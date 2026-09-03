@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 52.* Ranked by blocking-ness, not by interest.
+*Current as of take 56.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -658,7 +658,7 @@ in the future, the simulator.
 - **Open:** the tour needs a card for the modes; the icon and splash are
   Collect's palette (fine — the icon is the app, not a mode).
 
-## A23 — An OP TCG simulator · SCOPED take 24 · STEP (1) BOARD take 46 · STEP (2) EFFECTS-AS-DATA takes 47–51 · PHASE
+## A23 — An OP TCG simulator · SCOPED take 24 · STEP (1) BOARD take 46 · STEP (2) EFFECTS takes 47–51 · STEP (3) OPPONENT take 55 · PHASE
 
 The owner wants an actual simulator inside Prep & Play, in the future. Scoped
 honestly:
@@ -714,6 +714,36 @@ honestly:
   7,553 lines (28.6%); 1,130 cards fully, 772 partly.** Thirty-eight parser
   controls; a smoke assertion that every action the parser emits is one the
   engine handles.
+- **Take 55 — step (3), the opponent, honest about being a script.**
+  *Opponent: the app* on the setup screen, described there as *legal and
+  not clever; it never sees your hand*. `BOT` is a policy on the same
+  engine calls a player uses: play the dearest affordable Character while
+  there is room, give spare DON!! to the Leader, attack with everything
+  that may — the Leader always at the Leader so games end, a Character at a
+  rested Character it can beat, else the Leader — block when a Character
+  would die and a Blocker can take it, counter when the Leader would take
+  damage at two Life or less, apply an offered effect to its first legal
+  target (declining a trash cost that would empty its hand). One action per
+  step so the human sees each move; no curtain; the human's screen is
+  always the one shown; the app's block and counter are shown before the
+  human resolves. **MEASURED, twenty bot-versus-bot games on the showcase
+  deck: 10–19 turns, all ending by damage, 8–12 by seat, attacks 329–339 by
+  seat — symmetric.** In smoke, two whole games run under a running
+  invariant: every card in exactly one zone (fifty-one per player), DON!!
+  summing to ten, never six Characters (class 4 as a property, not a
+  fixture).
+- **Ruled out: lookahead, bluffing, reading the human's hand or deck.** A
+  stronger opponent is a later step and would be a different promise; this
+  one is for testing decks and finding effects that misfire, alone.
+- **Take 53 — feel, for testers.** The board's card lines carry their
+  colour dot on the name, DON!! is a row of pips (active bright, rested
+  dim, given in brass, the DON!! deck hollow), the attacker's row is marked
+  while a target is chosen, and a refusal reason sits on its own line. The
+  deck screen says how many of a deck's cards the sim runs itself, partly,
+  or by hand — naming the by-hand ones — and **Play this deck in Sim** takes
+  it to the board as Player 1. Home shows **New in this update** once per
+  take, lifted from `ci/RELEASE.md` at build time (the build refuses a take
+  whose release note is missing — the note is written first, PROTOCOL §6).
 - **Take 52 — the tail, measured, and two things for testers.** After
   take 51 the unparsed shapes are a long tail: the largest with an
   identifiable mechanism are *Choose one:* (37, a modal), *look at N and

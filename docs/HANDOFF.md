@@ -1,4 +1,165 @@
-# HANDOFF — through Take 52
+# HANDOFF — through Take 56
+
+## Take 56 — 2026-09-03 — the runner went red on the third night of prices; a count that grows was frozen at two
+
+*Opened after the fix, not before — the owner pasted a red CI log and I
+reproduced and repaired first. PROTOCOL §6 says the entry comes first; this
+one records the slip as well as the bug.*
+
+### What the runner said
+
+`smoke — 378 passed, 1 failed; pipeline stopped` on the bundle job, with the
+section headers but not the failing line. Reproduced here in one command:
+a fresh ingest — TCGCSV had published 2026-09-03 at 20:05 UTC — gave the
+sidecar its third day, and *manifest records two history days* failed on
+`["2026-09-01","2026-09-02","2026-09-03"]`. Written at take 20 with two days
+on file; true for thirty-five takes and false the first night it could be.
+Its sibling, *7d and 30d are absent with two days on file*, would have gone
+red on the eighth night. Landmine 114.
+
+### Consequences on the runner
+
+The bundle job stopped before the sidecar commit, so the runner's history
+still ends at 2026-09-02 and A9's failure issue is open. The seed carries
+the local sidecar with 2026-09-03 recorded, so dropping t56 repairs the
+runner's history as well as the test; the next nightly then appends
+2026-09-04 and the issue can be closed.
+
+### DEFERRED this cycle
+
+- **A guard against frozen counts** — a lint over smoke.mjs for `=== <n>`
+  against `history_days`, `days.length`, `source_updated_at`: worth its own
+  take with a control, not a patch under a red light.
+- The owner's list unchanged.
+
+## Take 55 — 2026-09-03 — A23 step (3): an opponent that plays legally and stupidly, so one tester can play alone
+
+Opened before any code (PROTOCOL §6).
+
+### Why this now
+
+The hot-seat board needs two people and testers mostly have one phone and
+no second player at hand. A23 scoped step (3) as *"a simple opponent that
+plays legally and stupidly, honest about being a script."* Built as that:
+the same engine, the same rules, one policy — play the dearest affordable
+Character, give DON!! to the Leader, attack with everything that may,
+block when a Character would die, counter when the Leader would take
+damage at low Life, apply an offered effect to its first target. No
+lookahead, no bluffing, no hidden knowledge (it never reads the human's
+hand or deck). It says what it is on the setup screen.
+
+### The invariant this buys
+
+A bot-versus-bot game in smoke is the first test that plays whole games:
+every turn, every card is in exactly one zone and the count is fifty-one
+per player; DON!! sum to ten; never six Characters; the game ends. Failure
+class 4 (limits unchecked) as a running assertion rather than a fixture.
+
+### Built
+
+- **`BOT`** — `step()` (one action: play, DON!!, an attack, or end),
+  `defend()` (block, counter), `offers()` (first legal target, declining a
+  trash cost that would empty the hand), `mulligan()` (keeps). Wired into
+  the board: *Opponent: the app* on setup; no curtain against it; the
+  human's screen always shown; the app's block and counter shown before the
+  human resolves; the app's whole turn runs on *End turn*, pausing only
+  when it attacks, which is the human's window.
+- **Smoke:** two whole bot-versus-bot games (deterministic shuffles) under
+  a running conservation invariant; a render assertion that the board names
+  the app.
+
+### Findings
+
+- **The first policy never ended a game.** Characters attacked rested
+  Characters they could beat, Leaders included, and the two seats traded
+  Characters forever — sixty turns, no defeat. The Leader now always attacks
+  the Leader; games end in 10–19 turns. A stupid policy still has to be a
+  policy that finishes.
+- **Five games in a row to seat 0 looked like an asymmetry** and was not:
+  twenty games split 8–12 with attacks 329–339 by seat. Measured before
+  believed.
+
+**smoke.mjs 393, render.mjs 55 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **The app as an opponent on the Fold** — the first solo game report.
+- **Step (4), two phones** (D18); a stronger opponent, if ever, as its own
+  promise.
+- The owner's list: the seed drop; the opt-in link; the `.aab` filename; the
+  icon; D16, D15, D17, D18.
+
+## Take 54 — 2026-09-03 — one paragraph PROTOCOL §6 was said to have
+
+Opened before any code (PROTOCOL §6).
+
+### What happened
+
+Take 53's entry says *PROTOCOL §6 says the note is part of opening a take*.
+The write that would have made that true failed on an anchor (the section
+is headed `## 6. Ordering`, not `## §6`) and the seal ran on the sentence.
+A reseal is a new take (A-203); this is it. The paragraph is in §6 now, and
+take 53's claim is true one take late — noted here rather than edited there
+(the record does not edit itself, `stamp.py`'s rule).
+
+### DEFERRED this cycle
+
+- Take 53's list, unchanged: the first game report and self-test report from
+  a tester; the sim's tail when a report says which part mattered; the owner's
+  seed drop, opt-in link, the `.aab` filename, the icon, D16, D15, D17, D18.
+
+## Take 53 — 2026-09-03 — feel: what's new on Home, a deck's sim-readiness and a way in, the board's colours and DON!! as pips
+
+Opened before any code (PROTOCOL §6).
+
+### The owner's ask
+
+Anything productive — fonts, sim, feel. Testers are arriving.
+
+### Chosen, for testers
+
+1. **What's new, in the app.** Testers get a Play update every seed drop
+   and nothing tells them what changed; the release notes live on GitHub.
+   The build now lifts the *New at take N* paragraph from `ci/RELEASE.md`
+   into the manifest, and Home shows it once per take, dismissible.
+2. **A deck's sim-readiness.** The Decks screen says how many of a deck's
+   cards are fully scripted, partly, or by hand, so a player picks a deck
+   the sim can mostly run — and a **Play in Sim** button takes that deck
+   straight to the board as Player 1.
+3. **The board's feel.** Card lines carry their colour dots; DON!! reads as
+   pips (active bright, rested dim) rather than "4/5"; the attacker's row
+   is marked while a target is being chosen.
+
+### Built
+
+- **What's new on Home:** `build_app.py` lifts the *New at take N*
+  paragraph from `ci/RELEASE.md` into the manifest and refuses a build
+  whose note is missing or for another take; Home shows *New in this
+  update* once per take with *Got it*. PROTOCOL §6 says the note is part of
+  opening a take.
+- **Sim-readiness on the deck screen:** `simReadiness(d)` sorts every card
+  into runs-itself / partly / by hand / no text, names the by-hand ones, and
+  **Play this deck in Sim** preselects it on the board.
+- **The board:** colour dot on the name, DON!! as pips with a title that
+  spells the counts, the chosen attacker outlined, refusal reasons on their
+  own line, no stray separator on the Leader's line.
+
+### Findings
+
+- The first cut put the colour dot as a sibling of the name and the `.nm`
+  layout stacked it on its own line; the Leader's line began with a
+  separator because cost and power were both empty. Both seen in the render
+  screenshot, not in an assertion — the picture is still worth looking at.
+
+**smoke.mjs 386, render.mjs 54 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **The first game report and self-test report** from a tester.
+- **Sim tail** (modal, ordering, protection, opponent's choices) when a
+  report says which mattered.
+- The owner's list: the seed drop; the opt-in link; the `.aab` filename; the
+  icon; D16, D15, D17, D18.
 
 ## Take 52 — 2026-09-03 — Play approved the closed test; the tester guide becomes the Play guide; the sim learns the opponent's choices
 

@@ -1,6 +1,6 @@
 # PROTOCOL
 
-*Current as of take 52.*
+*Current as of take 56.*
 
 The working rules for this project. The gate enforces the ones it can.
 
@@ -134,6 +134,10 @@ spoken is a decision; deferral that is silent is a hole in the record.
 
 ---
 
+
+*Take 53/54:* the take's **New at take N** paragraph in `ci/RELEASE.md` is
+part of opening the take. The build lifts it into the manifest and Home shows
+it to testers; a build without it stops and says so.
 ## 6b. Clean runs **[INHERITED]**
 
 **Any take that adds or changes a pipeline step is followed by a clean run before

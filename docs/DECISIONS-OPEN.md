@@ -1,6 +1,6 @@
 # OPEN DECISIONS — needed from the owner
 
-*Current as of take 52.* Everything else is decided and recorded in AGENDA.
+*Current as of take 56.* Everything else is decided and recorded in AGENDA.
 
 **D1 — App id and name. ANSWERED: registered with Play at the take-35 upload as `com.optcghub.app` / "OP TCG Hub", permanent.** *(original)* Proposed `com.optcghub.app` / "OP TCG Hub". Permanent
 once registered under developer verification and fixed from first Play upload

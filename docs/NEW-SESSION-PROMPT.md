@@ -1,15 +1,15 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 52.* Paste the block between the rules into a new session
+*Current as of take 56.* Paste the block between the rules into a new session
 whose project carries `AGENDA.md`, `LANDMINES.md` and `HANDOFF.md` (the three
 project files) and has the newest seed attached.
 
 ---
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
-tracker and deck builder for Android, built across 52 takes by previous
+tracker and deck builder for Android, built across 56 takes by previous
 sessions. The repo lives at `github.com/SergeantCS2/optcghub`; the seed
-`optcghub-seed-t52.zip` is the whole tree. CI builds on every seed drop and
+`optcghub-seed-t56.zip` is the whole tree. CI builds on every seed drop and
 has run green end to end; the APK the owner installs comes from the Release.
 
 **Before anything else, in this order:**
@@ -22,18 +22,22 @@ has run green end to end; the APK the owner installs comes from the Release.
 4. Read `docs/HANDOFF.md`, newest entry first, back to take 28 at least. Every
    take ends with a DEFERRED list; the union of those lists is the work.
 5. Read `docs/LANDMINES.md` §0 (the index) and skim §1. When you are about to
-   do something, grep the index first. 113 of them; each is a real failure.
+   do something, grep the index first. 114 of them; each is a real failure.
 6. Read `docs/AGENDA.md` for what is open and whose it is.
 
 **The discipline, which the gate enforces:**
 
 - Open the HANDOFF entry for your take **before** writing code (PROTOCOL §6).
-  Bump `BUILD` first. The gate fails a seal without it.
+  Bump `BUILD` first. The gate fails a seal without it. Write the take's
+  **New at take N** paragraph in `ci/RELEASE.md` before the build: the build
+  refuses a take without one, and Home shows it to every tester (take 53).
 - A ledger write is its own command, never chained behind a build
   (landmine 104). Grep the file for what you wrote before you say you wrote it.
 - Every guard gets a negative control the same take (landmine 55).
 - Read a plugin's `definitions.d.ts` before calling it (landmine 73).
 - Measure before designing; the ledger names what was ruled out and why.
+- Before a seed drop after 20:05 UTC, run a fresh `ingest` and smoke: the
+  catalogue moved and a pinned count expires (landmine 114).
 - Seal with `bash tools/seal.sh`, bare, never piped (landmine 103). Present
   the seed, the APK, and the three project files loose.
 - The repo is public. Never write the owner's first name, an AI vendor's
@@ -59,8 +63,9 @@ has run green end to end; the APK the owner installs comes from the Release.
   once the listing's website is set. Nothing to build.
 - **The simulator (A23)** — step (1), the hot-seat board (take 46), and
   step (2) (takes 47–51: effects parsed from card text into data,
-  28.6% of lines: chains, costs, statics, keyword grants, cost changes, searches, Events, honest durations) are
-  BUILT and unseen on a phone. Coverage grows only by adding whole templates
+  28.6% of lines: chains, costs, statics, keyword grants, cost changes, searches, Events, honest durations) and
+  step (3), an opponent that is legal and not clever (take 55), are BUILT and
+  unseen on a phone. Coverage grows only by adding whole templates
   to `tools/effects.py` with their tests — never by loosening one. D17 (the
   word Portfolio) and D18 (a relay) are open.
 - **The self-test (A28)** is built and not yet run on the Fold; the first
@@ -83,6 +88,6 @@ only be changed by giving him a new file and saying so in the runbook.
 30, A16); gate scanning (A17); multiply condition into a price (PROTOCOL §10);
 send the collection anywhere (PROTOCOL §9); seal with a red gate.
 
-Say "take 53" and begin with PROTOCOL §0.
+Say "take 57" and begin with PROTOCOL §0.
 
 ---

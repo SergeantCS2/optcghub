@@ -1,6 +1,6 @@
 # ROADMAP — OP TCG Hub
 
-*Current as of take 52.*
+*Current as of take 56.*
 
 An offline-first Android collection tracker and card scanner for the One Piece
 Card Game, built from TCGplayer catalogue data via TCGCSV. Play Store plus
@@ -50,7 +50,7 @@ The owner says otherwise. Cheap first.
 | 8.12 | Collection share page (static HTML) | export code | **done take 42** — one self-contained page through the share sheet |
 | 8.13 | Other games (A19) | per-game scanner + rules; catalogue packs | |
 | 8.14 | Japanese printings (A11) | second catalogue | |
-| 8.15 | Simulator (A23) | a phase | **step (1) built take 46**, **step (2) takes 47–51** — effects as data, 28.6% of lines scripted; (3)–(4) open |
+| 8.15 | Simulator (A23) | a phase | **step (1) built take 46**, **step (2) takes 47–51** — effects as data, 28.6% scripted; **step (3) take 55** — a legal, stupid opponent; (4) open |
 | 8.16 | Cloud sync via the user's own Drive | Drive plugin | |
 
 ## Where the phases actually landed · take 32

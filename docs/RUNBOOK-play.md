@@ -1,6 +1,6 @@
 # RUNBOOK — Google Play, from the repo to a running 14-day clock
 
-*Current as of take 52.* The whole procedure, in the order it must happen,
+*Current as of take 56.* The whole procedure, in the order it must happen,
 with who does each step. Everything on the repo side is already built; what
 follows is the owner's, and none of it is hard. The gate at the end is calendar
 time: **12 testers opted in for 14 continuous days** (landmine 35; re-checked

@@ -327,10 +327,15 @@ ok('deltas are internally consistent: pct = abs / yesterday',
 ok('no printing moved more than 10x overnight (landmine 7)',
    withD.every(p => Math.abs(p.d1p) < 900),
    String(withD.filter(p => Math.abs(p.d1p) >= 900).length));
-ok('manifest records two history days',
-   (manifest.history_days || []).length === 2, JSON.stringify(manifest.history_days));
-ok('7d and 30d are absent, not zero, with two days on file',
-   withD.every(p => p.d7p == null && p.d30p == null));
+/* Landmine 114: this froze "two days" at take 20 and went red on the runner
+   the first night TCGCSV published a third. The count grows nightly; assert
+   the SHAPE -- at least two, consecutive, ending on the source date. */
+const hd = manifest.history_days || []; const nd = hd.length;
+const consecutive = hd.every((d, i) => i === 0 || (new Date(d) - new Date(hd[i - 1])) === 864e5);
+ok('manifest records the history days on file: at least two, consecutive, ending on the source date',
+   nd >= 2 && consecutive && hd[nd - 1] === (manifest.source_updated_at || '').slice(0, 10), JSON.stringify(hd));
+ok('7d and 30d deltas are absent, not zero, until enough days are on file',
+   withD.every(p => (nd < 8 ? p.d7p == null : true) && (nd < 31 ? p.d30p == null : true)), `${nd} day(s)`);
 
 section('take 10 — the scanner stages (A2, everything but the camera)');
 const SC = V.scan;
@@ -1259,6 +1264,59 @@ const sub = (p, t) => (p.subtypes || '').split(/[;/]/).map(x => x.trim()).includ
   const keep = P1.chars[1]; const bp = S.power(1, 1); S.mod(1, 'u' + keep.uid, 1000, 'turn');
   P1.chars.splice(0, 1);   // the first card leaves; the buffed one is now index 0
   ok('a modifier keyed by instance follows the card after the index shifts', S.power(1, 0) === bp + 1000); }
+S.g = null;
+}
+
+{
+section('take 53 — what\'s new on Home; a deck\'s sim-readiness; the board\'s pips');
+ok('the manifest carries this take\'s release note, lifted from ci/RELEASE.md', manifest.whatsNew && manifest.whatsNew.take === V.TAKE && manifest.whatsNew.text.length > 20, JSON.stringify(manifest.whatsNew));
+const relTxt = fs.readFileSync(path.join(ROOT, 'ci', 'RELEASE.md'), 'utf8');
+ok('...and it is the first "New at take" paragraph, word for word', relTxt.includes(manifest.whatsNew.text.split(' ').slice(0, 6).join(' ')));
+ok('Home shows it once per take and remembers the dismissal', /vault\.seenTake/.test(js) && /id="whatsNew"/.test(html) && /id="wnOk"/.test(js));
+const PL9 = new Function('return ' + js.match(/function parseListLine\(raw\) \{[\s\S]*?\n\}/)[0])();
+const mk = () => { const d = V.DECKS.blank(); for (const raw of fs.readFileSync(path.join(ROOT, 'showcase', 'deck.txt'), 'utf8').split(/\r?\n/)) { const line = raw.trim(); if (!line || line.startsWith('#')) continue; const m = PL9(line); const num = m[2].toUpperCase(); const p = (V.CAT.byNum.get(num) || []).filter(x => x.num === num).sort((a, b) => (a.market || 9e9) - (b.market || 9e9))[0]; if (p.type === 'Leader') d.leader = p.id; else d.cards.push({ id: p.id, n: +m[1] }); } return d; };
+const sr = V.simReadiness(mk());
+ok('sim-readiness counts every card of the deck into exactly one bucket', sr.total === 14 && sr.full + sr.part + sr.hand + sr.none === sr.total, JSON.stringify(sr));
+ok('...and names the by-hand cards for the player', Array.isArray(sr.handNames) && sr.handNames.length <= 6);
+ok('the deck screen has the panel and the Play in Sim button; the sim preselects that deck', /id="dkSim"/.test(html) && /id="dkPlaySim"/.test(js) && /SIMUI\.pre = dkCur\.id/.test(js) && /d\.id === SIMUI\.pre \? 'selected'/.test(js));
+ok('the board draws DON!! as pips and colour dots on card lines', /'\\u25cf'\.repeat\(X\.don\.active\)/.test(js) && /background:var\(--c-\$\{CCLASS\[c\]\}\)/.test(js));
+}
+
+{
+section('take 55 — the opponent: whole games, bot against bot, with every card in exactly one zone');
+const S = V.SIM, B = V.BOT;
+const PL10 = new Function('return ' + js.match(/function parseListLine\(raw\) \{[\s\S]*?\n\}/)[0])();
+const mk = () => { const d = V.DECKS.blank(); for (const raw of fs.readFileSync(path.join(ROOT, 'showcase', 'deck.txt'), 'utf8').split(/\r?\n/)) { const line = raw.trim(); if (!line || line.startsWith('#')) continue; const m = PL10(line); const num = m[2].toUpperCase(); const p = (V.CAT.byNum.get(num) || []).filter(x => x.num === num).sort((a, b) => (a.market || 9e9) - (b.market || 9e9))[0]; if (p.type === 'Leader') d.leader = p.id; else d.cards.push({ id: p.id, n: +m[1] }); } return d; };
+/* deterministic shuffles for the test */
+let seed = 7; const _rnd = ctx.Math.random; ctx.Math.random = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+const zones = P => P.deck.length + P.hand.length + P.life.length + P.trash.length + P.chars.length + (P.stage ? 1 : 0) + 1 + (P.looking || []).length;
+const donSum = P => P.don.active + P.don.rested + P.donDeck + P.leader.don + P.chars.reduce((a, c) => a + c.don, 0);
+const invariants = g => g.players.every(P => zones(P) === 51 && donSum(P) === 10 && P.chars.length <= 5 && P.don.active >= 0 && P.don.rested >= 0 && P.life.length >= 0);
+const playOne = (first) => {
+  const g = S.new(mk(), mk(), first); g.bot = 1;                      // player 1 is the bot; player 0 is driven by the same policy here
+  S.mulligan(0, false); S.mulligan(1, false);
+  let turns = 0, broke = null, actions = 0;
+  while (g.phase !== 'over' && turns < 90) {
+    if (!invariants(g)) { broke = `invariants at turn ${g.turn}: ` + g.players.map(P => `${zones(P)}/${donSum(P)}/${P.chars.length}`).join(' '); break; }
+    const i = g.active; g.bot = i;                                     // both seats play the bot's policy
+    let guard = 0, did;
+    do { did = B.step(); actions++;
+      if (g.phase === 'battle') { g.bot = g.battle.def; B.defend(); g.bot = i; const res = S.resolve(); if (res && g.phase !== 'over') { const def = 1 - i; g.bot = def; res.life.forEach(l => { if (!l.banished) B.offers(def, 'trigger', null, l.id, true); }); if (res.koId) B.offers(def, 'onko', null, res.koId); g.bot = i; } }
+    } while (g.phase === 'main' && g.active === i && did !== 'end' && guard++ < 40);
+    turns++;
+  }
+  return { g, turns, broke, actions };
+};
+const r1 = playOne(0), r2 = playOne(1);
+ok('a bot-versus-bot game runs to a defeat, from either first player', r1.g.phase === 'over' && r2.g.phase === 'over', `${r1.turns} and ${r2.turns} turns; over=${r1.g.over},${r2.g.over}`);
+ok('every card was in exactly one zone every turn, DON!! summed to ten, never six Characters (class 4, as a running invariant)', !r1.broke && !r2.broke, r1.broke || r2.broke || '');
+ok('the games were real games: attacks were declared and Life was taken', r1.g.log.some(l => /attacks/.test(l)) && r1.g.players.some(P => P.life.length < 5) && r1.actions > 20, String(r1.actions));
+ok('the winner is named by the log line the rules require (defeat by damage with no Life, or by an empty deck)', /defeat/.test(r1.g.log.find(l => /defeat/.test(l)) || ''));
+ctx.Math.random = _rnd;
+/* the board wiring: no curtain against the app, the human always on screen, the app defends at once */
+ok('against the app there is no curtain and the human\'s screen is always the one shown', /if \(SIM\.g && SIM\.g\.bot != null\) return; const c = \$\('#simCurtain'\)/.test(js) && /i = 1 - g\.bot;/.test(js));
+ok('the app defends the moment it is attacked, and its block/counter are shown before the human resolves', /if \(g\.bot === g\.battle\.def\) \{ BOT\.defend\(\); paintSim\(\); return; \}/.test(js) && /The app defends/.test(js));
+ok('the setup offers the app as an opponent and says what it is', /never sees your hand/.test(js));
 S.g = null;
 }
 

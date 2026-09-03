@@ -417,6 +417,7 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
     <span class="pill"><i class="dot" id="netdot"></i><span id="netlbl">offline ok</span></span>
   </div>
   <div class="stale" id="staleBanner" hidden></div>
+  <div class="panel" id="whatsNew" hidden style="border-color:var(--brass)"></div>
   <div class="hero" id="hero">
     <button class="who" id="pfSwitch" style="text-align:left">Portfolio <em id="pfName">One Piece</em> <span style="color:var(--dim2);font-size:13px">&#9662;</span></button>
     <div class="total mono" id="pfTotal">$0.00</div>
@@ -635,6 +636,7 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
   <div id="dkAddRes"></div>
   <div class="panel" id="dkValue"></div>
   <div class="panel"><h3>Main deck <span class="note" id="dkTypes"></span></h3><div id="dkRows"></div></div>
+  <div class="panel" id="dkSim"></div>
   <div class="row" style="gap:10px;margin-bottom:30px">
     <button class="ghost" id="dkImport" style="flex:1">Import</button>
     <button class="ghost" id="dkExport" style="flex:1">Export</button>
@@ -1332,6 +1334,18 @@ document.addEventListener('click', e => {
 });
 $('#dkNew').addEventListener('click', () => { const d = DECKS.blank(); DECKS.list.push(d); DECKS.save(); openDeck(d.id); });
 function openDeck(id) { dkCur = DECKS.list.find(d => d.id === id); if (dkCur) go('deck'); }
+/* Sim-readiness (take 53): of the cards in a deck, how many has the sim fully
+   scripted, partly, or not at all -- so a player knows how much of a game
+   the app will run and how much is theirs by hand. */
+function simReadiness(d) {
+  const ids = (d.leader ? [d.leader] : []).concat(d.cards.map(c => c.id));
+  const counts = { full: 0, part: 0, hand: 0, none: 0 }; const byName = { hand: [] };
+  for (const id of ids) { const p = CAT.byId.get(id); if (!p) continue;
+    const lines = (p.text || '').split(/\n\s*\n|\n/).map(x => x.trim()).filter(x => x.startsWith('[') && !/^\[(Blocker|Rush|Double Attack|Banish|Unblockable|Trigger)\]\s*\(/.test(x));
+    const fx = (CAT.effects || {})[String(id)] || [];
+    if (!lines.length) counts.none++; else if (fx.length >= lines.length) counts.full++; else if (fx.length) counts.part++; else { counts.hand++; if (byName.hand.length < 6 && !byName.hand.includes(p.name)) byName.hand.push(p.name); } }
+  return { ...counts, total: ids.length, handNames: byName.hand };
+}
 
 function paintDeck() {
   if (!dkCur) return go('decks');
@@ -1343,6 +1357,10 @@ function paintDeck() {
     : 'Tap the card to choose a Leader';
   const n = $('#dkN'); n.innerHTML = `${A.total}<span style="font-size:13px;color:var(--dim2)">/50</span>`;
   n.className = 'dkcount' + (A.total === 50 ? ' ok' : A.total > 50 ? ' over' : '');
+  const sr = simReadiness(dkCur); const simBox = $('#dkSim');
+  if (simBox) simBox.innerHTML = `<h3>In the Sim</h3><div class="note">Of ${sr.total} cards: <b>${sr.full}</b> run themselves, <b>${sr.part}</b> partly, <b>${sr.hand}</b> by hand, ${sr.none} have no effect text.${sr.handNames.length ? ' By hand: ' + esc(sr.handNames.join(', ')) + (sr.hand > sr.handNames.length ? '\u2026' : '') + '.' : ''}</div>
+    <div class="row" style="margin-top:10px"><button class="ghost go" id="dkPlaySim" ${A.legal ? '' : 'disabled title="the deck must be legal first"'}>Play this deck in Sim</button></div>`;
+  const ps = $('#dkPlaySim'); if (ps) ps.addEventListener('click', () => { SIMUI.pre = dkCur.id; MODE.set('play'); go('sim'); });
   const lg = $('#dkLegal');
   lg.className = 'legal ' + (A.legal ? 'ok' : 'bad');
   lg.innerHTML = A.legal ? 'Legal under Comprehensive Rules §5-1. Fifty cards, one Leader, in colour, no more than four of a number.'
@@ -2251,6 +2269,13 @@ function paintHome() {
       (CAT.man.updateUrl ? `Every figure here is from that day. <b>More \u2192 Sync now</b> when you are online.`
                         : `Every figure here is from that day. Update the app for newer prices.`);
   } else sb.hidden = true;
+  /* What's new (take 53): the release note for THIS take, from the manifest, until dismissed. */
+  const wn = $('#whatsNew'), note = CAT.man.whatsNew;
+  if (note && note.take === TAKE && localStorage.getItem('vault.seenTake') !== String(TAKE)) {
+    wn.hidden = false;
+    wn.innerHTML = `<div class="row" style="justify-content:space-between;align-items:flex-start;gap:10px"><div><h3 style="margin-bottom:6px">New in this update</h3><div class="note">${esc(note.text)}</div></div><button class="ghost" id="wnOk">Got it</button></div>`;
+    $('#wnOk').addEventListener('click', () => { localStorage.setItem('vault.seenTake', String(TAKE)); wn.hidden = true; });
+  } else wn.hidden = true;
   if ((CAT.man.user || []).includes('home-bg.jpg') && !$('#hero').dataset.bg) {
     $('#hero').dataset.bg = '1';
     $('#hero').style.cssText += ';background:linear-gradient(rgba(11,22,34,.88),var(--bg)),url(bundle/user/home-bg.jpg) center/cover;border-radius:14px;padding:12px;margin:0 -8px';
@@ -4154,17 +4179,66 @@ const SIM = {
   }
 };
 
+/* ---- sim: the opponent (A23 step 3, take 55) ------------------------------
+   Legal and stupid, on purpose. It uses the same engine calls a player does,
+   reads only what is face-up to it, and takes one action per step so the
+   human sees each move. It never reads the opponent's hand or deck. */
+const BOT = {
+  is(i) { return SIM.g && SIM.g.bot === i; },
+  /* apply an offered effect to its first legal target; skip an offer with a cost it would rather not pay */
+  offers(i, trigger, ref, cardId, fromLife) {
+    let list = SIM.offers(i, trigger, ref, cardId, fromLife);
+    for (let guard = 0; list.length && guard < 20; guard++) {
+      const o = list.shift();
+      if (o.steps[0].a === 'cost_trashhand' && SIM.P(i).hand.length < 3) continue;   // do not empty the hand for it
+      let r = SIM.apply(i, o, o.targets && o.targets.length ? o.targets[0].ref : null);
+      while (r.ok && !r.done) r = SIM.apply(i, o, o.targets && o.targets.length ? o.targets[0].ref : null);
+      if (r.ok && r.follow && r.follow.length) list = r.follow.concat(list);
+    } },
+  /* one action of the bot's Main phase; returns what it did, or 'end' */
+  step() { const g = SIM.g; const i = g.bot; if (!g || g.phase !== 'main' || g.active !== i) return null; const P = SIM.P(i), O = SIM.P(1 - i);
+    // 1. play the dearest affordable Character (or Stage), while there is room
+    if (P.chars.length < 5) { let best = -1, bc = -1;
+      P.hand.forEach((id, h) => { const p = SIM.card(id); if (!p || (p.type !== 'Character' && p.type !== 'Stage')) return; const v = SIM.canPlay(i, h); if (v.ok && SIM.cost(p) > bc) { bc = SIM.cost(p); best = h; } });
+      if (best >= 0) { const r = SIM.play(i, best); if (r.ok) { if (r.card.type === 'Character') this.offers(i, 'onplay', P.chars.length - 1); else this.offers(i, 'onplay', null, r.card.id); return 'play'; } } }
+    // 2. give spare DON!! to the Leader
+    if (P.don.active > 0 && !this.donGiven) { const n = P.don.active; for (let k = 0; k < n; k++) SIM.giveDon(i, 'leader'); this.donGiven = true; return 'don'; }
+    // 3. attack with everything that may: a rested opponent Character it can K.O. first, else the Leader
+    if (!SIM.firstTurnOf(i)) { const refs = ['leader'].concat(P.chars.map((c, k) => k));
+      for (const ref of refs) { if (!SIM.canAttack(i, ref).ok) continue; const pw = SIM.power(i, ref);
+        // the Leader always goes for the Leader (games must end); a Character K.O.s a rested Character it can beat, else the Leader
+        const rested = ref === 'leader' ? [] : O.chars.map((c, k) => ({ k, pw: SIM.power(1 - i, k) })).filter(x => O.chars[x.k].rested && x.pw <= pw).sort((a, b) => b.pw - a.pw);
+        const tref = rested.length ? rested[0].k : 'leader';
+        const r = SIM.attack(i, ref, tref); if (r.ok) { this.offers(i, 'attack', ref); return 'attack'; } } }
+    // 4. nothing left: end
+    this.donGiven = false; this.offers(i, 'endturn', 'leader'); P.chars.forEach((c, k) => this.offers(i, 'endturn', k)); SIM.endTurn(); return 'end'; },
+  /* the bot as defender: block when a Character would die and a Blocker can take it; counter when the Leader would take damage at low Life */
+  defend() { const g = SIM.g, b = g.battle; if (!b || g.bot !== b.def) return; const i = b.def;
+    if (b.step === 'block') { const pw = SIM.battlePowers(); const bl = SIM.blockers();
+      if (b.dref !== 'leader' && pw.a >= pw.d && bl.length) { const r = SIM.block(bl[0].ref); if (r.ok) this.offers(i, 'onblock', bl[0].ref); } else SIM.noBlock(); }
+    if (b.step === 'counter') { for (let guard = 0; guard < 6; guard++) { const pw = SIM.battlePowers(); if (pw.a < pw.d) break;
+        const stakes = b.dref === 'leader' && SIM.P(i).life.length <= 2; const cs = SIM.counters().sort((a, c) => c.plus - a.plus);
+        if (!stakes || !cs.length) break; SIM.counter(cs[0].h); } } },
+  mulligan(i) { SIM.mulligan(i, false); }
+};
 /* ---- sim: the screen ----------------------------------------------------
    One column, one player at a time, the curtain between them. A card on the
    board is its catalogue line: name · cost · power · counter · keywords. */
-const SIMUI = { sel: null, result: null, menu: null, offer: null, post: null, afterOffer: null, legalDecks() { return DECKS.list.filter(d => d.leader && legality(d).problems.length === 0); } };
+const SIMUI = { sel: null, result: null, menu: null, offer: null, post: null, afterOffer: null, pre: null, legalDecks() { return DECKS.list.filter(d => d.leader && legality(d).problems.length === 0); } };
 function simCard(id, extra = '', noPower = false) {
   const p = CAT.byId.get(id); if (!p) return `<span class="note">unknown</span>`;
   const kw = (p.kw || '').split('|').filter(k => ['Rush', 'Blocker', 'Double Attack', 'Banish', 'Trigger', 'Unblockable'].includes(k));
   if (extra && /\u2022kw:/.test(extra)) { extra.match(/\u2022kw:([^\u2022]*)/)[1].split(',').filter(Boolean).forEach(k => { if (!kw.includes(k)) kw.push(k + '*'); }); extra = extra.replace(/\u2022kw:[^\u2022]*\u2022/, ''); }
-  return `<b>${esc(p.name)}</b> <span class="note">${[p.cost != null ? p.cost + 'c' : '', (!noPower && p.power) ? p.power : ''].filter(Boolean).join(' \u00b7 ')}${p.counter ? ' \u00b7 +' + p.counter : ''}${kw.length ? ' \u00b7 ' + esc(kw.join(', ')) : ''}${extra}</span>`;
+  const dots = String(p.color || '').split(/[;/,]/).map(x => x.trim()).filter(x => CCLASS[x]).map(c => `<i style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:3px;vertical-align:1px;background:var(--c-${CCLASS[c]})"></i>`).join('');
+  const bits = [p.cost != null ? p.cost + 'c' : '', (!noPower && p.power) ? p.power : '', p.counter ? '+' + p.counter : '', kw.length ? esc(kw.join(', ')) : '', String(extra || '').replace(/^\s*\u00b7\s*/, '')].filter(Boolean);
+  return `<b>${dots}${esc(p.name)}</b> <span class="note">${bits.join(' \u00b7 ')}</span>`;
 }
-function simCurtain(text, sub) { const c = $('#simCurtain'); c.innerHTML = `<div class="big" style="font-size:22px;margin-bottom:8px">Hand the phone to</div><h2 style="font-size:34px;margin:0 0 12px">${esc(text)}</h2><div class="note">${esc(sub || 'tap when you have it')}</div>`; c.classList.add('on'); }
+/* Against the app there is nothing to hide: no curtain, the bot just moves. */
+function simBotRun() { const g = SIM.g; if (!g || g.bot == null) return; let guard = 0;
+  while (g.phase === 'main' && g.active === g.bot && !SIMUI.offer && guard++ < 40) { const did = BOT.step(); if (did === 'attack') { BOT.defendIfBot(); if (g.phase === 'battle') return; } if (did === 'end' || did == null) break; }
+  if (g.phase === 'battle' && g.battle.def === g.bot) { BOT.defend(); } }
+BOT.defendIfBot = () => { const g = SIM.g; if (g.phase === 'battle' && g.battle.def === g.bot) BOT.defend(); };
+function simCurtain(text, sub) { if (SIM.g && SIM.g.bot != null) return; const c = $('#simCurtain'); c.innerHTML = `<div class="big" style="font-size:22px;margin-bottom:8px">Hand the phone to</div><h2 style="font-size:34px;margin:0 0 12px">${esc(text)}</h2><div class="note">${esc(sub || 'tap when you have it')}</div>`; c.classList.add('on'); }
 function paintSim() {
   const box = $('#simBoard'); const g = SIM.g;
 
@@ -4172,26 +4246,31 @@ function paintSim() {
     const ds = SIMUI.legalDecks();
     box.innerHTML = `<div class="panel"><h3>Hot-seat game</h3>
       <div class="note">Two players, one phone. The app keeps the rules \u2014 phases, DON!!, cost, the five-Character limit, who may attack whom, block, counter, damage, Life, defeat. <b>Card effects are yours to play by hand</b> (the \u22ef menu on a card): the app does not read card text and will not guess at it.</div>
-      ${ds.length ? `<div class="fgrp">Player 1 deck</div><select id="simD1">${ds.map((d, i) => `<option value="${i}">${esc(d.name || 'Untitled')}</option>`).join('')}</select>
+      ${ds.length ? `<div class="fgrp">Player 1 deck</div><select id="simD1">${ds.map((d, i) => `<option value="${i}" ${d.id === SIMUI.pre ? 'selected' : ''}>${esc(d.name || 'Untitled')}</option>`).join('')}</select>
       <div class="fgrp">Player 2 deck</div><select id="simD2">${ds.map((d, i) => `<option value="${i}" ${i === Math.min(1, ds.length - 1) ? 'selected' : ''}>${esc(d.name || 'Untitled')}</option>`).join('')}</select>
+      <div class="fgrp">Opponent</div><select id="simOpp"><option value="human">A friend \u2014 pass the phone</option><option value="bot">The app \u2014 legal and not clever; it never sees your hand</option></select>
       <div class="fgrp">Goes first (rock-paper-scissors is yours, \u00a75-2-2)</div><select id="simFirst"><option value="0">Player 1</option><option value="1">Player 2</option></select>
       <div class="row" style="margin-top:14px"><button class="ghost go" data-sim="start" style="padding:10px 18px">Deal</button></div>`
       : `<div class="note" style="margin-top:10px">No legal deck yet \u2014 build one in <b>Decks</b> (a Leader and exactly fifty cards) and it appears here.</div>`}</div>`;
     return;
   }
-  const i = SIMUI.post ? SIMUI.post.i : (g.phase === 'battle' && !(SIMUI.offer && SIMUI.offer.i === g.active) ? g.battle.def : g.active); const P = SIM.P(i), O = SIM.P(1 - i);
-  const head = (X, mine) => `<div class="row" style="gap:8px;flex-wrap:wrap"><b>${esc(X.name)}</b><span class="note">Life <b>${X.life.length}</b> \u00b7 Deck ${X.deck.length} \u00b7 Hand ${X.hand.length} \u00b7 DON!! ${X.don.active}/${X.don.active + X.don.rested} (${X.donDeck} in deck)${mine ? '' : ' \u00b7 ' + (X.chars.length) + ' char'}</span></div>`;
+  let i = SIMUI.post ? SIMUI.post.i : (g.phase === 'battle' && !(SIMUI.offer && SIMUI.offer.i === g.active) ? g.battle.def : g.active);
+  if (g.bot != null && !SIMUI.post && !(g.phase === 'battle')) i = 1 - g.bot;    // the human's screen, always, against the app
+  const P = SIM.P(i), O = SIM.P(1 - i);
+  const pips = X => { const given = X.leader.don + X.chars.reduce((a, c) => a + c.don, 0); return `<span title="DON!!: ${X.don.active} active, ${X.don.rested} rested, ${given} given, ${X.donDeck} in the DON!! deck" style="letter-spacing:1px">${'\u25cf'.repeat(X.don.active)}<span style="opacity:.35">${'\u25cf'.repeat(X.don.rested)}</span><span style="color:var(--brass)">${'\u25cf'.repeat(given)}</span><span style="opacity:.18">${'\u25cb'.repeat(X.donDeck)}</span></span>`; };
+  const head = (X, mine) => `<div class="row" style="gap:8px;flex-wrap:wrap"><b>${esc(X.name)}</b><span class="note">Life <b>${X.life.length}</b> \u00b7 Deck ${X.deck.length} \u00b7 Hand ${X.hand.length}${mine ? '' : ' \u00b7 ' + (X.chars.length) + ' char'}</span></div><div class="note" style="margin-top:2px">DON!! ${pips(X)}</div>`;
   const unit = (X, xi, ref, mine) => { const o = ref === 'leader' ? X.leader : X.chars[ref]; const pw = SIM.power(xi, ref);
     const open = mine && SIMUI.menu === String(ref);
     const granted = SIM.kwOf(xi, ref).filter(k => !((CAT.byId.get(o.id) || {}).kw || '').split('|').includes(k));
-    return `<div class="row" style="gap:8px;align-items:center;opacity:${o.rested ? .55 : 1}"><div class="nm">${simCard(o.id, `\u2022kw:${granted.join(',')}\u2022 \u00b7 <b>${pw}</b>${o.don ? ' (+' + o.don + ' DON!!)' : ''}${o.rested ? ' \u00b7 rested' : ''}`, true)}</div>
+    const marked = mine && SIMUI.sel && SIMUI.sel.ref === ref;
+    return `<div class="row" style="gap:8px;align-items:center;opacity:${o.rested ? .55 : 1}${marked ? ';outline:1px solid var(--brass);border-radius:8px;padding:2px 6px' : ''}"><div class="nm">${simCard(o.id, `\u2022kw:${granted.join(',')}\u2022 \u00b7 <b>${pw}</b>${o.don ? ' (+' + o.don + ' DON!!)' : ''}${o.rested ? ' \u00b7 rested' : ''}`, true)}</div>
       ${mine && g.phase === 'main' && SIM.offers(xi, 'main', ref).length ? `<button class="ghost go" data-sim="fxmain:${ref}">Main</button>` : ''}
       ${mine && g.phase === 'main' ? `<button class="ghost" data-sim="give:${ref}" title="+1000">+DON</button><button class="ghost" data-sim="attack:${ref}">Attack</button><button class="ghost${open ? ' go' : ''}" data-sim="menu:${ref}">\u22ef</button>` : ''}
       ${!mine && SIMUI.sel && g.phase === 'main' && (ref === 'leader' || o.rested) ? `<button class="ghost go" data-sim="target:${ref}">Target</button>` : ''}</div>
       ${open ? `<div class="row" style="gap:6px;flex-wrap:wrap;padding-left:8px"><span class="note" style="width:100%">Effects, by hand (\u00a710):</span><button class="ghost" data-sim="mp:${ref}:1000">+1000 this turn</button><button class="ghost" data-sim="mp:${ref}:-1000">\u22121000</button><button class="ghost" data-sim="mr:${ref}">${o.rested ? 'Set active' : 'Rest'}</button>${ref === 'leader' ? '' : `<button class="ghost" data-sim="mk:${ref}">K.O.</button><button class="ghost" data-sim="mh:${ref}">To hand</button>`}</div>` : ''}`; };
   if (g.phase === 'over') { box.innerHTML = `<div class="panel"><h3>${esc(SIM.P(g.over).name)} wins</h3><div class="note">${esc(g.log[0] || '')}</div><div class="row" style="margin-top:12px"><button class="ghost go" data-sim="new">New game</button></div></div>${simLog()}`; return; }
   if (g.phase === 'mulligan') {
-    const who = g.players.findIndex(x => x.mulliganed === null); const order = [g.first, 1 - g.first]; const cur = order.find(k => g.players[k].mulliganed === null);
+    const who = g.players.findIndex(x => x.mulliganed === null); const order = [g.first, 1 - g.first]; const cur = g.bot != null ? 1 - g.bot : order.find(k => g.players[k].mulliganed === null);
     const M = SIM.P(cur);
     box.innerHTML = `<div class="panel"><h3>${esc(M.name)} \u2014 keep or mulligan? (\u00a75-2-3)</h3>
       <div class="note">Leader: ${simCard(M.leader.id)}</div><div class="fgrp">Your hand</div>${M.hand.map(id => `<div class="row"><div class="nm">${simCard(id)}</div></div>`).join('')}
@@ -4199,6 +4278,7 @@ function paintSim() {
     return;
   }
   if (g.phase === 'battle' && SIMUI.offer && SIMUI.offer.i === g.active) { box.innerHTML = simOfferPanel() + simLog(); return; }
+  if (g.phase === 'battle' && g.bot === g.battle.def) { const pw = SIM.battlePowers(); const b = g.battle; box.innerHTML = `${simOfferPanel()}<div class="panel"><h3>The app defends</h3><div class="note">${b.blocked ? 'It blocked.' : 'No block.'}${b.counter ? ' Countered +' + b.counter + '.' : ''} ${pw.a} vs ${pw.d}${pw.a >= pw.d ? ': hit' : ': held'}</div><div class="row" style="margin-top:10px"><button class="ghost go" data-sim="resolve">Resolve</button></div></div>${simLog()}`; return; }
   if (g.phase === 'battle') {
     const b = g.battle; const pw = SIM.battlePowers(); const A = SIM.P(b.att); const att = CAT.byId.get((b.aref === 'leader' ? A.leader : A.chars[b.aref]).id);
     const tgt = b.dref === 'leader' ? CAT.byId.get(P.leader.id) : CAT.byId.get(P.chars[b.dref].id);
@@ -4216,9 +4296,9 @@ function paintSim() {
   const res = SIMUI.result; SIMUI.result = null;
   box.innerHTML = `${simOfferPanel()}${res && i !== (g.battle ? g.battle.def : -1) ? `<div class="panel" style="border-color:var(--brass)"><h3>${res.win ? 'Hit' : 'Held'} \u2014 ${res.a} vs ${res.d}</h3>${res.ko ? `<div class="note">${esc(res.ko)} K.O.\u2019d</div>` : ''}${res.life.map(l => `<div class="note">Life card ${l.banished ? 'banished' : 'to hand'}: <b>${esc(l.name)}</b></div>`).join('')}</div>` : ''}
     <div class="panel"><h3>Opponent</h3>${head(O, false)}<div style="margin-top:8px">${unit(O, 1 - i, 'leader', false)}${O.chars.map((c, k) => unit(O, 1 - i, k, false)).join('')}${O.stage ? `<div class="note">Stage: ${simCard(O.stage)}</div>` : ''}</div></div>
-    <div class="panel"><h3>${esc(P.name)} \u2014 turn ${g.turn}${SIMUI.sel ? ' \u00b7 <span style="color:var(--brass)">choose a target</span>' : ''}</h3>${head(P, true)}
+    <div class="panel"><h3>${esc(P.name)} \u2014 turn ${g.turn}${SIMUI.sel ? ' \u00b7 <span style="color:var(--brass)">choose a target</span>' : ''}${g.bot != null && g.active === g.bot ? ' \u00b7 <span class="note">the app is moving</span>' : ''}</h3>${head(P, true)}
       <div style="margin-top:8px">${unit(P, i, 'leader', true)}${P.chars.map((c, k) => unit(P, i, k, true)).join('')}${P.stage ? `<div class="note">Stage: ${simCard(P.stage)}</div>` : ''}</div>
-      <div class="fgrp">Hand</div>${P.hand.map((id, h) => { const v = SIM.canPlay(i, h); return `<div class="row" style="gap:8px"><div class="nm">${simCard(id)}${v.ok ? '' : `<span>${esc(v.why)}</span>`}</div><button class="ghost${v.ok ? ' go' : ''}" data-sim="play:${h}" ${v.ok ? '' : 'disabled'}>Play</button><button class="ghost" data-sim="trashhand:${h}" title="effect: trash">\u2715</button></div>`; }).join('') || '<div class="note">empty</div>'}
+      <div class="fgrp">Hand</div>${P.hand.map((id, h) => { const v = SIM.canPlay(i, h); return `<div class="row" style="gap:8px"><div class="nm">${simCard(id)}${v.ok ? '' : `<span style="display:block;color:var(--dim2);font-size:12.5px">${esc(v.why)}</span>`}</div><button class="ghost${v.ok ? ' go' : ''}" data-sim="play:${h}" ${v.ok ? '' : 'disabled'}>Play</button><button class="ghost" data-sim="trashhand:${h}" title="effect: trash">\u2715</button></div>`; }).join('') || '<div class="note">empty</div>'}
       <div class="row" style="gap:10px;margin-top:14px;flex-wrap:wrap"><button class="ghost go" data-sim="end">End turn \u2014 pass the phone</button>
         <button class="ghost" data-sim="m:draw">Draw (effect)</button><button class="ghost" data-sim="m:don">+1 DON!! (effect)</button><button class="ghost" data-sim="m:life-">Life \u2192 hand (effect)</button><button class="ghost" data-sim="m:life+">+1 Life (effect)</button></div>
     </div>${simLog()}`;
@@ -4237,41 +4317,49 @@ function simOfferAll(i, trigger) { const P = SIM.P(i); let any = simOffer(i, tri
 /* What happens once an offer list empties: the end of the turn that was
    waiting on [End of Your Turn], or the hand-over the attack step delayed. */
 function simAfterOffers() { const g = SIM.g; if (!g || SIMUI.offer) return;
-  if (SIMUI.afterOffer === 'endTurn') { SIMUI.afterOffer = null; const who = 1 - g.active; SIM.endTurn(); SIMUI.sel = null; if (g.phase !== 'over') simCurtain(SIM.P(who).name, `turn ${g.turn}`); }
-  if (SIMUI.afterOffer === 'toDefender' && g.phase === 'battle') { SIMUI.afterOffer = null; simCurtain(SIM.P(g.battle.def).name, 'an attack is coming \u2014 block or counter'); } }
+  if (SIMUI.afterOffer === 'endTurn') { SIMUI.afterOffer = null; const who = 1 - g.active; SIM.endTurn(); SIMUI.sel = null; if (g.phase !== 'over') simCurtain(SIM.P(who).name, `turn ${g.turn}`); if (g.bot != null) simBotRun(); }
+  if (SIMUI.afterOffer === 'toDefender' && g.phase === 'battle') { SIMUI.afterOffer = null; if (g.bot === g.battle.def) BOT.defend(); else simCurtain(SIM.P(g.battle.def).name, 'an attack is coming \u2014 block or counter'); } }
 function simLog() { return `<div class="panel"><h3>Log</h3><div class="note">${SIM.g.log.slice(0, 8).map(esc).join('<br>') || '\u2014'}</div><button class="linkish" data-sim="sharelog" style="margin-top:6px">Share the game log</button></div>`; }
 function simLogText() { const g = SIM.g; if (!g) return ''; const P = i => g.players[i]; return [`OP TCG Hub sim \u2014 take ${TAKE}`, `${P(0).name} (${CAT.byId.get(P(0).leader.id)?.name}) vs ${P(1).name} (${CAT.byId.get(P(1).leader.id)?.name}), turn ${g.turn}`, '', ...g.log.slice().reverse()].join('\n'); }
 $('#sim').addEventListener('click', e => {
-  const b = e.target.closest('[data-sim]'); if (!b) return; const [act, arg] = b.dataset.sim.split(':'); const g = SIM.g;
+  const b = e.target.closest('[data-sim]'); if (!b) return; const [act, arg] = b.dataset.sim.split(':'); const g = SIM.g; let g2;
   const ref = arg === 'leader' ? 'leader' : (arg == null ? null : +arg);
   const say = r => { if (r && r.ok === false && r.why) toast(r.why); };
   if (act === 'start') { const ds = SIMUI.legalDecks(); const d1 = ds[+$('#simD1').value], d2 = ds[+$('#simD2').value]; const first = +$('#simFirst').value;
-    SIM.new({ ...d1, name: 'Player 1' + (d1.name ? ' \u2014 ' + d1.name : '') }, { ...d2, name: 'Player 2' + (d2.name ? ' \u2014 ' + d2.name : '') }, first); simCurtain(SIM.P(first).name, 'keep or mulligan first'); paintSim(); return; }
+    const bot = $('#simOpp') && $('#simOpp').value === 'bot';
+    SIM.new({ ...d1, name: 'You' + (d1.name ? ' \u2014 ' + d1.name : '') }, { ...d2, name: (bot ? 'The app' : 'Player 2') + (d2.name ? ' \u2014 ' + d2.name : '') }, first);
+    if (bot) { g2 = SIM.g; g2.bot = 1; if (first === 1) { /* the bot keeps; the human decides first anyway */ } BOT.mulligan(1); if (!g2.players[0].mulliganed && false) {} paintSim(); return; }
+    simCurtain(SIM.P(first).name, 'keep or mulligan first'); paintSim(); return; }
   if (act === 'new') { SIM.g = null; SIMUI.sel = null; SIMUI.offer = null; SIMUI.post = null; SIMUI.result = null; paintSim(); return; }
   if (act === 'sharelog') { const t = simLogText(); if (navigator.share) navigator.share({ title: 'OP TCG Hub game log', text: t }).catch(() => {}); else { try { navigator.clipboard.writeText(t); toast('Copied'); } catch (e) { toast('Copy failed'); } } return; }
-  if (act === 'keep' || act === 'mull') { SIM.mulligan(ref, act === 'mull'); const next = g.players.findIndex(x => x.mulliganed === null); simCurtain(next >= 0 ? SIM.P(next).name : SIM.P(g.active).name, next >= 0 ? 'keep or mulligan' : 'turn 1'); paintSim(); return; }
+  if (act === 'keep' || act === 'mull') { SIM.mulligan(ref, act === 'mull'); const next = g.players.findIndex(x => x.mulliganed === null);
+    if (g.bot != null) { simBotRun(); paintSim(); return; }
+    simCurtain(next >= 0 ? SIM.P(next).name : SIM.P(g.active).name, next >= 0 ? 'keep or mulligan' : 'turn 1'); paintSim(); return; }
   if (act === 'play') { const r = SIM.play(g.active, ref); say(r); if (r.ok && r.card.type === 'Character') simOffer(g.active, 'onplay', SIM.P(g.active).chars.length - 1); else if (r.ok && r.card.type === 'Event') simOffer(g.active, 'evmain', null, r.card.id); else if (r.ok) simOffer(g.active, 'onplay', null, r.card.id); paintSim(); return; }
   if (act === 'cev') { const r = SIM.playCounterEvent(ref); say(r); if (r.ok) simOffer(g.battle.def, 'evcounter', null, r.id); paintSim(); return; }
   if (act === 'fxmain') { simOffer(g.active, 'main', ref); paintSim(); return; }
   if (act === 'fx' || act === 'fxapply') { const o = SIMUI.offer; if (!o) return; const cur = o.list[0]; const r = SIM.apply(o.i, cur, act === 'fx' ? arg : null); say(r);
     if (r.ok && r.done) { o.list.shift(); if (r.follow && r.follow.length) o.list.unshift(...r.follow); if (!o.list.length) SIMUI.offer = null; } simAfterOffers(); paintSim(); return; }
   if (act === 'fxskip') { const o = SIMUI.offer; if (o) { o.list.shift(); if (!o.list.length) SIMUI.offer = null; } simAfterOffers(); paintSim(); return; }
-  if (act === 'post') { SIMUI.post = null; simCurtain(SIM.P(g.battle ? g.battle.att : 1 - g.active).name, 'the attack is resolved'); paintSim(); return; }
+  if (act === 'post') { const bn = SIMUI.post && SIMUI.post.botNext; SIMUI.post = null; if (bn) { simBotRun(); paintSim(); return; } simCurtain(SIM.P(g.battle ? g.battle.att : 1 - g.active).name, 'the attack is resolved'); paintSim(); return; }
   if (act === 'trashhand') { SIM.manual.trashHand(g.active, ref); paintSim(); return; }
   if (act === 'give') { say(SIM.giveDon(g.active, ref)); paintSim(); return; }
   if (act === 'attack') { const v = SIM.canAttack(g.active, ref); if (!v.ok) { toast(v.why); return; } SIMUI.sel = SIMUI.sel && SIMUI.sel.ref === ref ? null : { ref }; paintSim(); return; }
   if (act === 'target') { const aref = SIMUI.sel.ref; const r = SIM.attack(g.active, aref, ref); SIMUI.sel = null; if (!r.ok) { toast(r.why); paintSim(); return; }
     /* §7-1-1 attack step: [When Attacking] resolves before the defender's window, on the attacker's screen */
     if (simOffer(g.active, 'attack', aref)) { SIMUI.afterOffer = 'toDefender'; paintSim(); return; }
+    if (g.bot === g.battle.def) { BOT.defend(); paintSim(); return; }
     simCurtain(SIM.P(g.battle.def).name, 'an attack is coming \u2014 block or counter'); paintSim(); return; }
   if (act === 'block') { const r = SIM.block(ref); say(r); if (r.ok) simOffer(g.battle.def, 'onblock', ref); paintSim(); return; }
   if (act === 'noblock') { SIM.noBlock(); paintSim(); return; }
   if (act === 'counter') { say(SIM.counter(ref)); paintSim(); return; }
   if (act === 'resolve') { const def = g.battle.def, att = g.battle.att; const res = SIM.resolve(); SIMUI.result = res;
     if (g.phase === 'over') { paintSim(); return; }
+    if (g.bot === def) { res.life.forEach(l => { if (!l.banished) BOT.offers(def, 'trigger', null, l.id, true); }); if (res.koId) BOT.offers(def, 'onko', null, res.koId); paintSim(); return; }
     SIMUI.post = { i: def, att }; res.life.forEach(l => { if (!l.banished) simOffer(def, 'trigger', null, l.id, true); }); if (res.koId) simOffer(def, 'onko', null, res.koId);
+    if (g.bot === att) { SIMUI.post = { i: def, att, botNext: true }; }
     paintSim(); return; }
-  if (act === 'end') { if (simOfferAll(g.active, 'endturn')) { SIMUI.afterOffer = 'endTurn'; paintSim(); return; } const who = 1 - g.active; SIM.endTurn(); SIMUI.sel = null; if (g.phase !== 'over') simCurtain(SIM.P(who).name, `turn ${g.turn}`); paintSim(); return; }
+  if (act === 'end') { if (simOfferAll(g.active, 'endturn')) { SIMUI.afterOffer = 'endTurn'; paintSim(); return; } const who = 1 - g.active; SIM.endTurn(); SIMUI.sel = null; if (g.phase !== 'over') simCurtain(SIM.P(who).name, `turn ${g.turn}`); if (g.bot != null) simBotRun(); paintSim(); return; }
   if (act === 'menu') { SIMUI.menu = SIMUI.menu === String(ref) ? null : String(ref); paintSim(); return; }
   if (act === 'mp') { const parts = b.dataset.sim.split(':'); SIM.manual.power(g.active, parts[1] === 'leader' ? 'leader' : +parts[1], +parts[2]); paintSim(); return; }
   if (act === 'mr') { const P = SIM.P(g.active); const o = ref === 'leader' ? P.leader : P.chars[ref]; SIM.manual.rest(g.active, ref, !o.rested); paintSim(); return; }
@@ -4374,9 +4462,9 @@ async function runSelfTest() {
      day and a hardcoded placeholder is landmine 62 in a text box. */
   $('#allq').placeholder = `Search all ${(CAT.man.cards || 0).toLocaleString()} cards`;
   paintNet(); paintHome();
-  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, exportCsv, collectionPage, shareCollectionPage, simLogText,
+  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness,
                    FILT, applyFilter, sortRows, blankFilter, activeCount,
-                   DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,
+                   DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,
                    backupJson, scheduleBackup,
                    scan: { PLATFORM, detectQuad, parseRead, normaliseRead, starScore,
                            makeVoter, identifyFrame, cropCode, cropStar, CODE_BOX } };

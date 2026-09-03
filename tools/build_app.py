@@ -235,6 +235,14 @@ def build(verbose=True):
     man["user"] = user
     man["fonts"] = fonts_used     # which file served each role, for the About panel and the harness
     man["effects"] = {"lines": fxstats["lines"], "scripted": fxstats["parsed"], "cards_full": fxstats["cards_full"], "cards_partial": fxstats["cards_partial"]}
+    # What's new (take 53): the first "New at take N" paragraph of ci/RELEASE.md,
+    # so a Play tester sees what changed without leaving the app. Read, not typed.
+    rel = open(os.path.join(ROOT, "ci", "RELEASE.md"), encoding="utf8").read()
+    import re as _re
+    mw = _re.search(r"\*\*New at take (\d+):\*\*\s*(.+?)(?:\n\n|\Z)", rel, _re.S)
+    man["whatsNew"] = {"take": int(mw.group(1)), "text": " ".join(mw.group(2).split())} if mw else None
+    if not mw or man["whatsNew"]["take"] != n:
+        raise SystemExit(f"build_app: ci/RELEASE.md has no 'New at take {n}' paragraph -- write the release note before the build (PROTOCOL §6)")
     man["game"] = "optcg"        # A19: the data model knows its game from take 23
     from config import UPDATE_URL
     man["updateUrl"] = UPDATE_URL or None

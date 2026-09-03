@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 52.*
+*Current as of take 56.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -120,6 +120,7 @@ Start here. Do not read top to bottom.
 | A ledger script changed some files and not others | 104, 112 |
 | An effect says "gives 2000 power" to an opponent's card | **113** |
 | Two engine actions share a name | 113 |
+| The runner goes red the night a count grows | **114** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -1582,6 +1583,21 @@ Pirates] type card* is a named card OR a typed one. The parser now classifies
 each token against the catalogue and refuses a line whose token is neither.
 Rule: when the same word means two things, the data decides, not the
 grammar; and every symbol the parser emits must have a consumer, checked.
+
+**114. An assertion froze a count that grows every night. Take 56, on the
+runner, the third night of prices.** *manifest records two history days* was
+written at take 20 when there were two; smoke passed for thirty-five takes
+and failed on the runner the first night TCGCSV's third day landed, stopping
+the bundle job before the sidecar commit — so the failure also cost the
+runner that night's history until a seed carried it back. Its sibling would
+have failed on night eight (*7d absent with two days on file*). Landmine 8
+was this exact shape for prices: the catalogue moves every night and a test
+that pins a moving number is a test that expires. Assert the SHAPE — at
+least two, consecutive, ending on the source date; the 7-day delta absent
+until eight days are on file — never the count. Reproduced locally with one
+fresh ingest, which is the check to run before any seed drop after 20:05
+UTC. Corollary for the runner: a red smoke costs the night's sidecar commit,
+so a seed that follows must carry the day the runner missed (this one did).
 
 ## §2 — Inherited from APEX ORV
 

@@ -1,4 +1,4 @@
-# OP TCG Hub — take 52
+# OP TCG Hub — take 56
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,19 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 56:** nothing visible; a test that expired on the third night
+of prices is fixed, and this build carries that night's prices.
+
+**New at take 55:** Sim can be played alone — choose *the app* as your
+opponent. It plays by the rules and not at all cleverly; it never looks at
+your hand. Good for trying decks and for finding effects that misfire.
+
+**New at take 54:** nothing visible; a note in the protocol.
+
+**New at take 53:** Home tells you what changed in each update; a deck's
+screen says how much of it the Sim runs by itself and has a *Play this deck in
+Sim* button; the board shows DON!! as pips and card colours as dots.
 
 **New at take 52:** this guide, for Play testers; *Share the game log* in
 Sim; the self-test checks the sim's effects too.

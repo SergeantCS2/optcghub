@@ -143,13 +143,14 @@ if (puppeteer) {
     for (const l of lines) { const [n, num] = l.split(' '); const p = V.candidates(num, null).slice().sort((a, b) => (a.market || 9e9) - (b.market || 9e9))[0]; if (p.type === 'Leader') d.leader = p.id; else d.cards.push({ id: p.id, n: +n }); }
     const skip = [...document.querySelectorAll('#tour button')].find(b => /skip/i.test(b.textContent)); if (skip) skip.click();
     V.MODE.set('play', false); document.querySelector('nav button[data-go="sim"]').click();
-    V.SIM.new(d, d, 0); V.SIM.mulligan(0, false); V.SIM.mulligan(1, false); V.paintSim();
+    V.SIM.new(d, d, 0); V.SIM.g.bot = 1; V.SIM.g.players[1].name = 'The app'; V.SIM.mulligan(0, false); V.SIM.mulligan(1, false); V.paintSim();
     const b = document.querySelector('#simBoard');
-    return { panels: b.querySelectorAll('.panel').length, hand: b.querySelectorAll('[data-sim^="play:"]').length, end: !!b.querySelector('[data-sim="end"]'), h: b.getBoundingClientRect().height, legal: V.legality(d).problems.length };
+    return { panels: b.querySelectorAll('.panel').length, hand: b.querySelectorAll('[data-sim^="play:"]').length, end: !!b.querySelector('[data-sim="end"]'), h: b.getBoundingClientRect().height, legal: V.legality(d).problems.length, vsApp: /The app/.test(b.textContent) };
   });
   ok('the hot-seat board draws: opponent, player, log panels', sim.panels >= 3, JSON.stringify(sim));
   ok('the hand is drawn as rows with Play buttons, and the turn can be ended', sim.hand === 5 && sim.end && sim.legal === 0);
   ok('the board has real height on the phone viewport', sim.h > 600, String(sim.h));
+  ok('against the app, the board names the opponent as the app (take 55)', sim.vsApp === true);
   const simShot = await page.screenshot({ encoding: 'base64', fullPage: false });
   fs.writeFileSync(path.join(ROOT, 'www', 'render-sim.png'), Buffer.from(simShot, 'base64'));
   await page.evaluate(() => { window.VAULT.SIM.g = null; window.VAULT.MODE.set('collect', false); document.querySelector('nav button[data-go="collection"]').click(); });
