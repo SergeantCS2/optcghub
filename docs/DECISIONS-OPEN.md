@@ -1,6 +1,6 @@
 # OPEN DECISIONS — needed from Jacob
 
-*Current as of take 30.* Everything else is decided and recorded in AGENDA.
+*Current as of take 31.* Everything else is decided and recorded in AGENDA.
 
 **D1 — App id and name.** Proposed `com.optcghub.app` / "OP TCG Hub". Permanent
 once registered under developer verification and fixed from first Play upload

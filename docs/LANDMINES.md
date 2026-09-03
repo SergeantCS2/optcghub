@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 30.*
+*Current as of take 31.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -108,6 +108,8 @@ Start here. Do not read top to bottom.
 | A sealed seed with a red gate | **103** |
 | A landmine cited in chat that is not in the file | **104** |
 | Every 7d/30d delta empty forever after launch | **105** |
+| Pipeline stops on the first new card of a set | **106** |
+| Failure issue never appears after a red night | 107 |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -1439,6 +1441,31 @@ seen, read the script against every tool it calls, in the current tree.** The
 scripts were correct when written; the tools moved; nothing checked.
 
 
+**106. A percentage guard with a sample of one.** The first run on a GitHub
+runner: 6,657 hashes restored from the sidecar, 204 known-unavailable skipped,
+**one** new printing to fetch (EB05-025, image not yet published — it 403s
+from anywhere). One fetch failed; `miss > len(rows) * 0.20` read 1/1 as
+100%; the pipeline stopped with 97% coverage already on file and the gate's
+coverage check — the actual guard — never got to run. The sibling guard two
+lines above already required twenty; this one had been written at take 3
+against a full pass of 6,860 and never met a small denominator. Below twenty
+attempts, a failure is recorded as unavailable and the run continues.
+**A rate is not a rate until the denominator is one you would trust by eye.**
+
+**107. `permissions:` grants what it lists and nothing else, and the failure
+reporter was not on the list.** A9's "open an issue when a night fails" step
+failed on the first failure with `Resource not accessible by integration
+(createIssue)`: the workflow granted `contents`, `pages` and `id-token`, and
+`issues: write` was never among them. The step that exists to make failure
+visible was itself invisible on the one run that mattered. Added — and
+because `build.yml` is hand-pasted, Jacob pastes it once more; the runbook
+says so and 2b's checks still apply.
+
+*Measured on the same run:* TCGCSV ingest took **3 seconds** on the runner —
+174 requests, no throttle. APEX 205's risk is absent for this source, and
+A-205's note in §2 is updated to say so.
+
+
 ---
 
 ## §2 — Inherited from APEX ORV
@@ -1540,7 +1567,7 @@ the seed, CI consumes. **Applied here at take 9:** artwork hashes and daily pric
 are already committed sidecars and CI only *restores* them. TCGCSV ingest is the
 one fetch CI must do — it is 174 requests to a purpose-built mirror, it fails
 loudly if throttled (landmine 5), and the app keeps running on its last catalogue
-if a night is lost. That is the accepted exposure and it is now written down.
+if a night is lost. That is the accepted exposure and it is now written down. *Measured take 31 on the first real run: 3 seconds, 174 requests, no throttle.*
 
 **A-207.** A detached process does not outlive the turn. This repo hit it at
 take 3 (landmines 47, 48) without knowing the sibling had already named it.

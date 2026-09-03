@@ -150,9 +150,17 @@ def run(limit=None, verbose=True, workers=8, retry_missing=False):
     if rows and miss == len(rows) and miss > 20:
         raise SystemExit(f"hashes: every one of {miss} fetches failed "
                          f"— the CDN is refusing us, not a data problem")
-    if rows and miss > len(rows) * 0.20:
+    # A percentage needs a sample (landmine 106). The first run on a GitHub
+    # runner had ONE new printing to fetch; it failed; 1/1 read as 100% and the
+    # pipeline stopped with 97% coverage already on file. Below twenty
+    # attempts a failure is recorded as unavailable (above, _save) and the
+    # gate's coverage check -- the real guard -- decides whether to ship.
+    if rows and len(rows) >= 20 and miss > len(rows) * 0.20:
         raise SystemExit(f"hashes: {miss}/{len(rows)} images failed "
                          f"({100*miss/len(rows):.1f}%) — too many to be dead links")
+    if rows and miss and len(rows) < 20:
+        print(f"   {miss} of {len(rows)} new image(s) unavailable — recorded, not fatal "
+              f"(sample too small for a rate; landmine 106)")
     if verbose:
         print(f"   hashed {ok}, missing {miss}, in {time.time()-t0:.0f}s")
     return ok, miss

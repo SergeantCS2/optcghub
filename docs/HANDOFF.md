@@ -1,4 +1,57 @@
-# HANDOFF — through Take 30
+# HANDOFF — through Take 31
+
+## Take 31 — 2026-09-03 — the first run on a runner: two things the reading missed
+
+Opened before any code (PROTOCOL §6).
+
+### The run
+
+Jacob dropped the take-30 seed at the repo root; the `seed` job unpacked and
+committed it; `bundle` ran. **Ingest took 3 seconds** — TCGCSV did not
+throttle a GitHub runner, which measures APEX landmine 205's risk as absent
+for this source. History and catalogue built. Then:
+
+```
+restored 6657 artwork hashes from the sidecar
+skipping 204 images known to be unavailable
+hashes: 1/1 images failed (100.0%) — too many to be dead links
+hashes failed (1) — pipeline stopped
+```
+
+One new printing since the sidecar was built; its one fetch failed; the
+dead-link guard read one-of-one as a hundred percent and stopped everything.
+Then the A9 failure-issue step failed: `Resource not accessible by
+integration (createIssue)` — the workflow grants `contents`, `pages`,
+`id-token`, and never `issues`.
+
+### What this take does
+
+- **`hashes.py`** — a percentage needs a sample. Below twenty attempted
+  fetches the guard does not apply; a failure is recorded as unavailable and
+  the pipeline continues, because the sidecar already covers 97% and the
+  gate's coverage check is the real guard. Landmine 106.
+- **`build.yml`** — `issues: write`. Landmine 107. This is a hand-pasted file,
+  so Jacob replaces it once more; the runbook says so.
+- **The seed** is re-sealed as take 31 with both.
+
+### Verified here
+
+The exact case from the runner — one new printing, unavailable at source —
+now prints *"1 of 1 new image(s) unavailable — recorded, not fatal"* and the
+pipeline continues to the gate. The decision table (1/1 continue; 5/20 stop;
+25/25 stop-all-failed) is asserted.
+
+**smoke.mjs 235, render.mjs 48 (Chrome). Gate green.**
+
+### DEFERRED this cycle
+
+- **Running the rest.** Hashes was the fourth of ten pipeline steps; validate,
+  app, smoke, render, stamp, gate, the sidecar commit, Pages and the APK job
+  have still not run on a runner. Each may teach something. That is the
+  deal.
+- **The failure-issue step** is now permitted but has not fired successfully;
+  the next red night will tell.
+- **Everything of Jacob's.**
 
 ## Take 30 — 2026-09-03 — the repo, for real: the workflows read against the tools, and the runbook rewritten
 

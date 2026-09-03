@@ -1,6 +1,6 @@
 # RUNBOOK — from nothing to a repo that builds every night
 
-*Current as of take 30.* Everything below is the whole procedure. You need
+*Current as of take 31.* Everything below is the whole procedure. You need
 three files from the outputs: `build.yml`, `bootstrap.yml`, and the newest
 `optcghub-seed-tNNN.zip`. A PC makes step 2 easier; a phone works.
 
@@ -83,6 +83,14 @@ triggers a build). From then on an installed app fetches the nightly catalogue
 when it is online: quietly once per open, or **More → Sync now**. Price alerts
 fire against it. Until this is set the app says "update the app for newer
 prices", which is true.
+
+## 5b. When `build.yml` changes
+
+`build.yml` is the one file the seed cannot update. When a take changes it
+(take 31 added `issues: write`), the release notes say so, and the fix is:
+open `.github/workflows/build.yml` in the browser → the pencil → select all →
+paste the new file → commit. Then the 2b checks again. It happens rarely and
+the runbook will always say when.
 
 ## 6. Every take after the first
 

@@ -1,6 +1,6 @@
 # RUNBOOK — Google Play
 
-*Current as of take 30.* Adapted from APEX ORV, with the ordering reversed —
+*Current as of take 31.* Adapted from APEX ORV, with the ordering reversed —
 see landmine 36 and agenda A12.
 
 **The difference from APEX ORV:** that project shipped a sideloaded APK first and
