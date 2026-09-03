@@ -39,6 +39,7 @@ permissions:
   contents: write
   pages: write
   id-token: write
+  issues: write        # A9's failure issue; missing on the first run (landmine 107)
 
 jobs:
   # ── unpack the seed ─────────────────────────────────────────────────────
