@@ -552,7 +552,8 @@ ok('the credit is earned from the Rewarded EVENT, never from show() resolving',
    !/showRewardVideoAd\(\)[\s\S]{0,80}CREDITS\.earn/.test(js));
 ok('ADS_ENABLED is derived, and is OFF in a browser', V.ADS_ENABLED === false);
 ok('the unit IDs are Google\'s published TEST units, not real ones',
-   manifest.ads && manifest.ads.test === true && /3940256099942544/.test(manifest.ads.scan));
+   manifest.ads && manifest.ads.test === true && /^ca-app-pub-3940256099942544\//.test(manifest.ads.scan) && /^ca-app-pub-3940256099942544\//.test(manifest.ads.deck));
+ok('the app ID is the app\'s own (take 41) and does not flip the test flag', /^ca-app-pub-6243777967151950~/.test(manifest.ads.app) && manifest.ads.test === true);
 ok('D10 constants come from the manifest', manifest.ads.free === 20 && manifest.ads.perAd === 20 && manifest.ads.decksFree === 1);
 
 section('take 14 — deck builder polish');

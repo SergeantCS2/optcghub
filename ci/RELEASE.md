@@ -1,6 +1,9 @@
-# OP TCG Hub — take 40
+# OP TCG Hub — take 41
 
 Installs over any earlier take; same key, your data stays.
+
+**New at take 41:** the app carries its own AdMob app ID; the ads you see are
+still Google's test ads, on purpose.
 
 **New at take 40:** nothing visible; ledgers only.
 

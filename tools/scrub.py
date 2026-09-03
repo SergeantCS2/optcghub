@@ -29,7 +29,10 @@ MARKERS = [
     ("AI vendor",    re.compile(r"\b(Claude|Anthropic|OpenAI|ChatGPT|Copilot|Gemini|LLM|large language model)\b", re.I)),
     ("chat ref",     re.compile(r"\b(chat|chatbot|conversation with)\b", re.I)),
     ("container",    re.compile(r"/home/claude|/mnt/user-data|/mnt/skills|/mnt/transcripts")),
-    ("credential",   re.compile(r"AIza[0-9A-Za-z_\-]{20,}|ghp_[0-9A-Za-z]{20,}|github_pat_[0-9A-Za-z_]{20,}|sk-[0-9A-Za-z]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY|ca-app-pub-(?!3940256099942544)[0-9]{16}[~/][0-9]{10}|xox[bp]-[0-9A-Za-z\-]{10,}")),
+    # AdMob app and ad-unit IDs are NOT credentials: they ship in every APK's
+    # manifest and are readable from any installed app. The take-35 version
+    # flagged them and fired on the app's own ID at take 41.
+    ("credential",   re.compile(r"AIza[0-9A-Za-z_\-]{20,}|ghp_[0-9A-Za-z]{20,}|github_pat_[0-9A-Za-z_]{20,}|sk-[0-9A-Za-z]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY|xox[bp]-[0-9A-Za-z\-]{10,}")),
     ("leftover",     re.compile(r"\b(TODO|FIXME|XXX|HACK)\b")),
 ]
 # Names an ALLOWED public link may carry: the sibling repo is the owner's own.

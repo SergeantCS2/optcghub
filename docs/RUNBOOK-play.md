@@ -1,6 +1,6 @@
 # RUNBOOK — Google Play, from the repo to a running 14-day clock
 
-*Current as of take 40.* The whole procedure, in the order it must happen,
+*Current as of take 41.* The whole procedure, in the order it must happen,
 with who does each step. Everything on the repo side is already built; what
 follows is the owner's, and none of it is hard. The gate at the end is calendar
 time: **12 testers opted in for 14 continuous days** (landmine 35; re-checked
@@ -183,8 +183,7 @@ The AdMob account exists (take 33): publisher `pub-6243777967151950`.
    until it is found. Once the listing's *Website* is
    `https://sergeantcs2.github.io/optcghub/`, AdMob → the app → *app-ads.txt
    → Check for updates*; verified within about a day.
-2. **The three IDs** (D11): the AdMob **app ID** (`ca-app-pub-6243777967151950~…`)
-   and **two rewarded ad units** (`…/…`) — *Apps → OP TCG Hub → App settings*
+2. **The IDs** (D11): the **app ID is in** (`~1538944343`, take 41). Left: **two rewarded ad units** (`…/…`) — *Apps → OP TCG Hub → App settings*
    and *Ad units → Rewarded*. Paste them into `tools/config.py` **when the
    closed test is real users**, not before: Google's test units are what a
    closed test runs on, because tapping a real unit repeatedly on your own

@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 40
+# V1-STATE — what exists, as of take 41
 
-*Current as of take 40.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 41.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -48,7 +48,7 @@ refresh from Pages (take 27).
 | Prep & Play | mode slider + palette; Cards browse (keywords, colour, cost, text, for-this-deck); Play counter with §6-4-1 first turn; Sim placeholder | render mode checks |
 | Trade | two lists valued with spread; paste their list; share summary | smoke |
 | Wants & alerts | want list valued at likeliest printing; set checklist grid; binder pages; price alerts via local notifications, idempotent per catalogue date | smoke |
-| Ads | AdMob 8.1.0 against Google test units; credit ledger; pending tray; reward from the event only | smoke; **no ad has been seen on a device** |
+| Ads | AdMob 8.1.0, the app's own app ID with Google's test ad units (take 41); credit ledger; pending tray; reward from the event only | smoke; **no ad has been seen on a device** |
 | Onboarding | first-run tour v2 (6 cards), versioned; picture slots in assets/user | render |
 | Packaging | signed APK (committed sideload key), AAB branch for Play (needs 4 secrets), icon + splash from SVG, play-assets, CAMERA + POST_NOTIFICATIONS + AD_ID in the manifest | built every take since 9; signer verified by aapt2/apksigner |
 | CI | build.yml (seed → bundle → pages + apk), bootstrap.yml, nightly 21:30 UTC with sidecar commit-back, failure issue | **ran green on a runner at take 32; APK installed by the owner.** The nightly's commit message and a rejected-push retry fixed at take 33 after a rehearsal against a bare remote; bootstrap.yml re-pasted for landmine 108 |
@@ -56,7 +56,7 @@ refresh from Pages (take 27).
 | Typography | four roles (display / comic / body / heavy), OFL/Apache faces bundled, 232 KB, licensed faces as a file drop in `assets/user/fonts/` | render.mjs: Chrome reports all four LOADED and h2 resolves to the display face, with a missing-file control; smoke 7 |
 | Sync | quiet once-per-open sync holds on cellular unless switched on; Sync now always runs; `UPDATE_URL` points at Pages | smoke 4 controls; **not yet seen on the Fold** |
 
-**Harness totals, take 40:** smoke.mjs 265 assertions, render.mjs 51 in
+**Harness totals, take 41:** smoke.mjs 266 assertions, render.mjs 51 in
 Chrome, gate 22 checks with negative controls (the render receipt is new), zero console errors across 14
 screens in both modes.
 

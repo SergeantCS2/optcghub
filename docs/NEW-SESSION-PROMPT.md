@@ -1,15 +1,15 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 40.* Paste the block between the rules into a new session
+*Current as of take 41.* Paste the block between the rules into a new session
 whose project carries `AGENDA.md`, `LANDMINES.md` and `HANDOFF.md` (the three
 project files) and has the newest seed attached.
 
 ---
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
-tracker and deck builder for Android, built across 40 takes by previous
+tracker and deck builder for Android, built across 41 takes by previous
 sessions. The repo lives at `github.com/SergeantCS2/optcghub`; the seed
-`optcghub-seed-t40.zip` is the whole tree. CI builds on every seed drop and
+`optcghub-seed-t41.zip` is the whole tree. CI builds on every seed drop and
 has run green end to end; the APK the owner installs comes from the Release.
 
 **Before anything else, in this order:**
@@ -74,6 +74,6 @@ only be changed by giving him a new file and saying so in the runbook.
 30, A16); gate scanning (A17); multiply condition into a price (PROTOCOL §10);
 send the collection anywhere (PROTOCOL §9); seal with a red gate.
 
-Say "take 41" and begin with PROTOCOL §0.
+Say "take 42" and begin with PROTOCOL §0.
 
 ---

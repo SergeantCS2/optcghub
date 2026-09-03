@@ -1,6 +1,6 @@
 # OPEN DECISIONS — needed from the owner
 
-*Current as of take 40.* Everything else is decided and recorded in AGENDA.
+*Current as of take 41.* Everything else is decided and recorded in AGENDA.
 
 **D1 — App id and name. ANSWERED: registered with Play at the take-35 upload as `com.optcghub.app` / "OP TCG Hub", permanent.** *(original)* Proposed `com.optcghub.app` / "OP TCG Hub". Permanent
 once registered under developer verification and fixed from first Play upload
@@ -56,7 +56,7 @@ mind, would settle it.
 **D10 — The numbers.** 20 free credits on install, +20 per rewarded ad, 1 free
 deck save, +1 per ad. Confirm or change; they are constants.
 
-**D11 — AdMob account.** *Take 33: it exists — publisher `pub-6243777967151950`, and the app-ads.txt line is in RUNBOOK-play §9.* Still needed, when the closed test is real users and not before (A17): the AdMob **app ID** (`ca-app-pub-6243777967151950~…`) and **two rewarded ad-unit IDs** (`…/…`), one for scan credits and one for deck saves. Three values into `tools/config.py`.
+**D11 — AdMob account.** *Take 33: it exists — publisher `pub-6243777967151950`, and the app-ads.txt line is in RUNBOOK-play §9. Take 41: the app ID `ca-app-pub-6243777967151950~1538944343` is in `config.py`; the two rewarded ad units are still Google's test units.* Still needed, when the closed test is real users and not before (A17): the AdMob **app ID** (`ca-app-pub-6243777967151950~…`) and **two rewarded ad-unit IDs** (`…/…`), one for scan credits and one for deck saves. Three values into `tools/config.py`.
 
 **D12 — Banners.** None on Scan is proposed as fixed. One on Search, yes or no?
 

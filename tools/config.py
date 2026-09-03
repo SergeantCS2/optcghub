@@ -63,10 +63,13 @@ SAFE_SPREAD_FACTOR = 1.25
 # Rule (landmine 31 / A17 "ruled out"): real unit IDs NEVER go in a debug or
 # sideload-testing build until the account is verified -- invalid-traffic bans
 # are permanent. The test IDs below are safe in every build.
-ADMOB_APP_ID          = "ca-app-pub-3940256099942544~3347511713"   # Google test app ID (Android)
+ADMOB_APP_ID          = "ca-app-pub-6243777967151950~1538944343"   # the app's own ID (AdMob, take 41)
 ADMOB_REWARD_SCAN     = "ca-app-pub-3940256099942544/5224354917"   # Google test rewarded unit
 ADMOB_REWARD_DECK     = "ca-app-pub-3940256099942544/5224354917"   # same unit until the owner has two
-ADMOB_IS_TEST         = ADMOB_APP_ID.startswith("ca-app-pub-3940256099942544")
+# Test-ness is a property of the AD UNITS (what gets loaded and tapped), not
+# of the app ID: Google's own development guidance is a real app ID with the
+# sample units. The SDK's isTesting flag follows the units (take 41).
+ADMOB_IS_TEST         = ADMOB_REWARD_SCAN.startswith("ca-app-pub-3940256099942544/")
 
 # D10 -- the owner's starting numbers, constants until he says otherwise.
 CREDITS_FREE_ON_INSTALL = 20

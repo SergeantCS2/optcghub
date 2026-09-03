@@ -1,4 +1,49 @@
-# HANDOFF — through Take 40
+# HANDOFF — through Take 41
+
+## Take 41 — 2026-09-03 — the real AdMob app ID, with the test ad units kept
+
+Opened before any code (PROTOCOL §6).
+
+### The owner's ask
+
+He added OP TCG Hub in AdMob by name and got an app ID
+(`ca-app-pub-6243777967151950~1538944343`, "Requires review", "Limited ad
+serving — add store to lift limit", no package name). Did it find the app or
+make a random one?
+
+### The answer
+
+It made the entry — AdMob's store lookup only finds apps *published* on the
+store, and a closed test is not published, so "Add app" by name is the
+correct path and the entry is the right one. The package name fills in when
+the app is linked to Play after production; "Limited ad serving" is the
+unlinked state and does not matter for a closed test running on Google's
+test units. "Requires review" is AdMob's own app review and happens on its
+side.
+
+### What changes in the tree
+
+`ADMOB_APP_ID` is the real one now. Google's own guidance for development is
+a real app ID with the sample ad units, so the two rewarded units stay
+Google's test units until the closed test is real users (A17, D11).
+`ADMOB_IS_TEST` was derived from the app ID and would have flipped to false
+on a build that still loads test units; it is derived from the units now,
+which is what the SDK's `isTesting` flag is about. Smoke asserts the pair:
+real app ID, test units, `test: true`.
+
+### The scrubber fired on it
+
+The take-35 credential pattern treated a real AdMob ID as a secret and
+refused the seal — four hits, the config and three ledgers. It is not one:
+every APK carries its app ID in the manifest, readable by anyone who installs
+it. Pattern narrowed to the things that are secrets (API keys, tokens,
+private keys); the scrubber's own controls still fire.
+
+### DEFERRED this cycle
+
+- **Two rewarded ad-unit IDs** (D11) — created in AdMob when the testers
+  are real people, then two lines in `config.py`.
+- Take 40's list, unchanged.
 
 ## Take 40 — 2026-09-03 — app-ads.txt live; the root site explained; audit and seal
 

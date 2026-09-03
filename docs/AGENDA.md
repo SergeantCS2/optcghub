@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 40.* Ranked by blocking-ness, not by interest.
+*Current as of take 41.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -683,7 +683,7 @@ a One Piece background, and placeholders for whatever I cannot supply.
 - **Open:** the splash-bg slot is declared but `ci/apk.sh` does not yet use it
   — it renders the icon on navy. One line, next take.
 
-## A17 — Ads and revenue · SDK WIRED take 22 against Google test units · ADMOB ACCOUNT EXISTS take 33 · unit IDs pending (D11)
+## A17 — Ads and revenue · SDK WIRED take 22 against Google test units · REAL APP ID take 41 · unit IDs pending (D11)
 
 The owner's ask, take 13: ad revenue, probably Google's. Starting ideas — 20 scans
 free then 20 per rewarded ad, repeating; 1 deck build free then 1 per ad,
