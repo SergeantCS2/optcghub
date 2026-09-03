@@ -1,6 +1,6 @@
 # OPEN DECISIONS — needed from the owner
 
-*Current as of take 41.* Everything else is decided and recorded in AGENDA.
+*Current as of take 52.* Everything else is decided and recorded in AGENDA.
 
 **D1 — App id and name. ANSWERED: registered with Play at the take-35 upload as `com.optcghub.app` / "OP TCG Hub", permanent.** *(original)* Proposed `com.optcghub.app` / "OP TCG Hub". Permanent
 once registered under developer verification and fixed from first Play upload
@@ -72,6 +72,19 @@ WEEK — the package name `com.optcghub.app` cannot change after the first Play
 upload, and I re-cut it in ten minutes today. See A19.
 
 ---
+
+*Added take 44.*
+
+**D17 — "Portfolio" in the app's own vocabulary.** The Home hero and the
+portfolio sheet say *Portfolio*; that word is what led the Play declaration
+to *Stock trading and portfolio management*, the organisation-only trigger
+(take 43). A reviewer reads the same word. *Binder* or *Collection* say the
+same thing for cards. Rename, or keep and accept the reviewer's second look?
+
+**D18 — A relay for two-phone play across the internet (A23 step 4).** Same
+wifi or a hotspot needs no server; the internet does — a STUN server and a
+signalling relay. The ledger has said no server since take 1. Not now; on
+the record so the sim's transport is a decision and not a surprise.
 
 *Added take 33.*
 

@@ -42,6 +42,9 @@ echo "::endgroup::"
 # past the seed and every 7d/30d delta stays empty forever. hashes.json is
 # the same shape for newly released printings. catalog/ is NOT in push.paths,
 # so this commit does not re-trigger the workflow.
+# The Chrome receipt is for the gate, not for Pages (take 42).
+rm -f www/render.png
+
 echo "::group::commit sidecars"
 git config user.name  "optcghub-nightly"
 git config user.email "optcghub-nightly@users.noreply.github.com"

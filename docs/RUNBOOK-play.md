@@ -1,23 +1,22 @@
 # RUNBOOK — Google Play, from the repo to a running 14-day clock
 
-*Current as of take 41.* The whole procedure, in the order it must happen,
+*Current as of take 52.* The whole procedure, in the order it must happen,
 with who does each step. Everything on the repo side is already built; what
 follows is the owner's, and none of it is hard. The gate at the end is calendar
 time: **12 testers opted in for 14 continuous days** (landmine 35; re-checked
 against Google's current wording at take 33: unchanged since 11 Dec 2024, when
 it dropped from 20).
 
-**Where things stand at take 39 (PROVEN by the console and the repo, not
-remembered):** personal account; the app exists as `com.optcghub.app`;
-**version code 35 is in internal testing** (two optional warnings, ignored);
-the advertising-ID declaration and the Data Safety form are done as §5 says;
-the take-36 listing copy is pasted; the closed-test track is created and at
-4 of 5 — **roll out** and **Publishing overview → Send for review** are what
-is left, then the opt-in link to 16–18 testers. On the repo: public, CI green
-end to end, Pages live, privacy policy returning 200. **Still open:** which
-bundle was the first upload (the upload-key one, or the DEVKEY one — §2 has
-the reset if it was the wrong one); the listing icon (the console shows the
-jolly roger; `play-assets-t33/icon-512.png` is the compass); a seed newer than 31 at the repo root (drop t40). app-ads.txt is live (§9).
+**Where things stand at take 52 (PROVEN by the owner's console and report):**
+personal account; the app exists as `com.optcghub.app`; the internal test ran;
+the advertising-ID declaration and Data Safety are done; the listing is in;
+**the closed-testing release is APPROVED by Play review.** Now: the opt-in
+link to 16–18 testers (§7), and the 14-day clock starts when the twelfth is
+opted in. `ci/RELEASE.md` is what the testers read. On the repo: public, CI
+green end to end, Pages live, privacy policy returning 200, app-ads.txt
+served from the root. **Still open:** which bundle was the first upload (§2
+has the reset if it was the DEVKEY one); the listing icon; a seed newer than
+the one on the track at the repo root.
 
 **Read first — the one thing that costs a collection (landmine 34):** the Play
 build and the sideloaded take carry the same id, `com.optcghub.app`, but
@@ -110,7 +109,7 @@ export/uninstall/import dance here, once.
 | COVID-19 | No |
 | Data safety | see below — landmine 94 |
 | Government app | No |
-| Financial features | No — prices are displayed, nothing is bought or sold in the app |
+| Financial features | **My app doesn't provide any financial features** — prices are displayed, nothing is bought, sold, traded or invested. Anything else here, on a personal account, makes the app *organisation only* (take 43). The app's own word *Portfolio* is what invites the wrong box — D17 |
 | Health | No |
 
 **Data safety** (landmine 94 — APEX was rejected here): the app itself
@@ -137,7 +136,7 @@ collects nothing, but AdMob does. Declare exactly this:
 | App icon 512×512 | `play-assets-t33/icon-512.png` in this take's outputs (the take-16 compass placeholder, as asked) |
 | Feature graphic 1024×500 | `play-assets-t33/feature-1024x500.png` |
 | Phone screenshots, at least 2 | the Fold, cover screen: Home, Collection, a card detail, Scan, a deck. No character art in the first one (landmine 30 — the app shows none) |
-| Category | Tools (or Entertainment) — never Games |
+| Category | **App → Tools** (or Entertainment) — never **Game**; it is a collection tracker |
 | Contact email | yours |
 | Website | `https://sergeantcs2.github.io/optcghub/` — this is the domain AdMob crawls for app-ads.txt (§9) |
 
@@ -220,4 +219,5 @@ track. `versionCode` is the take number and never goes backwards (landmine
 | Rejected for misleading claims | the full description must **open** with the disclaimer; `docs/PLAY-LISTING.md` does |
 | Tester count stuck below 12 | invited ≠ opted in: they must open the link **and** install; ask them for a screenshot of the app |
 | The clock reset | a tester opted out; that is why 16–18 |
+| "Violation of Play Console Requirements — some types of apps can only be distributed by organisations" | the policy's four triggers are financial, health, VPN, government. Set *Financial features* to **none**, *Health* to **none**, *Government* **No**; category **App → Tools**; save every card; resubmit. Category alone is not on the list (take 43) |
 | AdMob app-ads.txt "not found" | the file must be at the **root** of `sergeantcs2.github.io`, and the listing's website must be set (§9) |

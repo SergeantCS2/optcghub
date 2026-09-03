@@ -203,6 +203,12 @@ def build(verbose=True):
 
     db = sqlite3.connect(CATALOG_DB)
     cat = catalogue_json(db)
+    # A23 step (2), take 47: effects parsed from the cards' own text -- only
+    # whole sentences the engine can run; everything else stays manual.
+    import effects as fx
+    cat["effects"], fxstats = fx.build(cat)
+    print(f"   effects: {fxstats['parsed']}/{fxstats['lines']} lines scripted ({100*fxstats['parsed']/max(1,fxstats['lines']):.1f}%), "
+          f"{fxstats['cards_full']} cards fully, {fxstats['cards_partial']} partly")
     raw = json.dumps(cat, separators=(",", ":")).encode()
     open(os.path.join(BUNDLE, "catalog.json"), "wb").write(raw)
     # The .gz goes OUTSIDE www/. Android's asset merger treats catalog.json and
@@ -228,6 +234,7 @@ def build(verbose=True):
     man = json.load(open(MANIFEST))
     man["user"] = user
     man["fonts"] = fonts_used     # which file served each role, for the About panel and the harness
+    man["effects"] = {"lines": fxstats["lines"], "scripted": fxstats["parsed"], "cards_full": fxstats["cards_full"], "cards_partial": fxstats["cards_partial"]}
     man["game"] = "optcg"        # A19: the data model knows its game from take 23
     from config import UPDATE_URL
     man["updateUrl"] = UPDATE_URL or None

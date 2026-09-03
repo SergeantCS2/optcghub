@@ -1,6 +1,6 @@
 # Play listing — copy, in the shape the console wants
 
-*Current as of take 41.* Plain text: the console shows asterisks and hashes
+*Current as of take 52.* Plain text: the console shows asterisks and hashes
 literally, so there is no markdown in the paste blocks. The disclaimer is the
 first line of the full description, not the last (landmine 30, A8). Every URL
 below was requested before it was written down (RUNBOOK-play §C, take 36).

@@ -1,6 +1,6 @@
 # ROADMAP — OP TCG Hub
 
-*Current as of take 41.*
+*Current as of take 52.*
 
 An offline-first Android collection tracker and card scanner for the One Piece
 Card Game, built from TCGplayer catalogue data via TCGCSV. Play Store plus
@@ -47,10 +47,10 @@ The owner says otherwise. Cheap first.
 | 8.9 | Trade matching via QR | QR plugin | |
 | 8.10 | Sealed EV | community pull rates — label as estimate of estimate | |
 | 8.11 | Grading ROI | a graded-price source TCGCSV lacks | |
-| 8.12 | Collection share page (static HTML) | export code | |
+| 8.12 | Collection share page (static HTML) | export code | **done take 42** — one self-contained page through the share sheet |
 | 8.13 | Other games (A19) | per-game scanner + rules; catalogue packs | |
 | 8.14 | Japanese printings (A11) | second catalogue | |
-| 8.15 | Simulator (A23) | a phase | |
+| 8.15 | Simulator (A23) | a phase | **step (1) built take 46**, **step (2) takes 47–51** — effects as data, 28.6% of lines scripted; (3)–(4) open |
 | 8.16 | Cloud sync via the user's own Drive | Drive plugin | |
 
 ## Where the phases actually landed · take 32
@@ -68,7 +68,7 @@ happened:
 | 5 — Collection safety | 1 week | export take 2, auto-backup take 15 (fourteen takes late — landmine 80), portfolios take 18 |
 | 6 — Release | 2–4 weeks | signed APK take 9, Play listing copy take 23, repo stood up take 30, first CI run take 31 reached step 4 of 10. **In flight.** |
 | 7 — Deck builder | after v1 | rules take 12, built take 13, browse take 25 |
-| 8 — Backlog | — | 8.1–8.8 done; 8.9–8.16 open |
+| 8 — Backlog | — | 8.1–8.8 and 8.12 done; 8.9–8.11, 8.13–8.16 open |
 
 Thirty-two takes in three days against a plan of thirteen weeks. The plan's
 *order* held; its *durations* were for a person, not a session.

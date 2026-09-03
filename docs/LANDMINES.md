@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 41.*
+*Current as of take 52.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -118,6 +118,8 @@ Start here. Do not read top to bottom.
 | Public repo names people, tools, or a container | 111 |
 | Render says 10 passed (mode: dom) right after a seal | **112** |
 | A ledger script changed some files and not others | 104, 112 |
+| An effect says "gives 2000 power" to an opponent's card | **113** |
+| Two engine actions share a name | 113 |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -1561,6 +1563,25 @@ and both cost a take (A-203: a reseal is a new take). Fixes: the seal keeps
 than `www/app.js`) so a DOM-mode build cannot seal; PROTOCOL §0 gives the one
 command that rebuilds a seed in full. Rule: a verifier that names its own
 downgrade still needs a gate that refuses to ship on it.
+
+**113. The source text has lost a minus sign, and two of my own actions
+shared a name. Take 51, both found by the effect parser's fixtures.** Forty-
+eight catalogue lines read *Give up to 1 of your opponent's Characters 2000
+power during this turn* where eleven siblings read *−1000*; somewhere between
+the card and TCGCSV the sign went. No card in this game raises an opponent's
+Character, so the template reads the bare number as a reduction — the one
+place the parser infers instead of reads, marked `sign_inferred` in the
+data and said in A23. Second half: the search's "put the rest at the bottom"
+step was named `rest`, and so was "rest an opponent's Character"; the engine
+took the first branch and tried to rest a card that was a pile. A test that
+happened to exercise both caught it; a new smoke assertion now checks every
+action name the parser emits is one the engine handles, and a fixture that
+looked for *Sanji-type* cards exposed a third thing: bracketed tokens are
+names or types and the text does not say which — *[Sanji] or [Big Mom
+Pirates] type card* is a named card OR a typed one. The parser now classifies
+each token against the catalogue and refuses a line whose token is neither.
+Rule: when the same word means two things, the data decides, not the
+grammar; and every symbol the parser emits must have a consumer, checked.
 
 ## §2 — Inherited from APEX ORV
 

@@ -1,4 +1,647 @@
-# HANDOFF — through Take 41
+# HANDOFF — through Take 52
+
+## Take 52 — 2026-09-03 — Play approved the closed test; the tester guide becomes the Play guide; the sim learns the opponent's choices
+
+Opened before any code (PROTOCOL §6).
+
+### The owner's report
+
+*"It's been approved on Play and we're ready for testing in prep for prod."*
+The closed-testing release passed review. The 14-day clock starts when the
+twelfth tester is opted in (A21 step 8; landmine 35). PROVEN by the owner's
+report; the console is his.
+
+### Chosen
+
+First the thing the testers will read: `ci/RELEASE.md`'s guide was written
+for sideload testers at take 22 — *installs over any earlier take* is false
+for anyone who sideloaded and now installs from Play (landmine 34), and it
+does not say to run the self-test or to stay installed for two weeks. Then
+the sim's next mechanism by count: effects where the OPPONENT chooses
+(*your opponent trashes 1 card from their hand*), which on one phone means
+the curtain and a hand-over mid-effect; and protection flags.
+
+### Built
+
+- **`ci/RELEASE.md`** opens with the Play tester's page: the opt-in link,
+  the sideload-to-Play switch (export → uninstall → import), stay installed
+  two weeks, run the self-test once and share it; the five-minute script
+  starts with that self-test and ends with a sim game.
+- **Share the game log** on the board — a tester's "an effect fired when it
+  shouldn't" arrives with the turn-by-turn record.
+- **Self-test:** a fifteenth check — the effects bundle loaded and a plain
+  [On Play] draw offers and applies on the phone, against a throwaway game
+  state, the real one restored after.
+- **A21** approved; RUNBOOK-play's state block; V1-STATE; the session
+  prompt tells the next session that every seed is now a Play update.
+
+### Measured, and a decision
+
+The unparsed tail after take 51: *Choose one:* 37, ordering choices 27,
+protection flags ~25, the opponent's hidden choices ~25 — each below forty
+lines and each its own mechanism. **Template-chasing pauses at 28.6%** until
+a game has been played; the next measurement is a person's.
+
+**smoke.mjs 379, render.mjs 54 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **The first game report** — with its log.
+- **The tail** above, when the report says which of them mattered.
+- The owner's list: the opt-in link and testers; the `.aab` filename; the
+  icon; the self-test report; screenshots; D16, D15, D17, D18.
+
+## Take 51 — 2026-09-03 — step (2): searches in every phrasing, keyword grants, cost changes, and a sign the source text lost
+
+Opened before any code (PROTOCOL §6).
+
+### Measured first
+
+Unknown sentences by count, in any position of a line, with the leading
+condition stripped: *Place the rest at the bottom of your deck in any
+order* 354 and *Trash the rest* 60 — the tails of searches whose reveal
+filter is not the one form the template knew (a named card 19, two types
+14, a quoted type, a cost line); a DON!! cost *after* a condition 172; *Add
+up to 1 DON!! from your DON!! deck and rest it* 69; *Give … Characters N
+power during this turn* 48; *−N cost during this turn* 47; *This Character
+gains +N power* as a step 46; *Trash N cards from the top of your deck*
+42; *This Character gains [Rush]* (and Double Attack, Blocker, Banish) 84
+across timed and continuous forms; *Set this Character as active* 24;
+*Add N card from Life to hand* 35; *deck to Life* 24.
+
+### A finding in the source
+
+The 48 lines that read *Give up to 1 of your opponent's Characters 2000
+power during this turn* have lost their minus sign somewhere between the
+card and TCGCSV; 11 sibling lines still carry it. No card in this game
+gives an opponent's Character more power. The template treats the bare
+number as a reduction and says so — the one place in the parser where a
+sign is inferred rather than read, recorded as landmine 113.
+
+### Built
+
+- **Parser:** `search_steps()` — a type, two tokens classified against the
+  catalogue as names or types, a quoted type, a named card, a cost line,
+  *other than*; *place the rest at the bottom* / *trash the rest* as steps;
+  a cost after a condition; N-sentence chains; keyword grants timed and
+  continuous; cost changes; mill; Life moves; *set this Character as
+  active*; permanent *+N power*; the inferred sign. Thirty-eight controls.
+- **Engine:** `inst()` gives every Character in play an id and `keyOf()`
+  keys modifiers by it; `kwOf()`/`has()` read printed, continuous and timed
+  keywords and the four rules that care use them; `effCost()` reads timed
+  cost changes and every cost filter uses it; `mod()` carries `kw` or
+  `cost` beside `n`; `P.looking` holds the cards a search revealed until the
+  next step decides where they go, bottomed by default when the offer ends.
+- **Board:** granted keywords show beside the printed ones with a mark.
+
+### Measured
+
+**2,161 of 7,553 lines (28.6%); 1,130 cards fully, 772 partly** — from 1,774
+/ 824 / 772.
+
+### Findings — three, all from fixtures
+
+- **The source text lost a minus sign** on 48 lines (landmine 113); the
+  parser infers a reduction there and nowhere else.
+- **Two of my actions shared the name `rest`**; the engine ran the wrong
+  one. A smoke assertion now checks every action name the parser emits is
+  one the engine handles; `restcards` is the search's.
+- **Bracketed tokens are names or types**, and *[Sanji] or [Big Mom Pirates]
+  type card* means a named card or a typed one. The parser asks the
+  catalogue which is which and refuses a token that is neither. The fixture
+  that found it was looking for Characters of the "Sanji" type: zero.
+
+**smoke.mjs 377, render.mjs 54 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **Modal effects** (*Choose one:* 37), *look at N and place them at the top
+  or bottom in any order* (an ordering choice), *cannot be K.O.'d by
+  effects* (protection flags), the opponent's hidden choices (*your
+  opponent trashes 1 card from their hand*) — each a mechanism.
+- **The whole of it on the Fold, two people.**
+- The owner's list unchanged.
+
+## Take 50 — 2026-09-03 — step (2): two sentences, "that card", and durations done right
+
+Opened before any code (PROTOCOL §6).
+
+### Measured first
+
+1,569 unparsed lines are two sentences. Splitting them at the sentence
+boundary and parsing each half with the existing templates: **62 have both
+halves known today**, 216 know only the first, 162 only the second. The
+unknown second halves are led by *that card gains an additional +N power
+(during this turn/battle)* under a condition — a reference to the first
+sentence's target — so a chain needs a "the card you just chose" target
+and conditions evaluated at the step, not only at the trigger.
+
+### A correctness finding on the way
+
+*During this turn* on an opponent's Character was expiring at the
+opponent's next refresh, not at the end of the current turn, because the
+engine cleared modifiers only in `startTurn`. And *until the start of your
+next turn* was being treated as *during this turn*. Both fixed by giving a
+modifier its expiry: end of this turn, or the source player's next refresh.
+
+### Built
+
+- **Parser:** a two-sentence line is parsed as two templates in order, the
+  second sentence's leading condition attached to its steps; *that card
+  gains an additional +N* as a `prev`-target step; *until the start of your
+  next turn* as its own duration; *Trash up to N*; two conditions.
+  Twenty-eight controls — a three-sentence line and a two-sentence line
+  with an unknown half must both stay manual.
+- **Engine:** modifiers are timed — `mod(i, key, n, dur)` with an expiry
+  of `endturn` (cleared for both players in `endTurn`) or `refresh:i`
+  (cleared in that player's `startTurn`); `power()` sums them beside the
+  untimed tray; step-level conditions are read at the step; `offer.prev`
+  remembers the last chosen target for the next step; an up-to trash may
+  choose none.
+- **Board:** *Trash none* on an up-to step.
+
+### Measured
+
+**1,774 of 7,553 lines (23.5%); 824 cards fully, 772 partly** — from 1,627
+/ 712 / 788. Of the 1,569 two-sentence lines, 62 have both halves known
+today; 216 know the first half only and 162 the second, so every future
+template pays twice.
+
+### Findings
+
+- **The duration bug was real and was mine.** A *−2000 during this turn* on
+  the opponent's Character had been living until *their* refresh, one full
+  turn too long — the kind of thing OPTCG Sim's patch notes call "is
+  buffing for the turn" (class 5). The fix is an expiry on the modifier,
+  not a clearing pass in the right place; the test now asserts the power on
+  the opponent's card before and after `endTurn`.
+- **No card in the catalogue carries a bare *until the start of your next
+  turn* sentence** — the phrase always comes with a *Then* or an *up to 1
+  of your Leader*. The parser control keeps the phrase; the engine test
+  drives the timer directly.
+
+**smoke.mjs 357, render.mjs 54 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **Three-sentence lines**, *Up to 1 of your Leader gains +N* (a choice
+  with one legal target), *None of your Characters can be K.O.'d by
+  effects* (a protection flag), cost modifiers — next by count.
+- **The whole of it on the Fold, two people.**
+- The owner's list unchanged.
+
+## Take 49 — 2026-09-03 — step (2): costs before actions, and Events at their two timings
+
+Opened before any code (PROTOCOL §6).
+
+### Measured first
+
+After take 48 the unparsed pile is led by things a template cannot reach
+without two new mechanisms. **Costs as a prefix:** *You may trash N card(s)
+from your hand:* 346 lines, *DON!! −N (…):* 192, *You may rest this
+Character:* 140 — "pay, then do", where declining is declining the whole
+effect. **Event timings:** 580 Event lines begin [Main] and 385 begin
+[Counter]; the parser refused every one at the tag, because the engine had
+no moment to fire them — an Event is played from hand in Main, or in the
+counter step for its cost, and its effect *is* the play. Smaller: *If your
+Leader is [X],* 28; the DON!!-count comparison 36; *Play up to 1 Character
+card with a cost of N or less from your hand* (a control that refused it
+until the engine could do it).
+
+### Built
+
+- **Parser:** a cost prefix becomes the first step (`cost_trashhand`,
+  `cost_returndon`, `cost_restself`); [Main] and [Counter] are triggers
+  (`evmain`, `evcounter`); *If your Leader is [X]* and the DON!!-count
+  comparison as conditions; typed play-from-hand under a cost or a power
+  line; *Activate this card's [Main] effect*. Twenty-four controls.
+- **Engine:** `canPay` decides whether a cost step can be paid and an
+  unpayable effect is never offered; `apply` pays trash (a hand target),
+  DON!! (active first, then rested, then given), or rests the source;
+  `playCounterEvent` pays from the defender's active DON!! in the counter
+  step and hands the effect on; `playfromhand` is free and keeps the five
+  limit; two conditions.
+- **Board:** an Event played in Main offers its [Main] effect; the counter
+  step lists affordable [Counter] Events beside the Counter cards; the offer
+  panel names a cost step as a cost and says that skipping it declines.
+
+### Measured
+
+**1,627 of 7,553 lines (21.5%); 712 cards fully, 788 partly** — from 1,143
+/ 498 / 607. The three fixtures that came back empty during the test were
+each the parser being right: a rest-self card whose condition was a Leader
+the deck did not have, a *DON!! −5* card the fixture had not given five
+DON!! for, and play-from-hand lines that exist only in the typed,
+power-limited form. Each fixture now finds a card by shape and pays what
+that card asks.
+
+**smoke.mjs 348, render.mjs 54 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **Cost modifiers for the turn** (40 lines) and *Then, if …* mid-sentence
+  conditions (42) — next by count, each a mechanism.
+- **Effects with two sentences** — the ordered-actions parse of *X. Then,
+  Y.* where both halves are templates.
+- **The whole of it on the Fold, two people.**
+- The owner's list unchanged: the `.aab` filename, the icon, review,
+  testers, screenshots, the self-test report, D16, D15, D17, D18.
+
+## Take 48 — 2026-09-03 — step (2) grows by whole templates: chains, statics, the defender's window, the end of the turn
+
+Opened before any code (PROTOCOL §6).
+
+### Measured first
+
+The unparsed lines, by shape, after take 47 (numbers and bracketed names
+generalised): *Activate this card's [X] effect* 153; *Play this card* 126;
+*K.O. … with N power or less* 79; *Return up to 1 Character with a cost of
+N or less to the owner's hand* 60; *Add up to 1 DON!! from your DON!! deck
+and set it as active* 60; *Draw N cards and trash N* 93 across two shapes;
+*Place … at the bottom of the owner's deck* 51; *Give … -N power during this
+turn* 48; *Your Leader gains +N power during this battle* 47; *Look at N …
+reveal up to 1 [X] type card … add it to your hand* 45; *K.O. … rested
+Characters …* 44; *This Character gains +N power* (a continuous effect under
+a condition) 35. The two largest, 575 and 84, are the Blocker and Rush
+reminder texts, already keywords.
+
+### Chosen
+
+Each of those becomes a whole template with its control, in count order,
+which needs three things the engine did not have: an effect as a **list of
+steps** (draw, then trash), **continuous** effects evaluated inside
+`power()` while their condition holds, and **follow-on** offers (a
+[Trigger] that activates the card's own [On Play]). Then the timings the
+board did not surface: [Trigger] and [On K.O.] on the defender's result
+screen, [On Block] at the block, [End of Your Turn] at the end.
+
+### Built
+
+- **Parser:** effects are lists of steps; eleven templates added in count
+  order; a conditioned line with no trigger and the sentence *This
+  Character gains +N power* is a continuous effect; eighteen controls (five
+  new sentences that must parse, two more that must be refused — a static
+  with no condition, a cost change).
+- **Engine:** `targetsFor` names targets as strings the board can put on a
+  button (`L`, `mK`, `oK`, `hK`, `dK`) on either side; `offers` carries the
+  steps; `apply` runs the current step, computes the next step's targets,
+  returns `done` and `follow` (a [Trigger] that activates the card's own
+  [On Play]); `power()` adds continuous effects whose conditions hold, read
+  live; a [Trigger] card that was activated goes to the trash after (§10-2);
+  *Play this card* respects the five-Character limit and pays nothing.
+- **Board:** [On Block] offered at the block; [End of Your Turn] offered
+  before the turn ends and the turn ends when the offers are done; after
+  Resolve the defender keeps the phone, sees the result, takes the
+  [Trigger] and [On K.O.] offers, then *Done — hand back*.
+
+### Measured
+
+**1,143 of 7,553 lines (15.1%); 498 cards fully scripted, 607 partly** — up
+from 462 / 201 / 261 at take 47, by whole templates. By trigger: 563
+[Trigger], 309 [On Play], 113 [When Attacking], 73 [On K.O.], 34 continuous,
+25 [End of Your Turn], 15 [On Block], 11 [Activate: Main]. Next by count in
+the unparsed pile: cost changes (40, ruled out for now), *You may trash 1
+card from your hand: Play this card* (33, a cost-then-action chain), the
+DON!! −N cost prefix (55 across two shapes).
+
+**smoke.mjs 332, render.mjs 54 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **Costs as a prefix** — *You may trash 1 card from your hand:* and *DON!!
+  −N:* before an action are the next largest shapes and need "pay, then
+  do" as a step type with a refusal when the cost cannot be paid.
+- **Cost modifiers** for the turn (40 lines) — their own mechanism.
+- **Event timings** — [Main] and [Counter] Events from hand.
+- **The whole of it on the Fold, two people.**
+- The owner's list unchanged: the `.aab` filename, the icon, review,
+  testers, screenshots, the self-test report, D16, D15, D17, D18.
+
+## Take 47 — 2026-09-03 — A23 step (2) begins: an effect is data, parsed from the card's own text, and only when the whole sentence is understood
+
+Opened before any code (PROTOCOL §6).
+
+### The design, from take 45's requirement
+
+Class 1 said card data must never be typed by hand. So the effects are not
+written at all: `tools/effects.py` reads each printing's text from the
+catalogue, splits it into effect lines, and claims a line only when the
+**entire sentence** matches one of a small closed set of templates and every
+bracket tag is one the engine can evaluate. Anything less is *manual* — the
+board shows the text and the ⋯ tray — because a half-understood effect
+executed confidently is the sim's version of entering the $1.48 printing
+(AGENTS §4). Coverage is measured, not promised, and printed by the build.
+
+### Built
+
+- **`tools/effects.py`** — seven triggers, six conditions, twelve
+  whole-sentence templates; `build()` from the bundle; `--selftest` with six
+  sentences that must parse and six that must be refused (two actions in
+  one sentence, two triggers on one line, a keyword's reminder text, an
+  action the engine lacks, an Event timing, a second sentence). In the gate.
+- **The bundle** carries `effects` and the manifest counts them; the build
+  prints coverage every time.
+- **The engine** — `fx`, `condOk`, `targetsFor`, `offers`, `apply` — the
+  conditions evaluated by the engine, the targets computed by the engine
+  from the same filters the rules use, Once Per Turn tracked per card
+  instance per turn, every application logged with the sentence.
+- **The board** — an offer panel at the trigger's timing: after a play,
+  in the attack step before the defender's window (§7-1-1), on a Main
+  button, with targets as buttons, Apply and Skip.
+
+### Measured
+
+**462 of 7,553 effect lines (6.1%); 201 cards fully scripted, 261 partly;**
+by trigger: 200 [Trigger], 132 [On Play], 45 [When Attacking], 43 [On K.O.],
+22 [End of Your Turn], 11 [Activate: Main], 9 [On Block]. The number is
+small on purpose: every one of the 462 is a whole sentence the engine can
+run, and every refused line is honest. Growth is a template at a time,
+each with a control.
+
+### Findings
+
+- The first run of the duration test compared against the wrong baseline:
+  refresh returns the attached DON!! as well as clearing the turn's
+  modifier, so a card that had +1000 from a DON!! *and* +2000 from its
+  effect goes back to its base, not to base+1000. The test was wrong, the
+  engine right — §6-2 in one line.
+
+**smoke.mjs 321, render.mjs 54 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **More templates**, in order of count: "play a card with a cost of N or
+  less from your hand", "K.O. ... with a cost of N or less" on the [Trigger]
+  line (already parsed), chained "Then, ..." sentences as ordered actions,
+  [On K.O.] and [Trigger] resolution wired into the battle result on the
+  defender's screen (the offers exist; the board does not yet show them at
+  that moment), [End of Your Turn] at end turn, [On Block] at block.
+- **Event timings** — [Main] and [Counter] Events as a hand action and a
+  counter-step action, so their scripted lines can be offered.
+- **The whole of it on the Fold**, two people.
+- The owner's list unchanged: the `.aab` filename, the icon, review,
+  testers, screenshots, the self-test report, D16, D15, D17, D18.
+
+## Take 46 — 2026-09-03 — A23 step (1): the hot-seat board, rules enforced, effects by hand
+
+Opened before any code (PROTOCOL §6).
+
+### Why now
+
+The owner asked for autonomous work by priority. The agenda's order is core
+→ scanner → collection → deck builder → Phase 8 → other games → simulator.
+Of Phase 8, every open item needs a plugin measured on a device (8.9), a
+data source that does not exist (8.10, 8.11), a second catalogue (8.14), a
+Drive account (8.16) or the Play clock (8.13). The simulator is the one
+item left whose next step is pure code against data the app already
+carries, and the owner has called it the draw. A23's "not before the clock
+is running" was written at take 24 to protect the closed test; the closed
+test is now a review queue and a tester list on the owner's side, and
+nothing here touches it. So: step (1), the hot-seat board, with the
+rule-conformance requirement of take 45 as the design.
+
+### What step (1) is, exactly
+
+Two players, one Fold, the curtain between them. The engine owns the
+things RULES.md §3 lists: setup, mulligan, Life from the deck, the five
+phases with the first-turn exceptions, paying cost with DON!!, the
+five-Character limit, giving DON!! on your own turn, who may attack and
+whom, the four battle steps with Blocker and Counter, damage with Double
+Attack and Banish, K.O., and the two defeats. **Effects are played by
+hand** — a manual tray for the things a card's text does — because that is
+the honest sequence and the alternative is the months-per-hundred-cards
+language. No art: a card on the board is its name, cost, power, counter,
+colour and keywords, from the catalogue.
+
+### Built
+
+- **`SIM`, the engine** — 118 lines, every rule with its section: `new`,
+  `mulligan`, `placeLife`, `startTurn` (refresh, draw, DON!! with the
+  turn-one exceptions), `endTurn`, `canPlay`/`play` (cost, the five limit,
+  Stage replaces, Event to trash), `giveDon`, `canAttack`/`targets`/
+  `attack` (first-turn ban, Rush, Leader-or-rested-Character), `blockers`/
+  `block`/`noBlock`, `counters`/`counter`, `battlePowers`, `resolve`
+  (ties to the attacker, Double Attack, Banish, K.O., both defeats), and a
+  `manual` tray that logs every act as an effect.
+- **The screen** — setup from the legal decks in Decks, mulligan one player
+  at a time behind the curtain, the board (opponent, you, hand with Play
+  buttons and the refusal reason inline, end turn), the battle window on
+  the defender's side (block, counter, resolve with the powers named), the
+  result card with Life cards shown and [Trigger] flagged, the ⋯ effect
+  tray per card, a log.
+- **Verified:** twenty-two smoke assertions walk a game on the showcase
+  deck against RULES.md §3; Chrome deals a deck built in the page and draws
+  the board (three panels, five Play buttons, real height).
+
+### Findings
+
+- **The catalogue's numbers are strings.** `power`, `counter` and `life`
+  arrive as `"5000"`, `"1000"`, `"4"`; the first battle computed
+  `"5000" + 1000` as a string and the test caught it. The engine parses at
+  its edge (`num()`), once. Not a landmine on its own — the deck builder's
+  analysis already parses — but the board is the third consumer, so it is
+  written here.
+- **Chrome's first-run tour covers a screenshot.** The board assertions
+  passed while the picture showed the tour; the render now skips the tour
+  before shooting. The assertion was right and the picture was still worth
+  looking at (PROTOCOL §1: observe, then believe).
+
+**smoke.mjs 308, render.mjs 54 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **The board on the Fold, two people** — whether the curtain rhythm and the
+  defender's window feel like a game. The only measurement that matters.
+- **Step (1) polish once it has been played:** a Stage's effect, [Trigger]
+  resolution, [Counter] Events, "DON!! x" conditions, Unblockable, effect
+  durations beyond the turn, the rested state of returned DON!!.
+- **Step (2)** — the effect language, to the take-45 requirement.
+- The owner's list unchanged: the `.aab` filename, the icon, review,
+  testers, screenshots, the self-test report, D16, D15, D17, D18.
+
+## Take 45 — 2026-09-03 — an on-device self-test, and card-rule conformance on the agenda
+
+Opened before any code (PROTOCOL §6).
+
+### The owner's ask
+
+Two things. For the sim, later: a way to make sure cards follow their rules
+— OPTCG Sim's latest patch notes are thirteen fixes and nearly every one is
+a card doing something its text does not say (a keyword always on, the
+wrong colour, an effect reaching a zone it should not, a limit unchecked, a
+combat state broken). On the agenda, not built. And now: a test/debug mode
+like APEX ORV's self-test, so the app checks itself on the phone instead of
+him tapping every feature — it will miss things, and it will still help.
+
+### Chosen
+
+**More → Self-test.** Fourteen checks that run on the device against the
+real catalogue and the real plugins: what smoke.mjs proves in node, proven
+where it matters, plus the things no harness here can reach — the OCR
+plugin reading a code the app draws itself, the Filesystem backup
+round-trip, the camera, notifications, ads, the sync URL, the fonts. Each
+check is PASS / FAIL / SKIP with one line, the whole thing shareable as
+text so a tester can paste it. smoke runs it in node, where the plugin
+checks SKIP, with a control that breaks the catalogue and watches the
+first check fail.
+
+### Built
+
+- **`SELFTEST`** — fourteen checks, `run()` and `text()`, More → Self-test →
+  Run with a shareable report; smoke runs it in node: the six catalogue and
+  gate checks PASS against the real bundle, the five plugin checks SKIP, the
+  sync check SKIPs offline, and a truncated catalogue makes the first check
+  FAIL (the control). A28 on the agenda with what it does not cover.
+- **A23** carries the rule-conformance requirement for scripted effects:
+  the owner's thirteen reference fixes sorted into five failure classes,
+  each with the guard this app would build first, and the consequence that
+  an effect is data validated against the catalogue and the engine's
+  invariants, shipped with a test of what it does and does not do.
+- RELEASE.md asks testers to run the self-test once and send the report.
+
+**smoke.mjs 287, render.mjs 51 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **The first self-test report from the Fold** — the OCR-on-a-drawn-code
+  check is the one worth reading first: it is the scanner's OCR half with
+  no card in hand.
+- **A28's blind spots** — the camera stream, quad detection, the star
+  detector, an ad showing, a notification arriving. Those stay the owner's
+  eyes.
+- **Step (2) of the sim** is not started; the requirement is the design.
+- The owner's list unchanged: the `.aab` filename, the icon, review,
+  testers, screenshots, D16, D15, D17, D18.
+
+## Take 44 — 2026-09-03 — the first hot-seat primitive: pass the phone; the sim's transport measured on paper
+
+Opened before any code (PROTOCOL §6).
+
+### The owner's ask
+
+Continue with an open item. For the sim: when a player ends the turn, the
+screen blanks and asks for the phone to be handed over; or two phones connect
+by QR and each plays on their own, the deck arriving when the game loads.
+"The sim would be a huge draw." And Play should be fixed now (the one
+checkbox).
+
+### Chosen
+
+A23 step (1) is the hot-seat board and the owner just described its first
+primitive: a hand-over curtain. The Play counter is the board's seed (take
+24), so the curtain goes there: a *Pass the phone* mode where only the
+active player's panel shows, and *End turn* drops a curtain naming who gets
+the phone next. The QR idea is not built; it is measured on paper in A23,
+because the transport decision is the whole cost of step (4).
+
+### Built
+
+- **Pass the phone** on the Play counter: `PLAY.hotseat`, `who()`, `label()`;
+  one upright panel, the opponent's Life and DON!! on a line, *End turn —
+  pass the phone*, a full-screen curtain naming the next player, dismissed
+  by a tap, the mode remembered per phone. The table layout is untouched and
+  is the smoke control (two panels, one rotated). Eight assertions.
+- **A23** carries both transports the owner described, measured on paper:
+  hot-seat now; two phones by QR-signalled WebRTC on the same wifi or a
+  hotspot, no server, with the QR-capacity and WebView caveats named as
+  INFERRED; across the internet it is a relay — D18, not now.
+- **D17** — the word *Portfolio* invited the Play checkbox that flagged the
+  app; rename or keep is the owner's.
+- Landmine 104 fired once more in this take: RELEASE.md's header was left
+  at 42 by take 43's chained script and this take's chain stopped on it.
+  Written one file per command from here.
+
+**smoke.mjs 280, render.mjs 51 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **The curtain on the Fold** — a hot-seat game between two people is the
+  only real test of whether the hand-over feels right.
+- **Step (1) proper** — a board with zones, hands and the rules enforced;
+  the curtain is its first piece, not the board.
+- **8.9 QR trade matching** shares the barcode plugin with the sim's QR
+  path; measure the plugin once, on the Fold, for both.
+- D17, D18, and the owner's list unchanged: the `.aab` filename, the icon,
+  review, testers, screenshots, D16, D15.
+
+## Take 43 — 2026-09-03 — Play's "organisation only" flag, and what it actually keys on
+
+Opened before any code (PROTOCOL §6).
+
+### What Play said
+
+*Violation of Play Console Requirements — some types of apps can only be
+distributed by organisations. You have selected an app category or declared
+your app offers certain features that require an organisation account.*
+Enforced Sep 3; app not available. The owner had chosen the category
+**Game → Card** and asked whether that was it.
+
+### What the policy actually keys on (read at the link, take 43)
+
+Section 1 lists exactly four organisation-only kinds: **financial products
+and services** (banking, loans, trading, investment funds, crypto), **health
+apps**, **VPN**, **government**. Category is not on the list. So the trigger
+is almost certainly an **App content declaration** — the *Financial
+features* card is the one a "portfolio value" app can mis-answer, and the
+flag says "declared your app offers certain features". The fix is in the
+declarations, and the category goes to **App → Tools** at the same time
+because a collection tracker is not a game (PLAY-LISTING has said so since
+take 23).
+
+### Recorded
+
+RUNBOOK-play §5's table and its *If something goes wrong* row for this exact
+message; nothing in the tree changes.
+
+### DEFERRED this cycle
+
+- Whether the flag clears on resubmission; if not, the appeal path is on the
+  issue page.
+- Take 42's list, unchanged.
+
+## Take 42 — 2026-09-03 — back to the build: 8.12 the share page, and the simulator reference
+
+Opened before any code (PROTOCOL §6).
+
+### The owner's ask
+
+Back to the build — anything to continue with? And for the agenda: the
+simulator he wants in future is like OPTCG Sim (optcgsim.com), which he has
+used; its zips are ~600 MB.
+
+### Chosen
+
+The next Phase 8 item that needs no device and no new data source: **8.12 —
+a collection share page**, a single self-contained HTML file the collector
+hands to anyone through the share sheet (landmine 110's mechanism, already
+built): totals, top ten, set completion, the full list by set. No art in it
+— it leaves the phone. A23 gets the reference and what it measures.
+
+### Built
+
+- **8.12 — `collectionPage()` / `shareCollectionPage()`.** One HTML file, the
+  app's own tokens inlined, no script, no image, no request: the portfolio's
+  total and card count, the ten most valuable, set completion with bars,
+  then every line by set. More → *Share as a web page*: the share sheet on a
+  device, a download in a browser. Six smoke assertions, one of which is that
+  every field goes through `esc()` so a card named `<b>` cannot inject.
+- **`www/render.png` no longer deploys to Pages** — removed in `bundle.sh`
+  after the gate has read it.
+- **A23** carries the OPTCG Sim reference, what it is (read off the site),
+  what it measures for this app, and what is ruled out because of it.
+  ROADMAP 8.12 done.
+
+**smoke.mjs 272, render.mjs 51 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **The share page on the Fold** — same device half as landmine 110.
+- **Reference art on the page** — ruled out on purpose; the collector's own
+  scan photos could go in later as data URIs, at the page's size cost.
+- **8.9, 8.10, 8.11, 8.16** — each needs a plugin, a data source or a
+  decision the ledger names.
+- The owner's list, unchanged: the `.aab` filename, the icon, roll out and
+  review, testers, screenshots, two ad units, D16, D15.
 
 ## Take 41 — 2026-09-03 — the real AdMob app ID, with the test ad units kept
 

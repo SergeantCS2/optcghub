@@ -1,15 +1,15 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 41.* Paste the block between the rules into a new session
+*Current as of take 52.* Paste the block between the rules into a new session
 whose project carries `AGENDA.md`, `LANDMINES.md` and `HANDOFF.md` (the three
 project files) and has the newest seed attached.
 
 ---
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
-tracker and deck builder for Android, built across 41 takes by previous
+tracker and deck builder for Android, built across 52 takes by previous
 sessions. The repo lives at `github.com/SergeantCS2/optcghub`; the seed
-`optcghub-seed-t41.zip` is the whole tree. CI builds on every seed drop and
+`optcghub-seed-t52.zip` is the whole tree. CI builds on every seed drop and
 has run green end to end; the APK the owner installs comes from the Release.
 
 **Before anything else, in this order:**
@@ -22,7 +22,7 @@ has run green end to end; the APK the owner installs comes from the Release.
 4. Read `docs/HANDOFF.md`, newest entry first, back to take 28 at least. Every
    take ends with a DEFERRED list; the union of those lists is the work.
 5. Read `docs/LANDMINES.md` §0 (the index) and skim §1. When you are about to
-   do something, grep the index first. 112 of them; each is a real failure.
+   do something, grep the index first. 113 of them; each is a real failure.
 6. Read `docs/AGENDA.md` for what is open and whose it is.
 
 **The discipline, which the gate enforces:**
@@ -43,14 +43,13 @@ has run green end to end; the APK the owner installs comes from the Release.
 
 **What is in flight when you arrive:**
 
-- **A21 — the Play clock.** The app is in the console (`com.optcghub.app`,
-  personal account); version code 35 is in internal testing; the
-  advertising-ID and Data Safety forms are done; the listing copy is pasted;
-  the closed track is at 4 of 5. Left: roll out, *Send for review*, the
-  opt-in link to 16–18 testers, then 12 opted in for 14 days. RUNBOOK-play
-  is the procedure and its first block is the state. **UNKNOWN and worth
-  asking first:** which `.aab` was uploaded first — if the DEVKEY one, the
-  upload key must be reset (RUNBOOK-play §2).
+- **A21 — the Play clock.** The closed-testing release is **approved** (take
+  52). What is left is the owner's: the opt-in link to 16–18 testers, twelve
+  opted in, fourteen days, then *Apply for production*. `ci/RELEASE.md` is the
+  guide testers read; keep it true. **UNKNOWN and worth asking first:** which
+  `.aab` was uploaded first — if the DEVKEY one, the upload key must be
+  reset (RUNBOOK-play §2). Every seed dropped now becomes a Play update for
+  the testers: seal only what you would ship.
 - **The listing screenshots** — the owner has a frames kit and the take-37
   showcase files (`showcase/`); graded copies, alerts and photos are set by
   hand before shooting.
@@ -58,13 +57,23 @@ has run green end to end; the APK the owner installs comes from the Release.
   opens a share sheet closes it.
 - **app-ads.txt is live** at the root user site (take 40); AdMob verifies it
   once the listing's website is set. Nothing to build.
+- **The simulator (A23)** — step (1), the hot-seat board (take 46), and
+  step (2) (takes 47–51: effects parsed from card text into data,
+  28.6% of lines: chains, costs, statics, keyword grants, cost changes, searches, Events, honest durations) are
+  BUILT and unseen on a phone. Coverage grows only by adding whole templates
+  to `tools/effects.py` with their tests — never by loosening one. D17 (the
+  word Portfolio) and D18 (a relay) are open.
+- **The self-test (A28)** is built and not yet run on the Fold; the first
+  report the owner pastes is the next measurement.
 - **D16 (fonts), D11 (AdMob unit IDs, later), D7 (icon: the console shows
   the jolly roger, the tree ships the compass), D15 (colour).** Do not
   build ahead of them.
 
 **What the owner has said he wants, in order:** the core (done) → scanner (proven)
 → collection with filtering (done) → deck builder (done) → the backlog in
-ROADMAP Phase 8 order → other games (A19, after Play) → a simulator (A23).
+ROADMAP Phase 8 order (8.9–8.11, 8.13, 8.14, 8.16 each wait on a device, a
+source or a decision) → other games (A19, after Play) → a simulator (A23,
+step 1 built; the owner calls it the draw).
 
 **What you may change:** anything in the tree, with the ledger updated the
 same take. `build.yml` and `bootstrap.yml` are hand-pasted by the owner and can
@@ -74,6 +83,6 @@ only be changed by giving him a new file and saying so in the runbook.
 30, A16); gate scanning (A17); multiply condition into a price (PROTOCOL §10);
 send the collection anywhere (PROTOCOL §9); seal with a red gate.
 
-Say "take 42" and begin with PROTOCOL §0.
+Say "take 53" and begin with PROTOCOL §0.
 
 ---

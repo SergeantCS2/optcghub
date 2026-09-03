@@ -134,6 +134,25 @@ if (puppeteer) {
   ok('a 4292x spread still refuses to auto-accept in the browser',
      await page.evaluate(() => window.__r) === 'ask');
 
+  /* Take 46 -- the hot-seat board DRAWS: a legal deck built in the page from
+     the showcase list, dealt, both keep, and the board must show the opponent
+     panel, the player panel with a hand, and the end-turn button. */
+  const sim = await page.evaluate(() => {
+    const V = window.VAULT; const lines = ['1 OP01-001', '4 ST01-006', '4 OP01-016', '4 ST01-004', '4 OP01-013', '4 OP01-004', '4 OP01-025', '4 OP01-015', '4 OP01-017', '4 OP02-008', '4 EB01-003', '4 OP03-013', '4 OP05-007', '2 OP04-016'];
+    const d = V.DECKS.blank(); d.name = 'render';
+    for (const l of lines) { const [n, num] = l.split(' '); const p = V.candidates(num, null).slice().sort((a, b) => (a.market || 9e9) - (b.market || 9e9))[0]; if (p.type === 'Leader') d.leader = p.id; else d.cards.push({ id: p.id, n: +n }); }
+    const skip = [...document.querySelectorAll('#tour button')].find(b => /skip/i.test(b.textContent)); if (skip) skip.click();
+    V.MODE.set('play', false); document.querySelector('nav button[data-go="sim"]').click();
+    V.SIM.new(d, d, 0); V.SIM.mulligan(0, false); V.SIM.mulligan(1, false); V.paintSim();
+    const b = document.querySelector('#simBoard');
+    return { panels: b.querySelectorAll('.panel').length, hand: b.querySelectorAll('[data-sim^="play:"]').length, end: !!b.querySelector('[data-sim="end"]'), h: b.getBoundingClientRect().height, legal: V.legality(d).problems.length };
+  });
+  ok('the hot-seat board draws: opponent, player, log panels', sim.panels >= 3, JSON.stringify(sim));
+  ok('the hand is drawn as rows with Play buttons, and the turn can be ended', sim.hand === 5 && sim.end && sim.legal === 0);
+  ok('the board has real height on the phone viewport', sim.h > 600, String(sim.h));
+  const simShot = await page.screenshot({ encoding: 'base64', fullPage: false });
+  fs.writeFileSync(path.join(ROOT, 'www', 'render-sim.png'), Buffer.from(simShot, 'base64'));
+  await page.evaluate(() => { window.VAULT.SIM.g = null; window.VAULT.MODE.set('collect', false); document.querySelector('nav button[data-go="collection"]').click(); });
   const shot = await page.screenshot({ encoding: 'base64' });
   const bytes = Buffer.from(shot, 'base64').length;
   ok('a screenshot of a non-blank page', bytes > 20000, bytes + ' bytes');

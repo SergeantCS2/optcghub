@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 41.* Ranked by blocking-ness, not by interest.
+*Current as of take 52.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -453,7 +453,7 @@ from.
 - Auto-grading condition from a photo (a separate product; A4).
 - A social feed (a backend; ROADMAP won't-build).
 
-## A21 — Google Play · IN THE CONSOLE take 39 · internal test live, closed track at 4 of 5, review next
+## A21 — Google Play · CLOSED TEST APPROVED take 52 · the clock starts at the twelfth tester
 
 The owner wants the closed-testing clock started in a few days. The gate is
 **12 testers opted in for 14 continuous days** (landmine 35). Everything below
@@ -468,13 +468,14 @@ is what stands between the seed and that clock, in order, with who does it.
 | 5 | Listing: title, short and full description opening with the disclaimer, screenshots, icon 512, feature graphic 1024×500 | The owner | copy pasted (take 36); screenshots from the Fold with the take-37 showcase files; the console shows the jolly roger icon — swap to `play-assets-t33/icon-512.png` or say so (D7) |
 | 6 | Privacy policy live on Pages, naming AdMob | take 30 | Pages deployed at `https://sergeantcs2.github.io/optcghub/` (run #3); the policy is `/privacy.html` there |
 | 7 | Data Safety form: **AD_ID collected/shared for advertising** (landmine 94); camera; no other collection | The owner | **DONE** — advertising-ID declaration Yes / advertising; Data Safety: device IDs collected and shared, advertising, required, not ephemeral, encrypted in transit, no deletion request, no accounts |
-| 8 | Internal test → closed test; 16–18 testers recruited (landmine 35) | The owner | internal test rolled out; closed track created, 4 of 5 — roll out, *Send for review*, then the opt-in link to 16–18 |
+| 8 | Internal test → closed test; 16–18 testers recruited (landmine 35) | The owner | **closed-test release APPROVED by Play review (take 52, the owner's report).** Now: the opt-in link to 16–18; the clock starts when the twelfth is opted in; `ci/RELEASE.md` is the guide they read |
 | 9 | Developer verification: package + signing key registered (landmine 36) | The owner | |
 | 10 | Real AdMob IDs — **not required to start the clock**; Google's test units are correct for a closed test | The owner, D11 | account exists (take 33): `pub-6243777967151950`; **app-ads.txt live at the root site, take 40** — RUNBOOK-play §9 |
 
 - **Ruled out: waiting for real AdMob IDs.** Test units are what a closed test
   should run on.
 - **Ruled out: adding games first.** A19.
+- **Take 52:** the tester guide rewritten for Play testers — the opt-in link, the sideload-to-Play switch (export → uninstall → import, landmine 34), stay installed two weeks, run the self-test once and share it, play one sim game.
 - **Ruled out (take 39): a second applicationId for the sideload build (D3).** The id is registered now; the Play build and the sideload build share it, so the switch is export → uninstall → import (landmine 34, RUNBOOK-play).
 - **Ruled out (take 33): building the APK in the session container now that the runner does.** The runner's build is the one the owner installs; a container build is a second signer's worth of doubt for no information. The seed is the deliverable, the Release is the artifact.
 - **Take 34:** `tools/play-key.ps1` for Windows (PowerShell cannot run a `.sh`), tested under PowerShell 7 with a damaged-keystore control; the take-32 APK's arm64 libraries MEASURED 16 KB page-aligned (Play's rule for new apps); export through the share sheet and restore through a file picker, because the landmine-34 switch is a reinstall (landmine 110).
@@ -572,6 +573,31 @@ APEX ORV runs one before a release; this repo did not, and it is public.
 - **Ruled out: the README's link to the sibling repo.** It is the owner's own
   public project and the README says why the governance is shared.
 
+## A28 — The on-device self-test · BUILT take 45
+
+APEX ORV's self-test told a rider the app worked before he was three miles
+in; the owner wants the same here so the phone checks itself instead of him
+tapping every feature.
+
+- **Built:** More → Self-test → Run. Fourteen checks, each PASS / FAIL /
+  SKIP with one line: catalogue loaded and counted, index one-to-one, price
+  history on file, the confidence gate asking on EB03-024, a unique number
+  auto-accepting, search, the star template, the four fonts, storage
+  round-trip, a Filesystem write/read/delete, the share sheet, the camera,
+  **ML Kit reading a code the app draws on a canvas** (the scanner's OCR
+  half with no card in hand), notifications, ads on test units, the sync
+  URL. A shareable text report for testers. smoke runs it in node with the
+  plugin checks SKIPping and a truncated-catalogue control.
+- **What it does not cover, said plainly:** the camera *stream*, quad
+  detection on a real card, the star detector on a real foil, an ad
+  actually showing, a notification actually appearing — anything that needs
+  a hand and an eye. SKIP is "this environment cannot answer", never
+  "probably fine".
+- **Ruled out: a check that PASSes when a plugin is absent.** A missing
+  plugin is the most likely field failure; it is SKIP with the reason.
+- **Ruled out: running it at boot.** It writes files and calls plugins; a
+  tester runs it on purpose and pastes the report.
+
 ## A24 — The colour scheme, again · OPENED take 28 · NOT A PRIORITY
 
 The owner, take 28: it still reads as Collectr; something One Piece; a transparent
@@ -632,7 +658,7 @@ in the future, the simulator.
 - **Open:** the tour needs a card for the modes; the icon and splash are
   Collect's palette (fine — the icon is the app, not a mode).
 
-## A23 — An OP TCG simulator · SCOPED take 24 · PHASE, NOT A TAKE
+## A23 — An OP TCG simulator · SCOPED take 24 · STEP (1) BOARD take 46 · STEP (2) EFFECTS-AS-DATA takes 47–51 · PHASE
 
 The owner wants an actual simulator inside Prep & Play, in the future. Scoped
 honestly:
@@ -653,8 +679,218 @@ honestly:
   opponent that plays scripted decks; (4) online play, which needs a server
   and the ledger has said no to servers since take 1 — that is its own
   decision.
+- **The reference (take 42): OPTCG Sim, optcgsim.com.** The owner has used
+  it. Read off its site: unofficial; Unity; Windows, Mac, Linux, Android and
+  iOS; online matchmaking through Unity services (port 7777) with an
+  auto-patcher; sideloaded on every platform, never on a store; ~600 MB
+  because it ships every card's image; at 1.43a (2 Sep 2026) and its patch
+  notes are per-card effect fixes — that is sequence step (2), the scripted
+  effect language, kept alive by a volunteer team card by card. What this
+  app already shares with it: its deck-list shape (`4xOP01-016`) imports
+  and exports here since take 29, so a deck built in OP TCG Hub is playable
+  there today.
+- **What that measures for us:** the sim's whole value is (2)+(4) — scripted
+  effects and online play — and both are the things this app has ruled out
+  or deferred (art on the phone, a server). A phone hot-seat board (1) is
+  the piece OPTCG Sim does not do well and this app can: two players, one
+  Fold, rules enforced, effects by hand, the collector's own scans as the
+  cards. That stays the first step.
 - **Ruled out for now:** starting before the Play clock is running and A2's
   remaining half is measured. The sim does not help the closed test.
+- **Take 51 — searches in every phrasing, keyword grants, cost changes,
+  ids.** The search's reveal filter now takes a type, two tokens, a quoted
+  type, a named card, a cost line, and *other than* — with each bracketed
+  token classified against the catalogue as a name or a type (landmine 113);
+  *place the rest at the bottom* and *trash the rest* are the steps that
+  follow it. Keywords are read through the engine now — printed, granted
+  while a condition holds (*[DON!! x1] This Character gains [Rush]*), or
+  granted for the turn — and Rush, Blocker, Double Attack and Banish all
+  consult it. Cost changes are timed modifiers that every cost filter reads
+  (*−N cost, then K.O. up to N* is the classic two-card play and it works
+  across two cards). Every Character in play has an instance id so a
+  modifier follows its card when another leaves. Also: a cost after a
+  condition, N-sentence chains, *add a DON!! rested*, mill, Life moves, *set
+  this Character as active*, permanent *+N power*. **MEASURED: 2,161 of
+  7,553 lines (28.6%); 1,130 cards fully, 772 partly.** Thirty-eight parser
+  controls; a smoke assertion that every action the parser emits is one the
+  engine handles.
+- **Take 52 — the tail, measured, and two things for testers.** After
+  take 51 the unparsed shapes are a long tail: the largest with an
+  identifiable mechanism are *Choose one:* (37, a modal), *look at N and
+  place them at the top or bottom in any order* (27, an ordering choice),
+  *cannot be K.O.'d …* (protection flags, ~25 across eight phrasings), and
+  the opponent's hidden choices (*your opponent trashes/returns/chooses*,
+  ~25 across eight phrasings; on one phone that is the curtain mid-effect).
+  None reaches forty lines; each is its own mechanism with its own tests.
+  Template-chasing pauses here at 28.6% and resumes when a game has been
+  played — the next measurement is a person's. Built instead: **Share the
+  game log** on the board, so "an effect fired when it shouldn't" arrives
+  with the record; and a **self-test check** that the effects bundle loaded
+  and one plain [On Play] draw offers and applies on the phone.
+- **The inferred sign (landmine 113):** the 48 lines that read *Give … 2000
+  power* are treated as −2000. The only inference in the parser; marked in
+  the data.
+- **Take 50 — two sentences, "that card", durations.** A line of two
+  sentences is its two templates in order when both halves are known (62
+  today; every new template adds to both halves); *Then, if …* puts a
+  condition on the second step, read when that step runs; *that card gains
+  an additional +N* lands on the card the first step chose with no new
+  choice. Durations are honest now: a modifier carries its expiry — *during
+  this turn/battle* ends at the end of the turn on **both** sides (it used
+  to survive on the opponent's card until their refresh), *until the start
+  of your next turn* survives the opponent's turn and ends at the source's
+  refresh. Also *If you have N or less Life cards*, *N or more cards in your
+  trash*, and *Trash up to N* with a *Trash none* choice. **MEASURED: 1,774
+  of 7,553 lines (23.5%); 824 cards fully, 772 partly.** Twenty-eight parser
+  controls, including a three-sentence line that must stay manual.
+- **Take 49 — costs and Events.** A cost before the colon is the first
+  step of the effect — *You may trash N cards from your hand:* (346 lines),
+  *DON!! −N (…):* (192), *You may rest this Character:* (140) — and an
+  effect whose cost cannot be paid is not offered at all: an empty hand, too
+  few DON!! on the field, an already-rested source. Declining the cost step
+  declines the effect. Events have their two timings: a [Main] Event is
+  played from hand in Main for its cost and its effect is offered; a
+  [Counter] Event the defender can afford is listed in the counter step,
+  paid from the defender's own active DON!!, and its +power lands on the
+  defending card. Also *If your Leader is [X]*, the DON!!-count comparison,
+  and the typed *Play up to 1 [X] type Character card … from your hand*
+  (free, five-limit). **MEASURED: 1,627 of 7,553 lines (21.5%); 712 cards
+  fully, 788 partly.** Twenty-four parser controls, seventeen new smoke
+  assertions including the three declines.
+- **Take 48 — step (2) grown by whole templates, in count order.** Eleven
+  more: *Draw N and trash N* (the first chained effect — steps run in
+  order, the second waiting for its hand target), *Play this card* and
+  *Activate this card's [On Play] effect* (follow-on offers; a [Trigger]
+  card that is activated is trashed afterwards, §10-2), K.O. by power and
+  by rested-with-cost, return or bottom *any* Character under a cost line,
+  add a DON!! from the DON!! deck, −N power to an opponent's Character, the
+  Leader +N during this battle, and the search (*look at N, reveal one of
+  the [X] type, the rest to the bottom*). And **continuous effects**: a
+  line with a condition and no trigger — *[DON!! x1] This Character gains
+  +1000 power* — is evaluated inside `power()` every time it is read, so it
+  is there while the DON!! is and gone when it goes. **MEASURED: 1,143 of
+  7,553 lines (15.1%); 498 cards fully, 607 partly.** The board now
+  surfaces every timing the parser knows: [On Block] at the block, [End of
+  Your Turn] before the turn ends, [Trigger] and [On K.O.] on the
+  defender's result screen with a *Done — hand back* button.
+- **Ruled out, still: cost changes** (*−N cost during this turn*, 40 lines).
+  A cost modifier changes every other effect's filter for the turn; it is
+  its own mechanism with its own tests, not a template.
+- **Ruled out: "This Character gains +N power" with no condition.** That is
+  base power, the catalogue's number; a template for it would double count.
+- **Built take 47 — step (2)'s foundation, to take 45's requirement.**
+  `tools/effects.py` parses every printing's text at build time into effect
+  lines and claims a line only when every bracket tag is one the engine can
+  fire or evaluate (On Play, When Attacking, Activate: Main, On K.O.,
+  Trigger, On Block, End of Your Turn; DON!! xN, Once Per Turn, Your /
+  Opponent's Turn; "if your opponent has N or less Life", "if you have N or
+  more DON!!", "if your Leader has the [X] type") **and** the whole sentence
+  matches one of twelve templates (draw N; this card / up to one of yours
+  +N power this turn; K.O. / rest / return an opponent's Character under a
+  cost or power line; give up to N rested DON!!; set N DON!! active; a Life
+  card to hand; trash one from hand). **MEASURED: 462 of 7,553 effect lines
+  (6.1%); 201 cards fully scripted, 261 partly; the rest are the text and
+  the tray.** The engine's `offers()` evaluates the conditions and computes
+  the legal targets itself; `apply()` runs under the same invariants as
+  every other action; the board shows the offer (text, targets, Apply,
+  Skip) at the trigger's timing — [When Attacking] before the defender's
+  window, [Activate: Main] as a button, Once Per Turn tracked per card.
+  Smoke tests the five classes on real cards: scope (only the cost-legal
+  target), never-always-on (no DON!!, no offer), duration (gone at refresh),
+  limits (once per turn refused, offered next turn), data (all of it from
+  the catalogue; nothing typed). `effects.py --selftest` runs in the gate:
+  six sentences that must parse, six that must be refused.
+- **Ruled out: widening a template to catch more cards.** "Draw 1 card.
+  Then, trash 1 card from your hand." is refused on purpose: the second
+  sentence is a second action and the template set does not chain yet. A
+  looser regex would script the first half and silently drop the second —
+  failure class 3 built in. Coverage grows by adding whole templates with
+  their tests, never by loosening one.
+- **Ruled out: [Main] and [Counter] Events.** They are played from hand at
+  a timing the board does not yet model as a trigger; they stay manual until
+  the Event flow exists.
+- **Built take 46 — step (1), the hot-seat board.** Prep & Play → Sim. Two
+  legal decks from Decks, a first player, Deal. The engine (`SIM`) owns what
+  RULES.md §3 lists and cites the section on every refusal: §5-2 setup and
+  Life from the deck, §5-2-3 one mulligan each, §6-1 the phases with the
+  first player's turn-one exceptions, §2-7 cost paid by resting DON!!, the
+  five-Character limit, §6-5-5 giving DON!! on your own turn, §6-5-6-1 no
+  battle on a first turn, §10-1 Rush, §7-1 targets (the Leader or a rested
+  Character), the block step with one active [Blocker], the counter step
+  with Counter cards from hand, §7-1-4 damage with ties to the attacker,
+  Double Attack, Banish, K.O., and both defeats. The curtain passes the
+  phone at every hand-over, including into the defender's block/counter
+  window. **Effects by hand:** a ⋯ tray on every card (+/−1000 this turn,
+  rest, K.O., to hand) and a row under the hand (draw, +DON!!, Life up or
+  down); every manual act is logged as "(effect)". No art: a card is its
+  catalogue line. Twenty-two smoke assertions against §3 on a real deck, and
+  Chrome draws the dealt board (three panels, five Play buttons).
+- **Not in step (1), on purpose:** Stage effects, [Trigger] resolution (the
+  Life card is shown and named as having one), [Counter] Events (played by
+  hand), Unblockable, effect durations other than "this turn", the DON!!
+  attached to Characters counting toward "DON!! x" conditions. Each is
+  either card text or a rule the honour system covers.
+- **Built take 44 — the first primitive of step (1):** *Pass the phone* on
+  the Play counter. One panel at a time, upright, the opponent's Life and
+  DON!! on a line, and *End turn* drops a curtain naming who takes the
+  phone; the board repaints when they tap. In a full board that curtain is
+  what keeps a hand a hand. Remembered per phone; the table layout is the
+  default and unchanged.
+- **The owner's two transports for step (4), measured on paper (take 44):**
+  1. **Hot-seat** — one phone, the curtain. Zero network, zero server, fits
+     PROTOCOL §9 as it stands. This is the path until (2) exists.
+  2. **Two phones by QR, each on their own screen, the deck arriving when
+     the game loads.** The honest way to do it without a server is WebRTC
+     with the signalling carried by the QR itself: phone A shows its offer
+     as a QR, phone B scans it and shows its answer, A scans that, and the
+     data channel is up — on the same wifi or one phone's hotspot, no
+     internet, no STUN, no server. INFERRED: an SDP offer is 1–3 KB and a
+     QR holds ~2.9 KB, so the offer must be reduced to its ICE candidates
+     and fingerprint (~200 bytes, a known technique) or split over two
+     codes; Android's WebView carries WebRTC; the ML Kit barcode plugin is
+     the scanning half 8.9 already needs. The deck is 14 lines of text and
+     rides in the first message. Across the internet it would need a STUN
+     server and a signalling relay — that is the server the ledger has said
+     no to since take 1, and it would be its own decision (D18).
+- **Requirement for step (2), from the owner at take 45: cards must follow
+  their rules, and the reference shows how they fail.** OPTCG Sim 1.43a's
+  patch notes are thirteen fixes; twelve are a card doing what its text does
+  not say. Sorted, they are five failure classes, and each names a guard
+  this app would build *before* the first scripted effect:
+  1. **Card data typed by hand** — *Gunko is black instead of purple*,
+     *Franky leader gives real counter values*. Guard: colour, cost, power,
+     counter, keywords and type come from the catalogue bundle, never from
+     the effect script; the gate already refuses a bundle that drifts.
+  2. **A keyword or effect that is always on** — *Curly Dadan always has
+     Double Attack*, *Law is buffing for the turn*. Guard: every effect has
+     a trigger and a duration from a closed list (§8, §10), and a test that
+     the effect is *absent* when its trigger did not fire.
+  3. **Scope wider than the text** — *Robin can save characters from combat
+     KOs*, *Heat and Wire can rest a character below total life, not the
+     opponent's*, *Luffy is preventing cost-5 stages*. Guard: targets are
+     declared as a filter over zone + type + owner + cost, and the test
+     asserts the filter on both sides of the boundary (landmine 55's rule).
+  4. **A limit or a count unchecked** — *Thanks for the Treat is not
+     checking DON!! counts*, *Ace can allow opponents beyond 5 characters*.
+     Guard: the rules engine owns the invariants (five characters, DON!!
+     totals, hand size, life) and rejects an effect that would break one,
+     regardless of the script.
+  5. **Timing and state** — *Franky can break the combat state during
+     Counter events*, *Issho's On Attack isn't proccing Kuzan's leader
+     ability*, *Linlin should not change characters already under a base-
+     power change*. Guard: a phase/state machine from §6–§7 in which an
+     effect can only run in the windows its trigger names, and stacked
+     modifiers are ordered by the rules' own layering, not by script order.
+  The thirteenth (*a setting not saving*) is landmine 83's family.
+  Consequence: **an effect is data, not code** — trigger, condition, target
+  filter, action, duration — validated against the catalogue and the
+  engine's invariants at build time, and every scripted card ships with a
+  test of what it does *and* what it does not do. The volunteer sim fixes
+  these one at a time after players find them; this app's whole method is to
+  refuse them before they ship. That is the difference the ledger buys.
+- **Ruled out: competing with OPTCG Sim on scripted effects or online play.**
+  A volunteer team is years into it; the honest companion is deck
+  compatibility, which exists.
 - **Ruled out: card art in the sim.** It is the collector's own scans or the
   reference art under landmine 28's rules; nothing new.
 

@@ -361,6 +361,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 /* ---- mode slider ------------------------------------------------------------ */
 .modebar{position:sticky;top:var(--sat);z-index:20;display:flex;justify-content:center;padding:6px 0 2px;
   background:linear-gradient(var(--bg) 70%,transparent)}
+.curtain{display:none;position:fixed;inset:0;z-index:60;background:var(--bg);align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px}
+.curtain.on{display:flex}
 .mode{display:inline-flex;position:relative;background:var(--card2);border:1px solid var(--line);
   border-radius:999px;padding:3px;gap:2px}
 .mode button{position:relative;z-index:1;padding:7px 16px;border-radius:999px;font-size:12.5px;font-weight:700;
@@ -694,6 +696,7 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
     <button class="ghost" id="plReset" style="margin-left:auto">New game</button></div>
   <div class="note" style="margin:2px 0 12px">Life and DON!! for a table game. Two Leaders, one phone. Nothing here is saved or sent.</div>
   <div id="plBoard"></div>
+  <div id="plCurtain" class="curtain"></div>
   <div class="panel" style="margin-top:14px"><h3>A turn, from the rules</h3>
     <div class="note">Refresh — DON!! return, everything untaps. Draw one (not on the first player's first turn).
     DON!! — two from the DON!! deck (one on the first player's first turn). Main — play, give DON!! for +1000 each,
@@ -702,14 +705,9 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
 
 <!-- ============================ SIM (placeholder) ======================== -->
 <section id="sim" class="screen">
-  <div class="bar"><span class="tab on">Sim</span></div>
-  <div class="empty">
-    <svg class="g"><use href="#g-don"/></svg>
-    A full simulator is on the roadmap (A23).<br>
-    First a hot-seat board on one phone with the rules enforced and effects played by hand; then scripted
-    effects for the most-played cards; then an opponent.<br><br>
-    <b>Play</b> is the first piece — the counter that a board grows out of.
-  </div>
+  <div class="bar"><span class="tab on">Sim</span><span class="note" style="margin-left:auto">hot-seat · rules by the app, effects by hand</span></div>
+  <div id="simBoard"></div>
+  <div id="simCurtain" class="curtain"></div>
 </section>
 
 <!-- ========================== TRADE ANALYZER =========================== -->
@@ -955,6 +953,7 @@ async function loadCatalogue() {
   CAT.man = man; CAT.ng = cat.ng; CAT.ngs = cat.ngs;
   CAT.valid = new Set(cat.valid_numbers || []);
   CAT.star = cat.star || null;
+  CAT.effects = cat.effects || {};          // A23 step (2): scripted effects, parsed from the text at build time
   CAT.days = cat.days || []; CAT.hist = cat.hist || {};
   cat.sets.forEach(s => CAT.sets.set(s.id, s));
   const C = cat.cols;
@@ -1822,11 +1821,20 @@ $('#modeSlider').addEventListener('click', e => {
  * so Life starts right; or leave it at 5.
  * ===================================================================== */
 const PLAY = { p: [{ name: 'Player 1', leader: null, life: 5, don: 0, given: 0 },
-                   { name: 'Player 2', leader: null, life: 5, don: 0, given: 0 }], turn: 1, first: 0 };
+                   { name: 'Player 2', leader: null, life: 5, don: 0, given: 0 }], turn: 1, first: 0,
+  /* A23 step (1), take 44: the first hot-seat primitive. On the TABLE both
+     panels face each other; in the HAND only the active player's panel shows
+     and ending the turn drops a curtain that names who takes the phone. */
+  hotseat: localStorage.getItem('vault.hotseat') === '1',
+  who() { return this.turn === 1 ? this.first : (this.first + this.turn - 1) % 2; },
+  label(i) { const pl = this.p[i]; const L = pl.leader ? CAT.byId.get(pl.leader) : null; return L ? L.name : pl.name; } };
 function paintPlay() {
-  $('#plBoard').innerHTML = PLAY.p.map((pl, i) => {
+  const active = PLAY.who();
+  const shown = PLAY.hotseat ? PLAY.p.map((pl, i) => [pl, i]).filter(([, i]) => i === active) : PLAY.p.map((pl, i) => [pl, i]);
+  const other = PLAY.p[1 - active];
+  $('#plBoard').innerHTML = shown.map(([pl, i]) => {
     const L = pl.leader ? CAT.byId.get(pl.leader) : null;
-    return `<div class="panel" style="${i === 0 ? 'transform:rotate(180deg)' : ''}">
+    return `<div class="panel" style="${(!PLAY.hotseat && i === 0) ? 'transform:rotate(180deg)' : ''}">
       <div style="display:flex;gap:12px;align-items:center">
         <button class="lead" data-plleader="${i}" style="width:48px;flex:0 0 48px;aspect-ratio:.716;border-radius:6px;background:var(--card2);overflow:hidden;position:relative">${L ? refArt(L) : ''}</button>
         <div style="flex:1;min-width:0"><b style="font-family:var(--display);font-weight:400;font-size:17px">${L ? esc(L.name) : pl.name}</b>
@@ -1850,10 +1858,22 @@ function paintPlay() {
         </div>
       </div>
     </div>`;
-  }).join('') + `<div class="row" style="justify-content:center;gap:10px;flex-wrap:wrap">
+  }).join('') + (PLAY.hotseat ? `<div class="note" style="text-align:center;margin:8px 0">Opponent \u2014 ${esc(PLAY.label(1 - active))}: Life <b>${other.life}</b> \u00b7 DON!! <b>${other.don - other.given}</b>/${other.don}</div>` : '') +
+  `<div class="row" style="justify-content:center;gap:10px;flex-wrap:wrap">
       <span class="note">Turn ${PLAY.turn} \u00b7 ${PLAY.turn === 1 ? 'first player: ' : ''}<button class="linkish" id="plFirst" style="display:inline;padding:0">${
         PLAY.turn === 1 ? (PLAY.p[PLAY.first].leader ? esc(CAT.byId.get(PLAY.p[PLAY.first].leader).name) : PLAY.p[PLAY.first].name) + ' \u21c4' : ''}</button></span>
-      <button class="ghost go" id="plNext" style="padding:8px 18px">${PLAY.turn === 1 ? 'Start \u2014 first player draws no card, gets 1 DON!!' : 'Next turn \u2014 refresh, +2 DON!!'}</button></div>`;
+      <button class="ghost go" id="plNext" style="padding:8px 18px">${PLAY.turn === 1 ? 'Start \u2014 first player draws no card, gets 1 DON!!' : (PLAY.hotseat ? 'End turn \u2014 pass the phone' : 'Next turn \u2014 refresh, +2 DON!!')}</button></div>
+    <label class="row" style="justify-content:center;gap:8px;margin-top:6px;cursor:pointer"><input type="checkbox" id="plHot" ${PLAY.hotseat ? 'checked' : ''}>
+      <span class="note">Pass the phone \u2014 one player at a time, a curtain between turns</span></label>`;
+}
+/* The curtain: hides the board until the next player taps. In a full board
+   this is what keeps a hand a hand; in the counter it is the habit. */
+function plCurtain(nextIdx) {
+  const c = $('#plCurtain');
+  c.innerHTML = `<div class="big" style="font-size:22px;margin-bottom:8px">Hand the phone to</div>
+    <h2 style="font-size:34px;margin:0 0 18px">${esc(PLAY.label(nextIdx))}</h2>
+    <div class="note">Turn ${PLAY.turn} \u00b7 tap when you have it</div>`;
+  c.classList.add('on');
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-pl]');
@@ -1863,13 +1883,17 @@ document.addEventListener('click', e => {
     if (k === 'given') pl.given = Math.max(0, Math.min(pl.don, pl.given + +d));
     PLATFORM.haptic(); paintPlay(); return; }
   if (e.target.id === 'plFirst') { PLAY.first = 1 - PLAY.first; paintPlay(); return; }
+  if (e.target.id === 'plHot') { PLAY.hotseat = e.target.checked; localStorage.setItem('vault.hotseat', PLAY.hotseat ? '1' : '0'); paintPlay(); return; }
+  if (e.target.closest('#plCurtain')) { $('#plCurtain').classList.remove('on'); paintPlay(); return; }
   if (e.target.id === 'plNext') {
     /* §6-2 refresh: given DON!! return. §6-4: +2 to ten -- except the first
        player's first turn, which is +1 (§6-4-1), modelled here (take 25). */
     const who = PLAY.turn === 1 ? PLAY.first : (PLAY.first + PLAY.turn - 1) % 2;
     const pl = PLAY.p[who]; pl.given = 0;
     pl.don = Math.min(10, pl.don + (PLAY.turn === 1 ? 1 : 2));
-    PLAY.turn++; paintPlay(); return; }
+    PLAY.turn++;
+    if (PLAY.hotseat) { plCurtain(PLAY.who()); return; }   // the board repaints when the next player taps
+    paintPlay(); return; }
   if (e.target.id === 'plReset') { PLAY.p.forEach(p => { p.life = p.leader ? (CAT.byId.get(p.leader).life || 5) : 5; p.don = 0; p.given = 0; }); PLAY.turn = 1; PLAY.first = 0; paintPlay(); return; }
   const l = e.target.closest('[data-plleader]');
   if (l) {
@@ -2158,7 +2182,7 @@ function go(id) {
   window.scrollTo(0, 0);
   ({ home: paintHome, collection: paintCollection, search: paintSearch,
      scan: paintScan, settings: paintSettings, decks: paintDecks, deck: paintDeck,
-     trade: paintTrade, play: paintPlay, sim: () => {}, cards: paintCards,
+     trade: paintTrade, play: paintPlay, sim: paintSim, cards: paintCards,
      checklist: paintChecklist, wants: () => { paintWants(); paintAlerts(); }, binder: paintBinder })[id]?.();
 }
 document.addEventListener('click', e => {
@@ -2700,6 +2724,7 @@ document.addEventListener('click', e => {
   const a = e.target.closest('[data-act]'); if (!a) return;
   ({
     export: exportCsv,
+    sharepage: shareCollectionPage,
     backup: () => { scheduleBackup('manual'); toast('Backing up to Documents/OPTCGHub'); },
     restore: restoreFromBackup,
     wants: () => go('wants'),
@@ -2876,6 +2901,50 @@ async function exportCsv() {
   a.href = url; a.download = name;
   a.click(); URL.revokeObjectURL(url);
   toast(`Exported ${rows.length} rows`);
+}
+
+/* 8.12 (take 42): the collection as one self-contained web page, handed over
+   through the share sheet (landmine 110's path) or downloaded in a browser.
+   Text and numbers only -- no art, no script, no request in it: the file
+   leaves the phone, and what leaves the phone is the collector's own list. */
+function collectionPage() {
+  const scope = PF.scope(OWN.items).filter(i => CAT.byId.get(i.id));
+  const asOf = (CAT.man.source_updated_at || '').slice(0, 10);
+  const pfName = PF.active === 'all' ? 'All portfolios' : PF.name(PF.active);
+  const total = scope.reduce((a, i) => a + (price(i.id) || 0) * i.qty, 0);
+  const cards = scope.reduce((a, i) => a + i.qty, 0);
+  const top = scope.slice().sort((a, b) => (price(b.id) || 0) * b.qty - (price(a.id) || 0) * a.qty).slice(0, 10);
+  const prog = setProgress();
+  const bySet = new Map();
+  for (const i of scope) { const p = CAT.byId.get(i.id); (bySet.get(p.set) || bySet.set(p.set, []).get(p.set)).push({ i, p }); }
+  const row = ({ i, p }) => `<tr><td>${esc(p.num)}</td><td>${esc(p.name)}</td><td>${esc(TREAT[p.treat] || p.treat)}</td><td class="n">${i.qty}</td><td>${esc(i.condition || '')}</td><td class="n">${esc(money(price(i.id)))}</td></tr>`;
+  const sets = [...bySet.entries()].sort((a, b) => (CAT.sets.get(a[0])?.name || '').localeCompare(CAT.sets.get(b[0])?.name || ''))
+    .map(([sid, rows]) => `<h2>${esc(CAT.sets.get(sid)?.name || sid)}</h2><table>${rows.sort((a, b) => a.p.num.localeCompare(b.p.num)).map(row).join('')}</table>`).join('');
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(pfName)} \u2014 OP TCG Hub</title>
+<style>body{margin:0;padding:24px;background:#0B1622;color:#EADFC8;font:15px/1.45 "Open Sans",system-ui,sans-serif}
+h1{font-size:28px;margin:0 0 4px;color:#C9A24A}h2{font-size:17px;margin:28px 0 8px;color:#C9A24A}.sub{color:#A08E70;margin-bottom:20px}
+.big{font-size:40px;font-weight:900;color:#C9A24A;letter-spacing:-.01em}table{border-collapse:collapse;width:100%;max-width:820px}
+td,th{padding:6px 8px;border-bottom:1px solid #26394B;text-align:left;vertical-align:top}th{color:#A08E70;font-weight:600}.n{text-align:right;font-variant-numeric:tabular-nums}
+.bar{height:6px;background:#182A3A;border-radius:3px;overflow:hidden}.bar i{display:block;height:100%;background:#C9A24A}
+.note{color:#A08E70;font-size:13px;margin-top:28px}</style></head><body>
+<h1>${esc(pfName)}</h1><div class="sub">${cards} card${cards === 1 ? '' : 's'} \u00b7 ${scope.length} lines \u00b7 TCGplayer market via TCGCSV, ${esc(asOf)}</div>
+<div class="big">${esc(money(total))}</div>
+<h2>Most valuable</h2><table><tr><th>Number</th><th>Card</th><th>Printing</th><th class="n">Qty</th><th>Condition</th><th class="n">Market</th></tr>${top.map(i => row({ i, p: CAT.byId.get(i.id) })).join('')}</table>
+<h2>Set completion</h2><table>${prog.map(r => `<tr><td>${esc(r.s.name || '')}</td><td class="n">${r.have} / ${r.all}</td><td style="width:40%"><div class="bar"><i style="width:${r.all ? Math.round(100 * r.have / r.all) : 0}%"></i></div></td><td class="n">${esc(money(r.val))}</td></tr>`).join('')}</table>
+${sets}
+<div class="note">A market price is an estimate, not an offer, and condition is the collector's own assertion \u2014 it does not change the figure shown. Made with OP TCG Hub. Not affiliated with Bandai, Shueisha, Toei Animation, Viz Media or TCGplayer.</div>
+</body></html>`;
+}
+async function shareCollectionPage() {
+  const html = collectionPage();
+  const name = `optcghub-${new Date().toISOString().slice(0, 10)}.html`;
+  const shared = await PLATFORM.shareFile(name, html, 'Share your collection page');
+  if (shared === 'shared') return toast('Collection page shared');
+  if (shared === 'cancelled') return;
+  const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+  const a = document.createElement('a'); a.href = url; a.download = name; a.click(); URL.revokeObjectURL(url);
+  toast('Collection page saved');
 }
 
 /* ---- search ------------------------------------------------------------ */
@@ -3748,6 +3817,7 @@ function paintSettings() {
         <span>${OWN.items.reduce((a, i) => a + i.qty, 0)} cards \u00b7 ${money(OWN.total())}</span>
       </div></div>
       <button class="linkish" data-act="export">Export CSV</button>
+      <button class="linkish" data-act="sharepage">Share as a web page</button>
       <div class="row"><div class="nm"><b>Last backup</b>
         <span>${OWN.lastBackup ? (OWN.lastBackup.failed ? '<span class="down">FAILED</span> ' + esc(OWN.lastBackup.at.slice(0, 16))
           : esc(OWN.lastBackup.at.slice(0, 16)) + ' · ' + esc(OWN.lastBackup.where)) : 'never'}</span></div>
@@ -3758,6 +3828,11 @@ function paintSettings() {
         collection is what cannot be lost. <b>Before you uninstall or switch to
         the Play build: Export CSV and keep the file</b> — a reinstalled app
         cannot read its old backups by itself, though Restore lets you pick one.</div>
+    </div>
+    <div class="panel"><h3>Self-test</h3>
+      <div class="row"><div class="nm"><b>Does this phone run the app?</b><span>catalogue, scanner gate, OCR, backup, camera, fonts, sync \u2014 in one tap</span></div>
+        <button class="ghost" id="stRun">Run</button></div>
+      <div id="stOut"></div>
     </div>
     <div class="panel"><h3>How it works</h3>
       <button class="linkish" id="guideAgain">Show the guide again</button></div>
@@ -3817,8 +3892,456 @@ function paintSettings() {
   $$('.screen').forEach(x => x.classList.toggle('on', x.id === 'settings'));
   const de = $('#devEarn'); if (de) de.addEventListener('click', () => { CREDITS.earn('scan'); paintSettings(); });
   const ga = $('#guideAgain'); if (ga) ga.addEventListener('click', guideOpen);
+  const st = $('#stRun'); if (st) st.addEventListener('click', () => { st.disabled = true; runSelfTest().finally(() => { st.disabled = false; }); });
   const sc = $('#syncCell'); if (sc) sc.addEventListener('change', () => localStorage.setItem('vault.syncCellular', sc.checked ? '1' : '0'));
   const sy = $('#syncBtn'); if (sy) sy.addEventListener('click', async () => { sy.disabled = true; await PLATFORM.refreshCatalogue(); sy.disabled = false; paintSettings(); });
+}
+
+/* ---- sim: the hot-seat board (A23 step 1, take 46) --------------------
+   The ENGINE owns what RULES.md §3 lists and nothing else: setup, mulligan,
+   Life, the five phases and their first-turn exceptions, cost, the five-
+   Character limit, giving DON!!, who may attack whom, the four battle steps
+   with Blocker and Counter, damage, K.O., the two defeats. Card EFFECTS are
+   played by hand through the manual tray. Every rule cites its section, and
+   every refusal says why: an honest "I don't know this card's text" beats a
+   guess about a game (AGENTS §4, the same rule as the scanner's). */
+const SIM = {
+  g: null, uid: 0,
+  inst(id, turn) { return { id, rested: false, don: 0, turn, uid: ++this.uid }; },
+  keyOf(P, ref) { const o = ref === 'leader' ? P.leader : P.chars[ref]; return ref === 'leader' ? 'leader' : (o && o.uid != null ? 'u' + o.uid : (o ? o.id + ':' + ref : null)); },
+  shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; },
+  card(id) { return CAT.byId.get(id); },
+  expand(deck) { const ids = []; for (const c of deck.cards) for (let k = 0; k < c.n; k++) ids.push(c.id); return ids; },
+  /* §5-2: a legal deck each, shuffled, Leader face-up, five cards in hand.
+     Life is placed after the mulligan decision (§5-2-4). */
+  new(deckA, deckB, first = 0) {
+    const mk = (d, i) => ({ name: d.name || `Player ${i + 1}`, deckName: d.name, deck: this.shuffle(this.expand(d)), hand: [], life: [], trash: [],
+      leader: { id: d.leader, rested: false, don: 0 }, chars: [], stage: null, donDeck: 10, don: { active: 0, rested: 0 },
+      mulliganed: null, mods: {}, modl: [], taken: 0 });
+    this.g = { turn: 0, first, active: first, phase: 'mulligan', players: [mk(deckA, 0), mk(deckB, 1)], battle: null, log: [], over: null };
+    this.g.players.forEach((P, i) => this.draw(i, 5));
+    return this.g;
+  },
+  P(i) { return this.g.players[i]; },
+  log(m) { this.g.log.unshift(`T${this.g.turn} ${m}`); if (this.g.log.length > 60) this.g.log.pop(); },
+  draw(i, n = 1) { const P = this.P(i); for (let k = 0; k < n; k++) { if (!P.deck.length) { this.g.over = 1 - i; this.log(`${P.name} cannot draw — defeat (§1-2-1-1)`); return; } P.hand.push(P.deck.shift()); } },
+  /* §5-2-3: return all five, shuffle, redraw five, once. */
+  mulligan(i, yes) { const P = this.P(i); if (P.mulliganed !== null) return; P.mulliganed = !!yes;
+    if (yes) { P.deck.push(...P.hand); P.hand = []; this.shuffle(P.deck); this.draw(i, 5); this.log(`${P.name} mulligans`); }
+    if (this.g.players.every(x => x.mulliganed !== null)) { this.g.players.forEach((x, k) => this.placeLife(k)); this.startTurn(); } },
+  /* §5-2-4: Life cards, face-down, from the top of the deck, equal to the Leader's Life. */
+  placeLife(i) { const P = this.P(i); const L = this.card(P.leader.id); const n = (L && this.num(L.life)) || 5; P.life = P.deck.splice(0, n); },
+  firstTurnOf(i) { return this.P(i).taken === 1; },
+  /* §6-1: Refresh → Draw → DON!! → Main. */
+  startTurn() { const g = this.g; g.turn++; const i = g.active; const P = this.P(i); P.taken++;
+    // §6-2 refresh: given DON!! return to the cost area; everything rested becomes active
+    let back = P.leader.don; P.leader.don = 0; P.leader.rested = false;
+    for (const c of P.chars) { back += c.don; c.don = 0; c.rested = false; }
+    P.don.active += P.don.rested + back; P.don.rested = 0; P.mods = {};
+    g.players.forEach(X => { X.modl = (X.modl || []).filter(m => m.until !== 'refresh:' + i); });   // 'until the start of your next turn' ends at that refresh
+    // §6-3 draw: not the first player on turn one
+    if (!(g.turn === 1 && i === g.first)) this.draw(i, 1);
+    if (g.over !== null) { g.phase = 'over'; return; }
+    // §6-4 DON!!: two from the DON!! deck; one on the first player's first turn
+    const add = Math.min(P.donDeck, (g.turn === 1 && i === g.first) ? 1 : 2); P.donDeck -= add; P.don.active += add;
+    g.phase = 'main'; g.battle = null; this.log(`${P.name} — refresh, draw, +${add} DON!!`); },
+  /* §6-6 end, then the other player's turn. */
+  endTurn() { const g = this.g; if (g.phase !== 'main') return false; this.log(`${this.P(g.active).name} ends the turn`);
+    g.players.forEach(X => { X.modl = (X.modl || []).filter(m => m.until !== 'endturn'); });      // 'during this turn' ends here, on BOTH sides (take 50)
+    g.active = 1 - g.active; this.startTurn(); return true; },
+  /* A timed modifier: key = 'leader' or '<id>:<k>', until = 'endturn' | 'refresh:<player>'. */
+  mod(i, key, n, dur, extra) { const P = this.P(i); P.modl = P.modl || []; P.modl.push(Object.assign({ key, n, until: dur === 'nextturn' ? 'refresh:' + i : (dur === 'permanent' ? 'never' : 'endturn') }, extra || {})); },
+  cost(p) { const c = parseInt(p.cost, 10); return isNaN(c) ? 0 : c; },
+  num(v) { const n = parseInt(v, 10); return isNaN(n) ? 0 : n; },     // the bundle's power, counter and life are strings
+  power(i, ref) { const P = this.P(i); const o = ref === 'leader' ? P.leader : P.chars[ref]; if (!o) return 0; const p = this.card(o.id);
+    /* continuous effects (take 48): "+N power" while the condition holds, re-evaluated every read */
+    const stat = this.fx(o.id).filter(e => e.t === 'static' && e.do[0].a === 'selfpower' && e.if.every(c => this.condOk(i, o, c))).reduce((a, e) => a + e.do[0].n, 0);
+    const key = this.keyOf(P, ref);
+    return this.num(p.power) + 1000 * o.don + stat + (P.mods[key] || 0) + (P.mods[o.id + ':' + ref] || 0) + (P.modl || []).filter(m => m.key === key && m.n != null).reduce((a, m) => a + m.n, 0); },
+  /* Keywords the card has NOW: printed, granted while a condition holds, granted for a while (take 51). */
+  kwOf(i, ref) { const P = this.P(i); const o = ref === 'leader' ? P.leader : P.chars[ref]; if (!o) return []; const p = this.card(o.id); const key = this.keyOf(P, ref);
+    const printed = (p.kw || '').split('|').filter(Boolean);
+    const stat = this.fx(o.id).filter(e => e.t === 'static' && e.do[0].a === 'selfkw' && e.if.every(c => this.condOk(i, o, c))).map(e => e.do[0].k);
+    const timed = (P.modl || []).filter(m => m.key === key && m.kw).map(m => m.kw);
+    return printed.concat(stat, timed); },
+  has(i, ref, k) { return this.kwOf(i, ref).includes(k); },
+  /* Cost the card has NOW: printed, changed for the turn by an effect (take 51). */
+  effCost(X, k) { const c = X.chars[k]; if (!c) return 0; const key = c.uid != null ? 'u' + c.uid : c.id + ':' + k; return Math.max(0, this.cost(this.card(c.id)) + (X.modl || []).filter(m => m.key === key && m.cost != null).reduce((a, m) => a + m.cost, 0)); },
+  /* §6-5, §2-7: pay by resting active DON!!. Characters: five in play (§3). */
+  canPlay(i, h) { const g = this.g; if (g.phase !== 'main' || g.active !== i) return { ok: false, why: 'not your Main phase' };
+    const P = this.P(i), p = this.card(P.hand[h]); if (!p) return { ok: false, why: 'unknown card' };
+    if (p.type === 'Leader') return { ok: false, why: 'a Leader is not played from hand (§2-2)' };
+    const c = this.cost(p); if (P.don.active < c) return { ok: false, why: `costs ${c} DON!!, ${P.don.active} active (§2-7)` };
+    if (p.type === 'Character' && P.chars.length >= 5) return { ok: false, why: 'five Characters already — K.O. or trash one first (§3)' };
+    return { ok: true, cost: c }; },
+  play(i, h) { const v = this.canPlay(i, h); if (!v.ok) return v; const P = this.P(i); const id = P.hand.splice(h, 1)[0]; const p = this.card(id);
+    P.don.active -= v.cost; P.don.rested += v.cost;
+    if (p.type === 'Character') P.chars.push(this.inst(id, this.g.turn));
+    else if (p.type === 'Stage') { if (P.stage) P.trash.push(P.stage); P.stage = id; }
+    else P.trash.push(id);                                   // an Event resolves by hand, then goes to trash (§2-4)
+    this.log(`${P.name} plays ${p.name} (${v.cost})`); return { ok: true, card: p }; },
+  /* §6-5-5: give an active DON!! to your Leader or a Character, +1000, your turn only. */
+  giveDon(i, ref) { const g = this.g; if (g.phase !== 'main' || g.active !== i) return { ok: false, why: 'your turn only (§6-5-5)' };
+    const P = this.P(i); if (P.don.active < 1) return { ok: false, why: 'no active DON!!' }; const o = ref === 'leader' ? P.leader : P.chars[ref]; if (!o) return { ok: false, why: 'no such card' };
+    P.don.active--; o.don++; this.log(`${P.name} gives DON!! to ${this.card(o.id).name}`); return { ok: true }; },
+  /* §7-1: an active Leader or Character attacks the opponent's Leader or a RESTED Character.
+     §6-5-6-1: nobody battles on their first turn. Rush lets a Character attack the turn it is played (§10-1). */
+  canAttack(i, ref) { const g = this.g; if (g.phase !== 'main' || g.active !== i) return { ok: false, why: 'your Main phase only' };
+    if (this.firstTurnOf(i)) return { ok: false, why: 'no battle on your first turn (§6-5-6-1)' };
+    const P = this.P(i); const o = ref === 'leader' ? P.leader : P.chars[ref]; if (!o) return { ok: false, why: 'no such card' };
+    if (o.rested) return { ok: false, why: 'already rested' };
+    if (ref !== 'leader' && o.turn === g.turn && !this.has(i, ref, 'Rush')) return { ok: false, why: 'played this turn and no [Rush] (§10-1)' };
+    return { ok: true }; },
+  targets(i) { const O = this.P(1 - i); const t = [{ ref: 'leader', name: this.card(O.leader.id).name }]; O.chars.forEach((c, k) => { if (c.rested) t.push({ ref: k, name: this.card(c.id).name }); }); return t; },
+  attack(i, ref, tref) { const v = this.canAttack(i, ref); if (!v.ok) return v; const O = this.P(1 - i);
+    if (tref !== 'leader' && !(O.chars[tref] && O.chars[tref].rested)) return { ok: false, why: 'only the Leader or a rested Character can be attacked (§7-1)' };
+    const P = this.P(i); const a = ref === 'leader' ? P.leader : P.chars[ref]; a.rested = true;
+    this.g.battle = { att: i, aref: ref, def: 1 - i, dref: tref, blocked: false, counter: 0, step: 'block' };
+    this.g.phase = 'battle'; this.log(`${P.name}: ${this.card(a.id).name} attacks ${tref === 'leader' ? this.card(O.leader.id).name : this.card(O.chars[tref].id).name}`); return { ok: true }; },
+  /* §7-1-2 block: the defender may activate ONE active [Blocker]; it becomes the target. */
+  blockers() { const b = this.g.battle; if (!b || b.step !== 'block') return []; const O = this.P(b.def);
+    return O.chars.map((c, k) => ({ k, c })).filter(x => !x.c.rested && this.has(b.def, x.k, 'Blocker') && x.k !== b.dref).map(x => ({ ref: x.k, name: this.card(x.c.id).name })); },
+  block(k) { const b = this.g.battle; if (!b || b.step !== 'block') return { ok: false }; const O = this.P(b.def); const c = O.chars[k];
+    if (!c || c.rested || !this.has(b.def, k, 'Blocker')) return { ok: false, why: 'not an active [Blocker]' };
+    c.rested = true; b.dref = k; b.blocked = true; b.step = 'counter'; this.log(`${O.name}: ${this.card(c.id).name} blocks`); return { ok: true }; },
+  noBlock() { const b = this.g.battle; if (b && b.step === 'block') b.step = 'counter'; },
+  /* §7-1-3 counter: trash a card with a Counter value from hand, +1000/+2000 to the defender. */
+  /* [Counter] Events (take 49): played from hand in the counter step for their cost, then their effect is offered. */
+  counterEvents() { const b = this.g.battle; if (!b || b.step !== 'counter') return []; const O = this.P(b.def);
+    return O.hand.map((id, h) => ({ h, p: this.card(id) })).filter(x => x.p && x.p.type === 'Event' && this.fx(x.p.id).some(e => e.t === 'evcounter') && this.cost(x.p) <= O.don.active).map(x => ({ h: x.h, name: x.p.name, cost: this.cost(x.p) })); },
+  playCounterEvent(h) { const b = this.g.battle; if (!b || b.step !== 'counter') return { ok: false }; const O = this.P(b.def); const p = this.card(O.hand[h]);
+    if (!p || p.type !== 'Event') return { ok: false, why: 'not an Event' }; const c = this.cost(p); if (O.don.active < c) return { ok: false, why: `costs ${c} DON!!` };
+    O.hand.splice(h, 1); O.don.active -= c; O.don.rested += c; O.trash.push(p.id); this.log(`${O.name} plays ${p.name} [Counter]`); return { ok: true, id: p.id }; },
+  counters() { const b = this.g.battle; if (!b || b.step !== 'counter') return []; const O = this.P(b.def);
+    return O.hand.map((id, h) => ({ h, p: this.card(id) })).filter(x => x.p && this.num(x.p.counter) > 0).map(x => ({ h: x.h, name: x.p.name, plus: this.num(x.p.counter) })); },
+  counter(h) { const b = this.g.battle; if (!b || b.step !== 'counter') return { ok: false }; const O = this.P(b.def); const p = this.card(O.hand[h]);
+    const plus = this.num(p && p.counter); if (!plus) return { ok: false, why: 'no Counter value' }; O.hand.splice(h, 1); O.trash.push(p.id); b.counter += plus; this.log(`${O.name} counters with ${p.name} (+${plus})`); return { ok: true }; },
+  battlePowers() { const b = this.g.battle; if (!b) return null; return { a: this.power(b.att, b.aref), d: this.power(b.def, b.dref) + b.counter }; },
+  /* §7-1-4 damage: attacker ≥ defender wins; a losing Leader takes damage, a losing Character is K.O.'d. */
+  resolve() { const g = this.g, b = g.battle; if (!b) return null; const { a, d } = this.battlePowers(); const A = this.P(b.att), O = this.P(b.def);
+    const att = this.card((b.aref === 'leader' ? A.leader : A.chars[b.aref]).id); const res = { win: a >= d, a, d, life: [], ko: null };
+    if (res.win) {
+      if (b.dref === 'leader') { const n = this.has(b.att, b.aref, 'Double Attack') ? 2 : 1;
+        for (let k = 0; k < n; k++) { if (!O.life.length) { g.over = b.att; this.log(`${O.name} takes damage with no Life — defeat (§1-2-1-1)`); break; }
+          const id = O.life.shift(); const lc = this.card(id); const banish = this.has(b.att, b.aref, 'Banish');
+          if (banish) O.trash.push(id); else O.hand.push(id);
+          res.life.push({ id, name: lc ? lc.name : '?', trigger: !!(lc && hasKw(lc, 'Trigger')), banished: banish }); } }
+      else { const c = O.chars.splice(b.dref, 1)[0]; O.trash.push(c.id); res.ko = this.card(c.id).name; res.koId = c.id; this.log(`${res.ko} is K.O.'d`); }
+    }
+    this.log(`${att.name} ${a} vs ${d}: ${res.win ? 'hit' : 'held'}`); g.battle = null; g.phase = g.over !== null ? 'over' : 'main'; return res; },
+  /* ---- effects (A23 step 2, take 47) -----------------------------------
+     Scripted at build time from the card's own text, only whole sentences
+     the engine can run. offers() evaluates the tags the engine knows and
+     returns what may be applied NOW, with the legal targets computed by the
+     engine; apply() executes under the same invariants as everything else.
+     Everything not offered is the text and the tray. */
+  fx(id) { return CAT.effects[String(id)] || []; },
+  key(ref) { return ref === 'leader' ? 'leader' : String(ref); },
+  condOk(i, src, c) { const P = this.P(i), g = this.g; const L = this.card(P.leader.id);
+    if (c.c === 'donx') return (src ? src.don : 0) >= c.n;
+    if (c.c === 'opt') return true;                                    // checked against P.used in offers()
+    if (c.c === 'yourturn') return g.active === i;
+    if (c.c === 'oppturn') return g.active !== i;
+    if (c.c === 'opplife') return this.P(1 - i).life.length <= c.max;
+    if (c.c === 'donfield') return (P.don.active + P.don.rested + P.leader.don + P.chars.reduce((a, x) => a + x.don, 0)) >= c.min;
+    if (c.c === 'leadertype') return ((L && L.subtypes) || '').split(/[;/]/).map(x => x.trim()).includes(c.t);
+    if (c.c === 'leadername') return !!L && L.name === c.name;
+    if (c.c === 'life') return P.life.length <= c.max;
+    if (c.c === 'trash') return P.trash.length >= c.min;
+    if (c.c === 'donle') { const f = X => X.don.active + X.don.rested + X.leader.don + X.chars.reduce((a, x) => a + x.don, 0); return f(P) <= f(this.P(1 - i)); }
+    return false; },
+  /* Can the first step's COST be paid at all? If not, the effect is not offered. */
+  fieldDon(P) { return P.don.active + P.don.rested + P.leader.don + P.chars.reduce((a, x) => a + x.don, 0); },
+  canPay(i, ref, d) { const P = this.P(i); if (!d || !/^cost_/.test(d.a)) return true;
+    if (d.a === 'cost_trashhand') return P.hand.length >= d.n;
+    if (d.a === 'cost_returndon') return this.fieldDon(P) >= d.n;
+    if (d.a === 'cost_restself') { const o = ref === 'leader' ? P.leader : P.chars[ref]; return !!o && !o.rested; }
+    return false; },
+  /* Targets are strings the board can put on a button: L = your Leader,
+     mK = your Character K, oK = the opponent's Character K, hK = a hand
+     card, dK = the K-th card looked at from the top of the deck. */
+  targetsFor(i, d) { const O = this.P(1 - i), P = this.P(i);
+    const fit = (X, k) => { const c = X.chars[k], p = this.card(c.id); return (d.cost == null || this.effCost(X, k) <= d.cost) && (d.power == null || this.num(p.power) <= d.power) && (!d.rested || c.rested); };
+    const opp = () => O.chars.map((c, k) => ({ ref: 'o' + k, name: this.card(c.id).name + ' (theirs)' })).filter((t, k) => fit(O, k));
+    const own = () => P.chars.map((c, k) => ({ ref: 'm' + k, name: this.card(c.id).name })).filter((t, k) => fit(P, k));
+    if (d.a === 'ko') return opp();
+    if (d.a === 'rest') return opp().filter(t => !O.chars[+t.ref.slice(1)].rested);
+    if (d.a === 'bounce' || d.a === 'bottom') return d.who === 'any' ? own().concat(opp()) : opp();
+    if (d.a === 'power' && d.who === 'prev') return null;   // the card the previous step chose
+    if (d.a === 'costmod') return opp();
+    if (d.a === 'power') return d.who === 'opp' ? opp() : [{ ref: 'L', name: this.card(P.leader.id).name }].concat(own());
+    if (d.a === 'givedon') return [{ ref: 'L', name: this.card(P.leader.id).name }].concat(P.chars.map((c, k) => ({ ref: 'm' + k, name: this.card(c.id).name })));
+    if (d.a === 'trashhand' || d.a === 'cost_trashhand') return P.hand.map((id, h) => ({ ref: 'h' + h, name: this.card(id).name }));
+    if (d.a === 'playfromhand') return P.hand.map((id, h) => ({ id, h, p: this.card(id) })).filter(x => x.p && x.p.type === 'Character' && (d.cost == null || this.cost(x.p) <= d.cost) && (d.power == null || this.num(x.p.power) <= d.power) && (!d.type || (x.p.subtypes || '').split(/[;/]/).map(y => y.trim()).includes(d.type))).map(x => ({ ref: 'h' + x.h, name: x.p.name + ' (' + this.cost(x.p) + 'c)' }));
+    if (d.a === 'search') { const types = d.types || (d.type ? [d.type] : null);
+      return P.deck.slice(0, d.n).map((id, k) => ({ id, k, p: this.card(id) })).filter(x => x.p
+        && ((!types && !d.names) || (types || []).some(t => (x.p.subtypes || '').split(/[;/]/).map(y => y.trim()).includes(t)) || (d.names || []).includes(x.p.name))
+        && (!d.name || x.p.name === d.name) && (!d.not || x.p.name !== d.not)
+        && (d.cost_max == null || this.cost(x.p) <= d.cost_max) && (d.cost_min == null || this.cost(x.p) >= d.cost_min)).map(x => ({ ref: 'd' + x.k, name: x.p.name + (x.p.type ? ' (' + x.p.type + ')' : '') })); }
+    return null; },
+  offers(i, trigger, ref, cardId, fromLife) { const P = this.P(i); const src = ref == null ? null : (ref === 'leader' ? P.leader : P.chars[ref]); const id = cardId || (src && src.id);
+    return this.fx(id).map((e, n) => ({ e, n })).filter(({ e }) => e.t === trigger)
+      .filter(({ e }) => e.if.every(c => this.condOk(i, src, c)))
+      .filter(({ e, n }) => !(e.if.some(c => c.c === 'opt') && (P.used || {})[`${this.key(ref)}:${n}:${this.g.turn}`]))
+      .filter(({ e }) => this.canPay(i, ref, e.do[0]))
+      .map(({ e, n }) => ({ i, e, n, ref, cardId: id, fromLife: !!fromLife, steps: e.do, step: 0, targets: this.targetsFor(i, e.do[0]) })); },
+  /* Runs the CURRENT step of an offer. Returns { ok, done, follow } -- follow
+     is a list of new offers (a [Trigger] that activates an [On Play]). */
+  apply(i, offer, target) { const P = this.P(i), O = this.P(1 - i), d = offer.steps[offer.step]; const need = offer.targets && offer.targets.length > 0;
+    /* a condition on the STEP is read now, not at the trigger (take 50): a false one skips the step */
+    if (d.if && !d.if.every(c => this.condOk(i, offer.ref == null ? null : (offer.ref === 'leader' ? P.leader : P.chars[offer.ref]), c))) {
+      this.log(`condition not met: ${d.if.map(c => c.c).join(',')}`); offer.step++; const done = offer.step >= offer.steps.length; if (!done) offer.targets = this.targetsFor(i, offer.steps[offer.step]); return { ok: true, done, follow: [] }; }
+    if (d.a === 'trashhand' && d.upto && target == null) { offer.step++; const done = offer.step >= offer.steps.length; if (!done) offer.targets = this.targetsFor(i, offer.steps[offer.step]); return { ok: true, done, follow: [] }; }
+    if (need && target == null) return { ok: false, why: 'choose a target' };
+    if (need && !offer.targets.some(t => t.ref === target)) return { ok: false, why: 'not a legal target for this effect' };
+    if (offer.step === 0 && offer.e.if.some(c => c.c === 'opt')) { P.used = P.used || {}; P.used[`${this.key(offer.ref)}:${offer.n}:${this.g.turn}`] = true; }
+    const side = t => (t && t[0] === 'o') ? O : P, idx = t => +String(t).slice(1);
+    const srcKey = () => this.keyOf(P, offer.ref);
+    let follow = [];
+    if (d.a === 'draw') this.draw(i, d.n);
+    else if (d.a === 'selfpower') { const k = srcKey(); if (k) this.mod(i, k, d.n, d.dur); }
+    else if (d.a === 'leaderpower') this.mod(i, 'leader', d.n, d.dur);
+    else if (d.a === 'power') { const tg = d.who === 'prev' ? offer.prev : target; if (tg == null) return { ok: false, why: 'no card chosen before' };
+      if (tg === 'L') this.mod(i, 'leader', d.n, d.dur); else { const X = side(tg), c = X.chars[idx(tg)]; if (!c) return { ok: false, why: 'that card is gone' }; this.mod(X === P ? i : 1 - i, c.uid != null ? 'u' + c.uid : c.id + ':' + idx(tg), d.n, d.dur); } }
+    else if (d.a === 'ko') { const c = O.chars.splice(idx(target), 1)[0]; O.trash.push(c.id); }
+    else if (d.a === 'rest') { O.chars[idx(target)].rested = true; }
+    else if (d.a === 'bounce') { const X = side(target); const c = X.chars.splice(idx(target), 1)[0]; X.hand.push(c.id); }
+    else if (d.a === 'bottom') { const X = side(target); const c = X.chars.splice(idx(target), 1)[0]; X.deck.push(c.id); }
+    else if (d.a === 'givedon') { const o = target === 'L' ? P.leader : P.chars[idx(target)]; const n = Math.min(d.n, P.don.rested); P.don.rested -= n; o.don += n; }
+    else if (d.a === 'activedon') { const n = Math.min(d.n, P.don.rested); P.don.rested -= n; P.don.active += n; }
+    else if (d.a === 'lifetohand') { for (let k = 0; k < (d.n || 1); k++) if (P.life.length) P.hand.push(P.life.shift()); }
+    else if (d.a === 'trashhand') { const id = P.hand.splice(idx(target), 1)[0]; if (id) P.trash.push(id); }
+    else if (d.a === 'search') { const top = P.deck.splice(0, d.n); if (target != null) { const k = idx(target); P.hand.push(top.splice(k, 1)[0]); } P.looking = (P.looking || []).concat(top); }
+    else if (d.a === 'restcards') { const rest = P.looking || []; P.looking = []; if (d.to === 'trash') P.trash.push(...rest); else P.deck.push(...rest); }
+    else if (d.a === 'adddon') { const n = Math.min(d.n, P.donDeck); P.donDeck -= n; if (d.rested) P.don.rested += n; else P.don.active += n; }
+    else if (d.a === 'costmod') { const X = side(target), c = X.chars[idx(target)]; this.mod(X === P ? i : 1 - i, c.uid != null ? 'u' + c.uid : c.id + ':' + idx(target), null, d.dur, { cost: d.n }); }
+    else if (d.a === 'selfkw') { const k = srcKey(); if (k) this.mod(i, k, null, d.dur, { kw: d.k }); }
+    else if (d.a === 'mill') { P.trash.push(...P.deck.splice(0, d.n)); }
+    else if (d.a === 'decktolife') { if (P.deck.length) P.life.unshift(P.deck.shift()); }
+    else if (d.a === 'selfactive') { const o = offer.ref === 'leader' ? P.leader : P.chars[offer.ref]; if (o) o.rested = false; }
+    else if (d.a === 'playself') { const p = this.card(offer.cardId); const h = P.hand.indexOf(offer.cardId);
+      if (p.type === 'Character' && P.chars.length >= 5) return { ok: false, why: 'five Characters already (§3)' };
+      if (h >= 0) P.hand.splice(h, 1);
+      if (p.type === 'Character') { P.chars.push(this.inst(offer.cardId, this.g.turn)); offer.ref = P.chars.length - 1; offer.fromLife = false; follow = this.offers(i, 'onplay', offer.ref); }
+      else if (p.type === 'Stage') { if (P.stage) P.trash.push(P.stage); P.stage = offer.cardId; offer.fromLife = false; }
+      else P.trash.push(offer.cardId); }
+    else if (d.a === 'activate') { follow = this.offers(i, d.t, offer.ref != null ? offer.ref : null, offer.ref != null ? null : offer.cardId); }
+    else if (d.a === 'cost_trashhand') { const id = P.hand.splice(idx(target), 1)[0]; if (!id) return { ok: false, why: 'nothing to trash' }; P.trash.push(id); }
+    else if (d.a === 'cost_returndon') { let n = d.n; if (this.fieldDon(P) < n) return { ok: false, why: 'not enough DON!! on the field' };
+      const take = (k, v) => { const t = Math.min(n, v); n -= t; return t; }; P.don.active -= take(0, P.don.active); P.don.rested -= take(0, P.don.rested); P.leader.don -= take(0, P.leader.don); for (const c of P.chars) c.don -= take(0, c.don); P.donDeck += d.n; }
+    else if (d.a === 'cost_restself') { const o = offer.ref === 'leader' ? P.leader : P.chars[offer.ref]; if (!o || o.rested) return { ok: false, why: 'already rested' }; o.rested = true; }
+    else if (d.a === 'playfromhand') { if (P.chars.length >= 5) return { ok: false, why: 'five Characters already (§3)' }; const id = P.hand.splice(idx(target), 1)[0]; P.chars.push(this.inst(id, this.g.turn)); follow = this.offers(i, 'onplay', P.chars.length - 1); }
+    else return { ok: false, why: 'unknown action' };
+    const nm = offer.ref === 'leader' ? this.card(P.leader.id).name : (offer.ref != null && P.chars[offer.ref] ? this.card(P.chars[offer.ref].id).name : (this.card(offer.cardId) || {}).name || 'a card');
+    this.log(`${nm}: ${d.a}${target ? ' \u2192 ' + target : ''} (${offer.e.raw.replace(/^(\[[^\]]+\]\s*)+/, '').slice(0, 60)})`);
+    if (target != null) offer.prev = target;
+    offer.step++; const done = offer.step >= offer.steps.length;
+    if (!done) offer.targets = this.targetsFor(i, offer.steps[offer.step]);
+    if (done && P.looking && P.looking.length) { P.deck.push(...P.looking); P.looking = []; }
+    /* a [Trigger] card that was activated instead of kept goes to the trash afterwards (§10-2) */
+    if (done && offer.fromLife) { const h = P.hand.indexOf(offer.cardId); if (h >= 0) { P.hand.splice(h, 1); P.trash.push(offer.cardId); } }
+    return { ok: true, done, follow }; },
+  /* The manual tray: what a card's TEXT does, done by hand and logged. */
+  manual: {
+    draw(i) { SIM.draw(i, 1); SIM.log(`${SIM.P(i).name} draws (effect)`); },
+    trashChar(i, k) { const P = SIM.P(i); const c = P.chars.splice(k, 1)[0]; if (c) { P.trash.push(c.id); SIM.log(`${SIM.card(c.id).name} to trash (effect)`); } },
+    toHand(i, k) { const P = SIM.P(i); const c = P.chars.splice(k, 1)[0]; if (c) { P.hand.push(c.id); SIM.log(`${SIM.card(c.id).name} returns to hand (effect)`); } },
+    rest(i, ref, rested) { const P = SIM.P(i); const o = ref === 'leader' ? P.leader : P.chars[ref]; if (o) o.rested = rested; },
+    power(i, ref, delta) { const P = SIM.P(i); const key = SIM.keyOf(P, ref); if (!key) return; P.mods[key] = (P.mods[key] || 0) + delta; SIM.log(`${delta > 0 ? '+' : ''}${delta} power this turn (effect)`); },
+    don(i, delta) { const P = SIM.P(i); if (delta > 0) { const n = Math.min(P.donDeck, delta); P.donDeck -= n; P.don.active += n; } else { const n = Math.min(P.don.active, -delta); P.don.active -= n; P.donDeck += n; } },
+    life(i, delta) { const P = SIM.P(i); if (delta > 0 && P.deck.length) P.life.push(P.deck.shift()); if (delta < 0 && P.life.length) P.hand.push(P.life.shift()); SIM.log(`Life ${delta > 0 ? '+' : ''}${delta} (effect)`); },
+    trashHand(i, h) { const P = SIM.P(i); const id = P.hand.splice(h, 1)[0]; if (id) P.trash.push(id); }
+  }
+};
+
+/* ---- sim: the screen ----------------------------------------------------
+   One column, one player at a time, the curtain between them. A card on the
+   board is its catalogue line: name · cost · power · counter · keywords. */
+const SIMUI = { sel: null, result: null, menu: null, offer: null, post: null, afterOffer: null, legalDecks() { return DECKS.list.filter(d => d.leader && legality(d).problems.length === 0); } };
+function simCard(id, extra = '', noPower = false) {
+  const p = CAT.byId.get(id); if (!p) return `<span class="note">unknown</span>`;
+  const kw = (p.kw || '').split('|').filter(k => ['Rush', 'Blocker', 'Double Attack', 'Banish', 'Trigger', 'Unblockable'].includes(k));
+  if (extra && /\u2022kw:/.test(extra)) { extra.match(/\u2022kw:([^\u2022]*)/)[1].split(',').filter(Boolean).forEach(k => { if (!kw.includes(k)) kw.push(k + '*'); }); extra = extra.replace(/\u2022kw:[^\u2022]*\u2022/, ''); }
+  return `<b>${esc(p.name)}</b> <span class="note">${[p.cost != null ? p.cost + 'c' : '', (!noPower && p.power) ? p.power : ''].filter(Boolean).join(' \u00b7 ')}${p.counter ? ' \u00b7 +' + p.counter : ''}${kw.length ? ' \u00b7 ' + esc(kw.join(', ')) : ''}${extra}</span>`;
+}
+function simCurtain(text, sub) { const c = $('#simCurtain'); c.innerHTML = `<div class="big" style="font-size:22px;margin-bottom:8px">Hand the phone to</div><h2 style="font-size:34px;margin:0 0 12px">${esc(text)}</h2><div class="note">${esc(sub || 'tap when you have it')}</div>`; c.classList.add('on'); }
+function paintSim() {
+  const box = $('#simBoard'); const g = SIM.g;
+
+  if (!g) {                                                    // setup
+    const ds = SIMUI.legalDecks();
+    box.innerHTML = `<div class="panel"><h3>Hot-seat game</h3>
+      <div class="note">Two players, one phone. The app keeps the rules \u2014 phases, DON!!, cost, the five-Character limit, who may attack whom, block, counter, damage, Life, defeat. <b>Card effects are yours to play by hand</b> (the \u22ef menu on a card): the app does not read card text and will not guess at it.</div>
+      ${ds.length ? `<div class="fgrp">Player 1 deck</div><select id="simD1">${ds.map((d, i) => `<option value="${i}">${esc(d.name || 'Untitled')}</option>`).join('')}</select>
+      <div class="fgrp">Player 2 deck</div><select id="simD2">${ds.map((d, i) => `<option value="${i}" ${i === Math.min(1, ds.length - 1) ? 'selected' : ''}>${esc(d.name || 'Untitled')}</option>`).join('')}</select>
+      <div class="fgrp">Goes first (rock-paper-scissors is yours, \u00a75-2-2)</div><select id="simFirst"><option value="0">Player 1</option><option value="1">Player 2</option></select>
+      <div class="row" style="margin-top:14px"><button class="ghost go" data-sim="start" style="padding:10px 18px">Deal</button></div>`
+      : `<div class="note" style="margin-top:10px">No legal deck yet \u2014 build one in <b>Decks</b> (a Leader and exactly fifty cards) and it appears here.</div>`}</div>`;
+    return;
+  }
+  const i = SIMUI.post ? SIMUI.post.i : (g.phase === 'battle' && !(SIMUI.offer && SIMUI.offer.i === g.active) ? g.battle.def : g.active); const P = SIM.P(i), O = SIM.P(1 - i);
+  const head = (X, mine) => `<div class="row" style="gap:8px;flex-wrap:wrap"><b>${esc(X.name)}</b><span class="note">Life <b>${X.life.length}</b> \u00b7 Deck ${X.deck.length} \u00b7 Hand ${X.hand.length} \u00b7 DON!! ${X.don.active}/${X.don.active + X.don.rested} (${X.donDeck} in deck)${mine ? '' : ' \u00b7 ' + (X.chars.length) + ' char'}</span></div>`;
+  const unit = (X, xi, ref, mine) => { const o = ref === 'leader' ? X.leader : X.chars[ref]; const pw = SIM.power(xi, ref);
+    const open = mine && SIMUI.menu === String(ref);
+    const granted = SIM.kwOf(xi, ref).filter(k => !((CAT.byId.get(o.id) || {}).kw || '').split('|').includes(k));
+    return `<div class="row" style="gap:8px;align-items:center;opacity:${o.rested ? .55 : 1}"><div class="nm">${simCard(o.id, `\u2022kw:${granted.join(',')}\u2022 \u00b7 <b>${pw}</b>${o.don ? ' (+' + o.don + ' DON!!)' : ''}${o.rested ? ' \u00b7 rested' : ''}`, true)}</div>
+      ${mine && g.phase === 'main' && SIM.offers(xi, 'main', ref).length ? `<button class="ghost go" data-sim="fxmain:${ref}">Main</button>` : ''}
+      ${mine && g.phase === 'main' ? `<button class="ghost" data-sim="give:${ref}" title="+1000">+DON</button><button class="ghost" data-sim="attack:${ref}">Attack</button><button class="ghost${open ? ' go' : ''}" data-sim="menu:${ref}">\u22ef</button>` : ''}
+      ${!mine && SIMUI.sel && g.phase === 'main' && (ref === 'leader' || o.rested) ? `<button class="ghost go" data-sim="target:${ref}">Target</button>` : ''}</div>
+      ${open ? `<div class="row" style="gap:6px;flex-wrap:wrap;padding-left:8px"><span class="note" style="width:100%">Effects, by hand (\u00a710):</span><button class="ghost" data-sim="mp:${ref}:1000">+1000 this turn</button><button class="ghost" data-sim="mp:${ref}:-1000">\u22121000</button><button class="ghost" data-sim="mr:${ref}">${o.rested ? 'Set active' : 'Rest'}</button>${ref === 'leader' ? '' : `<button class="ghost" data-sim="mk:${ref}">K.O.</button><button class="ghost" data-sim="mh:${ref}">To hand</button>`}</div>` : ''}`; };
+  if (g.phase === 'over') { box.innerHTML = `<div class="panel"><h3>${esc(SIM.P(g.over).name)} wins</h3><div class="note">${esc(g.log[0] || '')}</div><div class="row" style="margin-top:12px"><button class="ghost go" data-sim="new">New game</button></div></div>${simLog()}`; return; }
+  if (g.phase === 'mulligan') {
+    const who = g.players.findIndex(x => x.mulliganed === null); const order = [g.first, 1 - g.first]; const cur = order.find(k => g.players[k].mulliganed === null);
+    const M = SIM.P(cur);
+    box.innerHTML = `<div class="panel"><h3>${esc(M.name)} \u2014 keep or mulligan? (\u00a75-2-3)</h3>
+      <div class="note">Leader: ${simCard(M.leader.id)}</div><div class="fgrp">Your hand</div>${M.hand.map(id => `<div class="row"><div class="nm">${simCard(id)}</div></div>`).join('')}
+      <div class="row" style="gap:10px;margin-top:12px"><button class="ghost go" data-sim="keep:${cur}">Keep</button><button class="ghost" data-sim="mull:${cur}">Mulligan (once)</button></div></div>`;
+    return;
+  }
+  if (g.phase === 'battle' && SIMUI.offer && SIMUI.offer.i === g.active) { box.innerHTML = simOfferPanel() + simLog(); return; }
+  if (g.phase === 'battle') {
+    const b = g.battle; const pw = SIM.battlePowers(); const A = SIM.P(b.att); const att = CAT.byId.get((b.aref === 'leader' ? A.leader : A.chars[b.aref]).id);
+    const tgt = b.dref === 'leader' ? CAT.byId.get(P.leader.id) : CAT.byId.get(P.chars[b.dref].id);
+    box.innerHTML = `${simOfferPanel()}<div class="panel"><h3>${esc(P.name)} is attacked</h3>
+      <div class="row"><div class="nm">${simCard(att.id)}<span>attacks with <b>${pw.a}</b></span></div></div>
+      <div class="row"><div class="nm">${simCard(tgt.id)}<span>defends with <b>${pw.d}</b>${b.counter ? ' (counters +' + b.counter + ')' : ''}${b.blocked ? ' \u00b7 blocking' : ''}</span></div></div>
+      ${b.step === 'block' ? `<div class="fgrp">Block step (\u00a77-1-2)</div>${SIM.blockers().map(x => `<button class="linkish" data-sim="block:${x.ref}">Block with ${esc(x.name)}</button>`).join('') || '<div class="note">No active [Blocker]</div>'}<button class="ghost" data-sim="noblock" style="margin-top:8px">No block \u2192 counter step</button>`
+      : `<div class="fgrp">Counter step (\u00a77-1-3)</div>${SIM.counters().map(x => `<button class="linkish" data-sim="counter:${x.h}">Counter with ${esc(x.name)} (+${x.plus})</button>`).join('') || '<div class="note">No Counter cards in hand</div>'}${SIM.counterEvents().map(x => `<button class="linkish" data-sim="cev:${x.h}">Play [Counter] ${esc(x.name)} (${x.cost} DON!!)</button>`).join('')}<div class="note" style="margin-top:6px">[Counter] Events and other effects: play them by hand, then adjust with \u22ef if needed.</div><button class="ghost go" data-sim="resolve" style="margin-top:8px">Resolve \u2014 ${pw.a} vs ${pw.d}${pw.a >= pw.d ? ': hit' : ': held'}</button>`}
+    </div>${simLog()}`;
+    return;
+  }
+  if (SIMUI.post) { const res = SIMUI.result || { win: false, a: 0, d: 0, life: [] };
+    box.innerHTML = `<div class="panel" style="border-color:var(--brass)"><h3>${res.win ? 'Hit' : 'Held'} \u2014 ${res.a} vs ${res.d}</h3>${res.ko ? `<div class="note">${esc(res.ko)} K.O.\u2019d</div>` : ''}${res.life.map(l => `<div class="note">Life card ${l.banished ? 'banished' : 'to hand'}: <b>${esc(l.name)}</b>${l.trigger && !SIMUI.offer ? ' \u2014 has [Trigger]: play it by hand if you choose' : ''}</div>`).join('')}</div>
+      ${simOfferPanel()}${SIMUI.offer ? '' : `<div class="row" style="margin-top:10px"><button class="ghost go" data-sim="post">Done \u2014 hand back to ${esc(SIM.P(SIMUI.post.att).name)}</button></div>`}${simLog()}`; return; }
+  const res = SIMUI.result; SIMUI.result = null;
+  box.innerHTML = `${simOfferPanel()}${res && i !== (g.battle ? g.battle.def : -1) ? `<div class="panel" style="border-color:var(--brass)"><h3>${res.win ? 'Hit' : 'Held'} \u2014 ${res.a} vs ${res.d}</h3>${res.ko ? `<div class="note">${esc(res.ko)} K.O.\u2019d</div>` : ''}${res.life.map(l => `<div class="note">Life card ${l.banished ? 'banished' : 'to hand'}: <b>${esc(l.name)}</b></div>`).join('')}</div>` : ''}
+    <div class="panel"><h3>Opponent</h3>${head(O, false)}<div style="margin-top:8px">${unit(O, 1 - i, 'leader', false)}${O.chars.map((c, k) => unit(O, 1 - i, k, false)).join('')}${O.stage ? `<div class="note">Stage: ${simCard(O.stage)}</div>` : ''}</div></div>
+    <div class="panel"><h3>${esc(P.name)} \u2014 turn ${g.turn}${SIMUI.sel ? ' \u00b7 <span style="color:var(--brass)">choose a target</span>' : ''}</h3>${head(P, true)}
+      <div style="margin-top:8px">${unit(P, i, 'leader', true)}${P.chars.map((c, k) => unit(P, i, k, true)).join('')}${P.stage ? `<div class="note">Stage: ${simCard(P.stage)}</div>` : ''}</div>
+      <div class="fgrp">Hand</div>${P.hand.map((id, h) => { const v = SIM.canPlay(i, h); return `<div class="row" style="gap:8px"><div class="nm">${simCard(id)}${v.ok ? '' : `<span>${esc(v.why)}</span>`}</div><button class="ghost${v.ok ? ' go' : ''}" data-sim="play:${h}" ${v.ok ? '' : 'disabled'}>Play</button><button class="ghost" data-sim="trashhand:${h}" title="effect: trash">\u2715</button></div>`; }).join('') || '<div class="note">empty</div>'}
+      <div class="row" style="gap:10px;margin-top:14px;flex-wrap:wrap"><button class="ghost go" data-sim="end">End turn \u2014 pass the phone</button>
+        <button class="ghost" data-sim="m:draw">Draw (effect)</button><button class="ghost" data-sim="m:don">+1 DON!! (effect)</button><button class="ghost" data-sim="m:life-">Life \u2192 hand (effect)</button><button class="ghost" data-sim="m:life+">+1 Life (effect)</button></div>
+    </div>${simLog()}`;
+}
+function simOfferPanel() {
+  const o = SIMUI.offer; if (!o || !o.list.length) return '';
+  const cur = o.list[0]; const P = SIM.P(o.i); const src = cur.ref == null ? null : (cur.ref === 'leader' ? P.leader : P.chars[cur.ref]);
+  const nm = src ? CAT.byId.get(src.id).name : (cur.cardId ? CAT.byId.get(cur.cardId).name : 'Effect');
+  return `<div class="panel" style="border-color:var(--brass)"><h3>${esc(nm)} \u2014 effect</h3><div class="note">${esc(cur.e.raw)}</div>
+    ${cur.steps.length > 1 ? `<div class="note">step ${cur.step + 1} of ${cur.steps.length}${/^cost_/.test(cur.steps[cur.step].a) ? ' \u2014 the cost; skipping declines the effect' : ''}</div>` : ''}
+    ${cur.targets && cur.targets.length ? `<div class="fgrp">Choose</div>${cur.targets.map(t => `<button class="linkish" data-sim="fx:${t.ref}">${esc(t.name)}</button>`).join('')}` : (cur.targets && !cur.targets.length ? '<div class="note">No legal target for this step.</div>' : '')}
+    <div class="row" style="gap:10px;margin-top:8px">${!(cur.targets && cur.targets.length) || cur.steps[cur.step].upto ? `<button class="ghost go" data-sim="fxapply">${cur.targets ? (cur.steps[cur.step].upto ? 'Trash none' : 'Continue') : 'Apply'}</button>` : ''}<button class="ghost" data-sim="fxskip">Skip (play it by hand)</button></div></div>`;
+}
+function simOffer(i, trigger, ref, cardId, fromLife) { const list = SIM.offers(i, trigger, ref, cardId, fromLife); if (!list.length) return false; SIMUI.offer = SIMUI.offer && SIMUI.offer.i === i ? { i, list: SIMUI.offer.list.concat(list) } : { i, list }; return true; }
+function simOfferAll(i, trigger) { const P = SIM.P(i); let any = simOffer(i, trigger, 'leader'); P.chars.forEach((c, k) => { if (simOffer(i, trigger, k)) any = true; }); return any; }
+/* What happens once an offer list empties: the end of the turn that was
+   waiting on [End of Your Turn], or the hand-over the attack step delayed. */
+function simAfterOffers() { const g = SIM.g; if (!g || SIMUI.offer) return;
+  if (SIMUI.afterOffer === 'endTurn') { SIMUI.afterOffer = null; const who = 1 - g.active; SIM.endTurn(); SIMUI.sel = null; if (g.phase !== 'over') simCurtain(SIM.P(who).name, `turn ${g.turn}`); }
+  if (SIMUI.afterOffer === 'toDefender' && g.phase === 'battle') { SIMUI.afterOffer = null; simCurtain(SIM.P(g.battle.def).name, 'an attack is coming \u2014 block or counter'); } }
+function simLog() { return `<div class="panel"><h3>Log</h3><div class="note">${SIM.g.log.slice(0, 8).map(esc).join('<br>') || '\u2014'}</div><button class="linkish" data-sim="sharelog" style="margin-top:6px">Share the game log</button></div>`; }
+function simLogText() { const g = SIM.g; if (!g) return ''; const P = i => g.players[i]; return [`OP TCG Hub sim \u2014 take ${TAKE}`, `${P(0).name} (${CAT.byId.get(P(0).leader.id)?.name}) vs ${P(1).name} (${CAT.byId.get(P(1).leader.id)?.name}), turn ${g.turn}`, '', ...g.log.slice().reverse()].join('\n'); }
+$('#sim').addEventListener('click', e => {
+  const b = e.target.closest('[data-sim]'); if (!b) return; const [act, arg] = b.dataset.sim.split(':'); const g = SIM.g;
+  const ref = arg === 'leader' ? 'leader' : (arg == null ? null : +arg);
+  const say = r => { if (r && r.ok === false && r.why) toast(r.why); };
+  if (act === 'start') { const ds = SIMUI.legalDecks(); const d1 = ds[+$('#simD1').value], d2 = ds[+$('#simD2').value]; const first = +$('#simFirst').value;
+    SIM.new({ ...d1, name: 'Player 1' + (d1.name ? ' \u2014 ' + d1.name : '') }, { ...d2, name: 'Player 2' + (d2.name ? ' \u2014 ' + d2.name : '') }, first); simCurtain(SIM.P(first).name, 'keep or mulligan first'); paintSim(); return; }
+  if (act === 'new') { SIM.g = null; SIMUI.sel = null; SIMUI.offer = null; SIMUI.post = null; SIMUI.result = null; paintSim(); return; }
+  if (act === 'sharelog') { const t = simLogText(); if (navigator.share) navigator.share({ title: 'OP TCG Hub game log', text: t }).catch(() => {}); else { try { navigator.clipboard.writeText(t); toast('Copied'); } catch (e) { toast('Copy failed'); } } return; }
+  if (act === 'keep' || act === 'mull') { SIM.mulligan(ref, act === 'mull'); const next = g.players.findIndex(x => x.mulliganed === null); simCurtain(next >= 0 ? SIM.P(next).name : SIM.P(g.active).name, next >= 0 ? 'keep or mulligan' : 'turn 1'); paintSim(); return; }
+  if (act === 'play') { const r = SIM.play(g.active, ref); say(r); if (r.ok && r.card.type === 'Character') simOffer(g.active, 'onplay', SIM.P(g.active).chars.length - 1); else if (r.ok && r.card.type === 'Event') simOffer(g.active, 'evmain', null, r.card.id); else if (r.ok) simOffer(g.active, 'onplay', null, r.card.id); paintSim(); return; }
+  if (act === 'cev') { const r = SIM.playCounterEvent(ref); say(r); if (r.ok) simOffer(g.battle.def, 'evcounter', null, r.id); paintSim(); return; }
+  if (act === 'fxmain') { simOffer(g.active, 'main', ref); paintSim(); return; }
+  if (act === 'fx' || act === 'fxapply') { const o = SIMUI.offer; if (!o) return; const cur = o.list[0]; const r = SIM.apply(o.i, cur, act === 'fx' ? arg : null); say(r);
+    if (r.ok && r.done) { o.list.shift(); if (r.follow && r.follow.length) o.list.unshift(...r.follow); if (!o.list.length) SIMUI.offer = null; } simAfterOffers(); paintSim(); return; }
+  if (act === 'fxskip') { const o = SIMUI.offer; if (o) { o.list.shift(); if (!o.list.length) SIMUI.offer = null; } simAfterOffers(); paintSim(); return; }
+  if (act === 'post') { SIMUI.post = null; simCurtain(SIM.P(g.battle ? g.battle.att : 1 - g.active).name, 'the attack is resolved'); paintSim(); return; }
+  if (act === 'trashhand') { SIM.manual.trashHand(g.active, ref); paintSim(); return; }
+  if (act === 'give') { say(SIM.giveDon(g.active, ref)); paintSim(); return; }
+  if (act === 'attack') { const v = SIM.canAttack(g.active, ref); if (!v.ok) { toast(v.why); return; } SIMUI.sel = SIMUI.sel && SIMUI.sel.ref === ref ? null : { ref }; paintSim(); return; }
+  if (act === 'target') { const aref = SIMUI.sel.ref; const r = SIM.attack(g.active, aref, ref); SIMUI.sel = null; if (!r.ok) { toast(r.why); paintSim(); return; }
+    /* §7-1-1 attack step: [When Attacking] resolves before the defender's window, on the attacker's screen */
+    if (simOffer(g.active, 'attack', aref)) { SIMUI.afterOffer = 'toDefender'; paintSim(); return; }
+    simCurtain(SIM.P(g.battle.def).name, 'an attack is coming \u2014 block or counter'); paintSim(); return; }
+  if (act === 'block') { const r = SIM.block(ref); say(r); if (r.ok) simOffer(g.battle.def, 'onblock', ref); paintSim(); return; }
+  if (act === 'noblock') { SIM.noBlock(); paintSim(); return; }
+  if (act === 'counter') { say(SIM.counter(ref)); paintSim(); return; }
+  if (act === 'resolve') { const def = g.battle.def, att = g.battle.att; const res = SIM.resolve(); SIMUI.result = res;
+    if (g.phase === 'over') { paintSim(); return; }
+    SIMUI.post = { i: def, att }; res.life.forEach(l => { if (!l.banished) simOffer(def, 'trigger', null, l.id, true); }); if (res.koId) simOffer(def, 'onko', null, res.koId);
+    paintSim(); return; }
+  if (act === 'end') { if (simOfferAll(g.active, 'endturn')) { SIMUI.afterOffer = 'endTurn'; paintSim(); return; } const who = 1 - g.active; SIM.endTurn(); SIMUI.sel = null; if (g.phase !== 'over') simCurtain(SIM.P(who).name, `turn ${g.turn}`); paintSim(); return; }
+  if (act === 'menu') { SIMUI.menu = SIMUI.menu === String(ref) ? null : String(ref); paintSim(); return; }
+  if (act === 'mp') { const parts = b.dataset.sim.split(':'); SIM.manual.power(g.active, parts[1] === 'leader' ? 'leader' : +parts[1], +parts[2]); paintSim(); return; }
+  if (act === 'mr') { const P = SIM.P(g.active); const o = ref === 'leader' ? P.leader : P.chars[ref]; SIM.manual.rest(g.active, ref, !o.rested); paintSim(); return; }
+  if (act === 'mk') { SIM.manual.trashChar(g.active, ref); SIMUI.menu = null; paintSim(); return; }
+  if (act === 'mh') { SIM.manual.toHand(g.active, ref); SIMUI.menu = null; paintSim(); return; }
+  if (act === 'm') { const i = g.active; if (arg === 'draw') SIM.manual.draw(i); if (arg === 'don') SIM.manual.don(i, 1); if (arg === 'life-') SIM.manual.life(i, -1); if (arg === 'life+') SIM.manual.life(i, 1); paintSim(); return; }
+});
+$('#simCurtain').addEventListener('click', () => { $('#simCurtain').classList.remove('on'); paintSim(); });
+
+/* ---- self-test (take 45) ------------------------------------------------
+   smoke.mjs proves the app in node; this proves it on the PHONE, against
+   the real catalogue and the real plugins, in one tap. Each check is
+   PASS / FAIL / SKIP with one line; SKIP means "this environment cannot
+   answer", never "probably fine". The report is shareable text so a tester
+   can paste it. A check that throws is a FAIL with the message. */
+const SELFTEST = {
+  last: null,
+  async run() {
+    const out = [];
+    const check = async (name, fn) => {
+      try { const r = await fn(); out.push({ name, s: r === null ? 'SKIP' : (r === true || (r && r.ok) ? 'PASS' : 'FAIL'), note: (r && r.note) || (r === null ? 'not available here' : '') }); }
+      catch (e) { out.push({ name, s: 'FAIL', note: String(e && e.message || e).slice(0, 120) }); }
+    };
+    await check('Catalogue loaded', () => ({ ok: CAT.ready && CAT.rows.length === (CAT.man.printings || CAT.rows.length) && CAT.rows.length > 5000, note: `${CAT.rows.length} printings, ${CAT.sets.size} sets, prices ${(CAT.man.source_updated_at || '?').slice(0, 10)}` }));
+    await check('Printing index is one-to-one', () => ({ ok: CAT.byId.size === CAT.rows.length, note: `${CAT.byId.size} ids` }));
+    await check('Price history on file', () => ({ ok: (CAT.days || []).length >= 1, note: `${(CAT.days || []).length} day(s)` }));
+    await check('The confidence gate asks on a 300x spread', () => { const r = resolve('EB03-024'); return { ok: r.verdict === 'ask' && r.candidates.length === 3, note: `${r.verdict}, ${r.candidates.length} printings` }; });
+    await check('A unique number auto-accepts', () => { const one = [...CAT.byNum.entries()].find(([n, l]) => l.filter(p => p.num === n).length === 1); if (!one) return { ok: false, note: 'no unique number found' }; const r = resolve(one[0]); return { ok: r.verdict === 'auto', note: `${one[0]} \u2192 ${r.verdict}` }; });
+    await check('Search finds a card by name', () => { const n = CAT.rows.filter(p => p.full.toLowerCase().includes('nami')).length; return { ok: n > 0, note: `${n} rows for "nami"` }; });
+    await check('Star template shipped', () => ({ ok: !!(CAT.star && CAT.star.box), note: CAT.star ? `threshold ${CAT.star.threshold}` : 'missing' }));
+    await check('Fonts loaded', async () => { if (!document.fonts || !document.fonts.check) return null; await document.fonts.ready; const ok = document.fonts.check('16px "OPH Display"') && document.fonts.check('16px "OPH Body"'); return { ok, note: ok ? 'display + body' : 'a role face did not load' }; });
+    await check('Storage writes and reads back', () => { const k = 'vault.selftest', v = String(Date.now()); localStorage.setItem(k, v); const ok = localStorage.getItem(k) === v; localStorage.removeItem(k); return { ok, note: ok ? 'localStorage round-trip' : 'mismatch' }; });
+    await check('Backup file round-trip (Filesystem)', async () => { const FS = PLATFORM.plugin('Filesystem'); if (!FS) return null; const path = 'selftest/probe.json', data = JSON.stringify({ t: Date.now() }); await FS.writeFile({ path, data, directory: 'CACHE', recursive: true, encoding: 'utf8' }); const r = await FS.readFile({ path, directory: 'CACHE', encoding: 'utf8' }); try { await FS.deleteFile({ path, directory: 'CACHE' }); } catch (e) {} return { ok: r.data === data, note: 'wrote, read, deleted in the app cache' }; });
+    await check('Share sheet available', async () => { const SH = PLATFORM.plugin('Share'); if (!SH) return null; const r = await SH.canShare(); return { ok: !!r.value, note: r.value ? 'Share.canShare true' : 'canShare false' }; });
+    await check('Camera reachable', async () => { if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return null; const d = (await navigator.mediaDevices.enumerateDevices()).filter(x => x.kind === 'videoinput'); return { ok: d.length > 0, note: `${d.length} camera(s) listed` }; });
+    await check('OCR reads a code the app drew (ML Kit)', async () => {
+      if (!PLATFORM.hasOcr()) return null;
+      const c = document.createElement('canvas'); c.width = 600; c.height = 160;
+      const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 600, 160); x.fillStyle = '#000'; x.font = 'bold 72px sans-serif'; x.fillText('OP01-016', 40, 110);
+      const txt = await PLATFORM.ocr(c); const m = parseRead(txt || ''); return { ok: !!m && m.num === 'OP01-016', note: txt ? `read "${String(txt).trim().slice(0, 30)}"` : 'no text returned' };
+    });
+    await check('Notifications permission', async () => { const N = PLATFORM.plugin('LocalNotifications'); if (!N) return null; const r = await N.checkPermissions(); return { ok: r.display !== 'denied', note: `display: ${r.display}` }; });
+    await check('Ads plugin present, test units', () => { const A = PLATFORM.plugin('AdMob'); if (!A) return null; return { ok: !!(CAT.man.ads && CAT.man.ads.test), note: CAT.man.ads && CAT.man.ads.test ? 'Google test units' : 'REAL units in a test build' }; });
+    await check('Sim: scripted effects loaded and one offers correctly', () => { const n = Object.keys(CAT.effects || {}).length; if (!n) return { ok: false, note: 'no effects in the bundle' };
+      const k = Object.keys(CAT.effects).find(id => CAT.effects[id].some(e => e.t === 'onplay' && e.if.length === 0 && e.do.length === 1 && e.do[0].a === 'draw'));
+      if (!k) return { ok: false, note: `${n} cards scripted, no plain [On Play] draw among them` };
+      const P = { name: 'probe', deck: [1, 2, 3], hand: [], life: [], trash: [], leader: { id: +k, rested: false, don: 0 }, chars: [{ id: +k, rested: false, don: 0, turn: 1, uid: 1 }], stage: null, donDeck: 10, don: { active: 0, rested: 0 }, mods: {}, modl: [], taken: 1 };
+      const saved = SIM.g; SIM.g = { turn: 1, first: 0, active: 0, phase: 'main', players: [P, JSON.parse(JSON.stringify(P))], battle: null, log: [], over: null };
+      try { const o = SIM.offers(0, 'onplay', 0); const r = o.length ? SIM.apply(0, o[0], null) : null; return { ok: !!(r && r.ok && P.hand.length === o[0].steps[0].n), note: `${n} cards scripted; ${CAT.byId.get(+k)?.name} drew ${P.hand.length}` }; }
+      finally { SIM.g = saved; } });
+    await check('Sync URL answers', async () => { const base = CAT.man.updateUrl; if (!base) return { ok: false, note: 'not configured' }; if (!navigator.onLine) return null; const r = await fetch(base + 'manifest.json', { cache: 'no-store' }); const m = r.ok ? await r.json() : null; return { ok: !!(m && m.source_updated_at), note: m ? `Pages has prices from ${m.source_updated_at.slice(0, 10)}` : `HTTP ${r.status}` }; });
+    this.last = { at: new Date().toISOString(), take: TAKE, checks: out };
+    return this.last;
+  },
+  text() {
+    const r = this.last; if (!r) return '';
+    const n = s => r.checks.filter(c => c.s === s).length;
+    return [`OP TCG Hub self-test \u2014 take ${r.take} \u2014 ${r.at.slice(0, 16)}`, `${n('PASS')} pass, ${n('FAIL')} fail, ${n('SKIP')} skipped`, '',
+      ...r.checks.map(c => `${c.s.padEnd(4)} ${c.name}${c.note ? ' \u2014 ' + c.note : ''}`)].join('\n');
+  }
+};
+async function runSelfTest() {
+  const box = $('#stOut'); if (box) box.innerHTML = '<div class="note">Running\u2026</div>';
+  const r = await SELFTEST.run();
+  if (!box) return r;
+  box.innerHTML = r.checks.map(c => `<div class="row" style="gap:10px"><b style="min-width:44px;color:${c.s === 'PASS' ? 'var(--up)' : c.s === 'FAIL' ? 'var(--down)' : 'var(--dim2)'}">${c.s}</b>
+    <div class="nm"><b>${esc(c.name)}</b>${c.note ? `<span>${esc(c.note)}</span>` : ''}</div></div>`).join('') +
+    `<button class="linkish" id="stShare" style="margin-top:8px">Share the report</button>`;
+  const sh = $('#stShare'); if (sh) sh.addEventListener('click', () => { const t = SELFTEST.text(); if (navigator.share) navigator.share({ title: 'OP TCG Hub self-test', text: t }).catch(() => {}); else { try { navigator.clipboard.writeText(t); toast('Copied'); } catch (e) { toast('Copy failed'); } } });
+  return r;
 }
 
 /* ---- boot -------------------------------------------------------------- */
@@ -3851,9 +4374,9 @@ function paintSettings() {
      day and a hardcoded placeholder is landmine 62 in a text box. */
   $('#allq').placeholder = `Search all ${(CAT.man.cards || 0).toLocaleString()} cards`;
   paintNet(); paintHome();
-  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, exportCsv,
+  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, exportCsv, collectionPage, shareCollectionPage, simLogText,
                    FILT, applyFilter, sortRows, blankFilter, activeCount,
-                   DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, PLAY, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,
+                   DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,
                    backupJson, scheduleBackup,
                    scan: { PLATFORM, detectQuad, parseRead, normaliseRead, starScore,
                            makeVoter, identifyFrame, cropCode, cropStar, CODE_BOX } };

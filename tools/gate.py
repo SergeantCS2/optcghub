@@ -412,6 +412,10 @@ def check_selftests():
                        capture_output=True, text=True)
     if r.returncode:
         fail("selftest", "variants.py cases failed:\n" + r.stdout)
+    r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "effects.py"), "--selftest"],
+                       capture_output=True, text=True)
+    if r.returncode:
+        fail("selftest", "effects.py negative controls did not all fire:\n" + r.stdout)
     r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "scrub.py"), "--selftest"],
                        capture_output=True, text=True)
     if r.returncode:
