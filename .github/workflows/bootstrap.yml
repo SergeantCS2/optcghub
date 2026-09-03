@@ -1,0 +1,68 @@
+name: bootstrap
+
+# OP TCG Hub — first-run seed unpack. Pasted by hand ONCE, like build.yml.
+#
+# Why this exists: the phone-only path to a new repo is "create repo, paste
+# two workflows, upload one zip as a Release asset, press Run". A Release
+# asset upload works from a phone browser; committing a 700 KB zip into the
+# tree via "Add file" is fiddlier and larger repos choke on it. This job pulls
+# the newest optcghub-seed-tNNN.zip off the latest Release, unpacks it, and
+# commits it. That push triggers build.yml.
+#
+# It is ALSO the recovery path: if the tree is ever wrong, upload a seed as a
+# Release asset and run this. It replaces the tree with the seed's contents
+# (except .github/, which GITHUB_TOKEN cannot write — APEX landmine 46).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}          # APEX landmine 85
+
+      - name: Fetch the newest seed from the latest Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # the highest take number wins, not the newest upload
+          asset=$(gh release view --json assets -q '.assets[].name' 2>/dev/null \
+                  | grep -E '^optcghub-seed-t[0-9]+\.zip$' \
+                  | sort -t t -k3 -n | tail -1 || true)
+          if [ -z "$asset" ]; then
+            echo "::error::No optcghub-seed-tNNN.zip on the latest Release."
+            echo "Releases -> the latest one -> attach the seed zip -> re-run."
+            exit 1
+          fi
+          echo "seed: $asset"
+          gh release download --pattern "$asset" -O seed.zip
+          sha256sum seed.zip
+
+      - name: Unpack and commit
+        run: |
+          set -euo pipefail
+          # Replace, do not merge: a stale file the seed no longer carries must
+          # not survive (landmine 57 — a removed output that lived on).
+          find . -mindepth 1 -maxdepth 1 \
+               ! -name .git ! -name .github ! -name seed.zip \
+               -exec rm -rf {} +
+          unzip -o -q seed.zip -x '.github/*'
+          rm -f seed.zip
+          take=$(grep -oP 'VAULT_TAKE=\K[0-9]+' BUILD)
+          git config user.name  "optcghub-seed"
+          git config user.email "optcghub-seed@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "tree already matches the seed (take $take)"; exit 0
+          fi
+          git commit -q -m "bootstrap: take $take"
+          git push
+          echo "committed take $take — build.yml will now run"
