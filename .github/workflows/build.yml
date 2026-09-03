@@ -1,0 +1,203 @@
+name: build
+
+# OP TCG Hub. Adapted from APEX ORV's workflow; the structural landmines it
+# carries were paid for over there and cost nothing here.
+#
+#   seed   -> unpack the uploaded seed zip and commit it
+#   bundle -> build the catalogue, the app, run smoke + gate
+#   pages  -> browser build + privacy policy (Play requires a live URL)
+#   apk    -> signed APK for sideload, AAB for Play
+#
+# THIS FILE IS PASTED BY HAND into .github/workflows/build.yml. The seed cannot
+# write it (APEX landmine 46: GITHUB_TOKEN cannot write .github/workflows).
+# If it is ever rewritten: the `seed` job and 'optcghub-seed*.zip' in push.paths
+# are LOAD-BEARING and a paste has dropped them before, after which every run
+# rebuilt the same stale take at full green for a week (APEX landmine 202).
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'optcghub-seed*.zip'
+      - BUILD
+      - 'src/**'
+      - 'tools/**'
+      - 'ci/**'
+      - package.json
+      - capacitor.config.json
+      - 'signing/**'
+  schedule:
+    # TCGCSV refreshes ~20:00 UTC daily (landmine 3). Building before that ships
+    # a day-stale catalogue that reports itself current, so this runs after.
+    - cron: '30 21 * * *'
+
+concurrency:
+  group: build
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  # ── unpack the seed ─────────────────────────────────────────────────────
+  seed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - name: Unpack any seed zip at the repo root and commit it
+        run: |
+          shopt -s nullglob
+          zips=(optcghub-seed*.zip)
+          if [ ${#zips[@]} -eq 0 ]; then
+            echo "no seed zip at root — building the committed tree as-is"; exit 0
+          fi
+          z="${zips[-1]}"
+          echo "seed: $z  sha256 $(sha256sum "$z" | cut -c1-16)…"
+          unzip -o -q "$z" -x '.github/*'
+          rm -f optcghub-seed*.zip
+          take=$(grep -oP 'VAULT_TAKE=\K[0-9]+' BUILD || echo '?')
+          git config user.name  "optcghub-seed"
+          git config user.email "optcghub-seed@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "seed identical to the tree — nothing to commit (take $take)"; exit 0
+          fi
+          git commit -q -m "seed: take $take from $z"
+          git push
+          echo "committed take $take"
+
+  # ── build, verify, gate ─────────────────────────────────────────────────
+  bundle:
+    needs: seed
+    runs-on: ubuntu-latest
+    timeout-minutes: 45     # hashes are the long pole: MEASURED 8.3/s, ~14 min
+    steps:
+      # `ref` is REQUIRED. checkout defaults to the commit that TRIGGERED the
+      # run; the seed job pushes a newer one, so a default checkout lands on a
+      # tree without ci/bundle.sh (APEX landmine 85).
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'    # Capacitor 8 requires Node 22+
+
+      # Artwork is fetched, hashed and discarded (landmine 26). Caching the
+      # HASHES rather than the images means a rebuild is seconds and no
+      # copyrighted bytes ever persist anywhere in this repo's infrastructure.
+      - name: Restore catalogue cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            tcgcsv_cache
+            catalog/catalog.sqlite
+          key: catalog-${{ github.run_number }}
+          restore-keys: catalog-
+
+      - name: Build the catalogue, the app, and gate it
+        run: bash ci/bundle.sh
+
+      # A9. A failed nightly is silent by default: the app keeps its last
+      # catalogue and nobody is told. This opens ONE issue, labelled, and
+      # appends to it on each further failure, so three bad nights are three
+      # comments on one thread rather than nothing. GitHub also emails the
+      # owner on workflow failure; the issue is what survives the email.
+      - name: Report a failed night
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          n=$(gh issue list --label nightly-failure --state open --json number -q '.[0].number' 2>/dev/null || true)
+          body="Nightly build failed — run ${{ github.run_id }} on $(date -u +%Y-%m-%d). See the Actions log. The app keeps running on its last catalogue; the Home screen will show a stale banner after three days (A9)."
+          if [ -n "$n" ]; then gh issue comment "$n" --body "$body"
+          else gh issue create --title "Nightly catalogue build is failing" --label nightly-failure --body "$body" 2>/dev/null \
+               || gh issue create --title "Nightly catalogue build is failing" --body "$body"; fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: www
+          path: www
+          retention-days: 7
+
+  # ── Pages: the privacy policy URL Play requires ─────────────────────────
+  pages:
+    needs: bundle
+    runs-on: ubuntu-latest
+    continue-on-error: true      # un-enabled Pages must not block the APK
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: www, path: www }
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: www }
+      - id: deploy
+        uses: actions/deploy-pages@v4
+
+  # ── package ─────────────────────────────────────────────────────────────
+  apk:
+    needs: bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}          # APEX landmine 85, again
+      - uses: actions/download-artifact@v4
+        with: { name: www, path: www }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21' }
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      # Every job is a FRESH runner — the bundle job's pip install does not carry
+      # over (APEX landmine 83). All logic lives in ci/apk.sh, which the seed can
+      # update; this file cannot be (APEX landmine 84).
+      #
+      # The Play upload key is a repository SECRET and never enters the tree
+      # (landmine 23). With no secrets set the AAB is still built, dev-key-signed
+      # and NAMED unfit to upload, so sideload testing never blocks on Play setup.
+      - name: Build the signed APK and the Play AAB
+        id: pkg
+        env:
+          PLAY_UPLOAD_KEYSTORE_B64: ${{ secrets.PLAY_UPLOAD_KEYSTORE_B64 }}
+          PLAY_UPLOAD_STORE_PASS:   ${{ secrets.PLAY_UPLOAD_STORE_PASS }}
+          PLAY_UPLOAD_KEY_ALIAS:    ${{ secrets.PLAY_UPLOAD_KEY_ALIAS }}
+          PLAY_UPLOAD_KEY_PASS:     ${{ secrets.PLAY_UPLOAD_KEY_PASS }}
+        run: bash ci/apk.sh
+
+      - uses: actions/upload-artifact@v4
+        with: { name: apk, path: "${{ steps.pkg.outputs.apk }}" }
+      - uses: actions/upload-artifact@v4
+        with: { name: aab, path: "${{ steps.pkg.outputs.aab }}" }
+
+      # Release notes come from ci/RELEASE.md, in the REPO. Inline here they
+      # would freeze at whatever take was last pasted (APEX landmine 96).
+      # The nightly cron builds the SAME take with fresh prices; a second
+      # `gh release create` on an existing tag fails. Create once, then
+      # replace the assets (landmine 105).
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="take-${{ steps.pkg.outputs.take }}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "${{ steps.pkg.outputs.apk }}" "${{ steps.pkg.outputs.aab }}" --clobber
+            gh release edit "$tag" --notes-file ci/RELEASE.md
+            echo "updated $tag with tonight's build"
+          else
+            gh release create "$tag" \
+              "${{ steps.pkg.outputs.apk }}" "${{ steps.pkg.outputs.aab }}" \
+              --title "OP TCG Hub — take ${{ steps.pkg.outputs.take }}" \
+              --notes-file ci/RELEASE.md
+          fi
