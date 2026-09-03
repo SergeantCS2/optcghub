@@ -372,6 +372,22 @@ def check_secrets():
             fail("secrets", f".gitignore is missing '{pat}'")
 
 
+def check_render_receipt():
+    """Landmine 112. render.mjs falls back to a DOM check when Chrome is absent
+    and says so -- but a seal read off the last line does not hear it, and
+    take 37 sealed on "10 passed (mode: dom)". Chrome writes www/render.png
+    and DOM mode does not, so the receipt must exist and be newer than the
+    built app.js: this build was DRAWN, not merely parsed."""
+    js, png = os.path.join(ROOT, "www", "app.js"), os.path.join(ROOT, "www", "render.png")
+    if not os.path.exists(js):
+        return note("www/ not built -- render receipt skipped")
+    if not os.path.exists(png):
+        return fail("render", "www/render.png missing -- render.mjs did not run in Chrome on this build "
+                              "(npm install --no-save puppeteer acorn, then python3 tools/pipeline.py render)")
+    if os.path.getmtime(png) < os.path.getmtime(js):
+        fail("render", "www/render.png is older than www/app.js -- rebuild, then render in Chrome (landmine 112)")
+
+
 def check_scrub():
     """Take 35. Nothing public carries the owner's first name, an AI vendor's
     name, a session reference, a credential-shaped string, a build-container path
@@ -423,7 +439,7 @@ def selftest():
             globals()["ROOT"] = tmp
             n = take()
             check_docs_current(n); check_handoff(n); check_agenda()
-            check_landmine_citations(); check_secrets()
+            check_landmine_citations(); check_secrets(); check_render_receipt()
             fired = bool(FAILS)
         finally:
             globals()["ROOT"] = old
@@ -445,6 +461,8 @@ def selftest():
     probe("bogus landmine citation",
           lambda t: open(os.path.join(t, "tools/config.py"), "a")
           .write("\n# see land" + "mine 9999\n"))
+    probe("render receipt missing (DOM-mode seal)",
+          lambda t: os.path.exists(os.path.join(t, "www", "render.png")) and os.remove(os.path.join(t, "www", "render.png")))
     probe("upload key in the tree",
           lambda t: open(os.path.join(t, "apex-upload.jks"), "w").write("x"))
 
@@ -480,6 +498,7 @@ if __name__ == "__main__":
     check_catalogue()
     check_harness()
     check_secrets()
+    check_render_receipt()
     check_scrub()
     check_selftests()
 

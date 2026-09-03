@@ -1,6 +1,6 @@
 # PROTOCOL
 
-*Current as of take 35.*
+*Current as of take 40.*
 
 The working rules for this project. The gate enforces the ones it can.
 
@@ -20,8 +20,11 @@ When the session starts from a seed zip rather than a live tree:
    outputs folder should carry the last seed and APK; if not, that is the first fix.
 2. **Read** `V1-STATE.md`, then `HANDOFF.md` newest-first, then `LANDMINES.md`
    §0, then `AGENDA.md`. In that order; the state document is the map.
-3. **Rebuild once:** `python3 tools/pipeline.py history catalog validate app
-   smoke stamp gate`. Green before any change. Red on a fresh seed means the
+3. **Rebuild once, in full:** `npm install --no-save puppeteer acorn` then
+   `python3 tools/pipeline.py` (a seed carries no TCGCSV cache, so ingest
+   must run; the gate wants Chrome's render receipt, so render must run in
+   Chrome — `mode: chrome` in its last line, landmine 112). Green before any
+   change. Red on a fresh seed means the
    seed was sealed wrong, and that is the take.
 4. **Open the HANDOFF entry** for the new take before any code (§6). Bump
    `BUILD`.

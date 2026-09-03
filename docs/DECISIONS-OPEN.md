@@ -1,17 +1,17 @@
 # OPEN DECISIONS — needed from the owner
 
-*Current as of take 35.* Everything else is decided and recorded in AGENDA.
+*Current as of take 40.* Everything else is decided and recorded in AGENDA.
 
-**D1 — App id and name.** Proposed `com.optcghub.app` / "OP TCG Hub". Permanent
+**D1 — App id and name. ANSWERED: registered with Play at the take-35 upload as `com.optcghub.app` / "OP TCG Hub", permanent.** *(original)* Proposed `com.optcghub.app` / "OP TCG Hub". Permanent
 once registered under developer verification and fixed from first Play upload
 (A8, landmine 36). Blocks the first commit.
 
-**D2 — Play account: personal or organisation, and created when?** If personal
+**D2 — Play account. ANSWERED take 39: personal, so the 12-tester / 14-day gate applies (landmine 35).** *(original)* Personal or organisation, and created when? If personal
 and after 13 Nov 2023, Phase 6 carries a 12-tester / 14-continuous-day gate that
 is pure calendar time (landmine 35). This answer decides whether tester
 recruitment starts this week or never happens.
 
-**D3 — Does the sideload build get its own applicationId?** APEX ORV ships two so
+**D3 — Sideload applicationId. ANSWERED take 39: no — one id, registered; the switch is export → uninstall → import (landmine 34).** *(original)* Does the sideload build get its own applicationId? APEX ORV ships two so
 both can sit on the phone. Recommended yes. Decide before there is a collection
 worth keeping — WebView storage is per-app and does not carry across (landmine 34).
 

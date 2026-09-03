@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 35.* Ranked by blocking-ness, not by interest.
+*Current as of take 40.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -249,7 +249,7 @@ of value.
   by hand, flagged `sealed`, and never a scan candidate — the number index
   refuses an empty key so a no-read cannot resolve to "all 658 boxes".
 
-## A8 — App name, id and signing · CLOSED take 4
+## A8 — App name, id and signing · CLOSED take 4 · REGISTERED WITH PLAY take 35
 
 Blocked the first commit for three takes. The owner's call, take 4.
 
@@ -453,7 +453,7 @@ from.
 - Auto-grading condition from a photo (a separate product; A4).
 - A social feed (a backend; ROADMAP won't-build).
 
-## A21 — Google Play · CI PROVEN ON THE RUNNER take 33 · the clock is the owner's next ten steps
+## A21 — Google Play · IN THE CONSOLE take 39 · internal test live, closed track at 4 of 5, review next
 
 The owner wants the closed-testing clock started in a few days. The gate is
 **12 testers opted in for 14 continuous days** (landmine 35). Everything below
@@ -461,20 +461,21 @@ is what stands between the seed and that clock, in order, with who does it.
 
 | # | step | who | state |
 |---|---|---|---|
-| 1 | **D14 — one game or many, and therefore the package name** | The owner | open, blocks 3 |
+| 1 | **D14 — one game or many, and therefore the package name** | The owner | DONE take 24; `com.optcghub.app` registered with Play at the take-35 upload, permanent |
 | 2 | Stand up the repo: RUNBOOK §1–4 | The owner | **DONE** — read off the repo at take 34: public, run #3 green end to end (seed 6 s, bundle 42 s, apk 4 m 36 s, pages 14 s), Release **take-31**, Pages live. PROVEN |
 | 3 | First CI build produces the AAB | CI | built, dev-key-signed, named unfit (correct). Loses the suffix the first build after `tools/play-key.sh` sets the four secrets — RUNBOOK-play §2 |
-| 4 | Play Console: create the app, Play App Signing, the four secrets | The owner | RUNBOOK-play §1–4, rewritten take 33 as one ordered procedure; the key is one command |
-| 5 | Listing: title, short and full description opening with the disclaimer, screenshots, icon 512, feature graphic 1024×500 | copy ready; icon + feature graphic in `play-assets-t33/`; screenshots need the Fold | RUNBOOK-play §6 |
+| 4 | Play Console: create the app, Play App Signing, the four secrets | The owner | **DONE** — personal account; app created; version code 35 accepted into internal testing (two optional warnings). **UNKNOWN: whether the upload-key bundle or the DEVKEY one was the first upload** — RUNBOOK-play §2 says how to reset if the latter |
+| 5 | Listing: title, short and full description opening with the disclaimer, screenshots, icon 512, feature graphic 1024×500 | The owner | copy pasted (take 36); screenshots from the Fold with the take-37 showcase files; the console shows the jolly roger icon — swap to `play-assets-t33/icon-512.png` or say so (D7) |
 | 6 | Privacy policy live on Pages, naming AdMob | take 30 | Pages deployed at `https://sergeantcs2.github.io/optcghub/` (run #3); the policy is `/privacy.html` there |
-| 7 | Data Safety form: **AD_ID collected/shared for advertising** (landmine 94); camera; no other collection | The owner, from RUNBOOK-play §F | |
-| 8 | Internal test → closed test; 16–18 testers recruited (landmine 35) | The owner | |
+| 7 | Data Safety form: **AD_ID collected/shared for advertising** (landmine 94); camera; no other collection | The owner | **DONE** — advertising-ID declaration Yes / advertising; Data Safety: device IDs collected and shared, advertising, required, not ephemeral, encrypted in transit, no deletion request, no accounts |
+| 8 | Internal test → closed test; 16–18 testers recruited (landmine 35) | The owner | internal test rolled out; closed track created, 4 of 5 — roll out, *Send for review*, then the opt-in link to 16–18 |
 | 9 | Developer verification: package + signing key registered (landmine 36) | The owner | |
-| 10 | Real AdMob IDs — **not required to start the clock**; Google's test units are correct for a closed test | The owner, D11 | account exists (take 33): `pub-6243777967151950`; app-ads.txt goes on the root user site — RUNBOOK-play §9 |
+| 10 | Real AdMob IDs — **not required to start the clock**; Google's test units are correct for a closed test | The owner, D11 | account exists (take 33): `pub-6243777967151950`; **app-ads.txt live at the root site, take 40** — RUNBOOK-play §9 |
 
 - **Ruled out: waiting for real AdMob IDs.** Test units are what a closed test
   should run on.
 - **Ruled out: adding games first.** A19.
+- **Ruled out (take 39): a second applicationId for the sideload build (D3).** The id is registered now; the Play build and the sideload build share it, so the switch is export → uninstall → import (landmine 34, RUNBOOK-play).
 - **Ruled out (take 33): building the APK in the session container now that the runner does.** The runner's build is the one the owner installs; a container build is a second signer's worth of doubt for no information. The seed is the deliverable, the Release is the artifact.
 - **Take 34:** `tools/play-key.ps1` for Windows (PowerShell cannot run a `.sh`), tested under PowerShell 7 with a damaged-keystore control; the take-32 APK's arm64 libraries MEASURED 16 KB page-aligned (Play's rule for new apps); export through the share sheet and restore through a file picker, because the landmine-34 switch is a reinstall (landmine 110).
 - **Ruled out (take 34): `android:hasFragileUserData` to keep data across the uninstall.** Kept data pins the old signature; the Play build's different signer would then refuse to install at all. Export → import is the honest path.

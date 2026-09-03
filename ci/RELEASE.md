@@ -1,6 +1,12 @@
-# OP TCG Hub — take 35
+# OP TCG Hub — take 40
 
 Installs over any earlier take; same key, your data stays.
+
+**New at take 40:** nothing visible; ledgers only.
+
+**New at take 39:** a showcase collection and deck to import (`showcase/`);
+nothing you can see changes otherwise. Testers on the Play track: this is the
+same app as the internal-test build, version code 39.
 
 **New at take 35:** the shipped app carries no source comments (smaller,
 cleaner); nothing you can see changes.

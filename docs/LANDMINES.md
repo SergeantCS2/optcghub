@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 35.*
+*Current as of take 40.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -116,6 +116,8 @@ Start here. Do not read top to bottom.
 | Restore says "No backup found" right after a reinstall | 110 |
 | A smoke assertion passes on a comment, not on code | 111 |
 | Public repo names people, tools, or a container | 111 |
+| Render says 10 passed (mode: dom) right after a seal | **112** |
+| A ledger script changed some files and not others | 104, 112 |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -1428,6 +1430,8 @@ checked against the file before it is made**: `grep -c '^\*\*103\.'` is one
 line and it returned 0.
 
 
+*Fired again at take 37 (landmine 112): four writes in one script, one assert, the rest never ran, and the seal line was read as if it meant them.*
+
 **105. A workflow written at take 4 and a pipeline grown to take 29 had never
 been read against each other.** Take 30, on the eve of the first real run,
 found three things that would have failed silently or loudly on the second
@@ -1542,6 +1546,21 @@ this take's own HANDOFF entry that recorded the count of the word it removes
 — caught by grepping after (landmine 104's rule), fixed by describing the
 word instead of using it. A scrubber that rewrites text will rewrite the
 sentence that says what it rewrites.
+
+**112. A seal that removes `node_modules` sends the next take's render into
+DOM mode, and a seal read off its last line does not hear it. Take 37.**
+`seal.sh` deleted `node_modules` before zipping — needlessly, the zip already
+excludes it — so puppeteer was gone at the next `pipeline.py render`, which
+fell back to the DOM check and printed *10 passed (mode: dom)*, exactly as
+A-53 asks. Nobody read it; the entry already said "51 (Chrome)". Same take,
+same shape as 104: four ledger writes in one script, the third assertion
+aborted the rest, and the seal ran on two docs that still said the previous
+take. Both were caught only when the outputs were grep-checked afterwards,
+and both cost a take (A-203: a reseal is a new take). Fixes: the seal keeps
+`node_modules`; the gate requires Chrome's receipt (`www/render.png` newer
+than `www/app.js`) so a DOM-mode build cannot seal; PROTOCOL §0 gives the one
+command that rebuilds a seed in full. Rule: a verifier that names its own
+downgrade still needs a gate that refuses to ship on it.
 
 ## §2 — Inherited from APEX ORV
 

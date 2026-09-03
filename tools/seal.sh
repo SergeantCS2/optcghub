@@ -7,7 +7,9 @@ cd "$(dirname "$0")/.."
 TAKE=$(grep -oP 'VAULT_TAKE=\K[0-9]+' BUILD)
 python3 tools/stamp.py >/dev/null
 python3 tools/gate.py                       # exits non-zero on any failure; set -e stops here
-rm -rf __pycache__ tools/__pycache__ node_modules android www/render.png assets/gen play-assets
+# node_modules stays: the zip excludes it below, and removing it was what sent
+# render into DOM mode on the next take without anyone noticing (landmine 112).
+rm -rf __pycache__ tools/__pycache__ android www/render.png assets/gen play-assets
 rm -f catalog/catalog.json.gz package-lock.json   # manifest.json stays: the gate reads it
 OUT=/mnt/user-data/outputs
 zip -qr "$OUT/optcghub-seed-t$TAKE.zip" . -x 'www/*' 'tcgcsv_cache/*' 'catalog/catalog.sqlite' '*.pyc' '*__pycache__*' 'android/*' 'node_modules/*'

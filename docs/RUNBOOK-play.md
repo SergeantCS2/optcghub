@@ -1,20 +1,23 @@
 # RUNBOOK — Google Play, from the repo to a running 14-day clock
 
-*Current as of take 35.* The whole procedure, in the order it must happen,
+*Current as of take 40.* The whole procedure, in the order it must happen,
 with who does each step. Everything on the repo side is already built; what
 follows is the owner's, and none of it is hard. The gate at the end is calendar
 time: **12 testers opted in for 14 continuous days** (landmine 35; re-checked
 against Google's current wording at take 33: unchanged since 11 Dec 2024, when
 it dropped from 20).
 
-**Where things stand, read off the repo at take 34 (PROVEN, not remembered):**
-the repo is public; run #3 went green end to end — seed 6 s, bundle 42 s,
-apk 4 m 36 s, pages 14 s; the Release is **take-31** with the APK and a
-`DEVKEY-DO-NOT-UPLOAD` bundle; Pages is live at
-`https://sergeantcs2.github.io/optcghub/`; the APK's arm64 native libraries
-are 16 KB page-aligned, which Play requires of new apps (MEASURED on the
-take-32 APK). **Not yet:** a seed newer than 31 at the repo root; the take-33
-`bootstrap.yml` pasted; the four secrets; the OP TCG Hub app in the console.
+**Where things stand at take 39 (PROVEN by the console and the repo, not
+remembered):** personal account; the app exists as `com.optcghub.app`;
+**version code 35 is in internal testing** (two optional warnings, ignored);
+the advertising-ID declaration and the Data Safety form are done as §5 says;
+the take-36 listing copy is pasted; the closed-test track is created and at
+4 of 5 — **roll out** and **Publishing overview → Send for review** are what
+is left, then the opt-in link to 16–18 testers. On the repo: public, CI green
+end to end, Pages live, privacy policy returning 200. **Still open:** which
+bundle was the first upload (the upload-key one, or the DEVKEY one — §2 has
+the reset if it was the wrong one); the listing icon (the console shows the
+jolly roger; `play-assets-t33/icon-512.png` is the compass); a seed newer than 31 at the repo root (drop t40). app-ads.txt is live (§9).
 
 **Read first — the one thing that costs a collection (landmine 34):** the Play
 build and the sideloaded take carry the same id, `com.optcghub.app`, but
@@ -167,23 +170,19 @@ week. Then a production release from the same bundle.
 
 The AdMob account exists (take 33): publisher `pub-6243777967151950`.
 
-1. **app-ads.txt.** AdMob crawls the *root of the website on the listing*.
-   With the Pages site that root is `https://sergeantcs2.github.io/` — the
-   **user site**, not the project site. So: github.com → **New repository**
-   named exactly `SergeantCS2.github.io`, public, *Add a README*; then **Add
-   file → Create new file** `app-ads.txt` containing the one line AdMob
-   showed you:
-
-   ```
-   google.com, pub-6243777967151950, DIRECT, f08c47fec0942fa0
-   ```
-
-   Pages turns on by itself for that repo. Check
-   `https://sergeantcs2.github.io/app-ads.txt` in a browser; AdMob re-crawls
-   within about 24 hours once the Play listing carries the website.
-   (INFERRED from the IAB spec's root-domain rule: `github.io` is a public
-   suffix, so `sergeantcs2.github.io` is the root. AdMob's *app-ads.txt*
-   status page is the proof.)
+1. **app-ads.txt — DONE take 40, PROVEN:** `https://sergeantcs2.github.io/app-ads.txt`
+   serves `google.com, pub-6243777967151950, DIRECT, f08c47fec0942fa0`.
+   How it works, because it confused once: GitHub gives an account one
+   *user site* at the root of `<user>.github.io`, published only by a repo
+   named exactly `<user>.github.io` — the name is the switch. Every other
+   repo publishes under a path (`optcghub` → `/optcghub/`). AdMob's crawler
+   takes the website on the listing, drops the path, and fetches
+   `/app-ads.txt` from the **root**, never from `/optcghub/`. So the file
+   lives in the root repo, beside a README, and that is the whole repo. It
+   is not required to serve ads or to start the clock; AdMob shows a warning
+   until it is found. Once the listing's *Website* is
+   `https://sergeantcs2.github.io/optcghub/`, AdMob → the app → *app-ads.txt
+   → Check for updates*; verified within about a day.
 2. **The three IDs** (D11): the AdMob **app ID** (`ca-app-pub-6243777967151950~…`)
    and **two rewarded ad units** (`…/…`) — *Apps → OP TCG Hub → App settings*
    and *Ad units → Rewarded*. Paste them into `tools/config.py` **when the

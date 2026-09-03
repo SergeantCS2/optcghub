@@ -1,6 +1,6 @@
 # RUNBOOK — from nothing to a repo that builds every night
 
-*Current as of take 35.* Everything below is the whole procedure. You need
+*Current as of take 40.* Everything below is the whole procedure. You need
 three files from the outputs: `build.yml`, `bootstrap.yml`, and the newest
 `optcghub-seed-tNNN.zip`. A PC makes step 2 easier; a phone works.
 

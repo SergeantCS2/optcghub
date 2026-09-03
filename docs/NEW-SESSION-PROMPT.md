@@ -1,15 +1,15 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 35.* Paste the block between the rules into a new session
+*Current as of take 40.* Paste the block between the rules into a new session
 whose project carries `AGENDA.md`, `LANDMINES.md` and `HANDOFF.md` (the three
 project files) and has the newest seed attached.
 
 ---
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
-tracker and deck builder for Android, built across 35 takes by previous
+tracker and deck builder for Android, built across 40 takes by previous
 sessions. The repo lives at `github.com/SergeantCS2/optcghub`; the seed
-`optcghub-seed-t35.zip` is the whole tree. CI builds on every seed drop and
+`optcghub-seed-t40.zip` is the whole tree. CI builds on every seed drop and
 has run green end to end; the APK the owner installs comes from the Release.
 
 **Before anything else, in this order:**
@@ -22,7 +22,7 @@ has run green end to end; the APK the owner installs comes from the Release.
 4. Read `docs/HANDOFF.md`, newest entry first, back to take 28 at least. Every
    take ends with a DEFERRED list; the union of those lists is the work.
 5. Read `docs/LANDMINES.md` §0 (the index) and skim §1. When you are about to
-   do something, grep the index first. 111 of them; each is a real failure.
+   do something, grep the index first. 112 of them; each is a real failure.
 6. Read `docs/AGENDA.md` for what is open and whose it is.
 
 **The discipline, which the gate enforces:**
@@ -43,16 +43,24 @@ has run green end to end; the APK the owner installs comes from the Release.
 
 **What is in flight when you arrive:**
 
-- **A21 — the Play clock.** CI is proven on the runner (take 32). What is
-  left is the owner's, in `docs/RUNBOOK-play.md` order: account, `tools/play-key.sh`,
-  the app, internal test, app content, listing, closed test, 12 testers for
-  14 days. The next seed he drops builds an AAB signed with the upload key if
-  the secrets exist. The first *Sync now* on the Fold proves `UPDATE_URL`.
-- **A26 — typography** shipped with free faces in four roles; D16 asks
-  whether licensed files are coming. Do not swap faces on your own.
-- **A2's field half** — foils, sleeves, toploaders. The owner's cards, whenever.
-- **Open decisions** in `docs/DECISIONS-OPEN.md` — D11 (AdMob IDs), D15
-  (colour), D7 (icon), D12/D13 (banners, IAP). Do not build ahead of them.
+- **A21 — the Play clock.** The app is in the console (`com.optcghub.app`,
+  personal account); version code 35 is in internal testing; the
+  advertising-ID and Data Safety forms are done; the listing copy is pasted;
+  the closed track is at 4 of 5. Left: roll out, *Send for review*, the
+  opt-in link to 16–18 testers, then 12 opted in for 14 days. RUNBOOK-play
+  is the procedure and its first block is the state. **UNKNOWN and worth
+  asking first:** which `.aab` was uploaded first — if the DEVKEY one, the
+  upload key must be reset (RUNBOOK-play §2).
+- **The listing screenshots** — the owner has a frames kit and the take-37
+  showcase files (`showcase/`); graded copies, alerts and photos are set by
+  hand before shooting.
+- **Landmine 110's device half** — the first *Export CSV* on the Fold that
+  opens a share sheet closes it.
+- **app-ads.txt is live** at the root user site (take 40); AdMob verifies it
+  once the listing's website is set. Nothing to build.
+- **D16 (fonts), D11 (AdMob unit IDs, later), D7 (icon: the console shows
+  the jolly roger, the tree ships the compass), D15 (colour).** Do not
+  build ahead of them.
 
 **What the owner has said he wants, in order:** the core (done) → scanner (proven)
 → collection with filtering (done) → deck builder (done) → the backlog in
@@ -66,6 +74,6 @@ only be changed by giving him a new file and saying so in the runbook.
 30, A16); gate scanning (A17); multiply condition into a price (PROTOCOL §10);
 send the collection anywhere (PROTOCOL §9); seal with a red gate.
 
-Say "take 36" and begin with PROTOCOL §0.
+Say "take 41" and begin with PROTOCOL §0.
 
 ---

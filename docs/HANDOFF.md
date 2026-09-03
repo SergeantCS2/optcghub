@@ -1,4 +1,205 @@
-# HANDOFF — through Take 35
+# HANDOFF — through Take 40
+
+## Take 40 — 2026-09-03 — app-ads.txt live; the root site explained; audit and seal
+
+Opened before any code (PROTOCOL §6).
+
+### The owner's ask
+
+Does the app-ads.txt work belong in the stack? Audit again and seal.
+
+### What happened, and what the docs learn from it
+
+The owner put the one line at the root of his domain: a new public repo
+named `SergeantCS2.github.io`, one file, and `https://sergeantcs2.github.io/app-ads.txt`
+serves it — PROVEN by his browser. The confusion on the way was fair and is
+now written down in RUNBOOK-play §9: the root of `<user>.github.io` is a
+separate repo from any project site, the repo's *name* is the switch, and a
+README plus the one file is a complete site. AdMob's crawler reads the
+listing's website, drops the path, and fetches `/app-ads.txt` from the root;
+it will not look under `/optcghub/`. Nothing in the app or the pipeline
+touches this, so nothing in the tree changes but the ledgers.
+
+### The audit
+
+App rebuilt with the scrubber, **smoke 265, render 51 in Chrome**, the
+scrubber clean across the public tree, the gate's seven controls firing,
+the gate green with Chrome's receipt. `node_modules` survived the take-39
+seal (landmine 112's fix, seen working).
+
+### DEFERRED this cycle
+
+- **AdMob's verification of the file** — within a day of the listing's
+  website being set; the AdMob app-ads.txt tab is the proof.
+- Take 39's list, unchanged: the first `.aab`'s key, the icon, roll out and
+  review, testers, export/restore on the Fold, `build.yml` versions, D16,
+  D11, D15.
+
+## Take 39 — 2026-09-03 — the audit after Play: the stack walked, the docs told, ground zero
+
+Opened before any code (PROTOCOL §6).
+
+### The owner's ask
+
+Play is mostly set: audit the stack, tell every doc what Play now knows, and
+return the tree to a clean starting state for whatever comes next.
+
+### Where Play stands, as reported this session (PROVEN by the console
+screenshots, not remembered)
+
+Personal account; the app created as `com.optcghub.app`; version code 35
+accepted into internal testing with two optional warnings (no R8 map, no
+native symbols); the advertising-ID declaration and the Data Safety form
+completed as landmine 94 says; the listing copy from take 36 pasted; the
+closed-test track at 4 of 5 with roll-out and *Send for review* left; the
+opt-in link and 16–18 testers next. UNKNOWN: which bundle file was uploaded
+(the upload-key one or the DEVKEY one) — asked three times, not yet
+answered; the fix if it was the wrong one is written in RUNBOOK-play.
+
+### The audit
+
+- **The stack, from nothing:** a copy with no artifacts — ingest 7 s, history,
+  catalog, hashes (0 to fetch), validate, app with the scrubber (135 comments,
+  177 → 146 KB), **smoke 265, render 51 in Chrome**, gate. `www/` is 484 KB.
+  `bundle.sh`, `apk.sh`, `seal.sh`, both key scripts parse; both workflows
+  parse; the scrubber reports 48 public files clean; the gate's seven
+  negative controls fire.
+- **Landmine 112 fired during the audit itself:** the take-38 seal had
+  removed `node_modules`, so the clean run stopped at the strip (acorn gone)
+  — one command earlier than take 37's DOM-mode render, same cause. The
+  seal keeps `node_modules` now, and the gate demands Chrome's receipt
+  (`www/render.png` newer than `app.js`), shown to fire in `--selftest`.
+- **PROTOCOL §0 step 3** now gives the command that actually rebuilds a
+  seed: modules first, then the full pipeline — this session's first turn
+  found out the hard way that a seed has no TCGCSV cache and no Chrome.
+
+### Told to the docs
+
+A21 rewritten row by row to what the console shows; A8 registered; D1, D2,
+D3 answered; RUNBOOK-play opens with the take-39 state and what is still
+open; V1-STATE has a Play line under PROVEN and the two open items under
+DEFERRED; the session prompt's in-flight block is the clock; landmine 112
+and a note on 104; RELEASE.md at 39.
+
+### DEFERRED this cycle
+
+- **Which `.aab` was uploaded first** — UNKNOWN; asked, not answered. The
+  next session asks before anything else Play-related.
+- **The listing icon** — the console shows the jolly roger, the tree ships
+  the compass (D7); one of them changes.
+- **Roll out, Send for review, the opt-in link, 16–18 testers** — the clock.
+- **`SergeantCS2.github.io` + `app-ads.txt`**, real unit IDs later (D11).
+- **Export/restore on the Fold** (landmine 110's device half).
+- **`build.yml` action versions** — warnings, one paste when they turn.
+- D16, D15, A2's field half, 8.9 QR trade matching, the binder's
+  pocket-per-printing toggle, the delta download (A25).
+
+## Take 38 — 2026-09-03 — the reseal that had to be a new take
+
+Opened before any code (PROTOCOL §6).
+
+### What happened
+
+Take 37's ledger writes ran as one script. The third assertion (V1-STATE's
+header, which take 36 had not bumped) failed and aborted the rest, so
+V1-STATE and NEW-SESSION-PROMPT still said take 35/36 when the seal ran; the
+gate reads the stamp line, which `stamp.py` had fixed, so it passed. And
+`seal.sh` removes `node_modules`, so render fell back to DOM mode at take 37
+while the entry already said "51 (Chrome)". Neither was caught before the
+seal line was read. A-203 says a reseal is a new take; landmine 104 says a
+ledger write is its own command and is grep-checked, not read off the
+terminal. This take is the price of both: the two docs corrected, puppeteer
+reinstalled, render run in Chrome, the take-37 entry's harness line made
+true, one write per command.
+
+### DEFERRED this cycle
+
+- Nothing new; take 37's list stands — screenshots, the frames kit's eighth
+  subhead, graded copies and photos by hand, export/restore on the Fold,
+  `build.yml` deprecations, D16, D11, D7, D15.
+
+## Take 37 — 2026-09-03 — a showcase collection and deck to import for the listing screenshots
+
+Opened before any code (PROTOCOL §6).
+
+### The owner's ask
+
+A cool collection and a deck to import so the eight listing screenshots
+(his `optcghub-shots` kit) show a full app rather than empty states. Both
+importers already exist (CSV at take 11, deck lists at takes 13/29); what did
+not exist was a generator that composes them from the real catalogue, keyed
+by productId (landmine 1), legal by the app's own rules, and re-runnable as
+prices move.
+
+### Where the importers are (they exist)
+
+- **Collection:** Collect → Collection → the action row → **Import** → the
+  system file picker → a CSV with a `product_id` column (the app's own export
+  shape; a number without a product id is refused when it is ambiguous,
+  landmine 41). Get the file onto the Fold through Drive or Files.
+- **Deck:** Prep & Play → Decks → a deck → **Import** → paste lines like
+  `4 OP01-016 Nami`; a Leader line sets the Leader; five list shapes (take 29).
+
+### Built
+
+- **`tools/showcase.py`** → `showcase/collection.csv` (51 lines, 92 cards,
+  $16,227.64 at today's market: the dearest Nami and the SP Vivi the ledger
+  keeps citing, six alternate arts from six sets with a cost basis, an OP01
+  run 001–036 with six gaps so the binder and checklist read, playsets from
+  four sets, a five-card trade pile) and `showcase/deck.txt` (Red Zoro, thirteen
+  numbers, fifty cards, built from the Leader's era and base printings only so
+  it reads like a deck someone owns). Deterministic from the catalogue; the
+  files ship in the seed and re-generate as prices move.
+- **Verified:** smoke imports both through the app's own parsing — every row
+  a known productId, the deck **legal by `legality()`** with fifty cards,
+  four per number, one Leader.
+- The first cut of the deck was three promo Luffys and a starter-deck event
+  with a sentence for a name: the cheapest-printing pool reached into
+  promos. Restricting to main sets and starters of the Leader's era fixed it
+  without touching the rules.
+
+**smoke.mjs 265; render 10 in DOM mode at the seal (puppeteer gone after the take-35 seal — take 38 re-ran it in Chrome: 51). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **Screenshots are the owner's**; the frames kit's eighth subhead still says
+  a backup "survives an uninstall" — that promise was withdrawn at take 34
+  (landmine 110); the corrected line is in the reply, not in this tree.
+- **Graded copies, favourites, alerts and photos** are not in a CSV — set a
+  few by hand before shooting the detail and binder frames.
+- Export/restore on the Fold; `build.yml` deprecations; D16, D11, D7, D15.
+
+## Take 36 — 2026-09-03 — the listing copy, in the console's shape
+
+Opened before any code (PROTOCOL §6).
+
+### The owner's ask
+
+The store listing form: short description (80) and full description (4000),
+in the shape the sibling app's listing used — disclaimer first, a tagline,
+WHAT IS IN IT, WHAT IT DOES NOT DO, HONEST LIMITS, WHERE THE DATA COMES FROM
+with links, and the note that the same list is inside the app. Play had just
+accepted version code 35 into internal testing with two optional warnings
+(no R8 mapping — the app is not obfuscated; no native symbols — ML Kit's).
+
+### Done
+
+`docs/PLAY-LISTING.md` rewritten as plain text the console renders as-is (no
+markdown bold), in that shape. The take-23 short description was 84
+characters; it is 75 now. The old copy promised the backup "survives
+uninstalling" — withdrawn (landmine 110). Every URL in it was requested
+first (RUNBOOK-play §C): TCGplayer 200, TCGCSV 200, the privacy policy on
+Pages **200 — PROVEN live**, Google's ads policy 200; Bandai's rules page
+returned 404 and is cited at its root instead. The gate's disclaimer check
+still passes on the new opening line.
+
+### DEFERRED this cycle
+
+- Screenshots are the owner's; nothing here can take them.
+- If Play objects to the game's name in the short description (landmine 30's
+  line, deliberately crossed at take 23 with the disclaimer opening the full
+  text), the fallback is written in the file.
+- Export/restore on the Fold; `build.yml` deprecations; D16, D11, D7, D15.
 
 ## Take 35 — 2026-09-03 — the scrubber: what ships and what the public repo says
 

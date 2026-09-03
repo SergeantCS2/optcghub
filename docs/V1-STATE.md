@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 35
+# V1-STATE — what exists, as of take 40
 
-*Current as of take 35.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 40.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -18,7 +18,7 @@ counter). Rewarded ads gate *saving*, never scanning (A17). No account, no
 server; the only load-bearing network call is the opt-in nightly catalogue
 refresh from Pages (take 27).
 
-## PROVEN on a device (the Fold, take 16) and on a runner (take 32)
+## PROVEN on a device (the Fold, take 16), on a runner (take 32), and in the Play Console (take 39)
 
 - The camera comes up, the guide finds a plain card on a dark table, ML Kit
   reads the code, the picker opens with exactly the printings that share it.
@@ -28,6 +28,10 @@ refresh from Pages (take 27).
   `sergeantcs2.github.io/optcghub` (read off the repo at take 34). The owner
   installed the APK it built. The AAB is dev-signed and named unfit until the
   upload-key secrets exist.
+- **Play:** the app exists in the console as `com.optcghub.app` on a personal
+  account; version code 35 accepted into internal testing; advertising-ID
+  declaration and Data Safety done to landmine 94; listing copy in; closed
+  track created, review pending; app-ads.txt served from the root user site (take 40). The 14-day clock has not started.
 - **16 KB page size:** every arm64 native library in the APK loads at 0x4000
   alignment and is stored 16 KB-aligned in the zip (MEASURED take 34 on the
   take-32 APK). Play accepts it.
@@ -52,8 +56,8 @@ refresh from Pages (take 27).
 | Typography | four roles (display / comic / body / heavy), OFL/Apache faces bundled, 232 KB, licensed faces as a file drop in `assets/user/fonts/` | render.mjs: Chrome reports all four LOADED and h2 resolves to the display face, with a missing-file control; smoke 7 |
 | Sync | quiet once-per-open sync holds on cellular unless switched on; Sync now always runs; `UPDATE_URL` points at Pages | smoke 4 controls; **not yet seen on the Fold** |
 
-**Harness totals, take 35:** smoke.mjs 260 assertions, render.mjs 51 in
-Chrome, gate 21 checks with negative controls, zero console errors across 14
+**Harness totals, take 40:** smoke.mjs 265 assertions, render.mjs 51 in
+Chrome, gate 22 checks with negative controls (the render receipt is new), zero console errors across 14
 screens in both modes.
 
 ## DEFERRED, and why
@@ -63,10 +67,11 @@ screens in both modes.
 | Scanner field half — foils, sleeves, toploaders, the star region | needs the owner's cards under a phone camera | A2, RELEASE.md |
 | First test-ad impression | needs a phone | A17 |
 | First notification | needs a phone | 8.5 |
-| The Play clock | The owner's ten steps, in order, with the key as one command on Windows or a shell | RUNBOOK-play |
+| The Play clock | roll out, send for review, 12 of 16–18 testers opted in for 14 days | RUNBOOK-play §7 |
+| Which key signed the first upload | UNKNOWN until the owner says which `.aab` he uploaded | RUNBOOK-play §2 |
 | Export and restore on the Fold | share sheet and file picker are INFERRED from the plugin definitions until seen | landmine 110 |
 | First Sync on the Fold | `UPDATE_URL` is set; the first *Sync now* that shows a date proves Pages and the URL | RUNBOOK §5 |
-| Real AdMob unit IDs | D11; the account exists; test units are correct for a closed test | A17, RUNBOOK-play §9 |
+| Real AdMob unit IDs | D11; the account exists and app-ads.txt is live; test units are correct for a closed test | A17, RUNBOOK-play §9 |
 | The named fonts as files | D16; the roles ship with free faces, the slot takes licensed ones | A26 |
 | Colour direction | D15; parked, not a priority | A24 |
 | Icon motif | D7; the take-16 placeholder is back by request | A16 |
