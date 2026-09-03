@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <!--
+    OP TCG Hub — iconography, take 17. Original work.
+
+    Two families, both clear of landmines 26 and 30:
+
+    GAME STRUCTURE — what every One Piece card carries by RULE, not by art:
+    the four card categories (§2-2), the six-colour hexagon (§2-3-2), the
+    rarity plate, the Life counter (§2-9), the DON!! resource (§3-3), the
+    Counter value (§2-10), the Trigger (§2-11). These are the game's grammar.
+    No illustration, no character, no logo.
+
+    NAUTICAL — compass, ship's wheel, anchor, spyglass, rope, a plain skull
+    and crossed cutlasses. Pirate iconography is centuries older than any
+    franchise. The Straw Hats' hat-wearing skull, any crew's specific flag,
+    the Going Merry — NOT here, on purpose.
+
+    Every symbol is 24x24, stroke-based, currentColor, so it takes the brass
+    or any of the six game colours from CSS.
+  -->
+
+  <!-- ===== game structure ===== -->
+
+  <!-- Leader: a card with a crown-notch, the one card that sets the deck -->
+  <symbol id="g-leader" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+    <rect x="5" y="3" width="14" height="18" rx="2"/>
+    <path d="M8 9l2 2 2-3 2 3 2-2v3H8z" fill="currentColor" stroke="none"/>
+  </symbol>
+
+  <!-- Character: a card with a figure silhouette (a plain bust, nobody's) -->
+  <symbol id="g-character" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+    <rect x="5" y="3" width="14" height="18" rx="2"/>
+    <circle cx="12" cy="10" r="2.4"/>
+    <path d="M8 17c0-2.4 1.8-4 4-4s4 1.6 4 4"/>
+  </symbol>
+
+  <!-- Event: a card with a burst — something that happens once -->
+  <symbol id="g-event" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+    <rect x="5" y="3" width="14" height="18" rx="2"/>
+    <path d="M12 8l1.2 2.6 2.8.4-2 2 .5 2.8L12 14.5 9.5 15.8l.5-2.8-2-2 2.8-.4z"/>
+  </symbol>
+
+  <!-- Stage: a card lying flat — the field -->
+  <symbol id="g-stage" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+    <path d="M3 9l9-4 9 4-9 4z"/>
+    <path d="M3 9v6l9 4 9-4V9"/>
+  </symbol>
+
+  <!-- The six-colour hexagon (§2-3-2). Filled by CSS per colour, or brass. -->
+  <symbol id="g-hex" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2l8.66 5v10L12 22l-8.66-5V7z"/>
+  </symbol>
+
+  <!-- DON!! — the resource card: a plain card with a double-bang stamp -->
+  <symbol id="g-don" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+    <rect x="5" y="3" width="14" height="18" rx="2"/>
+    <path d="M10 8v6M14 8v6" stroke-width="2.2" stroke-linecap="round"/>
+    <circle cx="10" cy="17" r=".9" fill="currentColor" stroke="none"/>
+    <circle cx="14" cy="17" r=".9" fill="currentColor" stroke="none"/>
+  </symbol>
+
+  <!-- Life — a heart-shaped counter, the Leader's starting Life (§2-9) -->
+  <symbol id="g-life" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+    <path d="M12 20s-7-4.4-7-9.5A3.8 3.8 0 0 1 12 8a3.8 3.8 0 0 1 7 2.5C19 15.6 12 20 12 20z"/>
+  </symbol>
+
+  <!-- Counter — a shield with a plus (§2-10) -->
+  <symbol id="g-counter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+    <path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/>
+    <path d="M12 9v6M9 12h6" stroke-linecap="round"/>
+  </symbol>
+
+  <!-- Trigger — a lightning bolt on a card edge (§2-11) -->
+  <symbol id="g-trigger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+    <path d="M13 3L6 13h5l-1 8 8-11h-5z"/>
+  </symbol>
+
+  <!-- Blocker — two overlapping cards, the second taking the hit -->
+  <symbol id="g-blocker" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+    <rect x="4" y="6" width="11" height="14" rx="2"/>
+    <path d="M9 4h11v14"/>
+  </symbol>
+
+  <!-- Rush — a forward chevron pair -->
+  <symbol id="g-rush" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 6l6 6-6 6M13 6l6 6-6 6"/>
+  </symbol>
+
+  <!-- Rarity plate — the rounded tag the letter sits on -->
+  <symbol id="g-plate" viewBox="0 0 24 24" fill="currentColor">
+    <rect x="3" y="7" width="18" height="10" rx="2.5"/>
+  </symbol>
+
+  <!-- ===== nautical ===== -->
+
+  <symbol id="g-compass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+    <circle cx="12" cy="12" r="9"/>
+    <circle cx="12" cy="12" r="7" stroke-width=".7"/>
+    <path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4" stroke-width=".7"/>
+    <path d="M12 4.5l1.6 6.5-1.6 1.6-1.6-1.6z" fill="currentColor" stroke="none"/>
+    <path d="M12 19.5l-1.6-6.5 1.6-1.6 1.6 1.6z" fill="currentColor" stroke="none" opacity=".45"/>
+  </symbol>
+
+  <symbol id="g-wheel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+    <circle cx="12" cy="12" r="7"/>
+    <circle cx="12" cy="12" r="2.2"/>
+    <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/>
+  </symbol>
+
+  <symbol id="g-anchor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="5" r="2"/>
+    <path d="M12 7v14M5 13c0 4 3.5 7 7 8 3.5-1 7-4 7-8M8 11H4M20 11h-4"/>
+  </symbol>
+
+  <symbol id="g-spyglass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 20l7-7"/>
+    <rect x="9" y="9" width="6" height="6" rx="1" transform="rotate(45 12 12)"/>
+    <path d="M14.5 9.5l3-3M17.5 6.5l3-3"/>
+  </symbol>
+
+  <!-- A plain jolly roger: skull, crossed cutlasses. No hat, no bandana, no
+       crew mark. The pirate flag has flown since the 1700s. -->
+  <symbol id="g-roger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 20L20 6M20 20L4 6" opacity=".6"/>
+    <path d="M12 4a5 5 0 0 0-5 5v2l1.5 1.5V15h7v-2.5L17 11V9a5 5 0 0 0-5-5z" fill="#0B1622"/>
+    <circle cx="10" cy="10" r="1.1" fill="currentColor" stroke="none"/>
+    <circle cx="14" cy="10" r="1.1" fill="currentColor" stroke="none"/>
+    <path d="M11 13.5h2"/>
+  </symbol>
+
+  <symbol id="g-rope" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+    <path d="M3 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/>
+    <path d="M3 16c2-3 4-3 6 0s4 3 6 0 4-3 6 0" opacity=".5"/>
+  </symbol>
+
+  <!-- A card being scanned: the guide's idle-state decal, larger. -->
+  <symbol id="g-scancard" viewBox="0 0 64 88" fill="none" stroke="currentColor" stroke-width="1.5">
+    <rect x="4" y="4" width="56" height="80" rx="5" stroke-dasharray="4 3"/>
+    <rect x="10" y="12" width="44" height="40" rx="3" opacity=".5"/>
+    <path d="M10 62h30M10 68h22" opacity=".5"/>
+    <rect x="36" y="74" width="18" height="6" rx="1.5" opacity=".9"/>
+    <path d="M6 28v-8a3 3 0 0 1 3-3h8M47 17h8a3 3 0 0 1 3 3v8M58 60v8a3 3 0 0 1-3 3h-8M17 71H9a3 3 0 0 1-3-3v-8" stroke-width="2.2" stroke-linecap="round"/>
+  </symbol>
+</svg>

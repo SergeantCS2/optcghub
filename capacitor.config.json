@@ -1,0 +1,7 @@
+{
+  "appId": "com.optcghub.app",
+  "appName": "OP TCG Hub",
+  "webDir": "www",
+  "server": { "androidScheme": "https" },
+  "android": { "allowMixedContent": false, "webContentsDebuggingEnabled": false }
+}

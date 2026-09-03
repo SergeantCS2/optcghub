@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!--
+    OP TCG Hub — app icon PLACEHOLDER, take 12.
+    Original work: a compass rose behind a card silhouette, on the game's six
+    colours. Contains no character, no logo, no franchise mark, no jolly roger.
+    Replace when Jacob decides the icon; until then this is what ships, and it
+    is labelled as a placeholder in HANDOFF and in the Play listing notes.
+  -->
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="70%">
+      <stop offset="0" stop-color="#1b2326"/><stop offset="1" stop-color="#05080a"/>
+    </radialGradient>
+    <linearGradient id="hex" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d8383a"/><stop offset=".2" stop-color="#e2b93b"/>
+      <stop offset=".4" stop-color="#2e9e5b"/><stop offset=".6" stop-color="#2f79c9"/>
+      <stop offset=".8" stop-color="#8552b8"/><stop offset="1" stop-color="#4a4f57"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- compass rose -->
+  <g fill="none" stroke="#3ecfc0" stroke-width="6" opacity=".55">
+    <circle cx="256" cy="256" r="178"/>
+    <circle cx="256" cy="256" r="150" stroke-width="2"/>
+    <path d="M256 78v356M78 256h356M130 130l252 252M382 130 130 382" stroke-width="3"/>
+  </g>
+  <g fill="#3ecfc0" opacity=".9">
+    <path d="M256 92l22 150-22 26-22-26z"/><path d="M256 420l-22-150 22-26 22 26z" opacity=".6"/>
+    <path d="M92 256l150-22 26 22-26 22z" opacity=".6"/><path d="M420 256l-150 22-26-22 26-22z" opacity=".6"/>
+  </g>
+  <!-- card silhouette, slightly tilted -->
+  <g transform="rotate(-8 256 270)">
+    <rect x="176" y="150" width="160" height="224" rx="14" fill="#0d0f10" stroke="url(#hex)" stroke-width="8"/>
+    <rect x="196" y="172" width="120" height="118" rx="8" fill="#131618"/>
+    <rect x="196" y="304" width="120" height="14" rx="4" fill="#22282b"/>
+    <rect x="196" y="328" width="72" height="12" rx="4" fill="#22282b"/>
+  </g>
+  <!-- the six-colour hexagon every card carries (§2-3-2) -->
+  <polygon points="256,388 292,408 292,448 256,468 220,448 220,408" fill="url(#hex)" opacity=".95"/>
+</svg>

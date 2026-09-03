@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!--
+    OP TCG Hub — app icon, take 17. Original work.
+
+    A plain jolly roger on a compass, over a card, in the app's own palette:
+    night-sea navy, brass, parchment. The skull wears nothing — no hat, no
+    bandana, no crew mark — and the crossed blades are generic cutlasses. The
+    pirate flag has flown since the 1700s and belongs to nobody.
+
+    The previous icon is assets/icon-placeholder.old.svg. A character likeness
+    was asked for and declined; see AGENDA A16 and landmines 26/30.
+  -->
+  <defs>
+    <radialGradient id="sea" cx="50%" cy="35%" r="75%">
+      <stop offset="0" stop-color="#1B3047"/><stop offset="1" stop-color="#07111B"/>
+    </radialGradient>
+    <linearGradient id="brass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E9C46A"/><stop offset=".5" stop-color="#C9A24A"/><stop offset="1" stop-color="#8C6F2E"/>
+    </linearGradient>
+    <linearGradient id="hex" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d8383a"/><stop offset=".2" stop-color="#e2b93b"/>
+      <stop offset=".4" stop-color="#2e9e5b"/><stop offset=".6" stop-color="#2f79c9"/>
+      <stop offset=".8" stop-color="#8552b8"/><stop offset="1" stop-color="#4a4f57"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#sea)"/>
+
+  <!-- compass rose, faint, behind everything -->
+  <g fill="none" stroke="#C9A24A" opacity=".28">
+    <circle cx="256" cy="256" r="196" stroke-width="5"/>
+    <circle cx="256" cy="256" r="168" stroke-width="1.5"/>
+    <path d="M256 52v408M52 256h408M112 112l288 288M400 112 112 400" stroke-width="2"/>
+  </g>
+  <g fill="#C9A24A" opacity=".5">
+    <path d="M256 66l18 150-18 22-18-22z"/>
+    <path d="M256 446l-18-150 18-22 18 22z" opacity=".55"/>
+    <path d="M66 256l150-18 22 18-22 18z" opacity=".55"/>
+    <path d="M446 256l-150 18-22-18 22-18z" opacity=".55"/>
+  </g>
+
+  <!-- the card -->
+  <g transform="rotate(-7 256 268)">
+    <rect x="168" y="138" width="176" height="246" rx="16" fill="#0D1B2A" stroke="url(#brass)" stroke-width="7"/>
+    <rect x="186" y="158" width="140" height="130" rx="9" fill="#12202E"/>
+    <!-- a plain jolly roger on the card's art window -->
+    <g stroke="#EADFC8" stroke-width="7" stroke-linecap="round" fill="none" opacity=".95">
+      <path d="M212 268l88-84M300 268l-88-84" opacity=".7"/>
+    </g>
+    <path d="M256 176a30 30 0 0 0-30 30v14l9 9v15h42v-15l9-9v-14a30 30 0 0 0-30-30z" fill="#EADFC8"/>
+    <circle cx="245" cy="212" r="6.5" fill="#0D1B2A"/>
+    <circle cx="267" cy="212" r="6.5" fill="#0D1B2A"/>
+    <path d="M250 234h12" stroke="#0D1B2A" stroke-width="4" stroke-linecap="round"/>
+    <!-- text lines and the code plate, like a card's lower half -->
+    <rect x="186" y="304" width="140" height="12" rx="4" fill="#26394B"/>
+    <rect x="186" y="326" width="92" height="12" rx="4" fill="#26394B"/>
+    <rect x="266" y="352" width="60" height="18" rx="5" fill="url(#brass)"/>
+  </g>
+
+  <!-- the six-colour hexagon every card carries (§2-3-2) -->
+  <polygon points="256,392 296,414 296,458 256,480 216,458 216,414" fill="url(#hex)"/>
+  <polygon points="256,392 296,414 296,458 256,480 216,458 216,414" fill="none" stroke="#0D1B2A" stroke-width="5"/>
+</svg>

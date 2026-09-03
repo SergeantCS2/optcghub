@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>OP TCG Hub — Phase 0 rig</title>
+<!--
+  AGENDA A2 has been the top blocker since take 1 and survived three takes
+  untouched, because a camera cannot be measured from a build container. This is
+  the instrument, not the app.
+
+  Open it on the Fold. It is a single file, no install, no build. It runs the
+  REAL geometry the scanner will use -- quad detection, perspective warp, code
+  crop -- and reports numbers you can send back.
+
+  It asks THREE questions in order, because they fail differently and a single
+  pass/fail would hide which one broke:
+
+    Q1  Can the camera find the card at all?          (detection rate)
+    Q2  Does the crop land on the printed code?       (you judge, by eye)
+    Q3  Can the code actually be read?                (OCR, optional stage)
+
+  Q1 and Q2 need no OCR and no network. Do those first. If the crop never lands
+  on the code, no recogniser on earth helps and the architecture changes.
+
+  PROTOCOL §8 note: this rig may load Tesseract from a CDN for Q3. That is
+  deliberate and it is why this file is a TOOL and not part of www/. The gate
+  refuses remote origins in the shipped app; a measuring instrument is not the
+  shipped app. Q1 and Q2 run fully offline.
+
+  Landmine 14: the sample MUST include sleeved and toploadered foils. Testing on
+  loose base cards produces a false-positive feasibility result and costs months.
+-->
+<style>
+:root{--bg:#000;--fg:#f2f5f6;--dim:#8b969c;--teal:#3ecfc0;--gold:#f5c518;
+      --up:#3ecfa4;--down:#ff6b5e;--line:#22282b;--card:#0d0f10}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,sans-serif;
+     padding:12px 12px 40px}
+h1{font-size:19px;margin:0 0 2px}
+h2{font-size:15px;margin:18px 0 8px;color:var(--teal)}
+p.sub{color:var(--dim);font-size:13px;margin:0 0 14px}
+button{font:inherit;color:inherit;background:#151a1c;border:1px solid var(--line);
+  border-radius:12px;padding:11px 16px;font-weight:650}
+button.go{background:var(--teal);color:#000;border-color:var(--teal)}
+button.warn{color:var(--gold)}
+button:disabled{opacity:.4}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+#stage{position:relative;background:#050607;border:1px solid var(--line);
+  border-radius:14px;overflow:hidden}
+video{width:100%;display:block}
+canvas.ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:14px;margin:12px 0}
+.crops{display:flex;gap:8px;overflow-x:auto;padding:4px 0}
+.crops figure{margin:0;flex:0 0 auto;text-align:center}
+.crops canvas{border:1px solid var(--line);border-radius:6px;background:#111;
+  image-rendering:pixelated}
+.crops figcaption{font-size:10.5px;color:var(--dim);margin-top:3px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+td{padding:6px 0;border-top:1px solid var(--line)}
+td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:650}
+.big{font-size:30px;font-weight:750;letter-spacing:-.02em}
+.note{font-size:12.5px;color:var(--dim);line-height:1.55}
+.k{display:inline-block;background:#1d2426;border-radius:6px;padding:1px 7px;
+   font-size:12px;font-family:ui-monospace,monospace}
+label{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--dim);
+  margin:6px 0}
+select,input[type=text]{background:#151a1c;color:var(--fg);border:1px solid var(--line);
+  border-radius:8px;padding:8px 10px;font:inherit}
+#log{font-family:ui-monospace,monospace;font-size:11.5px;color:var(--dim);
+  white-space:pre-wrap;max-height:180px;overflow:auto}
+</style>
+</head>
+<body>
+
+<h1>OP TCG Hub — Phase 0 rig</h1>
+<p class="sub">Measuring AGENDA A2. Not the app. Nothing here is saved anywhere but this phone.</p>
+
+<div id="stage">
+  <video id="v" playsinline muted></video>
+  <canvas class="ov" id="ov"></canvas>
+</div>
+
+<div class="row">
+  <button class="go" id="start">Start camera</button>
+  <button id="grab" disabled>Capture</button>
+  <button id="torch" disabled>Torch</button>
+</div>
+
+<div class="panel">
+  <h2 style="margin-top:0">Label what you are holding</h2>
+  <label>Category
+    <select id="cat">
+      <option value="base">plain base card (control)</option>
+      <option value="foil">foil / SP / alt-art</option>
+      <option value="sleeve">in a penny sleeve</option>
+      <option value="toploader">in a toploader</option>
+      <option value="lowlight">poor light</option>
+    </select>
+  </label>
+  <label>Printed code <input type="text" id="truth" placeholder="e.g. EB03-024" autocapitalize="characters"></label>
+  <label>What the card face shows
+    <select id="face">
+      <option value="plain">nothing extra (plain)</option>
+      <option value="star">a star above the rarity</option>
+      <option value="sp">an SP badge before the number</option>
+    </select>
+  </label>
+  <div class="note">
+    Landmine 14: the sample must include sleeved and toploadered foils. Testing
+    only on loose base cards produces a false pass and costs months.
+  </div>
+</div>
+
+<div class="panel">
+  <h2 style="margin-top:0">Q2 — did the crop land on the code?</h2>
+  <div class="crops" id="crops"></div>
+  <div class="row">
+    <button class="go" id="yes" disabled>Crop is on the code</button>
+    <button class="warn" id="no" disabled>Crop missed</button>
+  </div>
+  <div class="row">
+    <button id="starYes" disabled>Star region looks right</button>
+    <button class="warn" id="starNo" disabled>Star region missed</button>
+  </div>
+  <div class="note">
+    The small strip under each crop is the <b>star region</b>. Take 6 measured
+    that a star there means a special printing — 16/16 plain cards had none —
+    worth 61.4% to 71.7% auto-accept. It is only useful if a camera can see it.
+  </div>
+  <div class="note">Judge by eye. If the strip does not contain the printed
+    code, no recogniser can help and the geometry has to change first.</div>
+</div>
+
+<div class="panel">
+  <h2 style="margin-top:0">Q3 — could it be read? <span class="note">(optional, needs signal once)</span></h2>
+  <div class="row"><button id="loadocr">Load recogniser</button></div>
+  <div id="ocrOut" class="note">Not loaded. Q1 and Q2 work fully offline; do those first.</div>
+</div>
+
+<div class="panel">
+  <h2 style="margin-top:0">Results</h2>
+  <div class="big" id="headline">no captures yet</div>
+  <table id="tbl"></table>
+  <div class="row">
+    <button id="csv">Export CSV</button>
+    <button id="reset">Reset</button>
+  </div>
+  <div class="note" id="verdict"></div>
+</div>
+
+<div class="panel"><h2 style="margin-top:0">Log</h2><div id="log"></div></div>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const log = m => { const l = $('#log'); l.textContent = m + '\n' + l.textContent; };
+
+/* ---- geometry constants, identical to the ones the scanner will use ------ */
+const ASPECT = 63 / 88;          // a standard card, 0.716
+const CANON  = { w: 500, h: 700 };
+/* One Piece prints the card number in the bottom-right. Take 6 located it on
+   real card images: the strip sits around y 0.94-0.96 and runs from roughly
+   x 0.62 to the right border. Still a variable, not a truth -- tuning it is
+   half of what Q2 is for. */
+/* Narrowed at take 7. The wide box swallowed the rarity badge and the cost
+   bubble, whose digits ran into the number; excluding them took correct reads
+   from 27% to 51% on the same images. */
+let CODE_BOX = { x: 0.60, y: 0.928, w: 0.29, h: 0.050 };
+
+/* Take 6 finding: the card face says which PRINTING it is.
+     plain   OP13-014 [C] (4)
+     star    OP04-030 *[R] (1)       a star above the rarity badge
+     sp      SP OP05-119 [SEC] (2)   a literal SP badge before the number
+   Worth 61.4% -> 71.7% auto-accept (MEASURED). The star sits just above and
+   right of the number, so it is a small fixed offset from CODE_BOX rather than
+   a search. Q4 asks whether it survives a camera. */
+/* MEASURED at take 7, not guessed. The take-6 box was five times too large and
+   offset; it scored plain cards at +0.51 against a threshold of 0.53, i.e. no
+   margin at all, and would have looked fine right up until it fired on a base
+   card. Located by differencing the mean of 200 star cards against the mean of
+   254 plain ones: peak at x 0.8883, y 0.9362, blob 0.0150 x 0.0108.
+   With this box: plain median +0.02, star median +0.98, and a zero-false-
+   positive threshold of 0.61 with 0.36 of headroom. */
+let STAR_BOX = { x: 0.8800, y: 0.9315, w: 0.0190, h: 0.0140 };
+
+const state = { rows: [], last: null, stream: null, ocr: null };
+
+/* ---- camera ------------------------------------------------------------- */
+$('#start').addEventListener('click', async () => {
+  try {
+    state.stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' },
+               width: { ideal: 1920 }, height: { ideal: 1080 } }
+    });
+    const v = $('#v');
+    v.srcObject = state.stream; await v.play();
+    const t = state.stream.getVideoTracks()[0].getSettings();
+    log(`camera ${t.width}x${t.height} @${t.frameRate || '?'}fps  ${t.facingMode || ''}`);
+    $('#grab').disabled = false;
+    const caps = state.stream.getVideoTracks()[0].getCapabilities?.() || {};
+    if (caps.torch) $('#torch').disabled = false;
+    requestAnimationFrame(loop);
+  } catch (e) { log('camera FAILED: ' + e.message); }
+});
+$('#torch').addEventListener('click', async () => {
+  const tr = state.stream.getVideoTracks()[0];
+  const on = !(tr.getSettings().torch);
+  try { await tr.applyConstraints({ advanced: [{ torch: on }] }); log('torch ' + on); }
+  catch (e) { log('torch failed: ' + e.message); }
+});
+
+/* ---- live quad detection ------------------------------------------------
+   Deliberately dependency-free. OpenCV.js is 8 MB and would make this rig
+   need the network to answer a question about geometry. A Sobel edge score
+   plus a rectangle search is enough to answer "can it find the card", which
+   is the only thing Q1 asks. */
+const work = document.createElement('canvas');
+function loop() {
+  const v = $('#v');
+  if (!v.videoWidth) return requestAnimationFrame(loop);
+  const ov = $('#ov'), r = v.getBoundingClientRect();
+  ov.width = r.width; ov.height = r.height;
+  const g = ov.getContext('2d');
+  g.clearRect(0, 0, ov.width, ov.height);
+  const q = detect(v);
+  g.lineWidth = 3;
+  g.strokeStyle = q ? '#3ecfa4' : '#39424766';
+  const sx = ov.width / v.videoWidth, sy = ov.height / v.videoHeight;
+  if (q) {
+    g.beginPath();
+    q.forEach((p, i) => i ? g.lineTo(p[0] * sx, p[1] * sy) : g.moveTo(p[0] * sx, p[1] * sy));
+    g.closePath(); g.stroke();
+    /* show where the code crop WILL be taken from */
+    g.strokeStyle = '#f5c518'; g.lineWidth = 2;
+    const c = boxOnQuad(q, CODE_BOX);
+    g.beginPath();
+    c.forEach((p, i) => i ? g.lineTo(p[0] * sx, p[1] * sy) : g.moveTo(p[0] * sx, p[1] * sy));
+    g.closePath(); g.stroke();
+  } else {
+    g.strokeRect(ov.width * .12, ov.height * .06, ov.width * .76, ov.height * .88);
+  }
+  state.lastQuad = q;
+  requestAnimationFrame(loop);
+}
+
+/* Find the largest bright-bordered rectangle with a card's aspect ratio.
+   Cards are printed on white stock with a dark table behind them far more often
+   than the reverse, so a coarse luminance threshold plus a bounding box is
+   enough for a feasibility answer. */
+function detect(v) {
+  const W = 160, H = Math.round(W * v.videoHeight / v.videoWidth);
+  work.width = W; work.height = H;
+  const c = work.getContext('2d', { willReadFrequently: true });
+  c.drawImage(v, 0, 0, W, H);
+  const d = c.getImageData(0, 0, W, H).data;
+  let sum = 0;
+  const lum = new Float32Array(W * H);
+  for (let i = 0, p = 0; i < d.length; i += 4, p++) {
+    lum[p] = (d[i] * .299 + d[i + 1] * .587 + d[i + 2] * .114);
+    sum += lum[p];
+  }
+  const mean = sum / (W * H);
+  const thr = mean * 1.18;
+  let x0 = W, y0 = H, x1 = 0, y1 = 0, n = 0;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (lum[y * W + x] > thr) {
+      n++;
+      if (x < x0) x0 = x; if (x > x1) x1 = x;
+      if (y < y0) y0 = y; if (y > y1) y1 = y;
+    }
+  }
+  if (n < W * H * 0.06) return null;
+  const w = x1 - x0, h = y1 - y0;
+  if (w < 8 || h < 8) return null;
+  const ar = w / h;
+  /* Landmine 14: a toploader is a different aspect ratio from the 0.716 card
+     inside it, and its edge is the higher-contrast one. A tolerance this tight
+     is the thing that will reject a slabbed or holdered card -- which is the
+     point of measuring rather than assuming. */
+  if (ar < ASPECT * 0.78 || ar > ASPECT * 1.22) return null;
+  const sx = v.videoWidth / W, sy = v.videoHeight / H;
+  return [[x0 * sx, y0 * sy], [x1 * sx, y0 * sy], [x1 * sx, y1 * sy], [x0 * sx, y1 * sy]];
+}
+
+function boxOnQuad(q, b) {
+  const [tl, tr, br, bl] = q;
+  const lerp = (a, c, t) => [a[0] + (c[0] - a[0]) * t, a[1] + (c[1] - a[1]) * t];
+  const pt = (u, v) => lerp(lerp(tl, tr, u), lerp(bl, br, u), v);
+  return [pt(b.x, b.y), pt(b.x + b.w, b.y), pt(b.x + b.w, b.y + b.h), pt(b.x, b.y + b.h)];
+}
+
+/* ---- capture ------------------------------------------------------------ */
+$('#grab').addEventListener('click', () => {
+  const v = $('#v');
+  const t0 = performance.now();
+  const q = state.lastQuad;
+  const found = !!q;
+
+  const full = document.createElement('canvas');
+  full.width = CANON.w; full.height = CANON.h;
+  const fc = full.getContext('2d');
+  if (q) {
+    /* Axis-aligned warp. A true perspective transform is the app's job; for a
+       feasibility answer the question is whether the CROP REGION lands on the
+       code, and that is answerable without it. Saying so beats implying more
+       rigour than is here. */
+    const x = q[0][0], y = q[0][1], w = q[1][0] - q[0][0], h = q[2][1] - q[1][1];
+    fc.drawImage(v, x, y, w, h, 0, 0, CANON.w, CANON.h);
+  } else {
+    fc.drawImage(v, 0, 0, CANON.w, CANON.h);
+  }
+
+  const sw = Math.round(CANON.w * STAR_BOX.w), sh = Math.round(CANON.h * STAR_BOX.h);
+  const star = document.createElement('canvas');
+  star.width = sw * 6; star.height = sh * 6;
+  const sc = star.getContext('2d');
+  sc.imageSmoothingQuality = 'high';
+  sc.drawImage(full, Math.round(CANON.w * STAR_BOX.x), Math.round(CANON.h * STAR_BOX.y),
+               sw, sh, 0, 0, star.width, star.height);
+  contrast(sc, star.width, star.height);
+
+  const cw = Math.round(CANON.w * CODE_BOX.w), ch = Math.round(CANON.h * CODE_BOX.h);
+  const crop = document.createElement('canvas');
+  crop.width = cw * 3; crop.height = ch * 3;          // 3x upscale before OCR
+  const cc = crop.getContext('2d');
+  cc.imageSmoothingQuality = 'high';
+  cc.drawImage(full, Math.round(CANON.w * CODE_BOX.x), Math.round(CANON.h * CODE_BOX.y),
+               cw, ch, 0, 0, crop.width, crop.height);
+  contrast(cc, crop.width, crop.height);
+
+  const ms = performance.now() - t0;
+  state.last = { found, crop, star, ms, cat: $('#cat').value,
+                 face: $('#face').value, starOk: null,
+                 truth: ($('#truth').value || '').trim().toUpperCase() };
+  showCrop(crop, found, ms, star);
+  $('#yes').disabled = $('#no').disabled = false;
+  $('#starYes').disabled = $('#starNo').disabled = false;
+  log(`capture: quad ${found ? 'FOUND' : 'missed'}  ${ms.toFixed(0)}ms  ${state.last.cat}`);
+  if (state.ocr) runOcr();
+});
+
+/* Foils blow out under auto-exposure (landmine 10). Stretch the crop's own
+   histogram before anything tries to read it. */
+function contrast(ctx, w, h) {
+  const im = ctx.getImageData(0, 0, w, h), d = im.data;
+  let lo = 255, hi = 0;
+  for (let i = 0; i < d.length; i += 4) {
+    const l = d[i] * .299 + d[i + 1] * .587 + d[i + 2] * .114;
+    if (l < lo) lo = l; if (l > hi) hi = l;
+  }
+  const span = Math.max(1, hi - lo);
+  for (let i = 0; i < d.length; i += 4) {
+    const l = (d[i] * .299 + d[i + 1] * .587 + d[i + 2] * .114 - lo) / span * 255;
+    d[i] = d[i + 1] = d[i + 2] = Math.max(0, Math.min(255, l));
+  }
+  ctx.putImageData(im, 0, 0);
+}
+
+function showCrop(crop, found, ms, star) {
+  const wrap = $('#crops');
+  const fig = document.createElement('figure');
+  const c = document.createElement('canvas');
+  c.width = crop.width; c.height = crop.height;
+  c.style.width = '210px'; c.getContext('2d').drawImage(crop, 0, 0);
+  const cap = document.createElement('figcaption');
+  const s2 = document.createElement('canvas');
+  s2.width = star.width; s2.height = star.height;
+  s2.style.width = '54px'; s2.style.display = 'block'; s2.style.margin = '4px auto 0';
+  s2.getContext('2d').drawImage(star, 0, 0);
+  cap.textContent = (found ? 'quad found' : 'NO QUAD') + ` · ${ms.toFixed(0)}ms`;
+  fig.append(c, s2, cap); wrap.prepend(fig);
+  while (wrap.children.length > 8) wrap.lastChild.remove();
+}
+
+/* ---- Q3: optional OCR --------------------------------------------------- */
+$('#loadocr').addEventListener('click', async () => {
+  $('#ocrOut').textContent = 'loading…';
+  try {
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+      s.onload = res; s.onerror = () => rej(new Error('CDN unreachable'));
+      document.head.appendChild(s);
+    });
+    state.ocr = await Tesseract.createWorker('eng');
+    /* Landmine 11: constrain the charset. Unconstrained OCR returns EBO3-O24.
+       This is cheaper and more effective than any model change. */
+    await state.ocr.setParameters({
+      tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-',
+      tessedit_pageseg_mode: '7'                    // single text line
+    });
+    $('#ocrOut').textContent = 'ready — capture again';
+    log('OCR ready (charset constrained)');
+  } catch (e) { $('#ocrOut').textContent = 'failed: ' + e.message; }
+});
+
+/* NO \b. Landmine 63: the badge digits concatenate onto the number, so
+   "EB04-024008" has no word boundary after 024 and the anchored form matched
+   nothing. This rig SHIPPED the anchored form at take 4 -- it would have told
+   Jacob the camera reads nothing while the crop was perfectly legible. */
+const CODE_RE = /(OP|ST|EB|PRB|LT|P)\d{0,2}-\d{3}/;
+function normalise(s) {
+  return s.toUpperCase().replace(/[^A-Z0-9-]/g, '')
+          .replace(/(?<=\d)O/g, '0').replace(/O(?=\d)/g, '0')
+          .replace(/(?<=\d)I/g, '1').replace(/I(?=\d)/g, '1')
+          .replace(/(?<=\d)S/g, '5');
+}
+async function runOcr() {
+  const t0 = performance.now();
+  const { data } = await state.ocr.recognize(state.last.crop);
+  const ms = performance.now() - t0;
+  const raw = (data.text || '').trim();
+  const norm = normalise(raw);
+  const m = norm.match(CODE_RE);
+  state.last.ocrMs = ms;
+  state.last.read = m ? m[0] : null;
+  state.last.raw = raw;
+  $('#ocrOut').innerHTML = `<span class="k">${raw || '(nothing)'}</span> → ` +
+    `<span class="k">${m ? m[0] : 'no match'}</span> · ${ms.toFixed(0)}ms`;
+  log(`ocr ${ms.toFixed(0)}ms  raw="${raw}"  code=${m ? m[0] : '-'}`);
+}
+
+/* ---- scoring ------------------------------------------------------------ */
+$('#starYes').addEventListener('click', () => {
+  if (state.last) state.last.starOk = true;
+  $('#starYes').disabled = $('#starNo').disabled = true;
+});
+$('#starNo').addEventListener('click', () => {
+  if (state.last) state.last.starOk = false;
+  $('#starYes').disabled = $('#starNo').disabled = true;
+});
+$('#yes').addEventListener('click', () => record(true));
+$('#no').addEventListener('click', () => record(false));
+function record(cropOk) {
+  if (!state.last) return;
+  const L = state.last;
+  state.rows.push({
+    cat: L.cat, truth: L.truth, face: L.face, starOk: L.starOk,
+    found: L.found, cropOk,
+    read: L.read || '', correct: L.read && L.truth ? (L.read === L.truth) : null,
+    ms: Math.round(L.ms), ocrMs: Math.round(L.ocrMs || 0),
+    at: new Date().toISOString()
+  });
+  $('#yes').disabled = $('#no').disabled = true;
+  $('#truth').value = '';
+  paint();
+}
+function paint() {
+  const R = state.rows;
+  if (!R.length) return;
+  const cats = [...new Set(R.map(r => r.cat))];
+  const pct = (a, b) => b ? (100 * a / b).toFixed(0) + '%' : '—';
+  let html = `<tr><td><b>overall</b> (${R.length} captures)</td><td>` +
+    `${pct(R.filter(r => r.found).length, R.length)} found</td></tr>`;
+  for (const c of cats) {
+    const s = R.filter(r => r.cat === c);
+    const okCrop = s.filter(r => r.cropOk).length;
+    const tried = s.filter(r => r.correct !== null);
+    const right = tried.filter(r => r.correct).length;
+    const wrong = tried.filter(r => r.correct === false).length;
+    html += `<tr><td>${c}<br><span class="note">${s.length} captures</span></td>` +
+      `<td>${pct(s.filter(r => r.found).length, s.length)} found<br>` +
+      `<span class="note">${pct(okCrop, s.length)} crop ok` +
+      (tried.length ? ` · ${pct(right, tried.length)} read` +
+        (wrong ? ` · <span style="color:var(--down)">${wrong} WRONG</span>` : '') : '') +
+      `</span></td></tr>`;
+  }
+  $('#tbl').innerHTML = html;
+
+  const base = R.filter(r => r.cat === 'base' && r.correct !== null);
+  const wrongOnControl = base.filter(r => r.correct === false).length;
+  const tried = R.filter(r => r.correct !== null);
+  const rate = tried.length ? tried.filter(r => r.correct).length / tried.length : null;
+  const cropRate = R.filter(r => r.cropOk).length / R.length;
+  $('#headline').textContent = rate !== null
+    ? (100 * rate).toFixed(0) + '% read correctly'
+    : (100 * cropRate).toFixed(0) + '% crops on target';
+
+  /* The gate from ROADMAP Phase 0, restated here so the answer is unambiguous
+     on the phone rather than reconstructed later from a spreadsheet. */
+  let v;
+  if (wrongOnControl > 0) {
+    v = `<b style="color:var(--down)">STOP.</b> ${wrongOnControl} WRONG code(s) on ` +
+        `plain base cards. A wrong read is worse than no read (landmine 12) and ` +
+        `the confidence model needs rethinking before anything is built on it.`;
+  } else if (R.length < 30) {
+    v = `${R.length} of 30 captures. Keep going — and make sure sleeved, ` +
+        `toploadered and poor-light cards are all in the sample (landmine 14).`;
+  } else if (cropRate < 0.9) {
+    v = `<b style="color:var(--gold)">Geometry first.</b> Only ` +
+        `${(100 * cropRate).toFixed(0)}% of crops landed on the code. Tune ` +
+        `CODE_BOX before judging the recogniser.`;
+  } else if (rate === null) {
+    v = `Geometry looks sound (${(100 * cropRate).toFixed(0)}% crops on target). ` +
+        `Load the recogniser and answer Q3.`;
+  } else if (rate >= 0.85) {
+    v = `<b style="color:var(--up)">PASS.</b> ${(100 * rate).toFixed(0)}% read, ` +
+        `zero wrong on the control. A2 clears; Phase 1 proceeds as planned.`;
+  } else if (rate >= 0.7) {
+    v = `<b style="color:var(--gold)">MARGINAL.</b> ${(100 * rate).toFixed(0)}%. ` +
+        `Temporal voting and exposure lock will likely close this; budget a week.`;
+  } else {
+    v = `<b style="color:var(--down)">BELOW GATE.</b> ${(100 * rate).toFixed(0)}%. ` +
+        `With zero wrong reads a picker-heavy scanner is still usable — a lying ` +
+        `one is not. Record the number and re-plan.`;
+  }
+  $('#verdict').innerHTML = v;
+  localStorage.setItem('phase0', JSON.stringify(state.rows));
+}
+
+$('#csv').addEventListener('click', () => {
+  const head = ['category', 'truth_code', 'declared_face', 'quad_found',
+                'crop_on_code', 'star_region_ok', 'code_read', 'correct',
+                'capture_ms', 'ocr_ms', 'at'];
+  const csv = [head.join(',')].concat(state.rows.map(r =>
+    [r.cat, r.truth, r.face, r.found, r.cropOk, r.starOk, r.read, r.correct,
+     r.ms, r.ocrMs, r.at]
+      .map(v => `"${String(v ?? '')}"`).join(','))).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = 'phase0-' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.click();
+});
+$('#reset').addEventListener('click', () => {
+  if (!confirm('Discard all captures?')) return;
+  state.rows = []; localStorage.removeItem('phase0');
+  $('#tbl').innerHTML = ''; $('#headline').textContent = 'no captures yet';
+  $('#verdict').textContent = ''; $('#crops').innerHTML = '';
+});
+
+try {
+  state.rows = JSON.parse(localStorage.getItem('phase0') || '[]');
+  if (state.rows.length) { paint(); log(`restored ${state.rows.length} captures`); }
+} catch (e) {}
+log('rig ready — Q1 and Q2 need no network');
+</script>
+</body>
+</html>
