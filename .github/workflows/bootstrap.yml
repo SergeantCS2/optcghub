@@ -12,12 +12,19 @@ name: bootstrap
 # It is ALSO the recovery path: if the tree is ever wrong, upload a seed as a
 # Release asset and run this. It replaces the tree with the seed's contents
 # (except .github/, which GITHUB_TOKEN cannot write — APEX landmine 46).
+#
+# Take 33: the push below CANNOT start build.yml on its own. GitHub does not
+# run workflows for events made with GITHUB_TOKEN (its rule against recursive
+# runs), with exactly two exceptions — workflow_dispatch and repository_dispatch.
+# So the last step asks for the build by name, which needs `actions: write`.
+# Landmine 108. Pasted by hand once more when this version replaces the last.
 
 on:
   workflow_dispatch:
 
 permissions:
   contents: write
+  actions: write        # `gh workflow run build.yml` at the end (landmine 108)
 
 jobs:
   bootstrap:
@@ -65,4 +72,12 @@ jobs:
           fi
           git commit -q -m "bootstrap: take $take"
           git push
-          echo "committed take $take — build.yml will now run"
+          echo "committed take $take"
+
+      - name: Start the build (a GITHUB_TOKEN push starts nothing by itself)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh workflow run build.yml --ref "${{ github.ref_name }}"
+          echo "build.yml dispatched on ${{ github.ref_name }} — Actions -> build"
