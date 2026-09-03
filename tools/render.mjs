@@ -49,6 +49,25 @@ if (puppeteer) {
 
   sec('real engine (Chrome)');
   ok('no page errors', errors.length === 0, errors.slice(0, 2).join(' | '));
+  /* Take 33 -- typography. A @font-face that 404s falls back silently and
+     every layout check still passes on the system font, so ask the engine:
+     did the four role faces LOAD, and is the display face what h2 resolved to?
+     Then the control: a face pointed at a file that does not exist must
+     report 'error', or this probe cannot see a missing font (landmine 55). */
+  const fonts = await page.evaluate(async () => {
+    await document.fonts.ready;
+    const st = {}; for (const f of document.fonts) st[f.family] = f.status;
+    const h2 = document.querySelector('h2');
+    const fam = h2 ? getComputedStyle(h2).fontFamily : '';
+    const nope = new FontFace('OPH Nope', 'url(fonts/does-not-exist.woff2)');
+    await nope.load().catch(() => 0);
+    return { st, fam, control: nope.status };
+  });
+  ok('the four role faces are LOADED in Chrome',
+     ['OPH Display', 'OPH Comic', 'OPH Body', 'OPH Heavy'].every(f => fonts.st[f] === 'loaded'),
+     JSON.stringify(fonts.st));
+  ok('h2 resolves to the display face', /OPH Display/.test(fonts.fam), fonts.fam);
+  ok('negative control: a missing font file reports error', fonts.control === 'error', fonts.control);
   ok('catalogue reached the page',
      await page.evaluate(() => !!window.VAULT && window.VAULT.CAT.ready));
 

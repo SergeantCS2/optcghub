@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 31.* Ranked by blocking-ness, not by interest.
+*Current as of take 35.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -16,7 +16,7 @@ data legally?
   categories, groups, products and prices as free JSON and CSV, updated daily
   around 20:00 UTC. One Piece Card Game is `categoryId 68`.
 - **PROVEN the numbers are the same ones the reference app shows.** `EB03-024
-  (SP)`, productId 672822: TCGCSV market **$467.33**, low **$400.00**. Jacob's
+  (SP)`, productId 672822: TCGCSV market **$467.33**, low **$400.00**. The owner's
   Collectr screenshot shows **$467.33**, and its TCGplayer shop row shows "From
   $400.00". Identical to the cent. The reference app's catalogue *is* the
   TCGplayer catalogue, and so is ours.
@@ -29,7 +29,7 @@ data legally?
   client-side, Cloudflare wins, and it is an independent ground for Play removal
   (landmine 32).
 - **Ruled out: paid aggregators** (JustTCG, tcgapi.dev, PriceCharting) **for v1.**
-  Jacob's budget is $0 and TCGCSV covers One Piece completely. They remain the
+  the owner's budget is $0 and TCGCSV covers One Piece completely. They remain the
   answer if per-condition pricing ever becomes required (A4).
 - **Ruled out: community One Piece APIs** (apitcg, optcgapi) as the *price*
   source. They are fine catalogues but they carry TCGplayer prices second-hand;
@@ -79,7 +79,7 @@ The one unproven assumption in the entire plan. Everything else is arithmetic.
 - **Ruled out: a separate simulation path in the APK.** `simulateScan()` runs
   only where `PLATFORM.hasOcr()` is false — the browser build — and the app
   says "preview only" there rather than pretending.
-- **PROVEN take 16, on the Fold, by Jacob:** *"The camera was able to scan my
+- **PROVEN take 16, on the Fold, by the owner:** *"The camera was able to scan my
   common cards."* Two plain base cards (OP16-074, OP16-107) on a dark table in a
   dark room — the guide found the card, ML Kit read the code, the picker opened
   with exactly the two printings that share the number. Fifteen takes of
@@ -97,7 +97,7 @@ The one unproven assumption in the entire plan. Everything else is arithmetic.
 
 ## A3 — Stack · DECIDED take 1 · RE-EXAMINED take 11 with the constraints lifted
 
-**Take 11.** Jacob confirmed the stack is free to change for this repo — APEX was
+**Take 11.** the owner confirmed the stack is free to change for this repo — APEX was
 sent for its process, and the phone-only constraint is gone. So the decision was
 re-run without either leg it originally stood on.
 
@@ -140,7 +140,7 @@ re-run without either leg it originally stood on.
   and no iOS requirement to justify it.
 - **Ruled out: a second app framework "just for the scanner".** Two build systems
   is two gates.
-- **Note:** Jacob now has PC access, which removes the constraint that originally
+- **Note:** the owner now has PC access, which removes the constraint that originally
   forced this on APEX. The decision stands on the toolchain argument alone, not
   on the constraint.
 
@@ -153,7 +153,7 @@ re-run without either leg it originally stood on.
   value, never multiplied into it. The app says which price it is showing.
 - **Ruled out: inventing condition multipliers.** A fabricated ×0.85 for Lightly
   Played is a confident wrong answer about someone's money (PROTOCOL §10.3).
-- **Reopen if:** a free per-condition source appears, or Jacob decides a paid tier
+- **Reopen if:** a free per-condition source appears, or the owner decides a paid tier
   is worth it. Not before.
 
 ## A5 — Variant disambiguation · REDESIGNED take 2 on measurement
@@ -226,7 +226,7 @@ Take 1 had this as a detail. Take 2 measured it and it is the architecture.
   for no benefit (landmine 26).
 - **Ruled out: caching CDN images to disk.** Same reason, one step removed.
 - **Consequence, and it is a good one:** the binder shows the actual cards. The
-  reference app cannot do this — every thumbnail in Jacob's screenshots is a
+  reference app cannot do this — every thumbnail in the owner's screenshots is a
   publisher SAMPLE watermark.
 - **Open:** what a not-yet-scanned card shows in search. Currently: hot-linked
   CDN image, memory-cache only, declared in PROVISION, DISPLAY-ONLY in the gate.
@@ -251,7 +251,7 @@ of value.
 
 ## A8 — App name, id and signing · CLOSED take 4
 
-Blocked the first commit for three takes. Jacob's call, take 4.
+Blocked the first commit for three takes. The owner's call, take 4.
 
 - **Name: OP TCG Hub.** Package **`com.optcghub.app`**, permanent from first
   registration under developer verification (landmine 36) and fixed from first
@@ -320,7 +320,7 @@ cards". Take 7 measured it against 572 labelled card images instead.
 
 ## A19 — Other games: MTG, Pokémon, Lorcana, Riftbound · MEASURED take 23 · DECISION NEEDED BEFORE THE PLAY LISTING
 
-Jacob's ask: add the other big TCGs. Measured against TCGCSV at take 23:
+The owner's ask: add the other big TCGs. Measured against TCGCSV at take 23:
 
 | game | TCGCSV cat | sets | products (rough) | catalogue in the APK? |
 |---|---|---|---|---|
@@ -403,11 +403,11 @@ Play clocks.
 
 ## A20 — Ideas backlog · OPENED take 23, RANKED
 
-Jacob: *"what other ideas can you think of?"* Ranked by value-to-a-collector
+The owner: *"what other ideas can you think of?"* Ranked by value-to-a-collector
 over cost, with what each needs. None are scheduled; this is the list to pick
 from.
 
-*Take 24: Jacob approved the whole list — "add them to the list." It lives in ROADMAP Phase 8 in this order. #7 shipped take 24 as Prep & Play's first screen.*
+*Take 24: The owner approved the whole list — "add them to the list." It lives in ROADMAP Phase 8 in this order. #7 shipped take 24 as Prep & Play's first screen.*
 
 **Cheap, high value — hours each**
 1. **Price alerts.** "Tell me when OP01-016 (Manga) drops under $1,500." The
@@ -453,34 +453,38 @@ from.
 - Auto-grading condition from a photo (a separate product; A4).
 - A social feed (a backend; ROADMAP won't-build).
 
-## A21 — Google Play · REPO PROCEDURE COMPLETE take 30 · Jacob's steps next
+## A21 — Google Play · CI PROVEN ON THE RUNNER take 33 · the clock is the owner's next ten steps
 
-Jacob wants the closed-testing clock started in a few days. The gate is
+The owner wants the closed-testing clock started in a few days. The gate is
 **12 testers opted in for 14 continuous days** (landmine 35). Everything below
 is what stands between the seed and that clock, in order, with who does it.
 
 | # | step | who | state |
 |---|---|---|---|
-| 1 | **D14 — one game or many, and therefore the package name** | Jacob | open, blocks 3 |
-| 2 | Stand up the repo: RUNBOOK §1–4 | Jacob | take 30: workflows read against the tools, four fixes (landmine 105), runbook rewritten as the whole procedure. Still **never run on a runner** — that is step 2 itself |
-| 3 | First CI build produces the AAB | CI | the AAB branch has never executed; the upload-key secrets (RUNBOOK-play §B) are the gate |
-| 4 | Play Console: create the app, Play App Signing, the four secrets | Jacob | |
-| 5 | Listing: title, short and full description opening with the disclaimer, screenshots, icon 512, feature graphic 1024×500 | copy ready this take; screenshots need a phone | |
-| 6 | Privacy policy live on Pages, naming AdMob | this take | |
-| 7 | Data Safety form: **AD_ID collected/shared for advertising** (landmine 94); camera; no other collection | Jacob, from RUNBOOK-play §F | |
-| 8 | Internal test → closed test; 16–18 testers recruited (landmine 35) | Jacob | |
-| 9 | Developer verification: package + signing key registered (landmine 36) | Jacob | |
-| 10 | Real AdMob IDs — **not required to start the clock**; Google's test units are correct for a closed test | Jacob, D11 | |
+| 1 | **D14 — one game or many, and therefore the package name** | The owner | open, blocks 3 |
+| 2 | Stand up the repo: RUNBOOK §1–4 | The owner | **DONE** — read off the repo at take 34: public, run #3 green end to end (seed 6 s, bundle 42 s, apk 4 m 36 s, pages 14 s), Release **take-31**, Pages live. PROVEN |
+| 3 | First CI build produces the AAB | CI | built, dev-key-signed, named unfit (correct). Loses the suffix the first build after `tools/play-key.sh` sets the four secrets — RUNBOOK-play §2 |
+| 4 | Play Console: create the app, Play App Signing, the four secrets | The owner | RUNBOOK-play §1–4, rewritten take 33 as one ordered procedure; the key is one command |
+| 5 | Listing: title, short and full description opening with the disclaimer, screenshots, icon 512, feature graphic 1024×500 | copy ready; icon + feature graphic in `play-assets-t33/`; screenshots need the Fold | RUNBOOK-play §6 |
+| 6 | Privacy policy live on Pages, naming AdMob | take 30 | Pages deployed at `https://sergeantcs2.github.io/optcghub/` (run #3); the policy is `/privacy.html` there |
+| 7 | Data Safety form: **AD_ID collected/shared for advertising** (landmine 94); camera; no other collection | The owner, from RUNBOOK-play §F | |
+| 8 | Internal test → closed test; 16–18 testers recruited (landmine 35) | The owner | |
+| 9 | Developer verification: package + signing key registered (landmine 36) | The owner | |
+| 10 | Real AdMob IDs — **not required to start the clock**; Google's test units are correct for a closed test | The owner, D11 | account exists (take 33): `pub-6243777967151950`; app-ads.txt goes on the root user site — RUNBOOK-play §9 |
 
 - **Ruled out: waiting for real AdMob IDs.** Test units are what a closed test
   should run on.
 - **Ruled out: adding games first.** A19.
-- **Built this take toward 5 and 6:** `docs/PLAY-LISTING.md` (the copy, in
+- **Ruled out (take 33): building the APK in the session container now that the runner does.** The runner's build is the one the owner installs; a container build is a second signer's worth of doubt for no information. The seed is the deliverable, the Release is the artifact.
+- **Take 34:** `tools/play-key.ps1` for Windows (PowerShell cannot run a `.sh`), tested under PowerShell 7 with a damaged-keystore control; the take-32 APK's arm64 libraries MEASURED 16 KB page-aligned (Play's rule for new apps); export through the share sheet and restore through a file picker, because the landmine-34 switch is a reinstall (landmine 110).
+- **Ruled out (take 34): `android:hasFragileUserData` to keep data across the uninstall.** Kept data pins the old signature; the Play build's different signer would then refuse to install at all. Export → import is the honest path.
+- **Built take 33:** `tools/play-key.sh` (the upload key and the four secrets, one command, read back before trusted), RUNBOOK-play as the whole ordered procedure, the landmine-34 export/uninstall/restore warning up front, the Play graphics from the reverted icon.
+- **Built take 30 toward 5 and 6:** `docs/PLAY-LISTING.md` (the copy, in
   the shape Play wants), `www/privacy.html` (served by Pages), and `ci/apk.sh`
   now emits `play-assets/` — icon 512 and a 1024×500 feature graphic from the
   committed SVG.
 
-## A25 — Catalogue sync cost · MEASURED take 29 · DELTA DEFERRED WITH A NUMBER
+## A25 — Catalogue sync cost · MEASURED take 29 · CELLULAR GUARD BUILT take 33 · delta deferred with a number
 
 A sync (take 27) downloads the whole catalogue. MEASURED: **4.2 MB raw, 0.56 MB
 as Pages serves it (gzip)**. A price-only delta of the rows that moved
@@ -494,11 +498,82 @@ overnight (2,433 of 7,520, take 8's 34%) would be **16 KB gzip** — 35× smalle
 - **Ruled out: syncing on mobile data without asking.** The quiet once-per-
   open sync checks `navigator.onLine` only; it should also check the
   connection type (`navigator.connection.type` where available) and defer
-  on cellular unless the collector says otherwise. One line, next pass.
+  on cellular unless the collector says otherwise. **Built take 33** after
+  sitting in four DEFERRED lists (landmine 70): `quietSyncAllowed()` holds the
+  quiet sync on `type === 'cellular'` unless *More → Sync → Also sync quietly
+  on mobile data* is on; an absent API means unknown and proceeds; **Sync now
+  never asks**. Four smoke controls, one of them the guard firing. INFERRED
+  that Android's WebView reports `cellular` until the Fold shows it.
+- **`UPDATE_URL` is set** (take 33) to the Pages host; the first *Sync now* on
+  the Fold that reports a date is the proof.
+
+## A26 — Typography · BUILT take 33 · the named faces are a file drop, not a download
+
+The owner, on seeing the app on the Fold: change the fonts — a mix of **Impress
+BT** and **Anime Ace BB** for the loud parts, and **Trebuchet MS**, **Avenir
+Black**, **Open Sans Semibold** for the plain parts (the Crunchyroll and
+Funimation house stacks, which is the vibe).
+
+- **What ships:** four ROLES, resolved at build time, every file bundled
+  (PROTOCOL §8, 232 KB for all four after subsetting to Latin and woff2):
+  *display* = Luckiest Guy (Apache-2.0) for Impress BT's job — headlines,
+  the hero, panel titles; *comic* = Bangers (OFL) for Anime Ace BB's job —
+  tabs, group labels, the mode slider; *body* = Open Sans (OFL, the one he
+  named) for everything readable; *heavy* = Nunito Sans at 900 (OFL) for
+  Avenir Black's job — the totals and counts. The CSS names the role ("OPH
+  Display"), never the face.
+- **The slot:** a licensed file dropped into `assets/user/fonts/<role>.woff2`
+  (or `.ttf`/`.otf`) replaces the default for that role at the next build and
+  not a line of CSS changes (`assets/user/README.md`). If the owner buys Impress
+  BT it becomes `display.ttf` and Luckiest Guy leaves.
+- **Verified:** render.mjs asks Chrome whether the four faces LOADED and what
+  `h2` resolved to, with a control that points a face at a missing file and
+  expects `error`; smoke checks the four rules are local files. Every layout
+  check at 360/412/673/820 still passes on the new metrics.
+- **Ruled out: shipping Impress BT, Anime Ace BB, Avenir Black or Trebuchet
+  MS as downloaded.** Impress BT and Avenir are Bitstream/Monotype commercial
+  faces and an app embed is a paid licence; Anime Ace BB is free only for
+  independent comic creators and non-commercial use, and A17 makes this a
+  commercial app; Trebuchet MS ships with Windows under a licence that does
+  not allow redistribution in an app. A font.download or dafont copy inside a
+  commercial APK is the same exposure as character art (landmine 26), on a
+  surface a takedown notice can name. The mechanism is built; the files are
+  the owner's call and the owner's purchase.
+- **Ruled out: Google Fonts by URL.** Dead offline (A-3), and a request on
+  every launch that PROVISION would have to declare.
+- **Open:** Fira Sans is the free Trebuchet if a third plain face is wanted;
+  not added, because four families is already the ceiling for one app.
+
+## A27 — The scrubber · BUILT take 35 · in the build and in the gate
+
+APEX ORV runs one before a release; this repo did not, and it is public.
+
+- **Built:** `tools/scrub.py` — `--strip` removes every comment from the
+  shipped `www/` (JS by acorn's exact ranges via `tools/strip_comments.mjs`,
+  HTML and CSS by pattern outside scripts), called from `build_app.py` so
+  the harnesses test the stripped artifact; `--check --docs` refuses the
+  owner's first name, an AI vendor's name, the conversational word, a
+  credential-shaped string, a build-container path or a leftover to-do marker anywhere public
+  — shipped files, public text, ledgers, source — and the gate runs it; a
+  `--selftest` plants each marker and shows the guard fire. MEASURED: 135
+  comments out of `app.js` (177 → 146 KB), 8 KB out of `index.html`.
+- **Applied once, take 35:** the first name became "the owner" (the GitHub
+  handle stays; it is the repo's), the conversational word became "session",
+  the container path became `~`, and the session prompt file was renamed
+  to `NEW-SESSION-PROMPT.md`. 196 lines, grep-checked.
+- **Ruled out: scrubbing the source's comments.** The record lives in the
+  source; the artifact is what ships. Strip on build, never on commit.
+- **Ruled out: a regex comment stripper.** A regex cannot tell `//` in a
+  string or a URL from a comment; the parser can, and it is one dependency
+  CI already installs beside puppeteer.
+- **Ruled out: making the repo private.** Pages on a free plan needs public,
+  and Pages is the privacy-policy URL Play requires.
+- **Ruled out: the README's link to the sibling repo.** It is the owner's own
+  public project and the README says why the governance is shared.
 
 ## A24 — The colour scheme, again · OPENED take 28 · NOT A PRIORITY
 
-Jacob, take 28: it still reads as Collectr; something One Piece; a transparent
+The owner, take 28: it still reads as Collectr; something One Piece; a transparent
 background would be fine at some point; green up, red down stay.
 
 What is true today: Collect is night-sea navy with brass and parchment (take
@@ -532,7 +607,7 @@ D15.
 
 ## A22 — Two modes: Collect and Prep & Play · SHELL BUILT take 24
 
-Jacob: a slider at the top; two modes; the whole colour scheme and feel
+The owner: a slider at the top; two modes; the whole colour scheme and feel
 changes. *Collect* is the collection. *Prep & Play* holds the deck builder and,
 in the future, the simulator.
 
@@ -558,7 +633,7 @@ in the future, the simulator.
 
 ## A23 — An OP TCG simulator · SCOPED take 24 · PHASE, NOT A TAKE
 
-Jacob wants an actual simulator inside Prep & Play, in the future. Scoped
+The owner wants an actual simulator inside Prep & Play, in the future. Scoped
 honestly:
 
 - **What exists to build on:** RULES.md from the official Comprehensive Rules
@@ -584,7 +659,7 @@ honestly:
 
 ## A18 — First-run guide and user pictures · BUILT take 19
 
-Jacob's ask: a tutorial like APEX's, a splash-style tour of every capability,
+The owner's ask: a tutorial like APEX's, a splash-style tour of every capability,
 a One Piece background, and placeholders for whatever I cannot supply.
 
 - **Built:** `#tour` — five cards (Scan, Value, Decks, Trade, Yours-offline),
@@ -597,7 +672,7 @@ a One Piece background, and placeholders for whatever I cannot supply.
   `home-bg.jpg`, `splash-bg.jpg`, `empty-collection.png`.
 - **Ruled out: shipping any One Piece image myself.** Landmines 26 and 30,
   unchanged. `assets/user/README.md` states the line once, plainly, and then
-  it is Jacob's folder: his own photographs of his own cards are the safest
+  it is the owner's folder: his own photographs of his own cards are the safest
   and the most premium thing the app can show, because they are real.
 - **Ruled out: an un-versioned "seen" flag.** APEX A147: a v1 flag set on the
   phone at an early take would suppress every rewrite forever.
@@ -607,9 +682,9 @@ a One Piece background, and placeholders for whatever I cannot supply.
 - **Open:** the splash-bg slot is declared but `ci/apk.sh` does not yet use it
   — it renders the icon on navy. One line, next take.
 
-## A17 — Ads and revenue · SDK WIRED take 22 against Google test units · real IDs pending (D11)
+## A17 — Ads and revenue · SDK WIRED take 22 against Google test units · ADMOB ACCOUNT EXISTS take 33 · unit IDs pending (D11)
 
-Jacob's ask, take 13: ad revenue, probably Google's. Starting ideas — 20 scans
+The owner's ask, take 13: ad revenue, probably Google's. Starting ideas — 20 scans
 free then 20 per rewarded ad, repeating; 1 deck build free then 1 per ad,
 repeating. His app, his decision. This entry keeps the ledger honest about what
 the decision touches, proposes a mechanism that does not recreate the thing the
@@ -652,7 +727,7 @@ app was built to replace, and asks what only he can answer.
    count is settled. With credits, the batch commits. Without, the batch waits
    in a **pending tray** — nothing scanned is ever lost.
 3. **Credits are earned online, spent anywhere.** A rewarded ad banks +20 (or
-   whatever number Jacob sets). The scanner shows the balance and, when it is
+   whatever number the owner sets). The scanner shows the balance and, when it is
    low *and* there is signal, offers to top up **before** the binder session.
    Offline with zero credits: keep scanning; the tray fills; it commits when
    the next ad is watched. The convention-hall session survives intact.
@@ -662,7 +737,7 @@ app was built to replace, and asks what only he can answer.
    access to the collector's own data — export, backup and browsing stay
    unconditional (PROTOCOL §9).
 
-Starting numbers, all Jacob's to change: 20 free credits on install, +20 per
+Starting numbers, all the owner's to change: 20 free credits on install, +20 per
 ad, 1 free deck, +1 per ad. These live in `config.py` as constants, not in code.
 
 ### Mechanism, technically
@@ -671,14 +746,14 @@ ad, 1 free deck, +1 per ad. These live in `config.py` as constants, not in code.
   Capacitor 8 major (PROVEN present on npm, take 13). Its rewarded API is read
   from `definitions.d.ts` at the integration take, not from memory — take 10's
   ML Kit lesson (landmine 73).
-- AdMob app ID and ad-unit IDs are Jacob's, created in the AdMob console; they
+- AdMob app ID and ad-unit IDs are the owner's, created in the AdMob console; they
   go in `capacitor.config.json` / the manifest, not in secrets (they are
   public by nature). Test unit IDs in every non-release build so nobody
   accrues invalid traffic on a real unit during development.
 - Credits persist in `user.db` alongside the collection and travel in the
   backup, so a restore does not zero them.
 - The whole thing sits behind one flag, `ADS_ENABLED`, off in the browser
-  build and in the Phase 0 rig, and off until Jacob has AdMob IDs.
+  build and in the Phase 0 rig, and off until the owner has AdMob IDs.
 
 ### Ruled out
 
@@ -711,7 +786,7 @@ ad, 1 free deck, +1 per ad. These live in `config.py` as constants, not in code.
   manifest (landmine 94) and 4 MB to the APK.
 - RUNBOOK-play §F: the Play consequences, in order.
 
-### Questions for Jacob (DECISIONS-OPEN D10–D13)
+### Questions for the owner (DECISIONS-OPEN D10–D13)
 
 - **The numbers.** 20 / +20 / 1 / +1 are his starting ideas; confirm or change.
 - **AdMob account.** Does one exist? It is a separate sign-up from Play, and
@@ -722,9 +797,9 @@ ad, 1 free deck, +1 per ad. These live in `config.py` as constants, not in code.
   usual companion to rewarded ads and needs the Billing library. Not
   proposed for v1 unless he wants it.
 
-## A16 — Theming, icon, splash · DESIGNED take 16, ICONOGRAPHY take 17 · one request declined
+## A16 — Theming, icon, splash · DESIGNED take 16, ICONOGRAPHY take 17 · ICON REVERTED take 33 as asked · one request declined
 
-Jacob wants One Piece theming, pictures and decals; placeholders where unsure;
+The owner wants One Piece theming, pictures and decals; placeholders where unsure;
 he will send more screenshots.
 
 - **Built take 12, not a question:** card art on tiles, search rows, the picker
@@ -745,7 +820,7 @@ he will send more screenshots.
   26, unchanged.
 - **Ruled out: a "Straw Hat" motif in the icon.** It is the one nautical symbol
   that IS the franchise.
-- **Take 17 — DECLINED, and written down so it is not quietly reversed:** Jacob
+- **Take 17 — DECLINED, and written down so it is not quietly reversed:** the owner
   asked for a Zoro image as the app icon. The old placeholder is kept as
   `assets/icon-placeholder.old.svg` as asked. The image is not used, for four
   reasons that were true at take 1 and are more true now:
@@ -760,6 +835,9 @@ he will send more screenshots.
   What ships instead: `assets/icon.svg` — a plain jolly roger on a compass on a
   card, in the take-16 palette. The skull wears nothing and the blades are
   generic cutlasses. Nobody owns the pirate flag.
+- **Take 33 — reverted, as asked.** the owner asked for the old icon back for
+  now; `assets/icon.svg` is the take-16 compass placeholder again and the
+  jolly roger is kept as `assets/icon-jollyroger.svg`. D7 stays open.
 - **Built take 17, the answer to "not a single One Piece decal":**
   `assets/glyphs.svg`, nineteen original symbols in two families. *The game's
   grammar* — Leader / Character / Event / Stage (§2-2), the six-colour hexagon
@@ -773,7 +851,7 @@ he will send more screenshots.
 - **Ruled out: the game's own icons** — the DON!! card's art, the rarity
   plate's typography, the attribute symbols as printed. Those are Bandai's
   artwork. The *concept* of each is the game's grammar and is drawn fresh.
-- **Questions for Jacob** (DECISIONS-OPEN D7–D9): the motif direction; whether
+- **Questions for the owner** (DECISIONS-OPEN D7–D9): the motif direction; whether
   the app should render in the six colours or stay teal-on-black with colour
   accents; whether the splash is the icon large or something else.
 
@@ -863,7 +941,7 @@ cost minutes.
 
 ## A12 — Distribution channel · REVISED take 1 · Play route CONFIRMED take 11
 
-- **Take 11:** Jacob is following the same Play process as APEX ORV, which is now
+- **Take 11:** the owner is following the same Play process as APEX ORV, which is now
   in closed testing. So the account exists, its type is whatever passed that
   gate, and landmine 35's calendar cost is known rather than unknown.
 - **Ruled out: the private-repo recommendation as a blocker.** APEX ORV is
@@ -901,7 +979,7 @@ cost minutes.
   and no iOS requirement to justify it.
 - **Ruled out: a second app framework "just for the scanner".** Two build systems
   is two gates.
-- **Note:** Jacob now has PC access, which removes the constraint that originally
+- **Note:** the owner now has PC access, which removes the constraint that originally
   forced this on APEX. The decision stands on the toolchain argument alone, not
   on the constraint.
 

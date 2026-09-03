@@ -145,6 +145,43 @@ def build(verbose=True):
     # privacy.html rides in www/ so Pages serves it beside the app (A21 #6).
     shutil.copy(os.path.join(ROOT, "src", "privacy.html"), os.path.join(WWW, "privacy.html"))
     assert '<symbol id="g-compass"' in html, "glyph sprite did not inline"
+    # Typography (take 33). Four roles, four files, every one bundled -- a font is
+    # never fetched (PROTOCOL §8). The CSS names the ROLE ("OPH Display"), never
+    # the face, so a licensed file dropped into assets/user/fonts/<role>.woff2
+    # (or .ttf/.otf) replaces the default for that role at build time and not a
+    # line of CSS changes. Defaults are OFL/Apache faces picked for the faces
+    # The owner named: Luckiest Guy for Impress BT, Bangers for Anime Ace BB, Open
+    # Sans for itself, Nunito Sans for Avenir Black (assets/user/README.md).
+    faces, fonts_used = [], {}
+    fdir = os.path.join(WWW, "fonts")
+    if os.path.isdir(fdir):
+        shutil.rmtree(fdir)
+    os.makedirs(fdir)
+    FMT = {".woff2": "woff2", ".woff": "woff", ".ttf": "truetype", ".otf": "opentype"}
+    for role, weights in (("display", ""), ("comic", ""), ("body", "300 800"), ("heavy", "200 1000")):
+        chosen = None
+        for base in (os.path.join(ROOT, "assets", "user", "fonts"), os.path.join(ROOT, "assets", "fonts")):
+            for ext in FMT:
+                cand = os.path.join(base, role + ext)
+                if os.path.exists(cand):
+                    chosen = cand; break
+            if chosen:
+                break
+        if not chosen:
+            raise SystemExit(f"build_app: no font for role '{role}' in assets/fonts/ (the seed lost it)")
+        ext = os.path.splitext(chosen)[1].lower()
+        shutil.copy(chosen, os.path.join(fdir, role + ext))
+        fonts_used[role] = os.path.relpath(chosen, ROOT)
+        # A user-supplied static face gets no weight range: the browser then
+        # uses the file for every weight rather than synthesising around a range
+        # that describes a different font.
+        rng = f"font-weight:{weights};" if (weights and "assets/user" not in fonts_used[role]) else ""
+        faces.append(f'@font-face{{font-family:"OPH {role.title()}";src:url(fonts/{role}{ext}) '
+                     f'format("{FMT[ext]}");{rng}font-display:block}}')
+    marker = "/* __FONTS__ */"
+    assert marker in html, "src/app.html has no __FONTS__ slot"
+    html = html.replace(marker, "\n".join(faces), 1)
+    assert html.count("@font-face") == 4, "font-face rules did not land"
     html = html.replace("__TAKE__", str(n))
     js = js.replace("__TAKE__", str(n))
     if "__TAKE__" in html or "__TAKE__" in js:
@@ -152,6 +189,17 @@ def build(verbose=True):
 
     open(os.path.join(WWW, "index.html"), "w").write(html)
     open(os.path.join(WWW, "app.js"), "w").write(js)
+    # Take 35: the scrubber strips every comment from the SHIPPED files. The
+    # source keeps its record; the artifact keeps its code. smoke.mjs and
+    # render.mjs run against what is left, so an assertion that was matching
+    # a comment fails here rather than passing on prose (landmine 111).
+    import subprocess
+    r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "scrub.py"), "--strip"],
+                       capture_output=True, text=True)
+    if r.returncode:
+        raise SystemExit("build_app: scrub --strip failed\n" + r.stdout + r.stderr)
+    for line in r.stdout.splitlines():
+        print("  " + line.strip())
 
     db = sqlite3.connect(CATALOG_DB)
     cat = catalogue_json(db)
@@ -179,6 +227,7 @@ def build(verbose=True):
                 user.append(fn)
     man = json.load(open(MANIFEST))
     man["user"] = user
+    man["fonts"] = fonts_used     # which file served each role, for the About panel and the harness
     man["game"] = "optcg"        # A19: the data model knows its game from take 23
     from config import UPDATE_URL
     man["updateUrl"] = UPDATE_URL or None

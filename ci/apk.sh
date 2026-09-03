@@ -160,7 +160,7 @@ print("  launcher icons rendered from assets/icon.svg")
 # every drawable density Capacitor's template ships. Until take 15 the first
 # second of every launch was Capacitor's own artwork (landmine 78's twin).
 import glob
-# assets/user/splash-bg.jpg, if Jacob supplied one (A18), becomes the splash:
+# assets/user/splash-bg.jpg, if the owner supplied one (A18), becomes the splash:
 # cover-fit, darkened, icon centred on top. Otherwise the icon on navy.
 user_bg = 'assets/user/splash-bg.jpg'
 bg_img = Image.open(user_bg).convert('RGB') if os.path.exists(user_bg) else None
@@ -210,7 +210,7 @@ echo "::group::APK size — ABI filter"
 # runs this app on them. Landmine 58.
 #
 # The Play AAB splits per-ABI automatically, so this only shapes the SIDELOAD
-# APK -- which is the artifact Jacob actually installs.
+# APK -- which is the artifact the owner actually installs.
 python3 - <<'PYABI'
 import re
 A = "android/app/build.gradle"

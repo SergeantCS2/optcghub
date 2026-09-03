@@ -1,6 +1,6 @@
 # ROADMAP — OP TCG Hub
 
-*Current as of take 31.*
+*Current as of take 35.*
 
 An offline-first Android collection tracker and card scanner for the One Piece
 Card Game, built from TCGplayer catalogue data via TCGCSV. Play Store plus
@@ -17,7 +17,7 @@ collector's data gets cut for schedule.
 
 ---
 
-## Re-sequenced at take 10 — Jacob's order
+## Re-sequenced at take 10 — The owner's order
 
 No field testing until everything is built. After the core:
 
@@ -26,13 +26,13 @@ No field testing until everything is built. After the core:
 3. **The deck builder** — rules researched take 12 (RULES.md), built take 13.
 
 Two agenda items close only on a device and will stay open by construction
-until the day Jacob tests: **A2's field half** (sleeves, glare, angle) and
+until the day the owner tests: **A2's field half** (sleeves, glare, angle) and
 **A14** (ML Kit language-model exclusion). Everything else closes here.
 
 ## Phase 8 — the approved backlog (A20), in order · added take 24
 
 Approved wholesale at take 24. Not scheduled; picked from in this order unless
-Jacob says otherwise. Cheap first.
+The owner says otherwise. Cheap first.
 
 | # | item | needs | status |
 |---|---|---|---|
@@ -52,6 +52,26 @@ Jacob says otherwise. Cheap first.
 | 8.14 | Japanese printings (A11) | second catalogue | |
 | 8.15 | Simulator (A23) | a phase | |
 | 8.16 | Cloud sync via the user's own Drive | Drive plugin | |
+
+## Where the phases actually landed · take 32
+
+The seven phases below are the take-1 plan, kept as the record. What
+happened:
+
+| phase | plan | actual |
+|---|---|---|
+| 0 — Feasibility spike | a weekend on the Fold | the rig was built at take 4 and never run; the *app's own scanner* was proven on the Fold at take 16 instead. A2 closed the way the plan did not expect |
+| 1 — Pipeline | 1 week | take 1, then hashes take 3, history take 8, keywords take 12, in-app refresh take 27 |
+| 2 — Shell | 2 weeks | take 2; redesigned take 16; two modes take 24 |
+| 3 — Scanner | 2–3 weeks | simulated take 2, built take 10, proven take 16; field half (foils, sleeves, toploaders) still unmeasured |
+| 4 — Charts | 1–2 weeks | snapshots take 3, deltas take 8, history estimate take 20 |
+| 5 — Collection safety | 1 week | export take 2, auto-backup take 15 (fourteen takes late — landmine 80), portfolios take 18 |
+| 6 — Release | 2–4 weeks | signed APK take 9, Play listing copy take 23, repo stood up take 30, first CI run take 31 reached step 4 of 10. **In flight.** |
+| 7 — Deck builder | after v1 | rules take 12, built take 13, browse take 25 |
+| 8 — Backlog | — | 8.1–8.8 done; 8.9–8.16 open |
+
+Thirty-two takes in three days against a plan of thirteen weeks. The plan's
+*order* held; its *durations* were for a person, not a session.
 
 ## Read this before the phases
 
@@ -109,7 +129,7 @@ If a phase stops serving one of those four, cut it.
 The catalogue question is closed (A1, PROVEN). The scanner question is not. This
 phase produces a number, not an opinion.
 
-- 30 real One Piece cards from Jacob's own collection:
+- 30 real One Piece cards from the owner's own collection:
   10 foil / SP / Alternate Art, 5 penny-sleeved, 5 in toploaders, 5 under poor
   light, 5 loose base cards as a control
 - Throwaway harness: capture → OpenCV quad detect → warp → crop bottom-right →
@@ -200,11 +220,11 @@ quantity increment on duplicates, review-and-commit (landmines 16–19).
 way to improve accuracy and it costs nothing.
 3.9 JP detect-and-refuse (landmine 24).
 
-**Gate: 100 real cards from Jacob's collection scanned in under 4 minutes, ≥95%
+**Gate: 100 real cards from the owner's collection scanned in under 4 minutes, ≥95%
 correctly identified, and ZERO silent misidentifications.** The last clause is the
 one that matters; the first two are negotiable.
 
-Jacob starts using the app for real here, ugly or not. Real use is what carries
+The owner starts using the app for real here, ugly or not. Real use is what carries
 motivation through Phase 5.
 
 ---
@@ -274,7 +294,7 @@ before One Piece is genuinely good.
 
 | Phase | Effort | Cumulative |
 |---|---|---|
-| 0 — Spike | 1 weekend | wk 0 |
+| 0 — Spike | 1 weekend | wk 0 | *(plan; see the table above for what happened)* |
 | 1 — Pipeline | 1 wk | wk 1 |
 | 2 — Shell | 2 wk | wk 3 |
 | 3 — Scanner | 2–3 wk | wk 6 |

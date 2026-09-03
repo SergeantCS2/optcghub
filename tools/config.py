@@ -57,7 +57,7 @@ SAFE_SPREAD_FACTOR = 1.25
 
 # ---------------------------------------------------------------------------
 # ADS — A17. Take 22 wires the SDK against GOOGLE'S PUBLISHED TEST IDS, which
-# serve real test ads and never accrue invalid traffic. Jacob replaces these
+# serve real test ads and never accrue invalid traffic. The owner replaces these
 # three values with his own from the AdMob console and nothing else changes.
 #
 # Rule (landmine 31 / A17 "ruled out"): real unit IDs NEVER go in a debug or
@@ -65,10 +65,10 @@ SAFE_SPREAD_FACTOR = 1.25
 # are permanent. The test IDs below are safe in every build.
 ADMOB_APP_ID          = "ca-app-pub-3940256099942544~3347511713"   # Google test app ID (Android)
 ADMOB_REWARD_SCAN     = "ca-app-pub-3940256099942544/5224354917"   # Google test rewarded unit
-ADMOB_REWARD_DECK     = "ca-app-pub-3940256099942544/5224354917"   # same unit until Jacob has two
+ADMOB_REWARD_DECK     = "ca-app-pub-3940256099942544/5224354917"   # same unit until the owner has two
 ADMOB_IS_TEST         = ADMOB_APP_ID.startswith("ca-app-pub-3940256099942544")
 
-# D10 -- Jacob's starting numbers, constants until he says otherwise.
+# D10 -- the owner's starting numbers, constants until he says otherwise.
 CREDITS_FREE_ON_INSTALL = 20
 CREDITS_PER_AD          = 20
 DECKS_FREE              = 1
@@ -79,6 +79,10 @@ DECKS_PER_AD            = 1
 # IN-APP CATALOGUE REFRESH -- take 27. The installed app fetches the nightly
 # bundle from the Pages site and keeps it on disk; the bundled copy is the
 # fallback and the first-run catalogue. Empty = disabled (the app says
-# "update the app for new prices"). Jacob sets this when the repo exists:
+# "update the app for new prices"). The owner sets this when the repo exists:
 #   UPDATE_URL = "https://<you>.github.io/optcghub/bundle/"
-UPDATE_URL = ""
+# Set at take 33, after the first full CI run: the repo is SergeantCS2/optcghub,
+# so Pages serves at the lowercase hostname below. INFERRED until "Sync now"
+# reports a date on the Fold; if Pages is not enabled (RUNBOOK §3) the app says
+# "Sync failed" and keeps its bundled catalogue, which is the honest state.
+UPDATE_URL = "https://sergeantcs2.github.io/optcghub/bundle/"

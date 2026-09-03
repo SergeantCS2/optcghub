@@ -1,6 +1,6 @@
 # RUNBOOK — from nothing to a repo that builds every night
 
-*Current as of take 31.* Everything below is the whole procedure. You need
+*Current as of take 35.* Everything below is the whole procedure. You need
 three files from the outputs: `build.yml`, `bootstrap.yml`, and the newest
 `optcghub-seed-tNNN.zip`. A PC makes step 2 easier; a phone works.
 
@@ -50,8 +50,10 @@ same stale take at full green and nothing tells you.
 `optcghub-seed-tNNN.zip` → **Publish release**.
 
 **Actions → bootstrap → Run workflow.** ~30 seconds: it takes the
-highest-numbered seed on the latest release, replaces the tree with it, and
-commits. That push triggers **build**.
+highest-numbered seed on the latest release, replaces the tree with it,
+commits, and **asks for the build by name** — its own push could never start
+one (landmine 108; fixed at take 33, which is why `bootstrap.yml` must be
+re-pasted once, §5b).
 
 ### The first build, what to expect
 
@@ -72,7 +74,9 @@ table at the end of this file maps the common ones.
 ## 5. Turn on live prices — one line, one upload
 
 Once Pages has deployed, the URL is `https://<you>.github.io/optcghub/`.
-In `tools/config.py` set:
+**Set at take 33** to `https://sergeantcs2.github.io/optcghub/bundle/`; if
+Pages was never enabled (§3) the app says *Sync failed* and keeps its bundled
+catalogue until it is. In `tools/config.py` the line is:
 
 ```
 UPDATE_URL = "https://<you>.github.io/optcghub/bundle/"
@@ -84,13 +88,15 @@ when it is online: quietly once per open, or **More → Sync now**. Price alerts
 fire against it. Until this is set the app says "update the app for newer
 prices", which is true.
 
-## 5b. When `build.yml` changes
+## 5b. When `build.yml` or `bootstrap.yml` changes
 
-`build.yml` is the one file the seed cannot update. When a take changes it
-(take 31 added `issues: write`), the release notes say so, and the fix is:
-open `.github/workflows/build.yml` in the browser → the pencil → select all →
-paste the new file → commit. Then the 2b checks again. It happens rarely and
-the runbook will always say when.
+The two workflow files are the ones the seed cannot update. When a take
+changes one (take 31: `build.yml` gained `issues: write`; **take 33:
+`bootstrap.yml` gained `actions: write` and a last step that starts the
+build** — landmine 108), the release notes say so, and the fix is: open
+`.github/workflows/<file>` in the browser → the pencil → select all → paste
+the new file → commit. Then the 2b checks again for `build.yml`. It happens
+rarely and the runbook will always say when.
 
 ## 6. Every take after the first
 
@@ -117,7 +123,7 @@ four **repository secrets** (Settings → Secrets and variables → Actions):
 
 The next build signs the AAB with it and the file loses the
 `DEVKEY-DO-NOT-UPLOAD` suffix. The upload key **never enters the tree or a
-chat**. The sideload APK keeps the committed key regardless, so testers'
+session**. The sideload APK keeps the committed key regardless, so testers'
 installs keep working.
 
 ## 8. First night check
@@ -150,3 +156,6 @@ the reason (A9).
 | Second night: release step red | should not since take 30 (idempotent); if it is, the tag exists and `--clobber` failed — the log says |
 | App shows `—` for every delta | one day of history (landmine 68); the second nightly fixes it |
 | More → Sync says "not configured" | §5 |
+| More → Sync says "Sync failed" | §3 — Pages is not deployed at the URL in `config.py`; the app keeps its bundled catalogue |
+| bootstrap went green and nothing built | the old `bootstrap.yml` — §5b, paste the take-33 file (landmine 108) |
+| The quiet sync never runs on the phone | it is on mobile data — More → Sync → *Also sync quietly on mobile data*, or wifi; Sync now always works (A25) |

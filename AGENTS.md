@@ -1,7 +1,7 @@
 # Working in this repo
 
 OP TCG Hub is an offline-first Android collection tracker and card scanner for
-the One Piece Card Game. It is built for one collector, Jacob, on a Samsung
+the One Piece Card Game. It is built for one collector, the owner, on a Samsung
 Galaxy Z Fold 7. A PC is available for this project; the phone-only path is still
 the one CI is designed around, because a build that only works on a laptop is a
 build that stops when the laptop isn't there.

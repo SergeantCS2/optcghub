@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 31.*
+*Current as of take 35.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -106,10 +106,16 @@ Start here. Do not read top to bottom.
 | A set checklist starts at 026 | 101 |
 | Prices never change on an installed phone | **102** |
 | A sealed seed with a red gate | **103** |
-| A landmine cited in chat that is not in the file | **104** |
+| A landmine cited in the session that is not in the file | **104** |
 | Every 7d/30d delta empty forever after launch | **105** |
 | Pipeline stops on the first new card of a set | **106** |
 | Failure issue never appears after a red night | 107 |
+| bootstrap ran green and no build followed | **108** |
+| Nightly commit says today, the file gained yesterday | 109 |
+| Export CSV says "Exported" and no file appears on the phone | **110** |
+| Restore says "No backup found" right after a reinstall | 110 |
+| A smoke assertion passes on a comment, not on code | 111 |
+| Public repo names people, tools, or a container | 111 |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -140,7 +146,7 @@ Start here. Do not read top to bottom.
 
 ## Landmines
 
-**1. A card number is not a product. MEASURED at take 1, on Jacob's own card.**
+**1. A card number is not a product. MEASURED at take 1, on the owner's own card.**
 `EB03-024` resolves to three TCGplayer products in the same set:
 
 | productId | name | market |
@@ -248,7 +254,7 @@ are a different aspect ratio from the 63×88 mm card (0.714). Filter quads on
 aspect ratio and the holder is rejected — but so is the card inside it, because
 the holder's edge is the higher-contrast one. Sleeved and toploadered cards must
 be in the Phase 0 sample; testing on loose base cards produces a false-positive
-feasibility result. Jacob's most valuable card is in a toploader in his own
+feasibility result. The owner's most valuable card is in a toploader in his own
 screenshots.
 
 **15. Bench light is not shop light.** Every accuracy figure carries the lighting
@@ -316,7 +322,7 @@ data three orders of magnitude removed from the work.
 **27. The collection thumbnail is the collector's own photograph.** This is the
 consequence of 26 and it is a better product: the binder shows the actual cards,
 with their actual foiling, in their actual sleeves. The reference app cannot do
-this — every thumbnail in Jacob's screenshots is a publisher SAMPLE watermark,
+this — every thumbnail in the owner's screenshots is a publisher SAMPLE watermark,
 which is itself evidence that they took advice on this and landed somewhere more
 constrained.
 
@@ -725,7 +731,7 @@ CPUs no phone has.** MEASURED on the first real APK:
 The x86 variants exist for emulators. Restricting the sideload APK to
 `arm64-v8a` and `armeabi-v7a` took it to **29 MB**, a 43% cut, with the same
 functionality on every real device. The Play AAB splits per-ABI on its own, so
-this shapes only the artifact Jacob actually installs.
+this shapes only the artifact the owner actually installs.
 
 **Not yet fixed, and recorded so it is not rediscovered:** the plugin also pulls
 `text-recognition-chinese`, `-devanagari`, `-japanese` and `-korean`, and ships
@@ -865,7 +871,7 @@ crop.
 Same crops, anchors removed: **53% read**.
 
 **The rig shipped this bug at take 4 and carried it through takes 5 and 6.** Had
-Jacob run his thirty cards, it would have reported that the camera could not read
+The owner run his thirty cards, it would have reported that the camera could not read
 a single code, and the honest conclusion from that would have been to re-plan the
 architecture. A broken measuring instrument does not produce no answer; it
 produces a confident wrong one, and this project's whole method rests on the
@@ -939,7 +945,7 @@ already going to run.
 TCGCSV publishes today's prices and only today's. The pipeline's ingest step
 overwrites `tcgcsv_cache/tcgcsv_payload.json` on every run. Through take 7 that
 meant every nightly build **destroyed the only copy of the previous day** — and
-the whole idea of a daily delta, which is on four of Jacob's five screenshots,
+the whole idea of a daily delta, which is on four of the owner's five screenshots,
 depends on having it.
 
 `tools/history.py` now appends each payload's prices to a committed sidecar,
@@ -1152,7 +1158,7 @@ name. The check was right to exist and wrong to be brittle; both are true.
 
 **82. `env(safe-area-inset-*)` is zero in an Android WebView. Capacitor 8
 injects its own `--safe-area-inset-*` variables, in pixels.** Every screen in
-Jacob's first field test drew under the status bar and the gesture bar —
+The owner's first field test drew under the status bar and the gesture bar —
 "Overview" behind the clock, the set chip behind the status icons, the picker's
 Cancel behind the nav bar. Landmine 37 had named edge-to-edge as a retrofit
 cost at take 1; the retrofit used the iOS/standard `env()` form, which evaluates
@@ -1214,7 +1220,7 @@ time is at the *selector*: every descendant-span rule inside a component is now
 
 **87. "The docs are in the seed" was a habit, and a habit is not a guarantee.**
 Seventeen takes shipped every ledger and runbook because the person doing it
-remembered to. Jacob asked for it as a rule; a rule the gate does not check is a
+remembered to. The owner asked for it as a rule; a rule the gate does not check is a
 rule a session under pressure can break without noticing. `check_docs_complete()`
 now names every required file — the ten in `docs/`, plus AGENTS, README, BUILD
 and the four `ci/` files — and fails on absence or on a stub under 500 bytes.
@@ -1227,7 +1233,7 @@ absence of a note, not the presence of a feature.**
 written at take 2, when the founding premise was a scanner with no wall. A17
 at take 13 put a credit gate on *saving*. Scanning stayed unlimited — that part
 was still true — but the cap line was not, and it sat on the scan screen and in
-the README for six more takes until Jacob read it. `check_stale_copy()` holds a
+the README for six more takes until the owner read it. `check_stale_copy()` holds a
 list of phrases with the reason each is false under the current design, and
 refuses them in any user-facing file. **When a design decision changes, its
 old sentence goes on the banned list the same take** — the gate then finds the
@@ -1410,14 +1416,14 @@ selftest on a tree the seal had just emptied. The seal keeps the manifest, and
 is run bare: `bash tools/seal.sh`, nothing after the filename.
 
 **104. The entry that was announced and never written.** This landmine, 103,
-was described to Jacob at the end of take 28 and again at take 29. It was not
+was described to the owner at the end of take 28 and again at take 29. It was not
 in the file. The script that wrote it was chained with `&&` after a
 `build_app.py` that failed on a missing manifest — the manifest `seal.sh` had
 just deleted — so the write never ran, and the confirmation line I read as
 "landmine 103, seal.sh, AGENTS" was not in the output; I saw what I expected.
 The gate could not catch it: nothing in `tools/` cited 103, so nothing was
 dangling. Two rules. **A ledger write is never chained behind an unrelated
-step** — it is its own command, first. And **a claim in chat about a ledger is
+step** — it is its own command, first. And **a claim in the session about a ledger is
 checked against the file before it is made**: `grep -c '^\*\*103\.'` is one
 line and it returned 0.
 
@@ -1434,7 +1440,7 @@ night and one on the first:
 - **`gh release create` on an existing tag fails**, and the cron builds the
   same take every night. Create once, then `--clobber` the assets.
 - **`build-tools/36.0.0` was pinned**; the newest present is used.
-- **The signer was verified by hand in chat for eleven takes and never in
+- **The signer was verified by hand in the session for eleven takes and never in
   the script.** It is a gate in `apk.sh` now.
 The rule: **before the first run of anything on a machine you have never
 seen, read the script against every tool it calls, in the current tree.** The
@@ -1458,7 +1464,7 @@ failed on the first failure with `Resource not accessible by integration
 (createIssue)`: the workflow granted `contents`, `pages` and `id-token`, and
 `issues: write` was never among them. The step that exists to make failure
 visible was itself invisible on the one run that mattered. Added — and
-because `build.yml` is hand-pasted, Jacob pastes it once more; the runbook
+because `build.yml` is hand-pasted, the owner pastes it once more; the runbook
 says so and 2b's checks still apply.
 
 *Measured on the same run:* TCGCSV ingest took **3 seconds** on the runner —
@@ -1467,6 +1473,75 @@ A-205's note in §2 is updated to say so.
 
 
 ---
+
+**108. A push made with `GITHUB_TOKEN` starts no workflow. INFERRED from
+GitHub's own documentation, read at take 33 (docs.github.com, "Triggering a
+workflow"): events created with the repository's `GITHUB_TOKEN` do not create
+a workflow run — the rule against recursive runs — with exactly two exceptions,
+`workflow_dispatch` and `repository_dispatch`.** `bootstrap.yml` said "that
+push triggers build.yml" from take 9 to take 32, and the RUNBOOK repeated it.
+It never had; the owner only ever used the upload-at-root path, where `build.yml`'s
+own `seed` job commits and the `bundle` job follows in the *same* run, so the
+claim was never tested. Fix: `permissions: actions: write` and a last step
+`gh workflow run build.yml --ref "$GITHUB_REF_NAME"` — dispatch is the
+exception, so the token may ask for the build by name. A hand-pasted file,
+so the owner pastes it once more. The general rule: a workflow that pushes and
+expects a `push:` workflow to follow is a workflow that runs once and reports
+success.
+
+**109. The nightly commit message dated the fetch, not the source.** The
+sidecar keys prices by TCGCSV's own date (landmine 3), but the commit that
+carried them said `nightly: prices $(date)` — the runner's day. Rehearsed at
+take 33 against a bare remote: the commit that added 2026-09-02 said
+`prices 2026-09-03`, on the exact line RUNBOOK §8 tells the owner to look for.
+The message now reads the newest day in the file. Small, and the same
+mistake as landmine 3 wearing a commit message: a date on a thing must be
+the thing's date.
+
+**110. A download link is a no-op in Capacitor's WebView, and a reinstalled
+app cannot read its own old backups. Found at take 34 by reading, on the
+feature PROTOCOL §9 says must exist first.** `exportCsv()` built a `blob:`
+URL, clicked an `<a download>`, and toasted *Exported N rows*. In Chrome that
+saves a file; in the Android WebView Capacitor installs no `DownloadListener`
+and a `blob:` URL has no handler, so nothing happens after the toast — the
+A-1 family (renders in the browser, not in the APK), on the one export the
+whole project promised from take 1. It was verified by smoke and render for
+thirty takes and never on a phone, because neither harness can see an intent
+that did not fire. Fix: on a device the CSV is written to the app cache and
+handed to `Share.share({ files })` (definitions read first, landmine 73), so
+the collector picks Drive, Files or Gmail; the download stays for browsers;
+smoke stubs both plugins and asserts the uri handed over, with the browser
+path as the control. Companion, same take: `Documents/OPTCGHub` is readable
+only by the install that wrote it — scoped storage on Android 11+ treats a
+reinstalled package as a stranger to its old files — which is exactly the
+landmine-34 case, sideload out, Play build in. Restore now falls back to the
+system file picker, which sees whatever the phone does. The settings copy no
+longer says the backup "survives uninstall" unqualified. INFERRED for the
+device until the Fold shows it; the mechanics are plugin calls read from
+their definitions. Rule: a feature that hands a file to the user is a feature
+that must be seen to hand it over on the phone before it is called built.
+
+**111. A harness assertion that matches prose is not measuring the product,
+and a public repo is a published document. Take 35, both halves at once.**
+Stripping comments from the shipped `app.js` (the scrubber) made exactly one
+of 255 smoke assertions fail: *"the chart marks purchases separately"* was
+matching the words `count changed` — in the comment explaining the tick, not
+in the code drawing it. It had passed for fifteen takes on a sentence. The
+scrubber now runs inside `build_app.py`, so smoke and render only ever see
+the artifact with no comments in it; an assertion has to find code or fail.
+Second half: the repo was public from its first commit (Pages on a free plan
+needs it), and the ledgers named the owner 157 times, used a conversational
+word for a working session 21 times, and carried the build container's
+home path — none of it a secret, all of it a signature. `tools/scrub.py
+--check --docs` is in the gate: first name, AI-vendor names, that word,
+credential-shaped strings, container paths, leftover markers, across the
+shipped files, the public text, the ledgers and the source. A planted
+instance of each is shown to fire (`--selftest`). The one-time rewrite that
+made the tree pass edited 196 lines and, in passing, rewrote the very line in
+this take's own HANDOFF entry that recorded the count of the word it removes
+— caught by grepping after (landmine 104's rule), fixed by describing the
+word instead of using it. A scrubber that rewrites text will rewrite the
+sentence that says what it rewrites.
 
 ## §2 — Inherited from APEX ORV
 
@@ -1552,7 +1627,7 @@ tester guide from the repo into Pages.
 before every replace, grep after.
 
 **A-203.** Two seals under one take number. A reseal is a new take — bump BUILD,
-bump the title, say what changed. The take number is the only handle Jacob has
+bump the title, say what changed. The take number is the only handle the owner has
 on what is on his phone.
 
 **A-204.** `pkill -f` / `pgrep -f` match the calling shell's own command line.

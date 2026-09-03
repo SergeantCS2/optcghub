@@ -1,4 +1,321 @@
-# HANDOFF — through Take 31
+# HANDOFF — through Take 35
+
+## Take 35 — 2026-09-03 — the scrubber: what ships and what the public repo says
+
+Opened before any code (PROTOCOL §6).
+
+### The owner's ask
+
+APEX ORV has a scrubber — comments, AI-vendor names, the owner's first name,
+credentials — that runs before a release. Does this repo? It did not. Build
+it before the Play upload.
+
+### Measured first
+
+The shipped `app.js` carried the first name 4 times and `index.html` 3, the
+sibling project's name 3 times, 40 landmine explanations in comments; no
+vendor names, no credential-shaped strings, no container paths. The public
+text (README, RELEASE, privacy, listing) was clean apart from the README's
+deliberate link to the sibling repo. The ledgers — a public repo since the
+first commit — named the owner 157 times, used the conversational word for a
+working session 21 times, and carried
+the build container's home path twice.
+
+### Findings
+
+- **One smoke assertion was passing on a comment.** Stripping comments from
+  the artifact made exactly one of 255 fail — the purchase tick on the chart
+  was asserted by the words in the comment above it, not the `fillStyle` and
+  `arc` below. Fifteen takes green on a sentence. Landmine 111; it asserts
+  the code now.
+- **The rewrite rewrote its own record.** The docs pass turned the count of
+  the conversational word in this entry into a count of the replacement.
+  Caught by grepping after (landmine 104), fixed by describing the word.
+- **`npm install --no-save` prunes.** Adding acorn removed puppeteer from
+  this container twice; render fell back to DOM mode and said so (A-53 did
+  its job). `bundle.sh` installs both in one command so the runner cannot
+  do the same.
+
+### Built
+
+- **`tools/scrub.py` + `tools/strip_comments.mjs`** — strip on build, check
+  in the gate, six negative controls, a one-time docs pass. 135 comments and
+  30 KB out of `app.js`; the source keeps every word.
+- **The tree, scrubbed once:** 196 lines. The first name is "the owner", the
+  conversational word is "session", the container home is `~`,
+  the session prompt file is renamed `NEW-SESSION-PROMPT.md` and the gate's
+  list says so. The GitHub handle stays where it must (the repo, the Pages host).
+- **A27** on the agenda with what was ruled out, and the session prompt now
+  tells the next session which words the gate refuses.
+
+**smoke.mjs 260, render.mjs 51 (Chrome). Gate 21 checks, green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **Nothing of the owner's has moved since take 34:** the steps in
+  RUNBOOK-play are unchanged and the seed to drop is now t35.
+- **Export and restore on the Fold** (landmine 110's device half).
+- **`build.yml` action versions** — warnings, one paste when they turn.
+- **Older release notes on GitHub still say take 29** until the next drop.
+- D16, D11, D7, D15, A2's field half.
+
+## Take 34 — 2026-09-03 — Windows, and what the repo actually shows
+
+Opened before any code (PROTOCOL §6).
+
+### The owner's ask
+
+He ran `./play-key.sh` in PowerShell — *not recognized as the name of a
+cmdlet* — and asked for Windows steps. The Play Console screenshot shows a
+**personal** account with APEX ORV already in closed testing, so the console
+is not new to him: *"I have most play things setup, ensure the app is ready."*
+
+### Method
+
+Read the repo, the run, the release and the Pages site before saying anything
+is ready (PROTOCOL §0: verify where the person reaches it). Then a native
+PowerShell script for the key, tested here under `pwsh`, not written blind.
+
+### Findings — the repo, read rather than remembered
+
+- **Three runs, one full.** #1 (16 s, the workflow paste itself), #2 (42 s,
+  the take-30 seed, landmine 106), #3 **green end to end on take 31**: seed
+  6 s, bundle 42 s — puppeteer install included — apk 4 m 36 s, **pages 14 s
+  with the URL** `https://sergeantcs2.github.io/optcghub/`, which serves the
+  take-31 app. The Release is take-31 with the APK and the DEVKEY bundle.
+  So the phone has take 31, not 32 as I wrote last take; the take-32 APK in
+  the uploads was the previous session's container build. Corrected in A21 and
+  V1-STATE. Nothing newer than 31 has been dropped in yet.
+- **Warnings on the run, not errors:** every action is Node 20 and is being
+  forced onto Node 24; `setup-java@v4` is deprecated in favour of v5. Both
+  live in the hand-pasted `build.yml`; both still work. Deferred, below.
+- **16 KB page size — MEASURED on the take-32 APK.** Play requires it of new
+  apps targeting Android 15+. Every arm64 library — ML Kit's 11 MB OCR
+  pipeline included — loads at `0x4000`, and the zip stores all six `.so`
+  files uncompressed at 16 KB-aligned offsets. The 32-bit copy is `0x1000`,
+  which is fine: the rule is for the 64-bit ABIs. Nothing to change.
+- **Export CSV does nothing on the phone — landmine 110.** Found by reading
+  `exportCsv()` while writing the landmine-34 instructions: a `blob:` URL
+  and an `<a download>`, which the Capacitor WebView drops on the floor
+  after the toast. And `Documents/OPTCGHub` is readable only by the install
+  that wrote it, which is exactly what a signer switch is. Both are INFERRED
+  for the device and both were fixed from the plugin definitions rather than
+  left: the share sheet for export, the file picker for restore, the settings
+  copy made true. `hasFragileUserData` was considered and ruled out (A21).
+
+### Built
+
+- **`tools/play-key.ps1`** — the Windows twin of the key script, run here
+  under PowerShell 7.4: keytool found in the four places it lives on Windows,
+  keystore made, read back, base64 identical to the `.jks` when decoded the
+  way `apk.sh` decodes it, second run refuses to overwrite, and a damaged
+  keystore is refused (the control). Native calls go through a helper because
+  Windows PowerShell 5.1 turns keytool's stderr into a terminating error —
+  INFERRED for 5.1, which this container cannot run.
+- **Export through the share sheet, restore through a file picker**, with
+  five smoke assertions and the browser download path as the control.
+- **RUNBOOK-play** now opens with what the repo shows, gives the one
+  PowerShell line, and makes the landmine-34 dance export → import.
+
+**smoke.mjs 255, render.mjs 51 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **Export and restore on the Fold.** Both are plugin calls read from the
+  definitions; neither has been seen on a phone. The first *Export CSV* that
+  opens a share sheet closes landmine 110's device half.
+- **`build.yml` action versions.** Node 20 actions are being forced onto
+  Node 24 and `setup-java@v4` is deprecated. The run is green; the paste is
+  the owner's; do it when a warning becomes an error, with one file, once.
+- **The take-31 release notes say take 29** — RELEASE.md was stale on the
+  runner at the time; the next seed drop replaces them.
+- **`gh` on Windows** — the script prints the four values if it is absent;
+  `winget install GitHub.cli` is the one-liner if he wants the script to set
+  them.
+- Everything of the owner's in RUNBOOK-play, D16, D11, D7, D15, A2's field half.
+
+## Take 33 — 2026-09-03 — the runner, rehearsed here: the pipeline's last six steps, the sidecar commit, the APK job, and one trigger that could never fire
+
+Opened before any code (PROTOCOL §6).
+
+### Where this session started
+
+A fresh session, from the take-32 seed and NEW-SESSION-PROMPT. PROTOCOL §0 in
+order: seed unzipped, `BUILD` said 32; the outputs directory was empty (a new
+session starts that way — the take-32 seed and APK were the uploads, sha256
+`6b6b915c…` and `2fda1fab…`); the state document, the handoff back to take
+27, the landmine index, the agenda; then the rebuild — ingest 6 s, history,
+catalog, hashes (0 to fetch, 205 known unavailable), validate, app, smoke
+235, render 48 in Chrome after installing puppeteer, stamp, gate green on
+take 32 before anything changed.
+
+### The owner's ask
+
+None yet this session. The in-flight item is A21: read `ci/build.yml`,
+`ci/bundle.sh`, `ci/apk.sh` against the tools *before* the next run
+(landmine 105), because pipeline steps 5–10, the sidecar commit-back, Pages
+and the APK job have never executed on a runner.
+
+### Method
+
+A reading found four things at take 30 and the first run found two more the
+reading missed (take 31). So this take does not only read; it **executes
+what a runner would**, as far as this container allows:
+
+1. `bash ci/bundle.sh` in a real git checkout with a bare remote standing
+   in for GitHub — every pipeline step and then the sidecar commit and push.
+2. `bash ci/apk.sh` with the Android SDK stood up here the way `ubuntu-latest`
+   carries it — the packaging steps, the signer readback, the AAB branch.
+3. The workflow files against GitHub's own documentation for the one
+   mechanism no local run can exercise: what triggers what.
+
+### The owner's ask, when it arrived mid-take
+
+He had the take-32 APK on the Fold from the runner's own build — *"GitHub
+worked, app downloaded"* — and liked the look. Then, in order: change the
+fonts (Impress BT + Anime Ace BB for the loud parts; Trebuchet MS, Avenir
+Black, Open Sans Semibold for the plain); his AdMob app-ads.txt line;
+revert to the old icon; get the app on Play and the 14-day clock started,
+with the package signing as a script, like APEX.
+
+### Findings
+
+**The rehearsal (before his message).** The `seed` job's script and
+`ci/bundle.sh` ran verbatim against a bare git remote standing in for
+GitHub, on a fresh clone the way the bundle job checks out: all ten pipeline
+steps green, the sidecar commit made and pushed by `optcghub-nightly`.
+Two things it found:
+
+1. **The nightly commit dated the fetch, not the source.** `prices
+   2026-09-03` on a commit that added 2026-09-02 — the line RUNBOOK §8 tells
+   the owner to look for. Landmine 109; the message now reads the newest day in
+   the file.
+2. **A push rejected by a moved remote lost the night.** Negative control
+   first — a bare `git push` against a branch that moved mid-build was
+   refused — then the fix, rebase once and push again, landed on top of the
+   browser edit. In `bundle.sh`.
+
+**The reading found the third.** `bootstrap.yml`'s push uses `GITHUB_TOKEN`,
+and GitHub's own documentation says events from that token create no
+workflow run except `workflow_dispatch` and `repository_dispatch`. "That
+push triggers build" was never true; the owner only ever used the upload-at-root
+path, where `build.yml`'s own `seed` job commits and `bundle` follows in the
+same run. Landmine 108: `actions: write` and `gh workflow run build.yml` as a
+last step. A hand-pasted file — `bootstrap.yml` is in the outputs and RUNBOOK
+§5b says so.
+
+**Then the runner answered the rest itself.** the owner's report that the APK
+built and installed makes steps 5–10, the sidecar commit-back and the whole
+`apk` job PROVEN on a runner — including `cairosvg` on `ubuntu-latest`, which
+I had flagged as the one INFERRED risk. The container-side SDK stand-up is
+ruled out in A21: the runner's build is the one he installs.
+
+### Built
+
+- **A26 — typography.** Four roles, resolved at build time, every file
+  bundled, 232 KB after subsetting to Latin and woff2: Luckiest Guy
+  (Apache-2.0) in Impress BT's job, Bangers (OFL) in Anime Ace BB's, Open
+  Sans (OFL) as named, Nunito Sans 900 (OFL) in Avenir Black's. The CSS names
+  the role, never the face, so a licensed file in `assets/user/fonts/` takes
+  the role over at the next build. The four he named are not shipped as
+  downloaded and A26 says why, face by face; D16 asks whether files are
+  coming. Chrome reports all four LOADED and `h2` resolved to the display
+  face; the control points a face at a missing file and gets `error`. Every
+  layout check at four widths passed on the new metrics first time.
+- **The icon**, reverted to the take-16 compass placeholder as asked; the
+  jolly roger kept as `assets/icon-jollyroger.svg`. Play graphics rendered
+  from it into the outputs.
+- **A25 — the cellular guard**, after four DEFERRED lists (landmine 70):
+  the quiet sync holds on `navigator.connection.type === 'cellular'` unless
+  the new switch under More → Sync is on; an absent API proceeds; Sync now
+  never asks. Four smoke controls, one the guard firing.
+- **`UPDATE_URL`** set to the Pages host. INFERRED until the first *Sync
+  now* on the Fold reports a date.
+- **`tools/play-key.sh`** — the upload key and the four secrets in one
+  command: keytool, read back before trusted, base64 round-tripped the way
+  `apk.sh` decodes it, `gh secret set` when the CLI is logged in, the four
+  values printed when not, refuses to overwrite. Proven here end to end.
+- **RUNBOOK-play** rewritten as the whole ordered procedure — ten steps,
+  landmine 34's export/uninstall/restore warning first, the Data Safety
+  answers, app-ads.txt on the root user site with his line, the 12/14 rule
+  re-checked against Google's current wording (unchanged).
+- **`ci/bundle.sh`**: landmine 109, the push retry, a `du` that counted the
+  bundle twice. **`ci/bootstrap.yml`**: landmine 108.
+
+**smoke.mjs 248, render.mjs 51 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **The APK for this take is the runner's.** No container build; drop the
+  seed at the repo root and install from the Release (A21, ruled out).
+- **The first Sync on the Fold.** `UPDATE_URL` and the cellular guard are
+  INFERRED until a date appears under More → Sync.
+- **The named fonts as files** — D16. Impress BT, Anime Ace BB and Avenir
+  Black need app-embed licences; Trebuchet MS cannot ship. The slot is built.
+- **Fira Sans** as a third plain face if the owner wants Trebuchet's shape.
+- **Real AdMob unit IDs** (D11) — not until the closed test is real users.
+- **`www/render.png` deploys to Pages** with the site; harmless, untidy.
+  Exclude it from the artifact next pass.
+- **8.9 trade matching via QR**, the binder's pocket-per-printing toggle,
+  D15, D7's motif, A2's field half — all unchanged.
+- **Everything in RUNBOOK-play** is the owner's, and the next real event is his
+  first upload.
+
+## Take 32 — 2026-09-03 — the audit, and the handoff to a new session
+
+Opened before any code (PROTOCOL §6).
+
+### The owner's ask
+
+Update all documentation; audit the entire application; make it ready for
+handoff; prepare a new-session handoff and every file he needs for the project
+and the next conversation.
+
+### Method
+
+The audit runs before the state document is written, so V1-STATE describes
+what is true rather than what is remembered:
+
+1. **The app, walked.** Every screen in both modes opened in Chrome with the
+   console listening; any `pageerror` is a finding.
+2. **The docs, grepped.** Stale take numbers, stale counts, stale phrases,
+   missing stamps, every agenda status against the roadmap.
+3. **The pipeline, seal and build**, end to end, one more time.
+
+Then `docs/V1-STATE.md` (what exists, with numbers, sorted into PROVEN /
+BUILT / DEFERRED), `docs/NEW-SESSION-PROMPT.md` (what a fresh session reads
+first and in what order), and PROTOCOL §0 rewritten for a session that
+starts from a seed.
+
+### The audit
+
+- **The app, walked in Chrome with the console listening:** fourteen screens
+  across both modes, the card detail, the filter sheet, three chart ranges,
+  the counter's turn and life buttons — **zero errors**.
+- **The docs, grepped:** no stale phrase outside the ledgers that record
+  them; every living doc stamped; the parity matrix has no open row that is
+  not a Phase 8 item; the ROADMAP's take-1 phase plan now sits beside a table
+  of where each phase actually landed.
+- **The pipeline, seal and build:** green, bare, below.
+
+### Written for the handoff
+
+- **`docs/V1-STATE.md`** — the inventory: PROVEN on a device / BUILT and
+  verified / DEFERRED with the reason, and the measured numbers a new session
+  must not re-derive.
+- **`docs/NEW-SESSION-PROMPT.md`** — what a fresh session reads and in what
+  order, the discipline the gate enforces, what is in flight, what it may and
+  may not do. Paste it into the new session.
+- **PROTOCOL §0** extended for a session that starts from a seed.
+- The gate now requires both new docs in the seed.
+
+### DEFERRED this cycle
+
+- **Nothing new.** The DEFERRED lists of takes 27–31 are the work, and
+  V1-STATE collects them.
+- **The next real event is the owner's re-run of CI** with the take-31 fixes;
+  steps 5–10 have never run on a runner and the next session should expect
+  the next red job to teach something.
 
 ## Take 31 — 2026-09-03 — the first run on a runner: two things the reading missed
 
@@ -6,7 +323,7 @@ Opened before any code (PROTOCOL §6).
 
 ### The run
 
-Jacob dropped the take-30 seed at the repo root; the `seed` job unpacked and
+The owner dropped the take-30 seed at the repo root; the `seed` job unpacked and
 committed it; `bundle` ran. **Ingest took 3 seconds** — TCGCSV did not
 throttle a GitHub runner, which measures APEX landmine 205's risk as absent
 for this source. History and catalogue built. Then:
@@ -31,7 +348,7 @@ integration (createIssue)` — the workflow grants `contents`, `pages`,
   the pipeline continues, because the sidecar already covers 97% and the
   gate's coverage check is the real guard. Landmine 106.
 - **`build.yml`** — `issues: write`. Landmine 107. This is a hand-pasted file,
-  so Jacob replaces it once more; the runbook says so.
+  so the owner replaces it once more; the runbook says so.
 - **The seed** is re-sealed as take 31 with both.
 
 ### Verified here
@@ -51,13 +368,13 @@ pipeline continues to the gate. The decision table (1/1 continue; 5/20 stop;
   deal.
 - **The failure-issue step** is now permitted but has not fired successfully;
   the next red night will tell.
-- **Everything of Jacob's.**
+- **Everything of the owner's.**
 
 ## Take 30 — 2026-09-03 — the repo, for real: the workflows read against the tools, and the runbook rewritten
 
 Opened before any code (PROTOCOL §6).
 
-### Jacob's ask
+### The owner's ask
 
 Get this into GitHub. Update all documentation. Provide every step.
 
@@ -78,7 +395,7 @@ the second night, one on the first:
 3. **`build-tools/36.0.0` was pinned** and a runner image may not carry it.
    The newest present is used.
 4. **The signer was never checked in CI** — eleven takes of checking it by
-   hand in chat. It is a gate in `apk.sh` now: not the committed sideload key,
+   hand in the session. It is a gate in `apk.sh` now: not the committed sideload key,
    no release.
 
 Landmine 105 covers the first three; the fourth is landmine 211's rule
@@ -99,7 +416,7 @@ point is one commit: `nightly: prices YYYY-MM-DD, 2 day(s) on file`.
 ### DEFERRED this cycle
 
 - **Running it.** Everything in this take is a reading, not a run. The first
-  run is Jacob's, and the first red job is expected to teach something the
+  run is the owner's, and the first red job is expected to teach something the
   reading did not — that is what the "if something goes wrong" table is for.
 - **The Play side** (RUNBOOK-play) is unchanged since take 22 and correct.
 - **A2's remaining half, D11, D15, D7, pictures, the cellular guard.**
@@ -108,7 +425,7 @@ point is one commit: `nightly: prices YYYY-MM-DD, 2 day(s) on file`.
 
 Opened before any code (PROTOCOL §6).
 
-### Jacob's question
+### The owner's question
 
 *"Let me know when you think it's in a good spot."* The honest answer, written
 here so it is on the record:
@@ -120,7 +437,7 @@ rules; backup survives uninstall; ads are wired against test units; the tour
 explains it. What stands between this seed and a running fourteen-day clock
 is not code: it is the repo (A21 step 2 — `build.yml` has never run on a
 runner), the Play console, screenshots from a phone, sixteen testers, and one
-config line for live prices. All of it is Jacob's, none of it is hard, and
+config line for live prices. All of it is the owner's, none of it is hard, and
 none of it gets easier by adding features.
 
 What is NOT in a good spot, honestly: the scanner's field half — foils,
@@ -153,7 +470,7 @@ that gets measured. That is a reason to start the clock, not to wait.
 
 ### Two landmines about the ledger itself
 
-Landmine 103 (the seal piped through `tail`) was told to Jacob at take 28 and
+Landmine 103 (the seal piped through `tail`) was told to the owner at take 28 and
 was not in the file: the script that wrote it was chained behind a failing
 build. Landmine 104 is that. Both are in the file now — grep-checked, not
 read off a terminal — and AGENTS carries the two rules: the seal runs bare,
@@ -164,14 +481,14 @@ and a ledger write is its own command.
 - **Cellular guard on the quiet sync.** One line; next.
 - **8.9 trade matching via QR** — needs the ML Kit barcode plugin for the
   scanning half; the sharing half already exists as text.
-- **Everything of Jacob's** — and the assessment above says the next real
+- **Everything of the owner's** — and the assessment above says the next real
   step is his.
 
 ## Take 28 — 2026-09-03 — the colour question on the agenda; binder view; deck price history
 
 Opened before any code (PROTOCOL §6).
 
-### Jacob's ask
+### The owner's ask
 
 The colour scheme still reads as Collectr; something One Piece, maybe a
 transparent background; green for up and red for down stay. Not a priority.
@@ -210,7 +527,7 @@ a deck is a list, the chart code exists.
 - **Deck history is the estimate only** — no per-deck snapshots; the estimate
   is the honest one for a list that changes.
 - **8.8 Limitless import, 8.9 trade matching via QR** next.
-- **D15** and everything of Jacob's.
+- **D15** and everything of the owner's.
 
 ## Take 27 — 2026-09-03 — price alerts
 
@@ -242,7 +559,7 @@ changed.
 
 ### DEFERRED this cycle
 
-- **`UPDATE_URL` is empty** until the repo and Pages exist — Jacob's step.
+- **`UPDATE_URL` is empty** until the repo and Pages exist — The owner's step.
   Until then the app says "update the app for newer prices", which is true.
 - **The refresh downloads the whole 4 MB catalogue.** A delta would be
   kinder on mobile data; the nightly already computes deltas. Not yet.
@@ -288,7 +605,7 @@ Phase 8, next two, taken together because one falls out of the other:
   pick a printing would complete it.
 - **8.5 price alerts** is next; it needs the local-notifications plugin, read
   from its definitions first.
-- **Everything of Jacob's, no deadline.**
+- **Everything of the owner's, no deadline.**
 
 ## Take 25 — 2026-09-03 — Cards for the table, the tour learns the modes, who goes first
 
@@ -327,13 +644,13 @@ Three from take 24's "mine, next":
   detail. A long-press to show the full text inline would suit the table.
 - **The Play board on the Fold's inner display** — unmeasured layout.
 - **8.3 set-completion checklist grid** is next in Phase 8.
-- **A2's remaining half, D7, D11, pictures, the repo** — Jacob's.
+- **A2's remaining half, D7, D11, pictures, the repo** — The owner's.
 
 ## Take 24 — 2026-09-03 — two modes, a game-day counter, and a correction to landmine 96
 
 Opened before any code (PROTOCOL §6).
 
-### Jacob's answers and asks
+### The owner's answers and asks
 
 - The A20 backlog is approved wholesale: "add them to the list."
 - **One Piece is the main mode.** Other games remain a future maybe.
@@ -397,13 +714,13 @@ writing a deadline on it.
   checked on the Fold's inner screen, where a two-panel side-by-side may be
   the better layout.
 - **A2's remaining half, D7, D11 real IDs, pictures, the first test ad, the
-  repo** — Jacob's, no deadline.
+  repo** — The owner's, no deadline.
 
 ## Take 23 — 2026-09-03 — multi-game measured, an ideas backlog, and the road to Play
 
 Opened before any code (PROTOCOL §6).
 
-### Jacob's three asks
+### The owner's three asks
 
 1. What other ideas can I think of?
 2. Add the other big TCGs — MTG, Pokémon, Lorcana, Riftbound.
@@ -429,7 +746,7 @@ not put it in the way of (3). (1) becomes a backlog, A20, ranked.
 - **A20 — an ideas backlog**, fifteen items ranked by value over cost, three
   ruled out with reasons.
 - **A21 — the road to Play**, ten steps, who does each, what state it is in.
-  The repo has never built on a runner; that is step 2 and it is Jacob's.
+  The repo has never built on a runner; that is step 2 and it is the owner's.
 
 ### Built toward Play
 
@@ -456,7 +773,7 @@ Opened before any code (PROTOCOL §6). New day: TCGCSV has published a third
 snapshot, and the pipeline runs before anything else so the history sidecar
 captures it (landmine 66).
 
-### Jacob's answer, in effect
+### The owner's answer, in effect
 
 He is finishing the AdMob account. Rather than wait on IDs, A17 gets wired now
 against **Google's published test unit IDs** — the ones AdMob documents for
@@ -492,7 +809,7 @@ Real IDs: three lines in `config.py`. Nothing else changes.
   will show Google's test ad on the earn button — that is the check.
 - **Real unit IDs — D11.** And D10/D12/D13 keep their defaults.
 - **Banner ads** — none anywhere yet; D12 is unanswered.
-- **A2's remaining half, D7, pictures** — Jacob's, no deadline.
+- **A2's remaining half, D7, pictures** — The owner's, no deadline.
 
 ## Take 21 — 2026-09-02 — the last prompts, and an estimate that knows when you bought
 
@@ -529,7 +846,7 @@ Two from take 20's "mine next":
 
 - **The ad SDK.** Mechanism complete, plugin identified, `ADS_ENABLED` false.
   Blocked on D11.
-- **A2's remaining half, D7, the picture slots** — Jacob's.
+- **A2's remaining half, D7, the picture slots** — The owner's.
 - **Nothing else is open on my side that does not need an answer first.**
 
 ## Take 20 — 2026-09-02 — the chart from history, and three carried items
@@ -545,7 +862,7 @@ Four things from take 19's "mine next":
    it has on file, and holdings × history is a legitimate *estimate* of what
    the collection was worth, as long as it is labelled as one (PROTOCOL §10).
 3. **A9 — nightly failure alerting.** The app runs on its last catalogue when a
-   night fails; nothing tells Jacob a night failed. Three nights should.
+   night fails; nothing tells the owner a night failed. Three nights should.
 4. **Portfolio move and rename** are still `prompt()`.
 
 ### Built
@@ -572,18 +889,18 @@ Four things from take 19's "mine next":
   every day, including days before a card was bought. Labelled honestly; a
   cost-basis-aware version would use `added`/`acquired` dates and is a follow-
   up, not a fix.
-- **A2's remaining half, D11, D7** — Jacob's.
+- **A2's remaining half, D11, D7** — The owner's.
 
 ## Take 19 — 2026-09-02 — the guide, the picture slots, and the gate catching me
 
-**Opened AFTER the code, and the gate is what made me write this line.** Jacob
+**Opened AFTER the code, and the gate is what made me write this line.** the owner
 asked for a tutorial and a copy audit; I built both and ran the gate to check
 the new stale-copy guard, and it reported *"no HANDOFF entry for take 19 —
 write it FIRST (PROTOCOL §6)"* alongside the copy it had found. Take 2 inverted
 §6 and said so; take 19 did it again, nineteen takes in, and this time a check
 said so instead of me. That is the whole point of the check. Landmine 89.
 
-### Jacob's ask
+### The owner's ask
 
 Stale copy — "unlimited scans" — and a first-run tutorial like APEX's, with a
 splash-style tour of what the app does and a One Piece background; placeholders
@@ -622,15 +939,15 @@ for anything I cannot supply, which he will fill.
   longer "How it works" page under More would suit the same content expanded.
 - **Value chart from catalogue history, A9 alerting, portfolio prompts** —
   carried.
-- **A2's remaining half, D11, D7** — Jacob's.
+- **A2's remaining half, D11, D7** — The owner's.
 
 ## Take 18 — 2026-09-02 — portfolios, the Trade Analyzer, and a gate for the docs
 
 Opened before any code (PROTOCOL §6).
 
-### Jacob's standing instruction, now a rule
+### The owner's standing instruction, now a rule
 
-Every take: the agenda in the chat, the docs in the seed, the ledgers and gate
+Every take: the agenda in the session, the docs in the seed, the ledgers and gate
 kept current. The first two were already the practice; the third is now
 **enforced** — `check_docs_complete()` fails the gate if any ledger or runbook
 is missing from `docs/`, so "the docs are in the seed" is a fact the seal
@@ -672,7 +989,7 @@ open rows in the parity matrix:
 - **Portfolio move and rename use `prompt()`.** Same debt as the Leader picker
   had; same fix, next pass.
 - **Value chart from catalogue history (4.2)** — the last open parity row.
-- **A9 — nightly failure alerting.** Nothing tells Jacob when a build has failed
+- **A9 — nightly failure alerting.** Nothing tells the owner when a build has failed
   three nights running.
 - **A2's remaining half, the ad SDK (D11), D7.**
 
@@ -680,7 +997,7 @@ open rows in the parity matrix:
 
 Opened before any code (PROTOCOL §6).
 
-### Jacob's ask
+### The owner's ask
 
 Keep the current icon as `.old`; replace it with an image he attached — Zoro's
 face. And: *"there isn't a single One Piece decal or icon,"* including the
@@ -726,7 +1043,7 @@ icon re-cut in the take-16 palette.
 ### DEFERRED this cycle
 
 - **The character-likeness question stays declined**, and D7 stays open for a
-  motif Jacob wants that nobody owns. A sketch would settle it.
+  motif the owner wants that nobody owns. A sketch would settle it.
 - **The splash** still renders from the icon at 30% — fine, but it could carry
   the compass at full bleed.
 - **A2's remaining half, the ad SDK, Trade Analyzer, multiple portfolios** —
@@ -734,7 +1051,7 @@ icon re-cut in the take-16 palette.
 
 ## Take 16 — 2026-09-02 — first field data: A2 answers YES, and four things it showed
 
-Opened before any code (PROTOCOL §6). Jacob ran take 15 on the Fold at
+Opened before any code (PROTOCOL §6). The owner ran take 15 on the Fold at
 22:16–22:18 and sent four screenshots.
 
 ### A2, PROVEN on the device
@@ -869,13 +1186,13 @@ and says so. Landmine 80 is about the ledger, not the feature.
   per game; this app is one game. Still on the list.
 - **Trade Analyzer.** Last toast on the action row.
 - **Ad SDK.** Gated on D10–D13.
-- **A2.** Jacob's.
+- **A2.** the owner's.
 
 ## Take 14 — 2026-09-02 — the first device test approaches; make it informative
 
 Opened before any code (PROTOCOL §6).
 
-Jacob wants to test tonight, and said not to alter priorities for it — work
+The owner wants to test tonight, and said not to alter priorities for it — work
 meticulously. So this take does the things that make a **first** device test
 tell us the most, in the order that removes embarrassment before it adds
 features:
@@ -931,7 +1248,7 @@ features:
 
 Opened before any code (PROTOCOL §6).
 
-### Jacob's ask
+### The owner's ask
 
 Ad revenue, probably Google's. Two starting ideas: 20 scans free, 20 more per
 short rewarded ad, repeating; and 1 free deck build, one more per ad, repeating.
@@ -942,7 +1259,7 @@ agenda *with the ledger's honesty intact*: three things this repo has written
 down as principles are touched, and one data-source term has to be checked
 before the idea is viable at all. Then to design the mechanism so it does not
 recreate the thing the app was built to replace, and to ask the questions only
-Jacob can answer.
+The owner can answer.
 
 And then the deck builder, built against RULES.md.
 
@@ -961,11 +1278,11 @@ the batch waits in a pending tray and nothing scanned is ever lost. Credits are
 earned online and spent anywhere. Deck saves: the same shape. Nothing already
 committed is ever locked — export, backup and browsing stay unconditional.
 
-Starting numbers (20 / +20 / 1 / +1) are Jacob's and live in config.
+Starting numbers (20 / +20 / 1 / +1) are the owner's and live in config.
 `@capacitor-community/admob` 8.1.0 is on npm at `latest`; its API is read from
 `definitions.d.ts` at the integration take, not now. README and landmine 31 no
 longer say "no ads" — a doc that lies is worse than none. D10–D13 ask the
-questions only Jacob can answer, starting with whether an AdMob account exists.
+questions only the owner can answer, starting with whether an AdMob account exists.
 
 ### The ledger had been corrupting itself for two takes
 
@@ -1027,7 +1344,7 @@ Decks replaced "More" on the nav; More is a link off the home sources panel.
 
 Opened before any code (PROTOCOL §6).
 
-### Jacob's ask
+### The owner's ask
 
 One Piece theming, pictures, decals — placeholders where unsure, ask where it
 matters, and he will provide more screenshots.
@@ -1047,7 +1364,7 @@ This sits directly on landmines 26 and 30. The honest split:
   the Going Merry, any character likeness, the Toei/Bandai logos, and the
   franchise wordmark are not, and they do not go in.
 - **Icon and splash** ship as **original placeholders**, labelled as such, until
-  Jacob says what he wants — and this take asks.
+  the owner says what he wants — and this take asks.
 
 ### And the rules
 
@@ -1113,7 +1430,7 @@ hexagon. No character, no mark. A16 draws the line and D7–D9 ask the questions
 
 Opened before any code (PROTOCOL §6).
 
-### Jacob's clarification, and what it changes
+### The owner's clarification, and what it changes
 
 APEX ORV was sent for its *process* — the ledgers, the gate, the harnesses, the
 take discipline — not to bind this app to its stack. The build process and core
@@ -1124,20 +1441,20 @@ Two things follow.
 
 **A3 gets re-examined.** The take-1 stack decision rested on two legs: the
 governance toolchain (which transfers regardless of stack) and the phone-only
-constraint (which no longer applies — Jacob has a PC). With both removed, does
+constraint (which no longer applies — The owner has a PC). With both removed, does
 Capacitor still hold? Answered in A3 below: yes, and the reason is no longer
 "because APEX" but because the scanner was designed as one OCR call per *card*
 on a stable quad, not per *frame* through the bridge, which was the only place
 native would have clearly won. Ten takes of harnesses and a proven signed APK
 would be thrown away for a benefit the design already avoided needing.
 
-**A35's question is answered.** Jacob has a Play developer account and it has
+**A35's question is answered.** the owner has a Play developer account and it has
 passed or is passing the closed-testing gate. Landmine 35's calendar risk is
 known, not unknown.
 
 ### This take
 
-By Jacob's order: the collection with proper filtering and sorting. The
+By the owner's order: the collection with proper filtering and sorting. The
 reference app's collection screen (screenshot 1) has a star filter and a
 sliders icon beside the search bar. This repo has a star toggle and a sort
 button that cycles. That is not "proper".
@@ -1182,7 +1499,7 @@ scroll, and `render.mjs` asserts that.
 
 Opened before any code (PROTOCOL §6).
 
-### Jacob's reordering
+### The owner's reordering
 
 No field testing until everything is built. Priority after the core: **the
 scanner**, then **the collection with proper filtering and sorting**, then **the
@@ -1248,7 +1565,7 @@ positive. Landmine 71.
 
 ### Re-sequenced
 
-ROADMAP now carries Jacob's order: scanner (done), then filtering and sorting
+ROADMAP now carries the owner's order: scanner (done), then filtering and sorting
 proper (take 11), then the deck builder with the rules understood first (12+).
 A2's field half and A14 are marked as closing only on a device, by
 construction, so nobody reads them as unfinished work.
@@ -1258,7 +1575,7 @@ construction, so nobody reads them as unfinished work.
 - **The camera.** Every stage but the sensor. Unchanged and unchangeable here.
 - **Torch and exposure lock** (landmine 10's foil mitigation) — `getUserMedia`
   track constraints, not written; the rig has torch, the app does not yet.
-- **Filtering and sorting proper** — next take, by Jacob's order.
+- **Filtering and sorting proper** — next take, by the owner's order.
 - **A14** — `script:'LATIN'` keeps the other recognisers idle at runtime; the
   models still ship. Needs a device to prove the exclusion is safe.
 - **The gallery path reads a single image with no quad-stability**, which is
@@ -1278,7 +1595,7 @@ line. Ten landmines did (203–212), and two of them describe failures this repo
 hit independently at takes 3 and 5 without knowing the sibling had named them.
 They come into §2 below.
 
-**Jacob asked how to use this in a new GitHub repo.** The honest answer is that
+**The owner asked how to use this in a new GitHub repo.** The honest answer is that
 this project has been *at that part* since take 5 — the pipeline runs, the gate
 passes, an APK builds — and nobody wrote the day-one procedure. APEX has
 `docs/RUNBOOK.md` and a `bootstrap.yml`; this repo has neither. And the single
@@ -1322,7 +1639,7 @@ heading with content, and its negative control still fires.
 
 ### The day-one procedure, written
 
-Jacob asked how to use this in a new repo. **`docs/RUNBOOK.md`** — four screens,
+The owner asked how to use this in a new repo. **`docs/RUNBOOK.md`** — four screens,
 one upload, one button: create a private repo, paste `build.yml` and
 `bootstrap.yml` by hand (the token cannot push workflows), attach the seed to a
 Release, run bootstrap. It downloads the highest-numbered seed, replaces the
@@ -1351,8 +1668,8 @@ down as the accepted exposure.
   sibling, which is the strongest thing that can be said without a runner.
 - **The AAB branch (`-Pupload=1`) has never executed** with real secrets. The
   sideload branch is proven; the Play branch is written.
-- **The Play upload key does not exist.** It is Jacob's to generate, on the
-  Fold or the PC, and it must never enter a chat. RUNBOOK-play §A.3.
+- **The Play upload key does not exist.** It is the owner's to generate, on the
+  Fold or the PC, and it must never enter a session. RUNBOOK-play §A.3.
 - **The committed key's password is in `ci/apk.sh` in plain text.** That is
   the APEX model too, and it is the same trade as committing the key at all —
   but it should be said, because someone will find it and think it was missed.
@@ -1369,7 +1686,7 @@ t1–t7 is present in outputs with the take number in its filename.
 
 ### Why this take
 
-Re-reading Jacob's five screenshots against what is built, the most visible thing
+Re-reading the owner's five screenshots against what is built, the most visible thing
 in all of them is the **day-over-day price delta**: `▼ $467.33 / -$4.00 (-0.85%)`
 on every collection tile, `-0.85%` beside every Most Valuable line, and a red or
 green triangle on the card detail. It is on four of the five screens.
@@ -1391,7 +1708,7 @@ has expired.
 ```
 
 Biggest overnight $ move: `OP17-079` Monkey.D.Luffy (Super Leader Alt), −$107.48
-(−5.1%), now $1,996.94. The Vivi SP from Jacob's screenshot: +$0.00 (+0.00%),
+(−5.1%), now $1,996.94. The Vivi SP from the owner's screenshot: +$0.00 (+0.00%),
 $463.53 — flat today, and the app says flat rather than unknown because
 yesterday is on file (landmine 68).
 
@@ -1492,7 +1809,7 @@ number and their digits run onto it. There is no word boundary between `024` and
 `008`, so `\b...\b` matched nothing on a perfectly legible crop. Same crops,
 anchors removed: **53%**.
 
-**The Phase 0 rig has carried that regex since take 4.** Had Jacob run his thirty
+**The Phase 0 rig has carried that regex since take 4.** Had the owner run his thirty
 cards this week, it would have reported that the camera cannot read a single
 code, and the honest response to that report would have been to abandon the
 approach. Landmine 63.
@@ -1687,7 +2004,7 @@ on the next run. Landmine 62.
 
 ### DEFERRED this cycle
 
-- **A2 is still open and still only Jacob can close it.** Take 6 answered the
+- **A2 is still open and still only the owner can close it.** Take 6 answered the
   half that could be answered here — *is the information on the card at all* —
   and the answer is yes, more of it than expected. The other half, whether a
   phone sees it through a sleeve at an angle under a kitchen light, is untouched.
@@ -1808,7 +2125,7 @@ Opened before any code was written (PROTOCOL §6), as at take 3.
 
 ### The name
 
-Jacob's call: **OP TCG Hub**. Package `com.optcghub.app`, permanent from first
+The owner's call: **OP TCG Hub**. Package `com.optcghub.app`, permanent from first
 registration. A8 closed after blocking the first commit for three takes.
 
 A deck builder is wanted eventually and explicitly not a priority. It goes on the
@@ -1820,7 +2137,7 @@ field was never ingested costs a rebuild.
 
 A2 has been the top blocker since take 1 and has survived three takes untouched,
 for the honest reason that a camera cannot be measured from here. So the
-deliverable is the *instrument*: something Jacob can open on the Fold that runs
+deliverable is the *instrument*: something the owner can open on the Fold that runs
 the real geometry and reports numbers, rather than another take of the plan
 getting better while its one unknown stays unknown.
 
@@ -1860,7 +2177,7 @@ getting better while its one unknown stays unknown.
 
 ### DEFERRED this cycle
 
-- **A2 is still UNKNOWN and only Jacob can close it.** The rig exists; nobody has
+- **A2 is still UNKNOWN and only the owner can close it.** The rig exists; nobody has
   pointed it at a card. Everything past this point in the plan rests on a number
   that does not exist yet.
 - **The app's scanner is still simulated.** `simulateScan()` runs the real
@@ -1889,7 +2206,7 @@ this is the correction.
 Take 2 shipped a green gate with three holes in it, all named in its own DEFERRED
 list: nothing proved the app *drew*, nothing packaged an APK, and 95% of the
 artwork hashes did not exist. Those are the take-3 targets, plus the screens from
-Jacob's screenshots that the data layer could already serve but the UI did not.
+The owner's screenshots that the data layer could already serve but the UI did not.
 
 ### The full hash pass, and what it overturned
 
@@ -2056,7 +2373,7 @@ scanner never does this arithmetic on the hot path.
 - **Catalogue** — 5.5 MB SQLite; bundle is 1.7 MB raw, **0.24 MB gzipped**.
 - **Validator** — six guards, all six shown to fire on purpose, real catalogue
   passes.
-- **App** — every screen in Jacob's screenshots: portfolio hero with sparkline
+- **App** — every screen in the owner's screenshots: portfolio hero with sparkline
   and 1D–MAX (MAX free), Most Valuable, collection grid with quantity and
   spread, action row, search, scanner with batch/undo/running total, card detail
   with quantity stepper and Ungraded/Graded, bottom nav. Plus the picker, the set
@@ -2120,7 +2437,7 @@ test data as a citation. Both fixed in the guard, not by widening it.
 - **PROTOCOL §6 inverted**, noted above.
 
 SEAL: smoke 32/0, validate 6/6 negative controls, real catalogue passes.
-No CI, no APK. `optcghub-seed-t2.zip`, sha256 printed beside it in chat.
+No CI, no APK. `optcghub-seed-t2.zip`, sha256 printed beside it in the session.
 
 ---
 
@@ -2129,7 +2446,7 @@ No CI, no APK. `optcghub-seed-t2.zip`, sha256 printed beside it in chat.
 Project opened. No code this take; the deliverable is the governance seed and one
 measurement that decided the architecture.
 
-**The question that mattered.** Jacob's budget is $0 and he asked to lean on
+**The question that mattered.** the owner's budget is $0 and he asked to lean on
 TCGplayer as hard as possible. TCGplayer's own developer API has been closed to
 new applicants for years — after the eBay acquisition, access sits with existing
 key holders, established sellers and approved partners. Applying returns silence.
@@ -2148,7 +2465,7 @@ PROVEN this take, against the live service:
 - 87 groups, **7,518 products** — 6,860 cards, 658 sealed — and **7,317 price rows**
 - The whole thing, catalogue and prices: **174 HTTP requests, 11 seconds**
 
-Then the check that closed the question. Jacob's most valuable card, from his own
+Then the check that closed the question. The owner's most valuable card, from his own
 screenshot:
 
 | productId | name | subType | market | low |
@@ -2190,7 +2507,7 @@ Not because Capacitor is the best scanner runtime — it probably is not — but
 because the valuable thing about the sibling repo is `gate.py`, the two harnesses,
 the seed→CI→Release ritual and 167 takes of landmines, all of which are written
 and working today. `@capacitor-mlkit/text-recognition` 8.2.0 puts native ML Kit
-behind that stack on the same Capacitor major APEX already ships. Jacob now has PC
+behind that stack on the same Capacitor major APEX already ships. The owner now has PC
 access, which removes the constraint that originally forced this choice on APEX;
 the decision stands on the toolchain argument alone.
 

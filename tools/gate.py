@@ -85,7 +85,8 @@ def check_docs_complete():
     not. Every ledger and runbook, by name, or nothing ships."""
     REQUIRED = ["AGENDA.md", "HANDOFF.md", "LANDMINES.md", "PROTOCOL.md",
                 "PROVISION.md", "ROADMAP.md", "RULES.md", "RUNBOOK.md",
-                "RUNBOOK-play.md", "DECISIONS-OPEN.md", "PLAY-LISTING.md"]
+                "RUNBOOK-play.md", "DECISIONS-OPEN.md", "PLAY-LISTING.md",
+                "V1-STATE.md", "NEW-SESSION-PROMPT.md"]
     for fn in REQUIRED:
         path = os.path.join(DOCS, fn)
         if not os.path.exists(path):
@@ -371,6 +372,18 @@ def check_secrets():
             fail("secrets", f".gitignore is missing '{pat}'")
 
 
+def check_scrub():
+    """Take 35. Nothing public carries the owner's first name, an AI vendor's
+    name, a session reference, a credential-shaped string, a build-container path
+    or a leftover marker: the shipped www/, the public-facing text, and the
+    ledgers (the repo is public). tools/scrub.py --check --docs; its own
+    negative controls run under check_selftests."""
+    r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "scrub.py"), "--docs"],
+                       capture_output=True, text=True, cwd=ROOT)
+    if r.returncode:
+        fail("scrub", r.stdout.strip())
+
+
 def check_selftests():
     """Run the guards' own negative controls. A gate that trusts other guards
     without watching them fail is a gate with a hole in it."""
@@ -383,6 +396,10 @@ def check_selftests():
                        capture_output=True, text=True)
     if r.returncode:
         fail("selftest", "variants.py cases failed:\n" + r.stdout)
+    r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "scrub.py"), "--selftest"],
+                       capture_output=True, text=True)
+    if r.returncode:
+        fail("selftest", "scrub.py negative controls did not all fire:\n" + r.stdout)
 
 
 # --------------------------------------------------------------------------
@@ -463,6 +480,7 @@ if __name__ == "__main__":
     check_catalogue()
     check_harness()
     check_secrets()
+    check_scrub()
     check_selftests()
 
     for m in NOTES:

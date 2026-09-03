@@ -143,7 +143,7 @@ const rv = V.resolve('EB03-024', {});
 ok('a 316x spread is NEVER auto-accepted', rv.verdict === 'ask', rv.verdict);
 ok('the ask explains itself in money', /\d+×|apart/.test(rv.why));
 /* Take 16, first field test: the picker showed a promo above the main-set base
-   twice and Jacob was holding the base both times. Likelihood, not price. */
+   twice and the owner was holding the base both times. Likelihood, not price. */
 ok('the picker leads with the LIKELIEST printing, not the dearest (landmine 84)',
    (() => { const s = V.CAT.sets.get(rv.candidates[0].set) || {};
             return s.kind === 'main' && rv.candidates[0].treat === 'base'; })(),
@@ -235,8 +235,10 @@ ok('a printing with no prior day renders as unknown, not 0.00%',
    /no prior day on file/.test(js) && /d1p == null/.test(js));
 ok('movers come from the catalogue, not a per-device baseline',
    !/vault\.prices/.test(js) && /history_days/.test(js));
+/* Landmine 111: this used to match 'count changed' -- the COMMENT explaining
+   the tick, not the code drawing it. Assert the code. */
 ok('the chart marks purchases separately from price moves',
-   /f5c518/.test(js) && /count changed/.test(js));
+   /fillStyle = '#f5c518'; x\.beginPath\(\)/.test(js) && !/count changed get a tick/.test(js));
 ok('set completion is computed from the catalogue', /setProgress/.test(js));
 
 section('take 3 — measured hash thresholds (landmine 49)');
@@ -738,7 +740,7 @@ ok('notifications go through the plugin with a numeric id, and fall back to a to
    /N\.schedule\(\{ notifications: \[\{ id, title, body/.test(js) && /if \(!N\) \{ toast/.test(js));
 ok('alerts ride in the backup', 'alerts' in JSON.parse(V.backupJson()));
 /* refresh */
-ok('sync is opt-in: no updateUrl, no fetch', manifest.updateUrl === null && /if \(!base\)/.test(js));
+ok('sync is opt-in on updateUrl (empty = nothing fetched), and take 33 points it at Pages', /if \(!base\)/.test(js) && (manifest.updateUrl === null || /^https:\/\/sergeantcs2\.github\.io\/optcghub\/bundle\/$/.test(manifest.updateUrl)), String(manifest.updateUrl));
 ok('the newer of disk and bundle wins at load', /local\.man\.source_updated_at > \(man\.source_updated_at \|\| ''\)/.test(js));
 ok('a sync re-checks alerts and snapshots', /await loadCatalogue\(\);\s*OWN\.snapshot\(\); scheduleBackup\('sync'\);/.test(js));
 ok('PROVISION declares the Pages host',
@@ -770,6 +772,69 @@ ok('the last history point equals today\'s deck value (Leader included)',
 ok('the deck chart is labelled as an estimate and drawn dashed', /Dashed: this list at each day/.test(js) && /sparkOn\(\$\('#dkSpark'\), hist, 'estimate'\)/.test(js));
 ok('the deck says how many of its cards you own and what it costs to complete', /to complete/.test(js) && /you own every card in it/.test(js));
 V.OWN.items = [];
+}
+
+{
+section('take 33 — typography: four roles, bundled, never fetched');
+const faces = html.match(/@font-face\{[^}]*\}/g) || [];
+ok('four @font-face rules in the built page', faces.length === 4, String(faces.length));
+ok('every face is a local file under fonts/', faces.every(f => /src:url\(fonts\/\w+\.\w+\)/.test(f) && !/https?:/.test(f)), faces.join(' '));
+ok('the roles, not the faces, are the family names', ['Display', 'Comic', 'Body', 'Heavy'].every(r => html.includes(`"OPH ${r}"`)));
+ok('the files the rules point at exist in www/fonts',
+   faces.every(f => fs.existsSync(W(f.match(/url\((fonts\/[^)]+)\)/)[1]))));
+ok('the manifest records which file served each role', manifest.fonts && Object.keys(manifest.fonts).length === 4, JSON.stringify(manifest.fonts));
+ok('no Georgia/serif stack survives (--serif retired)', !html.includes('--serif'));
+/* A25 -- the cellular guard on the QUIET sync, with its controls */
+const P = V.scan.PLATFORM;
+delete ctx.navigator.connection;
+ok('no Network Information API: the quiet sync proceeds (type unknown)', P.quietSyncAllowed() === true);
+ctx.navigator.connection = { type: 'wifi' };
+ok('on wifi: the quiet sync proceeds', P.quietSyncAllowed() === true);
+ctx.navigator.connection = { type: 'cellular' };
+ok('on cellular: the quiet sync is held (negative control -- the guard fires)', P.quietSyncAllowed() === false);
+store['vault.syncCellular'] = '1';
+ok('...unless the collector switched mobile-data sync on', P.quietSyncAllowed() === true);
+delete store['vault.syncCellular']; delete ctx.navigator.connection;
+ok('boot gates only the QUIET sync on it; Sync now never asks',
+   /navigator\.onLine && CAT\.man\.updateUrl && PLATFORM\.quietSyncAllowed\(\)/.test(js) && /await PLATFORM\.refreshCatalogue\(\); sy\.disabled = false/.test(js));
+ok('the switch is in the Sync panel and persists', /id="syncCell"/.test(js) && /vault\.syncCellular/.test(js));
+/* negative control for the local-file assertion: a CDN face would fail it */
+ok('negative control: a fonts.googleapis.com src would be caught',
+   !(/src:url\(fonts\/\w+\.\w+\)/.test('src:url(https://fonts.googleapis.com/x.woff2)')) && /https?:/.test('src:url(https://fonts.googleapis.com/x.woff2)'));
+}
+
+{
+section('take 34 — export leaves the phone (landmine 110); restore can pick a file');
+const calls = { write: null, share: null, clicked: 0 };
+ctx.window.Capacitor = { Plugins: {
+  Filesystem: { writeFile: async o => { calls.write = o; return { uri: 'file:///cache/export/' + o.path.split('/').pop() }; } },
+  Share: { share: async o => { calls.share = o; return { activityType: 'x' }; } } } };
+V.OWN.items = []; V.OWN.add(V.candidates('EB03-024', null)[0].id, { condition: 'NM' });
+await V.exportCsv();
+ok('on a device the CSV is written to the app cache, utf8', calls.write && calls.write.directory === 'CACHE' && calls.write.encoding === 'utf8' && /product_id/.test(calls.write.data), JSON.stringify(calls.write && Object.keys(calls.write)));
+ok('...and handed to the share sheet as a file:// uri (Share 8 definitions: files[])', calls.share && Array.isArray(calls.share.files) && /^file:\/\//.test(calls.share.files[0]), JSON.stringify(calls.share));
+ok('the CSV carries the row that was added', calls.write && calls.write.data.split('\n').length === 2);
+ok('a cancelled share sheet is not an error and not a download', /cancel/i.test('Share canceled') && /if \(shared === 'cancelled'\) return;/.test(js));
+delete ctx.window.Capacitor;
+const anchorClicks = []; const _ce = ctx.document.createElement;
+const _cou = ctx.URL.createObjectURL, _rou = ctx.URL.revokeObjectURL;
+ctx.URL.createObjectURL = () => 'blob:smoke'; ctx.URL.revokeObjectURL = () => {};
+ctx.document.createElement = tag => { const el = _ce(tag); if (tag === 'a') el.click = () => anchorClicks.push(el.download); return el; };
+await V.exportCsv();
+ok('negative control: in a browser (no plugins) the download link is used instead', anchorClicks.length === 1 && /^optcghub-\d{4}-\d{2}-\d{2}\.csv$/.test(anchorClicks[0]), JSON.stringify(anchorClicks));
+ctx.document.createElement = _ce; ctx.URL.createObjectURL = _cou; ctx.URL.revokeObjectURL = _rou;
+ok('restore falls back to a file picker when the install has no backup of its own', /raw = await PLATFORM\.pickTextFile\('\.json/.test(js) && /inp\.type = 'file'; inp\.accept = accept;/.test(js));
+ok('the settings copy no longer promises the backup survives a reinstall by itself', !/It survives uninstalling the app/.test(js) && /Export CSV and keep the file/.test(js));
+V.OWN.items = [];
+}
+
+{
+section('take 35 — the scrubber: what ships carries no comments and no markers');
+ok('app.js ships without a single comment', !/\/\*[\s\S]*?\*\//.test(js) && !/^\s*\/\/.*$/m.test(js));
+ok('index.html ships without HTML comments outside scripts', !/<!--[\s\S]*?-->/.test(html.replace(/<script[\s\S]*?<\/script>/g, '')));
+ok('the source still carries its record (the strip is on the artifact, not src/)', /\/\* PROTOCOL §10\. A portfolio line/.test(fs.readFileSync(path.join(ROOT, 'src', 'app.html'), 'utf8')));
+ok('CI installs the parser the strip needs (A-83: every job is a fresh runner)', /npm install --silent --no-save puppeteer acorn/.test(fs.readFileSync(path.join(ROOT, 'ci', 'bundle.sh'), 'utf8')));
+ok('the gate runs the scrubber and its controls', /check_scrub\(\)/.test(fs.readFileSync(path.join(ROOT, 'tools', 'gate.py'), 'utf8')) && /scrub\.py"\), "--selftest"/.test(fs.readFileSync(path.join(ROOT, 'tools', 'gate.py'), 'utf8')));
 }
 
 {

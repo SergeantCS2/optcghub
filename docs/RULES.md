@@ -1,6 +1,6 @@
 # RULES — the One Piece Card Game, as the deck builder must understand it
 
-*Current as of take 31.*
+*Current as of take 35.*
 
 Source: **Bandai, ONE PIECE CARD GAME Comprehensive Rules, Version 1.2.0,
 last updated 16 January 2026** — fetched and read in full at take 12, not

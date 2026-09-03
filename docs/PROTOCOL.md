@@ -1,6 +1,6 @@
 # PROTOCOL
 
-*Current as of take 31.*
+*Current as of take 35.*
 
 The working rules for this project. The gate enforces the ones it can.
 
@@ -10,7 +10,24 @@ here. Sections marked **[NEW]** are specific to a collection tracker.
 
 ---
 
-## 0. Start of every session **[INHERITED]**
+## 0. Start of every session **[INHERITED, extended take 32 for a seed start]**
+
+When the session starts from a seed zip rather than a live tree:
+
+0. **Unzip the seed** to `~/vault-seed`. Confirm `BUILD` says the
+   take you expect. If the container already holds a tree, the seed wins.
+1. **Verify the deliverables** where the owner reaches them: the session's
+   outputs folder should carry the last seed and APK; if not, that is the first fix.
+2. **Read** `V1-STATE.md`, then `HANDOFF.md` newest-first, then `LANDMINES.md`
+   §0, then `AGENDA.md`. In that order; the state document is the map.
+3. **Rebuild once:** `python3 tools/pipeline.py history catalog validate app
+   smoke stamp gate`. Green before any change. Red on a fresh seed means the
+   seed was sealed wrong, and that is the take.
+4. **Open the HANDOFF entry** for the new take before any code (§6). Bump
+   `BUILD`.
+
+The inherited list follows and still applies.
+
 
 **Deliverables are verified where the person reaches them.** A session that hands
 over work checks what is ACTUALLY in the outputs directory — not what a previous
@@ -89,7 +106,7 @@ order:
    finding — the attempts were not producing information.
 2. Find something that already does the thing and works, and read its source.
 3. Add a readback diagnostic. Turn "it doesn't work" into a fact.
-4. Ask Jacob for a *differential test*, not another build. A test that isolates
+4. Ask the owner for a *differential test*, not another build. A test that isolates
    one variable is worth more than three builds that change several.
 5. If none of that produces a new fact, say so and offer to stop.
 
@@ -208,7 +225,7 @@ This app displays dollar figures a person may act on. Three rules:
 - Is this my third failed attempt at the same symptom? (§5)
 - Did I write the HANDOFF entry FIRST? (§6)
 - Have I stated what I am DEFERRING this cycle? (§6)
-- Am I asking Jacob to test more than one thing at a time?
+- Am I asking the owner to test more than one thing at a time?
 - Does anything I added key off a card number instead of a printing? (AGENTS §3)
 
 **Touched steps run before the seal.** If a take edits a pipeline tool, that step

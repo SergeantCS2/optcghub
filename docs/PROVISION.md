@@ -1,6 +1,6 @@
 # PROVISION
 
-*Current as of take 31.*
+*Current as of take 35.*
 
 Every host this project touches, in either phase, with its purpose, licence and
 cadence. The gate refuses an undeclared host in `www/` or in `tools/`.
@@ -15,7 +15,7 @@ wifi and may fetch. **Scanning** happens anywhere and may not.
 | Host | Purpose | Phase | Cadence | Licence / terms |
 |---|---|---|---|---|
 | `tcgcsv.com` | TCGplayer categories, groups, products, prices for `categoryId 68` | build | nightly, after 20:00 UTC | Free public mirror of TCGplayer data. Community-run (`CptSpaceToaster/tcgcsv`), Patreon-supported. Attribution required in-app. |
-| `<you>.github.io` (Pages) | the nightly `bundle/manifest.json` and `bundle/catalog.json` | More → Sync, and once on open when online | **Yes** — written to `Directory.Data` as the live catalogue; the APK's bundled copy is the fallback. Take 27. Disabled until `UPDATE_URL` is set in `config.py` |
+| `sergeantcs2.github.io` (Pages) | the nightly `bundle/manifest.json` and `bundle/catalog.json` | More → Sync, and once on open when online | **Yes** — written to `Directory.Data` as the live catalogue; the APK's bundled copy is the fallback. Take 27. `UPDATE_URL` set at take 33; empty disables it |
 | `tcgplayer-cdn.tcgplayer.com` | Card art, downloaded to compute dHash then **discarded** | build | on catalogue change | Bandai / Shueisha / Toei / Viz artwork. Never redistributed. Only the 64-bit hash ships (landmine 26). |
 
 `tcgcsv.com` is fetched with a declared User-Agent naming this project,
@@ -29,7 +29,7 @@ and the airplane-mode invariant in PROTOCOL §8 holds without either.
 | Host | Role | Trigger | Load-bearing? |
 |---|---|---|---|
 | GitHub Releases | catalogue and price sync | user taps Sync, or once per 24 h on wifi | No — the app runs on its last catalogue and every price shows its date |
-| `<you>.github.io` (Pages) | the nightly `bundle/manifest.json` and `bundle/catalog.json` | More → Sync, and once on open when online | **Yes** — written to `Directory.Data` as the live catalogue; the APK's bundled copy is the fallback. Take 27. Disabled until `UPDATE_URL` is set in `config.py` |
+| `sergeantcs2.github.io` (Pages) | the nightly `bundle/manifest.json` and `bundle/catalog.json` | More → Sync, and once on open when online | **Yes** — written to `Directory.Data` as the live catalogue; the APK's bundled copy is the fallback. Take 27. `UPDATE_URL` set at take 33; empty disables it |
 | `tcgplayer-cdn.tcgplayer.com` | reference image for a card the collector has **not** scanned | collection tiles, search rows, the picker, card detail — **live since take 12** | No — DISPLAY-ONLY. `loading="lazy"`, memory cache, never written to disk, fails silently to a text placeholder. A scanned card uses the collector's own photograph (landmines 27, 28). Every image carries the publisher's SAMPLE watermark, as the reference app's do |
 
 ## Citation hosts — displayed, never requested

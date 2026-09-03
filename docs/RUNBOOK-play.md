@@ -1,125 +1,225 @@
-# RUNBOOK — Google Play
+# RUNBOOK — Google Play, from the repo to a running 14-day clock
 
-*Current as of take 31.* Adapted from APEX ORV, with the ordering reversed —
-see landmine 36 and agenda A12.
+*Current as of take 35.* The whole procedure, in the order it must happen,
+with who does each step. Everything on the repo side is already built; what
+follows is the owner's, and none of it is hard. The gate at the end is calendar
+time: **12 testers opted in for 14 continuous days** (landmine 35; re-checked
+against Google's current wording at take 33: unchanged since 11 Dec 2024, when
+it dropped from 20).
 
-**The difference from APEX ORV:** that project shipped a sideloaded APK first and
-added Play later. That ordering is no longer available. Android Developer
-Verification enforcement began 30 Sep 2026 in Brazil, Indonesia, Singapore and
-Thailand and goes global from 2027, covering direct APK installs on certified
-devices. Plan Play as primary from day one.
+**Where things stand, read off the repo at take 34 (PROVEN, not remembered):**
+the repo is public; run #3 went green end to end — seed 6 s, bundle 42 s,
+apk 4 m 36 s, pages 14 s; the Release is **take-31** with the APK and a
+`DEVKEY-DO-NOT-UPLOAD` bundle; Pages is live at
+`https://sergeantcs2.github.io/optcghub/`; the APK's arm64 native libraries
+are 16 KB page-aligned, which Play requires of new apps (MEASURED on the
+take-32 APK). **Not yet:** a seed newer than 31 at the repo root; the take-33
+`bootstrap.yml` pasted; the four secrets; the OP TCG Hub app in the console.
 
-## A. Before the first commit — the permanent decisions
+**Read first — the one thing that costs a collection (landmine 34):** the Play
+build and the sideloaded take carry the same id, `com.optcghub.app`, but
+different signers, so the Play build **cannot install over** the APK on the
+Fold. Before installing from Play: **More → Export CSV** — from take 34 this
+opens the share sheet; send it to Drive or Files — and keep that file. Then
+uninstall the sideload build (do **not** tick *keep app data* if offered),
+install from Play, **More → Import** the CSV. *Restore from backup* may also
+work — since take 34 it lets you pick the file in `Documents/OPTCGHub` — but
+a reinstalled app cannot read its old backups by itself on Android 11+, so
+the CSV is the copy to trust. After that, install only from Play on that
+phone; the sideload APK stays for testers who are not on the track.
 
-These are registered once and cannot be changed afterwards.
+---
 
-1. **applicationId.** Proposed `com.optcghub.app`. Fixed from first Play upload
-   and registered permanently under developer verification. No franchise mark in
-   it (landmine 30).
-2. **Sideload keystore**, generated on the Fold in Termux or on the PC:
-   ```
-   keytool -genkeypair -v -keystore vault.keystore -storetype PKCS12 \
-     -alias apexvault -keyalg RSA -keysize 2048 -validity 10000
-   ```
-   Committed to `signing/`, deliberately, so take N installs over take N-1.
-3. **Play upload key**, generated separately. **Never committed, never pasted
-   into a chat, never in a seed zip.**
-   ```
-   base64 -w0 vault-upload.jks > vault-upload.b64
-   ```
-   Back both up somewhere off the phone before writing any code.
+## 1. The account (once) — The owner
 
-## B. One-time setup on Google's side
+- play.google.com/console → **personal** developer account, $25 once. Your
+  legal name is shown on the listing. Write down the **creation date**: a
+  personal account made after 13 Nov 2023 is the one the 12/14 rule applies
+  to (D2 — yours is, so the rule applies).
+- Identity verification happens here; it can take a day. Start it now.
 
-1. **Four repository secrets** (Settings -> Secrets -> Actions):
-   `PLAY_UPLOAD_KEYSTORE_B64`, `PLAY_UPLOAD_STORE_PASS`, `PLAY_UPLOAD_KEY_ALIAS`,
-   `PLAY_UPLOAD_KEY_PASS`. Until they exist CI still succeeds but names the
-   bundle `...-DEVKEY-DO-NOT-UPLOAD.aab`, which Play will not accept. Sideload
-   testing is never blocked by their absence.
-2. **Paste `ci/build.yml`** into `.github/workflows/build.yml` by hand, once.
-   The seed cannot write workflows (A-46). Diff it job by job against what is
-   there: the `seed` job and `optcghub-seed*.zip` in `push.paths` are load-bearing
-   and have been dropped by a paste before (A-202).
-3. **Play Console**: create the app, accept Play App Signing, keep the
-   applicationId permanent.
-4. **Enable GitHub Pages** (Settings -> Pages -> Source: GitHub Actions) so the
-   privacy policy is live at `https://<user>.github.io/<repo>/privacy.html`.
-   Play requires a working URL.
-5. **Confirm the account type and creation date.** Personal accounts created
-   after 13 Nov 2023 face the 12-tester gate (landmine 35). This single answer
-   decides whether Phase 6 costs two weeks or zero.
-6. **Check the hobbyist developer-verification tier.** A lighter-touch free path
-   exists for students and hobbyists; worth ten minutes early (A12).
+## 2. The upload key (once) — The owner, one command
 
-## C. The listing — get this right the first time
+**Windows** — in the PowerShell that VS Code opens, from the unzipped seed
+folder (`…\optcghub-seed-tNN>`, where you already were):
 
-APEX ORV build 166 was **REJECTED** under Play's Misleading Claims policy for
-missing source attribution, and take 167 was spent entirely on fixing it. That
-lesson is free here.
+```
+powershell -ExecutionPolicy Bypass -File tools\play-key.ps1
+```
 
-- The full description **opens** with the affiliation disclaimer. Not a footnote —
-  "easy-to-see" was the actual requirement.
-- A **WHERE THE DATA COMES FROM** section names TCGplayer and TCGCSV with working
-  links, and the app carries the same disclaimer and the same links under About.
-- **Every URL is checked with a request before it is written down.** Play requires
-  them to be valid and functional; a dead link is another rejection.
-- No franchise name in the title, the short description, or the first screenshot.
-- The citation links trip the gate's remote-origin check by design. Allowlist them
-  as DISPLAY-ONLY with the reasoning recorded, exactly as APEX did — PROTOCOL §8
-  exists to stop the app *depending* on the network, not to stop it citing sources.
+`./play-key.sh` is the same script for Git Bash, WSL and Termux; PowerShell
+cannot run a `.sh`, which is what *not recognized as the name of a cmdlet*
+meant. If the script says *keytool not found*: adoptium.net → Temurin 21 →
+the `.msi` → tick **Set JAVA_HOME** → close and reopen PowerShell → run it
+again. (Android Studio's own JDK is found without any of that.)
 
-## D. Every build after that
+It makes `C:\Users\<you>\optcghub-play-key\upload.jks` with a generated
+password, reads the key back to be sure, and — if the GitHub CLI is logged in
+(`winget install GitHub.cli`, then `gh auth login`, once) — **sets the four
+repository secrets itself**. Without gh it prints the four values and where
+to paste them; the long one is a single line in `upload.b64` (Notepad,
+Ctrl+A, Ctrl+C). Both scripts were run end to end at take 33/34 — the
+`.ps1` under PowerShell 7 here, with a damaged-keystore control. Then:
 
-The `apk` job publishes to Releases:
+**Actions → build → Run workflow.** The release's bundle is now
+`optcghub-take-N.aab` — the `DEVKEY-DO-NOT-UPLOAD` suffix is gone, and the
+log line *AAB signer:* names the upload key. (Until the secrets exist the
+suffix stays, and Play refuses the file; landmine 33 says why that is the
+right failure.)
 
-| Artifact | What it is |
+**Back the folder up** somewhere that is not the PC. It never enters the
+tree, a seed, or a session (landmine 23). Losing it is recoverable through Play
+App Signing's upload-key reset, but it is a support ticket and days.
+
+## 3. Create the app — The owner, Play Console
+
+**All apps → Create app.** Name `OP TCG Hub`, English (US), *App*, *Free*.
+Accept the declarations. The applicationId is fixed from the first upload
+(A8): `com.optcghub.app`.
+
+**Play App Signing** is on by default for a new app: Google holds the app
+signing key; the key from step 2 is registered as the **upload key** by the
+first bundle you upload. Nothing to configure.
+
+## 4. Internal testing first — five minutes, and it proves the bundle
+
+**Testing → Internal testing → Create new release → upload
+`optcghub-take-N.aab`** from the latest Release on GitHub. Name it `take N`.
+Save, review, roll out. Add your own Google account under *Testers*, open
+the opt-in link on the Fold, install.
+
+Internal testing is instant and does not count toward the clock. It is where
+the first *real* Play-signed build meets the Fold; do the landmine-34
+export/uninstall/import dance here, once.
+
+## 5. App content — the questions Play asks before a closed test can roll out
+
+**Policy → App content**, every card, in this order:
+
+| card | answer |
 |---|---|
-| `optcghub-take-N.apk` | sideload, committed key, installs over the last take |
-| `optcghub-take-N.aab` | the Play upload, private upload key |
-| `play-assets-N.zip` | icon, feature graphic, privacy.html, listing copy, data safety answers, release notes |
+| Privacy policy | `https://sergeantcs2.github.io/optcghub/privacy.html` — open it in a browser first; Play checks it |
+| Ads | **Yes, contains ads** (A17) |
+| App access | All functionality available without special access |
+| Content rating | questionnaire → *Utility, productivity, communication, or other*; no violence, no user content, no gambling, no real-money |
+| Target audience | **18 and over** (or 13+); **not** designed for children — never a Families category (§9) |
+| News app | No |
+| COVID-19 | No |
+| Data safety | see below — landmine 94 |
+| Government app | No |
+| Financial features | No — prices are displayed, nothing is bought or sold in the app |
+| Health | No |
 
-Upload the **.aab**. Screenshots are the only thing not generated.
+**Data safety** (landmine 94 — APEX was rejected here): the app itself
+collects nothing, but AdMob does. Declare exactly this:
 
-`versionCode` derives from the take number and never goes backwards — a code
-uploaded once is burned forever, even from a deleted draft (landmine 33).
+- *Does your app collect or share any of the required user data types?* **Yes**
+- *Device or other IDs* → **Collected** and **Shared**, purpose **Advertising or
+  marketing**, not optional, not processed ephemerally
+- Data is **encrypted in transit**; users **cannot request deletion** (nothing
+  is stored on a server to delete — the collection never leaves the phone,
+  PROTOCOL §9)
+- Everything else: **not collected**. Photos stay on the device; the camera
+  feed is processed on-device and never sent.
 
-**The Play build and a sideloaded take cannot coexist under one applicationId**
-(landmine 34). APEX ORV ships them under different ids so both sit on the phone;
-decide this before there is a collection worth keeping. WebView storage is scoped
-per app, so a collection does not carry across.
+## 6. The listing — copy is written, pictures are yours
 
-## E. The track sequence
+**Grow → Store presence → Main store listing.** Paste from
+`docs/PLAY-LISTING.md` (title, short description, the full description that
+**opens** with the affiliation disclaimer — the APEX rejection at its take
+166 was for burying it).
 
-Internal testing (instant, any number of testers) -> complete the app setup ->
-closed testing -> **12 testers opted in for 14 continuous days** -> apply for
-production.
+| asset | where from |
+|---|---|
+| App icon 512×512 | `play-assets-t33/icon-512.png` in this take's outputs (the take-16 compass placeholder, as asked) |
+| Feature graphic 1024×500 | `play-assets-t33/feature-1024x500.png` |
+| Phone screenshots, at least 2 | the Fold, cover screen: Home, Collection, a card detail, Scan, a deck. No character art in the first one (landmine 30 — the app shows none) |
+| Category | Tools (or Entertainment) — never Games |
+| Contact email | yours |
+| Website | `https://sergeantcs2.github.io/optcghub/` — this is the domain AdMob crawls for app-ads.txt (§9) |
 
-A tester who opts out restarts their clock, so recruit 16-18 (landmine 35).
-Start at Phase 0. It is pure calendar time and it is the longest lead item in the
-whole plan.
+## 7. Closed testing — the clock
 
-Read the pre-launch report after the first upload as a field report and file
-items from it.
+**Testing → Closed testing → Create track** (call it `closed`). **Create new
+release → add from library** the internal-testing bundle (same take), or
+upload the next take. Roll out.
 
+**Testers:** *Create email list* → paste addresses (Gmail accounts), or a
+Google Group. Copy the **opt-in link** and send it with `ci/RELEASE.md`'s
+five-minute script. Recruit **16–18**: an opt-out restarts *that* tester's
+clock, and Google reads engagement when you apply, so people who will
+actually open it (landmine 35).
 
-## F. Ads (A17) — what changes on the Play side, once real IDs exist
+**The clock starts when the release is approved by Play review AND the 12th
+tester is opted in** — not when the track is created. It is 14 continuous
+days from there. Watch *Testing → Closed testing → Testers* for the count.
 
-Take 22 wired the SDK against Google's test units. When Jacob's AdMob account
-is live:
+Each new take: upload the new `.aab` to the same track. Testers update from
+Play; nothing resets.
 
-1. Replace the three values in `tools/config.py` (`ADMOB_APP_ID`,
-   `ADMOB_REWARD_SCAN`, `ADMOB_REWARD_DECK`). `ADMOB_IS_TEST` flips to false
-   on its own. **Never put the real IDs in a build that testers will tap on
-   repeatedly** — invalid-traffic bans are permanent; keep the test units
-   until the closed-testing track is real users.
-2. **Data Safety form** — the near-empty form (landmine 39) is gone. AdMob
-   collects the advertising ID and device identifiers for ads. Declare:
-   *Device or other IDs — collected, shared, for advertising*. APEX ORV was
-   rejected at its take 166 over the advertising-ID declaration; get it right
-   the first time.
-3. **Privacy policy** — name AdMob, link Google's ads policy, state that the
-   app itself collects nothing.
-4. **Families** — this app is not directed at children. Do not select a
-   families category; `tagForChildDirectedTreatment` stays unset.
-5. **AdMob app-ads.txt** — AdMob will ask; the Pages site can host it at
-   `/app-ads.txt` once the Play listing exists.
+## 8. Apply for production — day 15
+
+**Dashboard → Apply for production access.** Three short sections: how you
+recruited testers, what you learned, what changed. Google answers in about a
+week. Then a production release from the same bundle.
+
+## 9. Ads — AdMob, in parallel, none of it blocks the clock
+
+The AdMob account exists (take 33): publisher `pub-6243777967151950`.
+
+1. **app-ads.txt.** AdMob crawls the *root of the website on the listing*.
+   With the Pages site that root is `https://sergeantcs2.github.io/` — the
+   **user site**, not the project site. So: github.com → **New repository**
+   named exactly `SergeantCS2.github.io`, public, *Add a README*; then **Add
+   file → Create new file** `app-ads.txt` containing the one line AdMob
+   showed you:
+
+   ```
+   google.com, pub-6243777967151950, DIRECT, f08c47fec0942fa0
+   ```
+
+   Pages turns on by itself for that repo. Check
+   `https://sergeantcs2.github.io/app-ads.txt` in a browser; AdMob re-crawls
+   within about 24 hours once the Play listing carries the website.
+   (INFERRED from the IAB spec's root-domain rule: `github.io` is a public
+   suffix, so `sergeantcs2.github.io` is the root. AdMob's *app-ads.txt*
+   status page is the proof.)
+2. **The three IDs** (D11): the AdMob **app ID** (`ca-app-pub-6243777967151950~…`)
+   and **two rewarded ad units** (`…/…`) — *Apps → OP TCG Hub → App settings*
+   and *Ad units → Rewarded*. Paste them into `tools/config.py` **when the
+   closed test is real users**, not before: Google's test units are what a
+   closed test runs on, because tapping a real unit repeatedly on your own
+   phone is invalid traffic and the ban is permanent (A17).
+3. **Link the AdMob app to the Play listing** once it is live in a track, so
+   AdMob's store verification and app-ads.txt status can complete.
+4. **Families:** this app is not directed at children. Never a Families
+   category; `tagForChildDirectedTreatment` stays unset.
+
+## 10. Developer verification — The owner, when Play asks
+
+Play-distributed apps are covered by the Play account. The sideload APK is
+the one Android Developer Verification will eventually gate (landmine 36);
+the free hobbyist tier is worth ten minutes when the console offers it (A12).
+
+---
+
+## Every take after the first
+
+Drop the seed at the repo root → the build runs → the Release carries
+`optcghub-take-N.aab` signed with the upload key. Upload it to the closed
+track. `versionCode` is the take number and never goes backwards (landmine
+33).
+
+## If something goes wrong
+
+| symptom | look at |
+|---|---|
+| Play: "signed in debug mode" or "wrong key" | the bundle still has the DEVKEY suffix — §2, the secrets, then re-run the build |
+| Play: "Version code N has already been used" | landmine 33 — a burned code; the next take's number is new, upload that |
+| The Play build will not install on the Fold | landmine 34 — same id, different signer; export, uninstall the sideload build, install, restore |
+| "Your app must have a privacy policy" | §5 — the URL must open; Pages source must be *GitHub Actions* (RUNBOOK §3) |
+| Data safety rejection | §5 — device IDs collected **and** shared, advertising; landmine 94 |
+| Rejected for misleading claims | the full description must **open** with the disclaimer; `docs/PLAY-LISTING.md` does |
+| Tester count stuck below 12 | invited ≠ opted in: they must open the link **and** install; ask them for a screenshot of the app |
+| The clock reset | a tester opted out; that is why 16–18 |
+| AdMob app-ads.txt "not found" | the file must be at the **root** of `sergeantcs2.github.io`, and the listing's website must be set (§9) |

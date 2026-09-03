@@ -1,6 +1,6 @@
-# OPEN DECISIONS — needed from Jacob
+# OPEN DECISIONS — needed from the owner
 
-*Current as of take 31.* Everything else is decided and recorded in AGENDA.
+*Current as of take 35.* Everything else is decided and recorded in AGENDA.
 
 **D1 — App id and name.** Proposed `com.optcghub.app` / "OP TCG Hub". Permanent
 once registered under developer verification and fixed from first Play upload
@@ -32,7 +32,7 @@ makes a native Capacitor plugin a realistic fallback if A2 fails.
 
 *Added take 12.*
 
-**D7 — Icon and splash motif.** `assets/icon-placeholder.svg` is a compass rose
+**D7 — Icon and splash motif.** *Take 33: reverted to the take-16 compass placeholder at the owner's ask; the jolly roger is kept as `assets/icon-jollyroger.svg`. The motif question stays open.* `assets/icon-placeholder.svg` is a compass rose
 behind a card silhouette on the six-colour hexagon. Options that stay clear of
 landmine 30: a compass / log pose; a treasure chest with cards in it; a generic
 jolly roger (skull and crossed bones — *not* the Straw Hats' hat-wearing one); a
@@ -56,8 +56,7 @@ mind, would settle it.
 **D10 — The numbers.** 20 free credits on install, +20 per rewarded ad, 1 free
 deck save, +1 per ad. Confirm or change; they are constants.
 
-**D11 — AdMob account.** Exists? It is separate from Play. The app needs an
-AdMob app ID and two rewarded ad-unit IDs (scan credits, deck saves).
+**D11 — AdMob account.** *Take 33: it exists — publisher `pub-6243777967151950`, and the app-ads.txt line is in RUNBOOK-play §9.* Still needed, when the closed test is real users and not before (A17): the AdMob **app ID** (`ca-app-pub-6243777967151950~…`) and **two rewarded ad-unit IDs** (`…/…`), one for scan credits and one for deck saves. Three values into `tools/config.py`.
 
 **D12 — Banners.** None on Scan is proposed as fixed. One on Search, yes or no?
 
@@ -71,6 +70,12 @@ AdMob app ID and two rewarded ad-unit IDs (scan credits, deck saves).
 the first of several games under one listing, pick a non-franchise name THIS
 WEEK — the package name `com.optcghub.app` cannot change after the first Play
 upload, and I re-cut it in ten minutes today. See A19.
+
+---
+
+*Added take 33.*
+
+**D16 — The named fonts (A26).** Luckiest Guy, Bangers, Open Sans and Nunito Sans ship as the four roles. If you want Impress BT, Anime Ace BB or Avenir Black themselves: buy the app-embed licence, drop the file into `assets/user/fonts/` as `display`, `comic` or `heavy` with its extension, and the next build uses it. Trebuchet MS cannot be shipped at all; Fira Sans is its free twin if you want a third plain face. Yes to the defaults as they are, or which files are coming?
 
 ---
 

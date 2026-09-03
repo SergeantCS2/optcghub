@@ -1,6 +1,17 @@
-# OP TCG Hub — take 29
+# OP TCG Hub — take 35
 
 Installs over any earlier take; same key, your data stays.
+
+**New at take 35:** the shipped app carries no source comments (smaller,
+cleaner); nothing you can see changes.
+
+**New at take 34:** Export CSV opens the share sheet (it used to toast and
+do nothing — landmine 110); Restore lets you pick a backup file.
+
+**New at take 33:** the type — a poster face for headlines, comic lettering
+on tabs, Open Sans for text, a heavy sans for the numbers; the compass icon is
+back; the quiet price sync waits for wifi unless you say otherwise (More →
+Sync); prices sync from the nightly build once you are online.
 
 **Since take 22:** two modes (the slider at the top — Collect and Prep & Play,
 the whole app changes face); a Life / DON!! counter for game day; a card
@@ -8,8 +19,9 @@ browse built for deck-building; set checklists with a want list; a binder view;
 price alerts; portfolios; the Trade Analyzer; deck value and history; a
 first-run tour; no more text prompts anywhere.
 
-**Prices** are the ones that came with the app until `UPDATE_URL` is set
-(RUNBOOK §4b); then More → Sync now fetches the nightly catalogue.
+**Prices** refresh from the nightly build: quietly once per open on wifi, or
+More → Sync now. If it says *Sync failed*, the Pages site is not up yet and
+the app keeps the catalogue it came with.
 
 **Ads** run against Google's test units. You start with 20 save credits and
 1 deck save. Tap "+20 for a short ad" on Scan: watch it through and the count

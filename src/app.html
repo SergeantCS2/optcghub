@@ -30,8 +30,20 @@
   --teal:#C9A24A; --up:#7BC47F; --down:#E06D5C; --gold:#E9C46A;
   --brass:#C9A24A; --brass2:#8C6F2E;
   --r:14px; --pad:16px;
-  --serif:Georgia,"Noto Serif","Times New Roman",serif;
+  /* Typography (take 33). Four ROLES, resolved by build_app.py from
+     assets/fonts (OFL/Apache defaults) or assets/user/fonts (a licensed face
+     the owner drops in). The names are roles on purpose: the file behind
+     "OPH Display" can change without touching a line here.
+       display -- headlines, the hero, panel titles   (Impress BT's job)
+       comic   -- tabs, group labels, the mode slider (Anime Ace BB's job)
+       body    -- everything readable                 (Open Sans, as named)
+       heavy   -- the big numbers: totals, counts     (Avenir Black's job) */
+  --display:"OPH Display",Impact,"Arial Black",sans-serif;
+  --comic:"OPH Comic","OPH Display",Impact,sans-serif;
+  --body:"OPH Body","Open Sans","Segoe UI",Roboto,system-ui,sans-serif;
+  --heavy:"OPH Heavy","OPH Body","Arial Black",sans-serif;
 }
+/* __FONTS__ */
 /* PREP & PLAY (A22, take 24) -- the table. Felt, chalk, vermilion. Every
    component reads the same tokens, so the whole app changes face without a
    second stylesheet. --teal is the legacy alias for the accent; it follows. */
@@ -54,14 +66,17 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
 .screen{position:relative;z-index:1}
 body{
   background:var(--bg);color:var(--fg);
-  font:15px/1.45 -apple-system,"Segoe UI",Roboto,system-ui,sans-serif;
+  font:15px/1.45 var(--body);
   padding-top:var(--sat);
   padding-left:var(--sal);padding-right:var(--sar);
   padding-bottom:calc(76px + var(--sab));
   overscroll-behavior-y:none;
 }
 h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.015em}
-h2,.tab,.total,.dkcount,.big{font-family:var(--serif);font-weight:600;letter-spacing:0}
+/* Single-weight display faces: ask for 400 or the browser fakes a bold. */
+h1,h2{font-family:var(--display);font-weight:400;letter-spacing:.01em}
+.tab,.fgrp,.mode button{font-family:var(--comic);font-weight:400;letter-spacing:.04em}
+.total,.dkcount,.big{font-family:var(--heavy);font-weight:900;letter-spacing:-.01em;font-variant-numeric:lining-nums tabular-nums}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
 .screen{display:none;padding:0 var(--pad)}
 .screen.on{display:block}
@@ -85,7 +100,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   font-size:13px;color:#E9C46A;margin:8px 0 6px}
 .stale[hidden]{display:none}
 .hero .who{font-size:15px;color:var(--dim)}
-.hero .who em{color:var(--fg);font-style:normal;font-family:var(--serif);font-size:19px}
+.hero .who em{color:var(--fg);font-style:normal;font-family:var(--display);font-weight:400;font-size:19px}
 .total{font-size:46px;margin:2px 0 0;color:var(--brass);font-variant-numeric:lining-nums tabular-nums}
 .delta{font-size:15px;font-weight:600;margin-top:2px}
 .up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--dim)}
@@ -98,7 +113,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 /* ---- panels ------------------------------------------------------------- */
 .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
   padding:16px;margin-bottom:16px}
-.panel h3{font-size:16px;margin-bottom:12px;font-family:var(--serif);font-weight:600}
+.panel h3{font-size:16px;margin-bottom:12px;font-family:var(--display);font-weight:400;letter-spacing:.01em}
 #home .panel{background:none;border:0;border-top:1px solid var(--line);border-radius:0;
   padding:18px 0 4px;margin-bottom:6px}
 .row{display:flex;align-items:baseline;gap:10px;padding:9px 0}
@@ -174,7 +189,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .guide.seen{border-color:var(--gold)}
 .guide.hit{border-color:var(--up)}
 .guide .hint{position:absolute;inset:auto 0 -34px;text-align:center;font-size:12.5px;color:var(--dim2)}
-/* What the viewfinder shows before the camera stream arrives -- Jacob's
+/* What the viewfinder shows before the camera stream arrives -- the owner's
    "when the camera isn't loaded". A card outline with corner marks, brass,
    over the app's own sea. Hidden the moment the video has a frame. */
 .guide .idle{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
@@ -265,7 +280,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   position:relative;overflow:hidden}
 #tour .gcard .gpic{height:150px;border-radius:12px;background:var(--card2);display:flex;align-items:center;
   justify-content:center;color:var(--brass);margin-bottom:6px;background-size:cover;background-position:center}
-#tour .gcard h3{font-family:var(--serif);font-size:22px;color:var(--fg)}
+#tour .gcard h3{font-family:var(--display);font-weight:400;font-size:22px;color:var(--fg)}
 #tour .gcard p{margin:0;color:var(--dim);font-size:14.5px;line-height:1.5}
 #tour .gcard ul{margin:4px 0 0;padding-left:18px;color:var(--dim);font-size:13.5px;line-height:1.55}
 #tour .gcard li b{color:var(--fg);font-weight:600}
@@ -274,7 +289,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 #tour .gdots i.on{background:var(--brass);width:18px;border-radius:4px}
 
 /* ---- filter / sort sheet -------------------------------------------------- */
-.fgrp{margin:16px 0 6px;font-size:13px;color:var(--dim);font-family:var(--serif)}
+.fgrp{margin:16px 0 6px;font-size:13px;color:var(--dim)}
 .chips{display:flex;flex-wrap:wrap;gap:7px}
 .chip{border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13px;
   font-weight:600;color:var(--dim);background:var(--card2)}
@@ -773,7 +788,7 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
 <!-- ── FIRST-RUN GUIDE (A18, take 19) ─────────────────────────────────────
      Shown once on first open, versioned so a rewrite shows again, reachable
      afterwards from More → How it works. Every line is a fact the app can
-     back up. The background is assets/user/guide-bg.jpg if Jacob supplies
+     back up. The background is assets/user/guide-bg.jpg if the owner supplies
      one, else the compass on the sea. -->
 <div id="tour" hidden>
   <div class="gbg" id="tourBg"></div>
@@ -966,7 +981,7 @@ async function loadCatalogue() {
  * anywhere, so the airplane-mode invariant (PROTOCOL §8) holds: the field
  * session survives, the settlement happens later.
  *
- * ADS_ENABLED is false until Jacob has AdMob IDs (D11). Off, nothing gates and
+ * ADS_ENABLED is false until the owner has AdMob IDs (D11). Off, nothing gates and
  * this block is inert. The numbers are D10's and are constants here.
  * ===================================================================== */
 /* Derived at boot (take 22): unit IDs in the manifest AND a Capacitor
@@ -1693,7 +1708,7 @@ $('#trShare').addEventListener('click', () => {
  * itself again exactly when it becomes worth reading (APEX A147/A155).
  * Reachable afterwards from More → How it works. Every card is a fact the
  * app can back up today; when a capability changes, the card changes and
- * the version bumps. Pictures come from assets/user/ if Jacob supplies them.
+ * the version bumps. Pictures come from assets/user/ if the owner supplies them.
  * ===================================================================== */
 const GUIDE_KEY = 'optcghub.guide.v2';   // v2: the modes card (take 25)
 const GUIDE = [
@@ -1814,7 +1829,7 @@ function paintPlay() {
     return `<div class="panel" style="${i === 0 ? 'transform:rotate(180deg)' : ''}">
       <div style="display:flex;gap:12px;align-items:center">
         <button class="lead" data-plleader="${i}" style="width:48px;flex:0 0 48px;aspect-ratio:.716;border-radius:6px;background:var(--card2);overflow:hidden;position:relative">${L ? refArt(L) : ''}</button>
-        <div style="flex:1;min-width:0"><b style="font-family:var(--serif);font-size:17px">${L ? esc(L.name) : pl.name}</b>
+        <div style="flex:1;min-width:0"><b style="font-family:var(--display);font-weight:400;font-size:17px">${L ? esc(L.name) : pl.name}</b>
           <div class="note" style="margin:2px 0 0">${L ? colsOf(L).join('/') + ' \u00b7 starts at ' + (L.life || 5) + ' life' : 'tap the card to choose a Leader'}</div></div>
       </div>
       <div style="display:flex;gap:10px;margin-top:12px">
@@ -2817,8 +2832,12 @@ function scheduleBackup(reason) {
   }, 400);
 }
 async function restoreFromBackup() {
-  const raw = await PLATFORM.readBackup();
-  if (!raw) return toast('No backup found');
+  let raw = await PLATFORM.readBackup();
+  if (!raw) {
+    toast('No backup of this install \u2014 choose one: Documents \u203a OPTCGHub \u203a backup-latest.json');
+    raw = await PLATFORM.pickTextFile('.json,application/json');
+    if (!raw) return toast('No backup chosen');
+  }
   let b; try { b = JSON.parse(raw); } catch (e) { return toast('Backup is not readable'); }
   const n = (b.items || []).length, d = (b.decks || []).length;
   if (!confirm(`Restore ${n} collection line${n === 1 ? '' : 's'} and ${d} deck${d === 1 ? '' : 's'} from ${(b.at || '').slice(0, 16)}?\n\nThis REPLACES what is on the phone now.`)) return;
@@ -2832,8 +2851,10 @@ async function restoreFromBackup() {
   toast(`Restored ${n} lines, ${d} decks`); go('collection');
 }
 
-/* Landmine 20 / PROTOCOL §9: export exists before charts do. */
-function exportCsv() {
+/* Landmine 20 / PROTOCOL §9: export exists before charts do. Take 34: on a
+   device it goes through the share sheet, because a download link is a no-op
+   in the WebView (landmine 110). */
+async function exportCsv() {
   const head = ['portfolio', 'product_id', 'number', 'name', 'printing', 'set', 'rarity',
                 'finish', 'condition', 'qty', 'paid_usd', 'market_usd', 'low_usd',
                 'high_usd', 'price_source', 'price_as_of', 'added'];
@@ -2846,9 +2867,13 @@ function exportCsv() {
   });
   const csv = [head, ...rows].map(r => r.map(v =>
     `"${String(v == null ? '' : v).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const name = `optcghub-${new Date().toISOString().slice(0, 10)}.csv`;
+  const shared = await PLATFORM.shareFile(name, csv, 'Keep this somewhere safe');
+  if (shared === 'shared') return toast(`Exported ${rows.length} rows`);
+  if (shared === 'cancelled') return;
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
   const a = document.createElement('a');
-  a.href = url; a.download = `optcghub-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.href = url; a.download = name;
   a.click(); URL.revokeObjectURL(url);
   toast(`Exported ${rows.length} rows`);
 }
@@ -2891,7 +2916,7 @@ document.addEventListener('click', e => {
 });
 
 /* ---- scanner ----------------------------------------------------------- */
-/* The batch persists. Jacob's first field test: two cards scanned, picker
+/* The batch persists. The owner's first field test: two cards scanned, picker
    answered twice, collection empty afterwards -- the batch lived in memory
    and commit only happened on "Review". Closing the app lost it and nothing
    said so. Landmine 83. Now: every accept writes the batch to storage, the
@@ -2932,7 +2957,7 @@ function paintScan() {
 /* The set chip is worth 7x. MEASURED take 2: code alone resolves 8.9% of
    printings, code plus the set resolves 60.2%. One tap, before the batch. */
 /* The set chip is a sheet now, not a prompt -- it was the first thing under
-   the status bar in Jacob's screenshot and the second prompt() a tester would
+   the status bar in the owner's screenshot and the second prompt() a tester would
    have hit. Recent sets first. */
 $('#setChip').addEventListener('click', () => {
   const list = [...CAT.sets.values()];
@@ -3063,6 +3088,39 @@ const PLATFORM = {
       return r.data;
     } catch (e) { return null; }
   },
+  /* Take 34, landmine 110. A download link does NOTHING in Capacitor's WebView:
+     no DownloadListener is installed and a blob: URL has nowhere to go, so
+     "Export CSV" toasted success and produced no file on the phone -- the
+     A-1 family, on the one feature PROTOCOL §9 says must exist first. On a
+     device the file is written to the app's cache and handed to the share
+     sheet (Drive, Files, Gmail -- the collector's choice). API read from
+     @capacitor/share 8.0 definitions: share({ title, files: [file uri],
+     dialogTitle }); the uri is Filesystem.writeFile's. Returns 'shared',
+     'cancelled', or false when there is no plugin (a browser: caller downloads). */
+  async shareFile(name, text, dialogTitle) {
+    const FS = this.plugin('Filesystem'), SH = this.plugin('Share');
+    if (!FS || !SH) return false;
+    try {
+      const r = await FS.writeFile({ path: `export/${name}`, data: text, directory: 'CACHE', recursive: true, encoding: 'utf8' });
+      await SH.share({ title: name, files: [r.uri], dialogTitle });
+      return 'shared';
+    } catch (e) {
+      if (/cancel/i.test(String(e && e.message))) return 'cancelled';
+      toast('Export failed \u2014 ' + (e && e.message || 'unknown')); return 'cancelled';
+    }
+  },
+  /* Documents/OPTCGHub is only readable by the install that wrote it: on
+     Android 11+ a REINSTALLED app is a stranger to its own old files (scoped
+     storage), which is exactly the landmine-34 case -- sideload out, Play
+     build in. So when the automatic read finds nothing, the collector picks
+     the file: the system picker sees every file the phone does. */
+  pickTextFile(accept) {
+    return new Promise(res => {
+      const inp = document.createElement('input'); inp.type = 'file'; inp.accept = accept;
+      inp.addEventListener('change', () => { const f = inp.files && inp.files[0]; if (!f) return res(null); const rd = new FileReader(); rd.onload = () => res(rd.result); rd.onerror = () => res(null); rd.readAsText(f); });
+      inp.click();
+    });
+  },
   /* A17 — rewarded ads via @capacitor-community/admob 8.1.0. API read from
      the plugin's definitions at take 22 (landmine 73):
        initialize({ initializeForTesting })        once
@@ -3110,6 +3168,14 @@ const PLATFORM = {
      write both to Directory.Data, and reload. PROVISION names the host. The
      fetch is the only load-bearing network call in the app and it is
      opt-in: nothing happens unless UPDATE_URL is configured. */
+  /* A25, take 33. The quiet once-per-open sync is half a megabyte (MEASURED
+     take 29): nothing on wifi, a photo a day on mobile data that nobody asked
+     for. The Network Information API reports 'cellular' on Android's WebView
+     -- INFERRED from the spec until the Fold says so; where the API is absent
+     the type is unknown and the sync proceeds as it did before. "Sync now"
+     never consults this: the collector pressed it. */
+  onCellular() { const c = navigator.connection; return !!(c && c.type === 'cellular'); },
+  quietSyncAllowed() { return !this.onCellular() || localStorage.getItem('vault.syncCellular') === '1'; },
   async refreshCatalogue({ quiet = false } = {}) {
     const base = CAT.man.updateUrl; if (!base) { if (!quiet) toast('Sync is not configured \u2014 update the app for new prices'); return false; }
     if (!navigator.onLine) { if (!quiet) toast('No connection'); return false; }
@@ -3688,8 +3754,10 @@ function paintSettings() {
         <button class="ghost" data-act="backup">Back up now</button></div>
       <button class="linkish" data-act="restore">Restore from backup</button>
       <div class="note">A backup is written to <b>Documents/OPTCGHub</b> on every batch
-        commit and deck save. It survives uninstalling the app. Photos are not in
-        it — they are yours to rescan; the collection is what cannot be lost.</div>
+        commit and deck save. Photos are not in it — they are yours to rescan; the
+        collection is what cannot be lost. <b>Before you uninstall or switch to
+        the Play build: Export CSV and keep the file</b> — a reinstalled app
+        cannot read its old backups by itself, though Restore lets you pick one.</div>
     </div>
     <div class="panel"><h3>How it works</h3>
       <button class="linkish" id="guideAgain">Show the guide again</button></div>
@@ -3698,6 +3766,8 @@ function paintSettings() {
         <span>${CAT.man.fromDisk ? 'synced copy on this phone' : 'the copy that came with the app'}${CAT.man.updateUrl ? '' : ' \u00b7 sync not configured'}</span></div>
         <button class="ghost" id="syncBtn">Sync now</button></div>
       <div class="note">Fetches the nightly catalogue when you are online. Everything else stays offline.</div>
+      <label class="row" style="gap:10px;cursor:pointer"><input type="checkbox" id="syncCell" ${localStorage.getItem('vault.syncCellular') === '1' ? 'checked' : ''}>
+        <span class="nm"><b>Also sync quietly on mobile data</b><span>about 0.5 MB a day. Off: the quiet sync waits for wifi; Sync now always works.</span></span></label>
     </div>
     <div class="panel"><h3>Catalogue</h3>
       <div class="row"><div class="nm"><b>${(m.cards || 0).toLocaleString()} cards</b>
@@ -3747,6 +3817,7 @@ function paintSettings() {
   $$('.screen').forEach(x => x.classList.toggle('on', x.id === 'settings'));
   const de = $('#devEarn'); if (de) de.addEventListener('click', () => { CREDITS.earn('scan'); paintSettings(); });
   const ga = $('#guideAgain'); if (ga) ga.addEventListener('click', guideOpen);
+  const sc = $('#syncCell'); if (sc) sc.addEventListener('change', () => localStorage.setItem('vault.syncCellular', sc.checked ? '1' : '0'));
   const sy = $('#syncBtn'); if (sy) sy.addEventListener('click', async () => { sy.disabled = true; await PLATFORM.refreshCatalogue(); sy.disabled = false; paintSettings(); });
 }
 
@@ -3761,7 +3832,7 @@ function paintSettings() {
   OWN.snapshot(); paintBatchBadge();
   MODE.set(MODE.cur, false); if (MODE.cur === 'play') go('decks');
   ALERTS.check().then(f => { if (f.length) toast(`${f.length} price alert${f.length === 1 ? '' : 's'} fired`); });
-  if (navigator.onLine && CAT.man.updateUrl) setTimeout(() => PLATFORM.refreshCatalogue({ quiet: true }), 1500);
+  if (navigator.onLine && CAT.man.updateUrl && PLATFORM.quietSyncAllowed()) setTimeout(() => PLATFORM.refreshCatalogue({ quiet: true }), 1500);
   /* A17 at boot. Constants from the manifest (D10), gate on only where an ad
      can actually be shown. */
   if (CAT.man.ads) {

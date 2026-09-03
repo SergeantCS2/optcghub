@@ -20,4 +20,22 @@ illustrations, publisher logos, the franchise wordmark — those are Bandai /
 Shueisha / Toei / Viz property, and with ads on (A17) this is a commercial app.
 The app will not stop you. The Play listing is the exposure, and it is yours.
 
+## Fonts — `assets/user/fonts/` (take 33, A26)
+
+Four roles, four files. Drop a licensed face in under the ROLE's name and the
+next build uses it for that role; nothing else changes.
+
+| file | role | what ships when it is absent |
+|---|---|---|
+| `display.woff2` / `.ttf` / `.otf` | headlines, the hero, panel titles | Luckiest Guy (Apache-2.0) |
+| `comic.*` | tabs, group labels, the mode slider | Bangers (OFL) |
+| `body.*` | everything readable | Open Sans (OFL) |
+| `heavy.*` | the big numbers | Nunito Sans (OFL) |
+
+A face you buy an **app-embedding** licence for is fine here (Impress BT and
+Avenir from Monotype; Anime Ace BB's commercial licence from Blambot). A copy
+from a free-fonts site is not: this is a commercial app (A17) and a font file
+inside the APK is redistribution. Trebuchet MS ships with Windows and cannot
+be redistributed at all.
+
 Keep originals elsewhere; this folder ships in the seed.

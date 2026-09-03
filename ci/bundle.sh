@@ -7,7 +7,9 @@ echo "::group::deps"
 pip install --quiet --break-system-packages pillow
 # render.mjs falls back to a DOM check without this and says so. CI is the place
 # pixels actually get verified, so CI is where Chrome has to exist.
-npm install --silent --no-save puppeteer
+# acorn: the scrubber's parser (tools/strip_comments.mjs, take 35). Without it
+# build_app.py stops at the strip and says so.
+npm install --silent --no-save puppeteer acorn
 echo "::endgroup::"
 
 echo "::group::source present?"
@@ -47,9 +49,19 @@ git add catalog/prices_daily.json catalog/hashes.json catalog/star_template.json
 if git diff --cached --quiet; then
   echo "sidecars unchanged"
 else
-  git commit -q -m "nightly: prices $(date -u +%Y-%m-%d), $(python3 -c "import json;print(len(json.load(open('catalog/prices_daily.json'))))") day(s) on file"
-  git push
-  echo "sidecars committed and pushed"
+  # The date in the message is the SOURCE date -- the newest day in the file --
+  # not the day the runner ran (landmine 3: a fetch at 03:00 UTC carries
+  # yesterday's prices). Rehearsed at take 33: the fetch-date version said
+  # "prices 2026-09-03" on a commit that added 2026-09-02.
+  read -r day days < <(python3 -c "import json;h=json.load(open('catalog/prices_daily.json'));print(max(h), len(h))")
+  git commit -q -m "nightly: prices $day, $days day(s) on file"
+  # A push is rejected if anything landed on the branch during the ~6 minute
+  # build (a docs edit in the browser, say). The commit is one file that nobody
+  # else writes, so rebase once and push again rather than lose the night to
+  # a red job and an issue. Rehearsed against a moved remote at take 33.
+  branch=$(git rev-parse --abbrev-ref HEAD)
+  git push origin "$branch" || { git pull --rebase --autostash -q origin "$branch" && git push origin "$branch"; }
+  echo "sidecars committed and pushed: prices $day, $days day(s) on file"
 fi
 echo "::endgroup::"
 
@@ -57,7 +69,7 @@ echo "::endgroup::"
 # being downloaded, and Pages serves the same bundle for in-app sync (take
 # 27). ~0.56 MB gzipped for the entire game (A25).
 echo "::group::sizes"
-du -sh www www/bundle
+du -sh www; du -sh www/bundle   # two calls: du counts an overlapping pair once
 python3 - <<'PY'
 import json
 m = json.load(open('www/bundle/manifest.json'))
