@@ -1,15 +1,15 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 56.* Paste the block between the rules into a new session
+*Current as of take 59.* Paste the block between the rules into a new session
 whose project carries `AGENDA.md`, `LANDMINES.md` and `HANDOFF.md` (the three
 project files) and has the newest seed attached.
 
 ---
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
-tracker and deck builder for Android, built across 56 takes by previous
+tracker and deck builder for Android, built across 59 takes by previous
 sessions. The repo lives at `github.com/SergeantCS2/optcghub`; the seed
-`optcghub-seed-t56.zip` is the whole tree. CI builds on every seed drop and
+`optcghub-seed-t59.zip` is the whole tree. CI builds on every seed drop and
 has run green end to end; the APK the owner installs comes from the Release.
 
 **Before anything else, in this order:**
@@ -22,7 +22,7 @@ has run green end to end; the APK the owner installs comes from the Release.
 4. Read `docs/HANDOFF.md`, newest entry first, back to take 28 at least. Every
    take ends with a DEFERRED list; the union of those lists is the work.
 5. Read `docs/LANDMINES.md` §0 (the index) and skim §1. When you are about to
-   do something, grep the index first. 114 of them; each is a real failure.
+   do something, grep the index first. 116 of them; each is a real failure.
 6. Read `docs/AGENDA.md` for what is open and whose it is.
 
 **The discipline, which the gate enforces:**
@@ -37,7 +37,11 @@ has run green end to end; the APK the owner installs comes from the Release.
 - Read a plugin's `definitions.d.ts` before calling it (landmine 73).
 - Measure before designing; the ledger names what was ruled out and why.
 - Before a seed drop after 20:05 UTC, run a fresh `ingest` and smoke: the
-  catalogue moved and a pinned count expires (landmine 114).
+  catalogue moved and a pinned count expires (landmine 114). Every constant
+  in a test is a date at which it expires, and one that expires in
+  `bundle.sh` used to take a night of prices with it (landmine 115).
+- **`ci/bundle.sh` and `tools/history.py` changed at takes 58–59** and the seed carries them, so a seed
+  drop is enough; no paste.
 - Seal with `bash tools/seal.sh`, bare, never piped (landmine 103). Present
   the seed, the APK, and the three project files loose.
 - The repo is public. Never write the owner's first name, an AI vendor's
@@ -54,6 +58,12 @@ has run green end to end; the APK the owner installs comes from the Release.
   `.aab` was uploaded first — if the DEVKEY one, the upload key must be
   reset (RUNBOOK-play §2). Every seed dropped now becomes a Play update for
   the testers: seal only what you would ship.
+- **A26 and A29 are the owner's two named items for this session** (take 57,
+  not built at his instruction): the typography reads weak and ungolden —
+  A26 names the one-line cause found at take 57 and says to measure before
+  editing — and **stock decks**, the ST lists shipped by default so a player
+  with no collection can use the sim, never touching the collection (A29 has
+  both rules and the sourcing order).
 - **The listing screenshots** — the owner has a frames kit and the take-37
   showcase files (`showcase/`); graded copies, alerts and photos are set by
   hand before shooting.
@@ -88,6 +98,6 @@ only be changed by giving him a new file and saying so in the runbook.
 30, A16); gate scanning (A17); multiply condition into a price (PROTOCOL §10);
 send the collection anywhere (PROTOCOL §9); seal with a red gate.
 
-Say "take 57" and begin with PROTOCOL §0.
+Say "take 60" and begin with PROTOCOL §0.
 
 ---

@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 56
+# V1-STATE — what exists, as of take 59
 
-*Current as of take 56.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 59.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -44,7 +44,7 @@ refresh from Pages (take 27).
 |---|---|---|
 | Scanner | quad detect → warp → code crop → OCR → catalogue check → face (SP text / star template) → 3-frame vote → confidence gate → auto or picker; batch persists; likelihood-ordered picker | render.mjs pixel stages, smoke parse/vote, star port 30/30 vs Python (takes 10, 16) |
 | Catalogue | 6,862 cards + 658 sealed, 87 sets, from TCGCSV cat 68; keywords extracted (line-start rule); cleaned text; 3 days of price history, growing nightly | pipeline gate, validate.py 6 guards with negative controls |
-| Values | market/low/high per printing; d1 deltas; Market Movers; chart from snapshots (record) or history (estimate, dashed, purchase-date-aware) | smoke arithmetic vs the catalogue's own deltas |
+| Values | market/low/high per printing; deltas labelled with the horizon they measured, never "yesterday" across a missed night (take 58); Market Movers; chart from snapshots (record) or history (estimate, dashed, purchase-date-aware) | smoke arithmetic vs the catalogue's own deltas |
 | Collection | portfolios, conditions, graded, cost basis, favourites, bulk actions, filter/sort sheet (two scopes), export CSV **via the share sheet on a device** (take 34, landmine 110), a self-contained share page (8.12, take 42), import CSV, auto-backup to Documents on every save, restore with a file-picker fallback | smoke 255, render 51; **export/restore not yet seen on a phone** |
 | Decks | legality per Comprehensive Rules §5-1 by section; advisor (curve, counters, blockers, triggers, life); Leader sheet; printing swap; import 5 list formats; export; value + history; sim-readiness and *Play this deck in Sim* (take 53) | smoke, two guards on R6 (number-keying) |
 | Prep & Play | mode slider + palette; Cards browse (keywords, colour, cost, text, for-this-deck); Play counter with §6-4-1 first turn and a *pass the phone* mode (take 44); **Sim: the hot-seat board** — two legal decks, the rules of RULES.md §3 enforced with sections cited, effects by hand through a tray, the curtain at every hand-over (take 46); **scripted effects** parsed from card text at build time, 2,161 of 7,553 lines (28.6%): chains, costs, continuous effects and keywords, follow-ons, searches in every phrasing, Events at both timings, cost changes, modifiers with honest expiries that follow their card, offered under their conditions with engine-computed targets (takes 47–51); **an opponent** — legal, not clever, never reads the hand — so one person can play (take 55) | render draws the dealt board; smoke 22 against §3, 40 on the effect classes, two whole bot games under a conservation invariant |
@@ -59,7 +59,7 @@ refresh from Pages (take 27).
 | Typography | four roles (display / comic / body / heavy), OFL/Apache faces bundled, 232 KB, licensed faces as a file drop in `assets/user/fonts/` | render.mjs: Chrome reports all four LOADED and h2 resolves to the display face, with a missing-file control; smoke 7 |
 | Sync | quiet once-per-open sync holds on cellular unless switched on; Sync now always runs; `UPDATE_URL` points at Pages | smoke 4 controls; **not yet seen on the Fold** |
 
-**Harness totals, take 56:** smoke.mjs 393 assertions, render.mjs 55 in
+**Harness totals, take 59:** smoke.mjs 400 assertions, render.mjs 55 in
 Chrome, gate 22 checks with negative controls (the render receipt is new), zero console errors across 14
 screens in both modes.
 
@@ -76,6 +76,8 @@ screens in both modes.
 | First Sync on the Fold | `UPDATE_URL` is set; the first *Sync now* that shows a date proves Pages and the URL | RUNBOOK §5 |
 | Real AdMob unit IDs | D11; the account exists and app-ads.txt is live; test units are correct for a closed test | A17, RUNBOOK-play §9 |
 | The named fonts as files | D16; the roles ship with free faces, the slot takes licensed ones | A26 |
+| Typography as it looks | reported weak and ungolden by the owner (take 57); the cause is named, the fix is next session's | A26 |
+| Stock decks | the ST lists, shipped by default, never in the collection | A29 |
 | Colour direction | D15; parked, not a priority | A24 |
 | Icon motif | D7; the take-16 placeholder is back by request | A16 |
 | A14 ML Kit language trim (~10 MB) | needs a device to verify no NoClassDefFoundError | A14 |
@@ -103,6 +105,7 @@ a value. Nothing scanned is ever discarded.
 - Naive `[Rush]` matching over-counts by 4× (take 12)
 - A set can carry other sets' numbers — EB03 has four (take 26)
 - 34% of prices move on a given night; median move 2.7% (take 8)
+- 69% of printings over $5 carry a low at least 5% under market; market sits outside low..high on 427 printings, because market is an average of sales and low/high are live listings (take 58)
 - Bundle: 4.2 MB raw, 0.56 MB gzip; a delta would be 16 KB (take 29)
 - TCGCSV on a GitHub runner: 3 s, no throttle (take 31)
 - All four fonts, subset to Latin as woff2: 232 KB (take 33)

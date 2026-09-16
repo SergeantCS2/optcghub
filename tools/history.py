@@ -100,7 +100,56 @@ def deltas(h, today=None):
     return out
 
 
+def merge_git(limit=20, verbose=True):
+    """Union the working sidecar with its recent committed versions.
+
+    Landmine 116: the seed job unpacks with `unzip -o`, so a seed whose
+    sidecar is thinner than the repo's REPLACES it, and a price day that is
+    deleted cannot be fetched again -- TCGCSV publishes one day at a time.
+    The session's tree is a snapshot; the runner's history is the record.
+    So before the fetch, every day present in any recent commit is restored.
+    Newest value wins for a day that appears twice. Silent no-op outside a
+    git checkout (a session container, a zip).
+    """
+    import subprocess
+    cur = load()
+    try:
+        revs = subprocess.run(["git", "log", f"-n{limit}", "--format=%H", "--", SIDECAR],
+                              capture_output=True, text=True, cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        if revs.returncode:
+            raise RuntimeError(revs.stderr.strip()[:120])
+        shas = [x for x in revs.stdout.split() if x]
+    except Exception as e:                                   # noqa: BLE001
+        if verbose:
+            print(f"   history merge: no git history to merge ({e})")
+        return cur
+    rel = os.path.relpath(SIDECAR, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    added = []
+    for sha in shas:
+        blob = subprocess.run(["git", "show", f"{sha}:{rel}"], capture_output=True, text=True,
+                              cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        if blob.returncode:
+            continue
+        try:
+            old = json.loads(blob.stdout)
+        except Exception:                                    # noqa: BLE001
+            continue
+        for day, prices in old.items():
+            if day not in cur:
+                cur[day] = prices; added.append(day)
+    if added:
+        save(cur)
+        if verbose:
+            print(f"   history merge: restored {len(set(added))} day(s) from git \u2014 {len(cur)} on file")
+    elif verbose:
+        print(f"   history merge: nothing to restore, {len(cur)} day(s) on file")
+    return cur
+
+
 if __name__ == "__main__":
+    import sys
+    if "--merge-git" in sys.argv:
+        merge_git(); raise SystemExit(0)
     h = append_from_payload(tcgcsv.cached())
     d = deltas(h)
     moved = sum(1 for v in d.values() if v["d1"] and v["d1"][0] != 0)

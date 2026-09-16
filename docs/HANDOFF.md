@@ -1,4 +1,185 @@
-# HANDOFF — through Take 56
+# HANDOFF — through Take 59
+
+## Take 59 — 2026-09-16 — the seed was about to delete six days of prices
+
+Opened before any code (PROTOCOL §6).
+
+### Found while laying out take 58
+
+The runner's sidecar has ten days (2026-09-01..09, and 09-15). This
+container's has four: 09-01, 09-02, 09-03, 09-15 — the nights between were
+fetched by the runner and never came back here, because a seed is a
+snapshot of the session's tree. The seed job unpacks with `unzip -o` and
+commits, so **dropping take 58 would have replaced the runner's ten days
+with four and lost 09-04 to 09-09 for good.** TCGCSV publishes one day at a
+time; a deleted day is not re-fetchable.
+
+The same thing would happen on every future seed drop, and had been true
+since take 9. It has not bitten because the runner's history was younger
+than the session's until now.
+
+### Fixed, without a paste
+
+`build.yml` is hand-pasted and cannot be changed cheaply, so the repair
+lives where the seed can carry it: `tools/history.py --merge-git` reads the
+last twenty committed versions of `catalog/prices_daily.json` out of git and
+unions them into the working copy — a day present in any of them survives —
+and `ci/bundle.sh` runs it before the fetch. Any seed drop now *adds* to the
+history instead of replacing it, and the repair is retroactive: the first
+build after take 58's drop restores 09-04..09-09 from the commit the seed
+overwrote.
+
+### Built
+
+- **`tools/history.py --merge-git`** — unions the working sidecar with the
+  last twenty committed versions of itself; a day already on file is never
+  overwritten by an older copy; a no-op with a printed reason outside a git
+  checkout. **`ci/bundle.sh` runs it before the fetch**, so the order is now
+  merge → fetch → commit the day → everything that can fail.
+- **Rehearsed on the exact case:** a ten-day repo, a four-day seed
+  committed over it, the merge restoring all six missing days. Controls: a
+  second merge restores nothing, and a tree with no `.git` is a no-op.
+- Five smoke assertions on the mechanism and the ordering, including that
+  the merge runs before the fetch and the price commit before the pipeline.
+
+### Findings
+
+- **The three sidecars are not alike.** `prices_daily.json` is the only one
+  the runner extends and the session cannot reconstruct — a price day is
+  fetchable once. `hashes.json` and `star_template.json` are recomputable
+  from sources that stay available, so a thin seed costs runner time, not
+  data. Only the first needed the merge; the other two are named in landmine
+  116 as the thing to prove rather than assume.
+
+**smoke.mjs 400, render.mjs 55 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **Proving the hashes and star-template sidecars survive a thin seed** —
+  named in 116, not tested.
+- **A26 typography and A29 stock decks** — still the owner's two named
+  items, still next.
+- The pinned-count lint; the owner's list: the seed drop, the opt-in link,
+  the `.aab` filename, the icon, D16, D15, D17, D18, and the two standing
+  offers.
+
+## Take 58 — 2026-09-16 — five silent nights, and a six-day move the app was calling "since yesterday"
+
+Opened before any code (PROTOCOL §6).
+
+### What the owner brought
+
+The repo tree at take 56, the nightly's last commit 2026-09-09 (*9 day(s) on
+file*) and today the 16th — five nights with no commit — plus the red log:
+
+```
+FAIL  the SP carries a low well under its market  445.99 vs 448.29
+FAIL  manifest records the history days ... consecutive ...
+      ["2026-09-01"..."2026-09-09","2026-09-15"]
+```
+
+### The chain, read off the log
+
+1. **The spread assertion (take 1) was pinned to one card's numbers.**
+   EB03-024 SP was $467.33 market against $400 low when it was written — a
+   17% spread, the README's own example. Prices converged; on the night the
+   gap fell below the threshold the assertion failed, the bundle job
+   stopped **before the sidecar commit**, and that night's prices were lost.
+   It failed again the next night, and the next: five nights, no history.
+2. **My take-56 fix then failed on the hole those nights left.** I replaced
+   a frozen count with *at least two, consecutive, ending on the source
+   date* — and consecutive is exactly what a missed night is not. A shape
+   assertion that forbids the gaps the system can actually have is the same
+   error one layer up.
+3. **Underneath both, a real one.** `history.deltas()` defines d1 as *the
+   closest day at or before today−1* — correct, and its docstring says a gap
+   is never interpolated. But the app labels that number **"since
+   yesterday"**, the tour says **"what shifted overnight"**, and the runner
+   printed *4485 of 7135 moved* where a night is 34% (take 8). Those were
+   six-day moves wearing a one-night label: a money claim the data does not
+   support (PROTOCOL §10).
+
+### Built
+
+- **`ci/bundle.sh` records the night first.** The price fetch is the one
+  irreplaceable thing the job does — TCGCSV publishes today once — so
+  `ingest history` runs alone, the sidecar is committed and pushed, and only
+  then does the full pipeline run. **Rehearsed against a bare remote with a
+  deliberately failing assertion planted in smoke: the commit lands, the
+  build still goes red.** A red night now costs the build, not the history.
+- **The app names its horizon.** `sinceLabel()` reads the last two days on
+  file: *since yesterday* when the gap is a day, *over 6 days (2026-09-09 →
+  2026-09-15)* when it is not, *no prior day on file* when there is none.
+  Three sites carried the old wording; the tour's "shifted overnight" is now
+  "shifted since the last catalogue".
+- **Four assertions rewritten to derive from the data:** the spread over the
+  population rather than one card's numbers; history days ascending and
+  unique rather than consecutive; the moved-share ceiling following the
+  horizon (10–70% over a night, 10–95% over more); 7d/30d existence as a
+  calendar question rather than a count of days.
+
+### Measured
+
+69% of printings over $5 carry a low at least 5% under market. Market sits
+outside `low..high` on 427 of 6,551 printings — it is an average of recent
+sales while low and high are live listings, so that ordering must never be
+asserted. Twelve days of fresh catalogue: 6,906 cards (+44), 7,573 products,
+219 images known unavailable, hash coverage 99.6%.
+
+### Findings
+
+- **A9 was open for five nights and nobody looked.** The issue is a notice,
+  not a safeguard; the safeguard had to be ordering. Recorded in A9.
+- **My own take-56 fix was the second failure.** A shape assertion is only
+  better than a pinned number if the shape is one the system can actually
+  produce. "Consecutive" was a wish about the calendar.
+
+**smoke.mjs 395, render.mjs 55 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **A26 typography and A29 stock decks** — the owner's two named items,
+  still unbuilt and still next.
+- **The five lost nights are lost.** TCGCSV publishes one day at a time;
+  2026-09-10 to 09-14 cannot be fetched now. The history has a hole and the
+  app now says so rather than averaging across it.
+- The pinned-count lint (take 56's deferral) — landmine 115 raises its
+  value: a lint over smoke for constants that came from a measurement.
+- The owner's list: the seed drop, the opt-in link, the `.aab` filename, the
+  icon, D16, D15, D17, D18, and the two standing offers (seed attached to
+  releases, release-notes trim).
+
+## Take 57 — 2026-09-03 — two of the owner's observations onto the agenda, unbuilt on purpose
+
+Opened before any code (PROTOCOL §6).
+
+### The owner's ask
+
+*"The font looks a little weird / out of place compared to what it was
+before, and it's not gold any more, or poorly in some places — maybe that's
+because I'm viewing on desktop."* And: *"For decks, include the starter
+decks you can find — they should all be posted online. Included by default
+so users can play the sim or test other features. They shouldn't be added to
+the portfolio or anything."* Explicitly: **do not work on these; put them on
+the agenda for the next session.**
+
+### Done
+
+A26 carries the typography report with what to check first (the brass on
+headings went to the display face's own colour at take 33 and the desktop
+metrics were never looked at — the render checks four phone widths). A29 is
+opened for stock decks: what they are, where they come from, and the two
+rules the owner gave — available by default, never in the collection.
+Nothing built; no code touched beyond the ledgers.
+
+### DEFERRED this cycle
+
+- **A26's typography report** — the gold, the fit on desktop.
+- **A29 — stock decks** in full.
+- Everything on take 56's list: the pinned-count lint, the seed-attachment
+  `build.yml` change and the RELEASE.md trim (both offered, neither
+  accepted yet), the opt-in link, the `.aab` filename, the icon, D16, D15,
+  D17, D18.
 
 ## Take 56 — 2026-09-03 — the runner went red on the third night of prices; a count that grows was frozen at two
 

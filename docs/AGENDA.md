@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 56.* Ranked by blocking-ness, not by interest.
+*Current as of take 59.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -509,7 +509,7 @@ overnight (2,433 of 7,520, take 8's 34%) would be **16 KB gzip** — 35× smalle
 - **`UPDATE_URL` is set** (take 33) to the Pages host; the first *Sync now* on
   the Fold that reports a date is the proof.
 
-## A26 — Typography · BUILT take 33 · the named faces are a file drop, not a download
+## A26 — Typography · BUILT take 33 · REPORTED WEAK take 57 · the named faces are a file drop, not a download
 
 The owner, on seeing the app on the Fold: change the fonts — a mix of **Impress
 BT** and **Anime Ace BB** for the loud parts, and **Trebuchet MS**, **Avenir
@@ -543,6 +543,38 @@ Funimation house stacks, which is the vibe).
   the owner's call and the owner's purchase.
 - **Ruled out: Google Fonts by URL.** Dead offline (A-3), and a request on
   every launch that PROVISION would have to declare.
+- **The owner, take 57, on the app as shipped:** *"the font looks a little
+  weird / out of place compared to what it was before, and it's not gold any
+  more, or poorly in some places — maybe that's because I'm viewing on
+  desktop."* Not built this take, at his instruction. What to check first,
+  in order:
+  1. **The gold went out of the headings at take 33 and nobody noticed.**
+     Before: `h2` and the hero's `em` were the serif at `--brass`
+     (`#C9A24A`) by inheritance from their containers. After: `h1, h2` got
+     `font-family:var(--display)` and no colour rule, so they inherit
+     `--fg` — off-white. The panel titles, the hero name, the tour headings
+     and the sim's panel heads all went pale in one line. The share page
+     (`collectionPage`) still sets `#C9A24A` explicitly, which is why *that*
+     looks right and the app does not. Fix: a colour on the display role,
+     brass in Collect and the Play palette's own accent in Prep & Play — one
+     rule, then look at every screen.
+  2. **Desktop was never looked at.** `render.mjs` sets a 412×915 viewport
+     and checks four widths — 360, 412, 673, 820 — all phone and Fold. A
+     desktop browser is 1200–1900 wide, where a display face at
+     `font-size:28px` sits in a column of white space and reads as loud and
+     stranded. The app is an Android app and a desktop browser is not a
+     target, but Pages serves it and the owner looks at it there, so the
+     honest answer is either a max-width on the content column or a stated
+     "phone only" on the Pages build.
+  3. **The faces themselves.** Luckiest Guy (display) is rounder and
+     shorter than Impress BT; Bangers (comic) is narrower than Anime Ace.
+     If the objection survives the colour fix, the role slot is the lever
+     (D16) — a licensed file in `assets/user/fonts/` changes the face
+     without touching CSS.
+  4. **Measure, then change:** a render pass at a desktop width and a
+     screenshot of every screen in both modes, side by side with take 32's,
+     before any rule is edited. The complaint is about how it looks, and the
+     harness cannot see that (landmine 69 in reverse).
 - **Open:** Fira Sans is the free Trebuchet if a third plain face is wanted;
   not added, because four families is already the ceiling for one app.
 
@@ -572,6 +604,48 @@ APEX ORV runs one before a release; this repo did not, and it is public.
   and Pages is the privacy-policy URL Play requires.
 - **Ruled out: the README's link to the sibling repo.** It is the owner's own
   public project and the README says why the governance is shared.
+
+## A29 — Stock decks · OPENED take 57 · NOT BUILT, the owner's next-session item
+
+The owner: *"For decks, include the starter decks you can find — they should
+all be posted online. Starter decks should be included by default so users
+can play/test the sim or other features with that. They shouldn't be added to
+the portfolio or anything."*
+
+- **What they are.** Bandai's ST decks are fixed 51-card lists (one Leader,
+  fifty) sold as a product; ST01–ST2x exist in the catalogue already as
+  printings, so a stock deck is a list of numbers, not new card data. The
+  catalogue carries the set and the printings; what is missing is only the
+  **contents** of each product, which are published per set.
+- **The two rules he gave, which the build must enforce:**
+  1. **Available by default** — a fresh install has them, no import step, so
+     the sim, the advisor and the browse have something to run against on
+     day one. They appear in Decks (marked as stock) and in the sim's deck
+     picker.
+  2. **Never in the collection.** A stock deck is a reference list, not
+     owned cards: it must not touch `OWN`, the portfolio total, the CSV
+     export, the binder or the checklist. The guard is the point of the
+     item, and it needs a negative control the same take: a smoke assertion
+     that loading every stock deck leaves `OWN.total()` and the export byte
+     count unchanged.
+- **Where the lists come from — to be decided by measurement, not by
+  scraping first.** Options in order of preference: (a) the deck lists are
+  derivable from the catalogue itself if TCGCSV's product rows for an ST
+  product carry contents — check before anything else; (b) Bandai's own
+  product pages, one fetch per set, cached into the seed as a data file with
+  its source and date recorded in PROVISION; (c) hand-entered from the
+  printed decklist insert, which is 24 lists × 51 lines and the last resort.
+  Whatever the source, the lists ship **in the seed as data**, validated at
+  build time against the catalogue (every number must resolve, every deck
+  must pass `legality()`), so a bad list fails the gate rather than the
+  player's game.
+- **Also worth having if the lists exist:** the sim's *play a stock deck
+  against the app* becomes a one-tap thing for a tester with no collection
+  and no deck of their own, which is most of them.
+- **Ruled out ahead of time: shipping card images or scans with them.**
+  Landmine 26 and A16; a stock deck is numbers and names.
+- **Ruled out: seeding them into the collection as "owned".** The owner said
+  no, and it would be a lie about what a person owns (PROTOCOL §9).
 
 ## A28 — The on-device self-test · BUILT take 45
 
@@ -1166,6 +1240,13 @@ cost minutes.
   should carry a comment saying so or someone will "fix" it into landmine 1.
 
 ## A9 — TCGCSV as a single point of failure · MITIGATED, ALERTING BUILT take 20
+
+*Take 58: A9's issue was open for five nights and nobody looked, so the
+failure mode it guards against — a silent stale catalogue — happened anyway.
+The structural fix is upstream of the issue: `ci/bundle.sh` now commits the
+day's prices **before** anything that can fail (landmine 115), so a red
+night costs the build and not the history. The issue remains the notice; it
+is no longer the only thing standing between a bad night and lost data.*
 
 - **The risk:** one maintainer, Patreon-funded, free. If it stops, the app's
   prices freeze.

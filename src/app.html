@@ -897,6 +897,20 @@ const money = n => (n == null ? '—' : '$' + n.toLocaleString('en-US',
      down    ▼ -$4.00 (-0.85%)   red
      none    — no yesterday      grey, and it SAYS so instead of showing 0.00%
    A printing with no prior day is not "unchanged"; it is unknown. */
+/* Take 58. The "1-day" delta is against the closest day AT OR BEFORE
+   yesterday (history.deltas), so after a night with no build it spans the
+   gap. Calling a six-day move "since yesterday" is a claim the data does
+   not support (PROTOCOL §10), so the app says the horizon it actually
+   measured. One value for the whole catalogue: the last two days on file. */
+function D1() { const d = (typeof CAT !== 'undefined' && CAT.days) || []; if (d.length < 2) return { gap: null };
+  const p = d[d.length - 2], q = d[d.length - 1];
+  return { gap: Math.round((Date.parse(q + 'T00:00:00Z') - Date.parse(p + 'T00:00:00Z')) / 864e5), from: p, to: q };
+}
+function sinceLabel({ cap = false } = {}) { const g = D1();
+  if (g.gap == null) return cap ? 'No prior day on file' : 'no prior day on file';
+  if (g.gap === 1) return cap ? 'Since yesterday' : 'since yesterday';
+  return `${cap ? 'Over' : 'over'} ${g.gap} days (${g.from} \u2192 ${g.to})`;
+}
 function deltaHtml(p, { pctOnly = false, tile = false } = {}) {
   if (p.d1p == null) return `<span class="flat" title="no prior day on file">\u2014</span>`;
   const a = p.d1a, pc = p.d1p;
@@ -1382,7 +1396,7 @@ function paintDeck() {
   if (dv) {
     const d1 = hist.length > 1 ? hist[hist.length - 1][1] - hist[hist.length - 2][1] : null;
     dv.innerHTML = `<div class="row"><div class="nm"><b>Deck value</b><span>${dkOwnedValue(A)} \u00b7 at the sleeved printings, today</span></div>
-      <div class="v mono">${money(A.value)}${d1 != null ? `<span class="${d1 > 0.005 ? 'up' : d1 < -0.005 ? 'down' : 'flat'}">${d1 >= 0 ? '+' : '\u2212'}${money(Math.abs(d1)).slice(1)} since yesterday</span>` : ''}</div></div>
+      <div class="v mono">${money(A.value)}${d1 != null ? `<span class="${d1 > 0.005 ? 'up' : d1 < -0.005 ? 'down' : 'flat'}">${d1 >= 0 ? '+' : '\u2212'}${money(Math.abs(d1)).slice(1)} ${esc(sinceLabel())}</span>` : ''}</div></div>
       <canvas id="dkSpark" height="56" style="width:100%;display:block;margin-top:6px"></canvas>
       <div class="note" style="margin-top:4px">${hist.length > 1 ? 'Dashed: this list at each day\u2019s prices, estimated. Solid history arrives as the catalogue accrues days.' : 'One day of prices on file; the line appears as days accrue.'}</div>`;
     if (hist.length > 1) sparkOn($('#dkSpark'), hist, 'estimate');
@@ -1734,7 +1748,7 @@ const GUIDE = [
     l: ['Scanning is <b>free and unlimited</b>, always', 'Set the <b>set chip</b> first and it asks less', '<b>Your photo</b> becomes the card\u2019s picture'] },
   { g: 'compass', t: 'Value',
     p: 'Every card carries the TCGplayer market price and the day it was fetched. The collection totals up, moves day over day, and the chart is yours, not a reconstruction.',
-    l: ['A price is a <b>model, not an offer</b> — the low-to-high spread is shown', 'Condition is <b>what you tell it</b>; nothing is invented', 'Market Movers shows what shifted overnight'] },
+    l: ['A price is a <b>model, not an offer</b> — the low-to-high spread is shown', 'Condition is <b>what you tell it</b>; nothing is invented', 'Market Movers shows what shifted since the last catalogue'] },
   { g: 'leader', t: 'Decks',
     p: 'Pick a Leader, add fifty cards, and the builder checks the rules as you go — colour, the four-copy limit, the count — and shows the curve, counters, blockers and triggers.',
     l: ['Legality follows the <b>official Comprehensive Rules</b>, section by section', 'Import or export a list as <b>4 OP01-016 Nami</b>', 'Choose <b>which printing</b> is sleeved in the deck'] },
@@ -2789,7 +2803,7 @@ function showMovers() {
           withQty(x.p.id) > 1 ? ` \u00b7 \u00d7${withQty(x.p.id)} = ${
             x.dollars >= 0 ? '+' : '\u2212'}${money(Math.abs(x.dollars))}` : '')).join('')
         : `<div class="note">${mine.length
-            ? 'Nothing you own moved since yesterday.'
+            ? `Nothing you own moved ${esc(sinceLabel())}.`
             : 'Add cards and their moves show up here.'}</div>`}
     </div>
     <div class="panel"><h3>Biggest moves in the game</h3>

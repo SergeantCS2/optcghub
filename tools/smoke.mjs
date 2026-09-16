@@ -207,9 +207,21 @@ const withSpread = V.CAT.rows.filter(p => p.low && p.high && p.high > p.low);
 ok('the catalogue carries low and high, not just market',
    withSpread.length > V.CAT.rows.length * 0.5,
    `${withSpread.length}/${V.CAT.rows.length}`);
-const sp = V.CAT.byId.get(vivi[0].id);
-ok('the SP carries a low well under its market — the spread is real',
-   sp.low > 0 && sp.low < sp.market * 0.95, `${sp.low} vs ${sp.market}`);
+/* Landmine 115: this pinned EB03-024 SP's own numbers ($467.33 market vs
+   $400 low when it was written). The market converged, the assertion failed
+   on the runner, and it took five nights of price history with it. The claim
+   the app makes is that a spread EXISTS and is shown, not that one card has
+   one -- so assert the population. MEASURED take 58: 69% of printings over
+   $5 have a low at least 5% under market. Note market is an average of
+   recent sales and low/high are live listings, so market legitimately sits
+   outside low..high on 427 printings -- never assert an ordering. */
+const dearP = V.CAT.rows.filter(p => p.market >= 5 && p.low > 0);
+const spread = dearP.filter(p => p.low <= p.market * 0.95);
+ok('the spread is real across the catalogue, not a rounding artefact',
+   dearP.length > 500 && spread.length > dearP.length * 0.2,
+   `${spread.length}/${dearP.length} printings over $5 have a low 5%+ under market`);
+ok('every printing carries its own three numbers, market between or outside low and high as the source reports them',
+   dearP.every(p => p.low > 0 && p.high > 0 && p.market > 0));
 ok('same-art printings are flagged so the hash is not asked to separate them',
    V.CAT.rows.some(p => p.sameart === 1));
 ok('no condition multiplier exists anywhere in the shipped code',
@@ -315,10 +327,15 @@ section('take 8 — day two (the delta on every screen)');
 const withD = V.CAT.rows.filter(p => p.d1p != null);
 ok('most printings carry a 1-day delta',
    withD.length > V.CAT.rows.length * 0.9, `${withD.length}/${V.CAT.rows.length}`);
+/* Take 58: 34% move on a given night (take 8), but this delta spans the gap
+   between the last two days on file, and more cards move over a week than
+   over a night. The ceiling follows the horizon; the floor does not. */
+const hdm = manifest.history_days || [];
+const gapDays = hdm.length >= 2 ? Math.round((Date.parse(hdm[hdm.length - 1] + 'T00:00:00Z') - Date.parse(hdm[hdm.length - 2] + 'T00:00:00Z')) / 864e5) : 1;
 const moved = withD.filter(p => Math.abs(p.d1a) > 0.004);
-ok('a plausible share moved overnight (10%-70%)',
-   moved.length / withD.length > 0.10 && moved.length / withD.length < 0.70,
-   (100 * moved.length / withD.length).toFixed(0) + '%');
+const share = moved.length / withD.length;
+ok(`a plausible share moved over the ${gapDays}-day horizon (10% to ${gapDays === 1 ? 70 : 95}%)`,
+   share > 0.10 && share < (gapDays === 1 ? 0.70 : 0.95), (100 * share).toFixed(0) + '%');
 ok('deltas are internally consistent: pct = abs / yesterday',
    moved.slice(0, 300).every(p => {
      const yesterday = p.market - p.d1a;
@@ -331,11 +348,26 @@ ok('no printing moved more than 10x overnight (landmine 7)',
    the first night TCGCSV published a third. The count grows nightly; assert
    the SHAPE -- at least two, consecutive, ending on the source date. */
 const hd = manifest.history_days || []; const nd = hd.length;
-const consecutive = hd.every((d, i) => i === 0 || (new Date(d) - new Date(hd[i - 1])) === 864e5);
-ok('manifest records the history days on file: at least two, consecutive, ending on the source date',
-   nd >= 2 && consecutive && hd[nd - 1] === (manifest.source_updated_at || '').slice(0, 10), JSON.stringify(hd));
-ok('7d and 30d deltas are absent, not zero, until enough days are on file',
-   withD.every(p => (nd < 8 ? p.d7p == null : true) && (nd < 31 ? p.d30p == null : true)), `${nd} day(s)`);
+/* Take 58: "consecutive" was wrong. A night the build does not run leaves a
+   hole -- five of them, in fact -- and the sidecar is the record of the days
+   that WERE fetched, not of the calendar. Assert ascending, unique, ending
+   on the source date. The gap's consequence is asserted below instead. */
+const ascending = hd.every((d, i) => i === 0 || d > hd[i - 1]);
+ok('manifest records the history days on file: at least two, ascending, unique, ending on the source date',
+   nd >= 2 && ascending && new Set(hd).size === nd && hd[nd - 1] === (manifest.source_updated_at || '').slice(0, 10), JSON.stringify(hd));
+const gap = Math.round((Date.parse(hd[nd - 1] + 'T00:00:00Z') - Date.parse(hd[nd - 2] + 'T00:00:00Z')) / 864e5);
+ok('the app names the horizon its "1-day" delta actually measured, never "yesterday" across a gap (PROTOCOL §10)',
+   /function D1\(\) \{/.test(js) && /function sinceLabel/.test(js)
+   && !/ since yesterday<\/span>/.test(js)
+   && /\$\{cap \? 'Over' : 'over'\} \$\{g\.gap\} days/.test(js) && /'since yesterday'/.test(js),
+   `${gap} day(s) between the last two days on file`);
+/* Take 58: a horizon exists when SOME day on file is at or before it -- a
+   calendar question, not a count. Four days spanning a fortnight give a 7-day
+   delta; thirty consecutive days do not give a 30-day one until day 31. */
+const has = n => { const t0 = Date.parse(hd[nd - 1] + 'T00:00:00Z') - n * 864e5; return hd.some(d => Date.parse(d + 'T00:00:00Z') <= t0); };
+ok('a 7d or 30d delta exists exactly when a day on file reaches back that far, and is absent (not zero) otherwise',
+   withD.every(p => (has(7) ? true : p.d7p == null) && (has(30) ? true : p.d30p == null)),
+   `${nd} day(s), 7d ${has(7) ? 'reachable' : 'not reachable'}, 30d ${has(30) ? 'reachable' : 'not reachable'}`);
 
 section('take 10 — the scanner stages (A2, everything but the camera)');
 const SC = V.scan;
@@ -1318,6 +1350,17 @@ ok('against the app there is no curtain and the human\'s screen is always the on
 ok('the app defends the moment it is attacked, and its block/counter are shown before the human resolves', /if \(g\.bot === g\.battle\.def\) \{ BOT\.defend\(\); paintSim\(\); return; \}/.test(js) && /The app defends/.test(js));
 ok('the setup offers the app as an opponent and says what it is', /never sees your hand/.test(js));
 S.g = null;
+}
+
+{
+section('take 59 — a seed must not delete price history (landmine 116)');
+const hist = fs.readFileSync(path.join(ROOT, 'tools', 'history.py'), 'utf8');
+const bundle = fs.readFileSync(path.join(ROOT, 'ci', 'bundle.sh'), 'utf8');
+ok('history.py can union the sidecar with its recent committed versions', /def merge_git\(/.test(hist) && /--merge-git/.test(hist));
+ok('a day already on file is never overwritten by an older copy', /if day not in cur:/.test(hist));
+ok('it is a no-op outside a git checkout rather than a crash', /no git history to merge/.test(hist));
+ok('the nightly runs it BEFORE the fetch, so a thin seed cannot delete a day', bundle.indexOf('--merge-git') > 0 && bundle.indexOf('--merge-git') < bundle.indexOf('pipeline.py ingest history'));
+ok('and the day\'s prices are still committed before anything that can fail (take 58)', bundle.indexOf("commit the day's prices") < bundle.indexOf('::group::pipeline') && bundle.indexOf('::group::pipeline') < bundle.indexOf('::group::commit sidecars'));
 }
 
 {

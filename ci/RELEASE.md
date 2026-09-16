@@ -1,4 +1,4 @@
-# OP TCG Hub — take 56
+# OP TCG Hub — take 59
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,16 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 59:** nothing visible; an update can no longer shorten the
+price history the nightly build has collected.
+
+**New at take 58:** when a nightly build is missed, the app no longer calls
+the price change "since yesterday" — it says the days it actually measured.
+Two tests that had pinned themselves to particular prices are fixed.
+
+**New at take 57:** nothing visible; two things you reported are on the
+list for next time.
 
 **New at take 56:** nothing visible; a test that expired on the third night
 of prices is fixed, and this build carries that night's prices.

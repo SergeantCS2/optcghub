@@ -27,6 +27,33 @@ fi
 echo "take $(grep -oP 'VAULT_TAKE=\K[0-9]+' BUILD)"
 echo "::endgroup::"
 
+echo "::group::the day's prices, fetched first"
+# Landmine 115: the price fetch is the one irreplaceable thing this job does
+# -- TCGCSV publishes today's prices once and yesterday's are gone. Five nights
+# were lost because a stale assertion failed AFTER the fetch and before the
+# commit. So the day's prices are recorded FIRST, in their own pipeline call;
+# whatever follows may go red without costing the history.
+# Landmine 116: a seed's sidecar can be thinner than the repo's (the session
+# is a snapshot, the runner is the record) and the seed job overwrites. Restore
+# every day any recent commit had, then fetch today's.
+python3 tools/history.py --merge-git
+python3 tools/pipeline.py ingest history
+echo "::endgroup::"
+echo "::group::commit the day's prices (before anything that can fail)"
+git config user.name  "optcghub-nightly"
+git config user.email "optcghub-nightly@users.noreply.github.com"
+git add catalog/prices_daily.json 2>/dev/null || true
+if git diff --cached --quiet; then
+  echo "prices unchanged"
+else
+  read -r day days < <(python3 -c "import json;h=json.load(open('catalog/prices_daily.json'));print(max(h), len(h))")
+  git commit -q -m "nightly: prices $day, $days day(s) on file"
+  branch=$(git rev-parse --abbrev-ref HEAD)
+  git push origin "$branch" || { git pull --rebase --autostash -q origin "$branch" && git push origin "$branch"; }
+  echo "prices committed and pushed: $day, $days day(s) on file"
+fi
+echo "::endgroup::"
+
 echo "::group::pipeline"
 python3 tools/pipeline.py
 echo "::endgroup::"

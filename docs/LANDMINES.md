@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 56.*
+*Current as of take 59.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -121,6 +121,9 @@ Start here. Do not read top to bottom.
 | An effect says "gives 2000 power" to an opponent's card | **113** |
 | Two engine actions share a name | 113 |
 | The runner goes red the night a count grows | **114** |
+| Nightly stops, and the history has a hole | **115** |
+| "Since yesterday" on a number that spans a week | 115 |
+| A seed drop makes the price history shorter | **116** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -1598,6 +1601,56 @@ until eight days are on file — never the count. Reproduced locally with one
 fresh ingest, which is the check to run before any seed drop after 20:05
 UTC. Corollary for the runner: a red smoke costs the night's sidecar commit,
 so a seed that follows must carry the day the runner missed (this one did).
+
+**115. An assertion pinned to one card's price cost five nights of history,
+and the label on the delta then lied about what it measured. Take 58, found
+by the owner bringing a red log and a repo whose last nightly was six days
+old.** Take 1 asserted *the SP carries a low well under its market* against
+EB03-024's own numbers — $467.33 market, $400 low, the README's example.
+The market converged to 448.29 against a low of 445.99, the assertion
+failed, and because smoke runs before the sidecar commit in `bundle.sh`,
+**each failing night discarded that night's prices**. Five nights, no
+history, and the failure was invisible except as an A9 issue nobody was
+watching. Then take 56's own fix — *at least two days, consecutive* — failed
+on the hole those nights had left: a shape assertion that forbids a gap the
+system can really have. Underneath both, the actual defect: `deltas()`
+defines d1 as *the closest day at or before yesterday*, so with a gap it
+spans it, while the UI said **"since yesterday"** and the tour said **"what
+shifted overnight"**. The runner printed *4485 of 7135 moved* where a night
+is 34% — six-day moves wearing a one-night label, which is a money claim the
+data does not support (PROTOCOL §10). Fixes: the app names the horizon it
+measured (*over 6 days (2026-09-09 → 2026-09-15)*); the spread is asserted
+over the population (MEASURED: 69% of printings over $5 have a low 5%+ under
+market) and never as one card's numbers; history may have holes; the
+moved-share ceiling follows the horizon; and 7d/30d existence is a calendar
+question, not a count. Also recorded while measuring: **market legitimately
+sits outside low..high** on 427 printings, because market is an average of
+recent sales and low/high are live listings — never assert that ordering.
+Rule: an assertion must derive its expectation from the data's own shape.
+Every constant in a test is a date at which that test expires, and a test
+that expires in `bundle.sh` takes a night of prices with it.
+
+**116. A seed is a snapshot; the runner is the record. `unzip -o` puts the
+snapshot on top. Take 59, caught while laying out take 58's seed, before it
+was dropped.** The repo's sidecar had ten price days; the session's had
+four, because the nights the runner fetched never travel back into a
+session. The seed job unpacks with `unzip -o` and commits, so the drop would
+have deleted 2026-09-04 to 09-09 — and TCGCSV publishes one day at a time,
+so a deleted day is gone. True since take 9 and harmless only because the
+runner's history had always been the younger one. `build.yml` is hand-pasted
+and cannot be fixed cheaply, so the repair lives where the seed carries it:
+`tools/history.py --merge-git` unions the working sidecar with the last
+twenty committed versions of itself (a day present in any of them survives,
+newest value wins, silent no-op outside a git checkout), and `bundle.sh`
+runs it before the fetch. Retroactive: the first build after a thin seed
+restores what that seed overwrote, because the fuller copy is still in the
+commit behind it. Rehearsed on a ten-day repo with a four-day seed — six
+days restored — with idempotence and the no-git case as controls. General
+rule: any file the RUNNER writes and the session does not is a file a seed
+must merge into, never replace. The others today are `catalog/hashes.json`
+and `catalog/star_template.json`; both are append-only by nature and both
+are restored from the same commit history if a thin seed ever trims them,
+which is the next thing to prove rather than assume.
 
 ## §2 — Inherited from APEX ORV
 
