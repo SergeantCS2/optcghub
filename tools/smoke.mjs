@@ -42,6 +42,7 @@ function makeDom(html) {
       appendChild: c => { el.children.push(c); return c; },
       addEventListener: (t, f) => { (el._ev ||= {})[t] = f; },
       removeEventListener: () => {},
+      setAttribute: (k, v) => { el.dataset['attr_' + k] = String(v); }, getAttribute: k => el.dataset['attr_' + k] ?? null,
       querySelector: () => null, querySelectorAll: () => [],
       closest: () => null, click: () => {}, focus: () => {},
       getContext: () => ctx2d, clientWidth: 360, width: 0, height: 0
@@ -1404,6 +1405,73 @@ ok('negative control: the collection DOES move when a card is actually added', (
 V.OWN.items = [];
 ok('the sim offers them, so a player with no collection can start', /DECKS\.all\(\)\.filter\(d => d\.leader/.test(js));
 ok('Decks shows them under their own heading, marked ready-made', /id="dkStock"/.test(html) && /ready-made/.test(js) && /not in your collection/.test(js));
+/* take 62: covers are drawn, never downloaded (landmines 26, 30) */
+const cover = V.deckCover(stock[0]);
+ok('a deck cover is inline SVG with no image, no request and no publisher mark',
+   /^<svg /.test(cover.trim()) && !/<image|https?:|url\((?!#)/.test(cover) && !/One Piece|Bandai|BANDAI/i.test(cover), cover.slice(0, 80));
+ok('...it says the set code and the Leader, from the catalogue', cover.includes(stock[0].set) && cover.includes((V.CAT.byId.get(stock[0].leader).name || '').slice(0, 6)));
+ok('...and carries a label for a screen reader', /role="img"/.test(cover) && /aria-label=/.test(cover));
+/* take 66: nothing a screen reader reaches is nameless (A30's last item) */
+{
+const buttons = [...(html + js).matchAll(/<button((?:(?!>).)*)>((?:(?!<\/button>).)*)<\/button>/gs)];
+/* A reader announces letters fine ("OK", "Done"); it is symbols and empties
+   that arrive as nothing or as "plus sign". Those need a name. */
+const nameless = buttons.filter(([, attrs, inner]) => {
+  if (/aria-label=/.test(attrs)) return false;
+  const stripped = inner.replace(/<[^>]+>/g, '');
+  /* `${...}` inside the label is text at runtime -- a name, just a computed
+     one. What a reader announces as nothing is an empty button or one whose
+     whole label is punctuation. */
+  if (/\$\{[^}]*\}/.test(stripped)) return false;
+  return (stripped.replace(/\s/g, '').match(/[A-Za-z0-9]/g) || []).length === 0;
+});
+ok('every button that a reader would announce as nothing carries an aria-label', nameless.length === 0,
+   nameless.slice(0, 3).map(n => n[0].replace(/\s+/g, ' ').slice(0, 70)).join(' | '));
+ok('a screen title announces as a heading, not as a tab', (html.match(/class="tab on"[^>]*role="heading"/g) || []).length >= 8);
+ok('the only real tabs keep role="tab" and a selected state', /id="tabOver"[^>]*role="tab"[^>]*aria-selected/.test(html) && /id="tabPerf"[^>]*role="tab"[^>]*aria-selected/.test(html));
+ok('the network badge is a live status, not a control', /class="pill" role="status" aria-live="polite"/.test(html));
+ok('decorative glyphs inside labelled controls are hidden from the reader', /<span class="ic" aria-hidden="true">/.test(html));
+ok('negative control: a button with no text and no label would be caught', (() => { const probe = '<button class="x">\u2606</button>'; const m = [...probe.matchAll(/<button((?:(?!>).)*)>((?:(?!<\/button>).)*)<\/button>/gs)]; return m.length === 1 && !/aria-label=/.test(m[0][1]); })());
+}
+
+/* take 65: A30's two rows -- Rate and Share, no referral, no tracking */
+ok('the manifest carries the app id so the store link is not a literal twice', manifest.appId === 'com.optcghub.app');
+ok('More offers both rows', /data-act="rate"/.test(js) && /data-act="shareapp"/.test(js) && /rate: \(\) => PLATFORM\.rateApp\(\)/.test(js));
+const store = V.PLATFORM.storeUrl();
+ok('the store link is the app id and nothing else: no referral, no campaign, no tracking',
+   store === 'https://play.google.com/store/apps/details?id=com.optcghub.app' && !/[?&](referrer|utm_|campaign)/.test(store), store);
+{ const calls = [];
+  ctx.window.Capacitor = { Plugins: { Share: { share: async o => { calls.push(o); } } } };
+  const r = await V.PLATFORM.shareApp();
+  ok('sharing the app hands the store link and a plain line of text to the share sheet',
+     r === 'shared' && calls.length === 1 && calls[0].url === store && /scan, value and track/.test(calls[0].text) && !/[?&]utm_/.test(calls[0].url), JSON.stringify(calls[0]));
+  ok('...and it shares a link, never a file (that is the collection page)', !('files' in calls[0]));
+  delete ctx.window.Capacitor; }
+{ let copied = null; ctx.navigator.clipboard = { writeText: async t => { copied = t; } };
+  const r = await V.PLATFORM.shareApp();
+  ok('negative control: with no Share plugin it copies instead of failing silently', r === 'copied' && copied.includes(store));
+  delete ctx.navigator.clipboard; }
+{ let opened = null; ctx.window.open = (u) => { opened = u; };
+  await V.PLATFORM.rateApp();
+  ok('Rate opens the app\'s own Play listing', /play\.google\.com|market:\/\/details\?id=com\.optcghub\.app/.test(opened), String(opened));
+  delete ctx.window.open; }
+
+/* take 64: Overview and Performance are a pair, exactly one on */
+const tabOver = ctx.document.querySelector('#tabOver'), tabPerf = ctx.document.querySelector('#tabPerf');
+ok('Overview is a real tab with an id, a handler and a selected state', !!tabOver && /tabOver'\)\.addEventListener\('click'/.test(js) && /aria-selected/.test(html));
+const fire = el => (el._ev && el._ev.click) ? el._ev.click({ target: el, preventDefault() {} }) : null;
+ok('on load, Overview carries the on class from the markup', /id="tabOver"[^>]*class|class="tab on" id="tabOver"/.test(html));
+fire(tabPerf);
+ok('clicking Performance turns Overview OFF -- the reported bug', tabPerf.classList.contains('on') && !tabOver.classList.contains('on'), `over=${tabOver.className} perf=${tabPerf.className}`);
+ok('...and the overview blocks give way to the performance panel', ctx.document.querySelector('#perfPanel').style.display === 'block' && ctx.document.querySelector('#hero').style.display === 'none');
+fire(tabOver);
+ok('clicking Overview comes back, and Performance turns off', tabOver.classList.contains('on') && !tabPerf.classList.contains('on') && ctx.document.querySelector('#perfPanel').style.display === 'none' && ctx.document.querySelector('#hero').style.display !== 'none');
+ok('negative control: the old code toggled Performance without ever clearing Overview', !/classList\.toggle\('on', perfOn\);\s*\$\('#perfPanel'\)/.test(js));
+ok('both tabs answer the keyboard as well as the mouse', /keydown/.test(js) && /tabindex="0"/.test(html));
+ok('the skull glyph is gone from the sprite and from every screen (take 63)', !/g-roger/.test(html) && !/g-roger/.test(js));
+ok('the Decks tab is a card back, drawn here, not the publisher\'s design', /<use href="#g-cardback"\/>/.test(html) && /symbol id="g-cardback"/.test(html));
+ok('the empty collection points at the thing it tells you to tap', /id="colEmpty"[\s\S]{0,260}g-scancard/.test(html));
+ok('no bundled or fetched artwork ships anywhere in the page', !/tcgplayer\.com\/.*\.jpg|onepiece-cardgame\.com\/images/.test(js + html));
 }
 
 {

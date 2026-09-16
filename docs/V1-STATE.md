@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 61
+# V1-STATE — what exists, as of take 66
 
-*Current as of take 61.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 66.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -46,7 +46,7 @@ refresh from Pages (take 27).
 | Catalogue | 6,862 cards + 658 sealed, 87 sets, from TCGCSV cat 68; keywords extracted (line-start rule); cleaned text; 3 days of price history, growing nightly | pipeline gate, validate.py 6 guards with negative controls |
 | Values | market/low/high per printing; deltas labelled with the horizon they measured, never "yesterday" across a missed night (take 58); Market Movers; chart from snapshots (record) or history (estimate, dashed, purchase-date-aware) | smoke arithmetic vs the catalogue's own deltas |
 | Collection | portfolios, conditions, graded, cost basis, favourites, bulk actions, filter/sort sheet (two scopes), export CSV **via the share sheet on a device** (take 34, landmine 110), a self-contained share page (8.12, take 42), import CSV, auto-backup to Documents on every save, restore with a file-picker fallback | smoke 255, render 51; **export/restore not yet seen on a phone** |
-| Stock decks | 17 legal decks built from the ST sets, in the bundle, shown as *ready-made*, playable in the sim, **never in the collection** (take 61) | smoke 10 incl. the never-owned guard with a control; stockdecks.py 9 guards in the gate |
+| Stock decks | 17 legal decks built from the ST sets, with covers the app draws from the Leader colours and set code (take 62), shown as *ready-made*, playable in the sim, **never in the collection** (take 61) | smoke 10 incl. the never-owned guard with a control; stockdecks.py 9 guards in the gate |
 | Decks | legality per Comprehensive Rules §5-1 by section; advisor (curve, counters, blockers, triggers, life); Leader sheet; printing swap; import 5 list formats; export; value + history; sim-readiness and *Play this deck in Sim* (take 53) | smoke, two guards on R6 (number-keying) |
 | Prep & Play | mode slider + palette; Cards browse (keywords, colour, cost, text, for-this-deck); Play counter with §6-4-1 first turn and a *pass the phone* mode (take 44); **Sim: the hot-seat board** — two legal decks, the rules of RULES.md §3 enforced with sections cited, effects by hand through a tray, the curtain at every hand-over (take 46); **scripted effects** parsed from card text at build time, 2,161 of 7,553 lines (28.6%): chains, costs, continuous effects and keywords, follow-ons, searches in every phrasing, Events at both timings, cost changes, modifiers with honest expiries that follow their card, offered under their conditions with engine-computed targets (takes 47–51); **an opponent** — legal, not clever, never reads the hand — so one person can play (take 55) | render draws the dealt board; smoke 22 against §3, 40 on the effect classes, two whole bot games under a conservation invariant |
 | Trade | two lists valued with spread; paste their list; share summary | smoke |
@@ -60,7 +60,7 @@ refresh from Pages (take 27).
 | Typography | four roles (display / comic / body / heavy), OFL/Apache faces bundled, 232 KB, licensed faces as a file drop in `assets/user/fonts/` | render.mjs: Chrome reports all four LOADED and h2 resolves to the display face, with a missing-file control; smoke 7 |
 | Sync | quiet once-per-open sync holds on cellular unless switched on; Sync now always runs; `UPDATE_URL` points at Pages | smoke 4 controls; **not yet seen on the Fold** |
 
-**Harness totals, take 61:** smoke.mjs 417 assertions, render.mjs 58 in
+**Harness totals, take 66:** smoke.mjs 444 assertions, render.mjs 61 in
 Chrome, gate 22 checks with negative controls (the render receipt is new), zero console errors across 14
 screens in both modes.
 
@@ -78,8 +78,8 @@ screens in both modes.
 | Real AdMob unit IDs | D11; the account exists and app-ads.txt is live; test units are correct for a closed test | A17, RUNBOOK-play §9 |
 | The named fonts as files | D16; the roles ship with free faces, the slot takes licensed ones | A26 |
 | Whether the faces themselves fit | the colour and contrast are fixed (take 60); whether Luckiest Guy and Bangers are the right faces is D16 | A26 |
-| A TalkBack pass | 171 buttons, two icon-only, one aria-label | A30 |
-| Rate and Share rows in More | agreed, unbuilt | A30 |
+| A TalkBack session on a phone | every control has a name and the roles are right (take 66); whether the order and wording make sense needs a person | A30 |
+| Focus order and a visible focus ring | untouched; a keyboard user on the Pages build has no ring in places | A30 |
 | Importing from other apps (Collectr) | needs one real exported file; guessing the format would mis-key printings | A31 |
 | Colour direction | D15; parked, not a priority | A24 |
 | Icon motif | D7; the take-16 placeholder is back by request | A16 |
@@ -93,7 +93,8 @@ screens in both modes.
 ## What is NOT in the app, by design
 
 No account, no server, no analytics, no crash reporting, no social feed, no
-shop, no affiliate links, no character art, no publisher marks. A market
+shop, no affiliate links, no character art, no publisher marks — including
+product box shots, asked for and declined at take 62 (A29). A market
 price is a model and every screen says so. Condition is never multiplied into
 a value. Nothing scanned is ever discarded.
 

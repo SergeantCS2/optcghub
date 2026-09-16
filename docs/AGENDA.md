@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 61.* Ranked by blocking-ness, not by interest.
+*Current as of take 66.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -683,6 +683,34 @@ report. Read in full and checked against the code, take 60.
   unverified on a device for ten takes. "No crashes found" from fifteen
   minutes is the absence of evidence, not evidence of absence. Treat the
   document as a to-do list someone else wrote, not as a test result.
+- **Built take 65 — the two rows that were actually missing.** More →
+  *Rate this app on Google Play* opens `market://details?id=com.optcghub.app`
+  where the Play app exists and the https listing otherwise; *Tell someone
+  about the app* hands the listing URL and one plain line to the share sheet,
+  falling back to the clipboard where there is no Share plugin. **The link is
+  the app id and nothing else** — no referral parameter, no campaign tag, no
+  tracking, asserted in smoke — because A30 ruled referral promotions out and
+  the app claims no analytics. The app id comes from the manifest so it is
+  not a literal in two places. Ruled out again: the In-App Review API.
+- **Built take 66 — the accessibility pass, A30's last item.** Every button
+  a screen reader would announce as *nothing* now has a name: the favourites
+  star, both filter gears, the torch, the gallery, the shutter, the scan
+  shortcut, the Leader slots, and every +/− stepper in Decks, Trade and the
+  Play counter (named from their own context — *One more Nami*, *Life up*).
+  The ten screen titles announce as `role="heading"` instead of tabs; the two
+  real tabs keep `role="tab"` with `aria-selected`; the network badge is a
+  `role="status"` live region; decorative glyphs inside labelled controls are
+  `aria-hidden`. **Asserted twice:** in smoke against the markup, with a
+  control, and **in real Chrome** by walking every visible control and
+  checking it has a name. MEASURED: 2 `aria-label`s before, 20 after.
+- **Still owed, and it is the owner's:** a real TalkBack session. The
+  machine can prove a name exists; only a person can hear whether the order
+  and the wording make sense.
+- **The decorative-control sweep (take 65).** Every non-button element
+  wearing an interactive class was listed: **Home was the only multi-tab bar
+  in the app**, and it is fixed (landmine 118). The other ten `tab on` spans
+  are single screen titles — decoration by design, but they still announce
+  as tabs, which is the TalkBack pass's problem, not a second bug.
 - **Agreed order (take 60):** the tour check (the owner's, open) → A26
   colour and contrast (**done this take**) → A29 stock decks → Rate and
   Share rows, one small take together → the TalkBack pass.
@@ -731,6 +759,25 @@ the portfolio or anything."*
   `OWN` empty and the total at zero, no stock id is ever in the collection,
   none is written to the saved deck list — with a control that shows the
   collection *does* move when a card is genuinely added.
+- **Take 62 — covers, drawn not downloaded.** The owner asked for the
+  official product preview images. **Declined**, on the rules this project
+  has held for sixty takes: landmine 26 (card art is copyrighted and this
+  app never hosts it — the pipeline hashes and discards), landmine 30 and
+  A16 (the ONE PIECE logo and the BANDAI marks stay out of the app), and
+  Bandai's own footer on the page he linked — *all images, text and data on
+  this website may not be reproduced without permission*. Published
+  officially is not the same as licensed, and the store listing that Play
+  approved states the app carries no character art and no publisher marks;
+  shipping box shots would make that false in an ad-supported app during a
+  closed test. Built instead: `deckCover()` draws each cover from data the
+  app already holds — the Leader's colours as the field, the set code in the
+  display face, the Leader's name — inline SVG, no file, no request, and
+  smoke asserts no `<image>`, no URL and no publisher word appears in it.
+  **Not declined: the owner's own build.** `assets/user/` takes his own
+  photographs already; a deck-cover slot there is his call about his own
+  copy and would ship no defaults. **The only path to the real images** is
+  written permission from Bandai, which is a real thing to ask for and not
+  something to assume.
 - **The slot stays open.** If real quantities arrive — the owner's own
   decks, a licensed list, a paid export — they replace the generated lists
   in the same place and the names lose "built from".
@@ -1281,6 +1328,15 @@ he will send more screenshots.
   What ships instead: `assets/icon.svg` — a plain jolly roger on a compass on a
   card, in the take-16 palette. The skull wears nothing and the blades are
   generic cutlasses. Nobody owns the pirate flag.
+- **Take 63 — the skull removed, the Decks tab made a card back.** The owner
+  on `g-roger`: *"it looks awful."* It was drawn at take 17 and used in one
+  place, the empty-collection state, which now shows the scan-card decal it
+  is telling you to tap; the symbol is deleted from the sprite and smoke
+  refuses its return. The Decks tab was a card with a crown and is now
+  `g-cardback` — the inset border and centre diamond a card back reads as,
+  **drawn here**: the real card back is the publisher's design and is no
+  more shippable than the box art (landmines 26, 30). The shape was the ask;
+  the artwork is theirs.
 - **Take 33 — reverted, as asked.** the owner asked for the old icon back for
   now; `assets/icon.svg` is the take-16 compass placeholder again and the
   jolly roger is kept as `assets/icon-jollyroger.svg`. D7 stays open.

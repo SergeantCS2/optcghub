@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 61.*
+*Current as of take 66.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -126,6 +126,7 @@ Start here. Do not read top to bottom.
 | A seed drop makes the price history shorter | **116** |
 | A refactor moved an element and its colour went pale | **117** |
 | Small grey text nobody could read | 117 |
+| A tab that is styled selected but is not a control | **118** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -1673,6 +1674,22 @@ half on its own: `--dim2`, the secondary line on every card row, was
 4.5:1 AA bar and under even the 3:1 large-text floor, since take 1. The
 tester report that prompted this said only "consider accessibility" and
 found neither.
+
+**118. A tab that was decoration, not a control. Take 64, reported by the
+owner from the Pages build: "when you click Performance, Overview stays
+highlighted."** Home's Overview was `<span class="tab on">` with no id and no
+handler — hard-coded selected, unclickable, and never turned off, so
+Performance lit up beside a tab that was permanently lit and there was no way
+back except reloading. Two takes of smoke and render had passed over it
+because both harnesses assert what DRAWS and what a handler DOES, and this
+element had no handler to test: **a control with no listener is invisible to a
+test suite that tests listeners.** It shipped to a closed test. The pair is
+one function now, exactly one `on`, both keyboard-operable with
+`aria-selected`, and the check runs in real Chrome with real clicks — the
+place the bug was seen — with the old toggle-without-clearing as the negative
+control. Rule: if an element looks selectable it is a control, and a control
+with no handler is a bug with a stylesheet. Grep for `class="tab on"` and
+friends with no matching listener before shipping a screen.
 
 ## §2 — Inherited from APEX ORV
 

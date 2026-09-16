@@ -1,6 +1,6 @@
 # PROVISION
 
-*Current as of take 61.*
+*Current as of take 66.*
 
 Every host this project touches, in either phase, with its purpose, licence and
 cadence. The gate refuses an undeclared host in `www/` or in `tools/`.
@@ -31,6 +31,7 @@ and the airplane-mode invariant in PROTOCOL §8 holds without either.
 | GitHub Releases | catalogue and price sync | user taps Sync, or once per 24 h on wifi | No — the app runs on its last catalogue and every price shows its date |
 | `sergeantcs2.github.io` (Pages) | the nightly `bundle/manifest.json` and `bundle/catalog.json` | More → Sync, and once on open when online | **Yes** — written to `Directory.Data` as the live catalogue; the APK's bundled copy is the fallback. Take 27. `UPDATE_URL` set at take 33; empty disables it |
 | `tcgplayer-cdn.tcgplayer.com` | reference image for a card the collector has **not** scanned | collection tiles, search rows, the picker, card detail — **live since take 12** | No — DISPLAY-ONLY. `loading="lazy"`, memory cache, never written to disk, fails silently to a text placeholder. A scanned card uses the collector's own photograph (landmines 27, 28). Every image carries the publisher's SAMPLE watermark, as the reference app's do |
+| `play.google.com` | the app's OWN Play listing, handed to the OS by More → *Rate this app* and *Tell someone about the app* (take 65) | the collector taps one of those two rows | No — the app never fetches it. The URL is `…/details?id=com.optcghub.app` and carries no referral, campaign or tracking parameter (A30) |
 
 ## Citation hosts — displayed, never requested
 

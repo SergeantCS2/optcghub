@@ -238,6 +238,8 @@ def build(verbose=True):
     man = json.load(open(MANIFEST))
     man["user"] = user
     man["fonts"] = fonts_used     # which file served each role, for the About panel and the harness
+    # The app's own id, so the Play links are not a literal in two places.
+    man["appId"] = json.load(open(os.path.join(ROOT, "capacitor.config.json")))["appId"]
     man["stock"] = len(cat["stock"])
     man["effects"] = {"lines": fxstats["lines"], "scripted": fxstats["parsed"], "cards_full": fxstats["cards_full"], "cards_partial": fxstats["cards_partial"]}
     # What's new (take 53): the first "New at take N" paragraph of ci/RELEASE.md,

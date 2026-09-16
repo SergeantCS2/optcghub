@@ -242,6 +242,33 @@ if (puppeteer) {
   ok('desktop (1440px): the app is a centred phone-width column, not a sprawl',
      wide.bodyW <= 560 && wide.vw >= 1400, JSON.stringify(wide));
   ok('...and the bottom chrome is held to the same width', wide.navW > 0 && wide.navW <= 560, String(wide.navW));
+  /* Take 64: the reported bug, in a real browser -- click Performance and
+     Overview must go out. */
+  const tabs = await page.evaluate(() => {
+    const o = document.querySelector('#tabOver'), p = document.querySelector('#tabPerf');
+    const before = [o.classList.contains('on'), p.classList.contains('on')];
+    p.click();
+    const after = [o.classList.contains('on'), p.classList.contains('on'), getComputedStyle(document.querySelector('#perfPanel')).display];
+    o.click();
+    const back = [o.classList.contains('on'), p.classList.contains('on'), getComputedStyle(document.querySelector('#hero')).display];
+    return { before, after, back };
+  });
+  ok('Home tabs: Overview on at rest, Performance takes it, Overview takes it back',
+     tabs.before[0] && !tabs.before[1] && !tabs.after[0] && tabs.after[1] && tabs.after[2] === 'block'
+     && tabs.back[0] && !tabs.back[1] && tabs.back[2] !== 'none', JSON.stringify(tabs));
+  /* Take 66: what a screen reader would actually reach, in a real DOM --
+     every visible control has an accessible name (text or aria-label). */
+  const a11y = await page.evaluate(() => {
+    const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+    const ctrls = [...document.querySelectorAll('button, [role="tab"], a[href]')].filter(vis);
+    const bad = ctrls.filter(e => !((e.getAttribute('aria-label') || '').trim() || (e.textContent || '').trim()));
+    return { total: ctrls.length, bad: bad.length, sample: bad.slice(0, 3).map(e => e.outerHTML.slice(0, 60)),
+             headings: document.querySelectorAll('[role="heading"]').length,
+             tabs: [...document.querySelectorAll('[role="tab"]')].map(e => e.getAttribute('aria-selected')) };
+  });
+  ok('every visible control has an accessible name', a11y.bad === 0 && a11y.total > 10, JSON.stringify(a11y));
+  ok('screen titles are headings and exactly one real tab is selected',
+     a11y.headings >= 1 && a11y.tabs.filter(x => x === 'true').length === 1, JSON.stringify(a11y.tabs));
   ok('headings render in the palette accent, not the body colour (landmine 117)',
      /rgb\(201, 162, 74\)/.test(wide.headColour), wide.headColour);
   await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });

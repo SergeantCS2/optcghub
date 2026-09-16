@@ -1,4 +1,4 @@
-# OP TCG Hub — take 61
+# OP TCG Hub — take 66
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,22 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 66:** every button now has a name a screen reader can read,
+and screen titles announce as headings instead of tabs. If you use TalkBack,
+this is the update to try.
+
+**New at take 65:** More has *Rate this app on Google Play* and *Tell someone
+about the app*. No referral codes, no tracking in the link.
+
+**New at take 64:** Overview and Performance are proper tabs now — tapping
+one turns the other off, and Overview is tappable to come back.
+
+**New at take 63:** the Decks tab is a card back instead of a crown, and the
+skull on the empty collection screen is gone.
+
+**New at take 62:** the ready-made decks have covers now — drawn by the app
+from the Leader's colours and the set code, not downloaded from anywhere.
 
 **New at take 61:** Decks now comes with 17 ready-made decks built from the
 starter-deck sets, so you can try the Sim straight away without owning a

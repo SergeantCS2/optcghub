@@ -427,9 +427,9 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
 <!-- ============================= HOME ================================== -->
 <section id="home" class="screen on">
   <div class="bar">
-    <span class="tab on">Overview</span>
-    <span class="tab" id="tabPerf">Performance</span>
-    <span class="pill"><i class="dot" id="netdot"></i><span id="netlbl">offline ok</span></span>
+    <span class="tab on" id="tabOver" role="tab" tabindex="0" aria-selected="true">Overview</span>
+    <span class="tab" id="tabPerf" role="tab" tabindex="0" aria-selected="false">Performance</span>
+    <span class="pill" role="status" aria-live="polite"><i class="dot" id="netdot" aria-hidden="true"></i><span id="netlbl">offline ok</span></span>
   </div>
   <div class="stale" id="staleBanner" hidden></div>
   <div class="panel" id="whatsNew" hidden style="border-color:var(--brass)"></div>
@@ -460,7 +460,7 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
     <div id="setDone"></div>
   </div>
 
-  <div class="panel">
+  <div class="panel" id="srcPanel">
     <h3>Where these numbers come from</h3>
     <div class="note" id="srcNote"></div>
     <button class="linkish" data-go="settings">More · settings, export, sources</button>
@@ -470,20 +470,20 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
 <!-- ========================== COLLECTION =============================== -->
 <section id="collection" class="screen">
   <div class="actions">
-    <button data-act="movers"><span class="ic"><svg class="g" width="20" height="20"><use href="#g-trigger"/></svg></span>Market Movers</button>
-    <button data-act="trade"><span class="ic"><svg class="g" width="20" height="20"><use href="#g-rope"/></svg></span>Trade Analyzer</button>
-    <button data-act="bulk"><span class="ic"><svg class="g" width="20" height="20"><use href="#g-blocker"/></svg></span>Bulk Actions</button>
-    <button data-act="export"><span class="ic"><svg class="g" width="20" height="20"><use href="#g-spyglass"/></svg></span>Export</button>
-    <button data-act="backup"><span class="ic"><svg class="g" width="20" height="20"><use href="#g-counter"/></svg></span>Backup</button>
-    <button data-act="import"><span class="ic"><svg class="g" width="20" height="20"><use href="#g-anchor"/></svg></span>Import</button>
-    <button data-act="wants"><span class="ic"><svg class="g" width="20" height="20"><use href="#g-life"/></svg></span>Want list</button>
-    <button data-act="binder"><span class="ic"><svg class="g" width="20" height="20"><use href="#g-stage"/></svg></span>Binder</button>
+    <button data-act="movers"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-trigger"/></svg></span>Market Movers</button>
+    <button data-act="trade"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-rope"/></svg></span>Trade Analyzer</button>
+    <button data-act="bulk"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-blocker"/></svg></span>Bulk Actions</button>
+    <button data-act="export"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-spyglass"/></svg></span>Export</button>
+    <button data-act="backup"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-counter"/></svg></span>Backup</button>
+    <button data-act="import"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-anchor"/></svg></span>Import</button>
+    <button data-act="wants"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-life"/></svg></span>Want list</button>
+    <button data-act="binder"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-stage"/></svg></span>Binder</button>
   </div>
   <div class="search">
     <span>🔍</span>
     <input id="colq" placeholder="Search your collection">
-    <button id="favOnly">☆</button>
-    <button id="sortBtn" title="Filter &amp; sort">⚙<span class="fcount" id="fBadgeCol" style="display:none"></span></button>
+    <button id="favOnly" aria-label="Show favourites only" title="Favourites only">☆</button>
+    <button id="sortBtn" title="Filter &amp; sort" aria-label="Filter and sort">⚙<span class="fcount" id="fBadgeCol" style="display:none"></span></button>
   </div>
   <div id="bulkBar" style="display:none" class="panel">
     <div class="row" style="padding:0">
@@ -496,7 +496,7 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
   </div>
   <div class="grid" id="colGrid"></div>
   <div class="empty" id="colEmpty">
-    <svg class="g"><use href="#g-roger"/></svg>
+    <svg class="g" width="64" height="88" viewBox="0 0 64 88" style="opacity:.7"><use href="#g-scancard"/></svg>
     Nothing here yet.<br>Tap <b>Scan</b> and point the camera at a card.
   </div>
 </section>
@@ -504,9 +504,9 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
 <!-- ============================ SEARCH ================================= -->
 <section id="search" class="screen">
   <div class="search" style="margin-top:14px">
-    <button data-go="scan">📷</button>
+    <button data-go="scan" aria-label="Scan a card" title="Scan">📷</button>
     <input id="allq" placeholder="Search the catalogue">
-    <button id="sortBtnAll" title="Filter &amp; sort">⚙<span class="fcount" id="fBadgeAll" style="display:none"></span></button>
+    <button id="sortBtnAll" title="Filter &amp; sort" aria-label="Filter and sort">⚙<span class="fcount" id="fBadgeAll" style="display:none"></span></button>
   </div>
   <div id="allRes"></div>
   <div class="panel" id="setPanel">
@@ -539,10 +539,10 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
       <span><b id="scTotal" class="mono">$0.00</b> batch</span>
     </div>
     <div class="shutterbar">
-      <button class="ghost" id="btnTorch" title="Torch" style="display:none"><svg class="g" width="18" height="18"><use href="#g-trigger"/></svg></button>
-      <button class="ghost" id="btnGallery" title="Scan from a photo"><svg class="g" width="18" height="18"><use href="#g-stage"/></svg></button>
+      <button class="ghost" id="btnTorch" title="Torch" aria-label="Torch" style="display:none"><svg class="g" width="18" height="18"><use href="#g-trigger"/></svg></button>
+      <button class="ghost" id="btnGallery" title="Scan from a photo" aria-label="Scan from a photo"><svg class="g" width="18" height="18"><use href="#g-stage"/></svg></button>
       <button class="ghost" id="btnUndo">↶ Undo</button>
-      <button class="shutter" id="btnShutter"></button>
+      <button class="shutter" id="btnShutter" aria-label="Capture"></button>
       <button class="ghost go" id="btnDone">Review →</button>
     </div>
   </div>
@@ -565,7 +565,7 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
     <div class="row">
       <div class="nm"><b id="dFinish">Foil</b><span id="dCond">Near Mint</span></div>
       <div class="stepper">
-        <button id="dMinus">−</button><b class="mono" id="dQty">1</b><button id="dPlus">+</button>
+        <button id="dMinus" aria-label="One fewer">−</button><b class="mono" id="dQty">1</b><button id="dPlus" aria-label="One more">+</button>
       </div>
       <div class="v mono" id="dPrice">$0.00<span id="dDelta"></span></div>
     </div>
@@ -615,7 +615,7 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
 
 <!-- ============================ DECKS ================================== -->
 <section id="decks" class="screen">
-  <div class="bar"><span class="tab on">Decks</span>
+  <div class="bar"><span class="tab on" role="heading" aria-level="1">Decks</span>
     <button class="ghost" data-go="settings" style="margin-left:auto">&#9881;</button>
     <button class="ghost go" id="dkNew">+ New deck</button></div>
   <div id="dkList"></div>
@@ -628,7 +628,7 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
 
 <section id="deck" class="screen">
   <div class="dkhead">
-    <button class="lead" id="dkLead"></button>
+    <button class="lead" id="dkLead" aria-label="Choose this deck's Leader"></button>
     <div style="flex:1;min-width:0">
       <input id="dkName" placeholder="Deck name"
         style="background:none;border:0;border-bottom:1px solid var(--line);color:var(--fg);font:inherit;font-size:17px;font-weight:650;width:100%;padding:4px 0">
@@ -663,7 +663,7 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
 
 <!-- ============================ BINDER ================================== -->
 <section id="binder" class="screen">
-  <div class="bar"><span class="tab on">Binder</span>
+  <div class="bar"><span class="tab on" role="heading" aria-level="1">Binder</span>
     <span class="note" id="bnPage" style="margin-left:auto"></span></div>
   <div class="chips" id="bnSets" style="margin:2px 0 10px"></div>
   <div class="bnpage" id="bnGrid"></div>
@@ -676,7 +676,7 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
 
 <!-- ============================ SET CHECKLIST ============================ -->
 <section id="checklist" class="screen">
-  <div class="bar"><span class="tab on" id="ckTitle">Set</span>
+  <div class="bar"><span class="tab on" id="ckTitle" role="heading" aria-level="1">Set</span>
     <button class="ghost" id="ckWantAll" style="margin-left:auto">Want the rest</button></div>
   <div class="note" id="ckSummary" style="margin:2px 0 12px"></div>
   <div class="chips" id="ckFilter" style="margin-bottom:10px"></div>
@@ -685,7 +685,7 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
 
 <!-- ============================ WANT LIST ================================ -->
 <section id="wants" class="screen">
-  <div class="bar"><span class="tab on">Want list</span>
+  <div class="bar"><span class="tab on" role="heading" aria-level="1">Want list</span>
     <button class="ghost" id="wtClear" style="margin-left:auto">Clear</button></div>
   <div class="note" style="margin:2px 0 12px">Cards you are after, valued the same way as the ones you have. Add from a set checklist, a search result or a card's page.</div>
   <div class="panel" id="wtSummary"></div>
@@ -697,7 +697,7 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
 
 <!-- ============================ CARDS (P&P browse) ====================== -->
 <section id="cards" class="screen">
-  <div class="bar"><span class="tab on">Cards</span>
+  <div class="bar"><span class="tab on" role="heading" aria-level="1">Cards</span>
     <button class="ghost" id="cdForDeck" style="margin-left:auto">for this deck: off</button></div>
   <div class="search"><span><svg class="g" width="16" height="16"><use href="#g-spyglass"/></svg></span>
     <input id="cdq" placeholder="Name, number, or card text"></div>
@@ -710,7 +710,7 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
 
 <!-- ============================ PLAY (counter) ========================== -->
 <section id="play" class="screen">
-  <div class="bar"><span class="tab on">Play</span>
+  <div class="bar"><span class="tab on" role="heading" aria-level="1">Play</span>
     <button class="ghost" id="plReset" style="margin-left:auto">New game</button></div>
   <div class="note" style="margin:2px 0 12px">Life and DON!! for a table game. Two Leaders, one phone. Nothing here is saved or sent.</div>
   <div id="plBoard"></div>
@@ -723,14 +723,14 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
 
 <!-- ============================ SIM (placeholder) ======================== -->
 <section id="sim" class="screen">
-  <div class="bar"><span class="tab on">Sim</span><span class="note" style="margin-left:auto">hot-seat · rules by the app, effects by hand</span></div>
+  <div class="bar"><span class="tab on" role="heading" aria-level="1">Sim</span><span class="note" style="margin-left:auto">hot-seat · rules by the app, effects by hand</span></div>
   <div id="simBoard"></div>
   <div id="simCurtain" class="curtain"></div>
 </section>
 
 <!-- ========================== TRADE ANALYZER =========================== -->
 <section id="trade" class="screen">
-  <div class="bar"><span class="tab on">Trade</span></div>
+  <div class="bar"><span class="tab on" role="heading" aria-level="1">Trade</span></div>
   <div class="note" style="margin:4px 0 14px">Two lists, valued the same way. What you give, what you get, and
     the difference at today's market. Paste the other side's list as <b>4 OP01-016</b> lines, or
     pick from your collection.</div>
@@ -861,17 +861,17 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
 <div class="toast" id="toast"></div>
 
 <nav id="navPlay" hidden>
-  <button data-go="decks"><span class="ic"><svg class="g" width="22" height="22"><use href="#g-leader"/></svg></span>Decks</button>
-  <button data-go="cards"><span class="ic"><svg class="g" width="22" height="22"><use href="#g-spyglass"/></svg></span>Cards</button>
-  <button data-go="play"><span class="ic"><svg class="g" width="22" height="22"><use href="#g-life"/></svg></span>Play</button>
-  <button data-go="sim"><span class="ic"><svg class="g" width="22" height="22"><use href="#g-don"/></svg></span>Sim</button>
+  <button data-go="decks"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-cardback"/></svg></span>Decks</button>
+  <button data-go="cards"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-spyglass"/></svg></span>Cards</button>
+  <button data-go="play"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-life"/></svg></span>Play</button>
+  <button data-go="sim"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-don"/></svg></span>Sim</button>
 </nav>
 <nav id="navCollect">
-  <button data-go="home" class="on"><span class="ic"><svg class="g" width="22" height="22"><use href="#g-compass"/></svg></span>Home</button>
-  <button data-go="search"><span class="ic"><svg class="g" width="22" height="22"><use href="#g-spyglass"/></svg></span>Search</button>
-  <button data-go="scan"><span class="ic"><svg class="g" width="22" height="22"><use href="#g-blocker"/></svg></span>Scan</button>
-  <button data-go="collection"><span class="ic"><svg class="g" width="22" height="22"><use href="#g-stage"/></svg></span>Collection</button>
-  <button data-go="decks"><span class="ic"><svg class="g" width="22" height="22"><use href="#g-leader"/></svg></span>Decks</button>
+  <button data-go="home" class="on"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-compass"/></svg></span>Home</button>
+  <button data-go="search"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-spyglass"/></svg></span>Search</button>
+  <button data-go="scan"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-blocker"/></svg></span>Scan</button>
+  <button data-go="collection"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-stage"/></svg></span>Collection</button>
+  <button data-go="decks"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-cardback"/></svg></span>Decks</button>
 </nav>
 
 <script id="app">
@@ -1371,6 +1371,29 @@ function paintDecks() {
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-deck]'); if (b) openDeck(b.dataset.deck);
 });
+/* A deck's cover, drawn by the app from data it already has: the Leader's
+   colour or colours as the field, the set code large in the display face,
+   the Leader's name under it. No character art, no publisher mark, no file
+   and no request (landmines 26 and 30). A licensed image, if one is ever
+   obtained, would replace the <svg> and nothing else. */
+function deckCover(d, { w = 56 } = {}) {
+  const L = CAT.byId.get(d.leader) || {};
+  const cs = String(L.color || '').split(/[;/,]/).map(x => x.trim()).filter(x => CCLASS[x]);
+  const a = cs[0] ? `var(--c-${CCLASS[cs[0]]})` : 'var(--brass)';
+  const b = cs[1] ? `var(--c-${CCLASS[cs[1]]})` : a;
+  const code = (d.set || (L.num || '').split('-')[0] || '').toUpperCase();
+  const gid = 'cov' + (d.id || code).replace(/[^a-z0-9]/gi, '');
+  return `<svg width="${w}" height="${Math.round(w * 1.4)}" viewBox="0 0 56 78" aria-label="${esc(code)} deck cover" role="img" style="flex:0 0 auto;border-radius:6px;display:block">
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>
+    <rect width="56" height="78" rx="6" fill="url(#${gid})"/>
+    <rect x="3" y="3" width="50" height="72" rx="4" fill="none" stroke="rgba(0,0,0,.35)"/>
+    <text x="28" y="34" text-anchor="middle" font-family="OPH Display, Impact, sans-serif" font-size="17" fill="rgba(0,0,0,.72)">${esc(code)}</text>
+    <text x="28" y="50" text-anchor="middle" font-family="OPH Body, sans-serif" font-size="7" fill="rgba(0,0,0,.6)">${esc((L.name || '').slice(0, 14))}</text>
+    <circle cx="28" cy="62" r="5" fill="none" stroke="rgba(0,0,0,.5)" stroke-width="1.5"/>
+  </svg>`;
+}
+
 /* Stock decks: browsable, playable in the sim, copyable into your own decks.
    Never owned cards -- the Decks screen says so once, plainly. */
 function paintStock() {
@@ -1378,6 +1401,7 @@ function paintStock() {
   box.innerHTML = !stock.length ? '' : `<div class="fgrp">Ready-made decks</div>
     <div class="note" style="margin-bottom:8px">${stock.length} legal decks built from the starter-deck sets, so you can try the Sim and the browse before you own anything. They are not in your collection and never count toward its value.</div>
     ${stock.map(d => `<button class="panel" style="width:100%;text-align:left;display:flex;gap:12px;align-items:center" data-stock="${esc(d.id)}">
+      ${deckCover(d)}
       <div style="flex:1;min-width:0"><b>${esc(d.name)}</b><div class="note">${d.cards.reduce((a, c) => a + c.n, 0)} cards \u00b7 ${esc(d.set)}</div></div>
       <span class="badge">ready-made</span></button>`).join('')}`;
 }
@@ -1459,8 +1483,8 @@ function deckRow(p, n, L, adding = false) {
         own ? ` · <span class="up">own ${own}</span>` : ''}${
         !ok ? ` · <span class="down">${!RULES.MAIN_TYPES.has(p.type) ? p.type + ' — not a main-deck card' : 'off-colour'}</span>` : ''}</span></div>
     <div class="cnt">${adding
-      ? `<button data-dkadd="${p.id}" ${ok ? '' : 'disabled'}>+</button>`
-      : `<button data-dkdec="${p.id}">−</button><b>${n}</b><button data-dkinc="${p.id}">+</button>`}</div>
+      ? `<button data-dkadd="${p.id}" aria-label="Add one ${esc(p.name)}" ${ok ? '' : 'disabled'}>+</button>`
+      : `<button data-dkdec="${p.id}" aria-label="One fewer ${esc(p.name)}">−</button><b>${n}</b><button data-dkinc="${p.id}" aria-label="One more ${esc(p.name)}">+</button>`}</div>
   </div>`;
 }
 function paintDeckAdd() {
@@ -1532,7 +1556,7 @@ function paintLeaderPick() {
   const q = ($('#lpq').value || '').trim().toLowerCase();
   const ownedIds = new Set(OWN.items.map(i => i.id));
   $('#lpColours').innerHTML = COLORS.map(c =>
-    `<button class="chip${lpColour === c ? ' on' : ''}" data-lpc="${c}">
+    `<button class="chip${lpColour === c ? ' on' : ''}" data-lpc="${c}" aria-label="${esc(c)}" aria-pressed="${lpColour === c}">
        <i style="display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;
           vertical-align:-1px;background:var(--c-${CCLASS[c]})"></i>${c}</button>`).join('');
   let list = leadersByNumber();
@@ -1700,7 +1724,7 @@ function tradeRow(side, r) {
     <div class="oa" style="width:34px;flex:0 0 34px;aspect-ratio:.716;border-radius:5px;background:#182A3A;overflow:hidden">${refArt(p)}</div>
     <div class="n"><b>${esc(p.name)}${p.treat !== 'base' ? ` <span class="badge">${esc(TREAT[p.treat] || p.treat)}</span>` : ''}</b>
       <span>${esc(p.num)} \u00b7 ${money(p.market)} each${side === 'give' && own < r.n ? ` \u00b7 <span class="down">you own ${own}</span>` : ''}</span></div>
-    <div class="cnt"><button data-trdec="${side}:${p.id}">\u2212</button><b>${r.n}</b><button data-trinc="${side}:${p.id}">+</button></div>
+    <div class="cnt"><button data-trdec="${side}:${p.id}">\u2212</button><b>${r.n}</b><button data-trinc="${side}:${p.id}" aria-label="One more ${esc(p.name)}">+</button></div>
   </div>`;
 }
 function paintTrade() {
@@ -1908,7 +1932,7 @@ function paintPlay() {
     const L = pl.leader ? CAT.byId.get(pl.leader) : null;
     return `<div class="panel" style="${(!PLAY.hotseat && i === 0) ? 'transform:rotate(180deg)' : ''}">
       <div style="display:flex;gap:12px;align-items:center">
-        <button class="lead" data-plleader="${i}" style="width:48px;flex:0 0 48px;aspect-ratio:.716;border-radius:6px;background:var(--card2);overflow:hidden;position:relative">${L ? refArt(L) : ''}</button>
+        <button class="lead" data-plleader="${i}" aria-label="Choose this player's Leader" style="width:48px;flex:0 0 48px;aspect-ratio:.716;border-radius:6px;background:var(--card2);overflow:hidden;position:relative">${L ? refArt(L) : ''}</button>
         <div style="flex:1;min-width:0"><b style="font-family:var(--display);font-weight:400;font-size:17px">${L ? esc(L.name) : pl.name}</b>
           <div class="note" style="margin:2px 0 0">${L ? colsOf(L).join('/') + ' \u00b7 starts at ' + (L.life || 5) + ' life' : 'tap the card to choose a Leader'}</div></div>
       </div>
@@ -1916,17 +1940,17 @@ function paintPlay() {
         <div style="flex:1;text-align:center">
           <div class="note">${G('life', 13)} Life</div>
           <div class="big" style="font-size:44px;line-height:1;margin:4px 0">${pl.life}</div>
-          <div class="stepper" style="justify-content:center"><button data-pl="${i}:life:-1">\u2212</button><button data-pl="${i}:life:1">+</button></div>
+          <div class="stepper" style="justify-content:center"><button data-pl="${i}:life:-1">\u2212</button><button data-pl="${i}:life:1" aria-label="Life up">+</button></div>
         </div>
         <div style="flex:1;text-align:center">
           <div class="note">${G('don', 13)} DON!! active</div>
           <div class="big" style="font-size:44px;line-height:1;margin:4px 0">${pl.don - pl.given}<span style="font-size:16px;color:var(--dim2)">/${pl.don}</span></div>
-          <div class="stepper" style="justify-content:center"><button data-pl="${i}:don:-1">\u2212</button><button data-pl="${i}:don:1">+</button></div>
+          <div class="stepper" style="justify-content:center"><button data-pl="${i}:don:-1">\u2212</button><button data-pl="${i}:don:1" aria-label="DON!! up">+</button></div>
         </div>
         <div style="flex:1;text-align:center">
           <div class="note">given</div>
           <div class="big" style="font-size:44px;line-height:1;margin:4px 0">${pl.given}</div>
-          <div class="stepper" style="justify-content:center"><button data-pl="${i}:given:-1">\u2212</button><button data-pl="${i}:given:1">+</button></div>
+          <div class="stepper" style="justify-content:center"><button data-pl="${i}:given:-1">\u2212</button><button data-pl="${i}:given:1" aria-label="Given DON!! up">+</button></div>
         </div>
       </div>
     </div>`;
@@ -2027,7 +2051,7 @@ function paintCards() {
         <span>${esc(p.num)} \u00b7 ${colsOf(p).join('/')}${p.power ? ' \u00b7 ' + Number(p.power).toLocaleString() : ''}${
           p.counter ? ' \u00b7 +' + Number(p.counter).toLocaleString() : ''}${kws.map(k => `<i class="kwtag">${KW_GLYPH[k] ? G(KW_GLYPH[k], 11) + ' ' : ''}${k}</i>`).join('')}</span>
         <span style="white-space:normal;color:var(--dim2);font-size:11px;-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden">${esc((p.text || '').replace(/\n+/g, ' ').slice(0, 160))}</span></div>
-      <div class="cnt">${deck ? `<button data-cdadd="${p.id}">+</button>${inDeck ? `<b>${inDeck}</b>` : ''}` : ''}</div>
+      <div class="cnt">${deck ? `<button data-cdadd="${p.id}" aria-label="One more">+</button>${inDeck ? `<b>${inDeck}</b>` : ''}` : ''}</div>
     </div>`;
   }).join('') || '<div class="note">Nothing matches. Loosen a chip.</div>';
 }
@@ -2395,13 +2419,26 @@ function paintHome() {
 /* Performance = what you PAID against what it is worth. The reference app puts
    this behind a subscription. It needs a cost basis, which only the collector
    can supply, so the panel asks rather than inventing one. */
+/* Take 64. Overview was a hard-coded `on` span with no handler: it never
+   turned off and could not be clicked, so Performance lit up beside a tab
+   that was permanently lit. They are a PAIR -- exactly one is on, and the
+   one that is on decides what the page shows. */
 let perfOn = false;
-$('#tabPerf').addEventListener('click', () => {
-  perfOn = !perfOn;
+const HOME_OVERVIEW = ['hero', 'setPanel', 'srcPanel'];   // whatsNew has its own hidden flag
+function setHomeTab(perf) {
+  perfOn = !!perf;
   $('#tabPerf').classList.toggle('on', perfOn);
+  $('#tabOver').classList.toggle('on', !perfOn);
+  $('#tabPerf').setAttribute('aria-selected', String(perfOn));
+  $('#tabOver').setAttribute('aria-selected', String(!perfOn));
   $('#perfPanel').style.display = perfOn ? 'block' : 'none';
-  if (perfOn) paintPerf();
-});
+  for (const id of HOME_OVERVIEW) { const el = $('#' + id); if (el) el.style.display = perfOn ? 'none' : ''; }
+  if (perfOn) paintPerf(); else paintHome();
+}
+$('#tabPerf').addEventListener('click', () => setHomeTab(true));
+$('#tabOver').addEventListener('click', () => setHomeTab(false));
+for (const id of ['#tabOver', '#tabPerf']) $(id).addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setHomeTab(id === '#tabPerf'); } });
 function paintPerf() {
   if (!perfOn) return;
   const withCost = OWN.items.filter(i => i.paid > 0);
@@ -2805,6 +2842,8 @@ document.addEventListener('click', e => {
   ({
     export: exportCsv,
     sharepage: shareCollectionPage,
+    rate: () => PLATFORM.rateApp(),
+    shareapp: async () => { const r = await PLATFORM.shareApp(); if (r === 'copied') toast('Link copied'); if (r === false) toast('Could not share'); },
     backup: () => { scheduleBackup('manual'); toast('Backing up to Documents/OPTCGHub'); },
     restore: restoreFromBackup,
     wants: () => go('wants'),
@@ -3257,6 +3296,25 @@ const PLATFORM = {
       if (/cancel/i.test(String(e && e.message))) return 'cancelled';
       toast('Export failed \u2014 ' + (e && e.message || 'unknown')); return 'cancelled';
     }
+  },
+  /* A30, take 65. Two things the tester report asked for and the app lacked.
+     Both are one call and neither needs a plugin the app does not already
+     carry. The Play listing URL is the app's own id -- no tracking parameter,
+     no referral code (A30 ruled that out). */
+  storeUrl() { return 'https://play.google.com/store/apps/details?id=' + (CAT.man.appId || 'com.optcghub.app'); },
+  async rateApp() {
+    const url = this.storeUrl();
+    /* market:// opens the Play app directly where it exists; the https URL is
+       the fallback and the only thing a browser can do. */
+    try { if (this.plugin('App') || this.isNative) { window.open('market://details?id=' + (CAT.man.appId || 'com.optcghub.app'), '_system'); return true; } } catch (e) {}
+    window.open(url, '_blank');
+    return true;
+  },
+  async shareApp() {
+    const SH = this.plugin('Share');
+    const text = 'OP TCG Hub \u2014 scan, value and track your One Piece Card Game collection. Offline, no scan cap.';
+    if (SH) { try { await SH.share({ title: 'OP TCG Hub', text, url: this.storeUrl(), dialogTitle: 'Share OP TCG Hub' }); return 'shared'; } catch (e) { return 'cancelled'; } }
+    try { await navigator.clipboard.writeText(text + ' ' + this.storeUrl()); return 'copied'; } catch (e) { return false; }
   },
   /* Documents/OPTCGHub is only readable by the install that wrote it: on
      Android 11+ a REINSTALLED app is a stranger to its own old files (scoped
@@ -3891,7 +3949,7 @@ function paintSettings() {
   }
   const m = CAT.man;
   s.innerHTML = `
-    <div class="bar"><span class="tab on">More</span></div>
+    <div class="bar"><span class="tab on" role="heading" aria-level="1">More</span></div>
     <div class="panel"><h3>Your collection</h3>
       <div class="row"><div class="nm"><b>${OWN.items.length} lines</b>
         <span>${OWN.items.reduce((a, i) => a + i.qty, 0)} cards \u00b7 ${money(OWN.total())}</span>
@@ -3915,7 +3973,9 @@ function paintSettings() {
       <div id="stOut"></div>
     </div>
     <div class="panel"><h3>How it works</h3>
-      <button class="linkish" id="guideAgain">Show the guide again</button></div>
+      <button class="linkish" id="guideAgain">Show the guide again</button>
+      <button class="linkish" data-act="rate">Rate this app on Google Play</button>
+      <button class="linkish" data-act="shareapp">Tell someone about the app</button></div>
     <div class="panel"><h3>Sync</h3>
       <div class="row"><div class="nm"><b>Prices from ${esc((CAT.man.source_updated_at || '').slice(0, 10) || '?')}</b>
         <span>${CAT.man.fromDisk ? 'synced copy on this phone' : 'the copy that came with the app'}${CAT.man.updateUrl ? '' : ' \u00b7 sync not configured'}</span></div>
@@ -4518,7 +4578,7 @@ async function runSelfTest() {
      day and a hardcoded placeholder is landmine 62 in a text box. */
   $('#allq').placeholder = `Search all ${(CAT.man.cards || 0).toLocaleString()} cards`;
   paintNet(); paintHome();
-  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock,
+  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM,
                    FILT, applyFilter, sortRows, blankFilter, activeCount,
                    DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,
                    backupJson, scheduleBackup,

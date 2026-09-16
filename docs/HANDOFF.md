@@ -1,4 +1,245 @@
-# HANDOFF — through Take 61
+# HANDOFF — through Take 66
+
+## Take 66 — 2026-09-16 — names for everything a screen reader reaches
+
+Opened before any code (PROTOCOL §6).
+
+### What was measured
+
+2 `aria-label`s across 171 buttons; ten screen titles marked up as selected
+tabs; the network badge styled as a pill with no role. The tester report said
+"consider accessibility" and stopped there; this is the specific version.
+
+### Built
+
+Names on every control a reader would announce as nothing: the favourites
+star, both filter gears, the torch, the gallery, the shutter, the scan
+shortcut, both Leader slots, and every +/− stepper in Decks, Trade and the
+Play counter — each named from its own context (*One more Nami*, *Life up*,
+*DON!! down*). Screen titles are `role="heading" aria-level="1"`; the two
+real tabs keep `role="tab"` with `aria-selected`; the network badge is a
+`role="status" aria-live="polite"` region; decorative glyphs inside labelled
+controls are `aria-hidden`. **20 labels now, from 2.**
+
+### Findings — the assertion was wrong twice before it was right
+
+- First rule: *text ≤ 2 characters means nameless*. It flagged `OK`, which a
+  reader announces perfectly well. Narrowed to **letters**, not length.
+- Second rule flagged three buttons whose label is `${...}` — computed text,
+  which is still text. Narrowed again: an interpolation in the label is a
+  name. Each narrowing was made because the assertion found something real
+  and then something false; the rule that survives says exactly what it
+  means — *a button whose whole label is punctuation or empty*.
+- **Seven buttons the first sweep missed** were only found because the
+  assertion ran over the template strings as well as the static markup. A
+  grep of the markup alone would have called it done.
+- The render check walks every VISIBLE control in a real DOM and asks for an
+  accessible name, which is the thing TalkBack will ask.
+
+**smoke.mjs 444, render.mjs 61 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **A real TalkBack session** — the machine proves a name exists; only a
+  person hears whether the order and wording make sense. The owner's.
+- **Focus order and focus-visible styling** — not touched; a keyboard user
+  on the Pages build still has no visible focus ring in places.
+- A31 waits on a real export. The owner's list: the tour check, D16, D7,
+  the `.aab` filename, the opt-in link, D15, D17, D18.
+
+## Take 65 — 2026-09-16 — the sweep's result, and the two rows the report was right about
+
+Opened before any code (PROTOCOL §6).
+
+### The sweep (take 64's deferral), done first
+
+Every non-button element carrying an interactive class was listed: 27 of
+them — 11 `badge`, 10 `tab on`, 3 `chip`, 2 `pill`, 1 `tab`. Then every
+`.bar` with more than one tab: **Home was the only one in the app**, and it
+is fixed. The ten remaining `tab on` spans are single screen titles
+(Decks, Binder, Trade, Sim, Play, Cards, Want list, Set, More) — decoration
+by design, nothing to click beside them. They are not a second landmine 118;
+they are a TalkBack problem, because a screen reader will call a heading a
+tab. That goes in the accessibility pass, next take.
+
+### Built
+
+- **More → Rate this app on Google Play** — `market://details?id=…` where
+  the Play app is there, the https listing otherwise.
+- **More → Tell someone about the app** — the listing URL and one plain
+  sentence to the share sheet (`Share.share({title, text, url})`, read from
+  the plugin's definitions, landmine 73), clipboard as the fallback.
+- **The link carries nothing but the app id.** No referral parameter, no
+  campaign tag; asserted in smoke, because A30 ruled referral promotions out
+  and the listing claims no analytics.
+- The app id rides in the manifest from `capacitor.config.json`, so it is
+  not a literal in two files.
+
+### The gate caught the take
+
+Sealing failed first time: *undeclared remote host 'play.google.com' in
+www/* (PROTOCOL §8). Correct — the offline guard cannot tell a link from a
+fetch, and the rule is that every host in the shipped app is declared with
+its purpose. `PROVISION.md` now carries it in the runtime table, saying
+plainly that the app never fetches it and that the URL has no referral,
+campaign or tracking parameter. That is the guard doing the job it was
+written for at take 8.
+
+**smoke.mjs 438, render.mjs 59 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **The accessibility pass** — the ten title tabs, the status pill, the
+  icon-only buttons, a real TalkBack session. Next take, then the owner
+  pushes.
+- **Whether Rate opens the Play app on the Fold** — `market://` through
+  `window.open` is the documented path but is unproven on a device; the
+  https fallback always works.
+- A31 waits on a real export; the owner's list: the tour check, D16, D7,
+  the `.aab` filename, the opt-in link, D15, D17, D18.
+
+## Take 64 — 2026-09-16 — the Overview tab was never a control
+
+Opened before any code (PROTOCOL §6).
+
+### The owner's report
+
+*"I've only tested on desktop at my .io, but when you click Performance,
+Overview stays highlighted."* True, and worse than it looks: Overview was
+`<span class="tab on">` with no id and no handler — hard-coded selected,
+unclickable, with no way back to the overview but a reload. Landmine 118.
+
+### Why neither harness saw it
+
+smoke and render both test what draws and what handlers do. This element had
+no handler, so there was nothing to test; the markup that made it look
+selected was never questioned. A control with no listener is invisible to a
+suite that tests listeners.
+
+### Built
+
+`setHomeTab(perf)` owns both: exactly one `on`, `aria-selected` on each, the
+performance panel shown or hidden, and the overview blocks (`hero`,
+`setPanel`, the new `srcPanel`) giving way so the tab means something. Both
+tabs answer Enter and Space as well as a click. Six smoke assertions with the
+old toggle as the negative control, and **a render assertion that clicks both
+tabs in real Chrome** — the place the owner saw it.
+
+### Findings
+
+- **The DOM stub had no `setAttribute`.** The app had never needed one until
+  this take added `aria-selected`; the stub grew the method rather than the
+  app dropping the attribute, because the attribute is the accessible part.
+
+**smoke.mjs 431, render.mjs 59 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **A sweep for other decorative controls** — grep every `class="tab on"`,
+  `.pill`, `.chip` and `.badge` for a matching listener. This one reached a
+  closed test; there may be siblings.
+- Rate and Share rows, then the TalkBack pass; A31 waits on a real export.
+- The owner's list: the tour check, D16, D7, the `.aab` filename, the
+  opt-in link, D15, D17, D18.
+
+## Take 63 — 2026-09-16 — the skull goes, the Decks tab becomes a card back
+
+Opened before any code (PROTOCOL §6).
+
+### The owner's ask
+
+*"Remove this skull icon, it looks awful. For the Decks, change this to a
+picture of an actual card back."*
+
+- The skull was `g-roger`, drawn at take 17 and used in exactly one place:
+  the empty-collection state. Removed from the sprite entirely, and the
+  empty state now shows the scan-card decal it is actually telling you to
+  tap.
+- The Decks tab was `g-leader` — a card with a small crown. It is now
+  `g-cardback`: a card with the inset border and diamond lattice a card back
+  reads as. **Drawn, not reproduced:** the real One Piece card back is
+  Bandai's design and is no more shippable than the box art (landmines 26,
+  30). The shape is the thing the owner wanted; the artwork is theirs.
+
+### Findings
+
+- **An apostrophe inside an XML comment** — *Bandai's design* — broke
+  `glyphs.svg`'s parse. Reworded. The sprite is XML, not HTML.
+- **`pkill` on a background server killed the shell it ran in**, so a patch
+  in the same command silently never wrote and smoke reported the old count
+  as green. Caught by grepping for the assertion afterwards, which is
+  landmine 104's rule doing its job on a tool, not a ledger.
+
+**smoke.mjs 424, render.mjs 58 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **The empty-collection decal on a phone** — it draws in Chrome; whether
+  the scan card at 64×88 sits well in that space is an eye question.
+- Rate and Share rows, then the TalkBack pass; A31 waits on a real export.
+- The owner's list: the tour check, D16, D7, the `.aab` filename, the
+  opt-in link, D15, D17, D18.
+
+## Take 62 — 2026-09-16 — the one request declined, and the covers built instead
+
+Opened before any code (PROTOCOL §6).
+
+### The owner's ask, and why it is not built as asked
+
+*"For starter decks, I'd like to get preview images. You can find these from
+a ton of places online, but they're also published officially"* — with a
+photograph of the ST-36 box.
+
+Declined, and the reasons are all on the record already:
+
+- **Landmine 26.** Card art is copyrighted and this app never hosts it. The
+  pipeline fetches images inside the runner, hashes them and discards them;
+  what ships is derived data three orders of magnitude removed from the
+  work. A box shot is that work uncropped — Oda's character art across the
+  whole face.
+- **Landmine 30 / A16.** Publisher trademarks stay out. The box carries the
+  ONE PIECE logo, BANDAI and BANDAI NAMCO marks. The app's icon has been
+  kept original for sixty takes precisely to avoid this.
+- **Bandai's own terms**, on the page the owner linked: *all images, text
+  and data on this website may not be reproduced without permission.*
+  "Published officially" means published by them, on their site, under that
+  line. Widely available is not licensed.
+- **The store listing says so.** The full description states no character
+  art and no publisher marks, and the Data Safety and content answers were
+  approved against that app. Shipping box shots would make the listing
+  false, in a commercial app that carries ads, during a closed test.
+
+What is NOT declined: the owner's own build. `assets/user/` has carried a
+picture slot since take 25 and takes his own photographs; a folder for deck
+covers there is his call about his own copy and ships with no defaults.
+
+### Built instead
+
+Generated covers: each ready-made deck draws its own, from data the app
+already has — the Leader's colours as a field, the set code in the display
+face, the Leader's name. Inline SVG, no file, no request, no IP.
+
+### Built
+
+`deckCover(d)` — the Leader's colour or colours as a diagonal field, the set
+code in the display face, the Leader's name, a plain ring; inline SVG with a
+`role="img"` label. On every ready-made deck row. Four smoke assertions: it
+is an `<svg>` with no `<image>`, no URL and no publisher word; it carries the
+set code and Leader from the catalogue; it has a screen-reader label; and no
+fetched artwork URL appears anywhere in the shipped page.
+
+### DEFERRED this cycle
+
+- **A licensed image** — if the owner asks Bandai and is granted permission
+  in writing, `deckCover()` is one function and the covers become real
+  images with the licence recorded in PROVISION. Nothing else changes.
+- **A deck-cover slot in `assets/user/`** for the owner's own photographs of
+  his own boxes, on his own build, shipping no defaults — offered, not built,
+  because it is his decision and not an app feature.
+- **Rate and Share rows**, then the TalkBack pass (A30's order); A31 waits
+  on one real exported file.
+- The owner's list: the tour check, D16, D7, the `.aab` filename, the opt-in
+  link, D15, D17, D18.
 
 ## Take 61 — 2026-09-16 — A29: decks by default, without pretending they are Bandai's
 
