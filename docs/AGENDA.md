@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 59.* Ranked by blocking-ness, not by interest.
+*Current as of take 61.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -509,7 +509,7 @@ overnight (2,433 of 7,520, take 8's 34%) would be **16 KB gzip** — 35× smalle
 - **`UPDATE_URL` is set** (take 33) to the Pages host; the first *Sync now* on
   the Fold that reports a date is the proof.
 
-## A26 — Typography · BUILT take 33 · REPORTED WEAK take 57 · the named faces are a file drop, not a download
+## A26 — Typography and legibility · BUILT take 33 · REPORTED WEAK take 57 · COLOUR AND CONTRAST FIXED take 60
 
 The owner, on seeing the app on the Fold: change the fonts — a mix of **Impress
 BT** and **Anime Ace BB** for the loud parts, and **Trebuchet MS**, **Avenir
@@ -543,6 +543,22 @@ Funimation house stacks, which is the vibe).
   the owner's call and the owner's purchase.
 - **Ruled out: Google Fonts by URL.** Dead offline (A-3), and a request on
   every launch that PROVISION would have to declare.
+- **Fixed take 60, in the order the take-57 entry set out.** (1) The gold:
+  the colour lives on the display role now (`h1, h2`, `.panel h3`, the tour
+  heading), so it follows the palette into Prep & Play — landmine 117.
+  (2) Contrast: `--dim2` was **2.64:1** on the card in Collect and 3.20:1 in
+  Prep & Play; MEASURED replacements clear AA at **4.58:1** and **4.77:1**,
+  and smoke now computes every text token's ratio from the shipped tokens
+  with the old value as its control, so a palette edit cannot quietly go
+  under again. (3) Desktop: Pages serves the same file to a 1440px browser,
+  where the app ran edge to edge; it is a centred 520px column now, with the
+  fixed bottom nav pinned to the same width, asserted in Chrome at 1440.
+  (4) Measured before changing, and the screenshot is what found the
+  remaining faults — a left-pinned column because the media query sat above
+  `body{margin:0}`, and a two-line *Got it* button.
+- **Still open (D16):** whether the free faces stand. The owner's "weird /
+  out of place" may be the faces rather than the colour; that question is
+  cleaner to answer now that the palette is right.
 - **The owner, take 57, on the app as shipped:** *"the font looks a little
   weird / out of place compared to what it was before, and it's not gold any
   more, or poorly in some places — maybe that's because I'm viewing on
@@ -605,7 +621,73 @@ APEX ORV runs one before a release; this repo did not, and it is public.
 - **Ruled out: the README's link to the sibling repo.** It is the owner's own
   public project and the README says why the governance is shared.
 
-## A29 — Stock decks · OPENED take 57 · NOT BUILT, the owner's next-session item
+## A31 — Importing from other collection apps · OPENED take 61 · NOT A PRIORITY
+
+The owner, take 61: *"we have the ability to import decks, ensure this works
+with other platforms such as Collectr — they have an export feature, only
+works with their paid version however so I don't have an example to
+provide."*
+
+- **What exists.** `parseListLine` takes five deck-list shapes (take 29):
+  `4 OP01-016 Nami`, `4xOP01-016`, `OP01-016 x4`, tab-separated, and bare
+  numbers. Collection CSV import (take 11) keys on `product_id` and refuses
+  an ambiguous number without one (landmine 41).
+- **The blocker is evidence, not code.** Collectr's export is behind their
+  paid tier and neither of us has a file. **Writing an importer against a
+  guessed format is the same error as a guessed price**: it would appear to
+  work, mis-key a printing, and put the wrong card in someone's collection.
+  So this waits for **one real exported file** — anyone's, with the header
+  row intact; a screenshot of the first three lines is enough to start.
+- **What can be done without one, and is cheap:** make the CSV importer
+  *tolerant by shape rather than by vendor* — accept any header that carries
+  a recognisable number column and a quantity column, report per-row what it
+  matched and what it skipped, and never silently drop a line. That helps
+  every vendor at once and is testable against files we can construct.
+- **Ruled out: a vendor-specific parser per app.** Collectr, Dragon Shield,
+  TCGplayer and Deckbox all change their format when they feel like it, and
+  a parser with no sample to test against is a liability with a version
+  number.
+- **Priority: after A30's Rate/Share rows** and after the TalkBack pass, per
+  the owner ("not a priority"), or immediately if a sample file arrives.
+
+## A30 — The Testers Community report · ASSESSED take 60 · one third of it was true
+
+The owner bought the cheapest plan to reach production and forwarded the
+report. Read in full and checked against the code, take 60.
+
+- **"No user onboarding" — FALSE.** A six-card tour fires 250 ms after boot
+  on every fresh install (take 25), and *More → How it works* plus *Show the
+  guide again* repeat it. **Kept open as the one useful reading:** if the
+  tour genuinely did not appear for them, that is a real bug on a device
+  this session has never seen. The owner will check when he opens the app.
+- **"No Rate Your App" — TRUE.** Worth a row in More that opens
+  `market://details?id=com.optcghub.app`. Ruled out: the In-App Review API —
+  a plugin, a Play dependency and prompt-timing rules, for the same outcome.
+- **"No app sharing" — HALF TRUE.** *Share as a web page* shares the
+  collection (take 42); there is no *share the app*. Five lines through the
+  Share plugin. Ruled out: referral promotions — incentivised installs are a
+  Play policy hazard and need a server.
+- **Accessibility — right by accident, and the most valuable line in it.**
+  They wrote "consider accessibility"; measuring it found `--dim2` at
+  2.64:1, fixed at take 60 (A26). Still owed: a TalkBack pass — 171 buttons,
+  two icon-only, one `aria-label`.
+- **Ruled out entirely:** forums and community features (a server; PROTOCOL
+  §9 and the listing both say no), "performance monitoring" (analytics,
+  refused since take 1 and stated in the store listing), tutorial videos
+  (hosting plus card-art licensing).
+- **What the report is evidence of.** No device list, no Android versions,
+  no steps, no screenshots, no logs — and they did not run *More → Self-test
+  → Run → Share the report*, which is one tap and answers their entire
+  brief. They did not mention scanning (they would need cards), the sim, or
+  Export CSV's share sheet: the three things this project has listed as
+  unverified on a device for ten takes. "No crashes found" from fifteen
+  minutes is the absence of evidence, not evidence of absence. Treat the
+  document as a to-do list someone else wrote, not as a test result.
+- **Agreed order (take 60):** the tour check (the owner's, open) → A26
+  colour and contrast (**done this take**) → A29 stock decks → Rate and
+  Share rows, one small take together → the TalkBack pass.
+
+## A29 — Stock decks · BUILT take 61 · generated, not reproduced, and never owned
 
 The owner: *"For decks, include the starter decks you can find — they should
 all be posted online. Starter decks should be included by default so users
@@ -628,8 +710,31 @@ the portfolio or anything."*
      item, and it needs a negative control the same take: a smoke assertion
      that loading every stock deck leaves `OWN.total()` and the export byte
      count unchanged.
-- **Where the lists come from — to be decided by measurement, not by
-  scraping first.** Options in order of preference: (a) the deck lists are
+- **MEASURED take 61, and it settled the design.** (a) The catalogue has ST
+  printings but no contents — ST01 alone carries 113 printings against a
+  51-card deck. (b) **Bandai's product page publishes rarity counts and a
+  misprint correction, not per-card quantities**, and its footer forbids
+  reproducing site data. (c) Fan sites have lists: unverified, early sets
+  only. So a faithful reproduction is not available honestly, and inventing
+  quantities would be PROTOCOL §10's error wearing a deck list.
+- **Built instead: `tools/stockdecks.py`.** One deck per ST set, assembled
+  from that set's own base printings by a fixed rule — the set's Leader, the
+  cheapest printing of each in-colour number, four of each by cost then
+  number until fifty — deterministic, validated against `legality()` at
+  build time, and **named for what it is**: *Red Monkey.D.Luffy — built from
+  ST01*, never *Starter Deck ST-01*. **17 decks from 36 ST sets;** 19 sets
+  skipped, named in the build output (no Leader, or too few legal cards).
+  They ride in the bundle, appear under *Ready-made decks* on the Decks
+  screen with one line saying they are not in your collection, and the sim's
+  picker offers them, so a tester with nothing scanned can play at once.
+- **The guard the owner asked for, tested:** reading every stock deck leaves
+  `OWN` empty and the total at zero, no stock id is ever in the collection,
+  none is written to the saved deck list — with a control that shows the
+  collection *does* move when a card is genuinely added.
+- **The slot stays open.** If real quantities arrive — the owner's own
+  decks, a licensed list, a paid export — they replace the generated lists
+  in the same place and the names lose "built from".
+- **Where the lists come from — the original plan, superseded above.** Options in order of preference: (a) the deck lists are
   derivable from the catalogue itself if TCGCSV's product rows for an ST
   product carry contents — check before anything else; (b) Bandai's own
   product pages, one fetch per set, cached into the seed as a data file with

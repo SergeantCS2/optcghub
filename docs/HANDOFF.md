@@ -1,4 +1,148 @@
-# HANDOFF — through Take 59
+# HANDOFF — through Take 61
+
+## Take 61 — 2026-09-16 — A29: decks by default, without pretending they are Bandai's
+
+Opened before any code (PROTOCOL §6).
+
+### Measured first, and it changed the design
+
+The owner: *"include the starter decks you can find — they should all be
+posted online."* Three sources checked:
+
+1. **The catalogue.** ST printings are all there — 36 ST sets — but a
+   printing is not a deck: ST01 carries 113 printings and a deck is 51 cards
+   with quantities. No contents anywhere in TCGCSV.
+2. **Bandai's own product page** (`/products/decks/st01-04.php`, fetched).
+   It publishes the rarity counts (1 Leader, 2 SR, 14 C), the contents line
+   (51 cards), and a correction notice for ST-02's misprinted quantities —
+   **but not the per-card quantities themselves.** The cardlist page lists
+   the 17 numbers, not how many of each. Its footer: *all images, text and
+   data on this website may not be reproduced without permission.*
+3. **Fan sites** carry full lists with quantities, unverified, mostly for
+   the early sets, and scraping one into a shipped product is the kind of
+   confident wrong answer this project exists not to give (AGENTS §4).
+
+So a faithful reproduction of the products is **not available honestly**
+today, and inventing quantities to fill the gap would be the same class of
+error as a made-up condition multiplier (PROTOCOL §10).
+
+### What the owner actually asked for, underneath
+
+*"Included by default so users can play/test the sim or other features."*
+That is a legal, ready-to-play deck on a fresh install — not a replica of a
+retail product. So the mechanism ships and the data is swappable: stock
+decks are **built from each ST set's own printings**, deterministically,
+validated against `legality()` at build time, and labelled for what they are
+— *Red Luffy — built from ST01*, never *Starter Deck ST-01*. If the true
+quantities ever arrive (the owner owns decks; a paid Collectr export; a
+licensed list), they drop into the same slot and the labels change.
+
+### Built
+
+- **`tools/stockdecks.py`** — one deck per ST set from that set's own base
+  printings: the set's Leader, the cheapest printing of each in-colour
+  number, four of each ordered by type, cost and number until fifty.
+  Deterministic, `legality()`-validated, nine guards with two controls, in
+  the gate. **17 decks from 36 ST sets;** the 19 skipped are named in the
+  build output with the reason (no Leader, or fewer than fifty legal cards).
+- **In the app:** they ride in the bundle, list under *Ready-made decks* on
+  the Decks screen with one line stating they are not in the collection, and
+  the sim's picker draws from `DECKS.all()`, so a tester with nothing
+  scanned can deal a game immediately.
+- **The guard, tested:** reading every stock deck leaves `OWN` empty and the
+  total at zero; no stock id enters the collection; none is written to the
+  saved deck list — with a control proving the collection does move when a
+  card is genuinely added.
+- **A31** opened for importing from Collectr and similar, with the reason it
+  cannot start: no real exported file, and a guessed format mis-keys
+  printings the way a guessed price misprices a card.
+
+### Findings
+
+- **Nineteen ST sets cannot make a deck from themselves** — several have no
+  Leader at all (ST15, ST16 among them: they are promo or reprint sets that
+  carry ST numbers), and some carry too few legal in-colour cards. Skipping
+  them with a printed reason is right; filling them from other sets would
+  make a deck nobody could buy and nobody asked for.
+- **The build refused the take again** for a missing release note (take 53's
+  guard), which is the second time it has caught me writing code before the
+  note. Working as designed.
+
+**smoke.mjs 417, render.mjs 58 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **Real starter-deck quantities**, if a licensed or owner-supplied list
+  ever arrives — the slot is built and the names would lose "built from".
+- **A31** until one exported file exists; the shape-tolerant CSV importer is
+  the part that can be done without one.
+- **Rate and Share rows**, then the TalkBack pass (A30's order).
+- The owner's list: the tour check, D16, D7, the `.aab` filename, the
+  opt-in link, D15, D17, D18.
+
+## Take 60 — 2026-09-16 — the gold the owner missed, the contrast nobody measured, and the desktop nobody looked at
+
+Opened before any code (PROTOCOL §6).
+
+### Measured first (A26 step 4: measure, then change)
+
+- **Headings.** Before take 33, `h2`, the hero's `em` and panel titles were
+  the serif at `--brass` by inheritance. Take 33 added `h1, h2 {
+  font-family: var(--display) }` and no colour, so they fell back to
+  `--fg`. The share page still hard-codes `#C9A24A`, which is why it looks
+  right and the app does not.
+- **Contrast, computed from the tokens.** `--dim2` — the secondary line on
+  every card row — is **2.64:1** on the card background in Collect and
+  **3.20:1** in Prep & Play. WCAG AA wants 4.5:1 for body text and 3:1 even
+  for large. It has failed since take 1 and no one looked; the tester report
+  said "consider accessibility" and did not find it. `--fg` 12.49:1, `--dim`
+  5.19:1, brass 6.88:1 — those are fine.
+- **Width.** `render.mjs` checks 360, 412, 673 and 820. The Pages build is
+  the same file and the owner reads it on a desktop at 1200–1900, where a
+  display face at 28px sits alone in a wide column.
+- **Labels.** 171 buttons, 2 of them icon-only with no text, 1 `aria-label`.
+  Smaller than the report implies; a TalkBack pass is still owed.
+
+### Built
+
+- **The colour on the role.** `h1, h2`, `.panel h3` and the tour heading
+  carry `var(--brass)`, so the accent follows the palette into Prep & Play
+  instead of being lost when an element moves (landmine 117).
+- **`--dim2` raised to a measured 4.58:1 (Collect) and 4.77:1 (Prep &
+  Play)**, and smoke now computes every text token's WCAG ratio from the
+  shipped tokens — with the old `#6B5F4B` as the negative control, so the
+  check is known to be able to fail.
+- **A phone-width column on wide screens:** 520px centred at ≥900px, the
+  fixed bottom nav pinned to the same width, asserted in Chrome at 1440px
+  along with the heading colour.
+- **A30** on the agenda: the tester report assessed claim by claim, with
+  what is true, what is false, what is rejected and why, and the agreed
+  order of work.
+
+### Findings
+
+- **Two faults the assertions could not see, and a screenshot did.** The
+  media query sat above `body{margin:0}` and lost on order, so the column
+  was pinned left while every assertion passed; and the *Got it* button wrapped
+  to two lines. render.mjs measures geometry, not layout intent — looking at
+  the picture is still part of the job (landmine 69's other half).
+- **`file://` cannot fetch the catalogue**, so the first desktop screenshot
+  was an empty shell reading *Catalogue failed to load*. Served over http it
+  was fine. Worth remembering before reading anything into a local capture.
+
+**smoke.mjs 407, render.mjs 58 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **D16, the faces themselves** — the owner's "weird / out of place" may
+  survive the colour fix; cleaner to ask now that the palette is right.
+- **A29 stock decks**, next by the agreed order, then Rate and Share rows,
+  then a TalkBack pass.
+- **The tour check** on the owner's device — the one thing that decides how
+  seriously to read the rest of the report.
+- The owner's standing list: which `.aab` was uploaded first, the icon (D7),
+  the opt-in link, D15, D17, D18, and the two offers (seed attached to
+  releases, release-notes trim).
 
 ## Take 59 — 2026-09-16 — the seed was about to delete six days of prices
 

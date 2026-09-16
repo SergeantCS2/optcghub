@@ -1364,6 +1364,49 @@ ok('and the day\'s prices are still committed before anything that can fail (tak
 }
 
 {
+section('take 60 — the headings carry the palette, and every text token is legible');
+/* WCAG AA: 4.5:1 for body text. Computed from the tokens in the shipped page,
+   so a future palette edit that dips below it fails here rather than in a
+   collector's hand. Landmine 117: take 33 moved the headings to the display
+   face and their colour went with the containers they left. */
+const lum = hx => { const [r, g, b] = [1, 3, 5].map(i => parseInt(hx.slice(i, i + 2), 16) / 255).map(c => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+const palette = name => { const block = name === 'collect' ? html.slice(html.indexOf(':root{'), html.indexOf(':root[data-mode="play"]')) : html.slice(html.indexOf(':root[data-mode="play"]'), html.indexOf(':root[data-mode="play"]') + 400);
+  const t = {}; for (const m of block.matchAll(/--(bg|card|card2|fg|dim|dim2|brass):(#[0-9A-Fa-f]{6})/g)) t[m[1]] = m[2]; return t; };
+for (const mode of ['collect', 'play']) { const t = palette(mode);
+  ok(`${mode}: every text token clears WCAG AA 4.5:1 on the card background`,
+     ['fg', 'dim', 'dim2'].every(k => ratio(t[k], t.card) >= 4.5),
+     ['fg', 'dim', 'dim2'].map(k => `${k} ${ratio(t[k], t.card).toFixed(2)}`).join(', '));
+  ok(`${mode}: the brass accent clears 3:1 for the large text it is used on`, ratio(t.brass, t.card) >= 3.0, ratio(t.brass, t.card).toFixed(2)); }
+ok('negative control: the token that failed before this take would still fail the check', ratio('#6B5F4B', palette('collect').card) < 4.5);
+ok('headings carry the palette accent, not the body colour (landmine 117)',
+   /h1,h2\{font-family:var\(--display\)[^}]*color:var\(--brass\)\}/.test(html) && /\.panel h3\{[^}]*color:var\(--brass\)\}/.test(html) && !/#tour \.gcard h3\{[^}]*color:var\(--fg\)\}/.test(html));
+ok('a wide viewport gets a phone-width column rather than a sprawl', /@media \(min-width:900px\)\{[\s\S]*?max-width:520px/.test(html));
+}
+
+{
+section('take 61 — A29: stock decks are decks, never owned cards');
+const stock = V.CAT.stock || [];
+ok('the bundle ships ready-made decks and the manifest counts them', stock.length >= 10 && manifest.stock === stock.length, `${stock.length}`);
+ok('every one is legal by the app\'s own check (§5-1)', stock.every(d => V.legality(d).problems.length === 0),
+   stock.filter(d => V.legality(d).problems.length).map(d => d.id + ': ' + V.legality(d).problems[0]).join(' | '));
+ok('every card in them resolves to a printing the app knows (landmine 1)', stock.every(d => V.CAT.byId.has(d.leader) && d.cards.every(c => V.CAT.byId.has(c.id))));
+ok('they are named as built from a set, never as the retail product', stock.every(d => /built from ST\d+/.test(d.name) && !/Starter Deck/i.test(d.name)));
+/* THE guard of A29: the owner said they must not enter the collection. */
+V.OWN.items = [];
+const before = { total: V.OWN.total(), count: V.OWN.items.length };
+V.DECKS.all().filter(d => d.stock).forEach(d => { V.legality(d); V.simReadiness(d); });
+const csvBefore = (() => { let n = 0; const _ce = ctx.document.createElement; ctx.document.createElement = tag => { const el = _ce(tag); if (tag === 'a') el.click = () => n++; return el; }; ctx.document.createElement = _ce; return n; })();
+ok('reading every stock deck leaves the collection empty and worth nothing', V.OWN.total() === before.total && V.OWN.items.length === before.count && V.OWN.total() === 0);
+ok('...and no stock card id is in the collection', !V.OWN.items.some(i => stock.some(d => d.cards.some(c => c.id === i.id))));
+ok('a stock deck is not in the saved deck list either (it is never written to storage)', !V.DECKS.list.some(d => d.stock) && V.DECKS.all().length === V.DECKS.list.length + stock.length);
+ok('negative control: the collection DOES move when a card is actually added', (V.OWN.add(stock[0].cards[0].id, { qty: 1 }), V.OWN.items.length === 1));
+V.OWN.items = [];
+ok('the sim offers them, so a player with no collection can start', /DECKS\.all\(\)\.filter\(d => d\.leader/.test(js));
+ok('Decks shows them under their own heading, marked ready-made', /id="dkStock"/.test(html) && /ready-made/.test(js) && /not in your collection/.test(js));
+}
+
+{
 section('take 29 — deck-list formats (8.8)');
 /* parseListLine is module-internal; exercise it through the deck importer's
    effect on a deck by driving the regexes the same way. */

@@ -26,7 +26,7 @@
      parchment for text, not white; rope-brown for secondary, not grey. The six
      game colours stay exactly as they are -- they are data. */
   --bg:#0B1622; --card:#12202E; --card2:#182A3A; --line:#26394B;
-  --fg:#EADFC8; --dim:#A08E70; --dim2:#6B5F4B;
+  --fg:#EADFC8; --dim:#A08E70; --dim2:#94856C;
   --teal:#C9A24A; --up:#7BC47F; --down:#E06D5C; --gold:#E9C46A;
   --brass:#C9A24A; --brass2:#8C6F2E;
   --r:14px; --pad:16px;
@@ -49,7 +49,7 @@
    second stylesheet. --teal is the legacy alias for the accent; it follows. */
 :root[data-mode="play"]{
   --bg:#0F2A1E; --card:#163826; --card2:#1D4530; --line:#2C5A40;
-  --fg:#F1EFE6; --dim:#A9B8A4; --dim2:#6F8470;
+  --fg:#F1EFE6; --dim:#A9B8A4; --dim2:#8FA389;
   --brass:#D9583B; --brass2:#9C3E29; --teal:#D9583B; --gold:#F0B27A;
   --up:#8FD19E; --down:#F28B7B;
 }
@@ -74,7 +74,11 @@ body{
 }
 h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.015em}
 /* Single-weight display faces: ask for 400 or the browser fakes a bold. */
-h1,h2{font-family:var(--display);font-weight:400;letter-spacing:.01em}
+/* Take 60. Take 33 gave the headings the display face and, by moving them
+   out of their old containers, took their colour with it: they inherited
+   --fg and went pale everywhere at once. The colour belongs to the ROLE,
+   here, once, so it follows the palette into Prep & Play. */
+h1,h2{font-family:var(--display);font-weight:400;letter-spacing:.01em;color:var(--brass)}
 .tab,.fgrp,.mode button{font-family:var(--comic);font-weight:400;letter-spacing:.04em}
 .total,.dkcount,.big{font-family:var(--heavy);font-weight:900;letter-spacing:-.01em;font-variant-numeric:lining-nums tabular-nums}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
@@ -113,7 +117,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 /* ---- panels ------------------------------------------------------------- */
 .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
   padding:16px;margin-bottom:16px}
-.panel h3{font-size:16px;margin-bottom:12px;font-family:var(--display);font-weight:400;letter-spacing:.01em}
+.panel h3{font-size:16px;margin-bottom:12px;font-family:var(--display);font-weight:400;letter-spacing:.01em;color:var(--brass)}
 #home .panel{background:none;border:0;border-top:1px solid var(--line);border-radius:0;
   padding:18px 0 4px;margin-bottom:6px}
 .row{display:flex;align-items:baseline;gap:10px;padding:9px 0}
@@ -280,7 +284,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   position:relative;overflow:hidden}
 #tour .gcard .gpic{height:150px;border-radius:12px;background:var(--card2);display:flex;align-items:center;
   justify-content:center;color:var(--brass);margin-bottom:6px;background-size:cover;background-position:center}
-#tour .gcard h3{font-family:var(--display);font-weight:400;font-size:22px;color:var(--fg)}
+#tour .gcard h3{font-family:var(--display);font-weight:400;font-size:22px;color:var(--brass)}
 #tour .gcard p{margin:0;color:var(--dim);font-size:14.5px;line-height:1.5}
 #tour .gcard ul{margin:4px 0 0;padding-left:18px;color:var(--dim);font-size:13.5px;line-height:1.55}
 #tour .gcard li b{color:var(--fg);font-weight:600}
@@ -396,6 +400,17 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
   padding:10px 18px;font-size:13.5px;font-weight:600;opacity:0;transition:opacity .2s;
   pointer-events:none;white-space:nowrap}
 .toast.on{opacity:1}
+/* The app is built for a phone and Pages serves the same file to a desktop
+   browser (take 60). Rather than pretend to be a desktop app, it stays a
+   phone-width column, centred, with the chrome that hangs off the bottom
+   edge held to the same width. */
+@media (min-width:900px){
+  body{max-width:520px;margin:0 auto;box-shadow:0 0 0 1px var(--line)}
+  /* nav is position:fixed, so a max-width does not centre it -- it has to be
+     pinned to the middle of the viewport and given the column's width. */
+  nav{left:50%;right:auto;transform:translateX(-50%);width:496px}
+  #tour .gcard,.sheet{max-width:520px;margin-left:auto;margin-right:auto}
+}
 </style>
 </head>
 <body>
@@ -637,6 +652,7 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
   <div class="panel" id="dkValue"></div>
   <div class="panel"><h3>Main deck <span class="note" id="dkTypes"></span></h3><div id="dkRows"></div></div>
   <div class="panel" id="dkSim"></div>
+  <div id="dkStock"></div>
   <div class="row" style="gap:10px;margin-bottom:30px">
     <button class="ghost" id="dkImport" style="flex:1">Import</button>
     <button class="ghost" id="dkExport" style="flex:1">Export</button>
@@ -969,7 +985,11 @@ async function loadCatalogue() {
   CAT.man = man; CAT.ng = cat.ng; CAT.ngs = cat.ngs;
   CAT.valid = new Set(cat.valid_numbers || []);
   CAT.star = cat.star || null;
-  CAT.effects = cat.effects || {};          // A23 step (2): scripted effects, parsed from the text at build time
+  CAT.effects = cat.effects || {};
+  /* A29: stock decks ride in the bundle. They are DECKS, never cards owned --
+     nothing here ever touches OWN, the portfolio, the export or the binder. */
+  CAT.stock = (cat.stock || []).map(d => ({ id: d.id, name: d.name, set: d.set, stock: true,
+    leader: d.leader, cards: d.cards.map(c => ({ id: c.id, n: c.n })) }));          // A23 step (2): scripted effects, parsed from the text at build time
   CAT.days = cat.days || []; CAT.hist = cat.hist || {};
   cat.sets.forEach(s => CAT.sets.set(s.id, s));
   const C = cat.cols;
@@ -1269,6 +1289,10 @@ const RULES = {
   MAIN_TYPES: new Set(['Character', 'Event', 'Stage']),
 };
 const DECKS = {
+  /* The player's decks, then the stock ones. A stock deck is never saved,
+     never edited in place, and never counted as owned (A29, take 61). */
+  all() { return this.list.concat(CAT.stock || []); },
+  isStock(d) { return !!(d && d.stock); },
   list: JSON.parse(localStorage.getItem('vault.decks') || '[]'),
   save() { localStorage.setItem('vault.decks', JSON.stringify(this.list)); },
   blank() { return { id: 'd' + Date.now(), name: '', leader: null, cards: [],
@@ -1333,6 +1357,7 @@ function analysis(deck) {
 let dkCur = null;
 function paintDecks() {
   const list = DECKS.list;
+  paintStock();
   $('#dkList').innerHTML = list.length ? list.map(d => {
     const A = analysis(d); const L = A.leader;
     return `<button class="panel" style="width:100%;text-align:left;display:flex;gap:12px;align-items:center" data-deck="${d.id}">
@@ -1345,6 +1370,21 @@ function paintDecks() {
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-deck]'); if (b) openDeck(b.dataset.deck);
+});
+/* Stock decks: browsable, playable in the sim, copyable into your own decks.
+   Never owned cards -- the Decks screen says so once, plainly. */
+function paintStock() {
+  const box = $('#dkStock'); if (!box) return; const stock = CAT.stock || [];
+  box.innerHTML = !stock.length ? '' : `<div class="fgrp">Ready-made decks</div>
+    <div class="note" style="margin-bottom:8px">${stock.length} legal decks built from the starter-deck sets, so you can try the Sim and the browse before you own anything. They are not in your collection and never count toward its value.</div>
+    ${stock.map(d => `<button class="panel" style="width:100%;text-align:left;display:flex;gap:12px;align-items:center" data-stock="${esc(d.id)}">
+      <div style="flex:1;min-width:0"><b>${esc(d.name)}</b><div class="note">${d.cards.reduce((a, c) => a + c.n, 0)} cards \u00b7 ${esc(d.set)}</div></div>
+      <span class="badge">ready-made</span></button>`).join('')}`;
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-stock]'); if (!b) return;
+  const d = (CAT.stock || []).find(x => x.id === b.dataset.stock); if (!d) return;
+  SIMUI.pre = d.id; MODE.set('play'); go('sim'); toast(`${d.name} \u2014 pick it as your deck`);
 });
 $('#dkNew').addEventListener('click', () => { const d = DECKS.blank(); DECKS.list.push(d); DECKS.save(); openDeck(d.id); });
 function openDeck(id) { dkCur = DECKS.list.find(d => d.id === id); if (dkCur) go('deck'); }
@@ -2215,6 +2255,7 @@ function go(id) {
   ({ home: paintHome, collection: paintCollection, search: paintSearch,
      scan: paintScan, settings: paintSettings, decks: paintDecks, deck: paintDeck,
      trade: paintTrade, play: paintPlay, sim: paintSim, cards: paintCards,
+     /* decks paints both lists */
      checklist: paintChecklist, wants: () => { paintWants(); paintAlerts(); }, binder: paintBinder })[id]?.();
 }
 document.addEventListener('click', e => {
@@ -4238,7 +4279,8 @@ const BOT = {
 /* ---- sim: the screen ----------------------------------------------------
    One column, one player at a time, the curtain between them. A card on the
    board is its catalogue line: name · cost · power · counter · keywords. */
-const SIMUI = { sel: null, result: null, menu: null, offer: null, post: null, afterOffer: null, pre: null, legalDecks() { return DECKS.list.filter(d => d.leader && legality(d).problems.length === 0); } };
+const SIMUI = { sel: null, result: null, menu: null, offer: null, post: null, afterOffer: null, pre: null,
+  legalDecks() { return DECKS.all().filter(d => d.leader && legality(d).problems.length === 0); } };
 function simCard(id, extra = '', noPower = false) {
   const p = CAT.byId.get(id); if (!p) return `<span class="note">unknown</span>`;
   const kw = (p.kw || '').split('|').filter(k => ['Rush', 'Blocker', 'Double Attack', 'Banish', 'Trigger', 'Unblockable'].includes(k));
@@ -4476,7 +4518,7 @@ async function runSelfTest() {
      day and a hardcoded placeholder is landmine 62 in a text box. */
   $('#allq').placeholder = `Search all ${(CAT.man.cards || 0).toLocaleString()} cards`;
   paintNet(); paintHome();
-  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness,
+  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock,
                    FILT, applyFilter, sortRows, blankFilter, activeCount,
                    DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,
                    backupJson, scheduleBackup,

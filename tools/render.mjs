@@ -228,6 +228,22 @@ if (puppeteer) {
     ok(`${name} (${w}px): nothing off-screen`,
        m.scroll <= m.vw + 1 && m.off === 0, JSON.stringify(m));
   }
+  /* Take 60: Pages serves this same file to a desktop browser, where the app
+     used to run edge to edge. It stays a phone-width column there. */
+  await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+  await new Promise(r => setTimeout(r, 150));
+  const wide = await page.evaluate(() => {
+    const b = document.body.getBoundingClientRect(); const n = [...document.querySelectorAll('nav')].find(x => x.offsetParent !== null || x.getBoundingClientRect().width > 0);
+    const h2 = document.querySelector('h2');
+    return { bodyW: Math.round(b.width), vw: document.documentElement.clientWidth,
+             navW: n ? Math.round(n.getBoundingClientRect().width) : 0,
+             headColour: h2 ? getComputedStyle(h2).color : '' };
+  });
+  ok('desktop (1440px): the app is a centred phone-width column, not a sprawl',
+     wide.bodyW <= 560 && wide.vw >= 1400, JSON.stringify(wide));
+  ok('...and the bottom chrome is held to the same width', wide.navW > 0 && wide.navW <= 560, String(wide.navW));
+  ok('headings render in the palette accent, not the body colour (landmine 117)',
+     /rgb\(201, 162, 74\)/.test(wide.headColour), wide.headColour);
   await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
 
   /* ---- take 10: the scanner's pixel stages, in a real canvas ------------

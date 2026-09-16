@@ -1,4 +1,4 @@
-# OP TCG Hub — take 59
+# OP TCG Hub — take 61
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,14 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 61:** Decks now comes with 17 ready-made decks built from the
+starter-deck sets, so you can try the Sim straight away without owning a
+card. They are not in your collection and never count toward its value.
+
+**New at take 60:** headings are gold again — they went pale in an earlier
+update; small grey text is legible now rather than nearly invisible; and the
+app no longer sprawls when you open it in a desktop browser.
 
 **New at take 59:** nothing visible; an update can no longer shorten the
 price history the nightly build has collected.

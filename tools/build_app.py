@@ -207,6 +207,10 @@ def build(verbose=True):
     # whole sentences the engine can run; everything else stays manual.
     import effects as fx
     cat["effects"], fxstats = fx.build(cat)
+    # A29, take 61: a legal deck on a fresh install, built from each ST set's
+    # own printings and labelled as built, never as the retail product.
+    import stockdecks as sd
+    cat["stock"] = sd.build(cat, verbose=True)
     print(f"   effects: {fxstats['parsed']}/{fxstats['lines']} lines scripted ({100*fxstats['parsed']/max(1,fxstats['lines']):.1f}%), "
           f"{fxstats['cards_full']} cards fully, {fxstats['cards_partial']} partly")
     raw = json.dumps(cat, separators=(",", ":")).encode()
@@ -234,6 +238,7 @@ def build(verbose=True):
     man = json.load(open(MANIFEST))
     man["user"] = user
     man["fonts"] = fonts_used     # which file served each role, for the About panel and the harness
+    man["stock"] = len(cat["stock"])
     man["effects"] = {"lines": fxstats["lines"], "scripted": fxstats["parsed"], "cards_full": fxstats["cards_full"], "cards_partial": fxstats["cards_partial"]}
     # What's new (take 53): the first "New at take N" paragraph of ci/RELEASE.md,
     # so a Play tester sees what changed without leaving the app. Read, not typed.

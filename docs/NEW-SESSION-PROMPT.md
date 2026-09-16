@@ -1,15 +1,15 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 59.* Paste the block between the rules into a new session
+*Current as of take 61.* Paste the block between the rules into a new session
 whose project carries `AGENDA.md`, `LANDMINES.md` and `HANDOFF.md` (the three
 project files) and has the newest seed attached.
 
 ---
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
-tracker and deck builder for Android, built across 59 takes by previous
+tracker and deck builder for Android, built across 61 takes by previous
 sessions. The repo lives at `github.com/SergeantCS2/optcghub`; the seed
-`optcghub-seed-t59.zip` is the whole tree. CI builds on every seed drop and
+`optcghub-seed-t61.zip` is the whole tree. CI builds on every seed drop and
 has run green end to end; the APK the owner installs comes from the Release.
 
 **Before anything else, in this order:**
@@ -22,7 +22,7 @@ has run green end to end; the APK the owner installs comes from the Release.
 4. Read `docs/HANDOFF.md`, newest entry first, back to take 28 at least. Every
    take ends with a DEFERRED list; the union of those lists is the work.
 5. Read `docs/LANDMINES.md` §0 (the index) and skim §1. When you are about to
-   do something, grep the index first. 116 of them; each is a real failure.
+   do something, grep the index first. 117 of them; each is a real failure.
 6. Read `docs/AGENDA.md` for what is open and whose it is.
 
 **The discipline, which the gate enforces:**
@@ -58,7 +58,11 @@ has run green end to end; the APK the owner installs comes from the Release.
   `.aab` was uploaded first — if the DEVKEY one, the upload key must be
   reset (RUNBOOK-play §2). Every seed dropped now becomes a Play update for
   the testers: seal only what you would ship.
-- **A26 and A29 are the owner's two named items for this session** (take 57,
+- **A30 carries the agreed order** after the tester report: the owner's tour
+  check (open) → A26 colour and contrast (done take 60) → A29 stock decks
+  (done take 61) → **Rate and Share rows** → a TalkBack pass → A31 (importing
+  from Collectr and friends, which waits on one real exported file).
+- **A26 and A29 were the owner's two named items at take 57** (take 57,
   not built at his instruction): the typography reads weak and ungolden —
   A26 names the one-line cause found at take 57 and says to measure before
   editing — and **stock decks**, the ST lists shipped by default so a player
@@ -98,6 +102,6 @@ only be changed by giving him a new file and saying so in the runbook.
 30, A16); gate scanning (A17); multiply condition into a price (PROTOCOL §10);
 send the collection anywhere (PROTOCOL §9); seal with a red gate.
 
-Say "take 60" and begin with PROTOCOL §0.
+Say "take 62" and begin with PROTOCOL §0.
 
 ---

@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 59.*
+*Current as of take 61.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -124,6 +124,8 @@ Start here. Do not read top to bottom.
 | Nightly stops, and the history has a hole | **115** |
 | "Since yesterday" on a number that spans a week | 115 |
 | A seed drop makes the price history shorter | **116** |
+| A refactor moved an element and its colour went pale | **117** |
+| Small grey text nobody could read | 117 |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -1651,6 +1653,26 @@ must merge into, never replace. The others today are `catalog/hashes.json`
 and `catalog/star_template.json`; both are append-only by nature and both
 are restored from the same commit history if a thin seed ever trims them,
 which is the next thing to prove rather than assume.
+
+**117. A property that was inherited is a property nobody wrote down, and a
+refactor takes it away silently. Take 60, reported by the owner as "it's not
+gold any more", eleven takes after it happened.** Take 33 gave `h1, h2` the
+display face; before that they sat inside containers that set `--brass`, so
+they were gold by inheritance. The new rule set a family and no colour, they
+fell back to `--fg`, and every panel title, hero name, tour heading and sim
+panel head went pale in one line. Nothing failed: `render.mjs` checks that
+things DRAW and at what size, never what colour, and the share page — which
+hard-codes `#C9A24A` — went on looking right, which is what made the app look
+wrong by comparison. Two rules out of it: when a refactor moves an element,
+the properties it *inherited* move with it or they are lost, so write them on
+the role; and a harness that measures geometry and not colour cannot see a
+palette regression, so smoke now computes WCAG contrast from the shipped
+tokens with the failing value as its control. That check found the second
+half on its own: `--dim2`, the secondary line on every card row, was
+**2.64:1** on the card in Collect and **3.20:1** in Prep & Play, under the
+4.5:1 AA bar and under even the 3:1 large-text floor, since take 1. The
+tester report that prompted this said only "consider accessibility" and
+found neither.
 
 ## §2 — Inherited from APEX ORV
 
