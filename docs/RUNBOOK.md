@@ -1,6 +1,6 @@
 # RUNBOOK — from nothing to a repo that builds every night
 
-*Current as of take 66.* Everything below is the whole procedure. You need
+*Current as of take 80.* Everything below is the whole procedure. You need
 three files from the outputs: `build.yml`, `bootstrap.yml`, and the newest
 `optcghub-seed-tNNN.zip`. A PC makes step 2 easier; a phone works.
 
@@ -97,6 +97,18 @@ build** — landmine 108), the release notes say so, and the fix is: open
 `.github/workflows/<file>` in the browser → the pencil → select all → paste
 the new file → commit. Then the 2b checks again for `build.yml`. It happens
 rarely and the runbook will always say when.
+
+## 5c. The hourly Hunt feed (take 71) — a third paste, once
+
+`ci/hunt.yml` is the third hand-pasted workflow (landmine 46). Paste it to
+`.github/workflows/hunt.yml` once. It runs at :17 every hour, rebuilds `www/`
+from the committed tree, fetches Target's product and shelf stock for the
+configured zip with `tools/hunt.py`, and deploys `www/` to Pages — the app
+reads `hunt/feed.json` from there. Change the zip or radius without a paste:
+repository **Variables** `HUNT_ZIP` and `HUNT_RADIUS` (Settings → Secrets and
+variables → Actions → Variables). It shares the `pages` concurrency group
+with the nightly so the two never deploy over each other. A run costs about
+two minutes of a public repo's free runner time.
 
 ## 6. Every take after the first
 

@@ -412,6 +412,23 @@ def check_selftests():
                        capture_output=True, text=True)
     if r.returncode:
         fail("selftest", "variants.py cases failed:\n" + r.stdout)
+    # Landmine 114/115 lint (take 80): a smoke assertion that pins a number to
+    # something the nightly moves -- the day count, the source date, a price --
+    # is a test that expires, and one that expired in bundle.sh cost five nights.
+    smoke_src = open(os.path.join(ROOT, "tools", "smoke.mjs"), encoding="utf8").read()
+    pinned = []
+    for m in re.finditer(r"(history_days|\.days\.length|source_updated_at|\.market|\.low|\.high)[^\n;]{0,40}?===\s*(\d+(?:\.\d+)?)\b", smoke_src):
+        line = smoke_src[:m.start()].count("\n") + 1
+        ctx = smoke_src[max(0, m.start() - 160):m.end()]
+        if "lint-ok" in ctx or "V.CAT.days.length" in ctx:            # a comparison between two live values is fine
+            continue
+        pinned.append(f"line {line}: {m.group(0).strip()[:70]}")
+    if pinned:
+        fail("smoke-lint", "an assertion pins a number to something the nightly moves (landmine 115):\n  " + "\n  ".join(pinned))
+    r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "hunt.py"), "--selftest"],
+                       capture_output=True, text=True)
+    if r.returncode:
+        fail("selftest", "hunt.py parsers did not all pass against the saved responses:\n" + r.stdout)
     r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "stockdecks.py"), "--selftest"],
                        capture_output=True, text=True)
     if r.returncode:

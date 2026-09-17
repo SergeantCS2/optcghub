@@ -256,6 +256,24 @@ if (puppeteer) {
   ok('Home tabs: Overview on at rest, Performance takes it, Overview takes it back',
      tabs.before[0] && !tabs.before[1] && !tabs.after[0] && tabs.after[1] && tabs.after[2] === 'block'
      && tabs.back[0] && !tabs.back[1] && tabs.back[2] !== 'none', JSON.stringify(tabs));
+  /* Take 70: the third mode draws -- the knob lands on Hunt, the Sealed
+     screen has rows, the palette applies. */
+  const hunt = await page.evaluate(() => {
+    const V = window.VAULT; V.MODE.set('hunt', true);
+    return new Promise(res => setTimeout(() => res((() => {
+    const knob = document.querySelector('#modeSlider .knob').getBoundingClientRect();
+    const btn = document.querySelector('#modeSlider [data-mode="hunt"]').getBoundingClientRect();
+    return { knobUnderHunt: Math.abs((knob.left + knob.width / 2) - (btn.left + btn.width / 2)) < 12,
+             rows: document.querySelectorAll('#sealedList [data-open]').length,
+             bg: getComputedStyle(document.body).backgroundColor,
+             navShown: !document.querySelector('#navHunt').hidden,
+             screenOn: document.querySelector('#sealed').classList.contains('on') };
+    })()), 350));   // the knob animates for 220 ms; measure it at rest
+  });
+  ok('Hunt: the slider knob sits under Hunt and the mode\'s nav and screen are on', hunt.knobUnderHunt && hunt.navShown && hunt.screenOn, JSON.stringify(hunt));
+  ok('Hunt: the Sealed screen draws product rows', hunt.rows > 100, String(hunt.rows));
+  ok('Hunt: the third palette is applied (not the Collect background)', hunt.bg !== 'rgb(11, 22, 34)', hunt.bg);
+  await page.evaluate(() => { window.VAULT.MODE.set('collect', true); });
   /* Take 66: what a screen reader would actually reach, in a real DOM --
      every visible control has an accessible name (text or aria-label). */
   const a11y = await page.evaluate(() => {
@@ -269,6 +287,13 @@ if (puppeteer) {
   ok('every visible control has an accessible name', a11y.bad === 0 && a11y.total > 10, JSON.stringify(a11y));
   ok('screen titles are headings and exactly one real tab is selected',
      a11y.headings >= 1 && a11y.tabs.filter(x => x === 'true').length === 1, JSON.stringify(a11y.tabs));
+  /* Take 80: keyboard focus is visible; a mouse click's focus is not */
+  const ring = await page.evaluate(async () => {
+    const b = document.querySelector('nav button[data-go="search"]'); b.focus();
+    const kb = getComputedStyle(b); const viaKeyboard = kb.outlineStyle !== 'none' && parseFloat(kb.outlineWidth) >= 1;
+    return { viaKeyboard, colour: kb.outlineColor };
+  });
+  ok('a keyboard-focused control shows a visible ring in the accent colour', ring.viaKeyboard, JSON.stringify(ring));
   ok('headings render in the palette accent, not the body colour (landmine 117)',
      /rgb\(201, 162, 74\)/.test(wide.headColour), wide.headColour);
   await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });

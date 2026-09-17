@@ -1,6 +1,6 @@
 # PROVISION
 
-*Current as of take 66.*
+*Current as of take 80.*
 
 Every host this project touches, in either phase, with its purpose, licence and
 cadence. The gate refuses an undeclared host in `www/` or in `tools/`.
@@ -16,6 +16,10 @@ wifi and may fetch. **Scanning** happens anywhere and may not.
 |---|---|---|---|---|
 | `tcgcsv.com` | TCGplayer categories, groups, products, prices for `categoryId 68` | build | nightly, after 20:00 UTC | Free public mirror of TCGplayer data. Community-run (`CptSpaceToaster/tcgcsv`), Patreon-supported. Attribution required in-app. |
 | `sergeantcs2.github.io` (Pages) | the nightly `bundle/manifest.json` and `bundle/catalog.json` | More → Sync, and once on open when online | **Yes** — written to `Directory.Data` as the live catalogue; the APK's bundled copy is the fallback. Take 27. `UPDATE_URL` set at take 33; empty disables it |
+| `onepieceevents.com` | the static `data/evnt_us.json` — every US One Piece event with its store's name, address, city, zip (derived from Bandai TCG+, where stores register to run events) | the hourly `hunt` workflow, at most once a day | daily | Third-party aggregator, keyless, public static files (a `manifest.json` lists them). The roster ships as `hunt/stores.json` naming its source and fetch time (take 74) |
+| `www2.census.gov` | the ZCTA gazetteer: a centroid per US zip | once, cached as `catalog/zcta.json` in the tree | never again unless removed | US Census, public domain. 758 KB compacted to two decimals; the app ships only the ~900 3-digit-prefix means (take 74) |
+| local game stores' Shopify storefronts (`hunt/storefronts.json`, hand-verified: today `blackvaultgaming.com`) | `/products.json` and `/collections/…/products.json` — the store's own public listings: One Piece sealed product with price and availability | the hourly `hunt` workflow | hourly | Public by design on every Shopify store; keyless; ~20 requests a store at most. The feed names the shop, links into its store, and says a shop lists what it chooses (take 75) |
+| `redsky.target.com` | Target's own product JSON: search, price, nearby stores, per-store availability for the configured zip (A32) | the hourly `hunt` workflow on the runner — **never the app** | hourly | Keyless; the key is the public constant in every Target page. The feed ships as `hunt/feed.json` with the fetch time on every source (take 71) |
 | `tcgplayer-cdn.tcgplayer.com` | Card art, downloaded to compute dHash then **discarded** | build | on catalogue change | Bandai / Shueisha / Toei / Viz artwork. Never redistributed. Only the 64-bit hash ships (landmine 26). |
 
 `tcgcsv.com` is fetched with a declared User-Agent naming this project,

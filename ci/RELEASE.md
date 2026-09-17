@@ -1,4 +1,4 @@
-# OP TCG Hub — take 66
+# OP TCG Hub — take 80
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,56 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 80:** a visible focus ring for keyboard users on the web
+version; nothing else changes.
+
+**New at take 79:** distances in Hunt → Local and Events can be exact for
+your zip with one tap (a one-time 200 KB download); until then they are
+"about".
+
+**New at take 78:** any event in Hunt → Events can go onto your phone's
+calendar with one tap.
+
+**New at take 77:** **stock alerts** — watch any box, pack or deck in Hunt
+and get a notification the moment it turns up in stock at any source the app
+tracks: Target online, a Target shelf near you, or a local shop's online
+store.
+
+**New at take 76:** Hunt → **Events** — every One Piece event near you for
+the next month, with the fee, the date and the store, and a link to register
+on Bandai TCG+. Hunt is green now.
+
+**New at take 75:** local shops with an online store now show their sealed
+One Piece stock and prices in Hunt, hourly — starting with the shops on a
+verified list that grows as you add them.
+
+**New at take 74:** Hunt → **Local** — every store that runs One Piece events
+near your zip, with their next event dates, a distance filter, and your own
+notes on what you saw on their shelves.
+
+**New at take 73:** Hunt remembers stock over time — when a product was last
+shipping and when each nearby store last had it on the shelf — so you can see
+a store's restock pattern instead of guessing.
+
+**New at take 72:** Hunt shows online prices and shipping stock for the whole
+US, and asks for your zip once to add shelf stock at stores near you where
+that area is covered.
+
+**New at take 71:** Hunt → Sealed shows Target's price and which Target
+stores near 48329 have it on the shelf, refreshed hourly. More stores and
+shops follow.
+
+**New at take 70:** a third mode, **Hunt** — every booster box, pack and
+starter deck with its market price and nightly move, alerts on any of them,
+and a release calendar. Local stores and store stock come next.
+
+**New at take 69:** nothing visible; more of the sealed tracker's design.
+
+**New at take 68:** nothing visible; the sealed-product tracker is designed.
+
+**New at take 67:** nothing visible; a sealed-product price tracker and a
+release calendar are planned as a third mode.
 
 **New at take 66:** every button now has a name a screen reader can read,
 and screen titles announce as headings instead of tabs. If you use TalkBack,

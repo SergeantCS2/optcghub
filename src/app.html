@@ -54,12 +54,29 @@
   --up:#8FD19E; --down:#F28B7B;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* Take 80. A keyboard user on the Pages build had no focus ring in places:
+   the reset above and several buttons' own outlines removed it. :focus-visible
+   fires only for keyboard focus, so a tap never shows it. */
+:focus-visible{outline:2px solid var(--brass);outline-offset:2px;border-radius:8px}
+button:focus:not(:focus-visible){outline:none}
 svg.g{display:inline-block;vertical-align:-3px;color:var(--brass);flex:0 0 auto}
 html,body{margin:0;height:100%}
 body{overflow-x:hidden}   /* belt and braces for landmine 54 */
 body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
   background:radial-gradient(circle at 50% 18%,rgba(201,162,74,.09),transparent 42%);}
 /* On the table the glow is the lamp over a playmat, not a compass. */
+/* Hunt is Zoro's (take 76): a forest-green ground, cream text, the gold of
+   three earrings as the accent, and the sash's red only where something has
+   gone down. A palette and a three-stroke mark, nothing more -- no likeness,
+   no art (landmine 26). */
+:root[data-mode="hunt"]{
+  --bg:#0B1B12; --card:#132A1C; --card2:#1B3A27; --line:#2E5A3D;
+  --fg:#EEF3E6; --dim:#A9C2AC; --dim2:#8FAA93;
+  --brass:#D6B04C; --brass2:#9A7A2B; --teal:#D6B04C; --gold:#E8C972;
+  --up:#8FD19E; --down:#F0806E;
+}
+:root[data-mode="hunt"] body::before{background:radial-gradient(60% 40% at 50% 0%,#1E4A2C 0%,transparent 70%)}
+.swords{display:inline-block;width:18px;height:18px;vertical-align:-3px;margin-right:6px;color:var(--brass)}
 :root[data-mode="play"] body::before{background:
   radial-gradient(ellipse at 50% 0%,rgba(240,178,122,.10),transparent 50%),
   repeating-linear-gradient(0deg,transparent 0 23px,rgba(255,255,255,.012) 23px 24px)}
@@ -373,9 +390,12 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   color:var(--dim);letter-spacing:.01em;min-width:118px;transition:color .2s}
 .mode button.on{color:#1A1408}
 :root[data-mode="play"] .mode button.on{color:#F1EFE6}
-.mode .knob{position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 4px);border-radius:999px;
+.mode .knob{position:absolute;top:3px;bottom:3px;left:3px;width:calc(33.333% - 3px);border-radius:999px;
   background:var(--brass);transition:transform .22s cubic-bezier(.4,0,.2,1)}
 .mode.play .knob{transform:translateX(calc(100% + 2px))}
+.mode.hunt .knob{transform:translateX(calc(200% + 4px))}
+.mode button{min-width:96px}
+:root[data-mode="hunt"] .mode button.on{color:#1A1408}
 @media (prefers-reduced-motion:reduce){.mode .knob{transition:none}}
 
 /* ---- nav ---------------------------------------------------------------- */
@@ -419,6 +439,7 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
     <div class="knob"></div>
     <button data-mode="collect" class="on" role="tab">Collect</button>
     <button data-mode="play" role="tab">Prep &amp; Play</button>
+    <button data-mode="hunt" role="tab">Hunt</button>
   </div>
 </div>
 <!-- __GLYPHS__ : assets/glyphs.svg is inlined here at build time (build_app.py)
@@ -499,6 +520,32 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
     <svg class="g" width="64" height="88" viewBox="0 0 64 88" style="opacity:.7"><use href="#g-scancard"/></svg>
     Nothing here yet.<br>Tap <b>Scan</b> and point the camera at a card.
   </div>
+</section>
+
+<!-- ============================= HUNT ================================== -->
+<section id="sealed" class="screen">
+  <div class="bar"><span class="tab on" role="heading" aria-level="1"><svg class="swords" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 15L13 5M6 16L16 6M2 12L12 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M12 5l2 2M15 6l1 1M11 2l2 2" stroke="currentColor" stroke-width="1.2"/></svg>Sealed</span>
+    <span class="pill" role="status" id="sealedAsOf"></span></div>
+  <div class="row" style="gap:8px;margin:6px 0 10px">
+    <input id="sealedQ" placeholder="Search boxes, packs, decks" aria-label="Search sealed product">
+  </div>
+  <div class="row" id="sealedKinds" style="gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
+  <div class="note" style="margin-bottom:10px">TCGplayer market via TCGCSV — the marketplace, not the shelf price. Store stock and local shops come to this mode next.</div>
+  <div id="sealedList"></div>
+</section>
+<section id="local" class="screen">
+  <div class="bar"><span class="tab on" role="heading" aria-level="1"><svg class="swords" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 15L13 5M6 16L16 6M2 12L12 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Local</span>
+    <select id="localRadius" aria-label="Distance"><option value="10">10 mi</option><option value="25">25 mi</option><option value="50" selected>50 mi</option><option value="100">100 mi</option><option value="0">Any</option></select></div>
+  <div id="localList"></div>
+</section>
+<section id="events" class="screen">
+  <div class="bar"><span class="tab on" role="heading" aria-level="1"><svg class="swords" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 15L13 5M6 16L16 6M2 12L12 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Events</span>
+    <select id="eventsRadius" aria-label="Distance"><option value="10">10 mi</option><option value="25">25 mi</option><option value="50">50 mi</option><option value="100">100 mi</option><option value="0">Any</option></select></div>
+  <div id="eventsList"></div>
+</section>
+<section id="releases" class="screen">
+  <div class="bar"><span class="tab on" role="heading" aria-level="1"><svg class="swords" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 15L13 5M6 16L16 6M2 12L12 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Releases</span></div>
+  <div id="relList"></div>
 </section>
 
 <!-- ============================ SEARCH ================================= -->
@@ -866,6 +913,12 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
   <button data-go="play"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-life"/></svg></span>Play</button>
   <button data-go="sim"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-don"/></svg></span>Sim</button>
 </nav>
+<nav id="navHunt" hidden>
+  <button data-go="sealed" class="on"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-stage"/></svg></span>Sealed</button>
+  <button data-go="releases"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-counter"/></svg></span>Releases</button>
+  <button data-go="local"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-compass"/></svg></span>Local</button>
+  <button data-go="events"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-life"/></svg></span>Events</button>
+</nav>
 <nav id="navCollect">
   <button data-go="home" class="on"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-compass"/></svg></span>Home</button>
   <button data-go="search"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-spyglass"/></svg></span>Search</button>
@@ -988,6 +1041,7 @@ async function loadCatalogue() {
   CAT.effects = cat.effects || {};
   /* A29: stock decks ride in the bundle. They are DECKS, never cards owned --
      nothing here ever touches OWN, the portfolio, the export or the binder. */
+  CAT.zips3 = cat.zips3 || null;
   CAT.stock = (cat.stock || []).map(d => ({ id: d.id, name: d.name, set: d.set, stock: true,
     leader: d.leader, cards: d.cards.map(c => ({ id: c.id, n: c.n })) }));          // A23 step (2): scripted effects, parsed from the text at build time
   CAT.days = cat.days || []; CAT.hist = cat.hist || {};
@@ -1894,14 +1948,14 @@ function ask({ title, why = '', kind = 'text', value = '', placeholder = '', ok 
  * ===================================================================== */
 const MODE = {
   cur: localStorage.getItem('vault.mode') || 'collect',
-  home: { collect: 'home', play: 'decks' },
-  navFor: { collect: '#navCollect', play: '#navPlay' },
+  home: { collect: 'home', play: 'decks', hunt: 'sealed' },
+  navFor: { collect: '#navCollect', play: '#navPlay', hunt: '#navHunt' },
   set(m, navigate = true) {
     this.cur = m; localStorage.setItem('vault.mode', m);
     const root = document.documentElement; if (root && root.dataset) root.dataset.mode = m;
-    $('#modeSlider').classList.toggle('play', m === 'play');
+    $('#modeSlider').classList.toggle('play', m === 'play'); $('#modeSlider').classList.toggle('hunt', m === 'hunt');
     $$('#modeSlider button').forEach(b => b.classList.toggle('on', b.dataset.mode === m));
-    $('#navCollect').hidden = m !== 'collect'; $('#navPlay').hidden = m !== 'play';
+    $('#navCollect').hidden = m !== 'collect'; $('#navPlay').hidden = m !== 'play'; $('#navHunt').hidden = m !== 'hunt';
     if (navigate) go(this.home[m]);
   }
 };
@@ -2280,7 +2334,11 @@ function go(id) {
      scan: paintScan, settings: paintSettings, decks: paintDecks, deck: paintDeck,
      trade: paintTrade, play: paintPlay, sim: paintSim, cards: paintCards,
      /* decks paints both lists */
-     checklist: paintChecklist, wants: () => { paintWants(); paintAlerts(); }, binder: paintBinder })[id]?.();
+     checklist: paintChecklist, wants: () => { paintWants(); paintAlerts(); }, binder: paintBinder,
+     sealed: () => { paintSealed(); if (!HUNT.zip && !localStorage.getItem('vault.hunt.zipAsked')) { localStorage.setItem('vault.hunt.zipAsked', '1'); askZip().then(ok => { if (ok) paintSealed(); }); }
+       if (navigator.onLine && HUNT.url() && (!HUNT.feed || HUNT.stale(HUNT.feed.fetched_at))) HUNT.sync({ quiet: true }).then(async ok => { if (ok) { await HUNT.syncHistory(); await LOCAL.syncShops(); await STOCK.check(); paintSealed(); } }); }, releases: paintReleases,
+     local: () => { paintLocal(); if (navigator.onLine && HUNT.url()) { const jobs = []; if (!LOCAL.stores || HUNT.ageMin(LOCAL.stores.fetched_at) > 24 * 60) jobs.push(LOCAL.syncStores()); if (!LOCAL.shops || HUNT.stale(LOCAL.shops.fetched_at)) jobs.push(LOCAL.syncShops()); if (jobs.length) Promise.all(jobs).then(r => { if (r.some(Boolean)) paintLocal(); }); } },
+     events: () => { paintEvents(); if (navigator.onLine && HUNT.url()) { const jobs = []; if (!LOCAL.stores || HUNT.ageMin(LOCAL.stores.fetched_at) > 24 * 60) jobs.push(LOCAL.syncStores()); if (!EVENTS.tab || HUNT.ageMin(EVENTS.tab.fetched_at) > 24 * 60) jobs.push(EVENTS.sync()); if (jobs.length) Promise.all(jobs).then(r => { if (r.some(Boolean)) paintEvents(); }); } } })[id]?.();
 }
 document.addEventListener('click', e => {
   const g = e.target.closest('[data-go]'); if (g) go(g.dataset.go);
@@ -3065,6 +3123,328 @@ async function shareCollectionPage() {
   const a = document.createElement('a'); a.href = url; a.download = name; a.click(); URL.revokeObjectURL(url);
   toast('Collection page saved');
 }
+
+/* ---- hunt: sealed and releases (A32, take 70) ---------------------------
+   Everything here is data the phone already holds: the catalogue's sealed
+   products with their TCGplayer market prices and nightly deltas, and the
+   sets' publish dates. Store stock and local shops arrive in later takes
+   through the runner's feed; this screen says so rather than pretending. */
+/* The Hunt feed (take 71): written by the runner, served by Pages beside the
+   catalogue, read here. The app never asks a retailer anything itself. The
+   feed says when each source was fetched; this shows that time and calls a
+   source older than three hours stale. Cached in localStorage (~30 KB). */
+const HUNT = {
+  feed: (() => { try { return JSON.parse(localStorage.getItem('vault.hunt') || 'null'); } catch (e) { return null; } })(),
+  url() { const b = CAT.man.updateUrl; return b ? b.replace(/bundle\/?$/, '') + 'hunt/feed.json' : null; },
+  async sync({ quiet = false } = {}) {
+    const u = this.url(); if (!u) { if (!quiet) toast('Sync is not configured'); return false; }
+    if (!navigator.onLine) { if (!quiet) toast('Offline'); return false; }
+    try { const r = await fetch(u, { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status);
+      const f = await r.json(); if (!f || !f.sources) throw new Error('not a feed');
+      this.feed = f; try { localStorage.setItem('vault.hunt', JSON.stringify(f)); } catch (e) {}
+      return true; } catch (e) { if (!quiet) toast('Stock feed unavailable \u2014 ' + e.message); return false; }
+  },
+  hist: (() => { try { return JSON.parse(localStorage.getItem('vault.hunt.hist') || 'null'); } catch (e) { return null; } })(),
+  async syncHistory() { const u = this.url(); if (!u || !navigator.onLine) return false;
+    try { const r = await fetch(u.replace(/feed\.json$/, 'history.json'), { cache: 'no-store' }); if (!r.ok) return false; const h = await r.json(); if (!h || !Array.isArray(h.runs)) return false;
+      this.hist = h; try { localStorage.setItem('vault.hunt.hist', JSON.stringify(h)); } catch (e) {} return true; } catch (e) { return false; } },
+  /* Take 73. What the runs say about ONE product: the last time it was seen
+     shipping, and for the served zip every time a store went from none to
+     some -- a restock, dated. No prediction is made until there is enough
+     history to make one honestly (a fortnight); until then it lists what it
+     saw and how many runs that rests on. */
+  restocks(tcin, zip) { const h = this.hist; if (!h || !h.runs || !h.runs.length) return null;
+    const runs = h.runs; const out = { runs: runs.length, since: h.since, lastShip: null, shipRuns: 0, events: [] };
+    for (const r of runs) { const o = r.online && r.online[tcin]; if (o != null) { out.shipRuns++; if (o) out.lastShip = r.t; } }
+    if (zip) { const prev = {};
+      for (const r of runs) { const st = r.shelf && r.shelf[zip] && r.shelf[zip][tcin]; if (!st) continue;
+        for (const [sid, q] of Object.entries(st)) { if ((prev[sid] || 0) === 0 && q > 0) out.events.push({ t: r.t, store: sid, qty: q }); prev[sid] = q; } } }
+    return out; },
+  storeName(zip, sid) { const st = this.hist && this.hist.stores && this.hist.stores[zip]; const x = (st || []).find(y => y.id === sid); return x ? x.name : sid; },
+  ageMin(iso) { return iso ? Math.round((Date.now() - Date.parse(iso)) / 60000) : null; },
+  ageLabel(iso) { const m = this.ageMin(iso); if (m == null) return 'never'; if (m < 2) return 'just now'; if (m < 60) return `${m} min ago`; if (m < 48 * 60) return `${Math.round(m / 60)} h ago`; return `${Math.round(m / 1440)} days ago`; },
+  stale(iso) { const m = this.ageMin(iso); return m == null || m > 180; },
+  /* per catalogue product: the retailer lines that matched it */
+  byCatalogId() { const out = {}; const t = this.feed && this.feed.sources && this.feed.sources.target; if (!t || !t.items) return out;
+    for (const it of t.items) if (it.catalog_id) (out[it.catalog_id] ||= []).push(it); return out; },
+  /* Take 72. The collector's zip, asked once. The runner serves LOCAL stock
+     for a list of zips; the closest honest match is exact, then the same
+     3-digit prefix (a sectional centre, roughly one metro), else none --
+     and none is said as none, with the online layer still complete. */
+  zip: localStorage.getItem('vault.hunt.zip') || '',
+  setZip(z) { this.zip = String(z || '').replace(/\D/g, '').slice(0, 5); localStorage.setItem('vault.hunt.zip', this.zip); },
+  served() { const t = this.feed && this.feed.sources && this.feed.sources.target; const zips = Object.keys((t && t.zips) || {}); if (!this.zip || !zips.length) return { how: 'none', zips };
+    if (zips.includes(this.zip)) return { how: 'exact', zip: this.zip, zips };
+    const pre = zips.find(z => z.slice(0, 3) === this.zip.slice(0, 3)); if (pre) return { how: 'area', zip: pre, zips };
+    return { how: 'none', zips }; }
+};
+async function askZip() {
+  const v = await ask({ title: 'Your zip code', kind: 'number', placeholder: '48329', ok: 'Use this zip',
+    why: 'Online prices and shipping stock show for everywhere. Your zip adds what is on the shelf at stores near you, where that area is covered. The zip stays on this phone.' });
+  const z = String(v || '').replace(/\D/g, ''); if (z.length === 5) { HUNT.setZip(z); return true; } return false;
+}
+function targetLine(it, T) {
+  /* every check carries its own time (take 72): the feed rotates through items
+     under the retailer's quota, so one item's online status may be an hour
+     older than the next one's, and it says so */
+  const online = it.online ? (it.online.status === 'IN_STOCK' ? `ships${it.online.qty ? ' (' + it.online.qty + ' online)' : ''}` : String(it.online.status || '?').toLowerCase().replace(/_/g, ' ') + ' online') + (it.online_at ? ` ${HUNT.ageLabel(it.online_at)}` : '') : 'online stock not checked yet';
+  const sv = HUNT.served(); let shelfTxt = '';
+  if (sv.how !== 'none') { const zz = T.zips[sv.zip]; if (!zz || !zz.ok) shelfTxt = `local check for ${sv.zip} ${zz && zz.error ? 'not done: ' + zz.error : 'failed'}`;
+    else if (!(zz.checked_at || {})[it.tcin]) shelfTxt = 'shelf not checked yet for this item';
+    else { const st = zz.stock[it.tcin] || {}; const on = Object.entries(st).filter(([, v]) => (v.qty || 0) > 0).map(([id, v]) => { const x = zz.stores.find(y => y.id === id); return `${x ? x.name : id} (${v.qty})`; });
+      shelfTxt = (on.length ? `on the shelf: ${on.join(', ')}` : `not on a shelf within ${T.radius || 50} mi of ${sv.zip}`) + ` ${HUNT.ageLabel(zz.checked_at[it.tcin])}`; } }
+  const sv2 = HUNT.served(); const rs = HUNT.restocks(it.tcin, sv2.how !== 'none' ? sv2.zip : null); let histTxt = '';
+  if (rs && rs.runs >= 2) { const days = Math.max(1, Math.round((Date.now() - Date.parse(rs.since)) / 864e5));
+    const ship = rs.lastShip ? `last seen shipping ${HUNT.ageLabel(rs.lastShip)}` : (rs.shipRuns ? `not seen shipping in ${rs.shipRuns} checks` : '');
+    const ev = rs.events.slice(-3).map(e => `${HUNT.storeName(sv2.zip, e.store)} ${new Date(e.t).toLocaleDateString(undefined, { weekday: 'short', hour: 'numeric' })}`).join(', ');
+    histTxt = [ship, rs.events.length ? `restocked ${rs.events.length}\u00d7 in ${days} d: ${ev}` : (sv2.how !== 'none' && rs.runs >= 24 ? `no shelf restock seen in ${days} d` : '')].filter(Boolean).join(' \u00b7 ');
+    if (rs.runs < 24) histTxt += `${histTxt ? ' \u00b7 ' : ''}${rs.runs} hourly checks so far \u2014 a pattern needs a fortnight`; }
+  return `<span style="display:block;color:var(--brass)">Target ${money(it.price)} \u00b7 ${esc(online)}${shelfTxt ? ' \u00b7 ' + esc(shelfTxt) : ''}</span>${histTxt ? `<span style="display:block;color:var(--dim2);font-size:12.5px">${esc(histTxt)}</span>` : ''}`;
+}
+const SEALED = {
+  q: '', kind: 'all',
+  /* TCGCSV files DON!! cards as sealed because they have no number; they are
+     single cards, not product, and stay out of this screen (232 of them). */
+  isProduct(p) { return p.sealed && p.market > 0 && !/don!! card/i.test(p.name || ''); },
+  kindOf(p) { const n = (p.name || '').toLowerCase();
+    if (/booster box|display/.test(n)) return 'box';
+    if (/case\b/.test(n)) return 'case';
+    if (/starter deck|deck set|ultra deck|st-?\d/.test(n)) return 'deck';
+    if (/booster pack|pack\b|blister|sleeved/.test(n)) return 'pack';
+    if (/collection|illustration box|gift|battle kit/.test(n)) return 'collection';
+    return 'other'; },
+  rows() { const q = this.q.trim().toLowerCase();
+    return CAT.rows.filter(p => this.isProduct(p))
+      .filter(p => this.kind === 'all' || this.kindOf(p) === this.kind)
+      .filter(p => !q || (p.name || '').toLowerCase().includes(q) || (CAT.sets.get(p.set)?.name || '').toLowerCase().includes(q))
+      .sort((a, b) => (CAT.sets.get(b.set)?.pub || '').localeCompare(CAT.sets.get(a.set)?.pub || '') || a.name.localeCompare(b.name)); }
+};
+const SEALED_KINDS = [['all', 'All'], ['box', 'Boxes'], ['pack', 'Packs'], ['deck', 'Decks'], ['case', 'Cases'], ['collection', 'Collections'], ['other', 'Other']];
+function paintSealed() {
+  const asOf = $('#sealedAsOf'); if (asOf) asOf.textContent = 'prices ' + ((CAT.man.source_updated_at || '').slice(0, 10) || '?');
+  const counts = {}; for (const p of CAT.rows) if (SEALED.isProduct(p)) { const k = SEALED.kindOf(p); counts[k] = (counts[k] || 0) + 1; counts.all = (counts.all || 0) + 1; }
+  $('#sealedKinds').innerHTML = SEALED_KINDS.map(([k, label]) => `<button class="chip${SEALED.kind === k ? ' on' : ''}" data-skind="${k}" aria-pressed="${SEALED.kind === k}">${label} <span class="note">${counts[k] || 0}</span></button>`).join('');
+  const rows = SEALED.rows(); let lastSet = null; const out = [];
+  const T = HUNT.feed && HUNT.feed.sources && HUNT.feed.sources.target; const byCat = HUNT.byCatalogId();
+  /* stock alerts: what is watched, and where it was last seen */
+  if (STOCK.list.length) out.push(`<div class="panel"><h3>Stock alerts</h3>${STOCK.list.map(a => { const srcs = STOCK.sourcesFor(a.id); const on = srcs.filter(x => x.available);
+    return `<div class="row"><div class="nm"><b>${esc(a.name)}</b><span>${on.length ? 'in stock: ' + esc(on.map(x => x.label).join(', ')) : srcs.length ? 'not in stock at ' + srcs.length + ' watched source' + (srcs.length === 1 ? '' : 's') : 'no source carries it yet'}${a.fired && a.fired.length ? ' \u00b7 last alert ' + esc(HUNT.ageLabel(a.fired[0].t)) : ''}</span></div><div class="v"><button class="ghost" data-stock="${a.id}" aria-label="Stop watching ${esc(a.name)}">\u00d7</button></div></div>`; }).join('')}
+    <div class="note" style="margin-top:6px">Fires once when a watched product turns up in stock at a source, then waits for the next time it goes out and back in. Checked whenever the feed refreshes \u2014 the app must be opened for that.</div></div>`);
+  /* the retailer panel: what the runner saw, and when */
+  if (T) {
+    const ja = (T.items || []).filter(i => /japanese/i.test(i.title)).length; const ships = (T.items || []).filter(i => i.online && i.online.status === 'IN_STOCK').length;
+    const sv = HUNT.served(); const zz = sv.how !== 'none' ? T.zips[sv.zip] : null;
+    const shelf = zz && zz.ok ? Object.entries(zz.stock).filter(([, st]) => Object.values(st).some(v => (v.qty || 0) > 0)).map(([tcin]) => (T.items || []).find(i => i.tcin === tcin)).filter(Boolean) : [];
+    out.push(`<div class="panel" style="border-color:var(--brass)"><h3>Target \u2014 online, all of the US</h3>
+      <div class="note">${T.ok ? `fetched ${esc(HUNT.ageLabel(T.fetched_at))}${HUNT.stale(T.fetched_at) ? ' \u2014 <b>stale</b>, the hourly feed has not landed' : ''} \u00b7 ${(T.items || []).length} products (list ${esc(HUNT.ageLabel(T.searched_at || T.fetched_at))}), ${ships} shipping at last check, ${ja} of them the Japanese release${T.throttled_after != null ? ' \u00b7 the retailer throttled this run' : ''}` : `unreachable since ${esc(T.stale_since || T.fetched_at || '?')} \u2014 ${esc(T.error || '')}`}</div>
+      <div class="fgrp">Near you</div>
+      ${!HUNT.zip ? `<div class="note">Enter your zip to add what is on the shelf near you.</div>` :
+        sv.how === 'none' ? `<div class="note">Zip ${esc(HUNT.zip)}: no local check for your area yet \u2014 online prices still show for everything. Covered areas: ${esc(sv.zips.join(', ') || 'none')}.</div>` :
+        !zz || !zz.ok ? `<div class="note">Zip ${esc(HUNT.zip)}: the local check for ${esc(sv.zip)} failed this run (${esc((zz && zz.error) || '?')}).</div>` :
+        `<div class="note">Zip ${esc(HUNT.zip)}${sv.how === 'area' ? ` \u2014 using the ${esc(sv.zip)} check, same area` : ''}: ${zz.stores.length} stores within ${T.radius || 50} mi, shelf checks on file for ${Object.keys(zz.checked_at || {}).length} products (the feed rotates through them under the retailer's limit).</div>
+         ${shelf.length ? `<div class="fgrp">On a shelf now</div>${shelf.slice(0, 12).map(i => `<div class="row"><div class="nm"><b>${esc(i.title)}</b>${targetLine(i, T)}</div></div>`).join('')}` : '<div class="note" style="margin-top:6px">Nothing on a shelf near you at the last check.</div>'}`}
+      <div class="row" style="margin-top:8px;gap:8px"><button class="ghost" id="huntZip">${HUNT.zip ? 'Change zip' : 'Enter zip'}</button><button class="ghost" id="huntSync">Refresh</button></div></div>`);
+  } else {
+    out.push(`<div class="panel"><h3>Store stock</h3><div class="note">Not fetched yet on this phone. Pull the hourly feed when you are online.</div><div class="row" style="margin-top:8px"><button class="ghost" id="huntSync">Fetch</button></div></div>`);
+  }
+  for (const p of rows.slice(0, 400)) {
+    if (p.set !== lastSet) { lastSet = p.set; const st = CAT.sets.get(p.set) || {}; out.push(`<div class="fgrp">${esc(st.name || 'Other')}${st.pub ? ` <span class="note">\u00b7 ${esc(st.pub)}</span>` : ''}</div>`); }
+    const tl = (byCat[p.id] || []).map(i => targetLine(i, T)).join('') + LOCAL.shopLines(p.id).map(l => `<span style="display:block;color:var(--brass)">${esc(l.shop)}${l.mi != null ? ' ~' + l.mi + ' mi' : ''} ${money(l.price)} \u00b7 ${l.available ? 'in stock online' : 'sold out online'} \u00b7 ${esc(HUNT.ageLabel(LOCAL.shops.fetched_at))}</span>`).join('');
+    out.push(`<div class="row" style="gap:8px"><button class="row" style="flex:1;text-align:left;padding:0" data-open="${p.id}">
+      <div class="nm"><b>${esc(p.name)}</b><span>${esc(SEALED_KINDS.find(k => k[0] === SEALED.kindOf(p))?.[1] || '')} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}</span>${tl}</div>
+      <div class="v"><b>${money(p.market)}</b>${deltaHtml(p, { pctOnly: true })}</div></button>
+      <button class="ghost" data-stock="${p.id}" aria-label="${STOCK.has(p.id) ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${STOCK.has(p.id)}" style="flex:0 0 auto;padding:8px 10px;${STOCK.has(p.id) ? 'color:var(--brass);border-color:var(--brass)' : ''}">${STOCK.has(p.id) ? '\u25cf' : '\u25cb'}</button></div>`);
+  }
+  $('#sealedList').innerHTML = out.join('') || `<div class="empty">Nothing matches.</div>`;
+  const hs = $('#huntSync'); if (hs) hs.addEventListener('click', async () => { hs.disabled = true; const ok = await HUNT.sync(); await HUNT.syncHistory(); await LOCAL.syncShops(); hs.disabled = false; if (ok) { const n = await STOCK.check(); toast(n ? `Stock feed updated \u2014 ${n} in stock` : 'Stock feed updated'); paintSealed(); } });
+  const hz = $('#huntZip'); if (hz) hz.addEventListener('click', async () => { if (await askZip()) paintSealed(); });
+}
+/* ---- hunt: stock alerts (take 77) ---------------------------------------
+   "Tell me when this is in stock anywhere the feed watches." A price alert
+   (take 27) watches a number; a stock alert watches availability, per
+   source, and fires on the FLIP from not-available to available -- once per
+   source per flip, never every hour it stays in stock. Sources today:
+   Target online, a Target shelf in the served zip, a local shop's online
+   store. Any source the feed grows into plugs in through sourcesFor(). */
+const STOCK = {
+  list: (() => { try { return JSON.parse(localStorage.getItem('vault.stockAlerts') || '[]'); } catch (e) { return []; } })(),
+  save() { localStorage.setItem('vault.stockAlerts', JSON.stringify(this.list)); },
+  has(id) { return this.list.some(a => a.id === id); },
+  toggle(id) { const p = CAT.byId.get(id); if (!p) return false;
+    if (this.has(id)) { this.list = this.list.filter(a => a.id !== id); this.save(); return false; }
+    this.list.push({ id, name: p.name, created: new Date().toISOString(), seen: {}, fired: [] }); this.save(); return true; },
+  /* every place the feed knows this product, and whether it is available there NOW */
+  sourcesFor(id) { const out = []; const T = HUNT.feed && HUNT.feed.sources && HUNT.feed.sources.target; const sv = HUNT.served();
+    if (T && T.ok) for (const it of (T.items || [])) { if (it.catalog_id !== id) continue;
+      if (it.online) out.push({ key: 'target:online:' + it.tcin, label: 'Target online', available: it.online.status === 'IN_STOCK', at: it.online_at });
+      if (sv.how !== 'none') { const zz = T.zips[sv.zip]; const st = zz && zz.ok && zz.stock[it.tcin]; if (st) { const on = Object.entries(st).filter(([, v]) => (v.qty || 0) > 0).map(([sid]) => { const x = zz.stores.find(y => y.id === sid); return x ? x.name : sid; });
+        out.push({ key: 'target:shelf:' + sv.zip + ':' + it.tcin, label: on.length ? 'Target ' + on.join(', ') : 'a Target shelf near ' + sv.zip, available: on.length > 0, at: zz.checked_at && zz.checked_at[it.tcin] }); } } }
+    for (const sh of ((LOCAL.shops && LOCAL.shops.shops) || [])) for (const it of (sh.sealed || [])) if (it.catalog_id === id) out.push({ key: 'shop:' + sh.url + ':' + it.url, label: sh.name + ' online', available: !!it.available, at: LOCAL.shops.fetched_at, url: it.url });
+    return out; },
+  /* after any sync: fire on flips, remember what was seen */
+  async check() { const fired = []; let changed = false;
+    for (const a of this.list) { a.seen = a.seen || {}; a.fired = a.fired || [];
+      for (const src of this.sourcesFor(a.id)) { const was = a.seen[src.key];
+        if (src.available && was !== true) { fired.push({ a, src }); a.fired.unshift({ t: new Date().toISOString(), label: src.label }); a.fired = a.fired.slice(0, 5); }
+        if (a.seen[src.key] !== src.available) changed = true; a.seen[src.key] = src.available; } }
+    if (changed) this.save();
+    for (const [k, f] of fired.entries()) { const ok = await PLATFORM.notify(9000 + (k % 500), `In stock: ${f.a.name}`, `${f.src.label} \u2014 ${HUNT.ageLabel(f.src.at)}`); if (!ok) toast(`In stock: ${f.a.name} at ${f.src.label}`); }
+    return fired.length; }
+};
+/* ---- hunt: local (A32, take 74) ----------------------------------------
+   Three lists from the collector's zip outward, filtered by the distance
+   dropdown: the shops that run One Piece events (the roster, from Bandai
+   TCG+ via onepieceevents.com, with each shop's next events), the Target
+   stores the feed checked for the served zip, and the collector's own notes
+   -- name, phone, what was on the shelf and when. Distances are from the
+   centre of the collector's 3-digit zip area, so they are "about". */
+const LOCAL = {
+  radius: +(localStorage.getItem('vault.hunt.radius') || 50),
+  notes: (() => { try { return JSON.parse(localStorage.getItem('vault.hunt.notes') || '[]'); } catch (e) { return []; } })(),
+  saveNotes() { localStorage.setItem('vault.hunt.notes', JSON.stringify(this.notes)); },
+  stores: (() => { try { return JSON.parse(localStorage.getItem('vault.hunt.stores') || 'null'); } catch (e) { return null; } })(),
+  async syncStores() { const u = HUNT.url(); if (!u || !navigator.onLine) return false;
+    try { const r = await fetch(u.replace(/feed\.json$/, 'stores.json'), { cache: 'no-store' }); if (!r.ok) return false; const j = await r.json(); if (!j || !Array.isArray(j.stores)) return false;
+      this.stores = j; try { localStorage.setItem('vault.hunt.stores', JSON.stringify(j)); } catch (e) {} return true; } catch (e) { return false; } },
+  shops: (() => { try { return JSON.parse(localStorage.getItem('vault.hunt.shops') || 'null'); } catch (e) { return null; } })(),
+  async syncShops() { const u = HUNT.url(); if (!u || !navigator.onLine) return false;
+    try { const r = await fetch(u.replace(/feed\.json$/, 'shops.json'), { cache: 'no-store' }); if (!r.ok) return false; const j = await r.json(); if (!j || !Array.isArray(j.shops)) return false;
+      this.shops = j; try { localStorage.setItem('vault.hunt.shops', JSON.stringify(j)); } catch (e) {} return true; } catch (e) { return false; } },
+  /* per catalogue sealed product: the local-shop listings that matched it */
+  shopLines(catId) { const out = []; for (const sh of ((this.shops && this.shops.shops) || [])) for (const it of (sh.sealed || [])) if (it.catalog_id === catId) out.push({ shop: sh.name, ...it, mi: this.miles((this.stores && this.stores.stores || []).find(s => s.zip === sh.zip && s.name === sh.name)?.ll) }); return out; },
+  /* Exact distances (take 79): the full zip-centroid table, fetched once on
+     request and kept on the phone when it fits (~758 KB); a zip found in it
+     is placed within a mile or two instead of the prefix area's ten. */
+  zcta: (() => { try { return JSON.parse(localStorage.getItem('vault.hunt.zcta') || 'null'); } catch (e) { return null; } })(),
+  async syncZcta() { const u = HUNT.url(); if (!u || !navigator.onLine) return false;
+    try { const r = await fetch(u.replace(/feed\.json$/, 'zcta.json'), { cache: 'force-cache' }); if (!r.ok) return false; const j = await r.json(); if (!j || !j['48329']) return false;
+      this.zcta = j; try { localStorage.setItem('vault.hunt.zcta', JSON.stringify(j)); } catch (e) { toast('Exact distances kept for this session only \u2014 the table is large'); } return true; } catch (e) { return false; } },
+  exact() { return !!(this.zcta && HUNT.zip && this.zcta[HUNT.zip]); },
+  here() { const z = HUNT.zip; if (!z) return null; if (this.zcta && this.zcta[z]) return this.zcta[z]; if (!CAT.zips3) return null; return CAT.zips3[z.slice(0, 3)] || null; },
+  miles(ll) { const h = this.here(); if (!h || !ll) return null; const R = 3958.8, toR = d => d * Math.PI / 180;
+    const dLa = toR(ll[0] - h[0]), dLo = toR(ll[1] - h[1]); const a = Math.sin(dLa / 2) ** 2 + Math.cos(toR(h[0])) * Math.cos(toR(ll[0])) * Math.sin(dLo / 2) ** 2;
+    return Math.round(2 * R * Math.asin(Math.sqrt(a))); },
+  within(mi) { return mi == null ? this.radius === 0 : (this.radius === 0 || mi <= this.radius); }
+};
+function paintLocal() {
+  const sel = $('#localRadius'); if (sel) sel.value = String(LOCAL.radius);
+  const out = []; const here = LOCAL.here();
+  if (!HUNT.zip) out.push(`<div class="panel"><h3>Where are you?</h3><div class="note">Enter your zip to see shops and stores near you. It stays on this phone.</div><div class="row" style="margin-top:8px"><button class="ghost go" id="localZip">Enter zip</button></div></div>`);
+  else out.push(`<div class="note" style="margin:6px 0 10px">Zip ${esc(HUNT.zip)}${here ? '' : ' \u2014 not a zip the app can place, so no distances'} \u00b7 ${LOCAL.exact() ? 'distances are from your zip\u2019s centre, within a mile or two' : 'distances are from the centre of your zip area, about \u00b110 mi <button class="linkish" id="localExact" style="display:inline;padding:0 0 0 6px">make them exact</button>'} <button class="linkish" id="localZip" style="display:inline;padding:0 0 0 6px">change</button></div>`);
+  /* the roster */
+  const R = LOCAL.stores; const shops = (R && R.stores) ? R.stores.map(s => ({ ...s, mi: LOCAL.miles(s.ll) })).filter(s => LOCAL.within(s.mi)).sort((a, b) => (a.mi ?? 9e9) - (b.mi ?? 9e9)) : [];
+  out.push(`<div class="panel"><h3>Shops that run One Piece events${R ? ` <span class="note">\u00b7 ${shops.length}${LOCAL.radius ? ` within ${LOCAL.radius} mi` : ''}</span>` : ''}</h3>
+    ${!R ? `<div class="note">Not fetched yet on this phone.</div><div class="row" style="margin-top:8px"><button class="ghost" id="localSync">Fetch</button></div>` :
+      !HUNT.zip ? '<div class="note">Enter your zip above.</div>' :
+      !shops.length ? `<div class="note">None within ${LOCAL.radius} mi of your zip area. Widen the distance.</div>` :
+      shops.slice(0, 60).map(s => `<div class="row"><div class="nm"><b>${esc(s.name)}</b><span>${esc([s.addr, s.city, s.state].filter(Boolean).join(', '))}${s.mi != null ? ` \u00b7 ~${s.mi} mi` : ''}</span>
+        ${s.events && s.events.length ? `<span style="display:block;color:var(--brass)">${s.events.slice(0, 2).map(e => `${esc(e.d)} ${esc(e.t)}${e.k === 'release' ? ' \u2014 release event' : ''}`).join(' \u00b7 ')}</span>` : ''}</div>
+        <div class="v"><button class="ghost" data-localnote="${esc(s.name)}" aria-label="Add a note for ${esc(s.name)}">Note</button></div></div>`).join('')}
+    <div class="note" style="margin-top:8px">From ${esc((R && R.source) || 'Bandai TCG+')}, ${R ? esc(HUNT.ageLabel(R.fetched_at)) : ''}. A store on this list registered to run events; whether it has product on the shelf is what your notes and the stock feed are for.</div></div>`);
+  /* Target stores the feed checked */
+  const T = HUNT.feed && HUNT.feed.sources && HUNT.feed.sources.target; const sv = HUNT.served(); const zz = T && sv.how !== 'none' ? T.zips[sv.zip] : null;
+  if (zz && zz.stores && zz.stores.length) out.push(`<div class="panel"><h3>Target stores the feed checks <span class="note">\u00b7 for ${esc(sv.zip)}</span></h3>${zz.stores.filter(s => LOCAL.within(s.miles)).map(s => `<div class="row"><div class="nm"><b>Target ${esc(s.name)}</b><span>${s.miles} mi from ${esc(sv.zip)}</span></div></div>`).join('') || `<div class="note">None within ${LOCAL.radius} mi.</div>`}</div>`);
+  /* local shops with an online store */
+  const SH = LOCAL.shops;
+  out.push(`<div class="panel"><h3>Shops with an online store</h3>
+    ${!SH ? `<div class="note">Not fetched yet on this phone.</div>` : !(SH.shops || []).length ? '<div class="note">None on the verified list yet.</div>' :
+      SH.shops.map(sh => { const st = (LOCAL.stores && LOCAL.stores.stores || []).find(s => s.zip === sh.zip && s.name === sh.name); const mi = LOCAL.miles(st && st.ll);
+        return `<div class="row"><div class="nm"><b>${esc(sh.name)}</b><span>${mi != null ? '~' + mi + ' mi \u00b7 ' : ''}${sh.ok ? `${sh.sealed.length} sealed listed, ${sh.sealed.filter(i => i.available).length} in stock, ${sh.singles} singles` : 'unreachable: ' + esc(sh.error || '?')}</span>
+          ${sh.ok && sh.sealed.length ? `<span style="display:block;color:var(--brass)">${sh.sealed.slice(0, 4).map(i => `${esc(i.title.slice(0, 40))} ${money(i.price)}${i.available ? '' : ' (out)'}`).join(' \u00b7 ')}</span>` : ''}</div>
+          <div class="v"><a class="ghost" href="${esc(sh.url)}" target="_blank" rel="noopener" style="display:inline-block;padding:8px 12px">Open</a></div></div>`; }).join('')}
+    <div class="note" style="margin-top:8px">${SH ? 'Fetched ' + esc(HUNT.ageLabel(SH.fetched_at)) + '. ' : ''}What a shop lists online, hourly. A shop lists what it chooses; the shelf may hold more \u2014 that is what your notes are for. The list of shops is verified by hand and grows as shops are added.</div></div>`);
+  /* the collector's own notes */
+  out.push(`<div class="panel"><h3>Your notes</h3>
+    ${LOCAL.notes.length ? LOCAL.notes.slice().reverse().map((n, i) => `<div class="row"><div class="nm"><b>${esc(n.store)}</b><span>${esc(n.what)}${n.price ? ' \u00b7 ' + money(n.price) : ''} \u00b7 ${esc(n.when)}</span>${n.phone ? `<span style="display:block"><a href="tel:${esc(n.phone)}" style="color:var(--brass)">Call ${esc(n.phone)}</a></span>` : ''}</div><div class="v"><button class="ghost" data-localdel="${LOCAL.notes.length - 1 - i}" aria-label="Delete this note">\u00d7</button></div></div>`).join('') : '<div class="note">What you saw, where, for how much. A store that publishes nothing online is still a store you walked into.</div>'}
+    <div class="row" style="margin-top:8px"><button class="ghost go" id="localAdd">Add a note</button></div></div>`);
+  $('#localList').innerHTML = out.join('');
+  const lz = $('#localZip'); if (lz) lz.addEventListener('click', async () => { if (await askZip()) paintLocal(); });
+  const le = $('#localExact'); if (le) le.addEventListener('click', async () => { le.disabled = true; le.textContent = 'fetching\u2026'; const ok = await LOCAL.syncZcta(); if (ok) { toast('Distances are exact now'); paintLocal(); } else { toast('Could not fetch the table'); le.disabled = false; le.textContent = 'make them exact'; } });
+  const ls = $('#localSync'); if (ls) ls.addEventListener('click', async () => { ls.disabled = true; const ok = await LOCAL.syncStores(); ls.disabled = false; if (ok) paintLocal(); else toast('Store list unavailable'); });
+  const la = $('#localAdd'); if (la) la.addEventListener('click', () => addLocalNote(''));
+}
+async function addLocalNote(store) {
+  const st = store || await ask({ title: 'Which store?', kind: 'text', placeholder: 'Store name', ok: 'Next', why: 'Any store \u2014 it need not be on the list.' }); if (!st) return;
+  const what = await ask({ title: `What did you see at ${st}?`, kind: 'text', placeholder: 'e.g. 3 OP-11 boxes, 20 packs', ok: 'Next', why: 'Stock, product, anything worth remembering.' }); if (what == null) return;
+  const price = await ask({ title: 'Price, if you saw one', kind: 'number', placeholder: 'USD, optional', ok: 'Next', why: 'Per box or pack, as marked.' });
+  const phone = await ask({ title: 'Their phone, optional', kind: 'text', placeholder: '(248) 555-0100', ok: 'Save', why: 'Adds a Call button to the note.' });
+  LOCAL.notes.push({ store: st, what: what || '', price: parseFloat(price) || null, phone: (phone || '').trim() || null, when: new Date().toISOString().slice(0, 10) }); LOCAL.saveNotes(); paintLocal();
+}
+$('#localRadius').addEventListener('change', e => { LOCAL.radius = +e.target.value; localStorage.setItem('vault.hunt.radius', String(LOCAL.radius)); paintLocal(); });
+$('#local').addEventListener('click', e => { const n = e.target.closest('[data-localnote]'); if (n) { addLocalNote(n.dataset.localnote); return; }
+  const d = e.target.closest('[data-localdel]'); if (d) { LOCAL.notes.splice(+d.dataset.localdel, 1); LOCAL.saveNotes(); paintLocal(); } });
+/* ---- hunt: events (take 76) --------------------------------------------
+   Every One Piece event within the radius for the next month, from the
+   roster's events table: date, title, store and distance, the fee, the
+   capacity, and the registration link on Bandai TCG+ (registration happens
+   there, in Bandai's app; this app only points). */
+const EVENTS = {
+  tab: (() => { try { return JSON.parse(localStorage.getItem('vault.hunt.events') || 'null'); } catch (e) { return null; } })(),
+  async sync() { const u = HUNT.url(); if (!u || !navigator.onLine) return false;
+    try { const r = await fetch(u.replace(/feed\.json$/, 'events.json'), { cache: 'no-store' }); if (!r.ok) return false; const j = await r.json(); if (!j || !Array.isArray(j.rows)) return false;
+      this.tab = j; try { localStorage.setItem('vault.hunt.events', JSON.stringify(j)); } catch (e) { toast('Event list too large to keep offline; showing it now'); } return true; } catch (e) { return false; } },
+  rows() { const t = this.tab, R = LOCAL.stores; if (!t || !R || !R.stores) return [];
+    const today = new Date().toISOString().slice(0, 10);
+    return t.rows.map(r => { const st = R.stores[r[0]]; if (!st) return null; return { store: st, d: r[1], title: t.titles[r[2]] || '', id: r[3], fee: r[4], cap: r[5], release: !!r[6], mi: LOCAL.miles(st.ll), url: r[3] ? t.url + r[3] : null }; })
+      .filter(e => e && e.d >= today && LOCAL.within(e.mi)).sort((a, b) => a.d.localeCompare(b.d) || (a.mi ?? 9e9) - (b.mi ?? 9e9)); }
+};
+/* An event as a calendar entry (take 78): a plain .ics handed to the share
+   sheet, so the phone's own calendar app takes it -- no calendar plugin, no
+   permission, works offline. The source gives a date, not a time, so it is
+   an all-day entry with the store's address as the place and the fee, seats
+   and registration link in the notes. */
+function icsFor(e) {
+  const esc2 = v => String(v || '').replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
+  const d = e.d.replace(/-/g, ''); const next = new Date(Date.parse(e.d + 'T00:00:00Z') + 864e5).toISOString().slice(0, 10).replace(/-/g, '');
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
+  const where = [e.store.name, e.store.addr, e.store.city, e.store.state, e.store.zip].filter(Boolean).join(', ');
+  const notes = [`${e.fee > 0 ? 'Fee ' + money(e.fee) : 'Free'}${e.cap ? ' · ' + e.cap + ' seats' : ''}`, e.url ? 'Register: ' + e.url : '', 'From OP TCG Hub'].filter(Boolean).join('\n');
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//OP TCG Hub//Hunt//EN', 'BEGIN:VEVENT', `UID:optcghub-event-${e.id || d + '-' + (e.store.zip || '')}@optcghub`, `DTSTAMP:${stamp}`,
+    `DTSTART;VALUE=DATE:${d}`, `DTEND;VALUE=DATE:${next}`, `SUMMARY:${esc2(e.title.replace(/^\[[^\]]*\]\s*/, ''))} — ${esc2(e.store.name)}`, `LOCATION:${esc2(where)}`, `DESCRIPTION:${esc2(notes)}`,
+    e.url ? `URL:${e.url}` : null, 'END:VEVENT', 'END:VCALENDAR'].filter(Boolean).join('\r\n') + '\r\n';
+}
+async function addEventToCalendar(e) {
+  const ics = icsFor(e); const name = `optcg-event-${e.d}.ics`;
+  const r = await PLATFORM.shareFile(name, ics, 'Add to calendar');
+  if (r === 'shared') return true;
+  try { const blob = new Blob([ics], { type: 'text/calendar' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); toast('Calendar file downloaded'); return true; } catch (err) { toast('Could not hand this to your calendar'); return false; }
+}
+function paintEvents() {
+  const sel = $('#eventsRadius'); if (sel) sel.value = String(LOCAL.radius);
+  const out = [];
+  if (!HUNT.zip) { out.push(`<div class="panel"><h3>Where are you?</h3><div class="note">Enter your zip to see events near you.</div><div class="row" style="margin-top:8px"><button class="ghost go" id="eventsZip">Enter zip</button></div></div>`); }
+  else if (!EVENTS.tab || !LOCAL.stores) { out.push(`<div class="panel"><h3>Events</h3><div class="note">Not fetched yet on this phone.</div><div class="row" style="margin-top:8px"><button class="ghost" id="eventsSync">Fetch</button></div></div>`); }
+  else { const rows = EVENTS.rows(); let lastD = null;
+    out.push(`<div class="note" style="margin:6px 0 10px">${rows.length} events in the next ${EVENTS.tab.window_days || 31} days${LOCAL.radius ? ` within ${LOCAL.radius} mi` : ''} of ${esc(HUNT.zip)} \u00b7 list ${esc(HUNT.ageLabel(EVENTS.tab.fetched_at))}</div>`);
+    if (!rows.length) out.push(`<div class="panel"><div class="note">Nothing in range. Widen the distance.</div></div>`);
+    for (const e of rows.slice(0, 120)) {
+      if (e.d !== lastD) { lastD = e.d; const dt = new Date(e.d + 'T12:00:00'); out.push(`<div class="fgrp">${esc(dt.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }))}</div>`); }
+      out.push(`<div class="row"><div class="nm"><b>${esc(e.title.replace(/^\[[^\]]*\]\s*/, ''))}${e.release ? ' <span class="badge">release</span>' : ''}</b>
+        <span>${esc(e.store.name)}${e.store.city ? ', ' + esc(e.store.city) : ''}${e.mi != null ? ` \u00b7 ~${e.mi} mi` : ''} \u00b7 ${e.fee > 0 ? money(e.fee) : 'free'}${e.cap ? ` \u00b7 ${e.cap} seats` : ''}</span></div>
+        <div class="v" style="display:flex;gap:6px;align-items:center">${e.url ? `<a class="ghost" href="${esc(e.url)}" target="_blank" rel="noopener" style="display:inline-block;padding:8px 12px">Register</a>` : ''}<button class="ghost" data-evcal="${rows.indexOf(e)}" aria-label="Add ${esc(e.title)} at ${esc(e.store.name)} to your calendar" style="padding:8px 10px">+cal</button></div></div>`);
+    }
+    out.push(`<div class="note" style="margin-top:10px">Registration is on Bandai TCG+, in their app or site; this only points there. Fees and seats are as the store listed them. From onepieceevents.com, from TCG+.</div>`);
+  }
+  $('#eventsList').innerHTML = out.join('');
+  const ez = $('#eventsZip'); if (ez) ez.addEventListener('click', async () => { if (await askZip()) paintEvents(); });
+  const es = $('#eventsSync'); if (es) es.addEventListener('click', async () => { es.disabled = true; const ok = (await LOCAL.syncStores()) | (await EVENTS.sync()); es.disabled = false; if (ok) paintEvents(); else toast('Event list unavailable'); });
+}
+$('#eventsRadius').addEventListener('change', e => { LOCAL.radius = +e.target.value; localStorage.setItem('vault.hunt.radius', String(LOCAL.radius)); paintEvents(); });
+$('#events').addEventListener('click', e => { const b = e.target.closest('[data-evcal]'); if (!b) return; const ev = EVENTS.rows()[+b.dataset.evcal]; if (ev) addEventToCalendar(ev); });
+function paintReleases() {
+  const today = new Date().toISOString().slice(0, 10);
+  const sets = [...CAT.sets.values()].filter(s => s.pub);
+  const up = sets.filter(s => s.pub >= today).sort((a, b) => a.pub.localeCompare(b.pub));
+  const past = sets.filter(s => s.pub < today).sort((a, b) => b.pub.localeCompare(a.pub)).slice(0, 12);
+  const days = d => Math.round((Date.parse(d + 'T00:00:00Z') - Date.parse(today + 'T00:00:00Z')) / 864e5);
+  const line = s => `<button class="row" style="width:100%;text-align:left" data-browse-set="${esc(s.id)}"><div class="nm"><b>${esc(s.name)}</b><span>${esc(s.abbr || '')}${s.n ? ` \u00b7 ${s.n} cards` : ' \u00b7 card list not published yet'}</span></div><div class="v"><b>${esc(s.pub)}</b><span class="note">${s.pub >= today ? (days(s.pub) === 0 ? 'today' : `in ${days(s.pub)} day${days(s.pub) === 1 ? '' : 's'}`) : `${-days(s.pub)} days ago`}</span></div></button>`;
+  $('#relList').innerHTML = `<div class="panel"><h3>Upcoming</h3>${up.map(line).join('') || '<div class="note">Nothing announced in the catalogue yet.</div>'}
+    <div class="note" style="margin-top:8px">Dates are TCGplayer's publish dates via TCGCSV, updated nightly. A release event at a local store means product on that shelf that morning — store events come with the local view.</div></div>
+    <div class="panel"><h3>Recent</h3>${past.map(line).join('')}</div>`;
+}
+$('#sealed').addEventListener('click', e => { const k = e.target.closest('[data-skind]'); if (k) { SEALED.kind = k.dataset.skind; paintSealed(); return; }
+  const b = e.target.closest('[data-stock]'); if (b) { e.stopPropagation(); const on = STOCK.toggle(+b.dataset.stock); if (on) { PLATFORM.notifyPermission().then(perm => toast(perm === 'denied' ? 'Watching \u2014 notifications are off, so it will show here instead' : 'Watching for stock')); STOCK.check(); } paintSealed(); } });
+$('#sealedQ').addEventListener('input', e => { SEALED.q = e.target.value; paintSealed(); });
 
 /* ---- search ------------------------------------------------------------ */
 function paintSearch() {
@@ -4578,7 +4958,7 @@ async function runSelfTest() {
      day and a hardcoded placeholder is landmine 62 in a text box. */
   $('#allq').placeholder = `Search all ${(CAT.man.cards || 0).toLocaleString()} cards`;
   paintNet(); paintHome();
-  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM,
+  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, openDetail, HUNT, targetLine, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar,
                    FILT, applyFilter, sortRows, blankFilter, activeCount,
                    DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,
                    backupJson, scheduleBackup,

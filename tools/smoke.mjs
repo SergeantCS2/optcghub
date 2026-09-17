@@ -9,6 +9,8 @@
  * checks report is the real one, computed over the real catalogue.
  */
 import fs from 'node:fs';
+import os from 'node:os';
+import { execSync } from 'node:child_process';
 import path from 'node:path';
 import vm from 'node:vm';
 
@@ -1372,9 +1374,9 @@ section('take 60 — the headings carry the palette, and every text token is leg
    face and their colour went with the containers they left. */
 const lum = hx => { const [r, g, b] = [1, 3, 5].map(i => parseInt(hx.slice(i, i + 2), 16) / 255).map(c => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
 const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
-const palette = name => { const block = name === 'collect' ? html.slice(html.indexOf(':root{'), html.indexOf(':root[data-mode="play"]')) : html.slice(html.indexOf(':root[data-mode="play"]'), html.indexOf(':root[data-mode="play"]') + 400);
+const palette = name => { const at = name === 'collect' ? html.indexOf(':root{') : html.indexOf(`:root[data-mode="${name}"]{`); const block = name === 'collect' ? html.slice(at, html.indexOf(':root[data-mode=')) : html.slice(at, at + 400);
   const t = {}; for (const m of block.matchAll(/--(bg|card|card2|fg|dim|dim2|brass):(#[0-9A-Fa-f]{6})/g)) t[m[1]] = m[2]; return t; };
-for (const mode of ['collect', 'play']) { const t = palette(mode);
+for (const mode of ['collect', 'play', 'hunt']) { const t = palette(mode);
   ok(`${mode}: every text token clears WCAG AA 4.5:1 on the card background`,
      ['fg', 'dim', 'dim2'].every(k => ratio(t[k], t.card) >= 4.5),
      ['fg', 'dim', 'dim2'].map(k => `${k} ${ratio(t[k], t.card).toFixed(2)}`).join(', '));
@@ -1383,6 +1385,8 @@ ok('negative control: the token that failed before this take would still fail th
 ok('headings carry the palette accent, not the body colour (landmine 117)',
    /h1,h2\{font-family:var\(--display\)[^}]*color:var\(--brass\)\}/.test(html) && /\.panel h3\{[^}]*color:var\(--brass\)\}/.test(html) && !/#tour \.gcard h3\{[^}]*color:var\(--fg\)\}/.test(html));
 ok('a wide viewport gets a phone-width column rather than a sprawl', /@media \(min-width:900px\)\{[\s\S]*?max-width:520px/.test(html));
+ok('keyboard focus has a visible ring and a mouse click does not (take 80)', /:focus-visible\{outline:2px solid var\(--brass\)/.test(html) && /button:focus:not\(:focus-visible\)\{outline:none\}/.test(html));
+ok('the gate lints smoke for numbers pinned to what the nightly moves (landmine 115), with the lint-ok escape for live-vs-live', /smoke-lint/.test(fs.readFileSync(path.join(ROOT, 'tools', 'gate.py'), 'utf8')) && /lint-ok/.test(fs.readFileSync(path.join(ROOT, 'tools', 'gate.py'), 'utf8')));
 }
 
 {
@@ -1472,6 +1476,183 @@ ok('the skull glyph is gone from the sprite and from every screen (take 63)', !/
 ok('the Decks tab is a card back, drawn here, not the publisher\'s design', /<use href="#g-cardback"\/>/.test(html) && /symbol id="g-cardback"/.test(html));
 ok('the empty collection points at the thing it tells you to tap', /id="colEmpty"[\s\S]{0,260}g-scancard/.test(html));
 ok('no bundled or fetched artwork ships anywhere in the page', !/tcgplayer\.com\/.*\.jpg|onepiece-cardgame\.com\/images/.test(js + html));
+}
+
+{
+section('take 70 — Hunt: a third mode, Sealed and Releases from the phone\'s own data');
+ok('the slider has three modes and Hunt has its own nav and home', /data-mode="hunt"/.test(html) && /id="navHunt"/.test(html) && /hunt: 'sealed'/.test(js) && /hunt: '#navHunt'/.test(js));
+ok('the knob has a third position and the palette a third root', /\.mode\.hunt \.knob\{transform:translateX\(calc\(200%/.test(html) && /:root\[data-mode="hunt"\]\{/.test(html));
+V.MODE.set('hunt', false);
+ok('setting Hunt hides the other navs and shows its own', ctx.document.querySelector('#navHunt').hidden === false && ctx.document.querySelector('#navCollect').hidden === true && ctx.document.querySelector('#navPlay').hidden === true);
+const rows = V.SEALED.rows();
+ok('Sealed lists the priced sealed PRODUCTS -- never a DON!! card, never unpriced', rows.length >= 300 && rows.every(p => p.sealed && p.market > 0 && !/don!! card/i.test(p.name)), String(rows.length));
+ok('negative control: DON!! cards are filed as sealed by the source and would flood the list unfiltered', V.CAT.rows.filter(p => p.sealed && p.market > 0 && /don!! card/i.test(p.name)).length > 100);
+const kinds = {}; for (const p of rows) kinds[V.SEALED.kindOf(p)] = (kinds[V.SEALED.kindOf(p)] || 0) + 1;
+ok('the kind classifier finds boxes, packs, decks and collections by name, with few left over', kinds.box >= 30 && kinds.pack >= 100 && kinds.deck >= 40 && (kinds.other || 0) < 40, JSON.stringify(kinds));
+V.SEALED.kind = 'box'; ok('the kind filter narrows to boxes only', V.SEALED.rows().every(p => V.SEALED.kindOf(p) === 'box') && V.SEALED.rows().length === kinds.box);
+V.SEALED.kind = 'all'; V.SEALED.q = 'starter deck 1';
+ok('the search narrows by product or set name', V.SEALED.rows().length >= 1 && V.SEALED.rows().every(p => /starter deck 1/i.test(p.name) || /starter deck 1/i.test(V.CAT.sets.get(p.set)?.name || '')));
+V.SEALED.q = '';
+V.paintSealed();
+ok('the Sealed screen draws rows with market, low, high and a delta, grouped by set', /data-open="/.test(ctx.document.querySelector('#sealedList').innerHTML) && /low \$/.test(ctx.document.querySelector('#sealedList').innerHTML) && (ctx.document.querySelector('#sealedList').innerHTML.match(/class="fgrp"/g) || []).length >= 10);
+ok('...and says plainly it is the marketplace price, not the shelf', /not the shelf price/.test(html));
+V.paintReleases();
+const rel = ctx.document.querySelector('#relList').innerHTML;
+ok('Releases lists what is upcoming with a countdown and what was recent', /Upcoming/.test(rel) && /in \d+ days?|today/.test(rel) && /days ago/.test(rel));
+ok('an unpublished card list is said to be unpublished, never shown as zero', !/\b0 cards/.test(rel));
+ctx.window.scrollTo = () => {}; ctx.scrollTo = () => {};
+ok('a sealed row opens the detail sheet, where the price alert already lives', (() => { try { V.openDetail(rows[0].id); return /alert/i.test(js) && /data-open="/.test(ctx.document.querySelector('#sealedList').innerHTML); } catch (e) { return false; } })());
+V.MODE.set('collect', false);
+}
+
+{
+section('take 71–72 — the Hunt feed: two layers, read by the app, honest about age, zip and coverage');
+/* the feed under test is built from SAVED real responses, never a live fetch */
+/* written OUTSIDE www/, so the nightly's Pages deploy (which runs after smoke) can never ship a fixture as real */
+const fxDir = fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-hunt-')); const feedFile = path.join(fxDir, 'feed-fixture.json');
+execSync(`python3 tools/hunt.py --from-fixtures --out ${feedFile}`, { cwd: ROOT, stdio: 'pipe' });
+const F = JSON.parse(fs.readFileSync(feedFile, 'utf8')); const T = F.sources.target;
+ok('a feed builds from the saved responses with a fetch time, a national item list and a served-zip map', !!F.fetched_at && Array.isArray(T.items) && T.zips && typeof T.zips === 'object' && Array.isArray(F.zips));
+ok('every item carries title, price, tcin and a checked flag; online status when checked', T.items.every(i => i.title && i.tcin && typeof i.checked === 'boolean' && (!i.checked || i.online)), String(T.items.length));
+ok('a Japanese release is never matched to the English catalogue (take 71 finding)', T.items.filter(i => /japanese/i.test(i.title)).every(i => !i.catalog_id));
+ok('a served zip carries its stores, per-store stock and a check time per item; a failed zip carries its reason', T.zips['48329'].ok && T.zips['48329'].stores.length >= 1 && Object.keys(T.zips['48329'].checked_at).length >= 1 && T.zips['48201'].ok === false && /budget|throttle/.test(T.zips['48201'].error));
+ok('every checked item carries the time its online status was read, and the feed carries a cursor for the next run', T.items.filter(i => i.checked).every(i => i.online_at) && T.cursor && 'online' in T.cursor);
+ok('the app never fetches a retailer: the only stock URL it knows is the feed on Pages', /hunt\/feed\.json/.test(js) && !/redsky\.target\.com/.test(js));
+ok('the feed URL is derived from the sync URL, not a second literal', /replace\(\/bundle\\\/\?\$\/, ''\) \+ 'hunt\/feed\.json'/.test(js));
+V.HUNT.feed = F; V.MODE.set('hunt', false);
+/* the zip: exact, same area, none */
+V.HUNT.setZip('48329'); ok('an exactly served zip is matched exactly', V.HUNT.served().how === 'exact' && V.HUNT.served().zip === '48329');
+V.HUNT.setZip('48340'); ok('a zip in the same 3-digit area uses that area\'s check and says so', V.HUNT.served().how === 'area' && V.HUNT.served().zip === '48329');
+V.HUNT.setZip('90210'); ok('a zip nowhere near a served area is NONE, never silently the nearest', V.HUNT.served().how === 'none');
+V.HUNT.setZip('48201'); V.paintSealed();
+ok('a served zip whose check did not run says why on screen', /local check for 48201 not done: budget/.test(ctx.document.querySelector('#sealedList').innerHTML));
+V.HUNT.setZip('90210'); V.paintSealed(); let h = ctx.document.querySelector('#sealedList').innerHTML;
+ok('with no local coverage the national online layer still shows for every product, and the covered areas are named', /Target — online, all of the US/.test(h) && /no local check for your area yet/.test(h) && /48329/.test(h) && /ships/.test(h));
+V.HUNT.setZip('48329'); V.paintSealed(); h = ctx.document.querySelector('#sealedList').innerHTML;
+ok('with a served zip the panel says how many stores and how many products have a shelf check on file', /4 stores within 50 mi, shelf checks on file for 2 products/.test(h));
+ok('a matched product carries a Target line with price, shipping status and shelf state', (() => { const by = V.HUNT.byCatalogId(); const ids = Object.keys(by); return ids.length >= 1 && ids.every(id => new RegExp('data-open="' + id + '"[\\s\\S]*?Target \\$').test(h)); })());
+ok('a checked item carries the age of its shelf check', /(on the shelf|not on a shelf within 50 mi of 48329) (just now|\d+ min ago)/.test(h));
+ok('an item the local check has not reached says the shelf was not checked yet (never "not on a shelf")', /shelf not checked yet for this item/.test(V.targetLine(T.items.find(i => /japanese/i.test(i.title)), T)));
+const oldFeed = JSON.parse(JSON.stringify(F)); oldFeed.sources.target.fetched_at = new Date(Date.now() - 5 * 3600e3).toISOString();
+V.HUNT.feed = oldFeed; V.paintSealed();
+ok('a feed older than three hours is called stale on screen (PROTOCOL §10)', /stale/.test(ctx.document.querySelector('#sealedList').innerHTML));
+const dead = JSON.parse(JSON.stringify(F)); dead.sources.target = { ok: false, error: 'HTTP 403', fetched_at: F.fetched_at, stale_since: F.fetched_at, zips: {}, items: [] };
+V.HUNT.feed = dead; V.paintSealed();
+ok('a failed source says unreachable-since and the reason, never an empty list', /unreachable since/.test(ctx.document.querySelector('#sealedList').innerHTML) && /HTTP 403/.test(ctx.document.querySelector('#sealedList').innerHTML));
+V.HUNT.feed = null; V.paintSealed();
+ok('with no feed on the phone it says so and offers a fetch', /Not fetched yet/.test(ctx.document.querySelector('#sealedList').innerHTML) && /id="huntSync"/.test(ctx.document.querySelector('#sealedList').innerHTML));
+ok('the zip is asked once, stays on the phone, and can be changed from the panel', /vault\.hunt\.zipAsked/.test(js) && /vault\.hunt\.zip'/.test(js) && /id="huntZip"/.test(js) && /The zip stays on this phone/.test(js));
+ok('the hourly workflow exists as a file to paste, takes a zip LIST, and deploys www/ to Pages', fs.existsSync(path.join(ROOT, 'ci', 'hunt.yml')) && /--zips/.test(fs.readFileSync(path.join(ROOT, 'ci', 'hunt.yml'), 'utf8')) && /deploy-pages/.test(fs.readFileSync(path.join(ROOT, 'ci', 'hunt.yml'), 'utf8')));
+/* take 73: the time series -- built by the runner from its own last deploy, read by the app as dated restocks */
+{
+const histFile = path.join(fxDir, 'history-fixture.json');
+ok('the runner writes a history beside the feed: one compact row per run, capped', fs.existsSync(histFile) && (() => { const h = JSON.parse(fs.readFileSync(histFile, 'utf8')); return Array.isArray(h.runs) && h.runs.length >= 1 && h.runs[0].t && 'online' in h.runs[0] && 'shelf' in h.runs[0]; })());
+ok('the runner fetches its previous feed and history back from Pages, derived from UPDATE_URL, because a fresh checkout has neither', /def load_previous/.test(fs.readFileSync(path.join(ROOT, 'tools', 'hunt.py'), 'utf8')) && /def pages_base/.test(fs.readFileSync(path.join(ROOT, 'tools', 'hunt.py'), 'utf8')) && /UPDATE_URL/.test(fs.readFileSync(path.join(ROOT, 'tools', 'hunt.py'), 'utf8')));
+/* synthesise a fortnight of hourly rows: one product shipping until day 9, one store restocking on two Fridays */
+const tcin = T.items.find(i => !/japanese/i.test(i.title) && i.catalog_id).tcin; const sid = T.zips['48329'].stores[0].id;
+const rows = []; const t0 = Date.now() - 14 * 864e5;
+for (let k = 0; k < 24 * 14; k++) { const t = new Date(t0 + k * 3600e3); const day = Math.floor(k / 24);
+  const qty = ((day === 4 || day === 11) && (k % 24) >= 9) ? 3 : 0;                                          // day 4 and 11 = restocks, from the 9th hour of that synthetic day
+  rows.push({ t: t.toISOString(), online: { [tcin]: day < 9 ? 1 : 0 }, shelf: { '48329': { [tcin]: { [sid]: qty } } } }); }
+V.HUNT.hist = { runs: rows, since: rows[0].t, stores: { '48329': T.zips['48329'].stores }, titles: {} };
+const rs = V.HUNT.restocks(tcin, '48329');
+ok('from the history: the last time it shipped, and every none-to-some flip per store as a dated restock', rs.runs === 336 && rs.lastShip && Math.round((Date.now() - Date.parse(rs.lastShip)) / 864e5) === 5 && rs.events.length === 2 && rs.events.every(e => e.store === sid && e.qty === 3), JSON.stringify(rs.events));
+V.HUNT.feed = F; V.HUNT.setZip('48329'); V.MODE.set('hunt', false); V.paintSealed();
+const h73 = ctx.document.querySelector('#sealedList').innerHTML;
+ok('the product line says it: last seen shipping N days ago, restocked 2× in 14 d with the store and day named', /last seen shipping 5 days ago/.test(h73) && /restocked 2× in 14 d: Auburn Hills/.test(h73));
+V.HUNT.hist = { runs: rows.slice(0, 5), since: rows[0].t, stores: { '48329': T.zips['48329'].stores }, titles: {} }; V.paintSealed();
+ok('with five checks it lists what it saw and says a pattern needs a fortnight -- never a prediction on thin data', /5 hourly checks so far — a pattern needs a fortnight/.test(ctx.document.querySelector('#sealedList').innerHTML));
+V.HUNT.hist = null; V.paintSealed();
+ok('with no history there is no history line at all', !/hourly checks so far|last seen shipping/.test(ctx.document.querySelector('#sealedList').innerHTML));
+/* take 74: Local -- the roster, distances from the zip area, the dropdown, own notes */
+{
+const storesFile = path.join(fxDir, 'stores-fixture.json');
+ok('the run writes a store roster beside the feed, from the events file, with location and next events', fs.existsSync(storesFile) && (() => { const r = JSON.parse(fs.readFileSync(storesFile, 'utf8')); return Array.isArray(r.stores) && r.stores.length >= 10 && r.stores.every(s => s.name && s.state && Array.isArray(s.events)) && r.stores.some(s => s.ll); })());
+ok('the bundle ships the 3-digit prefix centroid table, small, not the 758 KB full one', V.CAT.zips3 && Object.keys(V.CAT.zips3).length > 800 && Object.keys(V.CAT.zips3).length < 1000 && Array.isArray(V.CAT.zips3['483']));
+V.LOCAL.stores = JSON.parse(fs.readFileSync(storesFile, 'utf8')); V.HUNT.setZip('48329');
+const mi = V.LOCAL.miles([42.26, -83.72]);   // Ann Arbor from the 483 area
+ok('distance from the zip area to a store is computed in miles, about right (Ann Arbor ~35-45 from Waterford)', mi >= 25 && mi <= 55, String(mi));
+ok('a store the app cannot place has no distance and is kept only when the filter is Any', V.LOCAL.miles(null) === null && (V.LOCAL.radius = 50, !V.LOCAL.within(null)) && (V.LOCAL.radius = 0, V.LOCAL.within(null)));
+V.LOCAL.radius = 50; V.paintLocal(); const hl = ctx.document.querySelector('#localList').innerHTML;
+ok('Local lists the shops within the radius with address, ~miles and their next event', /Shops that run One Piece events/.test(hl) && /~\d+ mi/.test(hl) && /2026-\d\d-\d\d/.test(hl));
+ok('...and says what the list means: registered to run events, not proof of shelf stock', /registered to run events/.test(hl));
+V.LOCAL.radius = 10; V.paintLocal();
+ok('the distance dropdown narrows the list', (ctx.document.querySelector('#localList').innerHTML.match(/~\d+ mi/g) || []).length < (hl.match(/~\d+ mi/g) || []).length);
+V.LOCAL.radius = 50;
+V.LOCAL.notes = [{ store: 'Cosmic Cards & Collectibles', what: '3 OP-11 boxes', price: 130, phone: '(248) 555-0100', when: '2026-09-16' }]; V.paintLocal();
+ok('a note of your own shows the store, what you saw, the price, the date and a Call link', /3 OP-11 boxes/.test(ctx.document.querySelector('#localList').innerHTML) && /\$130\.00/.test(ctx.document.querySelector('#localList').innerHTML) && /href="tel:\(248\) 555-0100"/.test(ctx.document.querySelector('#localList').innerHTML));
+V.LOCAL.notes = []; V.HUNT.setZip(''); V.paintLocal();
+ok('with no zip it asks for one and offers nothing it cannot place', /Where are you\?/.test(ctx.document.querySelector('#localList').innerHTML));
+/* take 79: exact distances on request */
+V.HUNT.setZip('48329'); V.LOCAL.zcta = null; V.paintLocal();
+ok('by default distances are "about" and the screen offers to make them exact', /about ±10 mi/.test(ctx.document.querySelector('#localList').innerHTML) && /id="localExact"/.test(ctx.document.querySelector('#localList').innerHTML));
+const before79 = V.LOCAL.miles([42.26, -83.72]);
+V.LOCAL.zcta = JSON.parse(fs.readFileSync(path.join(ROOT, 'catalog', 'zcta.json'), 'utf8'));
+ok('with the table, the zip is placed at its own centroid and the screen says so', V.LOCAL.exact() && V.LOCAL.here()[0] === 42.69 && (V.paintLocal(), /within a mile or two/.test(ctx.document.querySelector('#localList').innerHTML)));
+const after79 = V.LOCAL.miles([42.26, -83.72]);
+ok('the exact distance differs from the area estimate by a few miles, not by tens (both are honest placements of 48329)', Math.abs(after79 - before79) <= 15 && after79 >= 25 && after79 <= 55, `${before79} -> ${after79}`);
+ok('the table is on Pages beside the feed, not in the bundle', fs.existsSync(path.join(ROOT, 'www', 'hunt', 'zcta.json')) && !('zcta' in V.CAT) && Object.keys(JSON.parse(fs.readFileSync(path.join(ROOT, 'www', 'hunt', 'zcta.json'), 'utf8'))).length > 30000);
+V.LOCAL.zcta = null; V.HUNT.setZip('');
+ok('the roster refreshes at most daily in the hourly run and the parser has its controls in the gate', /24 \* 3600/.test(fs.readFileSync(path.join(ROOT, 'tools', 'hunt.py'), 'utf8')) && /def selftest/.test(fs.readFileSync(path.join(ROOT, 'tools', 'hunt', 'roster.py'), 'utf8')));
+/* take 75: local shops' online stock */
+const shopsFile = path.join(fxDir, 'shops-fixture.json');
+ok('the run writes the shops file from the verified list: per shop its sealed listings with price, availability, link and a catalogue match', fs.existsSync(shopsFile) && (() => { const j = JSON.parse(fs.readFileSync(shopsFile, 'utf8')); const sh = j.shops[0]; return j.fetched_at && sh.name === 'Black Vault Gaming' && sh.ok && sh.sealed.length === 2 && sh.sealed.every(i => i.price > 0 && typeof i.available === 'boolean' && /^https:\/\/blackvaultgaming\.com\/products\//.test(i.url)) && sh.sealed.some(i => i.catalog_id); })());
+V.LOCAL.shops = JSON.parse(fs.readFileSync(shopsFile, 'utf8')); V.HUNT.setZip('48329'); V.LOCAL.radius = 0; V.paintLocal();
+const hs75 = ctx.document.querySelector('#localList').innerHTML;
+ok('Local shows the shop with what it lists: sealed count, in-stock count, singles, and a link into the store', /Black Vault Gaming/.test(hs75) && /2 sealed listed, 2 in stock, 2 singles/.test(hs75) && /href="https:\/\/blackvaultgaming\.com"/.test(hs75));
+ok('...and says a shop lists what it chooses and the shelf may hold more', /the shelf may hold more/.test(hs75));
+V.paintSealed(); const hsl = ctx.document.querySelector('#sealedList').innerHTML;
+ok('a matched sealed product carries the shop\'s line: name, price, in stock online, fetched when', /Black Vault Gaming[^<]*\$8\.99 · in stock online · (just now|\d+ min ago)/.test(hsl));
+V.LOCAL.shops = null; V.LOCAL.radius = 50;
+ok('the verified list is data in the tree, hand-verified, with a date on each entry', fs.existsSync(path.join(ROOT, 'hunt', 'storefronts.json')) && JSON.parse(fs.readFileSync(path.join(ROOT, 'hunt', 'storefronts.json'), 'utf8')).stores.every(s => s.name && s.url && s.platform && /^\d{4}-\d\d-\d\d$/.test(s.verified)));
+/* take 76: events near you, and Hunt's own palette */
+const evFile = path.join(fxDir, 'events-fixture.json');
+ok('the run writes a compact events table beside the roster: rows of [store, date, title, TCG+ id, fee, seats, release], titles interned', fs.existsSync(evFile) && (() => { const j = JSON.parse(fs.readFileSync(evFile, 'utf8')); return Array.isArray(j.rows) && j.rows.length >= 10 && j.titles.length < j.rows.length && j.rows.every(r => r.length === 7) && /\/event\/$/.test(j.url); })());
+V.EVENTS.tab = JSON.parse(fs.readFileSync(evFile, 'utf8')); V.LOCAL.stores = JSON.parse(fs.readFileSync(storesFile, 'utf8')); V.HUNT.setZip('48329'); V.LOCAL.radius = 0;
+const evRows = V.EVENTS.rows();
+ok('events join back to their stores, carry a distance and a registration link, and are sorted by date', evRows.length >= 5 && evRows.every(e => e.store.name && e.url && /bandai-tcg-plus\.com\/event\/\d+/.test(e.url)) && evRows.every((e, i) => i === 0 || e.d >= evRows[i - 1].d));
+V.paintEvents(); const he = ctx.document.querySelector('#eventsList').innerHTML;
+ok('the Events screen groups by day and shows store, ~miles, fee or free, seats, and a Register link', /<div class="fgrp">/.test(he) && /~\d+ mi/.test(he) && /(free|\$\d)/.test(he) && /Register/.test(he) && /Registration is on Bandai TCG\+/.test(he));
+V.LOCAL.radius = 10; V.paintEvents();
+ok('the distance dropdown narrows the events too', (ctx.document.querySelector('#eventsList').innerHTML.match(/Register/g) || []).length <= (he.match(/Register/g) || []).length);
+/* take 78: an event onto the calendar as a plain .ics */
+{ V.LOCAL.radius = 0; const ev = V.EVENTS.rows()[0]; const ics = V.icsFor(ev);
+  ok('an event becomes a valid all-day VEVENT: calendar and event envelopes, date start and end, summary with the store, location, notes with fee and the registration link', /^BEGIN:VCALENDAR\r\n/.test(ics) && /BEGIN:VEVENT[\s\S]*END:VEVENT\r\nEND:VCALENDAR\r\n$/.test(ics) && new RegExp('DTSTART;VALUE=DATE:' + ev.d.replace(/-/g, '')).test(ics) && /DTEND;VALUE=DATE:\d{8}/.test(ics) && ics.includes('SUMMARY:') && ics.includes(ev.store.name.replace(/,/g, '\\,').replace(/;/g, '\\;')) && /LOCATION:/.test(ics) && /DESCRIPTION:.*(Fee|Free)/.test(ics) && (!ev.url || ics.includes('URL:' + ev.url)));
+  ok('commas and semicolons in names are escaped per RFC 5545, and lines end CRLF', !/[^\\],[^\r]*\r\n(?!DESCRIPTION|SUMMARY|LOCATION)/.test(ics.split('LOCATION:')[1].split('\r\n')[0].replace(/\\,/g, '')) && ics.split('\n').every(l => l === '' || l.endsWith('\r')));
+  ok('the row carries the calendar button', /data-evcal="0"/.test(ctx.document.querySelector('#eventsList').innerHTML) || (V.paintEvents(), /data-evcal="0"/.test(ctx.document.querySelector('#eventsList').innerHTML)));
+  let shared = null; const _sf = V.PLATFORM.shareFile; V.PLATFORM.shareFile = async (name, text, title) => { shared = { name, text, title }; return 'shared'; };
+  const okc = await V.addEventToCalendar(ev);
+  ok('on the phone it is handed to the share sheet as a .ics, where the calendar app takes it', okc && shared && /\.ics$/.test(shared.name) && shared.text === ics && /calendar/i.test(shared.title));
+  V.PLATFORM.shareFile = _sf; V.LOCAL.radius = 50; }
+V.LOCAL.radius = 50; V.EVENTS.tab = null; V.HUNT.setZip('');
+ok('Hunt is green: the palette is Zoro\'s and it clears AA (checked with the other two above)', /:root\[data-mode="hunt"\]\{\s*--bg:#0B1B12/.test(html) && /\.swords\{/.test(html) && (html.match(/class="swords"/g) || []).length >= 4);
+ok('the mark is three strokes of original geometry -- no image, no likeness', !/<image/.test(html.slice(html.indexOf('class="swords"'), html.indexOf('class="swords"') + 400)));
+/* take 77: stock alerts -- fire on the flip, once, per source */
+{
+V.HUNT.feed = F; V.HUNT.setZip('48329'); V.LOCAL.shops = JSON.parse(fs.readFileSync(shopsFile, 'utf8'));
+const watched = V.CAT.rows.find(p => p.id === T.items.find(i => i.catalog_id).catalog_id);
+const shopItem = V.LOCAL.shops.shops[0].sealed.find(i => i.catalog_id); const watched2 = V.CAT.byId.get(shopItem.catalog_id);
+const notes = []; const _n = V.PLATFORM.notify; V.PLATFORM.notify = async (id, title, body) => { notes.push({ title, body }); return true; };
+V.STOCK.list = []; V.STOCK.toggle(watched.id); V.STOCK.toggle(watched2.id);
+ok('a Sealed row can be watched; the watch is kept on the phone with what each source last showed', V.STOCK.has(watched.id) && V.STOCK.has(watched2.id) && JSON.parse(ctx.localStorage.getItem('vault.stockAlerts')).length === 2);
+const srcs = V.STOCK.sourcesFor(watched.id), srcs2 = V.STOCK.sourcesFor(watched2.id);
+ok('a product\'s sources are every place the feed knows it -- Target online for one, a local shop for another', srcs.some(s => /^target:online/.test(s.key)) && srcs2.some(s => /^shop:/.test(s.key)), srcs.concat(srcs2).map(s => s.key.split(':')[0]).join());
+const n1 = await V.STOCK.check();
+ok('the first check fires once per source that is in stock, with the source named', n1 >= 2 && notes.length === n1 && notes.every(x => /^In stock: /.test(x.title)) && notes.some(x => /Black Vault Gaming online/.test(x.body)) && notes.some(x => /Target online/.test(x.body)), JSON.stringify(notes.map(x => x.body)));
+const n2 = await V.STOCK.check();
+ok('the second check with nothing changed fires nothing -- once per flip, not once per hour', n2 === 0);
+shopItem.available = false; await V.STOCK.check(); shopItem.available = true;
+const n3 = await V.STOCK.check();
+ok('out and back in fires again, for that source only', n3 === 1 && /Black Vault Gaming online/.test(notes[notes.length - 1].body));
+V.paintSealed(); const hst = ctx.document.querySelector('#sealedList').innerHTML;
+ok('the Stock alerts panel lists the watches with where each is in stock and when it last fired; the row shows it watched', /Stock alerts/.test(hst) && /in stock: /.test(hst) && /last alert (just now|\d+ min ago)/.test(hst) && new RegExp('data-stock="' + watched.id + '"[^>]*aria-pressed="true"').test(hst));
+ok('...and says plainly that the check runs when the app is opened', /the app must be opened for that/.test(hst));
+V.STOCK.toggle(watched.id); V.STOCK.toggle(watched2.id); ok('toggling again stops the watch', !V.STOCK.has(watched.id) && V.STOCK.list.length === 0);
+V.PLATFORM.notify = _n; V.HUNT.setZip(''); V.LOCAL.shops = null;
+}
+}
+V.HUNT.setZip(''); V.MODE.set('collect', false);
+}
 }
 
 {

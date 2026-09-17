@@ -1,4 +1,660 @@
-# HANDOFF — through Take 66
+# HANDOFF — through Take 80
+
+## Take 80 — 2026-09-16 — a focus ring, and the lint that would have saved five nights
+
+Opened before any code (PROTOCOL §6).
+
+### Chosen
+
+The last two items that need neither the device nor the owner: the
+keyboard focus ring A30 deferred at take 66, and the pinned-count lint
+deferred at takes 56 and 58 — the guard against the class of assertion that
+cost five nights of price history at take 58.
+
+### Built
+
+- **`:focus-visible`** — a 2px accent ring with an offset, on keyboard focus
+  only; a tap or click shows nothing. Asserted in Chrome by focusing a nav
+  button and reading its computed outline.
+- **The smoke lint in the gate:** any assertion that compares
+  `history_days`, `.days.length`, `source_updated_at`, `.market`, `.low` or
+  `.high` to a literal number fails the gate, with the line named. A
+  comparison between two live values passes; a deliberate exception carries
+  `lint-ok`. **Control:** the two assertions that actually broke (takes 56
+  and 58, reconstructed) are caught; a live-vs-live comparison is not.
+  Today's smoke has none.
+
+**smoke.mjs 525, render.mjs 65 (Chrome). Gate green, sealed bare.**
+
+### What is left, honestly
+
+*Mine, without the device:* nothing of size. The sim's tail (modal, ordering,
+protection, opponent choices) is a take per mechanism whenever wanted; the
+RELEASE.md trim and the seed-on-releases `build.yml` are standing offers.
+*Mine, with the device:* national sellers from a residential IP; whatever
+the first solo game and the first Hunt session show.
+*The owner's:* below, in the reply.
+
+### DEFERRED this cycle
+
+- Everything above under "what is left".
+
+## Take 79 — 2026-09-16 — exact distances on request; the background question filed, not built
+
+Opened before any code (PROTOCOL §6).
+
+### Chosen
+
+Background stock checks were next by the list, and they are a new native
+plugin, a permission and a Play review question — the kind of thing that
+fails on the runner overnight if added blind at the end of a long session.
+Filed as **D22** with the three honest options instead. Built in its place:
+the exact-distance upgrade deferred at take 74, small and safe.
+
+### Built
+
+`catalog/zcta.json` (758 KB, 33,791 zips) is copied to Pages beside the
+feed at build time, never into the bundle. On Local, the note that
+distances are *about ±10 mi* carries *make them exact*: one tap fetches the
+table once (kept on the phone when localStorage takes it, else for the
+session), and from then on the collector's own zip is placed at its
+centroid — within a mile or two — with the note saying so. Events use the
+same placement. Four smoke assertions, including that the exact and the
+area placements of 48329 agree within a few miles.
+
+### Findings
+
+- The area estimate for 48329 and the exact centroid put Ann Arbor at
+  nearly the same distance — the 3-digit mean happens to sit close to
+  Waterford. Other zips will not be so lucky; that is what the upgrade is
+  for.
+
+**smoke.mjs 523, render.mjs 64 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **D22** — the owner's.
+- **National sellers from a residential IP** in the sideload build — needs
+  the device.
+- The owner's list: push t79; paste `hunt.yml`; shop URLs; D20, D21; the
+  tour check.
+
+## Take 78 — 2026-09-16 — an event onto the phone's calendar, with no new plugin
+
+Opened before any code (PROTOCOL §6).
+
+### Chosen
+
+The calendar tap deferred at take 76. No calendar plugin — a new dependency,
+a permission, an Android build change — when a plain `.ics` handed to the
+share sheet lets the phone's own calendar take the event, offline, with the
+Filesystem-and-Share path take 34 already proved. In a browser the same
+file downloads.
+
+### Built
+
+`icsFor(e)`: a VCALENDAR with one all-day VEVENT (the source gives a date,
+not a time) — the store's address as the place, the fee, seats and
+registration link in the notes, the TCG+ URL as the URL, the event's TCG+
+id as the UID, commas and semicolons escaped and CRLF line ends per RFC
+5545. A *+cal* button on every Events row beside *Register*. Four smoke
+assertions, including that the handed-off text is byte-identical to the
+generated file.
+
+### Findings
+
+- The first assertion looked for the store's raw name inside the file and
+  failed on *DX Games & More, LLC* — the comma is escaped in the file, as it
+  must be. The file was right; the test compared against the wrong form.
+- The debug harness reused a stale path and fell over before the probe;
+  a clean probe found the answer in one run. Debug tooling accumulates the
+  same debt as anything else.
+
+**smoke.mjs 519, render.mjs 64 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **Event times.** The source has only dates; the store page on TCG+ has
+  the time. Fetching per event is 11,000 requests; a time in the calendar
+  entry waits for a source that carries it.
+- **Background stock checks** (take 77's deferral).
+- The owner's list: push t78; paste `hunt.yml`; shop URLs; D20, D21; the
+  tour check.
+
+## Take 77 — 2026-09-16 — stock alerts, named for what they do
+
+Opened before any code (PROTOCOL §6).
+
+### The owner's note
+
+He is not sure about "anti-scalper alert", or at least the name. Renamed
+by its use: a **stock alert** — tell me when this product is in stock at
+any source the feed watches. That is what it does; the scalper is who it
+beats, not what it is.
+
+### Measured first
+
+Seven national volume sellers probed for a Shopify `products.json`:
+Game Nerdz 404, Steel City 403, Dave & Adam's 403, Collector's Cache 404,
+TCG Unlimited 503, Premium Bandai 200 but not JSON, GameStop 403. From a
+cloud IP, none of them is readable keylessly today. So the alert ships over
+the sources that exist — Target online, a Target shelf in the served zip, a
+local shop's storefront — and is source-agnostic by construction: whatever
+the feed learns to read next plugs into `sourcesFor()`.
+
+### Built
+
+`STOCK`: a watch per sealed product, toggled from a bell on every Sealed
+row; `sourcesFor(id)` lists every place the feed knows the product and
+whether it is available there now; `check()` runs after every feed refresh
+and **fires on the flip only** — once per source when it goes from
+not-available to available, again only after it has gone out and come back
+— through the same local-notification path as price alerts, or a toast where
+notifications are off. A *Stock alerts* panel at the top of Sealed lists
+each watch with where it is in stock and when it last fired, and says
+plainly that the check runs when the app is opened.
+
+### Findings
+
+- The first test assumed one product would be known to both Target and a
+  local shop; none was (the shop lists two sealed products, Target matched
+  a third). Two watches, one per source, was the honest test.
+- The smoke insertion consumed a closing brace again (take 73's slip). A
+  block appended before another block's `}` needs its own — noted twice
+  now, so it is a pattern: append after the brace, not before it.
+
+**smoke.mjs 515, render.mjs 64 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **Background checks.** The alert fires when the app opens and the feed
+  refreshes; a check while the app is closed needs a background task
+  (Capacitor's background runner) and is its own take with its own battery
+  question.
+- **National sellers** — retry from a residential IP in the sideload build,
+  or with the store's collection endpoint once its name is known.
+- The event-to-calendar tap; the owner's list: push t77; paste `hunt.yml`;
+  shop URLs; D20, D21.
+
+## Take 76 — 2026-09-16 — Events near you, and Hunt in Zoro's colours
+
+Opened before any code (PROTOCOL §6).
+
+### The owner's asks
+
+Events matter to him — some give rewards, and he wants to play in one. And
+Hunt should be Zoro-themed: a green tinge, elements of his palette.
+
+### Built
+
+- **Events.** The roster now also emits a compact table of every event in
+  the next month — `[store index, date, title index, TCG+ id, fee, seats,
+  release]`, titles interned (11,564 rows use 11 strings; 484 KB raw, 94 KB
+  gzipped) — as `hunt/events.json` beside `stores.json`, carried over
+  between runs from Pages like the rest. The **Events** screen: the
+  distance dropdown, events grouped by day, each with title, store and city,
+  ~miles, fee or *free*, seats, a *release* badge, and a **Register** link
+  to the event on Bandai TCG+ — registration is theirs; this only points.
+- **The palette.** Forest-green ground, cream text, the gold of three
+  earrings as the accent, the sash's red only for a fall; MEASURED first:
+  fg 13.5, dim 8.0, dim2 6.1, gold 7.4 to 1 on the card, all AA. A
+  three-stroke mark of original geometry on Hunt's screen titles. No
+  likeness, no art (landmine 26).
+
+### Findings
+
+- The events file *is* the next month: 11,342 of 12,334 events fall in the
+  31-day window, so the table is the whole file made small, not a slice.
+- `stores.json` is 816 KB raw and the app keeps it in localStorage beside
+  the events table; under any limit today, worth a second look when the
+  roster grows.
+- The first Hunt screenshot looked dimmed: the zip pop-up had fired on
+  first entry, as designed. Read the screenshot before reading into it.
+- **`pkill` in the same command as a ledger write killed the shell before
+  the write, for the second time** (take 63 was the first). Nothing landed;
+  the grep-after-write rule caught it. The screenshot server now gets its
+  own command.
+
+**smoke.mjs 507, render.mjs 64 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **A "your event" reminder** — a tap that puts an event on the phone's
+  calendar (the Capacitor calendar path, or an .ics share).
+- **Store phone numbers and hours** for the Events rows — not in the source.
+- **The preorder watch** (the anti-scalper alert), still next by value.
+- The owner's list: push t76; paste `hunt.yml`; shop URLs; D20, D21.
+
+## Take 75 — 2026-09-16 — the shops' own storefronts: sealed stock and price, hourly, from the ones we can name
+
+Opened before any code (PROTOCOL §6).
+
+### Measured first
+
+- **OSM (Overpass) was 503 for the fourth time today** — not a source to
+  lean on for discovery.
+- **Guessed domains for seven Michigan roster stores: one right.** Black
+  Vault Gaming answers `/products.json`; the rest were 503s, 404s and
+  connection failures — guessed wrong, or not Shopify, and no way to tell
+  which from here. So discovery is a **hand-verified list**, not a guess.
+- **Black Vault, paged fully: 5,000 products over twenty pages, 405 One
+  Piece, only 2 sealed** — an OP16 pack ($8.99, in stock) and ST-32
+  ($34.99). `product_type` ("One Piece Card Game Sealed" / "… Singles") is
+  the clean filter; this store brackets its sealed titles too, so a title
+  regex alone would have misfiled them. `/collections/one-piece-card-game/
+  products.json` exists on this store and is tried first.
+
+### Built
+
+`tools/hunt/shops.py` — classify a site, fetch a store's One Piece listings
+(collection first, whole catalogue second, twenty pages at most), sealed
+told from singles by the store's own filing, five checks with two controls
+in the gate; `hunt/storefronts.json` — the verified list, one entry today,
+each with a `verified` date; the hourly run polls every Shopify entry and
+matches sealed listings to the catalogue with the same matcher; the app's
+Local screen lists each shop with sealed/in-stock/singles counts, its first
+listings and a link into the store, and every matched product in Sealed
+carries the shop's line — *Black Vault Gaming ~110 mi $8.99 · in stock
+online · 12 min ago*.
+
+### Findings
+
+- **A store's online listing is not its shelf.** 405 One Piece products
+  online and two of them sealed says the sealed stock is behind the counter,
+  not on the site. The screen says so, and the owner's notes are the layer
+  for it. The storefront layer is still worth having: the two it lists are
+  real prices at a real shop, refreshed hourly.
+- The control that assumed "bracketed number means single" was wrong for
+  this store; the store's own `product_type` decides.
+
+**smoke.mjs 501, render.mjs 64 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **Growing the list.** The owner knows the shops; each needs one URL and a
+  `--probe` to classify it. Crystal Commerce and TCGplayer Pro storefronts
+  need their own parsers when a listed shop runs one.
+- **Distance for a listed shop** comes from matching it to the roster by
+  name and zip; a shop not on the roster gets none until the list carries
+  its own point.
+- **The volume-seller preorder watch** — the same module, pointed at the
+  national retailers' Shopify stores (Game Nerdz and friends), with a *coming
+  soon → preorder* flip as the alert.
+- The owner's list: push t75; paste `hunt.yml`; D20, D21; the tour check.
+
+## Take 74 — 2026-09-16 — Local: the shops that actually carry One Piece, by distance from your zip
+
+Opened before any code (PROTOCOL §6).
+
+### Proven before building
+
+- **The roster is keyless and static.** onepieceevents.com publishes
+  `data/evnt_us.json` (10.8 MB): 12,334 US events, each with its store's
+  name, address, city, zip and state, derived from Bandai TCG+ — the system
+  a store must register with to run One Piece events. Built into stores:
+  **2,967 in the US, 96 in Michigan**, 2,963 with a centroid.
+- **Zip centroids from the Census ZCTA gazetteer**, public domain: 33,791
+  zips, 758 KB compacted, cached as `catalog/zcta.json` in the tree. The
+  app ships only the 896 three-digit-prefix means (~15 KB) to place a
+  collector's zip within about ten miles; the roster carries each store's
+  exact point.
+- Bandai TCG+'s own site is a JavaScript shell over `api.bandai-tcg-plus.com`
+  (needs a session); not used.
+
+### Built
+
+`tools/hunt/roster.py` (fetch, build, five checks with two controls) run at
+most daily inside the hourly job, carried over between runs from Pages like
+the feed; `hunt/stores.json` on Pages with source and fetch time. The
+**Local** screen: the distance dropdown (10/25/50/100/Any, kept), the shops
+within it sorted by distance with address, ~miles and their next two events
+(a release event flagged), the Target stores the feed checked for the served
+zip, and **your notes** — store, what you saw, price, date, a phone that
+becomes a Call link — with a *Note* button beside every shop. The screen
+says what the roster means: registered to run events, not proof of shelf
+stock.
+
+### Findings
+
+- **No release events exist in the file today** — the next set is two
+  months out and Bandai lists release events about a fortnight ahead. The
+  fixture carries a synthesised one, marked as such, so the flag is
+  exercised; the first real one will appear on the roster in November.
+- **The centroid table went into the bundle after the bundle was written**
+  — three assertions red until the line moved above the serialisation.
+  Order of operations, again.
+
+**smoke.mjs 496, render.mjs 64 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **Exact distances** — the full ZCTA table fetched on demand from Pages
+  when the collector wants better than ±10 mi; a 200 KB download once.
+- **The storefront layer** — mapping each roster store to its Shopify /
+  Crystal Commerce / TCGplayer Pro storefront and polling stock (A32's next
+  step; the roster is the list it needs).
+- **Store phone numbers** — the roster has none; OSM and the store's own
+  site do. Your notes carry them for now.
+- The owner's list: push t74; paste `hunt.yml`; D20, D21; the tour check;
+  D16; D7.
+
+## Take 73 — 2026-09-16 — the runner reads its own last deploy; the time series begins
+
+Opened before any code (PROTOCOL §6).
+
+### The hole in take 72
+
+The rotation cursor lived in `www/hunt/feed.json`, read as *previous* at the
+start of a run. On the runner every hourly run is a fresh checkout: there is
+no previous file, so the cursor would have restarted at zero every hour and
+the same two products would have been checked forever. Found by asking
+where the state lives; not by a test, because the tests run in one tree.
+
+### Built
+
+- **Pages is the state store.** `hunt.py` fetches its previous `feed.json`
+  and `history.json` back from Pages (the address derived from
+  `UPDATE_URL`, the one place the site is written) when no local copy
+  exists. A failed deploy costs one hour of state, nothing more.
+- **`history.json`** — one compact row per run (~2 KB): the online status
+  of every item checked that run, and per served zip per item the
+  per-store quantity. Capped at 336 rows, a fortnight of hours. Written
+  beside the feed; a fixture run keeps the fixture suffix.
+- **The app** syncs the history beside the feed and, per product, says what
+  the runs saw: *last seen shipping 5 days ago · restocked 2× in 14 d:
+  Auburn Hills Fri 9 AM, Auburn Hills Fri 9 AM*. Under 24 checks it lists
+  what it saw and says *a pattern needs a fortnight*; with none it says
+  nothing. **No prediction is made** — a dated list of restocks is what
+  the data supports today; the pattern language comes when there is a
+  fortnight to stand on.
+- Smoke builds a synthetic fortnight — one product shipping until day 9,
+  one store restocking on two Fridays — and proves the arithmetic and the
+  honesty on thin data. Fixtures now live in a temp dir so the nightly's
+  Pages deploy, which runs after smoke, can never ship one.
+
+**smoke.mjs 486, render.mjs 64 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **The pattern sentence** ("restocks Fridays, 3 of the last 4 weeks") once
+  a real fortnight exists on Pages.
+- **Local** — the TCG+ roster, the distance dropdown, own store notes.
+- The owner's list: push t73; paste `hunt.yml`; D21; the tour check; D16; D7.
+
+## Take 72 — 2026-09-16 — all of the US online, your zip for the shelf, and a quota that shapes the feed
+
+Opened before any code (PROTOCOL §6).
+
+### The owner's ask
+
+Increase the radius to all of the US: the online/shipping view loads fully;
+a pop-up asks for a zip and local prices are then included.
+
+### Built
+
+Two layers in one feed. **National:** every product with its price and
+online (shipping) stock, no store, no radius. **Local:** for each *served*
+zip (a repository variable, `HUNT_ZIPS`, default 48329), the nearby stores
+and per-store stock. The app asks for the collector's zip once (kept on the
+phone, changeable from the panel), then matches it to a served area
+honestly: exact, or the same three-digit prefix (roughly one metro, said as
+*using the 48329 check, same area*), or **none** — said as none, with the
+covered areas named and the online layer still complete.
+
+### Measured, and it changed the fetch
+
+**RedSky throttled after 33 calls even at one call a second.** The quota is
+per run from one IP, not a burst rule. So a run is a *budget* of 28 calls,
+spent in order: the product list only when the last one is six hours old;
+the local layer, two English items per zip in a round-robin; the national
+layer, online status in a round-robin over every item. A cursor rides in
+the feed so the next run continues where this one stopped, and **every
+check carries its own time** — one item's online status can be an hour
+older than its neighbour's and the line says so. Nothing unchecked is ever
+zero.
+
+**smoke.mjs 480, render.mjs 64 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **The quota's window is UNKNOWN** — thirty per run is what held; whether it
+  is per minute, per ten minutes or per IP-day is not measured. The hourly
+  cadence at 28 calls will tell within a day of the paste.
+- **Per-user zips beyond the served list** need the phone-side fetch in the
+  sideload build or a Data Safety update for the Play build (a zip sent to a
+  retailer): named as **D21**, the owner's.
+- **The restock time series** — the runner keeping every hourly feed, not
+  overwriting it.
+- **Local** — the TCG+ roster, the distance dropdown, own store notes.
+- The owner's list: push t72; paste `hunt.yml`; the tour check; D16; D7.
+
+## Take 71 — 2026-09-16 — the Hunt feed: Target, hourly, with what is on the shelf near 48329
+
+Opened before any code (PROTOCOL §6).
+
+### Proven before building
+
+Target's `nearby_stores_v1` returns eight stores within 17 miles of 48329
+(Auburn Hills 5.1, Bloomfield Township 7.6, Commerce 11.0, Rochester 13.6,
+Troy 14.2, Southfield 14.7, Novi 15.7, Farmington Hills 16.5) and
+`product_fulfillment_v1` returns a per-store `location_available_to_promise
+_quantity` with pickup and in-store status, plus online stock. Keyless,
+from a cloud IP.
+
+### Built
+
+- **`tools/hunt/target.py`** — stores, search over five keywords,
+  per-store availability; never raises, records a failure as a failure.
+- **`tools/hunt.py`** — builds `www/hunt/feed.json`, matches each item to a
+  catalogue sealed product by the share of the title's tokens found in the
+  product's name plus its set's name and code, kind agreeing, a set code
+  pinning the set; keeps the last good fetch when a fetch fails and says so;
+  `--from-fixtures` builds a feed from saved real responses; `--selftest` runs
+  ten checks including four controls, in the gate.
+- **The app** — `HUNT` syncs the feed from Pages (derived from the sync URL,
+  never a second literal), caches it, shows the Target panel with fetch age,
+  store count and how many items are the Japanese release, calls a feed
+  older than three hours stale and a failed source *unreachable since*, and
+  puts a Target line — price, online status, shelf state per store — on
+  every matched product. Refresh on tap; a quiet sync on entering Hunt when
+  the feed is stale.
+- **`ci/hunt.yml`** — hourly at :17, rebuilds `www/` and deploys it with the
+  feed; one paste (landmine 46). `vars.HUNT_ZIP` / `HUNT_RADIUS` override
+  48329 / 50.
+- PROVISION declares `redsky.target.com` as a runner-side source.
+
+### Findings — three, each a rule
+
+- **Most One Piece product on Target's site is the Japanese release.** 12 of
+  62 items say *(Japanese)*; their set names are translated differently
+  (*The Seven Heroes of the Blue Sea* is OP-14, *The Azure Sea's Seven*) and
+  their prices belong to a different product. The catalogue is the English
+  game. **A Japanese item is never matched to an English product** — the
+  first matcher scored it 0.5 and was right to refuse; the fixture that
+  expected a match was wrong.
+- **RedSky throttles availability calls: HTTP 435 after roughly forty in a
+  burst.** 120 of 160 store calls failed on the first live run. Now one call
+  a second, at most 64 a run, stop at the first throttle, English and dearer
+  items first; whatever is left is marked *not checked*, never zero. My own
+  probes then throttled the next fetch, which surfaced the second bug: a
+  kept feed printed as if fresh. It says *kept* now.
+- **Smoke must not need the network.** The first version asserted the live
+  feed; it tests a fixture-built feed now, and `build_app` deletes that
+  fixture from `www/` so it can never ride to Pages as real.
+
+**smoke.mjs 471, render.mjs 64 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **The paste**: `ci/hunt.yml` → `.github/workflows/hunt.yml`, once.
+- **Per-user zips.** The feed is for one zip; a collector elsewhere sees
+  stock near 48329 with the zip named. Serving a set of zips, or the
+  phone-side fetch in the sideload build, is the next decision.
+- **The restock time series** — the feed is one snapshot; the runner keeping
+  hourly snapshots is the prediction layer's raw material (A32 step 3).
+- **Local** — the TCG+ roster, the distance dropdown, own store notes.
+- The owner's list: push t71; the tour check; D16; D7; the `.aab` filename.
+
+## Take 70 — 2026-09-16 — Hunt, the third mode: Sealed and Releases from data already on the phone
+
+Opened before any code (PROTOCOL §6).
+
+### The owner's go, and the last question
+
+The plan vibed: restock prediction from the runner's hourly time series, the
+TCG+ roster for discovery, POS-storefront mapping, a Google Form as the
+crowd inbox. Then: *dealers with direct Bandai supply who sell just over
+MSRP in bulk — can we locate them, list contact info or stock?* Answered in
+A32 this take: **businesses yes, private individuals no.** Bandai's US
+supply moves through distributors to businesses with accounts; the
+"dealers" are volume retailers with public storefronts, and the thing that
+beats a scalper is a **preorder at MSRP** the week it opens — so a preorder
+watch across those storefronts, Premium Bandai and the big-box sites is the
+feature, not a contact list. Publishing private sellers' contact details is
+the one thing this app will not do.
+
+### Built this take
+
+The mode slider takes a third entry — **Collect · Prep & Play · Hunt** — with
+its own palette, nav and home. **Sealed**: every sealed product in the
+catalogue (boxes, packs, decks, cases, other), searchable, grouped by kind,
+with market/low/high, the nightly delta and the horizon label, a chart on
+tap through the existing detail sheet, and a price alert per product through
+the existing alert mechanism. **Releases**: every set with a publish date,
+upcoming first with a countdown, then recent, with the card count once
+published — from the group dates the ingest already reads.
+
+### Findings
+
+- **TCGCSV files 232 DON!! cards as sealed product** because they carry no
+  card number. They are single cards. Left in, they were two thirds of the
+  Sealed list; the screen keeps them out by name and smoke has the control.
+- **The palette was measured before it was written** (the take-60 rule):
+  dim2 5.42:1 on the card, and the contrast assertion now covers all three
+  modes.
+- **The knob measured mid-animation.** The first render assertion asked
+  where the knob was the instant the mode changed and it was still moving;
+  the screenshot showed it correctly under Hunt. The assertion now waits 350
+  ms for a 220 ms transition. Geometry has a time axis.
+- **`window.scrollTo` was missing from the DOM stub** — the first time a
+  smoke test opened the detail sheet directly. Added to the stub, not
+  removed from the app.
+- **The Dominance of God booster box is $399.55 on the marketplace two
+  months before release** — the scalper premium the owner is fighting,
+  visible on the first screen of the mode built to fight it.
+
+**smoke.mjs 459, render.mjs 64 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **The runner's feed** — Target hourly for 48329 with store stock, the
+  start of the time series (A32 step 2).
+- **Local** — the TCG+ roster, the distance dropdown, the collector's own
+  store notes, then POS-storefront polling.
+- **The volume-seller and preorder watch** — the anti-scalper alert.
+- **The form** for crowd reports (D20, if it vibes).
+- The owner's list: push t70; the tour check; D16; D7; the `.aab` filename.
+
+## Take 69 — 2026-09-16 — nine probes, the distance filter, and what to do about stores that publish nothing
+
+Opened before any code (PROTOCOL §6). Ledgers only.
+
+### Measured
+
+Nine more sources from a cloud IP in one pass: GameStop captcha; Best Buy
+503; B&N 404 on two paths; TCGplayer's listings endpoint 404 at the guessed
+shape; **GTS Distribution and Southern Hobby both return rendered catalogue
+pages** (GTS's carries "release" 43 times and "allocation" 4) though the
+search paths guessed were wrong; Alliance 503; Bandai's news path 404;
+Overpass 503 for the third time today. The finding is about method: a
+guessed URL from a cloud IP proves little either way, so each source is a
+take with its real page structure in hand and a saved response in smoke.
+
+### Filed
+
+The distance dropdown (10/25/50/100 miles, 50 the default, a filter over
+any list); the five options for stores with no feed, ranked — own notes,
+a Call button with a script, the AI caller (feasible, not now, not in the
+app), crowd reports (the real prize, needs a server: **D20**), and social
+pages (unscrapable).
+
+### DEFERRED this cycle
+
+- **A32's first build take**: Sealed, then Target via the runner.
+- **One session per source** for the eight that need their real structure.
+- **D20**, the owner's.
+- The owner's list unchanged.
+
+## Take 68 — 2026-09-16 — Hunt redesigned around what a keyless request actually gets
+
+Opened before any code (PROTOCOL §6). Ledgers only.
+
+### The owner's redirection
+
+No accounts, no keys. Scrape as much as possible — stock, releases, prices,
+as real-time as reasonable — from every supplier including eBay and
+Facebook; into prod if there are no concerns; local scope Michigan 48329,
+fifty miles.
+
+### Measured, seven probes
+
+Target's RedSky JSON: **200, 24 products with prices for a store near
+48329, keyless, from a cloud IP** — the backbone. Walmart: a captcha page.
+Meijer: 403. eBay: 403 robot check. B&N: 404 on the search path. Overpass:
+503 twice, overloaded. Facebook: not probed; it is login-walled and its
+automation bans accounts, which is a measured outcome from elsewhere, not a
+rule of ours.
+
+### The design that follows
+
+Two scrapers, one feed. The runner — one cloud IP, hourly, cached with the
+minute of fetch — publishes `hunt/feed.json` to Pages and **the Play build
+reads it and never scrapes a retailer from the phone**: that is what "no
+concerns" has to mean for a store-distributed app on the owner's developer
+account. The sideload build adds phone-side scrapers for the sources that
+serve a residential browser and block a cloud one (eBay, Walmart, Meijer).
+The Michigan local half is Overpass for discovery plus the fact that most
+LGS storefronts are Shopify, whose `/products.json` is public by design —
+stock and price for every store without touching HTML. TCGplayer's own
+seller lists are the other "one source, many suppliers" unlock. A32 carries
+the full supplier list with a status on each, and the order.
+
+### DEFERRED this cycle
+
+- **A32 in the order written**, starting with Sealed (data on the phone) and
+  Target via the runner.
+- **Probes owed before their sources ship**: GameStop, Best Buy, B&N at the
+  right URL, TCGplayer listings JSON, the distributors, Bandai's news page,
+  Overpass off-peak — each with a saved real response for smoke.
+- The owner's list unchanged.
+
+## Take 67 — 2026-09-16 — Hunt goes on the agenda, measured, not built
+
+Opened before any code (PROTOCOL §6). Ledgers only.
+
+### The owner's ask
+
+A price tracker for sealed product across every retailer and local store, a
+third mode called Hunt, upcoming release dates from the OPTCG site, and
+reprint information. Not to be built now.
+
+### Measured before filing
+
+660 of 667 sealed products already carry a TCGplayer market price and 590 of
+them are in the nightly sidecar today — the sealed tracker's first half is
+data the app has and does not show. TCGCSV's groups carry publication dates;
+four upcoming releases are known today. A32 carries the mode, the screens in
+the order they earn their place, the sources tiered by what can be done
+honestly, and what is ruled out before anyone is tempted (scraping, a
+server, "cheapest", affiliate links). D19 asks the one thing only the owner
+can answer: which retailer accounts he will open.
+
+### DEFERRED this cycle
+
+- **A32 in full**, in the order written: Sealed → Releases → Reprints → D19
+  → retailer feeds → Near me.
+- The owner's list unchanged: the tour check, D16, D7, the `.aab` filename,
+  the opt-in link, a Collectr export, a TalkBack listen, D15, D17, D18.
 
 ## Take 66 — 2026-09-16 — names for everything a screen reader reaches
 

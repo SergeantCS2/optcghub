@@ -1,0 +1,6 @@
+{
+  "_": "Local game stores' online shops, verified by hand: a store's site is not in the roster and guessed domains are wrong more often than right. Add a store as {name, zip, url, platform, verified}. The hourly job polls every 'shopify' entry.",
+  "stores": [
+    { "name": "Black Vault Gaming", "zip": "48858", "url": "https://blackvaultgaming.com", "platform": "shopify", "verified": "2026-09-16" }
+  ]
+}

@@ -211,6 +211,11 @@ def build(verbose=True):
     # own printings and labelled as built, never as the retail product.
     import stockdecks as sd
     cat["stock"] = sd.build(cat, verbose=True)
+    # Local (take 74): a 3-digit-prefix centroid table (~900 entries) so the app
+    # can place a collector's zip within about ten miles without the 758 KB full
+    # table; the roster carries each store's exact centroid.
+    from hunt import roster as _roster
+    cat["zips3"] = _roster.prefix_centroids(_roster.zcta())
     print(f"   effects: {fxstats['parsed']}/{fxstats['lines']} lines scripted ({100*fxstats['parsed']/max(1,fxstats['lines']):.1f}%), "
           f"{fxstats['cards_full']} cards fully, {fxstats['cards_partial']} partly")
     raw = json.dumps(cat, separators=(",", ":")).encode()
@@ -240,6 +245,16 @@ def build(verbose=True):
     man["fonts"] = fonts_used     # which file served each role, for the About panel and the harness
     # The app's own id, so the Play links are not a literal in two places.
     man["appId"] = json.load(open(os.path.join(ROOT, "capacitor.config.json")))["appId"]
+    # the smoke fixture feed must never ride to Pages as if it were real (take 71)
+    for fxf in (os.path.join(WWW, "hunt", "feed-fixture.json"), os.path.join(WWW, "hunt", "history-fixture.json")):
+        if os.path.exists(fxf):
+            os.remove(fxf)
+    # Exact distances on demand (take 79): the full zip-centroid table goes to
+    # Pages beside the feed, fetched once when the collector asks for it.
+    zc = os.path.join(ROOT, "catalog", "zcta.json")
+    if os.path.exists(zc):
+        os.makedirs(os.path.join(WWW, "hunt"), exist_ok=True)
+        shutil.copyfile(zc, os.path.join(WWW, "hunt", "zcta.json"))
     man["stock"] = len(cat["stock"])
     man["effects"] = {"lines": fxstats["lines"], "scripted": fxstats["parsed"], "cards_full": fxstats["cards_full"], "cards_partial": fxstats["cards_partial"]}
     # What's new (take 53): the first "New at take N" paragraph of ci/RELEASE.md,

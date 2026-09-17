@@ -1,6 +1,6 @@
 # OPEN DECISIONS — needed from the owner
 
-*Current as of take 66.* Everything else is decided and recorded in AGENDA.
+*Current as of take 80.* Everything else is decided and recorded in AGENDA.
 
 **D1 — App id and name. ANSWERED: registered with Play at the take-35 upload as `com.optcghub.app` / "OP TCG Hub", permanent.** *(original)* Proposed `com.optcghub.app` / "OP TCG Hub". Permanent
 once registered under developer verification and fixed from first Play upload
@@ -72,6 +72,60 @@ WEEK — the package name `com.optcghub.app` cannot change after the first Play
 upload, and I re-cut it in ten minutes today. See A19.
 
 ---
+
+*Added take 79.*
+
+**D22 — Stock checks while the app is closed.** Today a stock alert fires
+when the app is opened and the feed refreshes. A check with the app closed
+needs a background task: a Capacitor background runner (a new native
+plugin, an Android WorkManager job at fifteen-minute minimum, JavaScript
+in a separate context with no DOM), which costs battery, adds a permission
+prompt on newer Android, and is one more thing Play reviews. The
+alternative costs nothing: the hourly feed already runs on the runner, so
+the *runner* could decide "this watched product flipped" — but the runner
+does not know what any phone watches, and telling it would mean a phone
+sending its watch list somewhere (§9). So: (a) background runner in the
+app, (b) open-the-app-to-check as it is, or (c) a daily scheduled local
+notification that simply says "open Hunt to check your watches"? Nothing
+is built until this is answered; (b) is the default.
+
+*Added take 72.*
+
+**D21 — Local stock for a zip the runner does not serve.** The hourly feed
+carries shelf stock only for the zips in `HUNT_ZIPS`. A collector elsewhere
+sees the online layer and *no local check for your area yet*. Two ways to
+close that: (a) the sideload build fetches Target's store stock from the
+phone for any zip, on tap only — the owner's own device, his own IP, at most
+a dozen calls; or (b) the Play build does the same, which sends a typed zip
+to a retailer and must be declared in Data Safety (data shared with third
+parties: approximate location). (a) needs no decision from Play; (b) needs
+the form updated and re-reviewed. Which, and when?
+
+*Added take 69.*
+
+**D20 — Crowd reports for stores with no online stock (A32).** The most
+valuable signal for the local half — *"three boxes at Pandemonium, $130, this
+morning"* — is one collector telling the others, and that needs somewhere
+shared to write it: a server, however small. This project has refused a
+server since take 1 and the listing says the collection never leaves the
+phone. A reports store is not the collection, and it can be a public
+append-only file that the runner folds into the feed — but it is still a
+place data from users goes. Yes to a minimal reports endpoint for Hunt only,
+with nothing personal in a report (store, product, price, time), or no and
+the local half stays notes-only? This is the decision that sets the ceiling
+on Hunt's local value.
+
+*Added take 67.*
+
+**D19 — Retailer price sources for Hunt (A32). ANSWERED take 68: no accounts, no keys — keyless sources only, the runner as the scraper for the Play build, phone-side extras in the sideload build.** *(original)* TCGplayer via TCGCSV
+ships first and needs nothing from you. Beyond that, every retailer feed is
+a key in a repository secret that only you can obtain: a Walmart affiliate
+or marketplace API account is the one with a documented price API; Target,
+Meijer and Barnes & Noble have none, so for those the choice is *no feed*
+or *your own notes*. Which accounts will you open, and is an affiliate
+account acceptable given the listing says no affiliate links? (A key is not
+a link; the fetch would carry no tracking and the app would show no
+affiliate URL — but say so before I build on it.)
 
 *Added take 44.*
 

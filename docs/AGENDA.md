@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 66.* Ranked by blocking-ness, not by interest.
+*Current as of take 80.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -621,6 +621,337 @@ APEX ORV runs one before a release; this repo did not, and it is public.
 - **Ruled out: the README's link to the sibling repo.** It is the owner's own
   public project and the README says why the governance is shared.
 
+## A32 — Hunt: sealed-product prices, availability, releases and reprints · OPENED take 67 · a third mode
+
+The owner, take 67: *"a price tracker for all sets, hunting all available
+sources — Barnes & Noble, Meijer, Target, Walmart, all local game stores,
+anything online — for the cheapest prices on boxes and sealed packs. A major
+issue with One Piece is finding availability at a reasonable price. Eventually
+more local features for card/pack hunting. Maybe a new third mode called
+Hunt. List upcoming release dates with details from the OPTCG website, and any
+reprint info."*
+
+### MEASURED take 67 — what the app already holds toward this
+
+- **660 of 667 sealed products in the catalogue carry a TCGplayer market
+  price** — 46 booster boxes, 216 packs, 105 starter decks, 10 cases, 290
+  other — and **590 of them are in the nightly price sidecar today**, so a
+  sealed price *history* already exists and grows every night. The app
+  currently treats sealed as manual entry and never shows it. That is the
+  free first half of the tracker.
+- **TCGCSV's group data carries publication dates.** Today it names four
+  upcoming releases (Set Sail Deck Set 2026-09-18; Heroine's Edition Vol. 2
+  2026-10-30; The Dominance of God event cards 2026-11-13 and the set
+  2026-11-20). The ingest already reads this to skip unreleased sets
+  (landmine 42). A release calendar is a view over data the pipeline has.
+
+### Where it lives
+
+A third mode on the slider: **Collect · Prep & Play · Hunt.** The palette
+mechanism from take 24 takes a third entry. Hunt's screens, in the order they
+earn their place: **Sealed** (every box, pack and deck with market/low/high,
+the nightly delta, a chart from the sidecar, and a price alert — the alert
+mechanism from take 27 already keys on productId); **Releases** (what is
+dropping and when, from the group dates, with the set's card count once the
+group publishes); **Reprints** (see sourcing); **Near me** (the local half,
+last, and the hardest).
+
+### The owner's redirection, take 68
+
+*No account information will be provided. Scrape as much as possible — who
+has stock, when they release, current pricing, as real-time as reasonable.
+eBay, Facebook, any supplier, official or third party. Into prod if there
+are no concerns. The point: help people find cards without paying 2–3× MSRP
+on a new pack; if someone lists one low, see it. Scope local to Michigan,
+48329, 50 miles.* Get creative; nobody offers this.
+
+### MEASURED take 68 — what a plain, keyless request gets, from a cloud IP
+
+| source | result | meaning |
+|---|---|---|
+| **Target RedSky JSON** (`plp_search_v2`, the site's own public key) | **HTTP 200, 24 products with prices, priced for a store near 48329** | **PROVEN.** The runner can do this every hour. Store-level stock is one more endpoint (`product_fulfillment`), same key |
+| Target search HTML | 200, page shell with captcha markers | the data is not in the HTML anyway |
+| Walmart search | 200 but a 15 KB captcha page | cloud-blocked; phone likely fine |
+| Meijer | 403 access denied | cloud-blocked |
+| Barnes & Noble | 404 on the search path | untried at the right URL |
+| eBay search HTML | 403 robot check | cloud-blocked; phone-side works for real browsers |
+| OpenStreetMap Overpass (game shops within 80 km) | 503, overloaded, twice | the right keyless discovery source; retry off-peak or self-mirror |
+
+### The architecture that makes "into prod" honest
+
+**Two scrapers, one feed.** The **nightly runner** already fetches, publishes
+to Pages and the app syncs — that pipeline becomes hourly for Hunt: one
+cloud IP, low volume, every result cached with the minute it was fetched,
+published as `hunt/feed.json` beside the catalogue. **The Play build reads
+the feed and never scrapes a retailer itself**: ten thousand phones hitting
+Target's JSON would get the app's traffic pattern blocked in a week and put
+the owner's developer account on the wrong side of a retailer's terms; one
+runner fetching hourly does not. That is what "no concerns" has to mean for
+prod. The **sideload build** additionally runs the phone-side scrapers —
+the sources that block cloud IPs but serve a residential browser (eBay,
+Walmart, Meijer) — from the owner's own phone and IP, for himself. Both
+paths land in the same Hunt screens; a tile always shows *which source,
+fetched when*, and *unreachable since* when one breaks. Never a stale number
+dressed as now (§10).
+
+### The suppliers, as expansive as keyless allows — each with its status
+
+**National retail (runner-side unless marked):**
+- **Target** — RedSky JSON: search, price, store stock by store id. PROVEN.
+- **Walmart** — site JSON behind PerimeterX; phone-side in the sideload
+  build, INFERRED. Store pickup availability lives on the item page.
+- **GameStop** — Demandware search JSON and store-pickup availability;
+  keyless; UNKNOWN until probed. Sells OP TCG.
+- **Best Buy** — carries TCG now; site JSON; keyless UNKNOWN.
+- **Barnes & Noble** — server-rendered product pages; probe the right search
+  URL; UNKNOWN.
+- **Meijer** — Mi9 storefront API, 403 to cloud; phone-side, INFERRED.
+- **Amazon** — heavy bot defence; phone-side product pages for MSRP
+  reference only; low priority.
+- **Costco / Sam's Club** — occasional; skip until seen.
+
+**Marketplaces:**
+- **TCGplayer via TCGCSV** — sealed prices nightly, PROVEN (660 products).
+- **TCGplayer listings** — the seller list per product names hundreds of
+  stores, many of them local game stores on TCGplayer Pro; one source that
+  is *many suppliers*. Their listing JSON is unofficial; probe from the
+  runner. This is the creative unlock for "including TCG": not scraping
+  TCGplayer's price, scraping *who is selling at what*.
+- **eBay** — search HTML from a phone, sold and active, `_nkw=OP-11 booster
+  box`; the "someone listed one low" signal the owner described. Sideload
+  only, INFERRED. No RSS since 2021.
+- **Facebook Marketplace — NO.** Login-walled, and automating it from an app
+  with the owner's session is how the account gets banned. Not a rule; a
+  measured outcome. The value is in eBay and the LGS storefronts.
+- **Reddit r/OnePieceTCG restock threads** — `.json` endpoints keyless at low
+  volume; a "spotted at" signal, not a price. Phone-side, INFERRED.
+
+**Releases and reprints:**
+- **TCGCSV group dates** — PROVEN, four upcoming today.
+- **Bandai's products and news pages** — release details, reprint and
+  restock notices as *headlines with a link*; runner-side; INFERRED.
+- **Distributors** — GTS Distribution, Southern Hobby, Alliance publish
+  product pages with release dates and allocation/sold-out flags for the
+  stores they supply; that is the reprint wave before it reaches shelves.
+  UNKNOWN until probed.
+
+**Local game stores, Michigan, 48329 ± 50 miles — the part nobody offers:**
+1. **Discovery**: Overpass (`shop=games|hobby` within 80 km of 42.686,
+   −83.386), one keyless query, run off-peak or against a mirror, plus a
+   curated seed list — Metro Detroit, Flint, Ann Arbor, Lansing's edge — each
+   store verified by hand once.
+2. **The unlock**: most LGS storefronts run on **Shopify** (often via
+   BinderPOS) and every Shopify store exposes **`/products.json` and
+   `/collections/<handle>/products.json` — public, keyless, by design.**
+   Stock and price for every listed sealed product, without touching HTML.
+   Crystal Commerce and TCGplayer Pro storefronts are the other two shapes;
+   each gets a parser. A store whose site is a Facebook page has no feed and
+   goes in as a *name and address* with the collector's own last-seen note.
+3. **Cadence**: hourly from the runner for the Shopify stores (cheap JSON),
+   plus a refresh on open from the sideload build.
+
+### What is still ruled out, and why it costs nothing to keep
+
+- **Ruled out: on-device scraping in the Play build.** Above. The feed serves prod.
+- **Calling anything "the cheapest".** Show source, price, fetched-when.
+- **A server or a shared spotted-at board.** §9. The runner is not a server:
+  it writes a file.
+- **Affiliate links.** The listing says none.
+
+### Take 69 — nine more probes, the distance filter, and the stores that publish nothing
+
+**The owner:** a distance dropdown on the local view (50 miles is the
+default for now; whatever the collector sets, later); keep building the
+list; and think about stores that do not publish stock — including an AI
+that phones the shop and asks, which he calls crude.
+
+**Nine probes from a cloud IP, one pass:**
+
+| source | result | status |
+|---|---|---|
+| GameStop search JSON | 403, captcha | phone-side (sideload) |
+| Best Buy search | 503 | UNKNOWN; retry |
+| Barnes & Noble | 404 on two search paths | needs the real URL; site is server-rendered |
+| TCGplayer listings (`mpapi`) | 404 | the endpoint shape is wrong or gone; needs a real product id and method |
+| **GTS Distribution** | 404 on the search path but a **617 KB rendered page with 43 "release" and 4 "allocation" hits** | **reachable from cloud**; the catalogue pages exist, the search URL does not — a real source once the paths are read off the site |
+| Southern Hobby | 404 on the search path, 124 KB rendered page | same shape as GTS: reachable, path wrong |
+| Alliance | 503 | UNKNOWN |
+| Bandai `/information/` | 404 | the news path is different; find it from the site nav |
+| Overpass | 503, third time today | overloaded; run at night or self-mirror |
+
+The lesson of the pass: **a cloud probe with a guessed URL proves little
+either way.** Each source needs one session with its real page structure in
+hand, and its parser needs a saved real response in smoke with a control
+that fails on a changed shape. That is a take per source, not a line.
+
+**The distance filter.** A dropdown on the local view — 10, 25, 50, 100
+miles — over stores with a location, from the collector's own position (the
+device, with permission) or a zip they type. Fifty is the default and the
+only radius the seed list covers at first; the filter is just a filter, so
+it works for any radius as the list grows. Ships with the first local view.
+
+**Stores that publish nothing online — the options, honestly ranked:**
+1. **The collector's own notes** (name, address, phone, *last seen: 3 boxes
+   at $130, 9/12*). On the phone, no server, works today. v1.
+2. **A Call button with a script.** The store's number comes from OSM; the
+   app offers *"Do you have One Piece boxes in stock, and what's the price
+   on OP-11?"* — the collector makes the call. Crude, but it is the human
+   version of the owner's idea, costs nothing, and stores answer a person.
+3. **The AI phone call.** Feasible: a telephony service (Twilio or similar)
+   plus speech-to-text and text-to-speech, a scripted question, a parsed
+   answer. **Costs**: an account and a phone number, per-minute charges, a
+   server to run the call — the one thing this project has refused — and
+   the store's goodwill, which a robot that rings daily will spend fast.
+   Legally, calling a business is allowed but automated callers must
+   identify themselves and honour do-not-call requests. **Verdict: not now,
+   and not in the app.** If ever, it is a separate service the owner runs
+   for himself, whose *results* land in the feed like any other source.
+4. **Crowd reports** — *"I saw boxes at Pandemonium for $130"* from any
+   collector, shared with everyone. The single most valuable signal for
+   stores with no feed, and it needs a place to put the report that other
+   phones can read: a server, however small. Named as **D20** rather than
+   built or refused.
+5. **The store's own social page** (Facebook, Instagram) where many small
+   shops announce restocks — login-walled and unscrapable; the collector
+   can follow them, the app cannot.
+
+### Take 70 — the "dealers" question, and the first build
+
+**The owner:** some dealers have direct Bandai supply or access to large
+supply and sell just over MSRP in bulk — locate them, list contact info or
+stock? **Businesses yes, private individuals no.** Bandai's US supply moves
+through authorised distributors (GTS, Southern Hobby, Alliance/Diamond,
+ACD, PHD) to *businesses with accounts*; nobody private has "direct Bandai
+supply". The people the owner means are **volume retailers** — Game Nerdz,
+Dave & Adam's, Coolstuffinc, Miniature Market, Potomac (sells to the
+public), Steel City, Blowout, Troll and Toad, TCGplayer Direct, Premium
+Bandai itself, the Bandai Namco Amazon store, the two official shops (Plano
+TX, Brooklyn NY) — all with public storefronts that publish stock and
+price, most on Shopify or BigCommerce. They go on the source list as a
+**volume-seller and preorder watch**: the moment a preorder opens at MSRP
+is the moment a real fan beats a scalper, so a stock flip from *coming
+soon* to *preorder* across those storefronts is the highest-value alert
+Hunt can send. **Ruled out: publishing any private seller's contact
+details.** The app lists businesses that list themselves.
+
+**Built take 70:** the third mode — **Collect · Prep & Play · Hunt** — with
+its own palette (measured: dim2 5.42:1 on the card, fg 14.13, brass 7.59),
+nav and home. **Sealed:** 343 products (79 boxes, 161 packs, 51 decks, 6
+cases, 28 collections, 18 other) with market, low, high, the nightly delta
+and its horizon label, searchable, filtered by kind, grouped by set with the
+set's date, each row opening the detail sheet where the chart and the price
+alert already live. The 232 DON!! cards TCGCSV files as sealed are kept out
+by name. **Releases:** every set with a publish date, upcoming first with a
+countdown, then the twelve most recent, an unpublished card list said to be
+unpublished. Sixteen smoke assertions, three render assertions in Chrome
+(knob under Hunt, rows drawn, palette applied). A screenshot found what the
+first render assertion did not: the knob measured mid-animation.
+
+### Take 71 — step 2 built: Target, hourly, with shelf stock near 48329
+
+`tools/hunt/target.py` + `tools/hunt.py` + `ci/hunt.yml` + the app's `HUNT`.
+Sixty-two products (twelve of them the Japanese release), eight stores
+within 17 miles, online and per-store stock, matched to the catalogue where
+the match is safe, shown with its fetch time and called stale or
+unreachable when it is. **Two measured facts that shape every source after
+this:** Target throttles availability calls at ~40 in a burst (one a
+second, 64 a run, stop on 435), and a retailer's One Piece shelf is largely
+the Japanese release, which is a different product from the English
+catalogue and is never matched to it. **Ruled out: asserting a live fetch in
+smoke** — the tests build the feed from saved real responses.
+
+### Take 72 — all of the US online, the zip for the shelf, the quota
+
+The radius question answered as two layers: online for everywhere, shelf
+stock for served zips (`HUNT_ZIPS`), the pop-up once, and an honest match
+(exact → same area → none, said as none). **MEASURED: thirty calls per run
+is the quota even at one a second**, so the feed is a rotating budget with a
+cursor and a timestamp on every check. **Ruled out: pretending an unserved
+zip is served by the nearest one** — the app names the covered areas
+instead, and D21 asks how far the phone-side fetch should go.
+
+### Take 73 — the time series, and where the runner keeps its memory
+
+The cursor and the history live on **Pages**: each hourly run fetches its
+own last deploy back, because a fresh checkout has nothing. `history.json`
+keeps a fortnight of hourly rows; the app turns them into dated restocks per
+store and the last time a product shipped, and refuses to call anything a
+pattern under 24 checks. **Ruled out: predicting from thin data** — a list
+of what was seen, with the count it rests on, until a real fortnight exists.
+
+### Take 74 — Local, built on the roster nobody else uses
+
+**The roster is Bandai's own list, read sideways:** onepieceevents.com
+publishes every TCG+ event as static JSON with the store's address, so the
+stores that carry One Piece are the stores on it — 2,967 in the US, 96 in
+Michigan — each with its next events. Distances from the collector's zip
+area (Census centroids, public domain; the app ships prefix means, ±10 mi).
+The Local screen: dropdown, shops by distance, the feed's Target stores,
+your own notes with a Call link. **Ruled out: Bandai TCG+'s own API** (a
+session-bound JavaScript app) and **claiming a roster store has stock** —
+the screen says registered-to-run-events, and stock is the feed's and your
+notes' business.
+
+### Take 75 — the storefront layer, on a verified list
+
+Shopify's public `products.json` gives a shop's One Piece listings with
+price and availability; the hourly run polls every shop on
+`hunt/storefronts.json` and the app shows each shop's sealed stock on Local
+and on the matching Sealed rows. **MEASURED: one of seven guessed domains
+was right, and the one store lists 405 One Piece products of which two are
+sealed** — the online listing is not the shelf, and the screen says so.
+**Ruled out: guessing a shop's website** — the list is hand-verified with a
+date per entry, and grows as shops are added.
+
+### Take 76 — Events, and the mode's own colours
+
+Every One Piece event in the next month, near the collector, with fee,
+seats, a release badge and a Register link into Bandai TCG+ — from a compact
+table the roster now emits (11,564 rows, 94 KB gzipped). Hunt is Zoro's:
+green ground, cream, gold accent, a three-stroke mark, all measured to AA
+before it was written. **Ruled out: any likeness or costume art** — a palette
+and a mark are as far as the theme goes (landmine 26).
+
+### Take 77 — stock alerts
+
+Renamed at the owner's word and built by its use: watch a sealed product,
+be told when it is in stock at any source the feed tracks, once per flip per
+source. **MEASURED: none of seven national volume sellers is readable
+keylessly from a cloud IP** (403/404/503), so the watch runs over Target
+online, the served Target shelf and the local shops' storefronts, and gains
+sources as the feed does. **Ruled out: an alert that repeats every hour a
+product stays in stock** — it fires on the flip, and again only after out
+and back in.
+
+### Take 78 — an event onto the calendar
+
+A *+cal* on every Events row hands a standards-plain `.ics` to the share
+sheet; the phone's calendar takes it. **Ruled out: a calendar plugin** — a
+dependency, a permission and a build change for what one file does; and
+**a start time** — the source carries dates only, and a time waits for a
+source that has one.
+
+### Take 79 — exact distances on request; D22 for background checks
+
+The full zip-centroid table rides to Pages and a collector fetches it once
+to be placed within a mile or two instead of ten. Background stock checks
+are **D22** — a native plugin, a permission and a review question, filed
+with three options rather than built blind. **Ruled out: the runner knowing
+what a phone watches** — that is a phone sending its list somewhere (§9).
+
+### Order, and the first take
+
+1. **Sealed** — the mode, the screen, the chart, alerts on sealed productIds
+   (data already on the phone). 2. **Target via the runner** — search +
+   store stock for 48329, hourly, into `hunt/feed.json`; the app's Sealed
+   tiles gain a *Target: $X, in stock at N stores near you, fetched HH:MM*
+   line. 3. **Releases** from group dates. 4. **Michigan LGS** — discovery,
+   then Shopify `products.json` polling. 5. **TCGplayer sellers.** 6. The
+   phone-side pack in the sideload build: eBay, Walmart, Meijer. 7.
+   Reprints from Bandai and the distributors. Each source lands with a
+   probe in smoke that proves the parser against a saved real response and
+   a control that fails on a changed shape.
+
 ## A31 — Importing from other collection apps · OPENED take 61 · NOT A PRIORITY
 
 The owner, take 61: *"we have the ability to import decks, ensure this works
@@ -692,6 +1023,8 @@ report. Read in full and checked against the code, take 60.
   tracking, asserted in smoke — because A30 ruled referral promotions out and
   the app claims no analytics. The app id comes from the manifest so it is
   not a literal in two places. Ruled out again: the In-App Review API.
+- **Take 80 — the focus ring.** `:focus-visible` in the accent, keyboard
+  only, measured in Chrome. A30 is complete.
 - **Built take 66 — the accessibility pass, A30's last item.** Every button
   a screen reader would announce as *nothing* now has a name: the favourites
   star, both filter gears, the torch, the gallery, the shutter, the scan

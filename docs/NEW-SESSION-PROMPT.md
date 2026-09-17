@@ -1,15 +1,15 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 66.* Paste the block between the rules into a new session
+*Current as of take 80.* Paste the block between the rules into a new session
 whose project carries `AGENDA.md`, `LANDMINES.md` and `HANDOFF.md` (the three
 project files) and has the newest seed attached.
 
 ---
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
-tracker and deck builder for Android, built across 66 takes by previous
+tracker and deck builder for Android, built across 80 takes by previous
 sessions. The repo lives at `github.com/SergeantCS2/optcghub`; the seed
-`optcghub-seed-t66.zip` is the whole tree. CI builds on every seed drop and
+`optcghub-seed-t80.zip` is the whole tree. CI builds on every seed drop and
 has run green end to end; the APK the owner installs comes from the Release.
 
 **Before anything else, in this order:**
@@ -58,6 +58,31 @@ has run green end to end; the APK the owner installs comes from the Release.
   `.aab` was uploaded first — if the DEVKEY one, the upload key must be
   reset (RUNBOOK-play §2). Every seed dropped now becomes a Play update for
   the testers: seal only what you would ship.
+- **A32 — Hunt** is the owner's large item and the mode EXISTS (take 70:
+  Sealed and Releases; take 71 the hourly Target feed with shelf stock near
+  48329; take 72 the two-layer feed — online for all of the US, shelf stock per
+  served zip, a zip pop-up — under a MEASURED quota of ~30 retailer calls per
+  run, so the feed rotates with a cursor and every check carries its time;
+  `ci/hunt.yml` is a one-time paste; take 73 the hourly history, kept on
+  Pages and read back by the runner; take 74 Local — the TCG+ roster via
+  onepieceevents.com, Census centroids, the distance dropdown, own notes).
+  Take 75 the storefront layer over a hand-verified list
+  (`hunt/storefronts.json`, one shop today; the owner adds URLs); take 76
+  Events near you (fee, seats, a TCG+ Register link) and the Zoro palette.
+  Take 77 stock alerts (renamed from the anti-scalper alert at the owner's
+  word; national sellers are not keylessly readable, so it runs over the
+  sources the feed has); take 78 events onto the calendar as an .ics. Next:
+  D22 (background checks, filed, the owner's), then national sellers from
+  a residential IP in the sideload build — which needs the device
+  (TCG+ roster, distance dropdown, own store notes), then the restock time
+  series. Two rules from take 71: retailers throttle (one call a second,
+  stop on 435), and a Japanese release is never matched to the English
+  catalogue. Sealed shows 343 products; 660 are
+  priced nightly, and Target's product JSON is PROVEN keyless from the
+  runner. Two scrapers, one feed: the runner publishes `hunt/feed.json` for
+  the Play build; the sideload build adds phone-side sources. No keys, no
+  accounts (the owner's decision, take 68). Facebook is out because it does
+  not work, not because of a rule.
 - **A30 carries the agreed order** after the tester report: the owner's tour
   check (open) → A26 colour and contrast (done take 60) → A29 stock decks
   (done take 61) → **Rate and Share rows** → a TalkBack pass → A31 (importing
@@ -103,6 +128,6 @@ official product box shots, which the owner asked for at take 62 and which
 were declined with reasons in A29 (landmines 26, 30, A16); gate scanning (A17); multiply condition into a price (PROTOCOL §10);
 send the collection anywhere (PROTOCOL §9); seal with a red gate.
 
-Say "take 67" and begin with PROTOCOL §0.
+Say "take 81" and begin with PROTOCOL §0.
 
 ---
