@@ -1,4 +1,58 @@
-# HANDOFF — through Take 80
+# HANDOFF — through Take 81
+
+## Take 81 — 2026-09-17 — the owner's first impressions of Hunt on the Fold: one bug, three symptoms, and six fixes
+
+*This entry was written after the code: a first pass at this take was made
+and its record lost before the entry existed; the tree carried the code,
+the ledgers did not. Reconstructed by diffing the tree against the sealed
+take 80, then finished. PROTOCOL §6 says the entry comes first; twice now
+the record has caught up to the code.*
+
+### What the owner saw
+
+The zip pop-up "super enlarged, couldn't see, bugging out"; after a
+relaunch Hunt's colours over Collect's Home; the bottom nav "only pops up
+when you click into a product"; the search bar a generic white strip; the
+tour swiping two cards at a time; *Hunt* on the slider too small to read;
+the phone's back button leaving the app; the screen overwhelming.
+
+### The finding
+
+**One bug, three symptoms.** Android zooms the page when an input smaller
+than 16px takes focus. The zip sheet's input was smaller, the page zoomed,
+the sheet sat off-screen and unreadable — and being a fixed sheet at
+z-index 40, it also *covered the nav* for as long as it was open. Measured
+in Chrome at phone size: `elementFromPoint` at the nav's centre returned
+`button#askOk` inside `#askSheet.on`. The "missing nav" was the zip sheet;
+tapping a product opened the detail sheet over it, which is why the nav
+seemed to "pop up" then.
+
+### Fixed
+
+1. **The zoom**: `maximum-scale=1, user-scalable=no` on the viewport and
+   every text input at 16px. 2. **Relaunch**: boot navigates to the saved
+   mode's own home. 3. **Back**: `go()` keeps a screen stack; the hardware
+   button (App plugin, read from its definitions) closes any open sheet
+   first — the zip sheet through its own Cancel, so the pending ask resolves
+   — then walks the stack, then minimises rather than exits; the browser's
+   Back does the same through history state. 4. **The zip ask** is once per
+   launch, not once forever, since the first ask was unreadable. 5. **The
+   search bar** is themed with an icon and a brass focus border. 6. **Mode
+   labels** 14px. 7. **The tour** stops on every card (`scroll-snap-stop`).
+   8. **Overwhelm**: Sealed folds by set — a header with a count per set,
+   the two newest open, the rest on tap, a search opens what it matches —
+   and *Near you* folds into a details line.
+
+Ten smoke assertions, one render check updated for the folded list.
+
+**smoke.mjs 534, render.mjs 65 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **The rest of "overwhelming"** — the owner asked for better filtering and
+  organisation across Hunt; folding is the first cut. What to fold or
+  filter next is his call after seeing this one.
+- The owner's list unchanged: paste `hunt.yml`, shop URLs, D20–D22.
 
 ## Take 80 — 2026-09-16 — a focus ring, and the lint that would have saved five nights
 

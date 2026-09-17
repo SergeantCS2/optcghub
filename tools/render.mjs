@@ -264,14 +264,14 @@ if (puppeteer) {
     const knob = document.querySelector('#modeSlider .knob').getBoundingClientRect();
     const btn = document.querySelector('#modeSlider [data-mode="hunt"]').getBoundingClientRect();
     return { knobUnderHunt: Math.abs((knob.left + knob.width / 2) - (btn.left + btn.width / 2)) < 12,
-             rows: document.querySelectorAll('#sealedList [data-open]').length,
+             rows: document.querySelectorAll('#sealedList [data-open]').length, headers: document.querySelectorAll('#sealedList [data-setfold]').length,
              bg: getComputedStyle(document.body).backgroundColor,
              navShown: !document.querySelector('#navHunt').hidden,
              screenOn: document.querySelector('#sealed').classList.contains('on') };
     })()), 350));   // the knob animates for 220 ms; measure it at rest
   });
   ok('Hunt: the slider knob sits under Hunt and the mode\'s nav and screen are on', hunt.knobUnderHunt && hunt.navShown && hunt.screenOn, JSON.stringify(hunt));
-  ok('Hunt: the Sealed screen draws product rows', hunt.rows > 100, String(hunt.rows));
+  ok('Hunt: the Sealed screen draws set headers and the newest sets\' rows (folded since take 81)', hunt.rows >= 3 && hunt.headers >= 10, `${hunt.rows} rows, ${hunt.headers} set headers`);
   ok('Hunt: the third palette is applied (not the Collect background)', hunt.bg !== 'rgb(11, 22, 34)', hunt.bg);
   await page.evaluate(() => { window.VAULT.MODE.set('collect', true); });
   /* Take 66: what a screen reader would actually reach, in a real DOM --

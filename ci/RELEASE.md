@@ -1,4 +1,4 @@
-# OP TCG Hub — take 80
+# OP TCG Hub — take 81
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,11 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 81:** first-impressions fixes from the Fold — typing a zip no
+longer zooms the screen, the phone's back button goes back a page instead
+of closing the app, reopening lands on the right screen, Hunt's search bar
+and tab label are readable, and the Sealed list folds by set.
 
 **New at take 80:** a visible focus ring for keyboard users on the web
 version; nothing else changes.

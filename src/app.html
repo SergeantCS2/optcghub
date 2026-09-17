@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>OP TCG Hub — take __TAKE__</title>
 <style>
 :root{
@@ -156,7 +156,9 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .actions .ic{font-size:17px}
 .search{display:flex;align-items:center;gap:10px;background:var(--card2);
   border:1px solid var(--line);border-radius:999px;padding:11px 16px;margin-bottom:14px}
-.search input{flex:1;background:none;border:0;outline:0;color:var(--fg);font-size:15px}
+.search input{flex:1;background:none;border:0;outline:0;color:var(--fg);font-size:16px}   /* 16px: under it Android zooms the page on focus (take 81) */
+.search input::placeholder{color:var(--dim2)}
+.search:focus-within{border-color:var(--brass)}
 .search input::placeholder{color:var(--dim2)}
 /* minmax(0,1fr), not 1fr. A grid item's automatic minimum size is min-content,
    and .tile .s carries white-space:nowrap on a set name like "Extra Booster:
@@ -296,7 +298,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 #tour .gcards{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;
   padding:6px 16px;scrollbar-width:none}
 #tour .gcards::-webkit-scrollbar{display:none}
-#tour .gcard{flex:0 0 calc(100% - 32px);scroll-snap-align:center;background:var(--card);
+#tour .gcard{flex:0 0 calc(100% - 32px);scroll-snap-align:center;scroll-snap-stop:always;background:var(--card);
   border:1px solid var(--line);border-radius:18px;padding:22px 20px;display:flex;flex-direction:column;gap:10px;
   position:relative;overflow:hidden}
 #tour .gcard .gpic{height:150px;border-radius:12px;background:var(--card2);display:flex;align-items:center;
@@ -386,7 +388,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .curtain.on{display:flex}
 .mode{display:inline-flex;position:relative;background:var(--card2);border:1px solid var(--line);
   border-radius:999px;padding:3px;gap:2px}
-.mode button{position:relative;z-index:1;padding:7px 16px;border-radius:999px;font-size:12.5px;font-weight:700;
+.mode button{position:relative;z-index:1;padding:8px 14px;border-radius:999px;font-size:14px;font-weight:700;font-family:var(--heavy);
   color:var(--dim);letter-spacing:.01em;min-width:118px;transition:color .2s}
 .mode button.on{color:#1A1408}
 :root[data-mode="play"] .mode button.on{color:#F1EFE6}
@@ -526,9 +528,8 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
 <section id="sealed" class="screen">
   <div class="bar"><span class="tab on" role="heading" aria-level="1"><svg class="swords" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 15L13 5M6 16L16 6M2 12L12 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M12 5l2 2M15 6l1 1M11 2l2 2" stroke="currentColor" stroke-width="1.2"/></svg>Sealed</span>
     <span class="pill" role="status" id="sealedAsOf"></span></div>
-  <div class="row" style="gap:8px;margin:6px 0 10px">
-    <input id="sealedQ" placeholder="Search boxes, packs, decks" aria-label="Search sealed product">
-  </div>
+  <div class="search" style="margin:6px 0 10px"><svg class="g" width="18" height="18" aria-hidden="true"><use href="#g-spyglass"/></svg>
+    <input id="sealedQ" placeholder="Search boxes, packs, decks" aria-label="Search sealed product"></div>
   <div class="row" id="sealedKinds" style="gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
   <div class="note" style="margin-bottom:10px">TCGplayer market via TCGCSV — the marketplace, not the shelf price. Store stock and local shops come to this mode next.</div>
   <div id="sealedList"></div>
@@ -2325,7 +2326,18 @@ document.addEventListener('click', e => {
 });
 
 /* ---- navigation -------------------------------------------------------- */
+/* Take 81. The phone's back button goes back a screen, not out of the app:
+   go() keeps a stack, the hardware button pops it (App plugin, native) and
+   the browser's own Back does the same on the web through history state. */
+const NAV = { stack: [], silent: false,
+  back() { if (this.stack.length < 2) return false; this.stack.pop(); const prev = this.stack[this.stack.length - 1]; this.silent = true; go(prev); this.silent = false; return true; } };
+function closeAnyOverlay() {
+  const ask = $('#askSheet'); if (ask && ask.classList.contains('on')) { $('#askCancel').click(); return true; }   // resolves the pending ask() with null, cleanly
+  for (const id of ['#picker', '#detail', '#tour', '#simCurtain']) { const el = $(id); if (el && el.classList.contains('on')) { el.classList.remove('on'); return true; } }
+  return false;
+}
 function go(id) {
+  if (!NAV.silent) { if (NAV.stack[NAV.stack.length - 1] !== id) { NAV.stack.push(id); if (NAV.stack.length > 30) NAV.stack.shift(); } try { history.pushState({ id }, '', '#' + id); } catch (e) {} }
   if (id !== 'scan') stopCamera();
   $$('.screen').forEach(s => s.classList.toggle('on', s.id === id));
   $$('nav button').forEach(b => b.classList.toggle('on', b.dataset.go === id || (id === 'search' && b.dataset.go === 'cards')));
@@ -2335,7 +2347,7 @@ function go(id) {
      trade: paintTrade, play: paintPlay, sim: paintSim, cards: paintCards,
      /* decks paints both lists */
      checklist: paintChecklist, wants: () => { paintWants(); paintAlerts(); }, binder: paintBinder,
-     sealed: () => { paintSealed(); if (!HUNT.zip && !localStorage.getItem('vault.hunt.zipAsked')) { localStorage.setItem('vault.hunt.zipAsked', '1'); askZip().then(ok => { if (ok) paintSealed(); }); }
+     sealed: () => { paintSealed(); if (!HUNT.zip && !NAV.zipAsked) { NAV.zipAsked = true; askZip().then(ok => { if (ok) paintSealed(); }); }
        if (navigator.onLine && HUNT.url() && (!HUNT.feed || HUNT.stale(HUNT.feed.fetched_at))) HUNT.sync({ quiet: true }).then(async ok => { if (ok) { await HUNT.syncHistory(); await LOCAL.syncShops(); await STOCK.check(); paintSealed(); } }); }, releases: paintReleases,
      local: () => { paintLocal(); if (navigator.onLine && HUNT.url()) { const jobs = []; if (!LOCAL.stores || HUNT.ageMin(LOCAL.stores.fetched_at) > 24 * 60) jobs.push(LOCAL.syncStores()); if (!LOCAL.shops || HUNT.stale(LOCAL.shops.fetched_at)) jobs.push(LOCAL.syncShops()); if (jobs.length) Promise.all(jobs).then(r => { if (r.some(Boolean)) paintLocal(); }); } },
      events: () => { paintEvents(); if (navigator.onLine && HUNT.url()) { const jobs = []; if (!LOCAL.stores || HUNT.ageMin(LOCAL.stores.fetched_at) > 24 * 60) jobs.push(LOCAL.syncStores()); if (!EVENTS.tab || HUNT.ageMin(EVENTS.tab.fetched_at) > 24 * 60) jobs.push(EVENTS.sync()); if (jobs.length) Promise.all(jobs).then(r => { if (r.some(Boolean)) paintEvents(); }); } } })[id]?.();
@@ -3202,7 +3214,7 @@ function targetLine(it, T) {
   return `<span style="display:block;color:var(--brass)">Target ${money(it.price)} \u00b7 ${esc(online)}${shelfTxt ? ' \u00b7 ' + esc(shelfTxt) : ''}</span>${histTxt ? `<span style="display:block;color:var(--dim2);font-size:12.5px">${esc(histTxt)}</span>` : ''}`;
 }
 const SEALED = {
-  q: '', kind: 'all',
+  q: '', kind: 'all', open: new Set(),
   /* TCGCSV files DON!! cards as sealed because they have no number; they are
      single cards, not product, and stay out of this screen (232 of them). */
   isProduct(p) { return p.sealed && p.market > 0 && !/don!! card/i.test(p.name || ''); },
@@ -3237,23 +3249,31 @@ function paintSealed() {
     const shelf = zz && zz.ok ? Object.entries(zz.stock).filter(([, st]) => Object.values(st).some(v => (v.qty || 0) > 0)).map(([tcin]) => (T.items || []).find(i => i.tcin === tcin)).filter(Boolean) : [];
     out.push(`<div class="panel" style="border-color:var(--brass)"><h3>Target \u2014 online, all of the US</h3>
       <div class="note">${T.ok ? `fetched ${esc(HUNT.ageLabel(T.fetched_at))}${HUNT.stale(T.fetched_at) ? ' \u2014 <b>stale</b>, the hourly feed has not landed' : ''} \u00b7 ${(T.items || []).length} products (list ${esc(HUNT.ageLabel(T.searched_at || T.fetched_at))}), ${ships} shipping at last check, ${ja} of them the Japanese release${T.throttled_after != null ? ' \u00b7 the retailer throttled this run' : ''}` : `unreachable since ${esc(T.stale_since || T.fetched_at || '?')} \u2014 ${esc(T.error || '')}`}</div>
-      <div class="fgrp">Near you</div>
+      <details style="margin-top:6px"><summary class="note" style="cursor:pointer">Near you \u2014 details</summary>
       ${!HUNT.zip ? `<div class="note">Enter your zip to add what is on the shelf near you.</div>` :
         sv.how === 'none' ? `<div class="note">Zip ${esc(HUNT.zip)}: no local check for your area yet \u2014 online prices still show for everything. Covered areas: ${esc(sv.zips.join(', ') || 'none')}.</div>` :
         !zz || !zz.ok ? `<div class="note">Zip ${esc(HUNT.zip)}: the local check for ${esc(sv.zip)} failed this run (${esc((zz && zz.error) || '?')}).</div>` :
         `<div class="note">Zip ${esc(HUNT.zip)}${sv.how === 'area' ? ` \u2014 using the ${esc(sv.zip)} check, same area` : ''}: ${zz.stores.length} stores within ${T.radius || 50} mi, shelf checks on file for ${Object.keys(zz.checked_at || {}).length} products (the feed rotates through them under the retailer's limit).</div>
          ${shelf.length ? `<div class="fgrp">On a shelf now</div>${shelf.slice(0, 12).map(i => `<div class="row"><div class="nm"><b>${esc(i.title)}</b>${targetLine(i, T)}</div></div>`).join('')}` : '<div class="note" style="margin-top:6px">Nothing on a shelf near you at the last check.</div>'}`}
+      </details>
       <div class="row" style="margin-top:8px;gap:8px"><button class="ghost" id="huntZip">${HUNT.zip ? 'Change zip' : 'Enter zip'}</button><button class="ghost" id="huntSync">Refresh</button></div></div>`);
   } else {
     out.push(`<div class="panel"><h3>Store stock</h3><div class="note">Not fetched yet on this phone. Pull the hourly feed when you are online.</div><div class="row" style="margin-top:8px"><button class="ghost" id="huntSync">Fetch</button></div></div>`);
   }
-  for (const p of rows.slice(0, 400)) {
-    if (p.set !== lastSet) { lastSet = p.set; const st = CAT.sets.get(p.set) || {}; out.push(`<div class="fgrp">${esc(st.name || 'Other')}${st.pub ? ` <span class="note">\u00b7 ${esc(st.pub)}</span>` : ''}</div>`); }
+  /* folded by set (take 81): a header with a count per set; the two newest
+     open, the rest open on tap, a search opens everything it matches */
+  const bySet = new Map(); for (const p of rows.slice(0, 600)) { if (!bySet.has(p.set)) bySet.set(p.set, []); bySet.get(p.set).push(p); }
+  let n = 0;
+  for (const [setId, ps] of bySet) { const st = CAT.sets.get(setId) || {}; const open = SEALED.q || SEALED.open.has(setId) || n < 2; n++;
+    out.push(`<button class="fgrp" data-setfold="${esc(setId)}" aria-expanded="${open}" style="display:flex;width:100%;justify-content:space-between;align-items:center;text-align:left;padding:8px 0"><span>${esc(st.name || 'Other')}${st.pub ? ` <span class="note">\u00b7 ${esc(st.pub)}</span>` : ''}</span><span class="note">${ps.length} \u00b7 ${open ? '\u2212' : '+'}</span></button>`);
+    if (!open) continue;
+    for (const p of ps) {
     const tl = (byCat[p.id] || []).map(i => targetLine(i, T)).join('') + LOCAL.shopLines(p.id).map(l => `<span style="display:block;color:var(--brass)">${esc(l.shop)}${l.mi != null ? ' ~' + l.mi + ' mi' : ''} ${money(l.price)} \u00b7 ${l.available ? 'in stock online' : 'sold out online'} \u00b7 ${esc(HUNT.ageLabel(LOCAL.shops.fetched_at))}</span>`).join('');
     out.push(`<div class="row" style="gap:8px"><button class="row" style="flex:1;text-align:left;padding:0" data-open="${p.id}">
       <div class="nm"><b>${esc(p.name)}</b><span>${esc(SEALED_KINDS.find(k => k[0] === SEALED.kindOf(p))?.[1] || '')} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}</span>${tl}</div>
       <div class="v"><b>${money(p.market)}</b>${deltaHtml(p, { pctOnly: true })}</div></button>
       <button class="ghost" data-stock="${p.id}" aria-label="${STOCK.has(p.id) ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${STOCK.has(p.id)}" style="flex:0 0 auto;padding:8px 10px;${STOCK.has(p.id) ? 'color:var(--brass);border-color:var(--brass)' : ''}">${STOCK.has(p.id) ? '\u25cf' : '\u25cb'}</button></div>`);
+    }
   }
   $('#sealedList').innerHTML = out.join('') || `<div class="empty">Nothing matches.</div>`;
   const hs = $('#huntSync'); if (hs) hs.addEventListener('click', async () => { hs.disabled = true; const ok = await HUNT.sync(); await HUNT.syncHistory(); await LOCAL.syncShops(); hs.disabled = false; if (ok) { const n = await STOCK.check(); toast(n ? `Stock feed updated \u2014 ${n} in stock` : 'Stock feed updated'); paintSealed(); } });
@@ -3443,6 +3463,7 @@ function paintReleases() {
     <div class="panel"><h3>Recent</h3>${past.map(line).join('')}</div>`;
 }
 $('#sealed').addEventListener('click', e => { const k = e.target.closest('[data-skind]'); if (k) { SEALED.kind = k.dataset.skind; paintSealed(); return; }
+  const f = e.target.closest('[data-setfold]'); if (f) { const id = isNaN(+f.dataset.setfold) ? f.dataset.setfold : +f.dataset.setfold; if (SEALED.open.has(id)) SEALED.open.delete(id); else SEALED.open.add(id); paintSealed(); return; }
   const b = e.target.closest('[data-stock]'); if (b) { e.stopPropagation(); const on = STOCK.toggle(+b.dataset.stock); if (on) { PLATFORM.notifyPermission().then(perm => toast(perm === 'denied' ? 'Watching \u2014 notifications are off, so it will show here instead' : 'Watching for stock')); STOCK.check(); } paintSealed(); } });
 $('#sealedQ').addEventListener('input', e => { SEALED.q = e.target.value; paintSealed(); });
 
@@ -4937,7 +4958,7 @@ async function runSelfTest() {
     return;
   }
   OWN.snapshot(); paintBatchBadge();
-  MODE.set(MODE.cur, false); if (MODE.cur === 'play') go('decks');
+  MODE.set(MODE.cur, false); if (MODE.cur !== 'collect') go(MODE.home[MODE.cur] || 'home');   // take 81: Hunt used to reopen on Collect's Home
   ALERTS.check().then(f => { if (f.length) toast(`${f.length} price alert${f.length === 1 ? '' : 's'} fired`); });
   if (navigator.onLine && CAT.man.updateUrl && PLATFORM.quietSyncAllowed()) setTimeout(() => PLATFORM.refreshCatalogue({ quiet: true }), 1500);
   /* A17 at boot. Constants from the manifest (D10), gate on only where an ad
@@ -4949,6 +4970,13 @@ async function runSelfTest() {
     ADS_ENABLED = !!(CAT.man.ads.scan && PLATFORM.plugin('AdMob'));
     if (ADS_ENABLED) PLATFORM.adsInit().then(ok => { if (ok) PLATFORM.adLoad('scan'); });
   }
+  /* Take 81: the phone's back button. Read from @capacitor/app's definitions:
+     addListener('backButton', ({ canGoBack })), minimizeApp(). An open sheet
+     closes first; then the screen stack; at the bottom the app minimises
+     rather than exits, which is what Android users expect of Home-like apps. */
+  const APP = PLATFORM.plugin('App');
+  if (APP && APP.addListener) { try { APP.addListener('backButton', () => { if (closeAnyOverlay()) return; if (NAV.back()) return; if (APP.minimizeApp) APP.minimizeApp(); }); } catch (e) {} }
+  window.addEventListener('popstate', () => { if (closeAnyOverlay()) return; NAV.silent = true; NAV.stack.pop(); const prev = NAV.stack[NAV.stack.length - 1]; if (prev) go(prev); NAV.silent = false; });
   /* First open: the guide, once. If storage is unavailable it simply shows
      every time -- an extra tap beats a first-time collector with no
      explanation (APEX A129). */
@@ -4958,7 +4986,7 @@ async function runSelfTest() {
      day and a hardcoded placeholder is landmine 62 in a text box. */
   $('#allq').placeholder = `Search all ${(CAT.man.cards || 0).toLocaleString()} cards`;
   paintNet(); paintHome();
-  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, openDetail, HUNT, targetLine, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar,
+  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, openDetail, HUNT, targetLine, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, NAV, go, closeAnyOverlay,
                    FILT, applyFilter, sortRows, blankFilter, activeCount,
                    DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,
                    backupJson, scheduleBackup,

@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 80.* Ranked by blocking-ness, not by interest.
+*Current as of take 81.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -938,6 +938,16 @@ to be placed within a mile or two instead of ten. Background stock checks
 are **D22** — a native plugin, a permission and a review question, filed
 with three options rather than built blind. **Ruled out: the runner knowing
 what a phone watches** — that is a phone sending its list somewhere (§9).
+
+### Take 81 — first impressions from the Fold
+
+One bug, three symptoms: a sub-16px input zoomed the page, the zip sheet
+went off-screen and, being a fixed sheet, covered the nav; relaunch reopened
+on Collect's Home under Hunt's colours. Fixed with a viewport rule and 16px
+inputs, a boot that lands on the mode's home, a real back-button stack, the
+zip asked once per launch, a themed search bar, readable mode labels, the
+tour stopping on every card, and Sealed folded by set. **Ruled out: a
+modal that cannot be dismissed** — the back button now cancels it.
 
 ### Order, and the first take
 
