@@ -275,8 +275,12 @@ if (puppeteer) {
   ok('Hunt: the third palette is applied (not the Collect background)', hunt.bg !== 'rgb(11, 22, 34)', hunt.bg);
   await page.evaluate(() => { window.VAULT.MODE.set('collect', true); });
   /* Take 85: the opening screen was painted first and is gone once the app has drawn */
-  const sp = await page.evaluate(() => new Promise(res => setTimeout(() => { const el = document.querySelector('#splash'); res({ present: !!el, off: !el || el.classList.contains('off') }); }, 1200)));
-  ok('the opening screen has faded out within 1.2 s of boot', sp.off, JSON.stringify(sp));
+  await page.reload({ waitUntil: 'domcontentloaded' });   /* the splash is measured from a fresh load, not from wherever the run left the page */
+  const sp = await page.evaluate(() => new Promise(res => setTimeout(() => { const el = document.querySelector('#splash'); res({ present: !!el, off: !el || el.classList.contains('off') }); }, 200)));
+  ok('the opening screen is up 200 ms after a fresh load', sp.present && !sp.off, JSON.stringify(sp));
+  const sp2 = await page.evaluate(() => new Promise(res => setTimeout(() => { const el = document.querySelector('#splash'); res({ present: !!el, off: !el || el.classList.contains('off') }); }, 2000)));
+  ok('...and gone by 2.2 s (it lingers 1.6 s, take 86)', sp2.off, JSON.stringify(sp2));
+  await new Promise(r => setTimeout(r, 800));
   /* Take 82: native controls take the theme; the play palette is charcoal; five taps open Diagnostics */
   const t82 = await page.evaluate(async () => {
     const V = window.VAULT; V.MODE.set('hunt', true); V.go && V.go('local');

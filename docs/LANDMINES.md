@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 85.*
+*Current as of take 88.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -127,6 +127,9 @@ Start here. Do not read top to bottom.
 | A refactor moved an element and its colour went pale | **117** |
 | Small grey text nobody could read | 117 |
 | A tab that is styled selected but is not a control | **118** |
+| Typing in a box zooms the whole page and hides a sheet | **119** |
+| Two workflows deploy one site and one wipes the other | **120** |
+| A workflow depends on a tool only the other one installs | **121** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -1690,6 +1693,36 @@ place the bug was seen — with the old toggle-without-clearing as the negative
 control. Rule: if an element looks selectable it is a control, and a control
 with no handler is a bug with a stylesheet. Grep for `class="tab on"` and
 friends with no matching listener before shipping a screen.
+
+**119. A text input under 16px makes Android zoom the page, and a fixed
+sheet zooms with it. Take 81, the owner's first minute in Hunt.** The zip
+pop-up "super enlarged, bugging out"; after a relaunch the wrong screen;
+"the bottom nav only appears when I tap a product." One bug: the sheet's
+input was below 16px, Android zoomed the WebView on focus, the sheet went
+off-screen — and being fixed at a high z-index it also covered the nav
+until it closed. Three symptoms, measured in Chrome with `elementFromPoint`
+at the nav's centre returning the sheet's button. Fix: `maximum-scale=1,
+user-scalable=no` on the viewport and every text input at 16px. Rule: any
+input below 16px is a zoom on Android, and a modal that cannot be seen is a
+modal that blocks everything under it.
+
+**120. Two workflows deploying one Pages site: the second wipes what the
+first wrote. Take 82, "Stock feed unavailable, 404".** The hourly job wrote
+`hunt/feed.json`; the nightly rebuilt `www/` from the tree — which has no
+feed — and deployed it, deleting the feed until the next hour. Pages holds
+exactly one deploy. Fix: before the nightly uploads, it copies the live
+`hunt/` files from Pages into `www/` (`hunt.py --carry-over`). Rule: when
+two writers share one site, each deploy carries the other's files, or one
+of them owns the site.
+
+**121. A workflow that depends on a package only the other workflow
+installs runs red the first time it runs. Take 84.** `hunt.yml` never
+installed `acorn`, which the app build's comment strip needs; `bundle.sh`
+installs it for the nightly, so the tree looked fine and the hourly's first
+run would have failed at `app`. Found by reading what the first run would
+do before the owner pressed the button, and fixed by rehearsing the job in
+an empty directory with only its own installs. Rule: every workflow
+installs everything it uses itself, and is rehearsed from nothing.
 
 ## §2 — Inherited from APEX ORV
 

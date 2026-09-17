@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 85
+# V1-STATE — what exists, as of take 88
 
-*Current as of take 85.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 88.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -62,7 +62,7 @@ refresh from Pages (take 27).
 | Typography | four roles (display / comic / body / heavy), OFL/Apache faces bundled, 232 KB, licensed faces as a file drop in `assets/user/fonts/` | render.mjs: Chrome reports all four LOADED and h2 resolves to the display face, with a missing-file control; smoke 7 |
 | Sync | quiet once-per-open sync holds on cellular unless switched on; Sync now always runs; `UPDATE_URL` points at Pages | smoke 4 controls; **not yet seen on the Fold** |
 
-**Harness totals, take 85:** smoke.mjs 565 assertions, render.mjs 68 in
+**Harness totals, take 88:** smoke.mjs 580 assertions, render.mjs 69 in
 Chrome, gate 22 checks with negative controls (the render receipt is new), zero console errors across 14
 screens in both modes.
 

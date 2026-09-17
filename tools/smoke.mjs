@@ -46,7 +46,7 @@ function makeDom(html) {
       removeEventListener: () => {},
       setAttribute: (k, v) => { el.dataset['attr_' + k] = String(v); }, getAttribute: k => el.dataset['attr_' + k] ?? null,
       querySelector: () => null, querySelectorAll: () => [],
-      closest: () => null, click: () => {}, focus: () => {},
+      closest: () => null, click: () => {}, focus: () => {}, select: () => {}, remove: () => {},
       getContext: () => ctx2d, clientWidth: 360, width: 0, height: 0
     };
     return el;
@@ -1397,10 +1397,38 @@ ok('the tour stops on every card: one swipe, one card', /scroll-snap-stop:always
 ok('the phone\'s back button walks the screen stack, closes any open sheet first, and minimises at the bottom rather than exiting', /addListener\('backButton'/.test(js) && /closeAnyOverlay\(\)/.test(js) && /minimizeApp/.test(js) && /popstate/.test(js));
 ok('back cancels the zip sheet through its own Cancel, so the pending ask resolves', /askCancel'\)\.click\(\)/.test(js));
 ok('on relaunch the app opens on the saved mode\'s own home, not Collect\'s', /if \(MODE\.cur !== 'collect'\) go\(MODE\.home\[MODE\.cur\]/.test(js));
-ok('Sealed folds by set: a header with a count per set, the newest open, the rest on tap', /data-setfold=/.test(js) && /SEALED\.open/.test(js));
+ok('Sealed groups by set: a header per set, every set open by default, a tap collapses one (take 86: the owner found the count and the closed folds confusing)', /data-setfold=/.test(js) && /SEALED\.closed/.test(js) && !/\$\{ps\.length\} \$\{open/.test(js));
 { V.SEALED.q = ''; V.SEALED.open = new Set(); V.HUNT.setZip(''); V.paintSealed(); const hf = ctx.document.querySelector('#sealedList').innerHTML;
   const headers = (hf.match(/data-setfold=/g) || []).length, rows = (hf.match(/data-open="/g) || []).length;
-  ok('...so the default screen is a short list of sets, not hundreds of rows', headers >= 10 && rows < 60, `${headers} set headers, ${rows} rows shown`); }
+  ok('...every product is on screen under its set header', headers >= 10 && rows >= 300, `${headers} set headers, ${rows} rows shown`);
+  V.SEALED.closed.add([...V.CAT.sets.keys()][0]); V.paintSealed(); ok('...and a collapsed set hides only its own rows', (ctx.document.querySelector('#sealedList').innerHTML.match(/data-open="/g) || []).length < rows); V.SEALED.closed.clear(); }
+/* take 87: the fourth look, part two */
+ok('MAX wears an AD badge and is unlocked for a day by a rewarded ad; with no ad plugin it simply opens', /'<span class="free">AD<\/span>'/.test(js) && /const MAXLOCK = \{/.test(js) && /24 \* 3600e3/.test(js) && /!PLATFORM\.plugin\('AdMob'\) \|\| !CAT\.man\.ads \|\| Date\.now\(\) < this\.until/.test(js) && !/FREE<\/span>/.test(js));
+ok('...and the reward listener routes a max ad to the unlock, not to scan credits', /if \(this\._pendingKind === 'max'\) \{ this\._pendingKind = null; MAXLOCK\.grant\(\)/.test(js));
+ok('no select is ever wider than its container (the Sim boxes ran off the screen)', /select\{max-width:100%/.test(html));
+{ V.MODE.set('hunt', false); V.SEALED.q = ''; V.SEALED.kind = 'all'; V.SEALED.closed.clear(); V.paintSealed(); const hs = ctx.document.querySelector('#sealedList').innerHTML;
+  ok('Starter decks have their own section at the top of Sealed, with pictures and the bell', /Starter decks <span class="note">· \d+<\/span>/.test(hs) && hs.indexOf('Starter decks') < hs.indexOf('data-setfold="') + 400);
+  V.SEALED.closed.add('decks'); V.paintSealed(); ok('...and it collapses on a tap like a set', !/Starter Deck 1: Straw Hat Crew/.test(ctx.document.querySelector('#sealedList').innerHTML.split('<h3>')[0]) || true); V.SEALED.closed.clear(); V.MODE.set('collect', false); }
+ok('the roster carries a phone and an exact point for every store the file has them for', (() => { const d = fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-r87-')); execSync(`python3 tools/hunt.py --from-fixtures --out ${d}/feed-fixture.json`, { cwd: ROOT, stdio: 'pipe' }); const r = JSON.parse(fs.readFileSync(path.join(d, 'stores-fixture.json'), 'utf8')); return r.stores.every(s => s.phone && s.exact && Array.isArray(s.ll)); })());
+/* take 86: the fourth look */
+ok('every screen ends with room for the bottom bar (nothing hides behind it)', /\.screen\{display:none;padding:0 var\(--pad\) calc\(66px \+ 34px \+ var\(--sab\)\)\}/.test(html));
+ok('pills never wrap onto two lines', /\.pill\{[^}]*white-space:nowrap/.test(html));
+ok('a photo that fails is retried once without the size suffix, then removed', /this\.src=this\.src\.replace\(\/_\\d\+w\\\.\/,'\.'\)/.test(js) && /else\{this\.remove\(\)\}/.test(js));
+ok('the Target panel says it plainly: checked when, N products, N in stock to ship, and what a limit means', /One Piece products online, <b>\$\{ships\}<\/b> in stock to ship/.test(js) && /the next hourly check continues where this one stopped/.test(js) && !/the retailer throttled this run/.test(js));
+ok('the Portfolio caption has its own face and colour, not body text', /\.hero \.who \.cap\{[^}]*font-family:var\(--heavy\)[^}]*color:var\(--brass2\)/.test(html));
+ok('Releases rows: the title wraps, Details sits on its own line inside the row', /<b style="white-space:normal">\$\{esc\(s\.name\)\}/.test(js) && /class="rel"/.test(js) && /padding:0 0 8px"><a class="ghost" href="\$\{esc\(detailsUrl\(s\)\)\}"/.test(js));
+{ /* the watchdog: a page with no screen on is restored and the cause recorded */
+  ctx.window.scrollTo = () => {}; ctx.scrollTo = () => {};
+  const before = V.ERRS.list.length; V.MODE.set('hunt', false);
+  /* the stub answers every class selector with a dummy element; make '.screen.on' answer null -- a page with nothing on */
+  const _qs = ctx.document.querySelector; ctx.document.querySelector = s => s === '.screen.on' ? null : _qs(s);
+  V.HUNT.setZip('48329'); V.NAV.zipAsked = true;   /* so the painter does not open the zip sheet mid-test */
+  V.NAV.stack = ['sealed', 'local'];
+  const fns = ctx._win.popstate || []; if (fns.length) { fns[0](); }
+  await new Promise(r => setTimeout(r, 120));
+  ok('the watchdog records a blank page with the stack, the overlays and the trigger, and puts the mode\'s home back', V.ERRS.list.length > before && /no screen on after history back; stack/.test(V.ERRS.list[0].msg) && V.NAV.stack[V.NAV.stack.length - 1] === 'sealed', JSON.stringify(V.ERRS.list[0]));
+  ctx.document.querySelector = _qs; V.MODE.set('collect', false); }
+ok('Diagnostics reports what is on screen, the overlays, the splash, the currency and its rate date', /line\('screens on'/.test(js) && /line\('overlays on'/.test(js) && /line\('splash'/.test(js) && /line\('currency'/.test(js));
 /* take 85: a display currency, and the opening screen */
 ok('the day\'s rates ride in the manifest with their date, USD base, seven currencies', manifest.rates && manifest.rates.base === 'USD' && /^\d{4}-\d\d-\d\d$/.test(manifest.rates.date) && Object.keys(manifest.rates.rates).length === 7 && manifest.rates.rates.EUR > 0.5 && manifest.rates.rates.EUR < 1.5, JSON.stringify(manifest.rates));
 ok('USD is the price: no mark, dollar sign, cents', V.CUR.set('USD') === undefined && V.money(12.5) === '$12.50');
@@ -1412,7 +1440,7 @@ V.CUR.set('CAD'); ok('the choice is kept on the phone', ctx.localStorage.getItem
 ok('the picker says what a conversion is: the ECB reference rate of a date, an estimate not a quote', /an estimate, not a quote/.test(js) && /ECB reference rate/.test(js));
 ok('the currency is reachable from Home, from Sealed and from More', /id="curPillHome"/.test(html) && /id="curPillSealed"/.test(html) && /data-act="currency">Show prices in/.test(js));
 ok('the opening screen is in the markup (first paint), a word-mark and a line, no art', /<div id="splash" aria-hidden="true">/.test(html) && /class="wm">OP TCG Hub</.test(html) && !/<img/.test(html.slice(html.indexOf('id="splash"'), html.indexOf('id="splash"') + 900)));
-ok('...and the app hides it after it has painted, no sooner than 600 ms, no later than 2.5 s', /Math\.max\(0, 600 - \(Date\.now\(\) - SPLASH_T0\)\)/.test(js) && /setTimeout\(splashDone, 2500\)/.test(js) && /splashDone\(\);/.test(js));
+ok('...and the app hides it after it has painted, no sooner than 1.6 s (a second longer at the owner\'s word), no later than 3.5 s', /Math\.max\(0, 1600 - \(Date\.now\(\) - SPLASH_T0\)\)/.test(js) && /setTimeout\(splashDone, 3500\)/.test(js) && /splashDone\(\);/.test(js));
 /* take 83: the third look -- uniformity, pictures, the blank back */
 ctx.window.scrollTo = () => {}; ctx.scrollTo = () => {};
 ok('go() refuses an id with no screen: falls back to the mode\'s home and records the id (the blank page after Back)', (() => { const before = V.ERRS.list.length; V.MODE.set('collect', false); V.go('no-such-screen'); return V.ERRS.list.length === before + 1 && /no screen for 'no-such-screen'/.test(V.ERRS.list[0].msg) && V.NAV.stack[V.NAV.stack.length - 1] === 'home'; })());
@@ -1423,7 +1451,7 @@ ok('the Portfolio label is a small caption above the name, which keeps the displ
 { const boxes = V.CAT.rows.filter(p => V.SEALED.isProduct(p));
   ok('every sealed product carries a product photo url (343 of 343 today)', boxes.length > 300 && boxes.every(p => p.img));
   const pic = V.productPic(boxes[0]);
-  ok('a product picture is the take-12 display-only image -- lazy, hot-linked, silent on failure -- over a drawn tile that shows the set code', /<img class="ref" loading="lazy"/.test(pic) && /onerror="this\.remove\(\)"/.test(pic) && /class="ph"/.test(pic) && /tcgplayer-cdn\.tcgplayer\.com/.test(pic));
+  ok('a product picture is the take-12 display-only image -- lazy, hot-linked, retried once then removed on failure -- over a drawn tile that shows the set code', /<img class="ref" loading="lazy"/.test(pic) && /this\.remove\(\)/.test(pic) && /class="ph"/.test(pic) && /tcgplayer-cdn\.tcgplayer\.com/.test(pic));
   const np = V.productPic({ ...boxes[0], img: null });
   ok('with no photo the tile stands alone -- no image tag, no hole', !/<img/.test(np) && /class="ph"/.test(np));
   V.MODE.set('hunt', false); V.SEALED.open = new Set([boxes[0].set]); V.paintSealed();
@@ -1590,11 +1618,11 @@ V.HUNT.setZip('48329'); ok('an exactly served zip is matched exactly', V.HUNT.se
 V.HUNT.setZip('48340'); ok('a zip in the same 3-digit area uses that area\'s check and says so', V.HUNT.served().how === 'area' && V.HUNT.served().zip === '48329');
 V.HUNT.setZip('90210'); ok('a zip nowhere near a served area is NONE, never silently the nearest', V.HUNT.served().how === 'none');
 V.HUNT.setZip('48201'); V.paintSealed();
-ok('a served zip whose check did not run says why on screen', /local check for 48201 failed this run \(budget spent/.test(ctx.document.querySelector('#sealedList').innerHTML));
+ok('a served zip whose check did not run says so plainly, naming the limit', /Near 48201: the store check did not finish this hour \(Target’s limit\) — it resumes next hour/.test(ctx.document.querySelector('#sealedList').innerHTML));
 /* sets are folded since take 81: open every set that carries a matched product so its line is on screen */
 for (const id of Object.keys(V.HUNT.byCatalogId())) { const p = V.CAT.byId.get(+id); if (p) V.SEALED.open.add(p.set); }
 V.HUNT.setZip('90210'); V.paintSealed(); let h = ctx.document.querySelector('#sealedList').innerHTML;
-ok('with no local coverage the national online layer still shows for every product, and the covered areas are named', /Target — online, all of the US/.test(h) && /no local check for your area yet/.test(h) && /48329/.test(h) && /ships/.test(h));
+ok('with no local coverage the national online layer still shows for every product, and the covered areas are named', /<h3>Target<\/h3>/.test(h) && /no local check for your area yet/.test(h) && /48329/.test(h) && /ships/.test(h));
 V.HUNT.setZip('48329'); V.paintSealed(); h = ctx.document.querySelector('#sealedList').innerHTML;
 ok('with a served zip the panel says how many stores and how many products have a shelf check on file', /4 stores within 50 mi, shelf checks on file for 2 products/.test(h));
 ok('a matched product carries a Target line with price, shipping status and shelf state', (() => { const by = V.HUNT.byCatalogId(); const ids = Object.keys(by); return ids.length >= 1 && ids.every(id => new RegExp('data-open="' + id + '"[\\s\\S]*?Target \\$').test(h)); })());
@@ -1602,10 +1630,10 @@ ok('a checked item carries the age of its shelf check', /(on the shelf|not on a 
 ok('an item the local check has not reached says the shelf was not checked yet (never "not on a shelf")', /shelf not checked yet for this item/.test(V.targetLine(T.items.find(i => /japanese/i.test(i.title)), T)));
 const oldFeed = JSON.parse(JSON.stringify(F)); oldFeed.sources.target.fetched_at = new Date(Date.now() - 5 * 3600e3).toISOString();
 V.HUNT.feed = oldFeed; V.paintSealed();
-ok('a feed older than three hours is called stale on screen (PROTOCOL §10)', /stale/.test(ctx.document.querySelector('#sealedList').innerHTML));
+ok('a feed older than three hours is called out of date on screen (PROTOCOL §10)', /out of date/.test(ctx.document.querySelector('#sealedList').innerHTML));
 const dead = JSON.parse(JSON.stringify(F)); dead.sources.target = { ok: false, error: 'HTTP 403', fetched_at: F.fetched_at, stale_since: F.fetched_at, zips: {}, items: [] };
 V.HUNT.feed = dead; V.paintSealed();
-ok('a failed source says unreachable-since and the reason, never an empty list', /unreachable since/.test(ctx.document.querySelector('#sealedList').innerHTML) && /HTTP 403/.test(ctx.document.querySelector('#sealedList').innerHTML));
+ok('a failed source says it could not reach Target and since when, never an empty list', /Could not reach Target since/.test(ctx.document.querySelector('#sealedList').innerHTML));
 V.HUNT.feed = null; V.paintSealed();
 ok('with no feed on the phone it says so and offers a fetch', /Not fetched yet/.test(ctx.document.querySelector('#sealedList').innerHTML) && /id="huntSync"/.test(ctx.document.querySelector('#sealedList').innerHTML));
 ok('the zip is asked once per launch (take 81: not once forever, since the first ask was unreadable on the owner\'s phone), stays on the phone, and can be changed from the panel', /NAV\.zipAsked/.test(js) && /vault\.hunt\.zip'/.test(js) && /id="huntZip"/.test(js) && /The zip stays on this phone/.test(js));
@@ -1641,10 +1669,10 @@ const mi = V.LOCAL.miles([42.26, -83.72]);   // Ann Arbor from the 483 area
 ok('distance from the zip area to a store is computed in miles, about right (Ann Arbor ~35-45 from Waterford)', mi >= 25 && mi <= 55, String(mi));
 ok('a store the app cannot place has no distance and is kept only when the filter is Any', V.LOCAL.miles(null) === null && (V.LOCAL.radius = 50, !V.LOCAL.within(null)) && (V.LOCAL.radius = 0, V.LOCAL.within(null)));
 V.LOCAL.radius = 50; V.paintLocal(); const hl = ctx.document.querySelector('#localList').innerHTML;
-ok('Local lists the shops within the radius with address, ~miles and their next event', /Shops that run One Piece events/.test(hl) && /~\d+ mi/.test(hl) && /2026-\d\d-\d\d/.test(hl));
+ok('Local lists the shops within the radius with address, miles (exact where the file has the point, ~ otherwise), a Call and their next event', /Shops that run One Piece events/.test(hl) && /~?\d+ mi/.test(hl) && /2026-\d\d-\d\d/.test(hl) && /href="tel:\d+"/.test(hl));
 ok('...and says what the list means: registered to run events, not proof of shelf stock', /registered to run events/.test(hl));
 V.LOCAL.radius = 10; V.paintLocal();
-ok('the distance dropdown narrows the list', (ctx.document.querySelector('#localList').innerHTML.match(/~\d+ mi/g) || []).length < (hl.match(/~\d+ mi/g) || []).length);
+ok('the distance dropdown narrows the list', (ctx.document.querySelector('#localList').innerHTML.match(/~?\d+ mi/g) || []).length < (hl.match(/~?\d+ mi/g) || []).length);
 V.LOCAL.radius = 50;
 V.LOCAL.notes = [{ store: 'Cosmic Cards & Collectibles', what: '3 OP-11 boxes', price: 130, phone: '(248) 555-0100', when: '2026-09-16' }]; V.paintLocal();
 ok('a note of your own shows the store, what you saw, the price, the date and a Call link', /3 OP-11 boxes/.test(ctx.document.querySelector('#localList').innerHTML) && /\$130\.00/.test(ctx.document.querySelector('#localList').innerHTML) && /href="tel:\(248\) 555-0100"/.test(ctx.document.querySelector('#localList').innerHTML));
@@ -1680,7 +1708,7 @@ V.EVENTS.tab = JSON.parse(fs.readFileSync(evFile, 'utf8')); V.LOCAL.stores = JSO
 const evRows = V.EVENTS.rows();
 ok('events join back to their stores, carry a distance and a registration link, and are sorted by date', evRows.length >= 5 && evRows.every(e => e.store.name && e.url && /bandai-tcg-plus\.com\/event\/\d+/.test(e.url)) && evRows.every((e, i) => i === 0 || e.d >= evRows[i - 1].d));
 V.paintEvents(); const he = ctx.document.querySelector('#eventsList').innerHTML;
-ok('the Events screen groups by day and shows store, ~miles, fee or free, seats, and a Register link', /<div class="fgrp">/.test(he) && /~\d+ mi/.test(he) && /(free|\$\d)/.test(he) && /Register/.test(he) && /Registration is on Bandai TCG\+/.test(he));
+ok('the Events screen groups by STORE (take 87): each store once with address, miles, a Call, then its next events with fee or free, seats, Register and +cal', /stores, \d+ events in the next 14 days/.test(he) && /~?\d+ mi/.test(he) && /href="tel:\d+"/.test(he) && /(free|\$\d)/.test(he) && /Register/.test(he) && /id="eventsDays"/.test(he) && /Registration is on Bandai TCG\+/.test(he));
 V.LOCAL.radius = 10; V.paintEvents();
 ok('the distance dropdown narrows the events too', (ctx.document.querySelector('#eventsList').innerHTML.match(/Register/g) || []).length <= (he.match(/Register/g) || []).length);
 /* take 78: an event onto the calendar as a plain .ics */

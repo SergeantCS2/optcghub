@@ -64,6 +64,20 @@ def build(events, tab, now=None, days=31):
         key = (s["name"].strip().lower(), z)
         st = stores.setdefault(key, {"name": s["name"].strip(), "addr": (s.get("address") or "").strip(), "city": (s.get("city") or "").strip(),
                                      "state": (s.get("pref_code") or "").replace("US-", ""), "zip": z, "ll": tab.get(z), "events": []})
+        raw = e.get("raw") or {}
+        if isinstance(raw, dict):
+            ph = str(raw.get("phone_number") or "").strip()
+            if ph and not st.get("phone"):
+                st["phone"] = ph[:24]
+            geo = raw.get("event_place_geo") or raw.get("place_geo")
+            try:
+                if geo and not st.get("exact"):
+                    # the source spells the point {x: lat, y: lng} (MEASURED take 87: x 42.03, y -97.42 for a Nebraska store)
+                    la, lo = (float(geo.get("x", geo.get("lat"))), float(geo.get("y", geo.get("lng")))) if isinstance(geo, dict) else (float(geo[0]), float(geo[1]))
+                    if -90 <= la <= 90 and -180 <= lo <= 180 and (la or lo):
+                        st["ll"] = [round(la, 4), round(lo, 4)]; st["exact"] = True
+            except Exception:                                # noqa: BLE001 -- a malformed point keeps the zip centroid
+                pass
         d = str(e.get("start_date") or "")[:10]
         if d >= now:
             title = (e.get("title") or "")[:60]
@@ -99,6 +113,7 @@ def selftest(sample_events, tab):
     mi = [s for s in r["stores"] if s["state"] == "MI"]
     check("stores are deduplicated by name and zip, with address, city, state", len(r["stores"]) >= 2 and all(s["name"] and s["city"] and s["state"] for s in r["stores"]))
     check("a Michigan store gets a centroid from its zip", any(s["ll"] for s in mi), str(mi[0]["ll"] if mi else None))
+    check("a store carries its phone and an exact point when the event record has them (take 87)", any(s.get("phone") for s in r["stores"]) and any(s.get("exact") for s in r["stores"]), f"{sum(1 for s in r['stores'] if s.get('phone'))} phones, {sum(1 for s in r['stores'] if s.get('exact'))} exact")
     check("a store's upcoming events are kept, sorted, past ones dropped", all(all(e["d"] >= "2026-09-01" for e in s["events"]) for s in r["stores"]) and any(s["events"] for s in r["stores"]))
     r_all = build(sample_events, tab, now="2020-01-01")       # every event counts as upcoming, so the release ones are visible
     check("a release event is flagged as one", any(e["k"] == "release" for s in r_all["stores"] for e in s["events"]))

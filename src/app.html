@@ -62,7 +62,7 @@
 select,input[type="text"],input[type="search"],input[type="number"],input:not([type]),textarea{
   background:var(--card2);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font:inherit;font-size:16px;
   -webkit-appearance:none;appearance:none}
-select{padding-right:30px;background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);
+select{max-width:100%;padding-right:30px;background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);
   background-position:calc(100% - 16px) 55%,calc(100% - 11px) 55%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
 select:focus,input:focus,textarea:focus{border-color:var(--brass);outline:none}
 input::placeholder,textarea::placeholder{color:var(--dim2)}
@@ -89,6 +89,8 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
 }
 :root[data-mode="hunt"] body::before{background:radial-gradient(60% 40% at 50% 0%,#1E4A2C 0%,transparent 70%)}
 .swords{display:inline-block;width:18px;height:18px;vertical-align:-3px;margin-right:6px;color:var(--brass)}
+.rel{border-bottom:1px solid var(--line)}
+.rel:last-child{border-bottom:0}
 #splash{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:var(--bg);
   background-image:radial-gradient(60% 45% at 50% 35%,color-mix(in srgb,var(--brass) 18%,transparent) 0%,transparent 70%);
   transition:opacity .35s ease;color:var(--brass)}
@@ -118,7 +120,7 @@ h1,h2{font-family:var(--display);font-weight:400;letter-spacing:.01em;color:var(
 .tab,.fgrp,.mode button{font-family:var(--comic);font-weight:400;letter-spacing:.04em}
 .total,.dkcount,.big{font-family:var(--heavy);font-weight:900;letter-spacing:-.01em;font-variant-numeric:lining-nums tabular-nums}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
-.screen{display:none;padding:0 var(--pad)}
+.screen{display:none;padding:0 var(--pad) calc(66px + 34px + var(--sab))}   /* take 86: the bar is 66px + 10px off the bottom; the last control must clear it */
 .screen.on{display:block}
 .mono{font-variant-numeric:tabular-nums}
 
@@ -126,7 +128,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .bar{display:flex;align-items:center;gap:14px;padding:14px 0 6px;min-height:56px}   /* take 83: one height, every screen */
 .tab{font-size:21px;color:var(--dim2)}
 .tab.on{color:var(--fg);border-bottom:2px solid var(--brass);padding-bottom:4px}
-.pill{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:13px;
+.pill{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap;
   color:var(--dim);background:var(--card2);border-radius:999px;padding:5px 11px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--up)}
 .dot.warn{background:var(--gold)}
@@ -141,7 +143,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .stale[hidden]{display:none}
 .hero .who{font-size:15px;color:var(--dim)}
 /* take 83: the label is a caption above the name, so one face carries the name at the hero's scale and the other stays small and quiet */
-.hero .who .cap{display:block;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim2);margin-bottom:-2px}
+.hero .who .cap{display:block;font-family:var(--heavy);font-weight:800;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--brass2);margin-bottom:-1px}
 .hero .who em{color:var(--fg);font-style:normal;font-family:var(--display);font-weight:400;font-size:24px;letter-spacing:.01em}
 .total{font-size:46px;margin:2px 0 0;color:var(--brass);font-variant-numeric:lining-nums tabular-nums}
 .delta{font-size:15px;font-weight:600;margin-top:2px}
@@ -1238,6 +1240,21 @@ const OWN = {
   },
   cost() { return this.items.reduce((s, i) => s + (i.paid || 0) * i.qty, 0); }
 };
+/* The MAX range (take 87): behind a rewarded ad, unlocked for a day, at the
+   owner's word. Where there is no ad plugin -- the browser, a dev build --
+   there is nothing to watch and MAX simply opens. */
+const MAXLOCK = {
+  until: +(localStorage.getItem('vault.maxUntil') || 0),
+  open() { return !PLATFORM.plugin('AdMob') || !CAT.man.ads || Date.now() < this.until; },
+  grant() { this.until = Date.now() + 24 * 3600e3; localStorage.setItem('vault.maxUntil', String(this.until)); },
+  async ask() { const v = await new Promise(res => {
+      $('#pkTitle').textContent = 'All-time history';
+      $('#pkWhy').innerHTML = 'Watch one short ad and the MAX range is open for a day. The other ranges stay free.';
+      $('#pkOpts').innerHTML = `<button class="opt" data-maxad="go"><div class="oi"><b>Watch an ad</b><span>about 30 seconds</span></div></button><button class="opt" data-maxad="no"><div class="oi"><b>Not now</b></div></button>`;
+      const h = ev => { const b = ev.target.closest('[data-maxad]'); if (!b) return; document.removeEventListener('click', h, true); ev.stopPropagation(); $('#picker').classList.remove('on'); res(b.dataset.maxad); };
+      document.addEventListener('click', h, true); $('#picker').classList.add('on'); });
+    if (v !== 'go') return; const shown = await PLATFORM.adShow('max'); if (!shown) toast('No ad right now \u2014 try again in a moment'); }
+};
 const price = id => { const p = CAT.byId.get(id); return p ? p.market : null; };
 
 /* Reference art for a card the collector has not scanned. Hot-linked, memory
@@ -1249,7 +1266,7 @@ function refArt(p) {
      image; hide it on load rather than fight z-index. */
   return `<img class="ref" loading="lazy" decoding="async" src="${esc(p.img)}" alt=""
             onload="this.classList.add('ok');var q=this.parentNode.querySelector('.ph');if(q)q.style.display='none'"
-            onerror="this.remove()">`;
+            onerror="if(!this.dataset.r&&/_\d+w\./.test(this.src)){this.dataset.r=1;this.src=this.src.replace(/_\d+w\./,'.')}else{this.remove()}">`;
 }
 const CCLASS = { Red: 'red', Green: 'green', Blue: 'blue', Purple: 'purple', Black: 'black', Yellow: 'yellow' };
 /* Colour as a chip, for the detail hero and the deck builder: one dot per
@@ -2406,6 +2423,18 @@ const NAV = { stack: [], silent: false,
     const isScreen = i => { const el = i && document.getElementById(i); return !!el && String(el.tagName).toUpperCase() === 'SECTION'; };
     while (prev && !isScreen(prev) && this.stack.length > 1) { this.stack.pop(); prev = this.stack[this.stack.length - 1]; }
     if (!prev) return false; this.silent = true; go(prev); this.silent = false; return true; } };
+/* Take 86. The owner met the blank page again after closing a product with
+   Back, and the take-83 guard did not fire -- so the path is not go(). This
+   watches the DOM instead of the code: after any navigation, back press or
+   overlay close, if no screen is on, the mode's home is put back and the
+   screen stack, the overlays and the trigger are recorded for Diagnostics.
+   It heals the symptom and names the cause. */
+function screenWatchdog(trigger) {
+  setTimeout(() => { const on = document.querySelector('.screen.on'); if (on) return;
+    const overlays = ['#askSheet', '#picker', '#detail', '#tour', '#simCurtain', '#splash'].filter(id => { const el = $(id); return el && el.classList && el.classList.contains('on'); });
+    ERRS.push('blank', `no screen on after ${trigger}; stack ${NAV.stack.join('>') || '-'}; overlays ${overlays.join(',') || 'none'}; mode ${MODE.cur}`, 'watchdog');
+    NAV.silent = true; go(MODE.home[MODE.cur] || 'home'); NAV.silent = false; }, 60);
+}
 function closeAnyOverlay() {
   const ask = $('#askSheet'); if (ask && ask.classList.contains('on')) { $('#askCancel').click(); return true; }   // resolves the pending ask() with null, cleanly
   for (const id of ['#picker', '#detail', '#tour', '#simCurtain']) { const el = $(id); if (el && el.classList.contains('on')) { el.classList.remove('on'); return true; } }
@@ -2531,7 +2560,7 @@ function paintHome() {
 
   $('#ranges').innerHTML = RANGES.map(r =>
     `<button class="range${r === range ? ' on' : ''}" data-r="${r}">${r}${
-      r === 'MAX' ? '<span class="free">FREE</span>' : ''}</button>`).join('');
+      r === 'MAX' && !MAXLOCK.open() ? '<span class="free">AD</span>' : ''}</button>`).join('');
   spark(series, S.kind);
 
   const top = PF.scope(OWN.items).slice()
@@ -2709,7 +2738,7 @@ function spark(series, kind = 'record') {
 }
 document.addEventListener('click', e => {
   const r = e.target.closest('[data-r]');
-  if (r) { range = r.dataset.r; paintHome(); }
+  if (r) { if (r.dataset.r === 'MAX' && !MAXLOCK.open()) { MAXLOCK.ask(); return; } range = r.dataset.r; paintHome(); }
 });
 
 /* ---- collection -------------------------------------------------------- */
@@ -3300,7 +3329,7 @@ function targetLine(it, T) {
   return `<span style="display:block;color:var(--brass)">Target ${money(it.price)} \u00b7 ${esc(online)}${shelfTxt ? ' \u00b7 ' + esc(shelfTxt) : ''}</span>${histTxt ? `<span style="display:block;color:var(--dim2);font-size:12.5px">${esc(histTxt)}</span>` : ''}`;
 }
 const SEALED = {
-  q: '', kind: 'all', open: new Set(),
+  q: '', kind: 'all', open: new Set(), closed: new Set(),
   /* TCGCSV files DON!! cards as sealed because they have no number; they are
      single cards, not product, and stay out of this screen (232 of them). */
   isProduct(p) { return p.sealed && p.market > 0 && !/don!! card/i.test(p.name || ''); },
@@ -3336,6 +3365,10 @@ function paintSealed() {
   $('#sealedKinds').innerHTML = SEALED_KINDS.map(([k, label]) => `<button class="chip${SEALED.kind === k ? ' on' : ''}" data-skind="${k}" aria-pressed="${SEALED.kind === k}">${label} <span class="note">${counts[k] || 0}</span></button>`).join('');
   const rows = SEALED.rows(); let lastSet = null; const out = [];
   const T = HUNT.feed && HUNT.feed.sources && HUNT.feed.sources.target; const byCat = HUNT.byCatalogId();
+  /* starter decks, their own section (take 87): every deck product, newest set first */
+  if (SEALED.kind === 'all' && !SEALED.q) { const decks = CAT.rows.filter(p => SEALED.isProduct(p) && SEALED.kindOf(p) === 'deck').sort((a, b) => (CAT.sets.get(b.set)?.pub || '').localeCompare(CAT.sets.get(a.set)?.pub || '') || a.name.localeCompare(b.name));
+    if (decks.length) out.push(`<button class="fgrp" data-setfold="decks" aria-expanded="${!SEALED.closed.has('decks')}" style="display:flex;width:100%;justify-content:space-between;align-items:center;text-align:left;padding:8px 0"><span>Starter decks <span class="note">\u00b7 ${decks.length}</span></span><span class="note" aria-hidden="true">${SEALED.closed.has('decks') ? '\u25b8' : '\u25be'}</span></button>`);
+    if (decks.length && !SEALED.closed.has('decks')) for (const p of decks.slice(0, 80)) out.push(`<div class="row" style="gap:8px"><button class="row" style="flex:1;min-width:0;text-align:left;padding:0;gap:10px" data-open="${p.id}">${productPic(p)}<div class="nm" style="min-width:0"><b>${esc(p.name)}</b><span>${esc(CAT.sets.get(p.set)?.name || '')} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}</span>${(byCat[p.id] || []).map(i => targetLine(i, T)).join('')}</div><div class="v"><b>${money(p.market)}</b>${deltaHtml(p, { pctOnly: true })}</div></button><button class="ghost" data-stock="${p.id}" aria-label="${STOCK.has(p.id) ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${STOCK.has(p.id)}" style="flex:0 0 auto;padding:8px 10px;${STOCK.has(p.id) ? 'color:var(--brass);border-color:var(--brass)' : ''}">${STOCK.has(p.id) ? '\u25cf' : '\u25cb'}</button></div>`); }
   /* stock alerts: what is watched, and where it was last seen */
   if (STOCK.list.length) out.push(`<div class="panel"><h3>Stock alerts</h3>${STOCK.list.map(a => { const srcs = STOCK.sourcesFor(a.id); const on = srcs.filter(x => x.available);
     return `<div class="row"><div class="nm"><b>${esc(a.name)}</b><span>${on.length ? 'in stock: ' + esc(on.map(x => x.label).join(', ')) : srcs.length ? 'not in stock at ' + srcs.length + ' watched source' + (srcs.length === 1 ? '' : 's') : 'no source carries it yet'}${a.fired && a.fired.length ? ' \u00b7 last alert ' + esc(HUNT.ageLabel(a.fired[0].t)) : ''}</span></div><div class="v"><button class="ghost" data-stock="${a.id}" aria-label="Stop watching ${esc(a.name)}">\u00d7</button></div></div>`; }).join('')}
@@ -3345,12 +3378,12 @@ function paintSealed() {
     const ja = (T.items || []).filter(i => /japanese/i.test(i.title)).length; const ships = (T.items || []).filter(i => i.online && i.online.status === 'IN_STOCK').length;
     const sv = HUNT.served(); const zz = sv.how !== 'none' ? T.zips[sv.zip] : null;
     const shelf = zz && zz.ok ? Object.entries(zz.stock).filter(([, st]) => Object.values(st).some(v => (v.qty || 0) > 0)).map(([tcin]) => (T.items || []).find(i => i.tcin === tcin)).filter(Boolean) : [];
-    out.push(`<div class="panel" style="border-color:var(--brass)"><h3>Target \u2014 online, all of the US</h3>
-      <div class="note">${T.ok ? `fetched ${esc(HUNT.ageLabel(T.fetched_at))}${HUNT.stale(T.fetched_at) ? ' \u2014 <b>stale</b>, the hourly feed has not landed' : ''} \u00b7 ${(T.items || []).length} products (list ${esc(HUNT.ageLabel(T.searched_at || T.fetched_at))}), ${ships} shipping at last check, ${ja} of them the Japanese release${T.throttled_after != null ? ' \u00b7 the retailer throttled this run' : ''}` : `unreachable since ${esc(T.stale_since || T.fetched_at || '?')} \u2014 ${esc(T.error || '')}`}</div>
-      <details style="margin-top:6px"><summary class="note" style="cursor:pointer">Near you \u2014 details</summary>
+    out.push(`<div class="panel" style="border-color:var(--brass)"><h3>Target</h3>
+      <div class="note">${T.ok ? `Checked ${esc(HUNT.ageLabel(T.fetched_at))}${HUNT.stale(T.fetched_at) ? ' \u2014 <b>out of date</b>' : ''} \u00b7 ${(T.items || []).length} One Piece products online, <b>${ships}</b> in stock to ship${ja ? ` \u00b7 ${ja} are the Japanese version` : ''}.${T.throttled_after != null ? ' Target limits how often it can be asked; the next hourly check continues where this one stopped.' : ''}` : `Could not reach Target since ${esc((T.stale_since || T.fetched_at || '?').slice(0, 16))}.`}</div>
+      <details style="margin-top:6px"><summary class="note" style="cursor:pointer">Near you</summary>
       ${!HUNT.zip ? `<div class="note">Enter your zip to add what is on the shelf near you.</div>` :
         sv.how === 'none' ? `<div class="note">Zip ${esc(HUNT.zip)}: no local check for your area yet \u2014 online prices still show for everything. Covered areas: ${esc(sv.zips.join(', ') || 'none')}.</div>` :
-        !zz || !zz.ok ? `<div class="note">Zip ${esc(HUNT.zip)}: the local check for ${esc(sv.zip)} failed this run (${esc((zz && zz.error) || '?')}).</div>` :
+        !zz || !zz.ok ? `<div class="note">Near ${esc(HUNT.zip)}: the store check did not finish this hour${zz && /435|429|throttle|budget/i.test(zz.error || '') ? ' (Target\u2019s limit) \u2014 it resumes next hour' : ''}.</div>` :
         `<div class="note">Zip ${esc(HUNT.zip)}${sv.how === 'area' ? ` \u2014 using the ${esc(sv.zip)} check, same area` : ''}: ${zz.stores.length} stores within ${T.radius || 50} mi, shelf checks on file for ${Object.keys(zz.checked_at || {}).length} products (the feed rotates through them under the retailer's limit).</div>
          ${shelf.length ? `<div class="fgrp">On a shelf now</div>${shelf.slice(0, 12).map(i => `<div class="row"><div class="nm"><b>${esc(i.title)}</b>${targetLine(i, T)}</div></div>`).join('')}` : '<div class="note" style="margin-top:6px">Nothing on a shelf near you at the last check.</div>'}`}
       </details>
@@ -3362,8 +3395,8 @@ function paintSealed() {
      open, the rest open on tap, a search opens everything it matches */
   const bySet = new Map(); for (const p of rows.slice(0, 600)) { if (!bySet.has(p.set)) bySet.set(p.set, []); bySet.get(p.set).push(p); }
   let n = 0;
-  for (const [setId, ps] of bySet) { const st = CAT.sets.get(setId) || {}; const open = SEALED.q || SEALED.open.has(setId) || n < 2; n++;
-    out.push(`<button class="fgrp" data-setfold="${esc(setId)}" aria-expanded="${open}" style="display:flex;width:100%;justify-content:space-between;align-items:center;text-align:left;padding:8px 0"><span>${esc(st.name || 'Other')}${st.pub ? ` <span class="note">\u00b7 ${esc(st.pub)}</span>` : ''}</span><span class="note">${ps.length} ${open ? '\u25be' : '\u25b8'}</span></button>`);
+  for (const [setId, ps] of bySet) { const st = CAT.sets.get(setId) || {}; const open = SEALED.q || !SEALED.closed.has(setId); n++;
+    out.push(`<button class="fgrp" data-setfold="${esc(setId)}" aria-expanded="${open}" style="display:flex;width:100%;justify-content:space-between;align-items:center;text-align:left;padding:8px 0"><span>${esc(st.name || 'Other')}${st.pub ? ` <span class="note">\u00b7 ${esc(st.pub)}</span>` : ''}</span><span class="note" aria-hidden="true">${open ? '\u25be' : '\u25b8'}</span></button>`);
     if (!open) continue;
     for (const p of ps) {
     const tl = (byCat[p.id] || []).map(i => targetLine(i, T)).join('') + LOCAL.shopLines(p.id).map(l => `<span style="display:block;color:var(--brass)">${esc(l.shop)}${l.mi != null ? ' ~' + l.mi + ' mi' : ''} ${money(l.price)} \u00b7 ${l.available ? 'in stock online' : 'sold out online'} \u00b7 ${esc(HUNT.ageLabel(LOCAL.shops.fetched_at))}</span>`).join('');
@@ -3455,9 +3488,9 @@ function paintLocal() {
     ${!R ? `<div class="note">Not fetched yet on this phone.</div><div class="row" style="margin-top:8px"><button class="ghost" id="localSync">Fetch</button></div>` :
       !HUNT.zip ? '<div class="note">Enter your zip above.</div>' :
       !shops.length ? `<div class="note">None within ${LOCAL.radius} mi of your zip area. Widen the distance.</div>` :
-      shops.slice(0, 60).map(s => `<div class="row"><div class="nm"><b>${esc(s.name)}</b><span>${esc([s.addr, s.city, s.state].filter(Boolean).join(', '))}${s.mi != null ? ` \u00b7 ~${s.mi} mi` : ''}</span>
+      shops.slice(0, 60).map(s => `<div class="row"><div class="nm" style="min-width:0"><b>${esc(s.name)}</b><span>${esc([s.addr, s.city, s.state].filter(Boolean).join(', '))}${s.mi != null ? ` \u00b7 ${s.exact ? '' : '~'}${s.mi} mi` : ''}</span>
         ${s.events && s.events.length ? `<span style="display:block;color:var(--brass)">${s.events.slice(0, 2).map(e => `${esc(e.d)} ${esc(e.t)}${e.k === 'release' ? ' \u2014 release event' : ''}`).join(' \u00b7 ')}</span>` : ''}</div>
-        <div class="v"><button class="ghost" data-localnote="${esc(s.name)}" aria-label="Add a note for ${esc(s.name)}">Note</button></div></div>`).join('')}
+        <div class="v" style="flex:0 0 auto;display:flex;gap:6px">${s.phone ? `<a class="ghost" href="tel:${esc(s.phone)}" style="display:inline-block;padding:8px 12px" aria-label="Call ${esc(s.name)}">Call</a>` : ''}<button class="ghost" data-localnote="${esc(s.name)}" aria-label="Add a note for ${esc(s.name)}">Note</button></div></div>`).join('')}
     <div class="note" style="margin-top:8px">From ${esc((R && R.source) || 'Bandai TCG+')}, ${R ? esc(HUNT.ageLabel(R.fetched_at)) : ''}. A store on this list registered to run events; whether it has product on the shelf is what your notes and the stock feed are for.</div></div>`);
   /* Target stores the feed checked */
   const T = HUNT.feed && HUNT.feed.sources && HUNT.feed.sources.target; const sv = HUNT.served(); const zz = T && sv.how !== 'none' ? T.zips[sv.zip] : null;
@@ -3498,6 +3531,7 @@ $('#local').addEventListener('click', e => { const n = e.target.closest('[data-l
    there, in Bandai's app; this app only points). */
 const EVENTS = {
   tab: (() => { try { return JSON.parse(localStorage.getItem('vault.hunt.events') || 'null'); } catch (e) { return null; } })(),
+  days: +(localStorage.getItem('vault.hunt.eventDays') || 14),
   async sync() { const u = HUNT.url(); if (!u || !navigator.onLine) return false;
     try { const r = await fetch(u.replace(/feed\.json$/, 'events.json'), { cache: 'no-store' }); if (!r.ok) return false; const j = await r.json(); if (!j || !Array.isArray(j.rows)) return false;
       this.tab = j; try { localStorage.setItem('vault.hunt.events', JSON.stringify(j)); } catch (e) { toast('Event list too large to keep offline; showing it now'); } return true; } catch (e) { return false; } },
@@ -3532,14 +3566,20 @@ function paintEvents() {
   const out = [];
   if (!HUNT.zip) { out.push(`<div class="panel"><h3>Where are you?</h3><div class="note">Enter your zip to see events near you.</div><div class="row" style="margin-top:8px"><button class="ghost go" id="eventsZip">Enter zip</button></div></div>`); }
   else if (!EVENTS.tab || !LOCAL.stores) { out.push(`<div class="panel"><h3>Events</h3><div class="note">Not fetched yet on this phone.</div><div class="row" style="margin-top:8px"><button class="ghost" id="eventsSync">Fetch</button></div></div>`); }
-  else { const rows = EVENTS.rows(); let lastD = null;
-    out.push(`<div class="note" style="margin:6px 0 10px">${rows.length} events in the next ${EVENTS.tab.window_days || 31} days${LOCAL.radius ? ` within ${LOCAL.radius} mi` : ''} of ${esc(HUNT.zip)} \u00b7 list ${esc(HUNT.ageLabel(EVENTS.tab.fetched_at))}</div>`);
-    if (!rows.length) out.push(`<div class="panel"><div class="note">Nothing in range. Widen the distance.</div></div>`);
-    for (const e of rows.slice(0, 120)) {
-      if (e.d !== lastD) { lastD = e.d; const dt = new Date(e.d + 'T12:00:00'); out.push(`<div class="fgrp">${esc(dt.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }))}</div>`); }
-      out.push(`<div class="row"><div class="nm"><b>${esc(e.title.replace(/^\[[^\]]*\]\s*/, ''))}${e.release ? ' <span class="badge">release</span>' : ''}</b>
-        <span>${esc(e.store.name)}${e.store.city ? ', ' + esc(e.store.city) : ''}${e.mi != null ? ` \u00b7 ~${e.mi} mi` : ''} \u00b7 ${e.fee > 0 ? money(e.fee) : 'free'}${e.cap ? ` \u00b7 ${e.cap} seats` : ''}</span></div>
-        <div class="v" style="display:flex;gap:6px;align-items:center">${e.url ? `<a class="ghost" href="${esc(e.url)}" target="_blank" rel="noopener" style="display:inline-block;padding:8px 12px">Register</a>` : ''}<button class="ghost" data-evcal="${rows.indexOf(e)}" aria-label="Add ${esc(e.title)} at ${esc(e.store.name)} to your calendar" style="padding:8px 10px">+cal</button></div></div>`);
+  else { const all = EVENTS.rows(); const horizon = EVENTS.days; const lim = new Date(Date.now() + horizon * 864e5).toISOString().slice(0, 10);
+    const rows = all.filter(e => e.d <= lim);
+    /* take 87: the list was real -- every store runs about one event a week --
+       so it is grouped by STORE: each store once, nearest first, its next events
+       under it, its phone and distance beside it. The default is two weeks. */
+    const byStore = new Map(); for (const e of rows) { const k = e.store.name + '|' + e.store.zip; if (!byStore.has(k)) byStore.set(k, { store: e.store, mi: e.mi, evs: [] }); byStore.get(k).evs.push(e); }
+    const groups = [...byStore.values()].sort((a, b) => (a.mi ?? 9e9) - (b.mi ?? 9e9));
+    out.push(`<div class="note" style="margin:6px 0 10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span>${groups.length} stores, ${rows.length} events in the next ${horizon} days${LOCAL.radius ? ` within ${LOCAL.radius} mi` : ''} of ${esc(HUNT.zip)}</span><select id="eventsDays" aria-label="How far ahead"><option value="7" ${horizon === 7 ? 'selected' : ''}>next 7 days</option><option value="14" ${horizon === 14 ? 'selected' : ''}>next 14 days</option><option value="31" ${horizon === 31 ? 'selected' : ''}>next month</option></select></div>`);
+    if (!groups.length) out.push(`<div class="panel"><div class="note">Nothing in range. Widen the distance or the days.</div></div>`);
+    for (const g of groups.slice(0, 60)) { const st = g.store;
+      out.push(`<div class="panel" style="padding:12px 14px"><div class="row" style="padding:0 0 6px;border:0"><div class="nm" style="min-width:0"><b>${esc(st.name)}</b><span>${esc([st.addr, st.city].filter(Boolean).join(', '))}${g.mi != null ? ` \u00b7 ${st.exact ? '' : '~'}${g.mi} mi` : ''}</span></div>
+        <div class="v" style="flex:0 0 auto;display:flex;gap:6px">${st.phone ? `<a class="ghost" href="tel:${esc(st.phone)}" style="display:inline-block;padding:8px 12px" aria-label="Call ${esc(st.name)}">Call</a>` : ''}<button class="ghost" data-localnote="${esc(st.name)}" aria-label="Add a note for ${esc(st.name)}" style="padding:8px 10px">Note</button></div></div>
+        ${g.evs.slice(0, 6).map(e => { const dt = new Date(e.d + 'T12:00:00'); return `<div class="row" style="padding:6px 0"><div class="nm" style="min-width:0"><b style="font-weight:600;white-space:normal">${esc(dt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }))} \u00b7 ${esc(e.title.replace(/^\[[^\]]*\]\s*/, ''))}${e.release ? ' <span class="badge">release</span>' : ''}</b><span>${e.fee > 0 ? money(e.fee) : 'free'}${e.cap ? ` \u00b7 ${e.cap} seats` : ''}</span></div>
+          <div class="v" style="flex:0 0 auto;display:flex;gap:6px">${e.url ? `<a class="ghost" href="${esc(e.url)}" target="_blank" rel="noopener" style="display:inline-block;padding:6px 10px;font-size:13px">Register</a>` : ''}<button class="ghost" data-evcal="${all.indexOf(e)}" aria-label="Add ${esc(e.title)} at ${esc(st.name)} to your calendar" style="padding:6px 8px;font-size:13px">+cal</button></div></div>`; }).join('')}${g.evs.length > 6 ? `<div class="note">and ${g.evs.length - 6} more at this store</div>` : ''}</div>`);
     }
     out.push(`<div class="note" style="margin-top:10px">Registration is on Bandai TCG+, in their app or site; this only points there. Fees and seats are as the store listed them. From onepieceevents.com, from TCG+.</div>`);
   }
@@ -3548,7 +3588,8 @@ function paintEvents() {
   const es = $('#eventsSync'); if (es) es.addEventListener('click', async () => { es.disabled = true; const ok = (await LOCAL.syncStores()) | (await EVENTS.sync()); es.disabled = false; if (ok) paintEvents(); else toast('Event list unavailable'); });
 }
 $('#eventsRadius').addEventListener('change', e => { LOCAL.radius = +e.target.value; localStorage.setItem('vault.hunt.radius', String(LOCAL.radius)); paintEvents(); });
-$('#events').addEventListener('click', e => { const b = e.target.closest('[data-evcal]'); if (!b) return; const ev = EVENTS.rows()[+b.dataset.evcal]; if (ev) addEventToCalendar(ev); });
+$('#events').addEventListener('click', e => { const n = e.target.closest('[data-localnote]'); if (n) { addLocalNote(n.dataset.localnote); return; } const b = e.target.closest('[data-evcal]'); if (!b) return; const ev = EVENTS.rows()[+b.dataset.evcal]; if (ev) addEventToCalendar(ev); });
+$('#events').addEventListener('change', e => { if (e.target.id === 'eventsDays') { EVENTS.days = +e.target.value; localStorage.setItem('vault.hunt.eventDays', String(EVENTS.days)); paintEvents(); } });
 function paintReleases() {
   const today = new Date().toISOString().slice(0, 10);
   const sets = [...CAT.sets.values()].filter(s => s.pub);
@@ -3557,14 +3598,16 @@ function paintReleases() {
   const days = d => Math.round((Date.parse(d + 'T00:00:00Z') - Date.parse(today + 'T00:00:00Z')) / 864e5);
   const detailsUrl = s => 'https://www.tcgplayer.com/search/one-piece-card-game/product?q=' + encodeURIComponent(s.name) + '&view=grid';
   const picFor = s => { const ps = CAT.rows.filter(p => p.set === s.id && SEALED.isProduct(p)); const box = ps.find(p => /booster box/i.test(p.name)) || ps[0]; return box ? productPic(box, 44) : `<div class="pic" style="width:44px;height:55px;flex:0 0 auto;border-radius:8px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:11px;color:var(--dim2)">${esc((s.abbr || '').replace(/-/g, '').slice(0, 5))}</div>`; };
-  const line = s => `<div class="row" style="gap:8px"><button class="row" style="flex:1;text-align:left;padding:0;gap:10px" data-browse-set="${esc(s.id)}">${picFor(s)}<div class="nm"><b>${esc(s.name)}</b><span>${esc(s.abbr || '')}${s.n ? ` \u00b7 ${s.n} cards` : ' \u00b7 card list not published yet'}</span></div><div class="v"><b>${esc(s.pub)}</b><span class="note">${s.pub >= today ? (days(s.pub) === 0 ? 'today' : `in ${days(s.pub)} day${days(s.pub) === 1 ? '' : 's'}`) : `${-days(s.pub)} days ago`}</span></div></button>
-    <a class="ghost" href="${esc(detailsUrl(s))}" target="_blank" rel="noopener" style="display:inline-block;padding:8px 12px;flex:0 0 auto" aria-label="Full details for ${esc(s.name)} on TCGplayer">Details \u2197</a></div>`;
+  /* take 86: the row is two lines -- picture, a wrapping title with its meta, the date
+     and countdown at the right; then a Details link that never leaves the box */
+  const line = s => `<div class="rel"><button class="row" style="width:100%;text-align:left;padding:0;gap:10px;min-width:0" data-browse-set="${esc(s.id)}">${picFor(s)}<div class="nm" style="min-width:0"><b style="white-space:normal">${esc(s.name)}</b><span>${esc(s.abbr || '')}${s.n ? ` \u00b7 ${s.n} cards` : ' \u00b7 card list not published yet'}</span></div><div class="v" style="flex:0 0 auto"><b>${esc(s.pub)}</b><span class="note">${s.pub >= today ? (days(s.pub) === 0 ? 'today' : `in ${days(s.pub)} day${days(s.pub) === 1 ? '' : 's'}`) : `${-days(s.pub)} days ago`}</span></div></button>
+    <div style="display:flex;justify-content:flex-end;padding:0 0 8px"><a class="ghost" href="${esc(detailsUrl(s))}" target="_blank" rel="noopener" style="display:inline-block;padding:6px 12px;font-size:13px" aria-label="Full details for ${esc(s.name)} on TCGplayer">Details \u2197</a></div></div>`;
   $('#relList').innerHTML = `<div class="panel"><h3>Upcoming</h3>${up.map(line).join('') || '<div class="note">Nothing announced in the catalogue yet.</div>'}
     <div class="note" style="margin-top:8px">Dates are TCGplayer's publish dates via TCGCSV, updated nightly. A release event at a local store means product on that shelf that morning — store events come with the local view.</div></div>
     <div class="panel"><h3>Recent</h3>${past.map(line).join('')}</div>`;
 }
 $('#sealed').addEventListener('click', e => { const k = e.target.closest('[data-skind]'); if (k) { SEALED.kind = k.dataset.skind; paintSealed(); return; }
-  const f = e.target.closest('[data-setfold]'); if (f) { const id = isNaN(+f.dataset.setfold) ? f.dataset.setfold : +f.dataset.setfold; if (SEALED.open.has(id)) SEALED.open.delete(id); else SEALED.open.add(id); paintSealed(); return; }
+  const f = e.target.closest('[data-setfold]'); if (f) { const id = isNaN(+f.dataset.setfold) ? f.dataset.setfold : +f.dataset.setfold; if (SEALED.closed.has(id)) SEALED.closed.delete(id); else SEALED.closed.add(id); paintSealed(); return; }
   const b = e.target.closest('[data-stock]'); if (b) { e.stopPropagation(); const on = STOCK.toggle(+b.dataset.stock); if (on) { PLATFORM.notifyPermission().then(perm => toast(perm === 'denied' ? 'Watching \u2014 notifications are off, so it will show here instead' : 'Watching for stock')); STOCK.check(); } paintSealed(); } });
 $('#sealedQ').addEventListener('input', e => { SEALED.q = e.target.value; paintSealed(); });
 
@@ -3849,6 +3892,7 @@ const PLATFORM = {
       await A.addListener('onRewardedVideoAdReward', r => {
         /* r = { type, amount } per AdMobRewardItem. Which credit was earned is
            known from what we asked to show, not from the reward type. */
+        if (this._pendingKind === 'max') { this._pendingKind = null; MAXLOCK.grant(); toast('All-time history is open for a day \u2014 thank you'); range = 'MAX'; if ($('#home').classList.contains('on')) paintHome(); return; }
         CREDITS.earn(this._pendingKind || 'scan'); this._pendingKind = null;
         toast(`+${this._lastKind === 'deck' ? CREDITS.DECKS_PER_AD + ' deck save' : CREDITS.PER_AD + ' save credits'} \u2014 thank you`);
         if (typeof paintScan === 'function' && $('#scan').classList.contains('on')) paintScan();
@@ -3867,6 +3911,7 @@ const PLATFORM = {
   },
   async adShow(kind = 'scan') {
     const A = this.plugin('AdMob'); if (!A) return false;
+    if (kind === 'max') { const ok = await this.adShow('deck'); if (ok) this._pendingKind = 'max'; return ok; }   // any rewarded unit serves the MAX unlock
     if (!this._adReady[kind] && !(await this.adLoad(kind))) { toast('No ad available right now \u2014 try again in a moment'); return false; }
     this._pendingKind = kind; this._lastKind = kind;
     try { await A.showRewardVideoAd(); return true; }
@@ -5007,8 +5052,8 @@ $('#simCurtain').addEventListener('click', () => { $('#simCurtain').classList.re
    contents, no personal data beyond the zip the collector typed. */
 /* the opening screen goes once the app has painted -- never before 600 ms, never after 2.5 s */
 const SPLASH_T0 = Date.now();
-function splashDone() { const sp = $('#splash'); if (!sp || sp.classList.contains('off')) return; const wait = Math.max(0, 600 - (Date.now() - SPLASH_T0)); setTimeout(() => { sp.classList.add('off'); setTimeout(() => sp.remove(), 400); }, wait); }
-setTimeout(splashDone, 2500);
+function splashDone() { const sp = $('#splash'); if (!sp || sp.classList.contains('off')) return; const wait = Math.max(0, 1600 - (Date.now() - SPLASH_T0)); setTimeout(() => { sp.classList.add('off'); setTimeout(() => sp.remove(), 400); }, wait); }
+setTimeout(splashDone, 3500);
 const ERRS = { list: [], push(kind, msg, where) { this.list.unshift({ t: new Date().toISOString(), kind, msg: String(msg).slice(0, 200), where: String(where || '').slice(0, 120) }); this.list = this.list.slice(0, 20); } };
 window.addEventListener('error', e => ERRS.push('error', e.message, (e.filename || '') + ':' + (e.lineno || '')));
 window.addEventListener('unhandledrejection', e => ERRS.push('rejection', (e.reason && (e.reason.message || e.reason)) || 'unknown'));
@@ -5020,13 +5065,15 @@ const DIAG = {
   async report() {
     const L = []; const line = (k, v) => L.push(`${k}: ${v}`);
     L.push(`OP TCG Hub diagnostics \u2014 take ${TAKE} \u2014 ${new Date().toISOString().slice(0, 16)}Z`);
-    L.push('', '## app'); line('build', CAT.man.built || '?'); line('mode', MODE.cur); line('screen stack', NAV.stack.join(' > ') || '-'); line('online', navigator.onLine); line('native', !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())); line('plugins', ['Camera', 'Filesystem', 'Share', 'LocalNotifications', 'Network', 'App', 'AdMob'].filter(n => PLATFORM.plugin(n)).join(', ') || 'none (browser)');
+    L.push('', '## app'); line('build', CAT.man.built || '?'); line('mode', MODE.cur); line('screen stack', NAV.stack.join(' > ') || '-');
+    line('screens on', [...document.querySelectorAll('.screen.on')].map(e => e.id).join(',') || 'NONE'); line('overlays on', ['#askSheet', '#picker', '#detail', '#tour', '#simCurtain'].filter(id => { const el = $(id); return el && el.classList && el.classList.contains('on'); }).join(',') || 'none'); line('splash', $('#splash') ? 'still in the page' : 'gone');
+    line('currency', CUR.active() + (CAT.man.rates ? ` (rates ${CAT.man.rates.date}${CAT.man.rates.stale ? ', stale' : ''})` : ' (no rates)')); line('online', navigator.onLine); line('native', !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())); line('plugins', ['Camera', 'Filesystem', 'Share', 'LocalNotifications', 'Network', 'App', 'AdMob'].filter(n => PLATFORM.plugin(n)).join(', ') || 'none (browser)');
     L.push('', '## device'); line('ua', String(navigator.userAgent || '?').slice(0, 120)); line('viewport', `${typeof innerWidth === 'number' ? innerWidth + 'x' + innerHeight : '?'} @${devicePixelRatio || 1}`); line('language', navigator.language || '?'); line('tz', (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return '?'; } })());
     L.push('', '## catalogue'); line('cards', CAT.man.cards); line('printings', CAT.rows.length); line('prices dated', (CAT.man.source_updated_at || '?').slice(0, 10)); line('history days', (CAT.days || []).length + (CAT.days && CAT.days.length ? ` (${CAT.days[0]}..${CAT.days[CAT.days.length - 1]})` : '')); line('catalogue copy', CAT.man.fromDisk ? 'synced on this phone' : 'the one that came with the app'); line('sealed products', CAT.rows.filter(p => SEALED.isProduct(p)).length); line('stock decks', (CAT.stock || []).length); line('effects scripted', CAT.man.effects ? `${CAT.man.effects.scripted}/${CAT.man.effects.lines}` : '?');
     L.push('', '## sync'); line('update url', CAT.man.updateUrl || 'NOT SET'); line('manifest', await this.probe(CAT.man.updateUrl ? CAT.man.updateUrl + 'manifest.json' : null));
     L.push('', '## hunt'); line('zip', HUNT.zip || '(none)'); line('served', JSON.stringify(HUNT.served())); line('radius', LOCAL.radius); line('feed url', HUNT.url() || 'NOT SET');
     for (const f of ['feed.json', 'history.json', 'stores.json', 'events.json', 'shops.json', 'zcta.json']) line('  ' + f, await this.probe(HUNT.url() ? HUNT.url().replace(/feed\.json$/, f) : null));
-    line('feed on phone', HUNT.feed ? `${HUNT.ageLabel(HUNT.feed.fetched_at)}, target ${HUNT.feed.sources && HUNT.feed.sources.target && HUNT.feed.sources.target.ok ? 'ok' : 'not ok'}` : 'none'); line('history on phone', HUNT.hist ? `${HUNT.hist.runs.length} runs` : 'none'); line('stores on phone', LOCAL.stores ? `${LOCAL.stores.stores.length}, ${HUNT.ageLabel(LOCAL.stores.fetched_at)}` : 'none'); line('events on phone', EVENTS.tab ? `${EVENTS.tab.rows.length} rows` : 'none'); line('shops on phone', LOCAL.shops ? `${LOCAL.shops.shops.length}` : 'none'); line('exact distances', LOCAL.exact()); line('stock alerts', STOCK.list.length); line('local notes', LOCAL.notes.length);
+    line('feed on phone', HUNT.feed ? `${HUNT.ageLabel(HUNT.feed.fetched_at)}, target ${HUNT.feed.sources && HUNT.feed.sources.target && HUNT.feed.sources.target.ok ? 'ok' : 'not ok'}` : 'none'); line('history on phone', HUNT.hist ? `${HUNT.hist.runs.length} runs` : 'none'); line('stores on phone', LOCAL.stores ? `${LOCAL.stores.stores.length}, ${HUNT.ageLabel(LOCAL.stores.fetched_at)}${HUNT.zip ? ', ' + LOCAL.stores.stores.filter(s => s.zip && s.zip.slice(0, 3) === HUNT.zip.slice(0, 3)).length + ' in your zip area' : ''}` : 'none'); line('events on phone', EVENTS.tab ? `${EVENTS.tab.rows.length} rows` : 'none'); line('shops on phone', LOCAL.shops ? `${LOCAL.shops.shops.length}` : 'none'); line('exact distances', LOCAL.exact()); line('stock alerts', STOCK.list.length); line('local notes', LOCAL.notes.length);
     L.push('', '## storage'); for (const k of ['vault.collection', 'vault.decks', 'vault.hunt', 'vault.hunt.hist', 'vault.hunt.stores', 'vault.hunt.events', 'vault.hunt.shops', 'vault.hunt.zcta', 'vault.alerts', 'vault.stockAlerts']) line(k, this.kb(k));
     L.push('', '## counts (never contents)'); line('collection items', OWN.items.length); line('decks', DECKS.list.length); line('price alerts', ALERTS.list.length);
     L.push('', '## last errors'); if (!ERRS.list.length) L.push('none'); else for (const e of ERRS.list) L.push(`${e.t.slice(11, 19)} ${e.kind}: ${e.msg}${e.where ? ' @ ' + e.where : ''}`);
@@ -5123,8 +5170,8 @@ async function runSelfTest() {
      closes first; then the screen stack; at the bottom the app minimises
      rather than exits, which is what Android users expect of Home-like apps. */
   const APP = PLATFORM.plugin('App');
-  if (APP && APP.addListener) { try { APP.addListener('backButton', () => { if (closeAnyOverlay()) return; if (NAV.back()) return; if (APP.minimizeApp) APP.minimizeApp(); }); } catch (e) {} }
-  window.addEventListener('popstate', () => { if (closeAnyOverlay()) return; NAV.silent = true; NAV.stack.pop(); const prev = NAV.stack[NAV.stack.length - 1]; if (prev) go(prev); NAV.silent = false; });
+  if (APP && APP.addListener) { try { APP.addListener('backButton', () => { try { if (closeAnyOverlay()) return; if (NAV.back()) return; if (APP.minimizeApp) APP.minimizeApp(); } finally { screenWatchdog('hardware back'); } }); } catch (e) {} }
+  window.addEventListener('popstate', () => { try { if (closeAnyOverlay()) return; NAV.silent = true; NAV.stack.pop(); const prev = NAV.stack[NAV.stack.length - 1]; if (prev) go(prev); NAV.silent = false; } finally { screenWatchdog('history back'); } });
   /* First open: the guide, once. If storage is unavailable it simply shows
      every time -- an extra tap beats a first-time collector with no
      explanation (APEX A129). */

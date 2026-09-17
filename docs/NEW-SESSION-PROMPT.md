@@ -1,15 +1,15 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 85.* Paste the block between the rules into a new session
+*Current as of take 88.* Paste the block between the rules into a new session
 whose project carries `AGENDA.md`, `LANDMINES.md` and `HANDOFF.md` (the three
 project files) and has the newest seed attached.
 
 ---
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
-tracker and deck builder for Android, built across 85 takes by previous
+tracker and deck builder for Android, built across 88 takes by previous
 sessions. The repo lives at `github.com/SergeantCS2/optcghub`; the seed
-`optcghub-seed-t85.zip` is the whole tree. CI builds on every seed drop and
+`optcghub-seed-t88.zip` is the whole tree. CI builds on every seed drop and
 has run green end to end; the APK the owner installs comes from the Release.
 
 **Before anything else, in this order:**
@@ -22,7 +22,7 @@ has run green end to end; the APK the owner installs comes from the Release.
 4. Read `docs/HANDOFF.md`, newest entry first, back to take 28 at least. Every
    take ends with a DEFERRED list; the union of those lists is the work.
 5. Read `docs/LANDMINES.md` §0 (the index) and skim §1. When you are about to
-   do something, grep the index first. 118 of them; each is a real failure.
+   do something, grep the index first. 121 of them; each is a real failure.
 6. Read `docs/AGENDA.md` for what is open and whose it is.
 
 **The discipline, which the gate enforces:**
@@ -83,7 +83,15 @@ has run green end to end; the APK the owner installs comes from the Release.
   the Play build; the sideload build adds phone-side sources. No keys, no
   accounts (the owner's decision, take 68). Facebook is out because it does
   not work, not because of a rule.
-- **A33 is the owner's current list from the Fold** (takes 81–83): five of
+- **Read the Priorities block at the top of AGENDA.md first** (take 88's
+  audit): it is the live order, the owner's items then mine. The thirty-five
+  items below it are history.
+- **A35 was the owner's list at takes 86–87, all thirteen closed.** (take 86 did ten of thirteen). Take
+  87 is next: starter decks as a section in Hunt, Events regrouped by store
+  with the phone and exact position the events file carries, MAX behind a
+  rewarded ad. The blank-after-Back has a watchdog now; Diagnostics → last
+  errors will name the trigger.
+- **A33 was the owner's previous list from the Fold** (takes 81–83): five of
   six done; item 6 — pictures on Collect's rows and Decks like Hunt's — is
   next when he has seen Hunt's. The blank-after-Back cause is unknown and
   instrumented: Diagnostics → last errors will name it.
@@ -132,6 +140,6 @@ official product box shots, which the owner asked for at take 62 and which
 were declined with reasons in A29 (landmines 26, 30, A16); gate scanning (A17); multiply condition into a price (PROTOCOL §10);
 send the collection anywhere (PROTOCOL §9); seal with a red gate.
 
-Say "take 86" and begin with PROTOCOL §0.
+Say "take 89" and begin with PROTOCOL §0.
 
 ---

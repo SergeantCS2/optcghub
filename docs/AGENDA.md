@@ -1,11 +1,46 @@
 # AGENDA
 
-*Current as of take 85.* Ranked by blocking-ness, not by interest.
+*Current as of take 88.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
 
 ---
+
+## Priorities — as of the take-88 audit
+
+The live order, top first. Everything below this block is the record of how
+each item got where it is; this block is what to do next.
+
+**The owner's, gating everything else**
+1. Push the current seed; keep `hunt.yml` at take 84 or later.
+2. **A Diagnostics paste** (More → About ×5) — the blank-after-Back has a
+   watchdog since take 86 that names its trigger; nothing else can.
+3. **D22** background stock checks; **D21** local stock for unserved zips;
+   **D20** a crowd-report inbox. Each caps a Hunt feature until answered.
+4. Shop URLs for stores he knows (A32's storefront list, one entry today).
+5. D7 the icon; D16 the faces; the `.aab` filename before production.
+
+**Mine, in order**
+1. Whatever the diagnostics paste names.
+2. **A33 item 6** — pictures on Collect's rows and Decks as on Hunt's.
+3. **A32**: retailer sources one session each with the real page in hand
+   (GTS and Southern Hobby are reachable; GameStop, Walmart, Meijer, eBay
+   need a residential IP → the sideload build); the restock pattern
+   sentence once a fortnight of hourly history exists on Pages.
+4. **A23** the sim's tail — modal effects, ordering, protection, the
+   opponent's hidden choices — one mechanism per take, when wanted.
+5. **A31** Collectr import, the day a real exported file exists.
+6. The two standing offers: seed attached to releases (a `build.yml`
+   paste), the release-notes trim.
+
+**Closed since the last audit (takes 57–88):** A26 colour/contrast/desktop,
+A29 stock decks, A30 the tester report in full, A33 five of six, A34
+currency and splash, A35 all thirteen; A32 steps 1–3 and Local, Events,
+storefronts, stock alerts, the calendar tap, exact distances.
+
+**Stale and marked so:** A19 other games and A11 Japanese printings stay
+ruled out; A20's backlog is where ideas wait, not a queue.
 
 ## A1 — Price and catalogue source · CLOSED take 1
 
@@ -972,6 +1007,25 @@ other's.
    Reprints from Bandai and the distributors. Each source lands with a
    probe in smoke that proves the parser against a saved real response and
    a control that fails on a changed shape.
+
+## A35 — The fourth look, after Hunt's first live run · OPENED take 86
+
+Thirteen items from the Fold, filed in the owner's order with their take:
+1. splash a second longer *(86)*; 2. starter decks their own section in Hunt
+*(87)*; 3. every set open in Sealed, the "4 ▸" gone *(86)*; 4. the Target
+panel's wording *(86)*; 5. back to a blank screen after closing a product —
+a watchdog restores the screen and records the stack *(86)*; 6. packs with
+no picture (EB03) — retry the photo without the size suffix *(86)*; 7. the
+Events list — MEASURED as real (3.9 One Piece events per store per month),
+so regrouped by store with the store's phone and exact position from the
+same file *(87)*; 8. Releases rows overflowing *(86)*; 9. the Portfolio
+caption's face *(86)*; 10. MAX behind a rewarded ad, the FREE badge gone
+*(87)*; 11. content hiding behind the bottom bar at the end of every scroll
+*(86)*; 12. the "4 requests" pill wrapping *(86)*; 13. more in Diagnostics
+*(86)*. **Ruled out: filtering the events file by game** — it is already
+One Piece. *Take 87 closed 2, 7 and 10; the whole list is done. Two more
+notes from the same session — the Sim selects overflowing, the newest sets
+refusing to collapse (fixed by 86's logic) — closed in 87.*
 
 ## A34 — Display currency and the opening screen · BUILT take 85
 

@@ -1,4 +1,151 @@
-# HANDOFF — through Take 85
+# HANDOFF — through Take 88
+
+## Take 88 — 2026-09-17 — the audit the owner asked for
+
+Opened before any code (PROTOCOL §6). No code changed.
+
+### The clean run
+
+The take-87 seed, unpacked into an empty directory, every pipeline step from
+`ingest` to `gate`: 5 price days on file, 17 stock decks, 2,172 effect lines
+scripted, smoke 580, render 69 in Chrome, gate green. The tree does what
+the record says it does.
+
+### The record, read against the tree
+
+- **AGENDA** leads with a *Priorities* block now: the owner's items that
+  gate everything (push, the diagnostics paste, D20–D22, shop URLs, D7,
+  D16, the `.aab`), then mine in order (the diagnostics' answer, A33 item 6,
+  A32's remaining sources, A23's tail, A31, the two standing offers), then
+  what closed since take 57 and what is marked stale. Thirty-five items
+  below it are the history of each.
+- **LANDMINES** gains three that had lived only in HANDOFF entries: 119
+  the sub-16px input that zooms the page and hides a sheet; 120 two
+  workflows deploying one site; 121 a workflow depending on the other's
+  installs. The index and the session prompt's count follow.
+- **V1-STATE, RUNBOOK, PROVISION, NEW-SESSION-PROMPT** were re-read; each
+  says what the tree does at take 87. PROVISION names every host the app or
+  the runner touches, including the four added since 57 (Target, the events
+  file, the Census gazetteer, the rates mirror, the storefronts).
+
+### What the audit did not do
+
+It did not re-verify the device-side claims (export share sheet, ads,
+notifications, the camera on the Fold) — those are the owner's and are
+marked INFERRED where they stand. It did not shorten HANDOFF (5,100 lines);
+the record does not edit itself.
+
+**smoke.mjs 580, render.mjs 69 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- Everything in the Priorities block, in that order.
+
+## Take 87 — 2026-09-17 — the fourth look, part two: decks, events by store, MAX behind an ad, and two more notes
+
+Opened before any code (PROTOCOL §6).
+
+### The owner's further notes, checked
+
+- **"Can't collapse EB03 or Dominance of God; pictures update when I tap."**
+  The take he holds (85) force-opened the two newest sets whatever was
+  tapped, so a tap repainted and nothing closed. Take 86 replaced that
+  logic; verified in Chrome: a header tap on the newest set removes its
+  rows. Fixed before it was reported, by luck of order.
+- **"Sim boxes run off the screen."** Verified: the deck select's right edge
+  at 464 px on a 396 px panel — the take-82 control styling let a select
+  take its intrinsic width. `select{max-width:100%}`.
+- **"Back to a blank page under any sub-menu, not always, better under
+  Collect and Play."** The take-86 watchdog now heals it and writes the
+  trigger, stack, overlays and mode to the error buffer; Diagnostics is
+  reachable since 86. The next paste names it.
+
+### Built
+
+- **MAX behind a rewarded ad.** The badge reads *AD*; tapping MAX offers
+  *Watch an ad · about 30 seconds* / *Not now*; the reward unlocks MAX for
+  **24 hours** (the owner's duration unasked; a day is the default until he
+  says otherwise); any rewarded unit serves; where there is no ad plugin —
+  the browser, a dev build — MAX simply opens. The reward listener routes a
+  max ad to the unlock, not to scan credits.
+- **Starter decks, their own section** at the top of Sealed: every deck
+  product newest set first, with pictures, prices, the Target line and the
+  stock bell; collapses like a set.
+- **Events by store.** Each store once, nearest first, with address, miles
+  (exact — no tilde — where the file gives the point), a **Call** button and
+  a Note; its next events beneath with fee, seats, Register and +cal; a
+  horizon of 7 / 14 / 31 days, two weeks the default.
+- **Phones and exact points for all 2,967 stores**, from the events' raw
+  records (`phone_number`, `place_geo` as `{x: lat, y: lng}` — MEASURED on a
+  Nebraska store before trusting it). Local's shop rows get the Call button
+  and the exact distance too.
+
+**smoke.mjs 580, render.mjs 69 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **The audit take (88)**: a clean run from an empty directory, every
+  ledger read against the tree, landmines checked for currency, the agenda
+  reordered — the owner's ask, after this cycle of fixes.
+- The MAX duration, if a day is wrong.
+- The owner's list: push t87; the diagnostics paste; shop URLs; D20–D22.
+
+## Take 86 — 2026-09-17 — the fourth look, part one: what hid, what wrapped, what went blank
+
+Opened before any code (PROTOCOL §6). A35 filed with all thirteen first.
+
+### Measured first
+
+The Events list the owner called insane is **real**: every one of the ten
+distinct titles in the source is a One Piece event, twelve of 12,334 name
+another game (Bandai Card Fest retail slots), and Michigan's 96 stores run
+3.9 events a month each — the weekly store tournament. So the Events fix
+(take 87) is grouping, not filtering. The same records carry a **phone
+number and exact coordinates per store**, which answers the Call button and
+the ±10-mile distance at once.
+
+### Built (items 1, 3, 4, 5, 6, 8, 9, 11, 12, 13)
+
+- Every screen ends with room for the bar (66 + 34 px + the safe area), so
+  the last control on Home, More, Sealed — Diagnostics included — is never
+  behind it. This is what kept the owner out of Diagnostics.
+- The opening screen lingers 1.6 s (from 0.6).
+- Sealed opens every set; the header is a title with a chevron, the count
+  gone; a tap collapses one.
+- The Target panel: *Checked 10 min ago · 56 One Piece products online, 0
+  in stock to ship · 9 are the Japanese version. Target limits how often it
+  can be asked; the next hourly check continues where this one stopped.*
+- A photo that fails is retried once without the `_200w` size suffix, then
+  removed to the tile (the owner's EB03 packs).
+- Releases rows: the title wraps, date and countdown at the right, Details
+  on its own line inside the row.
+- The Portfolio caption in the heavy face, spaced, in the darker accent.
+- Pills never wrap ("4 requests" was on two lines).
+- **The blank page, again, and a watchdog.** The take-83 guard did not
+  fire, so the path is not `go()`. The watchdog watches the DOM: after any
+  navigation, hardware back or history back, if no screen is on it puts the
+  mode's home back and records the trigger, the stack, the overlays and the
+  mode in the error buffer. Heals the symptom; names the cause next time.
+- Diagnostics adds: screens on, overlays on, whether the splash is gone, the
+  currency and its rate date, stores in the collector's zip area.
+
+### Findings
+
+- The DOM stub answers every class selector with a dummy element, so "no
+  screen on" was invisible to it until the test made `.screen.on` answer
+  null. Twice now the stub's shape has decided how a guard is asserted.
+- The splash check in render measured from wherever the run had left the
+  page; it now reloads first. A timing assertion needs its own clock.
+
+**smoke.mjs 574, render.mjs 69 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **Take 87**: starter decks as their own section in Hunt (2); Events
+  regrouped by store with phone and exact position (7); MAX behind a
+  rewarded ad, the FREE badge gone (10).
+- The Back cause — read from the diagnostics when it recurs.
+- The owner's list: push t86; shop URLs; D20–D22.
 
 ## Take 85 — 2026-09-17 — a display currency, and an opening screen
 

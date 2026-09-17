@@ -1,4 +1,4 @@
-# OP TCG Hub — take 85
+# OP TCG Hub — take 88
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,18 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 88:** nothing visible; an audit of the project's records.
+
+**New at take 87:** starter decks have their own section in Hunt; Events
+are grouped by store, with each store's phone number and exact distance;
+the MAX price range is unlocked for a day by watching an ad; and dropdowns
+never run off the screen.
+
+**New at take 86:** nothing hides behind the bottom bar any more; the
+opening screen lingers a moment; Sealed opens every set; Releases rows fit
+the screen; the Target panel says less and says it plainly; a picture that
+fails once is tried again; and the app heals a blank screen and records why.
 
 **New at take 85:** prices can be shown in CAD, EUR, GBP, AUD, JPY, MXN or
 CHF (More → Currency, or the currency pill on Home and Hunt) — converted
