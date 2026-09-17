@@ -274,6 +274,18 @@ if (puppeteer) {
   ok('Hunt: the Sealed screen draws set headers and the newest sets\' rows (folded since take 81)', hunt.rows >= 3 && hunt.headers >= 10, `${hunt.rows} rows, ${hunt.headers} set headers`);
   ok('Hunt: the third palette is applied (not the Collect background)', hunt.bg !== 'rgb(11, 22, 34)', hunt.bg);
   await page.evaluate(() => { window.VAULT.MODE.set('collect', true); });
+  /* Take 85: the opening screen was painted first and is gone once the app has drawn */
+  const sp = await page.evaluate(() => new Promise(res => setTimeout(() => { const el = document.querySelector('#splash'); res({ present: !!el, off: !el || el.classList.contains('off') }); }, 1200)));
+  ok('the opening screen has faded out within 1.2 s of boot', sp.off, JSON.stringify(sp));
+  /* Take 82: native controls take the theme; the play palette is charcoal; five taps open Diagnostics */
+  const t82 = await page.evaluate(async () => {
+    const V = window.VAULT; V.MODE.set('hunt', true); V.go && V.go('local');
+    const sel = document.querySelector('#localRadius'); const cs = sel ? getComputedStyle(sel) : null;
+    V.MODE.set('play', true); const playBg = getComputedStyle(document.body).backgroundColor;
+    V.MODE.set('collect', true); window.scrollTo(0, 0);
+    return { selectBg: cs && cs.backgroundColor, selectBorder: cs && cs.borderTopColor, playBg }; });
+  ok('the distance dropdown is themed, not the platform white', t82.selectBg && t82.selectBg !== 'rgb(255, 255, 255)' && t82.selectBg !== 'rgba(0, 0, 0, 0)', JSON.stringify(t82));
+  ok('Prep & Play draws on charcoal, not green', t82.playBg === 'rgb(21, 23, 28)', t82.playBg);
   /* Take 66: what a screen reader would actually reach, in a real DOM --
      every visible control has an accessible name (text or aria-label). */
   const a11y = await page.evaluate(() => {
@@ -407,7 +419,7 @@ if (puppeteer) {
     navs: [...document.querySelectorAll('nav')].filter(n => getComputedStyle(n).display !== 'none').map(n => n.id),
     screen: document.querySelector('.screen.on').id,
     sliderTop: Math.round(document.querySelector('.modebar').getBoundingClientRect().top) }));
-  ok('Prep & Play: the body is felt green', md.bg === 'rgb(15, 42, 30)', md.bg);
+  ok('Prep & Play: the body is charcoal (red accent; green until take 82)', md.bg === 'rgb(21, 23, 28)', md.bg);
   ok('Prep & Play: only the play nav is visible', md.navs.length === 1 && md.navs[0] === 'navPlay', JSON.stringify(md.navs));
   ok('Prep & Play: lands on Decks', md.screen === 'decks', md.screen);
   ok('the mode slider sits below the status bar', md.sliderTop >= 36, String(md.sliderTop));

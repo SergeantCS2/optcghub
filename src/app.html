@@ -47,13 +47,25 @@
 /* PREP & PLAY (A22, take 24) -- the table. Felt, chalk, vermilion. Every
    component reads the same tokens, so the whole app changes face without a
    second stylesheet. --teal is the legacy alias for the accent; it follows. */
+/* Prep & Play is charcoal and red (take 82): the owner found the old green
+   too close to Hunt's. Measured before writing: fg 14.0, dim 8.5, dim2 5.9,
+   the red 4.3:1 on the card (an accent for large text and buttons). */
 :root[data-mode="play"]{
-  --bg:#0F2A1E; --card:#163826; --card2:#1D4530; --line:#2C5A40;
-  --fg:#F1EFE6; --dim:#A9B8A4; --dim2:#8FA389;
-  --brass:#D9583B; --brass2:#9C3E29; --teal:#D9583B; --gold:#F0B27A;
+  --bg:#15171C; --card:#1E2128; --card2:#262A33; --line:#3A3F4B;
+  --fg:#F1EFE6; --dim:#B8BCC6; --dim2:#969CAA;
+  --brass:#E0553D; --brass2:#9C3E29; --teal:#E0553D; --gold:#F0B27A;
   --up:#8FD19E; --down:#F28B7B;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* Take 82. Native controls wore the platform's white: every select and text
+   field takes the card, the line and the accent on focus, everywhere. */
+select,input[type="text"],input[type="search"],input[type="number"],input:not([type]),textarea{
+  background:var(--card2);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font:inherit;font-size:16px;
+  -webkit-appearance:none;appearance:none}
+select{padding-right:30px;background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);
+  background-position:calc(100% - 16px) 55%,calc(100% - 11px) 55%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+select:focus,input:focus,textarea:focus{border-color:var(--brass);outline:none}
+input::placeholder,textarea::placeholder{color:var(--dim2)}
 /* Take 80. A keyboard user on the Pages build had no focus ring in places:
    the reset above and several buttons' own outlines removed it. :focus-visible
    fires only for keyboard focus, so a tap never shows it. */
@@ -77,6 +89,13 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
 }
 :root[data-mode="hunt"] body::before{background:radial-gradient(60% 40% at 50% 0%,#1E4A2C 0%,transparent 70%)}
 .swords{display:inline-block;width:18px;height:18px;vertical-align:-3px;margin-right:6px;color:var(--brass)}
+#splash{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:var(--bg);
+  background-image:radial-gradient(60% 45% at 50% 35%,color-mix(in srgb,var(--brass) 18%,transparent) 0%,transparent 70%);
+  transition:opacity .35s ease;color:var(--brass)}
+#splash.off{opacity:0;pointer-events:none}
+#splash .mark{text-align:center}
+#splash .wm{font-family:var(--display);font-size:34px;letter-spacing:.02em;color:var(--fg)}
+#splash .tag{margin-top:6px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
 :root[data-mode="play"] body::before{background:
   radial-gradient(ellipse at 50% 0%,rgba(240,178,122,.10),transparent 50%),
   repeating-linear-gradient(0deg,transparent 0 23px,rgba(255,255,255,.012) 23px 24px)}
@@ -104,7 +123,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .mono{font-variant-numeric:tabular-nums}
 
 /* ---- top bar ------------------------------------------------------------ */
-.bar{display:flex;align-items:center;gap:14px;padding:14px 0 6px}
+.bar{display:flex;align-items:center;gap:14px;padding:14px 0 6px;min-height:56px}   /* take 83: one height, every screen */
 .tab{font-size:21px;color:var(--dim2)}
 .tab.on{color:var(--fg);border-bottom:2px solid var(--brass);padding-bottom:4px}
 .pill{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:13px;
@@ -121,7 +140,9 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   font-size:13px;color:#E9C46A;margin:8px 0 6px}
 .stale[hidden]{display:none}
 .hero .who{font-size:15px;color:var(--dim)}
-.hero .who em{color:var(--fg);font-style:normal;font-family:var(--display);font-weight:400;font-size:19px}
+/* take 83: the label is a caption above the name, so one face carries the name at the hero's scale and the other stays small and quiet */
+.hero .who .cap{display:block;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim2);margin-bottom:-2px}
+.hero .who em{color:var(--fg);font-style:normal;font-family:var(--display);font-weight:400;font-size:24px;letter-spacing:.01em}
 .total{font-size:46px;margin:2px 0 0;color:var(--brass);font-variant-numeric:lining-nums tabular-nums}
 .delta{font-size:15px;font-weight:600;margin-top:2px}
 .up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--dim)}
@@ -175,6 +196,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 /* Reference art, hot-linked from the TCGplayer CDN and never written to disk
    (landmines 26, 28; PROVISION runtime hosts). Fades in when it arrives, and
    the text placeholder underneath stays in case it does not. */
+.pic img.ref{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .25s}
+.pic img.ref.ok{opacity:1}
 .art img.ref{opacity:0;transition:opacity .25s}
 .art img.ref.ok{opacity:1}
 .art .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
@@ -401,9 +424,15 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 @media (prefers-reduced-motion:reduce){.mode .knob{transition:none}}
 
 /* ---- nav ---------------------------------------------------------------- */
-nav{position:fixed;left:calc(12px + var(--sal));right:calc(12px + var(--sar));bottom:calc(10px + var(--sab));
-  background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(16px);border:1px solid var(--line);
-  border-radius:999px;display:flex;justify-content:space-around;padding:9px 6px;z-index:30}
+/* Take 83: one bar in every mode -- the same height, a near-black that sits
+   apart from all three palettes, a brighter border, the mode's accent only
+   on the active item. Items stretch equally, so four or five look the same. */
+nav{position:fixed;left:calc(12px + var(--sal));right:calc(12px + var(--sar));bottom:calc(10px + var(--sab));height:66px;
+  background:color-mix(in srgb,#0B0D10 92%,transparent);backdrop-filter:blur(16px);border:1px solid color-mix(in srgb,var(--brass) 45%,#2A2E36);
+  box-shadow:0 6px 24px rgba(0,0,0,.45);border-radius:999px;display:flex;justify-content:space-around;align-items:center;padding:0 6px;z-index:30}
+nav button{flex:1 1 0;color:#B9BEC7}
+nav button.on{color:var(--brass)}
+nav button .ic{color:inherit}
 /* `hidden` loses to any author `display` -- both navs drew and the wrong one
    sat on top (take 24). Landmine 98. */
 nav[hidden]{display:none}
@@ -436,6 +465,14 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
 </style>
 </head>
 <body>
+<!-- Take 85: the opening screen. In the markup, so it is the first thing
+     painted; the app hides it once it has drawn, after at least 600 ms so it
+     reads as intended rather than as a flicker, and never later than 2.5 s
+     whatever the boot does. A word-mark and a line -- no art. -->
+<div id="splash" aria-hidden="true">
+  <div class="mark"><svg class="swords" viewBox="0 0 18 18" aria-hidden="true" style="width:34px;height:34px;margin:0 0 6px"><path d="M3 15L13 5M6 16L16 6M2 12L12 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    <div class="wm">OP TCG Hub</div><div class="tag">Collect &#183; Prep &amp; Play &#183; Hunt</div></div>
+</div>
 <div class="modebar">
   <div class="mode" id="modeSlider" role="tablist" aria-label="Mode">
     <div class="knob"></div>
@@ -453,11 +490,12 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
     <span class="tab on" id="tabOver" role="tab" tabindex="0" aria-selected="true">Overview</span>
     <span class="tab" id="tabPerf" role="tab" tabindex="0" aria-selected="false">Performance</span>
     <span class="pill" role="status" aria-live="polite"><i class="dot" id="netdot" aria-hidden="true"></i><span id="netlbl">offline ok</span></span>
+    <span id="curPillHome"></span>
   </div>
   <div class="stale" id="staleBanner" hidden></div>
   <div class="panel" id="whatsNew" hidden style="border-color:var(--brass)"></div>
   <div class="hero" id="hero">
-    <button class="who" id="pfSwitch" style="text-align:left">Portfolio <em id="pfName">One Piece</em> <span style="color:var(--dim2);font-size:13px">&#9662;</span></button>
+    <button class="who" id="pfSwitch" style="text-align:left;display:block"><span class="cap">Portfolio</span><em id="pfName">One Piece</em> <span style="color:var(--dim2);font-size:13px">&#9662;</span></button>
     <div class="total mono" id="pfTotal">$0.00</div>
     <div class="delta mono" id="pfDelta">&nbsp;</div>
   </div>
@@ -527,7 +565,7 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
 <!-- ============================= HUNT ================================== -->
 <section id="sealed" class="screen">
   <div class="bar"><span class="tab on" role="heading" aria-level="1"><svg class="swords" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 15L13 5M6 16L16 6M2 12L12 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M12 5l2 2M15 6l1 1M11 2l2 2" stroke="currentColor" stroke-width="1.2"/></svg>Sealed</span>
-    <span class="pill" role="status" id="sealedAsOf"></span></div>
+    <span class="pill" role="status" id="sealedAsOf"></span><span id="curPillSealed"></span></div>
   <div class="search" style="margin:6px 0 10px"><svg class="g" width="18" height="18" aria-hidden="true"><use href="#g-spyglass"/></svg>
     <input id="sealedQ" placeholder="Search boxes, packs, decks" aria-label="Search sealed product"></div>
   <div class="row" id="sealedKinds" style="gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
@@ -543,6 +581,12 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
   <div class="bar"><span class="tab on" role="heading" aria-level="1"><svg class="swords" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 15L13 5M6 16L16 6M2 12L12 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Events</span>
     <select id="eventsRadius" aria-label="Distance"><option value="10">10 mi</option><option value="25">25 mi</option><option value="50">50 mi</option><option value="100">100 mi</option><option value="0">Any</option></select></div>
   <div id="eventsList"></div>
+</section>
+<section id="diag" class="screen">
+  <div class="bar"><span class="tab on" role="heading" aria-level="1">Diagnostics</span></div>
+  <div class="note" style="margin:6px 0 10px">Everything needed to read this phone from a report: endpoints and their live status, what is stored, the last errors, the self-test. No collection contents. Copy it and send it.</div>
+  <div class="row" style="gap:8px;margin-bottom:10px"><button class="ghost go" id="diagRun">Run</button><button class="ghost" id="diagCopy" disabled>Copy report</button><button class="ghost" id="diagShare" disabled>Share</button></div>
+  <pre id="diagOut" style="white-space:pre-wrap;font-size:12px;line-height:1.45;color:var(--dim);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;min-height:80px"></pre>
 </section>
 <section id="releases" class="screen">
   <div class="bar"><span class="tab on" role="heading" aria-level="1"><svg class="swords" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 15L13 5M6 16L16 6M2 12L12 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Releases</span></div>
@@ -958,8 +1002,36 @@ function paintNet() {
 
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
-const money = n => (n == null ? '—' : '$' + n.toLocaleString('en-US',
-  { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+/* Display currency (take 85). Every price in the app is USD from TCGplayer;
+   the collector can SEE it in another currency, converted at the day's ECB
+   reference rate that rode in the manifest, and every converted figure
+   carries ≈ and the rate's date is one tap away -- a conversion is an
+   estimate, not a quote (PROTOCOL §10). No rates: USD only. */
+const CUR = {
+  code: localStorage.getItem('vault.currency') || 'USD',
+  list: [['USD', '$', 'US Dollar'], ['CAD', 'CA$', 'Canadian Dollar'], ['EUR', '€', 'Euro'], ['GBP', '£', 'British Pound'], ['AUD', 'A$', 'Australian Dollar'], ['JPY', '¥', 'Japanese Yen'], ['MXN', 'MX$', 'Mexican Peso'], ['CHF', 'CHF ', 'Swiss Franc']],
+  rates() { return (typeof CAT !== 'undefined' && CAT.man && CAT.man.rates) || null; },
+  rate(code) { if (code === 'USD') return 1; const r = this.rates(); return r && r.rates && r.rates[code] > 0 ? r.rates[code] : null; },
+  set(code) { if (!this.rate(code)) code = 'USD'; this.code = code; localStorage.setItem('vault.currency', code); },
+  sym() { return (this.list.find(c => c[0] === this.code) || this.list[0])[1]; },
+  active() { return this.rate(this.code) ? this.code : 'USD'; }
+};
+const money = n => { if (n == null) return '—'; const code = CUR.active(); const r = CUR.rate(code) || 1;
+  const v = n * r; const jp = code === 'JPY';
+  return (code === 'USD' ? '' : '\u2248') + CUR.sym() + v.toLocaleString('en-US', { minimumFractionDigits: jp ? 0 : 2, maximumFractionDigits: jp ? 0 : 2 }); };
+const moneyUSD = n => (n == null ? '—' : '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+async function pickCurrency() {
+  const R = CUR.rates(); const opts = CUR.list.map(([c, sym, name]) => { const ok = c === 'USD' || !!(R && R.rates && R.rates[c]); return { c, sym, name, ok }; });
+  const v = await new Promise(res => {
+    $('#pkTitle').textContent = 'Show prices in\u2026';
+    $('#pkWhy').innerHTML = `Prices are US dollars from TCGplayer. Another currency is a conversion at the ECB reference rate${R && R.date ? ' of ' + esc(R.date) : ''}, marked \u2248 \u2014 an estimate, not a quote.${R && R.stale ? ' <b>' + esc(R.stale) + '</b>' : ''}${!R ? ' <b>No rates in this build \u2014 USD only.</b>' : ''}`;
+    $('#pkOpts').innerHTML = opts.map(o => `<button class="opt" data-cur="${o.c}" ${o.ok ? '' : 'disabled'} aria-pressed="${CUR.active() === o.c}"><div class="oi"><b>${esc(o.sym.trim())} ${esc(o.c)}</b><span>${esc(o.name)}${o.ok ? (o.c === 'USD' ? '' : ' \u00b7 1 USD = ' + CUR.rate(o.c)) : ' \u00b7 no rate'}</span></div>${CUR.active() === o.c ? '<span class="note">\u2713</span>' : ''}</button>`).join('');
+    const h = ev => { const b = ev.target.closest('[data-cur]'); if (!b) { if (!ev.target.closest('#picker .opt')) { document.removeEventListener('click', h, true); $('#picker').classList.remove('on'); res(null); } return; } document.removeEventListener('click', h, true); ev.stopPropagation(); $('#picker').classList.remove('on'); res(b.dataset.cur); };
+    setTimeout(() => document.addEventListener('click', h, true), 0); $('#picker').classList.add('on');
+  });
+  if (v) { CUR.set(v); toast(v === 'USD' ? 'Prices in US dollars' : `Prices shown in ${v}, converted`); go(NAV.stack[NAV.stack.length - 1] || 'home'); }
+}
+function curPill() { return `<button class="pill" data-act="currency" aria-label="Change display currency" style="cursor:pointer">${esc(CUR.sym().trim())} ${esc(CUR.active())}</button>`; }
 /* The day-over-day delta, exactly as the reference app shows it on every
    screen: a triangle, the dollar move, the percentage. Three states, and the
    third is the one that matters (PROTOCOL §10):
@@ -2330,13 +2402,24 @@ document.addEventListener('click', e => {
    go() keeps a stack, the hardware button pops it (App plugin, native) and
    the browser's own Back does the same on the web through history state. */
 const NAV = { stack: [], silent: false,
-  back() { if (this.stack.length < 2) return false; this.stack.pop(); const prev = this.stack[this.stack.length - 1]; this.silent = true; go(prev); this.silent = false; return true; } };
+  back() { if (this.stack.length < 2) return false; this.stack.pop(); let prev = this.stack[this.stack.length - 1];
+    const isScreen = i => { const el = i && document.getElementById(i); return !!el && String(el.tagName).toUpperCase() === 'SECTION'; };
+    while (prev && !isScreen(prev) && this.stack.length > 1) { this.stack.pop(); prev = this.stack[this.stack.length - 1]; }
+    if (!prev) return false; this.silent = true; go(prev); this.silent = false; return true; } };
 function closeAnyOverlay() {
   const ask = $('#askSheet'); if (ask && ask.classList.contains('on')) { $('#askCancel').click(); return true; }   // resolves the pending ask() with null, cleanly
   for (const id of ['#picker', '#detail', '#tour', '#simCurtain']) { const el = $(id); if (el && el.classList.contains('on')) { el.classList.remove('on'); return true; } }
   return false;
 }
 function go(id) {
+  /* Take 83. A screen id that matches nothing left every screen off and the
+     nav unlit -- the owner's blank page after Back. Refuse it: fall back to
+     the mode's home, and record the id so the diagnostics name the cause. */
+  const isScreen = i => { const el = i && document.getElementById(i); return !!el && String(el.tagName).toUpperCase() === 'SECTION'; };   // every screen is a <section>
+  if (!isScreen(id)) {
+    ERRS.push('nav', `go() called with no screen for '${id}'`, 'go'); id = MODE.home[MODE.cur] || 'home';
+    if (!document.getElementById(id)) return;
+  }
   if (!NAV.silent) { if (NAV.stack[NAV.stack.length - 1] !== id) { NAV.stack.push(id); if (NAV.stack.length > 30) NAV.stack.shift(); } try { history.pushState({ id }, '', '#' + id); } catch (e) {} }
   if (id !== 'scan') stopCamera();
   $$('.screen').forEach(s => s.classList.toggle('on', s.id === id));
@@ -2350,6 +2433,7 @@ function go(id) {
      sealed: () => { paintSealed(); if (!HUNT.zip && !NAV.zipAsked) { NAV.zipAsked = true; askZip().then(ok => { if (ok) paintSealed(); }); }
        if (navigator.onLine && HUNT.url() && (!HUNT.feed || HUNT.stale(HUNT.feed.fetched_at))) HUNT.sync({ quiet: true }).then(async ok => { if (ok) { await HUNT.syncHistory(); await LOCAL.syncShops(); await STOCK.check(); paintSealed(); } }); }, releases: paintReleases,
      local: () => { paintLocal(); if (navigator.onLine && HUNT.url()) { const jobs = []; if (!LOCAL.stores || HUNT.ageMin(LOCAL.stores.fetched_at) > 24 * 60) jobs.push(LOCAL.syncStores()); if (!LOCAL.shops || HUNT.stale(LOCAL.shops.fetched_at)) jobs.push(LOCAL.syncShops()); if (jobs.length) Promise.all(jobs).then(r => { if (r.some(Boolean)) paintLocal(); }); } },
+     diag: () => { const out = $('#diagOut'); if (out && !out.textContent) out.textContent = 'Tap Run.'; },
      events: () => { paintEvents(); if (navigator.onLine && HUNT.url()) { const jobs = []; if (!LOCAL.stores || HUNT.ageMin(LOCAL.stores.fetched_at) > 24 * 60) jobs.push(LOCAL.syncStores()); if (!EVENTS.tab || HUNT.ageMin(EVENTS.tab.fetched_at) > 24 * 60) jobs.push(EVENTS.sync()); if (jobs.length) Promise.all(jobs).then(r => { if (r.some(Boolean)) paintEvents(); }); } } })[id]?.();
 }
 document.addEventListener('click', e => {
@@ -2418,6 +2502,7 @@ function paintHome() {
       (CAT.man.updateUrl ? `Every figure here is from that day. <b>More \u2192 Sync now</b> when you are online.`
                         : `Every figure here is from that day. Update the app for newer prices.`);
   } else sb.hidden = true;
+  const cph = $('#curPillHome'); if (cph) cph.innerHTML = curPill();
   /* What's new (take 53): the release note for THIS take, from the manifest, until dismissed. */
   const wn = $('#whatsNew'), note = CAT.man.whatsNew;
   if (note && note.take === TAKE && localStorage.getItem('vault.seenTake') !== String(TAKE)) {
@@ -2913,6 +2998,7 @@ document.addEventListener('click', e => {
     export: exportCsv,
     sharepage: shareCollectionPage,
     rate: () => PLATFORM.rateApp(),
+    currency: pickCurrency,
     shareapp: async () => { const r = await PLATFORM.shareApp(); if (r === 'copied') toast('Link copied'); if (r === false) toast('Could not share'); },
     backup: () => { scheduleBackup('manual'); toast('Backing up to Documents/OPTCGHub'); },
     restore: restoreFromBackup,
@@ -3191,7 +3277,7 @@ const HUNT = {
     return { how: 'none', zips }; }
 };
 async function askZip() {
-  const v = await ask({ title: 'Your zip code', kind: 'number', placeholder: '48329', ok: 'Use this zip',
+  const v = await ask({ title: 'Your zip code', kind: 'number', placeholder: '37203', ok: 'Use this zip',
     why: 'Online prices and shipping stock show for everywhere. Your zip adds what is on the shelf at stores near you, where that area is covered. The zip stays on this phone.' });
   const z = String(v || '').replace(/\D/g, ''); if (z.length === 5) { HUNT.setZip(z); return true; } return false;
 }
@@ -3232,8 +3318,20 @@ const SEALED = {
       .sort((a, b) => (CAT.sets.get(b.set)?.pub || '').localeCompare(CAT.sets.get(a.set)?.pub || '') || a.name.localeCompare(b.name)); }
 };
 const SEALED_KINDS = [['all', 'All'], ['box', 'Boxes'], ['pack', 'Packs'], ['deck', 'Decks'], ['case', 'Cases'], ['collection', 'Collections'], ['other', 'Other']];
+/* Take 83. A picture beside every sealed product: TCGplayer's product photo
+   through the take-12 path (hot-linked, lazy, never stored). Under it, and
+   in its place when there is none, a drawn tile in the set's colours -- so
+   the row never has a hole. */
+function productPic(p, size = 52) {
+  const st = CAT.sets.get(p.set) || {}; const cs = String(p.color || '').split(/[;/,]/).map(x => x.trim()).filter(x => CCLASS[x]);
+  const a = cs[0] ? `var(--c-${CCLASS[cs[0]]})` : 'var(--brass2)';
+  const code = esc((st.abbr || '').replace(/-/g, '').slice(0, 5) || (p.num || '').split('-')[0]);
+  return `<div class="pic" style="width:${size}px;height:${Math.round(size * 1.25)}px;flex:0 0 auto;position:relative;border-radius:8px;overflow:hidden;background:linear-gradient(160deg,${a},var(--card2));">
+    <div class="ph" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:${Math.round(size / 4)}px;color:rgba(0,0,0,.65)">${code}</div>${refArt(p)}</div>`;
+}
 function paintSealed() {
   const asOf = $('#sealedAsOf'); if (asOf) asOf.textContent = 'prices ' + ((CAT.man.source_updated_at || '').slice(0, 10) || '?');
+  const cps = $('#curPillSealed'); if (cps) cps.innerHTML = curPill();
   const counts = {}; for (const p of CAT.rows) if (SEALED.isProduct(p)) { const k = SEALED.kindOf(p); counts[k] = (counts[k] || 0) + 1; counts.all = (counts.all || 0) + 1; }
   $('#sealedKinds').innerHTML = SEALED_KINDS.map(([k, label]) => `<button class="chip${SEALED.kind === k ? ' on' : ''}" data-skind="${k}" aria-pressed="${SEALED.kind === k}">${label} <span class="note">${counts[k] || 0}</span></button>`).join('');
   const rows = SEALED.rows(); let lastSet = null; const out = [];
@@ -3265,12 +3363,12 @@ function paintSealed() {
   const bySet = new Map(); for (const p of rows.slice(0, 600)) { if (!bySet.has(p.set)) bySet.set(p.set, []); bySet.get(p.set).push(p); }
   let n = 0;
   for (const [setId, ps] of bySet) { const st = CAT.sets.get(setId) || {}; const open = SEALED.q || SEALED.open.has(setId) || n < 2; n++;
-    out.push(`<button class="fgrp" data-setfold="${esc(setId)}" aria-expanded="${open}" style="display:flex;width:100%;justify-content:space-between;align-items:center;text-align:left;padding:8px 0"><span>${esc(st.name || 'Other')}${st.pub ? ` <span class="note">\u00b7 ${esc(st.pub)}</span>` : ''}</span><span class="note">${ps.length} \u00b7 ${open ? '\u2212' : '+'}</span></button>`);
+    out.push(`<button class="fgrp" data-setfold="${esc(setId)}" aria-expanded="${open}" style="display:flex;width:100%;justify-content:space-between;align-items:center;text-align:left;padding:8px 0"><span>${esc(st.name || 'Other')}${st.pub ? ` <span class="note">\u00b7 ${esc(st.pub)}</span>` : ''}</span><span class="note">${ps.length} ${open ? '\u25be' : '\u25b8'}</span></button>`);
     if (!open) continue;
     for (const p of ps) {
     const tl = (byCat[p.id] || []).map(i => targetLine(i, T)).join('') + LOCAL.shopLines(p.id).map(l => `<span style="display:block;color:var(--brass)">${esc(l.shop)}${l.mi != null ? ' ~' + l.mi + ' mi' : ''} ${money(l.price)} \u00b7 ${l.available ? 'in stock online' : 'sold out online'} \u00b7 ${esc(HUNT.ageLabel(LOCAL.shops.fetched_at))}</span>`).join('');
-    out.push(`<div class="row" style="gap:8px"><button class="row" style="flex:1;text-align:left;padding:0" data-open="${p.id}">
-      <div class="nm"><b>${esc(p.name)}</b><span>${esc(SEALED_KINDS.find(k => k[0] === SEALED.kindOf(p))?.[1] || '')} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}</span>${tl}</div>
+    out.push(`<div class="row" style="gap:8px"><button class="row" style="flex:1;min-width:0;text-align:left;padding:0;gap:10px" data-open="${p.id}">
+      ${productPic(p)}<div class="nm" style="min-width:0"><b>${esc(p.name)}</b><span>${esc(SEALED_KINDS.find(k => k[0] === SEALED.kindOf(p))?.[1] || '')} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}</span>${tl}</div>
       <div class="v"><b>${money(p.market)}</b>${deltaHtml(p, { pctOnly: true })}</div></button>
       <button class="ghost" data-stock="${p.id}" aria-label="${STOCK.has(p.id) ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${STOCK.has(p.id)}" style="flex:0 0 auto;padding:8px 10px;${STOCK.has(p.id) ? 'color:var(--brass);border-color:var(--brass)' : ''}">${STOCK.has(p.id) ? '\u25cf' : '\u25cb'}</button></div>`);
     }
@@ -3457,7 +3555,10 @@ function paintReleases() {
   const up = sets.filter(s => s.pub >= today).sort((a, b) => a.pub.localeCompare(b.pub));
   const past = sets.filter(s => s.pub < today).sort((a, b) => b.pub.localeCompare(a.pub)).slice(0, 12);
   const days = d => Math.round((Date.parse(d + 'T00:00:00Z') - Date.parse(today + 'T00:00:00Z')) / 864e5);
-  const line = s => `<button class="row" style="width:100%;text-align:left" data-browse-set="${esc(s.id)}"><div class="nm"><b>${esc(s.name)}</b><span>${esc(s.abbr || '')}${s.n ? ` \u00b7 ${s.n} cards` : ' \u00b7 card list not published yet'}</span></div><div class="v"><b>${esc(s.pub)}</b><span class="note">${s.pub >= today ? (days(s.pub) === 0 ? 'today' : `in ${days(s.pub)} day${days(s.pub) === 1 ? '' : 's'}`) : `${-days(s.pub)} days ago`}</span></div></button>`;
+  const detailsUrl = s => 'https://www.tcgplayer.com/search/one-piece-card-game/product?q=' + encodeURIComponent(s.name) + '&view=grid';
+  const picFor = s => { const ps = CAT.rows.filter(p => p.set === s.id && SEALED.isProduct(p)); const box = ps.find(p => /booster box/i.test(p.name)) || ps[0]; return box ? productPic(box, 44) : `<div class="pic" style="width:44px;height:55px;flex:0 0 auto;border-radius:8px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:11px;color:var(--dim2)">${esc((s.abbr || '').replace(/-/g, '').slice(0, 5))}</div>`; };
+  const line = s => `<div class="row" style="gap:8px"><button class="row" style="flex:1;text-align:left;padding:0;gap:10px" data-browse-set="${esc(s.id)}">${picFor(s)}<div class="nm"><b>${esc(s.name)}</b><span>${esc(s.abbr || '')}${s.n ? ` \u00b7 ${s.n} cards` : ' \u00b7 card list not published yet'}</span></div><div class="v"><b>${esc(s.pub)}</b><span class="note">${s.pub >= today ? (days(s.pub) === 0 ? 'today' : `in ${days(s.pub)} day${days(s.pub) === 1 ? '' : 's'}`) : `${-days(s.pub)} days ago`}</span></div></button>
+    <a class="ghost" href="${esc(detailsUrl(s))}" target="_blank" rel="noopener" style="display:inline-block;padding:8px 12px;flex:0 0 auto" aria-label="Full details for ${esc(s.name)} on TCGplayer">Details \u2197</a></div>`;
   $('#relList').innerHTML = `<div class="panel"><h3>Upcoming</h3>${up.map(line).join('') || '<div class="note">Nothing announced in the catalogue yet.</div>'}
     <div class="note" style="margin-top:8px">Dates are TCGplayer's publish dates via TCGCSV, updated nightly. A release event at a local store means product on that shelf that morning — store events come with the local view.</div></div>
     <div class="panel"><h3>Recent</h3>${past.map(line).join('')}</div>`;
@@ -4368,6 +4469,8 @@ function paintSettings() {
         the Play build: Export CSV and keep the file</b> — a reinstalled app
         cannot read its old backups by itself, though Restore lets you pick one.</div>
     </div>
+    <div class="panel"><h3>About</h3>
+      <div class="row"><div class="nm"><b id="aboutTake">Take ${TAKE} \u00b7 built ${esc((CAT.man.built || '').slice(0, 16))}</b><span>${CAT.man.cards ? CAT.man.cards.toLocaleString() + ' cards' : ''} \u00b7 prices ${esc((CAT.man.source_updated_at || '?').slice(0, 10))}</span></div></div></div>
     <div class="panel"><h3>Self-test</h3>
       <div class="row"><div class="nm"><b>Does this phone run the app?</b><span>catalogue, scanner gate, OCR, backup, camera, fonts, sync \u2014 in one tap</span></div>
         <button class="ghost" id="stRun">Run</button></div>
@@ -4375,6 +4478,7 @@ function paintSettings() {
     </div>
     <div class="panel"><h3>How it works</h3>
       <button class="linkish" id="guideAgain">Show the guide again</button>
+      <button class="linkish" data-act="currency">Show prices in\u2026 ${esc(CUR.active())}${CUR.active() !== 'USD' ? ' (converted)' : ''}</button>
       <button class="linkish" data-act="rate">Rate this app on Google Play</button>
       <button class="linkish" data-act="shareapp">Tell someone about the app</button></div>
     <div class="panel"><h3>Sync</h3>
@@ -4433,6 +4537,7 @@ function paintSettings() {
   $$('.screen').forEach(x => x.classList.toggle('on', x.id === 'settings'));
   const de = $('#devEarn'); if (de) de.addEventListener('click', () => { CREDITS.earn('scan'); paintSettings(); });
   const ga = $('#guideAgain'); if (ga) ga.addEventListener('click', guideOpen);
+  const at = $('#aboutTake'); if (at) at.addEventListener('click', () => DIAG.tap());
   const st = $('#stRun'); if (st) st.addEventListener('click', () => { st.disabled = true; runSelfTest().finally(() => { st.disabled = false; }); });
   const sc = $('#syncCell'); if (sc) sc.addEventListener('change', () => localStorage.setItem('vault.syncCellular', sc.checked ? '1' : '0'));
   const sy = $('#syncBtn'); if (sy) sy.addEventListener('click', async () => { sy.disabled = true; await PLATFORM.refreshCatalogue(); sy.disabled = false; paintSettings(); });
@@ -4892,6 +4997,43 @@ $('#simCurtain').addEventListener('click', () => { $('#simCurtain').classList.re
    PASS / FAIL / SKIP with one line; SKIP means "this environment cannot
    answer", never "probably fine". The report is shareable text so a tester
    can paste it. A check that throws is a FAIL with the message. */
+/* ---- diagnostics (take 82) ----------------------------------------------
+   The owner's ask: the APEX diagnostic tool -- a report he can paste for
+   troubleshooting, behind a secret gesture. Five taps on the version line in
+   More. It runs the self-test and adds everything else that helps read a
+   phone from a report: the sync and Hunt endpoints with their live HTTP
+   status and file ages, what is stored and how big, the mode, the zip, the
+   device, and the last twenty errors the page raised. No collection
+   contents, no personal data beyond the zip the collector typed. */
+/* the opening screen goes once the app has painted -- never before 600 ms, never after 2.5 s */
+const SPLASH_T0 = Date.now();
+function splashDone() { const sp = $('#splash'); if (!sp || sp.classList.contains('off')) return; const wait = Math.max(0, 600 - (Date.now() - SPLASH_T0)); setTimeout(() => { sp.classList.add('off'); setTimeout(() => sp.remove(), 400); }, wait); }
+setTimeout(splashDone, 2500);
+const ERRS = { list: [], push(kind, msg, where) { this.list.unshift({ t: new Date().toISOString(), kind, msg: String(msg).slice(0, 200), where: String(where || '').slice(0, 120) }); this.list = this.list.slice(0, 20); } };
+window.addEventListener('error', e => ERRS.push('error', e.message, (e.filename || '') + ':' + (e.lineno || '')));
+window.addEventListener('unhandledrejection', e => ERRS.push('rejection', (e.reason && (e.reason.message || e.reason)) || 'unknown'));
+const DIAG = {
+  taps: 0, at: 0,
+  tap() { const now = Date.now(); this.taps = now - this.at < 1500 ? this.taps + 1 : 1; this.at = now; if (this.taps >= 5) { this.taps = 0; go('diag'); return true; } return false; },
+  async probe(url) { if (!url) return 'no url'; if (!navigator.onLine) return 'offline'; try { const r = await fetch(url, { cache: 'no-store' }); if (!r.ok) return 'HTTP ' + r.status; const j = await r.json().catch(() => null); const age = j && (j.fetched_at || j.source_updated_at) ? ' \u00b7 ' + HUNT.ageLabel(j.fetched_at || j.source_updated_at) : ''; return 'HTTP ' + r.status + age; } catch (e) { return 'fetch failed: ' + (e.message || e); } },
+  kb(key) { try { const v = localStorage.getItem(key); return v ? Math.round(v.length / 1024) + ' KB' : '-'; } catch (e) { return '?'; } },
+  async report() {
+    const L = []; const line = (k, v) => L.push(`${k}: ${v}`);
+    L.push(`OP TCG Hub diagnostics \u2014 take ${TAKE} \u2014 ${new Date().toISOString().slice(0, 16)}Z`);
+    L.push('', '## app'); line('build', CAT.man.built || '?'); line('mode', MODE.cur); line('screen stack', NAV.stack.join(' > ') || '-'); line('online', navigator.onLine); line('native', !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())); line('plugins', ['Camera', 'Filesystem', 'Share', 'LocalNotifications', 'Network', 'App', 'AdMob'].filter(n => PLATFORM.plugin(n)).join(', ') || 'none (browser)');
+    L.push('', '## device'); line('ua', String(navigator.userAgent || '?').slice(0, 120)); line('viewport', `${typeof innerWidth === 'number' ? innerWidth + 'x' + innerHeight : '?'} @${devicePixelRatio || 1}`); line('language', navigator.language || '?'); line('tz', (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return '?'; } })());
+    L.push('', '## catalogue'); line('cards', CAT.man.cards); line('printings', CAT.rows.length); line('prices dated', (CAT.man.source_updated_at || '?').slice(0, 10)); line('history days', (CAT.days || []).length + (CAT.days && CAT.days.length ? ` (${CAT.days[0]}..${CAT.days[CAT.days.length - 1]})` : '')); line('catalogue copy', CAT.man.fromDisk ? 'synced on this phone' : 'the one that came with the app'); line('sealed products', CAT.rows.filter(p => SEALED.isProduct(p)).length); line('stock decks', (CAT.stock || []).length); line('effects scripted', CAT.man.effects ? `${CAT.man.effects.scripted}/${CAT.man.effects.lines}` : '?');
+    L.push('', '## sync'); line('update url', CAT.man.updateUrl || 'NOT SET'); line('manifest', await this.probe(CAT.man.updateUrl ? CAT.man.updateUrl + 'manifest.json' : null));
+    L.push('', '## hunt'); line('zip', HUNT.zip || '(none)'); line('served', JSON.stringify(HUNT.served())); line('radius', LOCAL.radius); line('feed url', HUNT.url() || 'NOT SET');
+    for (const f of ['feed.json', 'history.json', 'stores.json', 'events.json', 'shops.json', 'zcta.json']) line('  ' + f, await this.probe(HUNT.url() ? HUNT.url().replace(/feed\.json$/, f) : null));
+    line('feed on phone', HUNT.feed ? `${HUNT.ageLabel(HUNT.feed.fetched_at)}, target ${HUNT.feed.sources && HUNT.feed.sources.target && HUNT.feed.sources.target.ok ? 'ok' : 'not ok'}` : 'none'); line('history on phone', HUNT.hist ? `${HUNT.hist.runs.length} runs` : 'none'); line('stores on phone', LOCAL.stores ? `${LOCAL.stores.stores.length}, ${HUNT.ageLabel(LOCAL.stores.fetched_at)}` : 'none'); line('events on phone', EVENTS.tab ? `${EVENTS.tab.rows.length} rows` : 'none'); line('shops on phone', LOCAL.shops ? `${LOCAL.shops.shops.length}` : 'none'); line('exact distances', LOCAL.exact()); line('stock alerts', STOCK.list.length); line('local notes', LOCAL.notes.length);
+    L.push('', '## storage'); for (const k of ['vault.collection', 'vault.decks', 'vault.hunt', 'vault.hunt.hist', 'vault.hunt.stores', 'vault.hunt.events', 'vault.hunt.shops', 'vault.hunt.zcta', 'vault.alerts', 'vault.stockAlerts']) line(k, this.kb(k));
+    L.push('', '## counts (never contents)'); line('collection items', OWN.items.length); line('decks', DECKS.list.length); line('price alerts', ALERTS.list.length);
+    L.push('', '## last errors'); if (!ERRS.list.length) L.push('none'); else for (const e of ERRS.list) L.push(`${e.t.slice(11, 19)} ${e.kind}: ${e.msg}${e.where ? ' @ ' + e.where : ''}`);
+    L.push('', '## self-test'); try { await runSelfTest(); L.push(...(SELFTEST.text() || 'no result').split('\n').slice(1)); } catch (e) { L.push('self-test threw: ' + (e.message || e)); }
+    return L.join('\n');
+  }
+};
 const SELFTEST = {
   last: null,
   async run() {
@@ -4938,6 +5080,11 @@ const SELFTEST = {
       ...r.checks.map(c => `${c.s.padEnd(4)} ${c.name}${c.note ? ' \u2014 ' + c.note : ''}`)].join('\n');
   }
 };
+document.addEventListener('click', async e => {
+  if (e.target.closest('#diagRun')) { const b = $('#diagRun'); b.disabled = true; $('#diagOut').textContent = 'Running\u2026'; const t = await DIAG.report(); $('#diagOut').textContent = t; b.disabled = false; $('#diagCopy').disabled = false; $('#diagShare').disabled = false; }
+  if (e.target.closest('#diagCopy')) { try { await navigator.clipboard.writeText($('#diagOut').textContent); toast('Copied'); } catch (err) { toast('Select the text and copy it'); } }
+  if (e.target.closest('#diagShare')) { const t = $('#diagOut').textContent; const r = await PLATFORM.shareFile(`optcghub-diagnostics-take${TAKE}.txt`, t, 'Diagnostics'); if (r !== 'shared') { try { await navigator.clipboard.writeText(t); toast('Copied instead'); } catch (err) {} } }
+});
 async function runSelfTest() {
   const box = $('#stOut'); if (box) box.innerHTML = '<div class="note">Running\u2026</div>';
   const r = await SELFTEST.run();
@@ -4959,6 +5106,7 @@ async function runSelfTest() {
   }
   OWN.snapshot(); paintBatchBadge();
   MODE.set(MODE.cur, false); if (MODE.cur !== 'collect') go(MODE.home[MODE.cur] || 'home');   // take 81: Hunt used to reopen on Collect's Home
+  splashDone();
   ALERTS.check().then(f => { if (f.length) toast(`${f.length} price alert${f.length === 1 ? '' : 's'} fired`); });
   if (navigator.onLine && CAT.man.updateUrl && PLATFORM.quietSyncAllowed()) setTimeout(() => PLATFORM.refreshCatalogue({ quiet: true }), 1500);
   /* A17 at boot. Constants from the manifest (D10), gate on only where an ad
@@ -4986,7 +5134,7 @@ async function runSelfTest() {
      day and a hardcoded placeholder is landmine 62 in a text box. */
   $('#allq').placeholder = `Search all ${(CAT.man.cards || 0).toLocaleString()} cards`;
   paintNet(); paintHome();
-  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, openDetail, HUNT, targetLine, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, NAV, go, closeAnyOverlay,
+  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, openDetail, HUNT, targetLine, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, NAV, go, closeAnyOverlay,
                    FILT, applyFilter, sortRows, blankFilter, activeCount,
                    DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,
                    backupJson, scheduleBackup,

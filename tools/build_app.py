@@ -255,6 +255,9 @@ def build(verbose=True):
     if os.path.exists(zc):
         os.makedirs(os.path.join(WWW, "hunt"), exist_ok=True)
         shutil.copyfile(zc, os.path.join(WWW, "hunt", "zcta.json"))
+    # Display currency (take 85): the day's rates ride in the manifest with their date.
+    import rates as _rates
+    man["rates"] = _rates.load()
     man["stock"] = len(cat["stock"])
     man["effects"] = {"lines": fxstats["lines"], "scripted": fxstats["parsed"], "cards_full": fxstats["cards_full"], "cards_partial": fxstats["cards_partial"]}
     # What's new (take 53): the first "New at take N" paragraph of ci/RELEASE.md,

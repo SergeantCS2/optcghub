@@ -58,6 +58,12 @@ echo "::group::pipeline"
 python3 tools/pipeline.py
 echo "::endgroup::"
 
+echo "::group::carry the hourly feed forward (take 82)"
+# Pages is one site with two deployers. The nightly must not wipe what the
+# hourly wrote: copy the live hunt/ files into www/ before this deploy.
+python3 tools/hunt.py --carry-over || echo "carry-over failed (non-fatal)"
+echo "::endgroup::"
+
 # render.mjs already ran inside the pipeline in Chrome mode (puppeteer was
 # installed above); running it twice was take 4's belt-and-braces and is now
 # just a minute of runner time.

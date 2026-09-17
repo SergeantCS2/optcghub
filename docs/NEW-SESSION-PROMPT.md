@@ -1,15 +1,15 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 81.* Paste the block between the rules into a new session
+*Current as of take 85.* Paste the block between the rules into a new session
 whose project carries `AGENDA.md`, `LANDMINES.md` and `HANDOFF.md` (the three
 project files) and has the newest seed attached.
 
 ---
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
-tracker and deck builder for Android, built across 81 takes by previous
+tracker and deck builder for Android, built across 85 takes by previous
 sessions. The repo lives at `github.com/SergeantCS2/optcghub`; the seed
-`optcghub-seed-t81.zip` is the whole tree. CI builds on every seed drop and
+`optcghub-seed-t85.zip` is the whole tree. CI builds on every seed drop and
 has run green end to end; the APK the owner installs comes from the Release.
 
 **Before anything else, in this order:**
@@ -83,6 +83,10 @@ has run green end to end; the APK the owner installs comes from the Release.
   the Play build; the sideload build adds phone-side sources. No keys, no
   accounts (the owner's decision, take 68). Facebook is out because it does
   not work, not because of a rule.
+- **A33 is the owner's current list from the Fold** (takes 81–83): five of
+  six done; item 6 — pictures on Collect's rows and Decks like Hunt's — is
+  next when he has seen Hunt's. The blank-after-Back cause is unknown and
+  instrumented: Diagnostics → last errors will name it.
 - **A30 carries the agreed order** after the tester report: the owner's tour
   check (open) → A26 colour and contrast (done take 60) → A29 stock decks
   (done take 61) → **Rate and Share rows** → a TalkBack pass → A31 (importing
@@ -128,6 +132,6 @@ official product box shots, which the owner asked for at take 62 and which
 were declined with reasons in A29 (landmines 26, 30, A16); gate scanning (A17); multiply condition into a price (PROTOCOL §10);
 send the collection anywhere (PROTOCOL §9); seal with a red gate.
 
-Say "take 82" and begin with PROTOCOL §0.
+Say "take 86" and begin with PROTOCOL §0.
 
 ---

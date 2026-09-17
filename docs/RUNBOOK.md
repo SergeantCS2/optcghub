@@ -1,6 +1,6 @@
 # RUNBOOK — from nothing to a repo that builds every night
 
-*Current as of take 81.* Everything below is the whole procedure. You need
+*Current as of take 85.* Everything below is the whole procedure. You need
 three files from the outputs: `build.yml`, `bootstrap.yml`, and the newest
 `optcghub-seed-tNNN.zip`. A PC makes step 2 easier; a phone works.
 
@@ -109,6 +109,20 @@ repository **Variables** `HUNT_ZIP` and `HUNT_RADIUS` (Settings → Secrets and
 variables → Actions → Variables). It shares the `pages` concurrency group
 with the nightly so the two never deploy over each other. A run costs about
 two minutes of a public repo's free runner time.
+
+**The first run is yours to start:** Actions → hunt → *Run workflow*. A new
+schedule's first cron run can lag by an hour or more; a manual run proves the
+workflow and deploys the feed at once. The `hunt.yml` from take 84 or later is
+required — earlier ones lacked an install and go red at the `app` step.
+
+**If Hunt says the stock feed is unavailable (404):** the hourly workflow has
+not deployed since the nightly last did. Check Actions → hunt: no runs means
+the file was never pasted or the cron has not fired yet; a red run means
+`tools/hunt.py` failed (a stale paste from take 71 calls `--zip`, which no
+longer exists — re-paste). Since take 82 the nightly carries the hourly's
+files forward, so once the hourly has run green once, the feed stays up.
+More → About, tapped five times, opens Diagnostics: its Hunt section probes
+every feed file live and says HTTP 200 or 404 for each.
 
 ## 6. Every take after the first
 

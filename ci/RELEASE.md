@@ -1,4 +1,4 @@
-# OP TCG Hub — take 81
+# OP TCG Hub — take 85
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,23 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 85:** prices can be shown in CAD, EUR, GBP, AUD, JPY, MXN or
+CHF (More → Currency, or the currency pill on Home and Hunt) — converted
+from the day's rates and marked ≈; and a brief opening screen.
+
+**New at take 84:** nothing visible; the hourly stock workflow is fixed so
+it can run.
+
+**New at take 83:** pictures of every box, pack and deck in Hunt; the bottom
+bar is the same size and colour in every mode and stands out more; screen
+titles line up across modes; the Portfolio line reads as one piece; and the
+back button can no longer leave a blank screen.
+
+**New at take 82:** a hidden Diagnostics screen (tap the version line in
+More five times) that writes a report you can send when something is wrong;
+Prep & Play is charcoal and red now, so it no longer looks like Hunt; every
+dropdown and text field matches the app; Releases rows link to full details.
 
 **New at take 81:** first-impressions fixes from the Fold — typing a zip no
 longer zooms the screen, the phone's back button goes back a page instead

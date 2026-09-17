@@ -1,4 +1,187 @@
-# HANDOFF — through Take 81
+# HANDOFF — through Take 85
+
+## Take 85 — 2026-09-17 — a display currency, and an opening screen
+
+Opened before any code (PROTOCOL §6).
+
+### The owner's asks
+
+Currency options for Hunt and Collect, fewer than the reference app's
+fifteen if space is a cost; and a very quick loading screen for a premium
+feel — short and sweet.
+
+### Built
+
+- **Rates.** `tools/rates.py` fetches the ECB reference rates USD→CAD, EUR,
+  GBP, AUD, JPY, MXN, CHF at build time, keyless (frankfurter.dev, PROVEN:
+  `2026-09-16`, EUR 0.867), caches them as `catalog/rates.json`, and they
+  ride in the manifest with their date; a failed fetch ships the sidecar's
+  rates marked stale; no rates means USD only with the other choices greyed.
+- **The converter.** `money()` converts at the day's rate and marks every
+  non-USD figure **≈**; yen shows no cents; an unknown or unrated code falls
+  back to USD; the choice is kept on the phone. `moneyUSD()` stays for
+  anything that must say the price. The picker says what a conversion is —
+  the ECB rate of a named date, an estimate, not a quote (PROTOCOL §10).
+- **Where.** A currency pill on Home's bar and on Sealed's bar (the
+  reference app's *$ USD* spot), and a row in More.
+- **The opening screen.** In the markup, so it is the first paint: the
+  three-stroke mark, the word-mark in the display face, *Collect · Prep &
+  Play · Hunt* — no art. The app fades it once it has drawn, never before
+  600 ms (so it reads, not flickers), never after 2.5 s whatever the boot
+  does. Asserted in Chrome: gone within 1.2 s.
+
+### Findings
+
+- Two guards fired on the seal: the markup guard (landmine 99) caught a JS
+  escape in the splash's HTML text, and the scrubber caught a placeholder
+  code in a test. Both correct; both fixed at the source.
+
+**smoke.mjs 565, render.mjs 68 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **More currencies** if asked — the list is one line in `rates.py` and one
+  in `CUR.list`.
+- **A currency on the collection's own snapshots** — history stays USD; a
+  converted chart would need a rate per day. Not asked; noted.
+- The owner's list: paste `hunt.yml` (take 84's), run it, push t85, test.
+
+## Take 84 — 2026-09-17 — the hourly workflow could never have run: one install it forgot
+
+Opened before any code (PROTOCOL §6).
+
+### What the owner showed
+
+Actions → hunt: *This workflow has no runs yet*, a workflow_dispatch button.
+So the paste is right and the cron has not fired — GitHub often delays a
+new schedule's first run by an hour or more. But reading what the first run
+would do: the `app` step strips comments through `acorn`
+(`scrub.py --strip`), which `bundle.sh` installs and `hunt.yml` never did.
+The first run would have gone red at `app` and the owner would have been
+told to paste again anyway. Landmine-shaped: a workflow that depends on a
+tool the *other* workflow installs.
+
+### Fixed, rehearsed
+
+`hunt.yml` sets up Node and installs `acorn` itself. **Rehearsed as the
+runner will see it** — the take-83 seed unpacked into an empty directory,
+no `node_modules`, only the workflow's own two installs, then its exact
+commands: the app built, the roster rebuilt (2,960 stores), 11,148 events,
+Black Vault listing seven sealed products in stock, the Target feed written.
+The only difference from the runner: my IP's Target quota is spent from a
+day of probing, the runner's is not.
+
+**smoke.mjs 555, render.mjs 67 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **A guard for this class**: a smoke assertion that every `npm`/`pip`
+  package `bundle.sh` installs is also installed by any workflow that runs
+  `pipeline.py app`. Next take.
+- The owner's list: paste `hunt.yml` once more, run it by hand, push t84.
+
+## Take 83 — 2026-09-17 — the third look: one bar, level titles, a caption, pictures, and a Back that cannot blank the screen
+
+Opened before any code (PROTOCOL §6). A33 filed with all six first.
+
+### The blank page after Back
+
+The owner's screenshot: Hunt's slider and nav, no screen, no nav item
+lit. That is exactly what `go(id)` does with an id that matches no section
+— every `.on` removed, nothing put on. `go()` now refuses such an id: it
+falls back to the mode's home and records the id in the error buffer, and
+`NAV.back()` pops until it finds a real screen. **The cause is not yet
+known** — no path in the code passes a bad id that I can see — so the
+guard is also the instrument: the next time it happens, Diagnostics → last
+errors will carry *go() called with no screen for '…'* and name it.
+
+### Built
+
+1. **The Portfolio line** — a small spaced caption above the name; the
+   display face carries the name alone at 24px.
+2. **The bottom bar** — one height (66px) in every mode; a near-black bar
+   apart from all three palettes, a border tinted with the mode's accent,
+   items stretching equally so four or five look the same, the accent only
+   on the active item.
+3. **Screen titles** — every `.bar` has one minimum height, so the title
+   sits at the same level in every mode.
+4. **Pictures** — `productPic()`: TCGplayer's product photo through the
+   take-12 display-only path (lazy, hot-linked, silent on failure), over a
+   drawn tile in the set's colours carrying the set code, which stands
+   alone when there is no photo. On every Sealed row and every Releases row
+   (the set's booster box). 343 of 343 sealed products have a photo.
+5. **Fold headers** show a chevron, and rows shrink instead of pushing the
+   stock-alert bell off the right edge — both seen in the screenshot.
+
+### Findings
+
+- The DOM stub built every element as a `div`, so "is this a screen" had to
+  be asked of the tag (every screen is a `<section>`); the stub now keeps
+  each element's tag. A guard that the harness could not see would have
+  been a guard untested.
+- The sandbox cannot reach the image CDN, so the screenshots show the tiles,
+  not the photos; the phone will show the photos. Not asserted as a picture
+  for that reason — asserted as the markup and the fallback.
+
+**smoke.mjs 555, render.mjs 67 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **A33 item 6** — pictures on Collect's rows and Decks in the same way,
+  once Hunt's are seen on the phone.
+- **The Back cause** — read from the diagnostics when it recurs.
+- The owner's list: push t83; Actions → hunt; a diagnostics paste; shop
+  URLs; D20–D22.
+
+## Take 82 — 2026-09-17 — the 404 explained, the diagnostics the owner asked for, and the second look
+
+Opened before any code (PROTOCOL §6).
+
+### The 404 (PROVEN live)
+
+Pages served `bundle/manifest.json` at 200 and `hunt/feed.json` at 404.
+Two workflows deploy one site: the hourly writes the feed; the nightly
+rebuilds `www/` from the tree — which has no feed — and deploys it, wiping
+the hourly's files until the next :17. Fixed where the seed can carry it:
+`hunt.py --carry-over` copies whatever is live under `hunt/` on Pages into
+`www/hunt/` and `bundle.sh` runs it before the nightly's upload. Tried live:
+*0 of 5 files carried — none live yet (has the hourly workflow run?)*,
+which is itself the second half of the diagnosis: as of now the hourly has
+never deployed. RUNBOOK §5c says what to check.
+
+### Built
+
+- **Diagnostics**, the owner's APEX-style tool, behind a secret gesture:
+  five taps within 1.5 s on the *About* line in More. Runs the self-test
+  and adds: app (mode, screen stack, plugins), device, catalogue (counts,
+  dates, days on file), sync (the update URL and a live probe of the
+  manifest), Hunt (zip, served match, radius, feed URL, **a live HTTP probe
+  of every feed file with its age**, what is on the phone), storage sizes
+  per key, counts never contents, the **last twenty page errors** from a
+  ring buffer wired at boot, and the self-test inline. Copy, or Share as a
+  text file.
+- **Prep & Play is charcoal and red** — measured first (fg 14.0, dim 8.5,
+  dim2 5.9, the red 4.3:1 on the card, an accent).
+- **Every native control themed** — select and text fields take the card,
+  the line and the accent on focus, 16px, an owned dropdown arrow.
+- **The zip placeholder** is nobody's zip.
+- **Releases** rows carry a visible *Details ↗* link to the set's listing.
+
+### Findings
+
+- The DOM stub has no `.screen` elements (`querySelectorAll('.screen')` is
+  empty there), so a screen change cannot be seen by class in smoke; the
+  gesture is asserted through the screen stack instead. The render suite
+  sees the real thing.
+- An old render assertion still expected Play's body to be felt green;
+  retired with the palette.
+
+**smoke.mjs 545, render.mjs 67 (Chrome). Gate green, sealed bare.**
+
+### DEFERRED this cycle
+
+- **Proving the hourly runs** — only the Actions tab can; the owner's.
+- The owner's list: push t82; check Actions → hunt; shop URLs; D20–D22.
 
 ## Take 81 — 2026-09-17 — the owner's first impressions of Hunt on the Fold: one bug, three symptoms, and six fixes
 

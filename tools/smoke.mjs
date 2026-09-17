@@ -53,10 +53,12 @@ function makeDom(html) {
   };
   const ctx2d = new Proxy({}, { get: () => () => ctx2d });
   const byId = new Map();
-  for (const m of html.matchAll(/id="([\w-]+)"/g)) byId.set(m[1], mk());
+  /* the element keeps its tag, so a <section id> is a section here too (take 83: go() refuses non-screens) */
+  for (const m of html.matchAll(/<([a-zA-Z][\w-]*)\b[^>]*\bid="([\w-]+)"/g)) byId.set(m[2], mk(m[1]));
   const doc = {
     _ids: byId,
     querySelector: s => s.startsWith('#') ? (byId.get(s.slice(1)) || mk()) : mk(),
+    getElementById: id => byId.get(id) || null,
     querySelectorAll: () => [],
     createElement: mk,
     addEventListener: (t, f) => { (listeners[t] ||= []).push(f); },
@@ -699,7 +701,7 @@ ok('the estimate skips days before a card was added', /i\.added\.slice\(0, 10\) 
 section('take 24 — two modes and the Play counter');
 ok('two modes exist and persist', V.MODE && V.MODE.cur && /vault\.mode/.test(js));
 ok('the play palette redefines the same tokens, not a second stylesheet',
-   /:root\[data-mode="play"\]\{[^}]*--bg:#0F2A1E/.test(html) && /--brass:#D9583B/.test(html));
+   /:root\[data-mode="play"\]\{[^}]*--bg:#15171C/.test(html) && /:root\[data-mode="play"\]\{[^}]*--brass:#E0553D/.test(html));   // charcoal and red since take 82
 ok('each mode has its own nav, and hidden actually hides (landmine 98)',
    /id="navPlay" hidden/.test(html) && /id="navCollect"/.test(html) && /nav\[hidden\]\{display:none\}/.test(html));
 ok('Prep & Play holds Decks, Cards, Play and Sim', /data-go="decks"[\s\S]*data-go="cards"[\s\S]*data-go="play"[\s\S]*data-go="sim"/.test(html));
@@ -1399,6 +1401,55 @@ ok('Sealed folds by set: a header with a count per set, the newest open, the res
 { V.SEALED.q = ''; V.SEALED.open = new Set(); V.HUNT.setZip(''); V.paintSealed(); const hf = ctx.document.querySelector('#sealedList').innerHTML;
   const headers = (hf.match(/data-setfold=/g) || []).length, rows = (hf.match(/data-open="/g) || []).length;
   ok('...so the default screen is a short list of sets, not hundreds of rows', headers >= 10 && rows < 60, `${headers} set headers, ${rows} rows shown`); }
+/* take 85: a display currency, and the opening screen */
+ok('the day\'s rates ride in the manifest with their date, USD base, seven currencies', manifest.rates && manifest.rates.base === 'USD' && /^\d{4}-\d\d-\d\d$/.test(manifest.rates.date) && Object.keys(manifest.rates.rates).length === 7 && manifest.rates.rates.EUR > 0.5 && manifest.rates.rates.EUR < 1.5, JSON.stringify(manifest.rates));
+ok('USD is the price: no mark, dollar sign, cents', V.CUR.set('USD') === undefined && V.money(12.5) === '$12.50');
+V.CUR.set('EUR');
+ok('another currency is a CONVERSION at the day\'s rate and is marked \u2248', V.money(100) === '\u2248\u20ac' + (100 * manifest.rates.rates.EUR).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), V.money(100));
+V.CUR.set('JPY'); ok('yen shows no cents', /^\u2248¥[\d,]+$/.test(V.money(100)), V.money(100));
+V.CUR.set('ZZZ'); ok('an unknown or unrated code falls back to USD', V.CUR.active() === 'USD' && V.money(1) === '$1.00');
+V.CUR.set('CAD'); ok('the choice is kept on the phone', ctx.localStorage.getItem('vault.currency') === 'CAD'); V.CUR.set('USD');
+ok('the picker says what a conversion is: the ECB reference rate of a date, an estimate not a quote', /an estimate, not a quote/.test(js) && /ECB reference rate/.test(js));
+ok('the currency is reachable from Home, from Sealed and from More', /id="curPillHome"/.test(html) && /id="curPillSealed"/.test(html) && /data-act="currency">Show prices in/.test(js));
+ok('the opening screen is in the markup (first paint), a word-mark and a line, no art', /<div id="splash" aria-hidden="true">/.test(html) && /class="wm">OP TCG Hub</.test(html) && !/<img/.test(html.slice(html.indexOf('id="splash"'), html.indexOf('id="splash"') + 900)));
+ok('...and the app hides it after it has painted, no sooner than 600 ms, no later than 2.5 s', /Math\.max\(0, 600 - \(Date\.now\(\) - SPLASH_T0\)\)/.test(js) && /setTimeout\(splashDone, 2500\)/.test(js) && /splashDone\(\);/.test(js));
+/* take 83: the third look -- uniformity, pictures, the blank back */
+ctx.window.scrollTo = () => {}; ctx.scrollTo = () => {};
+ok('go() refuses an id with no screen: falls back to the mode\'s home and records the id (the blank page after Back)', (() => { const before = V.ERRS.list.length; V.MODE.set('collect', false); V.go('no-such-screen'); return V.ERRS.list.length === before + 1 && /no screen for 'no-such-screen'/.test(V.ERRS.list[0].msg) && V.NAV.stack[V.NAV.stack.length - 1] === 'home'; })());
+ok('NAV.back() pops past anything that is not a screen', (() => { V.NAV.stack = ['sealed', 'ghost', 'local']; const r = V.NAV.back(); return r && V.NAV.stack[V.NAV.stack.length - 1] === 'sealed'; })());
+ok('the bottom bar is one bar in every mode: fixed height, near-black, items stretch equally, the accent only on the active item', /nav\{[^}]*height:66px[^}]*#0B0D10/.test(html) && /nav button\{flex:1 1 0/.test(html) && /nav button\.on\{color:var\(--brass\)\}/.test(html));
+ok('every screen title bar has the same minimum height', /\.bar\{[^}]*min-height:56px/.test(html));
+ok('the Portfolio label is a small caption above the name, which keeps the display face at the hero\'s size', /\.hero \.who \.cap\{[^}]*text-transform:uppercase/.test(html) && /<span class="cap">Portfolio<\/span><em id="pfName">/.test(html) && /\.hero \.who em\{[^}]*font-size:24px/.test(html));
+{ const boxes = V.CAT.rows.filter(p => V.SEALED.isProduct(p));
+  ok('every sealed product carries a product photo url (343 of 343 today)', boxes.length > 300 && boxes.every(p => p.img));
+  const pic = V.productPic(boxes[0]);
+  ok('a product picture is the take-12 display-only image -- lazy, hot-linked, silent on failure -- over a drawn tile that shows the set code', /<img class="ref" loading="lazy"/.test(pic) && /onerror="this\.remove\(\)"/.test(pic) && /class="ph"/.test(pic) && /tcgplayer-cdn\.tcgplayer\.com/.test(pic));
+  const np = V.productPic({ ...boxes[0], img: null });
+  ok('with no photo the tile stands alone -- no image tag, no hole', !/<img/.test(np) && /class="ph"/.test(np));
+  V.MODE.set('hunt', false); V.SEALED.open = new Set([boxes[0].set]); V.paintSealed();
+  ok('Sealed rows carry the picture', (ctx.document.querySelector('#sealedList').innerHTML.match(/class="pic"/g) || []).length >= 1);
+  V.paintReleases();
+  ok('Releases rows carry the set\'s box', (ctx.document.querySelector('#relList').innerHTML.match(/class="pic"/g) || []).length >= 5);
+  V.MODE.set('collect', false); }
+/* take 82: the owner's second look */
+ok('Prep & Play is charcoal and red, no longer Hunt\'s green (and clears AA above)', /:root\[data-mode="play"\]\{[^}]*--bg:#15171C/.test(html) && !/:root\[data-mode="play"\]\{[^}]*#0F2A1E/.test(html));
+ok('every native select and text field is themed: card background, line border, accent on focus, 16px', /select,input\[type="text"\][^{]*\{[^}]*background:var\(--card2\)[^}]*font-size:16px/.test(html) && /select:focus,input:focus,textarea:focus\{border-color:var\(--brass\)/.test(html));
+ok('the zip placeholder is nobody\'s zip', /placeholder: '37203'/.test(js) && !/placeholder: '48329'/.test(js));
+ok('every Releases row has a visible Details link to the set\'s full listing', /Details \\u2197|Details ↗/.test(js) && /tcgplayer\.com\/search\/one-piece-card-game\/product\?q=/.test(js));
+ok('the nightly carries the hourly\'s hunt files forward before it deploys (the 404)', /--carry-over/.test(fs.readFileSync(path.join(ROOT, 'ci', 'bundle.sh'), 'utf8')) && /def carry_over/.test(fs.readFileSync(path.join(ROOT, 'tools', 'hunt.py'), 'utf8')) && fs.readFileSync(path.join(ROOT, 'ci', 'bundle.sh'), 'utf8').indexOf('--carry-over') < fs.readFileSync(path.join(ROOT, 'ci', 'bundle.sh'), 'utf8').indexOf('::group::commit sidecars'));
+{ /* diagnostics: the gesture, the buffer, the report */
+  ctx.window.scrollTo = () => {}; ctx.scrollTo = () => {};
+  V.DIAG.taps = 0; for (let i = 0; i < 4; i++) V.DIAG.tap();
+  ok('four taps on the About line do nothing', V.NAV.stack[V.NAV.stack.length - 1] !== 'diag');
+  V.DIAG.tap(); ok('the fifth tap within the window opens Diagnostics (the screen stack ends on it)', V.NAV.stack[V.NAV.stack.length - 1] === 'diag');
+  V.ERRS.push('error', 'planted error for the test', 'app.js:1');
+  ctx.navigator.onLine = false;
+  const rep = await V.DIAG.report();
+  ok('the report carries every section a troubleshooter needs: app, device, catalogue, sync, hunt, storage, counts, errors, self-test', ['## app', '## device', '## catalogue', '## sync', '## hunt', '## storage', '## counts', '## last errors', '## self-test'].every(h => rep.includes(h)));
+  ok('...the live endpoint probes, one per hunt file, saying offline when offline', /feed\.json: offline/.test(rep) && /zcta\.json: offline/.test(rep));
+  ok('...the planted error, and never a collection\'s contents', /planted error for the test/.test(rep) && !/"qty"/.test(rep));
+  ok('...and the self-test results inline', /PASS|SKIP/.test(rep));
+  V.MODE.set('collect', false); }
 ok('keyboard focus has a visible ring and a mouse click does not (take 80)', /:focus-visible\{outline:2px solid var\(--brass\)/.test(html) && /button:focus:not\(:focus-visible\)\{outline:none\}/.test(html));
 ok('the gate lints smoke for numbers pinned to what the nightly moves (landmine 115), with the lint-ok escape for live-vs-live', /smoke-lint/.test(fs.readFileSync(path.join(ROOT, 'tools', 'gate.py'), 'utf8')) && /lint-ok/.test(fs.readFileSync(path.join(ROOT, 'tools', 'gate.py'), 'utf8')));
 }

@@ -203,10 +203,34 @@ def selftest():
     return ok
 
 
+HUNT_FILES = ("feed.json", "history.json", "stores.json", "events.json", "shops.json")
+
+
+def carry_over(out_dir):
+    """Take 82. Two workflows deploy the same Pages site: the hourly feed and
+    the nightly build. The nightly rebuilds www/ from the tree, which has no
+    feed, so its deploy WIPED the hourly's files until the next :17 -- the
+    owner's 404. Before the nightly uploads, it copies whatever is live on
+    Pages into www/hunt/. No retailer is touched; this reads our own site."""
+    base = pages_base()
+    if not base:
+        print("   hunt carry-over: no UPDATE_URL, nothing to carry"); return 0
+    os.makedirs(out_dir, exist_ok=True); n = 0
+    for name in HUNT_FILES:
+        j = fetch_json(base + "hunt/" + name)
+        if j is not None:
+            json.dump(j, open(os.path.join(out_dir, name), "w"), separators=(",", ":")); n += 1
+    print(f"   hunt carry-over: {n} of {len(HUNT_FILES)} files carried from Pages" + ("" if n else " -- none live yet (has the hourly workflow run?)"))
+    return n
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(); ap.add_argument("--zips", default="48329", help="comma-separated served zips for the local layer"); ap.add_argument("--radius", type=int, default=50)
     ap.add_argument("--out", default=OUT); ap.add_argument("--selftest", action="store_true"); ap.add_argument("--from-fixtures", action="store_true")
+    ap.add_argument("--carry-over", action="store_true", help="copy the live hunt files from Pages into www/hunt (the nightly, before it deploys)")
     a = ap.parse_args()
+    if a.carry_over:
+        raise SystemExit(0 if carry_over(os.path.dirname(a.out)) >= 0 else 1)
     if a.selftest:
         print("hunt.py parsers against saved real responses:"); raise SystemExit(0 if selftest() else 1)
     prev = None if a.from_fixtures else load_previous(a.out, "feed.json")

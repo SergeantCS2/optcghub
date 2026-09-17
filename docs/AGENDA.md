@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 81.* Ranked by blocking-ness, not by interest.
+*Current as of take 85.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -949,6 +949,17 @@ zip asked once per launch, a themed search bar, readable mode labels, the
 tour stopping on every card, and Sealed folded by set. **Ruled out: a
 modal that cannot be dismissed** — the back button now cancels it.
 
+### Take 82 — the 404, and the diagnostics
+
+Two deployers, one site: the nightly wiped the hourly's feed until the next
+hour. The nightly now carries the live `hunt/` files forward. **A hidden
+Diagnostics screen** (five taps on About) writes the report the owner asked
+for: live probes of every endpoint, storage, errors, the self-test. Also:
+Prep & Play in charcoal and red, every native control themed, a neutral zip
+placeholder, Details links on Releases. **Ruled out: two deployers writing
+disjoint files** — one site has one truth, and each deploy carries the
+other's.
+
 ### Order, and the first take
 
 1. **Sealed** — the mode, the screen, the chart, alerts on sealed productIds
@@ -961,6 +972,48 @@ modal that cannot be dismissed** — the back button now cancels it.
    Reprints from Bandai and the distributors. Each source lands with a
    probe in smoke that proves the parser against a saved real response and
    a control that fails on a changed shape.
+
+## A34 — Display currency and the opening screen · BUILT take 85
+
+Seven currencies by daily ECB reference rate at build time, every converted
+price marked ≈ with the rate's date a tap away, pills on Home and Sealed, a
+row in More; an opening screen from first paint, gone once the app has
+drawn. **Ruled out: live rates from the phone** (a request the store floor
+cannot make, §8) and **converted price history** (a rate per day, not
+asked).
+
+## A33 — The second look: uniformity, pictures, the blank back · OPENED take 83
+
+The owner's list from the Fold, in his order, with what each is and its
+state:
+
+1. **Portfolio / One Piece** — the label in the body face beside the name in
+   the display face at a different size reads as two fonts fighting. Fix:
+   the label becomes a small, spaced, dim caption above the name; the name
+   keeps the display face at the hero's size. *(take 83)*
+2. **The bottom bar** — a different width per mode (four or five items),
+   the card colour blending into every palette. Fix: one height, one
+   near-black bar with the mode's accent for the active item and a brighter
+   border, in all three modes. *(take 83)*
+3. **Headings** — Overview/Performance, Decks, Sealed start at slightly
+   different heights, so switching modes jumps. Fix: one `.bar` height and
+   top padding for every screen. *(take 83)*
+4. **Pictures in Hunt** — every sealed product carries a TCGplayer product
+   photo (343 of 343); they go beside the title on Sealed rows and on
+   Releases (the set's booster box), through the display-only image path of
+   take 12 (hot-linked, lazy, never stored, fails to a placeholder). A
+   product with no photo gets a drawn tile in the set's colours. *(take 83)*
+5. **The blank back** — after the back button the screen went empty until a
+   tap. `go()` now refuses an id that matches no screen (it falls back to the
+   mode's home and records the id in the error buffer), and `NAV.back()`
+   pops until it finds a real screen. The record will name the cause the
+   next time. *(take 83)*
+6. **Overall "non-uniform and basic"** — the owner's own diagnosis is the
+   lack of pictures; item 4 is the first step, and the same treatment for
+   Collect's rows and Decks follows once Hunt's is seen. *(next)*
+
+- **Ruled out: a fourth typeface.** The mismatch is scale and pairing, not
+  a missing font.
 
 ## A31 — Importing from other collection apps · OPENED take 61 · NOT A PRIORITY
 
