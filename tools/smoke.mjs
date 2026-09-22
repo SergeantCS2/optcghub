@@ -1704,6 +1704,16 @@ ok('the verified list is data in the tree, hand-verified, with a date on each en
 /* take 76: events near you, and Hunt's own palette */
 const evFile = path.join(fxDir, 'events-fixture.json');
 ok('the run writes a compact events table beside the roster: rows of [store, date, title, TCG+ id, fee, seats, release], titles interned', fs.existsSync(evFile) && (() => { const j = JSON.parse(fs.readFileSync(evFile, 'utf8')); return Array.isArray(j.rows) && j.rows.length >= 10 && j.titles.length < j.rows.length && j.rows.every(r => r.length === 7) && /\/event\/$/.test(j.url); })());
+/* Landmine 123: hunt.py builds this fixture under now="2026-09-01" and its events fall on two days that
+   September; the app filters events against the clock it is read with, so from the day after the last
+   event the rows were empty and three nights went red. This block runs under a Date pinned to the
+   fixture's first event day (noon UTC) and puts the real clock back after; the real clock is the
+   negative control at the end of the block. */
+const RealDate = ctx.Date;
+const fxDays = JSON.parse(fs.readFileSync(evFile, 'utf8')).rows.map(r => r[1]).sort();
+const pinnedNow = RealDate.parse(fxDays[0] + 'T12:00:00Z');
+ctx.Date = class extends RealDate { constructor(...a) { super(...(a.length ? a : [pinnedNow])); } static now() { return pinnedNow; } };
+ok('the fixture is read under a clock pinned to its own first event day, and the app sees that clock', vm.runInContext('new Date().toISOString().slice(0, 10)', ctx) === fxDays[0] && vm.runInContext('Date.now()', ctx) === pinnedNow);
 V.EVENTS.tab = JSON.parse(fs.readFileSync(evFile, 'utf8')); V.LOCAL.stores = JSON.parse(fs.readFileSync(storesFile, 'utf8')); V.HUNT.setZip('48329'); V.LOCAL.radius = 0;
 const evRows = V.EVENTS.rows();
 ok('events join back to their stores, carry a distance and a registration link, and are sorted by date', evRows.length >= 5 && evRows.every(e => e.store.name && e.url && /bandai-tcg-plus\.com\/event\/\d+/.test(e.url)) && evRows.every((e, i) => i === 0 || e.d >= evRows[i - 1].d));
@@ -1720,6 +1730,9 @@ ok('the distance dropdown narrows the events too', (ctx.document.querySelector('
   const okc = await V.addEventToCalendar(ev);
   ok('on the phone it is handed to the share sheet as a .ics, where the calendar app takes it', okc && shared && /\.ics$/.test(shared.name) && shared.text === ics && /calendar/i.test(shared.title));
   V.PLATFORM.shareFile = _sf; V.LOCAL.radius = 50; }
+ctx.Date = RealDate; V.LOCAL.radius = 0;
+ok('negative control (landmine 123): read with the real clock, once the fixture\'s last event day has passed the same fixture yields no rows -- the runner\'s three red nights, asserted live against live', RealDate.now() <= RealDate.parse(fxDays[fxDays.length - 1] + 'T23:59:59Z') || V.EVENTS.rows().length === 0);
+ok('the real clock is back for everything after this block', vm.runInContext('Date.now()', ctx) > pinnedNow + 864e5 && vm.runInContext('Date', ctx) === RealDate);
 V.LOCAL.radius = 50; V.EVENTS.tab = null; V.HUNT.setZip('');
 ok('Hunt is green: the palette is Zoro\'s and it clears AA (checked with the other two above)', /:root\[data-mode="hunt"\]\{\s*--bg:#0B1B12/.test(html) && /\.swords\{/.test(html) && (html.match(/class="swords"/g) || []).length >= 4);
 ok('the mark is three strokes of original geometry -- no image, no likeness', !/<image/.test(html.slice(html.indexOf('class="swords"'), html.indexOf('class="swords"') + 400)));

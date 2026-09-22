@@ -1,8 +1,10 @@
 # RUNBOOK — from nothing to a repo that builds every night
 
-*Current as of take 88.* Everything below is the whole procedure. You need
-three files from the outputs: `build.yml`, `bootstrap.yml`, and the newest
-`optcghub-seed-tNNN.zip`. A PC makes step 2 easier; a phone works.
+*Current as of take 89.* **Since take 89 the repo is the record:** a session
+works on a branch and opens a pull request; you merge; the merge builds. §6
+is every take. §1–§5 are how the repo was first stood up from a seed zip and
+remain the recovery procedure; you need them again only for a new repo or a
+tree that must be replaced wholesale.
 
 The order matters. Do not skip 2b.
 
@@ -16,10 +18,12 @@ github.com → **New repository**
   committed; A8 states the trade-off)
 - tick **Add a README** → **Create repository**
 
-## 2. Paste the two workflows — by hand, once
+## 2. Paste the two workflows — by hand, once (a new repo only)
 
-GitHub's build token cannot push workflow files, so these two are the only
-things you ever paste. Everything else arrives by zip.
+In a repo that already exists the workflow files live in git and change
+through pull requests like every other file (§5b). Standing up a *new* repo
+from a seed is the one time they are pasted, because the seed job cannot
+write them.
 
 **Add file → Create new file**, path exactly `.github/workflows/build.yml`,
 paste the whole of `build.yml`, **Commit changes**.
@@ -88,20 +92,26 @@ when it is online: quietly once per open, or **More → Sync now**. Price alerts
 fire against it. Until this is set the app says "update the app for newer
 prices", which is true.
 
-## 5b. When `build.yml` or `bootstrap.yml` changes
+## 5b. When a workflow file changes
 
-The two workflow files are the ones the seed cannot update. When a take
-changes one (take 31: `build.yml` gained `issues: write`; **take 33:
-`bootstrap.yml` gained `actions: write` and a last step that starts the
-build** — landmine 108), the release notes say so, and the fix is: open
+Since take 89 the four workflows — `build.yml`, `check.yml`, `hunt.yml`,
+`bootstrap.yml` — travel in the take's PR: `.github/workflows/<file>` and
+`ci/<file>` are one file each, and the gate refuses a take where they
+differ. Merging the PR is the whole procedure.
+
+**If a push of `.github/workflows` is refused** (the session's GitHub App
+lacks the *Workflows* permission), the PR carries the `ci/` copy alone and
+its HANDOFF entry says so. The paste is then yours: open
 `.github/workflows/<file>` in the browser → the pencil → select all → paste
-the new file → commit. Then the 2b checks again for `build.yml`. It happens
-rarely and the runbook will always say when.
+the contents of `ci/<file>` → commit. Then the 2b checks again for
+`build.yml`. (Earlier pastes: take 31 `issues: write`; take 33
+`bootstrap.yml`'s `actions: write` and its last step, landmine 108; take 84
+`hunt.yml`'s install, landmine 121.)
 
-## 5c. The hourly Hunt feed (take 71) — a third paste, once
+## 5c. The hourly Hunt feed (take 71)
 
-`ci/hunt.yml` is the third hand-pasted workflow (landmine 46). Paste it to
-`.github/workflows/hunt.yml` once. It runs at :17 every hour, rebuilds `www/`
+`hunt.yml` was the third hand-pasted workflow; since take 89 it travels in
+the PR like the others (§5b). It runs at :17 every hour, rebuilds `www/`
 from the committed tree, fetches Target's product and shelf stock for the
 configured zip with `tools/hunt.py`, and deploys `www/` to Pages — the app
 reads `hunt/feed.json` from there. Change the zip or radius without a paste:
@@ -126,10 +136,25 @@ every feed file live and says HTTP 200 or 404 for each.
 
 ## 6. Every take after the first
 
-Two paths, same result:
-- **Add file → Upload files** → drop `optcghub-seed-tNNN.zip` at the repo
-  root → Commit. The `seed` job unpacks and commits it.
-- **Or** attach it to a Release and run **bootstrap** again.
+**The flow (take 89).** The session works on a branch and opens a pull
+request titled `take N — …`. The `check` workflow runs the whole pipeline on
+the PR — ingest, hashes, smoke, Chrome render, gate — with a read-only token:
+it can commit, release and deploy nothing. When it is green and you have read
+the PR: **Squash and merge** (one commit per take on `main`, and the branch
+name stays out of `main`'s history). The merge runs `build.yml`: Release
+`take-N` with the APK and the AAB, Pages redeployed. Sideload from the
+Release as before.
+
+Two things a PR must never carry, and the check refuses the first:
+`catalog/prices_daily.json` and `catalog/hashes.json` — the nightly on `main`
+writes them and is their record (landmine 116) — and a seed zip, which the
+`seed` job would unpack over the tree (landmine 122; `.gitignore` refuses it).
+
+**Recovery — the tree is wrong, or git is not to hand.** The seed path still
+works, unchanged: `bash tools/seal.sh` writes `optcghub-seed-tNNN.zip`
+outside the tree; **Add file → Upload files** → drop it at the repo root →
+Commit (the `seed` job unpacks and commits it), **or** attach it to a Release
+and run **bootstrap**.
 
 The nightly runs at **21:30 UTC**, after TCGCSV's ~20:05 refresh, with no
 action from you. It commits the day's prices, redeploys Pages, and replaces
@@ -161,8 +186,10 @@ The morning after the first build:
 - The app on your phone, after **Sync now**, shows *Prices from* yesterday's
   date and yesterday's deltas on the tiles.
 
-If the run went red, there is an open issue labelled `nightly-failure` with
-the reason (A9).
+If the run went red, there is **one** open issue labelled `nightly-failure`,
+with a comment per red night; a green night closes it (A9; landmine 125 is
+the four separate issues that came before the label existed). The reason is
+in the run's last group; the table below maps the common ones.
 
 ---
 
@@ -174,7 +201,12 @@ the reason (A9).
 | Uploading a seed starts no run | §2b — the `push.paths` glob was dropped from the paste |
 | Any job: `remote: Permission … denied` on push | §3 — workflow permissions are read-only |
 | bundle red in `ingest` | TCGCSV: throttled cloud IP (APEX 205) or an unreleased set (landmine 42). Re-run once; if it persists the log names the group |
-| bundle red in `gate` | the gate's last lines say which check; the seed was sealed green, so this is the runner's environment — read the line |
+| bundle red in `gate` | the gate's last lines say which check; the take was gated green before its PR, so this is the runner's environment — read the line |
+| bundle red in `hashes` the week a set drops | since take 89 a 403/404 is "not published yet" and never counts; if it still stops, the canary failed — the CDN is refusing the runner (landmine 124) |
+| bundle red in `smoke` on a day with no code change | a fixture or an assertion with an expiry date (landmines 62, 114, 123); the log names the assertion |
+| `check` red on a PR at "runner-owned files" | the branch carries `catalog/prices_daily.json` or `hashes.json`; `git checkout origin/main -- catalog/prices_daily.json catalog/hashes.json`, commit, push (landmine 116) |
+| `check` red on a PR at `workflows` | `ci/<file>.yml` and `.github/workflows/<file>.yml` differ — copy one over the other; they are one file |
+| a Release or a Pages deploy from a branch | `branches: [ main ]` was lost from `build.yml`'s push trigger — put it back (landmine 122) |
 | pages skipped or red | §3 — Pages source is not "GitHub Actions" |
 | apk red at "no Android build-tools" | the runner image changed; open an issue with the log |
 | apk red at "APK is not signed by the committed sideload key" | `signing/optcghub.keystore` is missing from the tree — the seed lost it |

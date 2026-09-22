@@ -21,8 +21,10 @@ inherit here.
 `tools/pipeline.py` pulls the One Piece catalogue and prices from TCGCSV, joins
 them, computes a perceptual hash per printing, builds a SQLite catalogue, and
 assembles `www/`. `tools/gate.py` refuses to let anything ship that has drifted.
-CI runs the pipeline and the harnesses on push and produces a signed APK plus a
-Play AAB. You change `src/app.html` and `tools/*.py`; everything else is generated.
+CI runs the pipeline and the harnesses on every pull request (`check.yml`) and
+again on every merge to `main` (`build.yml`), which also produces a signed APK
+plus a Play AAB and publishes Release `take-N`. You change `src/app.html` and
+`tools/*.py`; everything else is generated.
 
 ## Rules that are not negotiable
 
@@ -75,23 +77,45 @@ DRAW", which no stub can. Both must pass; they measure different things on purpo
 
 ## Shipping a take
 
-Takes are numbered and never reused. In order:
+Takes are numbered and never reused. Since take 89, **one take is one branch
+and one pull request**, titled `take N — …`. The owner merges; the merge to
+`main` runs `build.yml`, which publishes Release `take-N` and deploys Pages.
+In order:
 
-1. Bump `VAULT_TAKE` in `BUILD`, and the title in `src/app.html`
-2. Write the `docs/HANDOFF.md` entry **before** shipping — what changed, what was
-   measured, what was ruled out, and what you got wrong
+1. Bump `VAULT_TAKE` in `BUILD` (the title in `src/app.html` takes it at build)
+2. Write the `docs/HANDOFF.md` entry **before** any code — what changed, what
+   was measured, what was ruled out, and what you got wrong — and the take's
+   **New at take N** paragraph in `ci/RELEASE.md` (the build refuses without it)
 3. New landmine for anything that bit you, numbered, never renumbered
-4. `python3 tools/stamp.py` then `python3 tools/gate.py`
-5. Rebuild `www/` **before** packaging — the version stamp lives in the built
-   artifact, not the source
+4. Rebuild: `bash ci/deps.sh`, then `python3 tools/pipeline.py` — render must
+   end `(mode: chrome)`; a clean run from an empty directory after any
+   pipeline change (PROTOCOL §6b)
+5. `bash tools/seal.sh --gate-only`, bare, never piped — stamps, then the gate
+6. Restore the runner-owned files: `git checkout -- catalog/prices_daily.json
+   catalog/hashes.json`. The nightly on `main` is their record (landmine 116);
+   the PR check refuses a branch that carries them
+7. Commit named paths (never `git add -A`), push the branch, open the PR. The
+   `check` workflow — the whole pipeline, with a read-only token — must be
+   green before you hand over. **Nothing opens with a red gate.**
+
+The workflow files travel in the PR like any file: `.github/workflows/*.yml`
+and `ci/*.yml` are one file each and the gate refuses a difference. If a push
+of `.github/workflows` is refused, hand the owner the `ci/` copy to paste
+(RUNBOOK §5b) and say so in the reply.
 
 ## What is generated, and must not be committed
 
 `www/bundle/`, `www/vendor/`, `catalog/`, `android/`, `node_modules/`,
 `*_payload.json`, `tcgcsv_cache/`, `img_cache/`, `*.sqlite`.
 
-Committed on purpose: `assets/logo-master.png` and `signing/vault.keystore`. The
-keystore is deliberate — a stable key is what lets take N install over take N−1.
+**Never from a branch:** `catalog/prices_daily.json`, `catalog/hashes.json`
+(committed by the nightly on `main` and nowhere else — landmine 116) and any
+`optcghub-seed*.zip` (the seed job would unpack it over the tree — landmine
+122; `.gitignore` refuses it).
+
+Committed on purpose: `assets/logo-master.png` and `signing/optcghub.keystore`.
+The keystore is deliberate — a stable key is what lets take N install over
+take N−1.
 
 **Never committed, ever:** the Play upload key. It lives in repository secrets
 and nowhere else, exactly as it does on APEX ORV.
@@ -112,12 +136,14 @@ worst outcome is not a missing feature. It is a collector selling a $467 card fo
 $5 because this app was confidently wrong about which printing they owned.
 
 
-## The seal (take 28)
+## The seal (take 28; `--gate-only` since take 89)
 
-`bash tools/seal.sh` — stamps, runs the gate **unpiped**, and zips only if the
-gate exits zero. Never seal by hand; landmine 103 is what a hand seal did.
-**Never pipe `seal.sh` either** — `seal.sh | tail` is the same hole one level
-up. Run it bare and read its last line.
+`bash tools/seal.sh --gate-only` — stamps, then runs the gate **unpiped**; in
+the branch flow the PR is the deliverable and the gate is the seal. Without the
+flag it also zips a seed — the recovery route, written outside the tree, and
+refused if pointed inside it. Never seal by hand; landmine 103 is what a hand
+seal did. **Never pipe `seal.sh` either** — `seal.sh | tail` is the same hole
+one level up. Run it bare and read its last line.
 
 ## Ledger writes are their own command (take 29)
 

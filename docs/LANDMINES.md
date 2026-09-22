@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 88.*
+*Current as of take 89.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -130,6 +130,10 @@ Start here. Do not read top to bottom.
 | Typing in a box zooms the whole page and hides a sheet | **119** |
 | Two workflows deploy one site and one wipes the other | **120** |
 | A workflow depends on a tool only the other one installs | **121** |
+| A branch push cancelled the nightly, or built a Release from a branch | **122** |
+| Smoke goes red on a date, with no code change, on a saved fixture | **123** |
+| Pipeline stops in hashes the week a set drops | **124** |
+| A new failure issue every night instead of one thread | **125** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -1723,6 +1727,70 @@ run would have failed at `app`. Found by reading what the first run would
 do before the owner pressed the button, and fixed by rehearsing the job in
 an empty directory with only its own installs. Rule: every workflow
 installs everything it uses itself, and is rehearsed from nothing.
+
+**122. A `push` trigger with `paths` and no `branches` runs the whole
+build on any branch that touches those paths. Found in the pre-move
+review, 2026-09-22, before the first branch existed.** `build.yml` listed
+`BUILD`, `src/**`, `tools/**`, `ci/**`, `package.json`,
+`capacitor.config.json` and `signing/**` under `push.paths` — and nothing
+under `push.branches`. A commit to a feature branch touching any of them
+would have run the full workflow on that branch: the `build` concurrency
+group with `cancel-in-progress` would have cancelled a running nightly,
+`bundle.sh` would have committed the day's prices to the branch, the apk
+job would have `--clobber`ed the current Release's assets with a build of
+unmerged code, and Pages would have been deployed from it. Eighty-eight
+takes never met this because a seed zip only ever landed on `main`. The
+owner added `branches: [ main ]` the same day; the PR check (`check.yml`)
+runs the pipeline with `contents: read` and none of the commit, release or
+deploy steps. Rule: a workflow that commits, releases or deploys names its
+branch, and a branch gets a check that can do none of those things.
+
+**123. A fixture recorded on a date is a test with an expiry — the
+Events fixture took the nightly down for three nights (09-18 to 09-20)
+and nobody saw it because the fourth night died earlier.** The saved TCG+
+events carry dates of 2026-09-16 and 09-17; `hunt.py --from-fixtures`
+builds the table with `now="2026-09-01"` — a pinned clock on the producer
+side — while smoke ran the app on the host's real `Date`. From 09-18 the
+app's `e.d >= today` filter left `EVENTS.rows()` empty, one assertion
+went red and the next threw on `rows()[0]`. Landmines 62 and 114 are the
+same shape for prices and counts; this is the shape for a clock. Fix: the
+smoke block that asserts the fixture runs under a `Date` pinned inside the
+fixture's window and restores the real one after, with the real-clock
+emptiness asserted as its control. Rule: when a fixture is built under a
+pinned `now`, the assertions run under the same `now`; a fixture and the
+clock it is read with are one thing.
+
+**124. The hashes guard counted "not published yet" as failure, and a
+miss was never retried. The 09-21 nightly, the week the Promotion Cards
+and Heroine's Edition printings landed on TCGCSV.** 77 new printings; 20
+of the first 69 tried returned 403 from the image CDN — ids 718642 and up,
+whose images the CDN had not published yet, while older ids returned 200
+from the same address (MEASURED 09-22). 26% is over the 20% guard, so the
+pipeline stopped, the misses were saved on the runner and never committed
+(the sidecar commit comes after the pipeline), and the next night tried
+the same 69 again. Separately, once an id was in `missing` nothing ever
+asked again: `retry_missing` existed and no caller passed it, so 220 ids
+were "known unavailable" forever, including any whose images arrived a
+week after release. Fix: a canary of three already-hashed images decides
+whether the CDN is serving us at all; a 403/404 is recorded as
+unpublished and kept out of the rate; timeouts, 5xx and undecodable bytes
+still count; and every missing id is retried each run. Rule: a guard
+distinguishes "the source refuses us" from "the source does not have it
+yet", and a list of misses is a queue, not a verdict.
+
+**125. `gh issue create --label X` fails outright when label X does not
+exist, and the fallback that "still creates the issue" made a new issue
+every night. Issues #8–#11, 2026-09-18 to 09-22.** A9's reporter looks up
+the open issue by label, appends a comment if found, else creates one with
+the label — falling back to an unlabelled create when that errors. The
+label was never created, so the labelled create failed every time, the
+fallback created an unlabelled issue, and the next night's lookup by label
+found nothing. Four red nights, four threads, none of them the one thread
+the design promised. Fix: `gh label create nightly-failure --force`
+(idempotent) before the lookup, and a green night closes the thread. Rule:
+a step that depends on a label, a tag or a secret existing creates it or
+checks for it first; a fallback that hides the failure is worse than the
+failure.
 
 ## §2 — Inherited from APEX ORV
 

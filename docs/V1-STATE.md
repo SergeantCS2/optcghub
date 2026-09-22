@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 88
+# V1-STATE — what exists, as of take 89
 
-*Current as of take 88.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 89.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -56,7 +56,7 @@ refresh from Pages (take 27).
 | Ads | AdMob 8.1.0, the app's own app ID with Google's test ad units (take 41); credit ledger; pending tray; reward from the event only | smoke; **no ad has been seen on a device** |
 | Onboarding | first-run tour v2 (6 cards), versioned; picture slots in assets/user; **New in this update** on Home once per take, from the release note (take 53) | render; smoke 3 |
 | Packaging | signed APK (committed sideload key), AAB branch for Play (needs 4 secrets), icon + splash from SVG, play-assets, CAMERA + POST_NOTIFICATIONS + AD_ID in the manifest | built every take since 9; signer verified by aapt2/apksigner |
-| CI | build.yml (seed → bundle → pages + apk), bootstrap.yml, nightly 21:30 UTC with sidecar commit-back, failure issue | **ran green on a runner at take 32; APK installed by the owner.** The nightly's commit message and a rejected-push retry fixed at take 33 after a rehearsal against a bare remote; bootstrap.yml re-pasted for landmine 108 |
+| CI | build.yml on `main` only (seed → bundle → pages + apk), nightly 21:30 UTC with sidecar commit-back and one labelled failure thread; **check.yml runs the whole pipeline on every PR with a read-only token (take 89)**; hunt.yml hourly; bootstrap.yml as recovery. Since take 89 the workflows live in git, byte-identical to their `ci/` copies, and a take is a PR the owner squash-merges | **ran green on a runner at take 32; APK installed by the owner.** Four red nights 09-18..21 read at take 89: the Events fixture's clock and the hashes guard's treatment of unpublished images (landmines 123, 124); both fixed with controls |
 | Self-test | More → Self-test: 14 on-device checks (catalogue, gate, search, fonts, storage, Filesystem, share, camera, ML Kit on a drawn code, notifications, ads, sync), shareable report | smoke 7 (take 45); **not yet run on the Fold** |
 | Scrubber | comments stripped from the shipped app on every build; the gate refuses a first name, an AI-vendor name, the conversational word, a credential, a container path or a leftover to-do marker anywhere public | scrub.py --selftest 6 controls; smoke 5 (take 35) |
 | Typography | four roles (display / comic / body / heavy), OFL/Apache faces bundled, 232 KB, licensed faces as a file drop in `assets/user/fonts/` | render.mjs: Chrome reports all four LOADED and h2 resolves to the display face, with a missing-file control; smoke 7 |

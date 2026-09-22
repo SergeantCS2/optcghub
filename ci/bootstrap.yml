@@ -1,6 +1,8 @@
 name: bootstrap
 
-# OP TCG Hub — first-run seed unpack. Pasted by hand ONCE, like build.yml.
+# OP TCG Hub — first-run seed unpack: the RECOVERY route since take 89, when
+# the tree moved to branches and PRs. Lives in git, kept BYTE-IDENTICAL to
+# ci/bootstrap.yml (the gate compares the two).
 #
 # Why this exists: the phone-only path to a new repo is "create repo, paste
 # two workflows, upload one zip as a Release asset, press Run". A Release
@@ -31,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.ref_name }}          # APEX landmine 85
 

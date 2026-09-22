@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 88.* Ranked by blocking-ness, not by interest.
+*Current as of take 89.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -13,7 +13,11 @@ The live order, top first. Everything below this block is the record of how
 each item got where it is; this block is what to do next.
 
 **The owner's, gating everything else**
-1. Push the current seed; keep `hunt.yml` at take 84 or later.
+1. **Merge take 89's PR** (squash), then confirm the next nightly is green
+   and the four failure issues are down to one closed thread. Open
+   `registry.npmjs.org`, `pypi.org` and `files.pythonhosted.org` in the
+   session's environment (take 89 could not rebuild without them). Decide
+   the vendor-name question for git metadata (take 89's HANDOFF).
 2. **A Diagnostics paste** (More → About ×5) — the blank-after-Back has a
    watchdog since take 86 that names its trigger; nothing else can.
 3. **D22** background stock checks; **D21** local stock for unserved zips;
@@ -22,17 +26,19 @@ each item got where it is; this block is what to do next.
 5. D7 the icon; D16 the faces; the `.aab` filename before production.
 
 **Mine, in order**
-1. Whatever the diagnostics paste names.
-2. **A33 item 6** — pictures on Collect's rows and Decks as on Hunt's.
-3. **A32**: retailer sources one session each with the real page in hand
+1. **A36** — the set chips in the filter sheet return zero cards (take 89,
+   INFERRED from the code; reproduce in Chrome first).
+2. Whatever the diagnostics paste names.
+3. **A33 item 6** — pictures on Collect's rows and Decks as on Hunt's.
+4. **A32**: retailer sources one session each with the real page in hand
    (GTS and Southern Hobby are reachable; GameStop, Walmart, Meijer, eBay
    need a residential IP → the sideload build); the restock pattern
    sentence once a fortnight of hourly history exists on Pages.
-4. **A23** the sim's tail — modal effects, ordering, protection, the
+5. **A23** the sim's tail — modal effects, ordering, protection, the
    opponent's hidden choices — one mechanism per take, when wanted.
-5. **A31** Collectr import, the day a real exported file exists.
-6. The two standing offers: seed attached to releases (a `build.yml`
-   paste), the release-notes trim.
+6. **A31** Collectr import, the day a real exported file exists.
+7. The standing offer: the release-notes trim. (The seed-on-releases
+   `build.yml` offer is moot since take 89: takes ship as PRs.)
 
 **Closed since the last audit (takes 57–88):** A26 colour/contrast/desktop,
 A29 stock decks, A30 the tester report in full, A33 five of six, A34
@@ -1007,6 +1013,30 @@ other's.
    Reprints from Bandai and the distributors. Each source lands with a
    probe in smoke that proves the parser against a saved real response and
    a control that fails on a changed shape.
+
+## A36 — The set chips in the filter sheet return zero cards · OPENED take 89 · unreproduced
+
+Recorded from the take-35 listing-frames session, never written down until
+the pre-move review. Tapping a set chip in Filter & sort — either scope —
+leaves nothing in the list.
+
+- **INFERRED from the code (take 89, not yet reproduced):** the chip's
+  click handler pushes `c.dataset.fv` — a string, because it came through
+  the DOM — onto `f.set`, and `applyFilter` asks `f.set.includes(p.set)`
+  with `p.set` an int from the bundle (MEASURED at take 35: 17675). Strict
+  equality never matches, so every row fails the set test. The chip's `on`
+  state (`f[key].includes(v)` with `v` the int from `bySet`) and the saved
+  filters in localStorage carry the same mismatch, so the chip also stops
+  showing as selected once the sheet reopens.
+- **Ruled out: a data problem.** The bundle's `set` field is an int on every
+  printing and the chips are built from those same ints; the comparison is
+  the bug, not the catalogue.
+- **Ruled out: the other facets.** `rarity`, `color`, `type`, `treat` and
+  `cond` are strings on both sides.
+- **Next:** reproduce in Chrome (render.mjs: click a set chip, count the
+  rows) with the mismatch as the negative control; then compare as strings
+  on both sides and migrate the saved filters on load. One function. A
+  product change, so a take of its own after 89.
 
 ## A35 — The fourth look, after Hunt's first live run · OPENED take 86
 

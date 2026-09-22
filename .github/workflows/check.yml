@@ -1,0 +1,59 @@
+name: check
+
+# OP TCG Hub — the PR check (take 89). Runs on every pull request into main:
+# the whole pipeline (ingest, history, catalogue, hashes, validate, app, smoke,
+# Chrome render, stamp, gate) on the PR's merge commit, and nothing that
+# writes outside the runner — no price commit, no sidecar commit, no Pages, no
+# release. build.yml does those, on main only (landmine 122). The token is
+# read-only here on purpose: this job cannot publish anything even by mistake.
+#
+# Lives in git; kept BYTE-IDENTICAL to ci/check.yml (the gate compares the
+# two). If a push of .github/workflows is refused, paste ci/check.yml here
+# (RUNBOOK §5b).
+
+on:
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45     # hashes are the long pole the week a set drops: MEASURED 8.3/s
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'    # Capacitor 8 requires Node 22+
+
+      # The same cache the nightly writes on main; a PR may read it and its own
+      # writes stay scoped to the PR (GitHub's cache isolation).
+      - name: Restore catalogue cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            tcgcsv_cache
+            catalog/catalog.sqlite
+          key: catalog-${{ github.run_number }}
+          restore-keys: catalog-
+
+      - name: Deps, the runner-owned-files guard, the whole pipeline
+        run: bash ci/check.sh
+
+      # The Chrome receipt (landmine 112), kept a week so a red render can be looked at.
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: render
+          path: www/render.png
+          if-no-files-found: ignore
+          retention-days: 7

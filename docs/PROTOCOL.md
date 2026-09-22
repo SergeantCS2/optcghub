@@ -1,6 +1,6 @@
 # PROTOCOL
 
-*Current as of take 88.*
+*Current as of take 89.*
 
 The working rules for this project. The gate enforces the ones it can.
 
@@ -10,32 +10,48 @@ here. Sections marked **[NEW]** are specific to a collection tracker.
 
 ---
 
-## 0. Start of every session **[INHERITED, extended take 32 for a seed start]**
+## 0. Start of every session **[INHERITED; take 32 for a seed start; rewritten take 89 for the branch flow]**
 
-When the session starts from a seed zip rather than a live tree:
+The session starts in a git checkout of the repo, on its own branch. The tree
+is the truth; the record of what shipped is the Release page and the Actions
+tab, not a folder a previous session remembers filling.
 
-0. **Unzip the seed** to `~/vault-seed`. Confirm `BUILD` says the
-   take you expect. If the container already holds a tree, the seed wins.
-1. **Verify the deliverables** where the owner reaches them: the session's
-   outputs folder should carry the last seed and APK; if not, that is the first fix.
+0. **Confirm where you are:** `git status`, `git log -3 main`, and `BUILD`
+   says the take you expect — the last one merged. Your branch starts from
+   `main`.
+1. **Verify the deliverables where the owner reaches them:** the latest
+   Release `take-N` carries the APK he installs, and Actions shows the last
+   nightly green. A red nightly or a missing Release is the first fact of the
+   take — read the run's last group before anything else (RUNBOOK §8). Four
+   red nights went unread once because the take's brief said one.
 2. **Read** `V1-STATE.md`, then `HANDOFF.md` newest-first, then `LANDMINES.md`
    §0, then `AGENDA.md`. In that order; the state document is the map.
-3. **Rebuild once, in full:** `npm install --no-save puppeteer acorn` then
-   `python3 tools/pipeline.py` (a seed carries no TCGCSV cache, so ingest
-   must run; the gate wants Chrome's render receipt, so render must run in
-   Chrome — `mode: chrome` in its last line, landmine 112). Green before any
-   change. Red on a fresh seed means the
-   seed was sealed wrong, and that is the take.
+3. **Rebuild once, in full:** `bash ci/deps.sh` (pillow, puppeteer, acorn)
+   then `python3 tools/pipeline.py`. A fresh checkout has no TCGCSV cache, so
+   ingest must run; the gate wants Chrome's render receipt, so render must
+   run in Chrome — `mode: chrome` in its last line, landmine 112. Green
+   before any change; red on an untouched `main` is the take. **If a host is
+   blocked, name it** — the package registries and the image CDN have been —
+   and the owner opens it in the environment. Do not route around it.
 4. **Open the HANDOFF entry** for the new take before any code (§6). Bump
-   `BUILD`.
+   `BUILD`. Write the `ci/RELEASE.md` paragraph.
+5. **Ship as a PR** (AGENTS, *Shipping a take*): gate green bare, the
+   runner-owned files restored, named paths committed, the branch pushed, a
+   PR titled `take N — …`, the `check` workflow green. The owner merges; the
+   merge builds.
+
+**Recovery, not the flow:** `bash tools/seal.sh` still writes a seed zip —
+outside the tree — and the `seed` and `bootstrap` jobs still rebuild the tree
+from one (RUNBOOK §6). A seed zip is never committed (landmine 122).
 
 The inherited list follows and still applies.
 
 
 **Deliverables are verified where the person reaches them.** A session that hands
-over work checks what is ACTUALLY in the outputs directory — not what a previous
-session remembers putting there. Every sealed seed carries its take number in its
-filename (`optcghub-seed-tNNN.zip`) and its sha256 is printed beside it.
+over work checks what is ACTUALLY on the Release and in Actions — not what a
+previous session remembers putting there. Every Release carries its take in
+its tag; a seed zip, when one is made, carries it in its filename
+(`optcghub-seed-tNNN.zip`) with its sha256 printed beside it.
 
 **One-off audit probes are code and get the same suspicion as checks.** A probe
 is verified against a known-true case before its findings are believed.
