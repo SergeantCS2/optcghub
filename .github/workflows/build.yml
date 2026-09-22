@@ -17,6 +17,7 @@ name: build
 on:
   workflow_dispatch:
   push:
+    branches: [ main ]
     paths:
       - 'optcghub-seed*.zip'
       - BUILD
