@@ -48,9 +48,20 @@ publishes Release take-N and deploys Pages. No product changes.
 `storage.googleapis.com` (puppeteer's Chrome download). Reachable:
 `tcgcsv.com`, the image CDN, `api.frankfurter.dev`, Pages. The owner opens
 the first three; Chromium is preinstalled and puppeteer takes it through
-`PUPPETEER_EXECUTABLE_PATH`, so the fourth is not needed. Until the hosts
-are open there is no rebuild, no Chrome render and no gate — and nothing
-ships on an unrun gate.
+`PUPPETEER_EXECUTABLE_PATH`, so the fourth is not needed. The Ubuntu
+archives answered 403 too, so no `apt` route either. Until the hosts are
+open there is no rebuild, no Chrome render and no gate — and nothing ships
+on an unrun gate. What could run here, ran: every new guard's controls
+(`hashes.py --selftest`, `check.sh --selftest`, `gate.py --selftest` with
+the two new probes, the seal's refusal of an output folder inside the
+tree, `git check-ignore` on a seed zip), the scrubber over the ledgers, and
+every gate check that needs no build.
+
+**The push of `.github/workflows/*` from the session was accepted
+(PROVEN, 23:40 UTC):** the GitHub App holds the Workflows permission, so
+the workflow files travel in the PR and the paste in RUNBOOK §5b is the
+fallback only. The branch push started no workflow run (PROVEN on the
+Actions tab) — landmine 122's fix holds.
 
 ### Built
 
