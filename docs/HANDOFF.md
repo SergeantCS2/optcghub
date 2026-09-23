@@ -105,6 +105,11 @@ commits).
   smoke's has. Eight takes of Chrome hid it. One line; **10 passed, 0
   failed (mode: dom)** here — markup only, and it says so; the gate still
   refuses that as a receipt (landmine 112), correctly.
+- **`.gitignore` gains the rest of `www/`** — the subset fonts, `hunt/`,
+  `privacy.html`, `render.png`: `build_app.py` writes them and only
+  `bundle/`, `app.js` and `index.html` were listed, so the first build
+  in a git checkout left six untracked files a careless `git add` would
+  have shipped. Named paths are the rule; the ignore is the guard.
 - **The scrubber** is clean over the ledgers; `catalog/rates.json`, which
   the app build refreshes, is restored — only the seed drops ever
   committed it and it is not this take's.
