@@ -1905,7 +1905,7 @@ function tradeSearch(side) {
   } else pool = CAT.rows.filter(p => p.num);
   const hits = pool.filter(p => (p.full + ' ' + p.num).toLowerCase().includes(q)).slice(0, 12);
   out.innerHTML = hits.length ? `<div style="border:1px solid var(--line);border-radius:10px;margin-bottom:8px">${hits.map(p =>
-    `<button class="row" style="width:100%;text-align:left;padding:8px 10px" data-tradd="${side}:${p.id}">
+    `<button class="row" style="width:100%;text-align:left;padding:8px 10px;align-items:center" data-tradd="${side}:${p.id}">
       ${cardPic(p)}<div class="nm"><b>${esc(p.name)}${p.treat !== 'base' ? ` <span class="badge">${esc(TREAT[p.treat] || p.treat)}</span>` : ''}</b>
       <span>${esc(p.num)} \u00b7 ${esc((CAT.sets.get(p.set) || {}).abbr || '')}</span></div>
       <div class="v mono">${money(p.market)}</div></button>`).join('')}</div>` : '<div class="note">No match.</div>';
@@ -2572,7 +2572,7 @@ function paintHome() {
     .map(i => ({ i, p: CAT.byId.get(i.id) })).filter(x => x.p)
     .sort((a, b) => (b.p.market || 0) * b.i.qty - (a.p.market || 0) * a.i.qty).slice(0, 4);
   $('#topList').innerHTML = top.length ? top.map(({ i, p }) => `
-    <div class="row">${cardPic(p)}<div class="nm">
+    <div class="row" style="align-items:center">${cardPic(p)}<div class="nm">
       <b>${esc(p.name)}${p.treat !== 'base'
         ? ` <span class="badge">${esc(TREAT[p.treat] || p.treat)}</span>` : ''}</b>
       <span>${esc(i.condition)} \u00b7 ${esc(p.sub || 'Normal')} \u00b7 ${esc(p.num)}</span>
@@ -2584,7 +2584,7 @@ function paintHome() {
   const prog = setProgress();
   $('#setDone').innerHTML = prog.length ? prog.slice(0, 8).map(x => {
     const pct = x.all ? Math.round(100 * x.have / x.all) : 0;
-    return `<button class="row" style="width:100%;text-align:left" data-checklist="${x.s.id}">${setPic(x.s, 36)}<div class="nm">
+    return `<button class="row" style="width:100%;text-align:left;align-items:center" data-checklist="${x.s.id}">${setPic(x.s, 36)}<div class="nm">
         <b>${esc(x.s.name || '?')}</b>
         <span>${x.have} of ${x.all} numbers \u00b7 ${pct}% \u00b7 tap for the checklist</span>
         <span class="spreadbar" style="display:block;margin-top:6px;height:4px">
@@ -3077,7 +3077,7 @@ function showMovers() {
     .sort((a, b) => Math.abs(b.d1a) - Math.abs(a.d1a)).slice(0, 8);
   const day = (CAT.man.history_days || []).slice(-1)[0] || '';
   const prev = (CAT.man.history_days || []).slice(-2)[0] || '';
-  const line = (p, extra) => `<button class="row" style="width:100%;text-align:left" data-open="${p.id}">
+  const line = (p, extra) => `<button class="row" style="width:100%;text-align:left;align-items:center" data-open="${p.id}">
       ${cardPic(p)}<div class="nm"><b>${esc(p.name)}${p.treat !== 'base'
         ? ` <span class="badge">${esc(TREAT[p.treat] || p.treat)}</span>` : ''}</b>
       <span>${esc(p.num)} \u00b7 ${money(p.market)}${extra || ''}</span></div>
@@ -3657,7 +3657,7 @@ function paintSearch() {
     $('#allRes').innerHTML = '';
     $('#setPanel').style.display = 'block';
     $('#setList').innerHTML = [...CAT.sets.values()].map(s =>
-      `<button class="row" style="width:100%;text-align:left" data-browse-set="${s.id}">
+      `<button class="row" style="width:100%;text-align:left;align-items:center" data-browse-set="${s.id}">
         ${setPic(s, 36)}<div class="nm"><b>${esc(s.name)}</b>
         <span>${esc(s.abbr || '')} \u00b7 ${s.n} cards</span></div>
        <div class="v" style="color:var(--dim)">${esc((s.pub || '').slice(0, 4))}</div></button>`).join('');
@@ -3668,7 +3668,7 @@ function paintSearch() {
     .slice(0, 60).map(x => x.p);
   $('#allRes').innerHTML = `<div class="panel">${hits.map(p => {
     const s = CAT.sets.get(p.set) || {};
-    return `<button class="row" style="width:100%;text-align:left" data-open="${p.id}">
+    return `<button class="row" style="width:100%;text-align:left;align-items:center" data-open="${p.id}">
       ${cardPic(p)}<div class="nm"><b>${esc(p.name)}${p.treat !== 'base'
         ? ` <span class="badge">${esc(TREAT[p.treat] || p.treat)}</span>` : ''}</b>
       <span>${esc(p.num)} \u00b7 ${esc(s.abbr || s.name || '')}${
@@ -4444,7 +4444,7 @@ function openDetail(id) {
   const sibs = candidates(p.num, null);
   $('#dSiblings').innerHTML = sibs.map(q => {
     const qs = CAT.sets.get(q.set) || {};
-    return `<button class="row" style="width:100%;text-align:left" data-open="${q.id}">
+    return `<button class="row" style="width:100%;text-align:left;align-items:center" data-open="${q.id}">
       ${cardPic(q)}<div class="nm"><b>${esc(TREAT[q.treat] || q.treat)}${
         q.id === p.id ? ' \u2190 this one' : ''}</b>
       <span>${esc(qs.abbr || qs.name || '')}${q.prov ? ' \u00b7 ' + esc(q.prov) : ''}</span></div>
