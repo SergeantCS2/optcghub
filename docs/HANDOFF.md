@@ -138,7 +138,11 @@ before it ships, against the opened host.
   row template and not to the per-set one: the harness caught a half-done
   edit before a phone did. Then **634 passed, 0 failed** (615 before, 19
   new), the DOM render 10, `hunt.py --selftest` 61 lines (39 before), the
-  scrubber clean. The three Chrome assertions run on the runner.
+  scrubber clean. **PROVEN on the runner, first run (check run 15, head
+  f773f83, 06:53 UTC): render 93 passed, 0 failed (mode: chrome)** — 90
+  before, the three new green — smoke **634 passed, 0 failed** there too,
+  **GATE PASSED**, hash coverage 100.0%, pipeline 31 s. One runner cycle
+  for the take, against take 93's three.
 - **The live run from this VM:** the host answered 200 for the twelve
   pages saved between 05:50 and 06:25 UTC — the fixture is one of them,
   fetched with the module's own URL shape — and the proxy has refused
