@@ -93,8 +93,10 @@ answers to the plan: the harness first (take 99), the pictures probe next
   nothing and only the log's last line showed it. Anchored to `/look/`;
   smoke asserts `git check-ignore` refuses the step list (smoke 685).
 - **The runner (check run 26, head e15382a, first run): smoke 685, render
-  106 in Chrome, GATE PASSED** — 45 s with the catalogue cache warm. The
-  PR stays draft until the owner has replied to the pictures (A40).
+  106 in Chrome, GATE PASSED** — 45 s with the catalogue cache warm; run
+  27 green on the numbers commit. The owner reviewed the eight pictures
+  ("Screenshots look good, go") and the PR was marked ready — the first
+  take shipped through A40's loop.
 
 ### DEFERRED this cycle
 
