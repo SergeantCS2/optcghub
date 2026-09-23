@@ -1917,5 +1917,60 @@ section('take 93 — a picture beside every row that had none (A33 item 6)');
   V.go('home');
 }
 
+{
+section('take 94 — the distributor: GTS Distribution in the feed, under the rows, on Releases, as an alert source');
+/* the feed under test is built from the SAVED real listing page (tools/fixtures/gts_listing.html), never a live fetch */
+const fxDir94 = fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-gts-')); const feed94 = path.join(fxDir94, 'feed-fixture.json');
+execSync(`python3 tools/hunt.py --from-fixtures --out ${feed94}`, { cwd: ROOT, stdio: 'pipe' });
+const F94 = JSON.parse(fs.readFileSync(feed94, 'utf8')); const G = F94.sources.gts;
+ok('the feed carries the distributor source: ok, a fetch time, the count the site said and the saved page\'s eleven products', !!G && G.ok && !!G.fetched_at && G.count === 49 && Array.isArray(G.items) && G.items.length === 11, JSON.stringify(G && { ok: G.ok, count: G.count, n: (G.items || []).length }));
+const ST94 = ['sold_out', 'call', 'in_stock', 'preorder', 'coming', 'out', 'unknown'];
+ok('every item: sku, name, a URL on the distributor, a named state, allocation as a boolean, an ISO release date or none',
+   G.items.every(i => i.sku && i.name && /^https:\/\/www\.gtsdistribution\.com\//.test(i.url) && ST94.includes(i.status) && typeof i.allocated === 'boolean' && (i.release === null || /^\d{4}-\d\d-\d\d$/.test(i.release))));
+const by = Object.fromEntries(G.items.map(i => [i.sku, i]));
+ok('the states read as measured: OP-19 sold out and allocated, PEB-01 coming (preorders open 2026-10-14), a sleeve assortment in stock, a figure on call, a released sleeve display out',
+   by.BJP2884797.status === 'sold_out' && by.BJP2884797.allocated === true && by.BJP2897699.status === 'coming' && by.BJP2897699.preorder === '2026-10-14' && by.BJP9056341.status === 'in_stock' && by.BJPBAS69321.status === 'call' && by.BJP2835333.status === 'out');
+ok('control: the ST44 display is sold out but NOT allocated -- the flag is read off the page, never inferred from sold out', by.BJP2904577.status === 'sold_out' && by.BJP2904577.allocated === false);
+const nm94 = id => (V.CAT.byId.get(id) || {}).name;
+ok('OP-16\'s 24-count booster matches The Time of Battle Booster Box -- not the Box Case (landmine 134)', nm94(by.BJP2850164.catalog_id) === 'The Time of Battle Booster Box', String(nm94(by.BJP2850164.catalog_id)));
+ok('ST-36\'s 6-count display matches the Display; DP-11 matches Vol. 11 Display; IB-07 matches Illustration Box Vol. 7',
+   /^Starter Deck 36.*Display$/.test(nm94(by.BJP2855988.catalog_id) || '') && nm94(by.BJP2850166.catalog_id) === 'Double Pack Set Vol. 11 Display' && nm94(by.BJP2864562.catalog_id) === 'One Piece Card Game Illustration Box Vol. 7',
+   [nm94(by.BJP2855988.catalog_id), nm94(by.BJP2850166.catalog_id), nm94(by.BJP2864562.catalog_id)].join(' | '));
+ok('controls: OP-19, PEB-01 and ST44 have no set in the catalogue and match nothing -- a wrong match is worse than none', by.BJP2884797.catalog_id === null && by.BJP2897699.catalog_id === null && by.BJP2904577.catalog_id === null);
+ok('the app never fetches the distributor: no distributor host in the shipped app, and the history rows carry each SKU\'s state', !/gtsdistribution\.com/.test(js) && (() => { const h = JSON.parse(fs.readFileSync(path.join(fxDir94, 'history-fixture.json'), 'utf8')); return h.runs[0].gts && h.runs[0].gts.BJP2884797 === 'sold_out'; })());
+ok('Diagnostics names the distributor beside the feed', /, gts \$\{HUNT\.feed\.sources && HUNT\.feed\.sources\.gts/.test(js));
+/* on screen: the panel, the row line, the dead-source text */
+V.HUNT.feed = F94; V.HUNT.setZip(''); V.MODE.set('hunt', false); V.SEALED.kind = 'all'; V.SEALED.q = '';   // a known state: earlier sections leave a kind chip or a search behind
+for (const id of Object.keys(V.HUNT.distByCatalogId())) { const p = V.CAT.byId.get(+id); if (p) { V.SEALED.closed.delete(p.set); V.SEALED.open.add(p.set); } }
+V.paintSealed(); const h94 = ctx.document.querySelector('#sealedList').innerHTML;
+ok('the matched products\' rows are on screen (their sets opened)', Object.keys(V.HUNT.distByCatalogId()).every(id => new RegExp('data-open="' + id + '"').test(h94)), `${Object.keys(V.HUNT.distByCatalogId()).length} matched, kind ${V.SEALED.kind}, q "${V.SEALED.q}"`);
+ok('the Sealed screen carries a GTS Distribution panel with the counts and what a distributor is', /<h3>GTS Distribution<\/h3>/.test(h94) && /11 One Piece products at the distributor: <b>7<\/b> sold out, <b>8<\/b> allocated, 0 with preorders open, 1 coming, 1 in stock for stores/.test(h94) && /A distributor sells to stores, not to you/.test(h94));
+ok('a matched row carries the distributor line in its words: sold out, allocated, MSRP named as MSRP with the case configuration, the release date, the age',
+   new RegExp('data-open="' + by.BJP2850164.catalog_id + '"[\\s\\S]*?GTS Distribution · sold out · allocated · MSRP \\$119\\.76 \\(12 cards / 24 packs / 12 displays\\) · release 2026-06-12 · (just now|\\d+ min ago)').test(h94),
+   (h94.match(/GTS Distribution · [^<]{0,140}/) || ['no distributor line in #sealedList'])[0]);
+ok('a coming preorder says when it opens, on the Releases list (no catalogue product to hang it on)', (() => { V.paintReleases(); return /PREMIUM EXTRA BOOSTER \(PEB01\)[\s\S]*?GTS Distribution · preorders open on 2026-10-14 · allocated · MSRP/.test(ctx.document.querySelector('#relList').innerHTML); })());
+const dead94 = JSON.parse(JSON.stringify(F94)); dead94.sources.gts = { ok: false, error: 'HTTP 403', fetched_at: F94.fetched_at, stale_since: F94.fetched_at, items: [] };
+V.HUNT.feed = dead94; V.paintSealed(); V.paintReleases();
+ok('a failed distributor fetch says it could not reach GTS Distribution and since when, on Sealed and on Releases, never an empty list', /Could not reach GTS Distribution since/.test(ctx.document.querySelector('#sealedList').innerHTML) && /Could not reach GTS Distribution since/.test(ctx.document.querySelector('#relList').innerHTML));
+V.HUNT.feed = F94; V.paintReleases(); const rel94 = ctx.document.querySelector('#relList').innerHTML;
+ok('Releases lists what the distributor has that the catalogue lacks, by release date, with the codes: OP-19 first, then PEB-01 and ST44',
+   /<h3>At the distributor, not in the catalogue yet<\/h3>/.test(rel94) && /BOOSTER \(OP-19\)[\s\S]*?<span>OP19<\/span>[\s\S]*?PEB01[\s\S]*?ST44/.test(rel94) && rel94.slice(rel94.indexOf('At the distributor'), rel94.indexOf('<h3>Recent</h3>')).split('class="row"').length === 4,
+   (rel94.match(/At the distributor[\s\S]{0,700}/) || ['no distributor panel in #relList'])[0].replace(/\s+/g, ' '));
+ok('the OP18 row (in the catalogue, releasing 2026-11-20) carries the distributor line: sold out, allocated', /<span>OP18 · [^<]*<\/span><span style="display:block;color:var\(--brass\)">GTS Distribution · sold out · allocated/.test(rel94));
+ok('control: a set the distributor does not list (OP17) carries no distributor line', /<span>OP17 · [^<]*<\/span><\/div>/.test(rel94) && !/<span>OP17 · [^<]*<\/span><span[^>]*>GTS/.test(rel94));
+/* the alert source */
+const watched94 = V.CAT.byId.get(by.BJP2850164.catalog_id);
+V.STOCK.list = []; V.STOCK.toggle(watched94.id);
+const s94 = V.STOCK.sourcesFor(watched94.id); const gsrc = s94.find(x => /^gts:/.test(x.key));
+ok('a watched product has the distributor as a source, keyed by SKU, not available while sold out, with the fetch time and the product link', !!gsrc && gsrc.key === 'gts:BJP2850164' && gsrc.available === false && gsrc.at === G.fetched_at && /gtsdistribution\.com/.test(gsrc.url), JSON.stringify(gsrc));
+await V.STOCK.check();
+by.BJP2850164.status = 'in_stock'; const f1 = await V.STOCK.check(); const f2 = await V.STOCK.check();
+by.BJP2850164.status = 'preorder'; const f3 = await V.STOCK.check();
+by.BJP2850164.status = 'sold_out'; await V.STOCK.check(); by.BJP2850164.status = 'preorder'; const f4 = await V.STOCK.check();
+ok('the alert fires once when the distributor flips to in stock for stores, not again while it stays or when it turns to an open preorder, and again after it went out and came back', f1 === 1 && f2 === 0 && f3 === 0 && f4 === 1, `${f1} ${f2} ${f3} ${f4}`);
+by.BJP2850164.status = 'sold_out'; V.STOCK.toggle(watched94.id); V.STOCK.list = [];
+V.HUNT.feed = null; V.MODE.set('collect', false);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

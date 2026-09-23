@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 93.*
+*Current as of take 94.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -143,6 +143,8 @@ Start here. Do not read top to bottom.
 | A Hunt file is a 404 on Pages and its sibling is days old, under a green workflow | **130** |
 | The self-test fails a check while quoting a correct answer | **131** |
 | A thumbnail shows a corner of the card, not the card | **132** |
+| Importing a tools script gets a package with none of its functions | **133** |
+| A test says "matched" and the product is the wrong one | **134** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -1901,6 +1903,26 @@ reading the CSS for take 93; measured in Chrome the same take. Rule: an
 `<img>` gets its box from one shared class (`pic`), never from a
 container's inline style alone, and a render assertion measures the
 image's rectangle against its box — the box alone proves nothing.
+
+**133. `import hunt` from `tools/` is the package, not the script.**
+`tools/hunt.py` and the package `tools/hunt/` share a name, and Python
+resolves `import hunt` to the package — so a test or a session that
+loads the script that way gets `AttributeError: module 'hunt' has no
+attribute 'match'` and can conclude the function is missing. Found at
+take 94 measuring the matcher against the distributor's names. Rule: a
+script is loaded by path (`importlib.util.spec_from_file_location`) or
+run as a command; a module and a package never share a name in new code.
+
+**134. A matcher tie resolved by row order, under a test that asserted
+"matched something".** `match()` scores the share of a title's words
+found in a product's words; "Booster Box" and "Booster Box Case" both
+score 1.0 for every booster-box title, and the first row wins — the Box,
+by the accident of product-id order, since take 71. The selftest asserted
+`mid is not None`. Found at take 94 reading the scores, not by any
+failure. Rule: a match test names the product it expects and a control
+names the product it must not pick; a tie between a product and its
+superset breaks toward the fewer extra words (the closer name), never
+toward order.
 
 ## §2 — Inherited from APEX ORV
 

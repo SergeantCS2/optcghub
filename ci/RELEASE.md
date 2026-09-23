@@ -1,4 +1,4 @@
-# OP TCG Hub — take 93
+# OP TCG Hub — take 94
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,12 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 94:** Hunt reads the distributor. GTS Distribution's One
+Piece list — release date, preorder open or not yet, sold out, allocated
+— shows under each sealed product it lists, with a distributor panel that
+says what those words mean; Releases lists the sets announced there
+before TCGplayer has them; a stock alert can watch a distributor restock.
 
 **New at take 93:** a picture beside every card and set in the lists that
 had none — search results, biggest moves, the set browse, a card's other

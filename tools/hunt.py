@@ -13,7 +13,7 @@ as failed with the reason and the last good time stays in the feed.
 import argparse, json, os, re, sqlite3, sys, time
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tools"))
-from hunt import target, roster, shops  # noqa: E402
+from hunt import target, roster, shops, gts  # noqa: E402   (landmine 133: this is the package tools/hunt/, not this file)
 
 OUT = os.path.join(ROOT, "www", "hunt", "feed.json")
 HIST = os.path.join(ROOT, "www", "hunt", "history.json")
@@ -56,6 +56,9 @@ def snapshot(feed):
     """One run of the feed as a compact time-series row: per item the online
     status, per served zip per item the per-store quantity. ~2 KB a run."""
     t = feed["sources"]["target"]; row = {"t": feed["fetched_at"], "online": {}, "shelf": {}}
+    g = feed["sources"].get("gts") or {}
+    if g.get("ok") and not g.get("kept"):                    # take 94: each SKU's state, so a flip is dated from now on
+        row["gts"] = {it["sku"]: it["status"] for it in g.get("items", [])}
     if not t.get("ok"):
         return row
     for it in t.get("items", []):
@@ -77,12 +80,21 @@ def append_history(prev_hist, feed):
 
 STOP = {"one", "piece", "card", "game", "bandai", "tcg", "the", "of", "-", "english", "ver", "version", "sealed", "new",
         "trading", "cards", "packs", "with", "and", "edition", "official"}
-CODE = re.compile(r"^(op|eb|st|prb)\d{2,}$")
+CODE = re.compile(r"^(op|eb|st|prb|peb|dp|ib)\d{2,}$")
 
 
 def tokens(s):
-    """Set codes are normalised so 'EB-04', 'EB04' and 'eb 04' agree."""
-    low = re.sub(r"\b(op|eb|st|prb)[ -]?0*(\d+)\b", lambda m: m.group(1) + m.group(2).zfill(2), (s or "").lower())
+    """Set codes are normalised so 'EB-04', 'EB04' and 'eb 04' agree. Take 94,
+    from the distributor's names: DP, IB and PEB numbers are codes too (a code
+    pins the set, so DP-14 with no catalogue product matches nothing rather
+    than Vol. 13 at 0.8 -- rule 4); 'Double Pack Set Vol. 11' and
+    'Illustration Box Vol. 7' carry their code even when the name does not
+    say DP-11 or IB-07; and 'Vol. 7' is one token, so Vol. 7 and Vol. 8
+    differ by a whole word instead of by a digit the scorer ignores."""
+    low = re.sub(r"\b(op|eb|st|prb|peb|dp|ib)[ -]?0*(\d+)\b", lambda m: m.group(1) + m.group(2).zfill(2), (s or "").lower())
+    low = re.sub(r"\bdouble pack set vol(?:ume)?\.?\s*0*(\d+)\b", lambda m: m.group(0) + " dp" + m.group(1).zfill(2), low)
+    low = re.sub(r"\billustration box vol(?:ume)?\.?\s*0*(\d+)\b", lambda m: m.group(0) + " ib" + m.group(1).zfill(2), low)
+    low = re.sub(r"\bvol(?:ume)?\.?\s*0*(\d+)\b", lambda m: "vol" + m.group(1), low)
     return {t for t in re.findall(r"[a-z0-9]+", low) if t not in STOP}
 
 
@@ -129,7 +141,10 @@ def match(title, sealed):
             continue                                         # a set code in the title is unambiguous: stay inside that set
         words = t - {code} if code else t
         sc = len(words & s["toks"]) / max(1, len(words))
-        if sc > score:
+        # Landmine 134: 'Booster Box' and 'Booster Box Case' both score 1.0 for
+        # every booster-box title. A tie breaks toward the product with fewer
+        # words of its own -- the closer name -- never toward row order.
+        if sc > score or (sc == score and best is not None and len(s["toks"]) < len(best["toks"])):
             best, score = s, sc
     bar = 0.5 if code else 0.7
     return (best["id"], round(score, 2)) if best and score >= bar else (None, round(score, 2))
@@ -165,6 +180,16 @@ def build(zips, radius, previous=None, fixtures=False):
         last = previous["sources"]["target"]; last["stale_since"] = last.get("stale_since") or feed["fetched_at"]; last["error"] = t.get("error"); last["kept"] = True
         t = last
     feed["sources"]["target"] = t
+    # take 94: the distributor. Matched through the retail name (the site names
+    # case packs); a failed fetch keeps the last good one and says since when.
+    g = gts.from_fixture(os.path.join(ROOT, "tools", "fixtures", "gts_listing.html")) if fixtures else gts.fetch()
+    if g.get("ok"):
+        for it in g["items"]:
+            it["catalog_id"], it["match_score"] = match(gts.retail_title(it["name"]), sealed)
+    elif previous and previous.get("sources", {}).get("gts", {}).get("ok"):
+        last = previous["sources"]["gts"]; last["stale_since"] = last.get("stale_since") or feed["fetched_at"]; last["error"] = g.get("error"); last["kept"] = True
+        g = last
+    feed["sources"]["gts"] = g
     return feed
 
 
@@ -189,8 +214,29 @@ def selftest():
         check("control: sleeves match nothing (no box/pack/deck kind, low overlap)", mid2 is None, f"score {sc2}")
         mid4, sc4 = match("Bandai One Piece Card Game The Best Vol.2 (PRB-02) Booster Box (Japanese) - 10 Packs", sealed)
         check("control: a JAPANESE release is never matched to the English catalogue", mid4 is None, "different product, different price")
+        # take 94: the match names its product, and a control names the one it must not pick (landmine 134)
+        name = lambda mid: next((s["name"] for s in sealed if s["id"] == mid), None)   # noqa: E731
+        check("a booster-box title matches the Booster Box, not the Booster Box Case (landmine 134)", name(mid3) == "Romance Dawn - Booster Box", str(name(mid3)))
+        g1 = match(gts.retail_title("ONE PIECE TCG: TIME OF BATTLE BOOSTER (OP-16) (24CT)"), sealed)
+        check("the distributor's 24-count booster matches the set's Booster Box", name(g1[0]) == "The Time of Battle Booster Box", str(name(g1[0])))
+        g2 = match(gts.retail_title("ONE PIECE TCG: (TITLE TBA) STARTER DECKS DISPLAY (ST-36) (6CT)"), sealed)
+        check("the distributor's 6-count starter deck display matches the Display, not the single deck", (name(g2[0]) or "").startswith("Starter Deck 36") and (name(g2[0]) or "").endswith("Display"), str(name(g2[0])))
+        g3 = match(gts.retail_title("ONE PIECE TCG DOUBLE PACK SET VOLUME 11 (DP-11) (8CT)"), sealed)
+        check("DP-11 matches Double Pack Set Vol. 11 Display", name(g3[0]) == "Double Pack Set Vol. 11 Display", str(name(g3[0])))
+        g4 = match(gts.retail_title("ONE PIECE TCG: ILLUSTRATION BOX VOLUME 7 (IB-07)"), sealed)
+        check("IB-07 matches Illustration Box Vol. 7 -- not Vol. 8, not the case", name(g4[0]) == "One Piece Card Game Illustration Box Vol. 7", str(name(g4[0])))
+        g5 = match(gts.retail_title("ONE PIECE TCG: EXTRA BOOSTER (EB-05) (24CT)"), sealed)
+        check("EB-05 matches its Booster Box", name(g5[0]) == "Extra Booster: One Piece Heroines Edition Vol.2 - Booster Box", str(name(g5[0])))
+        for title in ("ONE PIECE TCG: (TITLE TBA) BOOSTER (OP-99) (24CT)", "ONE PIECE TCG DOUBLE PACK SET VOLUME 99 (DP-99) (8CT)", "ONE PIECE TCG: PREMIUM EXTRA BOOSTER (PEB99) (12CT)", "ONE PIECE TCG: ILLUSTRATION BOX VOLUME 99 (IB-99)"):
+            mm = match(gts.retail_title(title), sealed)
+            check(f"control: a code the catalogue has no set for matches nothing ({title.split('(')[1].rstrip(') ')})", mm[0] is None, f"score {mm[1]} -> {name(mm[0])}")
+        g6 = match(gts.retail_title("ONE PIECE TCG: GIFT COLLECTION: NOBODY"), sealed)
+        check("control: a collection the catalogue lacks is not matched to an older namesake", g6[0] is None, f"score {g6[1]} -> {name(g6[0])}")
+        g7 = match(gts.retail_title("ONE PIECE TCG: OFFICIAL SLEEVE DISPLAY ASSORTMENT 13 (12CT)"), sealed)
+        check("control: a sleeve display (no box, pack or deck) is not matched to a box, pack or deck", g7[0] is None or not any(k in (name(g7[0]) or "").lower() for k in ("box", "pack", "deck")), str(name(g7[0])))
     else:
         print("  skip  no catalogue here; match checks run where catalog.sqlite exists")
+    ok &= gts.selftest(open(os.path.join(fx, "gts_listing.html"), encoding="utf8").read())
     ev = json.load(open(os.path.join(fx, "events_us.json")))["events"]
     ok &= roster.selftest(ev, roster.zcta())
     # take 92, landmine 130: a failed rebuild keeps the roster AND the events table
@@ -340,4 +386,13 @@ if __name__ == "__main__":
         print(f"   cursor: {t.get('cursor')} (the next run continues from here)")
     else:
         print(f"   target: FAILED {t.get('error')}" + (" (kept the last good fetch)" if t.get("stale_since") else ""))
+    g = feed["sources"]["gts"]
+    if g.get("kept"):
+        print(f"   gts: this fetch FAILED ({g.get('error')}); kept the last good fetch from {g.get('fetched_at')} (stale since {g.get('stale_since')})")
+    elif g.get("ok"):
+        n = g["items"]; st = lambda s: sum(1 for i in n if i["status"] == s)   # noqa: E731
+        print(f"   gts: {len(n)} of {g.get('count')} products ({sum(1 for i in n if i.get('catalog_id'))} matched), {st('sold_out')} sold out, {sum(1 for i in n if i['allocated'])} allocated, "
+              f"{st('preorder')} preorders open, {st('coming')} coming, {st('in_stock')} in stock, {st('call')} call; {g.get('calls')} call(s)")
+    else:
+        print(f"   gts: FAILED {g.get('error')}")
     print(f"   feed: {os.path.relpath(a.out, ROOT)} {os.path.getsize(a.out) // 1024} KB")
