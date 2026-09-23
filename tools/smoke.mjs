@@ -1490,6 +1490,39 @@ ok('...and the app hides it after it has painted, no sooner than 1.6 s (a second
 /* take 83: the third look -- uniformity, pictures, the blank back */
 ctx.window.scrollTo = () => {}; ctx.scrollTo = () => {};
 ok('go() refuses an id with no screen: falls back to the mode\'s home and records the id (the blank page after Back)', (() => { const before = V.ERRS.list.length; V.MODE.set('collect', false); V.go('no-such-screen'); return V.ERRS.list.length === before + 1 && /no screen for 'no-such-screen'/.test(V.ERRS.list[0].msg) && V.NAV.stack[V.NAV.stack.length - 1] === 'home'; })());
+
+/* take 91 -- A37, landmine 128. The one link a person taps to reach More
+   (Home's "More · settings, export, sources") had bounced to Home since
+   take 83: the section was built on first paint and the guard above ran
+   first. Drive go('settings') the way the delegate does; the assertion
+   above (an id with no screen) is this block's negative control. */
+section('take 91 — More is a screen (A37, landmine 128)');
+{
+  V.MODE.set('collect', false);
+  const before = V.ERRS.list.length;
+  V.go('settings');
+  const el = ctx.document.getElementById('settings');
+  ok("go('settings') lands on More, not on Home", V.NAV.stack[V.NAV.stack.length - 1] === 'settings', V.NAV.stack.slice(-2).join('>'));
+  ok('...and records no "no screen" error', V.ERRS.list.length === before, JSON.stringify(V.ERRS.list[0] || null));
+  ok('#settings is a <section> in the markup, not built on demand', !!el && el.tagName === 'SECTION');
+  ok('More painted its rows: About (the Diagnostics gesture), Export CSV, Sync',
+     !!el && /id="aboutTake"/.test(el.innerHTML) && /Export CSV/.test(el.innerHTML) && /id="syncBtn"/.test(el.innerHTML));
+  V.MODE.set('play', false); V.go('settings');
+  ok('the gear on Decks reaches the same screen', V.NAV.stack[V.NAV.stack.length - 1] === 'settings' && V.ERRS.list.length === before);
+  V.MODE.set('collect', false); V.go('home');
+  /* the buffer survives a restart (take 91): what the watchdog writes must
+     outlive the relaunch that follows a blank screen */
+  V.ERRS.push('error', 'planted for take 91', 'app.js:1');
+  const saved = JSON.parse(store['vault.errs'] || '[]');
+  ok('an error record is written to storage as it is pushed',
+     saved.length > 0 && saved[0].msg === 'planted for take 91' && saved.length <= 20, String(saved.length));
+  ok('a fresh load reads the same records back',
+     typeof V.ERRS.load === 'function' && !!V.ERRS.load()[0] && V.ERRS.load()[0].msg === 'planted for take 91');
+  store['vault.errs'] = 'not json';
+  ok('negative control: a corrupt buffer loads empty instead of throwing',
+     typeof V.ERRS.load === 'function' && V.ERRS.load().length === 0);
+  delete store['vault.errs'];
+}
 ok('NAV.back() pops past anything that is not a screen', (() => { V.NAV.stack = ['sealed', 'ghost', 'local']; const r = V.NAV.back(); return r && V.NAV.stack[V.NAV.stack.length - 1] === 'sealed'; })());
 ok('the bottom bar is one bar in every mode: fixed height, near-black, items stretch equally, the accent only on the active item', /nav\{[^}]*height:66px[^}]*#0B0D10/.test(html) && /nav button\{flex:1 1 0/.test(html) && /nav button\.on\{color:var\(--brass\)\}/.test(html));
 ok('every screen title bar has the same minimum height', /\.bar\{[^}]*min-height:56px/.test(html));

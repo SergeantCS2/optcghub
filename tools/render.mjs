@@ -85,6 +85,31 @@ if (puppeteer) {
   const totalText = await page.$eval('#pfTotal', e => e.textContent);
   ok('the portfolio total is DRAWN and non-zero',
      /\$\d/.test(totalText) && totalText !== '$0.00', totalText);
+
+  /* take 91 -- A37, landmine 128: the one link a person taps to reach More
+     had bounced to Home since take 83 (the section was built on first
+     paint; the take-83 guard refused the id first). Tap it as a person does. */
+  await page.evaluate(() => document.querySelector('#home [data-go="settings"]').click());
+  await new Promise(r => setTimeout(r, 250));
+  const more = await page.evaluate(() => ({
+    on: (document.querySelector('.screen.on') || {}).id,
+    heading: ((document.querySelector('#settings .bar .tab') || {}).textContent || '').trim(),
+    about: (document.querySelector('#aboutTake') || {}).textContent || '',
+    rows: ['#stRun', '#syncBtn', '[data-act="export"]'].filter(sel => document.querySelector('#settings ' + sel)).length,
+    take: window.VAULT.TAKE }));
+  ok("More: tapping Home's link opens the More screen, not Home", more.on === 'settings', String(more.on));
+  ok('More: the heading and the About line are drawn with the take',
+     more.heading === 'More' && more.about.includes('Take ' + more.take), `${more.heading} / ${more.about}`);
+  ok('More: Self-test, Sync and Export are on it', more.rows === 3, String(more.rows));
+  for (let i = 0; i < 5; i++) await page.evaluate(() => document.querySelector('#aboutTake').click());
+  await new Promise(r => setTimeout(r, 200));
+  ok('More: five taps on About reach Diagnostics',
+     await page.evaluate(() => (document.querySelector('.screen.on') || {}).id === 'diag'));
+  ok('negative control: an id with no screen still lands on Home with a record (the take-83 guard)',
+     await page.evaluate(() => { const V = window.VAULT; const n = V.ERRS.list.length; V.MODE.set('collect', false); V.go('no-such-screen');
+       return (document.querySelector('.screen.on') || {}).id === 'home' && V.ERRS.list.length === n + 1 && /no-such-screen/.test(V.ERRS.list[0].msg); }));
+  await page.evaluate(() => document.querySelector('nav button[data-go="home"]').click());
+  await new Promise(r => setTimeout(r, 200));
   /* Landmine 62: never assert a live market price. Compute the expected total
      from the catalogue the app itself loaded. */
   const want = await page.evaluate(() => {
