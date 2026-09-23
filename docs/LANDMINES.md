@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 97.*
+*Current as of take 98.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -147,6 +147,7 @@ Start here. Do not read top to bottom.
 | A test says "matched" and the product is the wrong one | **134** |
 | Tapping a row does nothing, in one mode | **135** |
 | An element set `hidden` still draws | **136** |
+| Back from a card's sheet lands on Home (the blank page after Back) | **137** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -1946,6 +1947,21 @@ runner's Chrome assertion on take 95's first run (check run 17). Rule: an
 element hidden by attribute gets a `<selector>[hidden]{display:none}`
 rule beside its display rule, and the render measures its height, not
 its attribute.
+
+**137. A screen listed as an overlay: Back turns it off and navigates
+nowhere, and a watchdog that heals the symptom hides the cause.**
+`closeAnyOverlay()` (take 81) closed `#detail` like a picker; the card
+sheet became a screen at take 83 (`go('detail')` pushes it on the stack).
+Every hardware Back from a sheet turned the sheet off, returned before
+`NAV.back()`, left no screen on — and the take-86 watchdog put the mode's
+home back 60 ms later, so the owner saw "Back goes to Home" and the
+harness saw nothing: smoke never drove the back handler's sequence, and
+the record was unreadable until take 91 and taken as "not recurring" at
+take 94. Eight records in one hour on the take-97 install named it. Rule:
+an overlay list holds overlays only — never a section; a back-path test
+drives the handler's exact sequence from a sheet and asserts the previous
+screen is on and no blank record was written; a "closed" item stays open
+until its record says so.
 
 ## §2 — Inherited from APEX ORV
 

@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 97.* Ranked by blocking-ness, not by interest.
+*Current as of take 98.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -29,11 +29,11 @@ each item got where it is; this block is what to do next.
 5. D7 the icon; D16 the faces; the `.aab` filename before production.
 
 **Mine, in order**
-1. **A38, in take order:** 95 (the Releases tap, the sealed sheet, the
-   alert you can find — merged) → 96 (where to buy, under each listing —
-   merged) → 97 (Releases: starter decks grouped, the countdown coloured,
-   a release reminder and add-to-calendar); then whatever the next release
-   answers name.
+1. **A39, take 98:** Back from a sheet (landmine 137), the most-valuable
+   rows, one splash colour, a toast that wraps, the Starter decks fold,
+   the condition segment in place and explained. Then the owner's picture
+   answer decides A39 item 3.
+2. **A38** — all eight done (takes 95–97, merged and released).
 2. **A32**: retailer sources one session each with the real page in hand
    (GTS built at take 94; Southern Hobby next, its host is open; GameStop,
    Walmart, Meijer, eBay need a residential IP → the sideload build); the
@@ -1061,6 +1061,44 @@ names (a normaliser on the source side), three set-code families and a
 tie-break (landmine 134). **Next:** Southern Hobby, same shape, its own
 take; the state timeline from the history rows.
 
+## A39 — The take-97 look: seven items from the third install · OPENED take 97
+
+The owner installed 97 (over 96, in place), answered the release report
+for takes 95–97 with five screenshots and the Diagnostics paste, and named:
+
+1. **"Back button is still weird … takes me to Collect's home instead of
+   the previous page"** — and the paste's eight `blank: no screen on after
+   hardware back … >detail` records. The blank-after-Back, root-caused:
+   `closeAnyOverlay()` closed the card sheet as if it were an overlay
+   (landmine 137). → take 98.
+2. **"Make starter decks automatically collapsed"** (the Sealed section).
+   → take 98.
+3. **"Still some missing pictures, namely releases and some newer packs —
+   these 100% have pictures on TCG"** — the catalogue's CDN URLs answer
+   404 for them; TCGplayer's own pages use a second image host. A
+   two-URL question to the owner decides whether a second host is worth a
+   take (PROVISION, landmine 29). Open.
+4. **"I haven't seen the tutorial popup in a while"** — the guide shows
+   once per install (`GUIDE_KEY`); there is no row to reopen it. Answered;
+   a More row is a later item.
+5. **"The loading screen has the default color, then changes to the
+   color of … whatever I was doing last. It should be the same constant
+   color"** → take 98.
+6. **"I can't click the cards directly in most valuable"** → take 98.
+7. **The condition buttons "still don't work, I click them and the page
+   seems to refresh. I'm still confused what they even do"** — a tap
+   repainted the whole sheet and nothing said the tap chooses the
+   condition recorded with the copy you add → take 98, in place and
+   explained. Also from the answers: the reminder toast ran off both sides
+   of the screen → take 98, a toast that wraps.
+
+**Ruled out:** treating the sheet as an overlay again (it navigates, so it
+goes through the stack); a second image host on a guess (the owner's
+measurement first, then PROVISION); a background check for anything.
+
+**Order:** take 98 (1, 2, 5, 6, 7, the toast) → the picture answer decides
+3 → A32 Southern Hobby.
+
 ## A38 — The take-94 look: eight items from the first install with a distributor · OPENED take 94
 
 The owner installed take 94, answered the release questions in order
@@ -1238,9 +1276,12 @@ state:
    mode's home and records the id in the error buffer), and `NAV.back()`
    pops until it finds a real screen. The record will name the cause the
    next time. *(take 83; the record could not be read until take 91 and
-   did not survive a restart until then — A37; **closed take 94**: the
-   owner, after takes 91–94 on the Fold with no record and no repeat —
-   "Back arrow improved … call it fixed")*
+   did not survive a restart until then — A37; "closed" take 94 at the
+   owner's word after takes 91–94 with no record; **reopened take 97 by
+   the record itself** — eight `no screen on after hardware back …
+   >detail` entries in one hour — and **closed take 98 by the cause**:
+   `closeAnyOverlay()` treated the card sheet as an overlay, landmine
+   137; the watchdog had been healing it to Home since take 86)*
 6. **Overall "non-uniform and basic"** — the owner's own diagnosis is the
    lack of pictures; item 4 is the first step, and the same treatment for
    Collect's rows and Decks follows once Hunt's is seen. *(take 93: a card

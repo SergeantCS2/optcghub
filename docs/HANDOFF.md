@@ -1,4 +1,108 @@
-# HANDOFF — through Take 97
+# HANDOFF — through Take 98
+
+## Take 98 — 2026-09-23 — the take-97 look: Back from a sheet goes back (landmine 137), and six small things the third install named
+
+Opened before any code (PROTOCOL §6). Take 97 merged at 08:18 UTC (PR
+#21, merge commit 15e65eb) on its first runner cycle; Release take-97
+was published at 08:23 with the APK and the AAB (GitHub's tag view lists
+a release's assets a minute late; the assets endpoint had both at once —
+not a failure). The owner installed 97 over 96 in place (the same signing
+key; that is what A8 is for) and answered the release report (08:41 UTC):
+**takes 95–97 PROVEN on the Fold** — the release tap lands on Sealed with
+the query, the chips draw under every row (three on Set Sail, two on the
+starter decks, wrapping to a second line), the sealed sheet reads "Sealed
+— no condition" with its Where-to-buy panel, the card sheet reads
+"Condition · Near Mint", the countdown and the Remind/Calendar buttons
+draw. **Local and Events fill** (3,395 stores, 19,369 rows on the phone);
+notifications are granted; 17 of 17.
+
+**The paste answered the oldest open question.** *Last errors* carries
+eight watchdog records in one hour, every one `blank: no screen on after
+hardware back; stack …>detail`. That is the blank-after-Back (A33 item
+5, "closed" at the owner's word at take 94 and reopened here by its own
+record) and his note today — *"I click back and it takes me to Collect's
+home instead of the previous page"* — is the same fault seen from the
+other side: the watchdog healed the blank by putting Home back.
+
+### Measured first
+
+- **The cause (PROVEN by reading the code against the record):**
+  `closeAnyOverlay()` lists `#detail` among the overlays it closes; the
+  card sheet has been a *screen* (`<section id="detail" class="screen">`,
+  opened through `go('detail')`) since take 83. The hardware back turns
+  the sheet off and returns before `NAV.back()` runs, so no screen is on
+  and the stack still ends in `detail` — exactly the record. Since take
+  81's overlay list; the take-86 watchdog healed the symptom on every
+  press and the record could not be read until take 91. Landmine 137.
+- **Home's most-valuable rows** are `<div class="row">` — nothing to tap;
+  every other list's row is a `<button data-open>`.
+- **The splash** paints `var(--bg)`, which is the mode's colour, so it
+  jumps from Collect's blue to the last mode's palette when that mode is
+  restored. The owner wants one constant colour.
+- **The toast** is `white-space:nowrap` in a pill; the take-97 reminder
+  toast ran off both sides of the screen.
+- **The Starter decks section on Sealed** is open by default (take 87);
+  the owner wants it folded.
+- **The condition segment** on a card's sheet repaints the whole sheet on
+  a tap (`openDetail(dCur.id)`), which reads as "the page refreshes", and
+  nothing says what a tap does: it chooses the condition recorded with the
+  copy you add.
+- **The pictures still missing on Releases and some newer packs:** the
+  catalogue carries a CDN URL for each; the CDN answers 404 for them from
+  the runner's side (take 95's reading). The owner is sure TCGplayer shows
+  them — TCGplayer's own pages use a second image host
+  (`product-images.tcgplayer.com`), which this session cannot probe. Two
+  URLs go to the owner as a question; a second host is a PROVISION and
+  landmine-29 decision, not a quiet fallback.
+- **The guide** shows once per install (`GUIDE_KEY`), and there is no row
+  to reopen it — an answer, and an item for later.
+- **Ruled out:** treating the sheet as an overlay again (it navigates);
+  a second image host without the owner's measurement; a background
+  check.
+
+### Built
+
+- `closeAnyOverlay()` no longer touches `#detail`: the back button pops
+  the stack and lands on the screen the sheet came from. Smoke drives the
+  handler's exact sequence and a control with the picker open; Chrome
+  runs it for real and asserts no blank record is written.
+- Home's most-valuable rows are buttons that open the card.
+- The splash is one colour in every mode (Collect's, as literals).
+- The toast wraps within the screen.
+- The Starter decks section on Sealed starts folded.
+- A condition tap updates the segment, the line, the quantity and the
+  cost basis in place; the card note says what the tap does.
+- Tests: smoke 680 (14 new, every one watched to fail on the take-97
+  build first: the overlay list, the sheet-on control, the picker control,
+  the most-valuable rows twice, the splash, the toast, the decks fold, the
+  condition handler, the tap on an unowned card, the tap on an owned copy
+  with quantity and cost basis, the refused sixth condition, the note);
+  the DOM render 10 here; Chrome 106 on the runner (five new) — the
+  runner's numbers are recorded below when the check reports them. Two
+  tests were wrong before the product was: `OWN.add()` takes no cost
+  basis (it is set on the sheet), so the smoke test sets it on the
+  returned copy; and the Chrome back-path test opened Sealed with no zip
+  set, so the zip prompt sheet was open when the history event fired and
+  Back closed the prompt first, rightly (take 81) — check run 24 read
+  that as the sheet staying (`after: detail`, no record). Reproduced
+  here in a real Chrome (playwright is installed globally on this VM,
+  `/opt/node22/lib/node_modules/playwright`, with Chromium under
+  `/opt/pw-browsers` — the first real browser this session has had; the
+  harness still wants puppeteer, which npm refuses). The test now closes
+  every overlay before the Back and reports the ones it found, and the
+  prompt case is its control.
+- **The condition buttons had never worked** (PROVEN by reading, then by
+  the test): the tap set the condition and the repaint reset it to the
+  owned copy's, or to NM. The owner's "I click them and the page seems to
+  refresh" was exact.
+
+### DEFERRED this cycle
+
+- **The pictures on Releases and the newest packs** — the owner's two-URL
+  measurement decides whether a second image host is worth its own take.
+- A row in More to reopen the guide.
+- **Southern Hobby** (A32); the distributor state timeline; the package
+  hosts in this session.
 
 ## Take 97 — 2026-09-23 — A38 items 1 and 5: Releases — starter decks grouped, the countdown coloured, a release reminder and the calendar
 

@@ -92,7 +92,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
 .rel{border-bottom:1px solid var(--line)}
 .rel .cd1{color:var(--up);font-weight:700} .rel .cd2{color:var(--brass)} .rel .cd3{color:var(--fg)} .rel .cd4{color:var(--dim2)}   /* take 97: the countdown by nearness */
 .rel:last-child{border-bottom:0}
-#splash{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:var(--bg);
+#splash{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:#0B1622;
   background-image:radial-gradient(60% 45% at 50% 35%,color-mix(in srgb,var(--brass) 18%,transparent) 0%,transparent 70%);
   transition:opacity .35s ease;color:var(--brass)}
 #splash.off{opacity:0;pointer-events:none}
@@ -455,7 +455,7 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
 .toast{position:fixed;left:50%;bottom:calc(96px + var(--sab));transform:translateX(-50%);z-index:50;
   background:#1d2426;border:1px solid var(--line);border-radius:999px;
   padding:10px 18px;font-size:13.5px;font-weight:600;opacity:0;transition:opacity .2s;
-  pointer-events:none;white-space:nowrap}
+  pointer-events:none;white-space:normal;max-width:min(92vw,520px);text-align:center;box-sizing:border-box}
 .toast.on{opacity:1}
 /* The app is built for a phone and Pages serves the same file to a desktop
    browser (take 60). Rather than pretend to be a desktop app, it stays a
@@ -2453,7 +2453,11 @@ function screenWatchdog(trigger) {
 }
 function closeAnyOverlay() {
   const ask = $('#askSheet'); if (ask && ask.classList.contains('on')) { $('#askCancel').click(); return true; }   // resolves the pending ask() with null, cleanly
-  for (const id of ['#picker', '#detail', '#tour', '#simCurtain']) { const el = $(id); if (el && el.classList.contains('on')) { el.classList.remove('on'); return true; } }
+  /* take 98 (landmine 137): #detail is a SCREEN since take 83 -- go('detail')
+     pushes it on the stack -- and closing it here returned before NAV.back()
+     ran, so every Back from a card's sheet left no screen on and the watchdog
+     put Home back. An overlay list holds overlays only. */
+  for (const id of ['#picker', '#tour', '#simCurtain']) { const el = $(id); if (el && el.classList.contains('on')) { el.classList.remove('on'); return true; } }
   return false;
 }
 function go(id) {
@@ -2583,13 +2587,13 @@ function paintHome() {
     .map(i => ({ i, p: CAT.byId.get(i.id) })).filter(x => x.p)
     .sort((a, b) => (b.p.market || 0) * b.i.qty - (a.p.market || 0) * a.i.qty).slice(0, 4);
   $('#topList').innerHTML = top.length ? top.map(({ i, p }) => `
-    <div class="row" style="align-items:center">${cardPic(p)}<div class="nm">
+    <button class="row" style="width:100%;text-align:left;align-items:center" data-open="${p.id}">${cardPic(p)}<div class="nm">
       <b>${esc(p.name)}${p.treat !== 'base'
         ? ` <span class="badge">${esc(TREAT[p.treat] || p.treat)}</span>` : ''}</b>
       <span>${esc(i.condition)} \u00b7 ${esc(p.sub || 'Normal')} \u00b7 ${esc(p.num)}</span>
     </div><div class="v mono">${money((p.market || 0) * i.qty)}
       <span>${deltaHtml(p, { pctOnly: true })}${i.qty > 1 ? ' \u00b7 \u00d7' + i.qty : ''}</span>
-    </div></div>`).join('')
+    </div></button>`).join('')
     : '<div class="note">Scan a card and it will show up here.</div>';
 
   const prog = setProgress();
@@ -3401,7 +3405,7 @@ function buyChips(p) {
   return `<div class="chips buy" style="flex-basis:100%">${buySources(p).map(chip).join('')}</div>`;
 }
 const SEALED = {
-  q: '', kind: 'all', open: new Set(), closed: new Set(),
+  q: '', kind: 'all', open: new Set(), closed: new Set(['decks']),   // take 98: the Starter decks section starts folded (the owner's word)
   /* TCGCSV files DON!! cards as sealed because they have no number; they are
      single cards, not product, and stay out of this screen (232 of them). */
   isProduct(p) { return p.sealed && p.market > 0 && !/don!! card/i.test(p.name || ''); },
@@ -4545,7 +4549,7 @@ document.addEventListener('click', e => {
 /* ---- detail ------------------------------------------------------------ */
 const CONDS = ['NM', 'LP', 'MP', 'HP', 'DMG'];
 const COND_NAMES = { NM: 'Near Mint', LP: 'Lightly Played', MP: 'Moderately Played', HP: 'Heavily Played', DMG: 'Damaged' };
-const COND_NOTE_CARD = 'Condition is <b>what you tell us</b>, not something the app can see. The free price feed publishes no per-condition figures, so OP TCG Hub records your condition beside the value and does not silently adjust for it.';
+const COND_NOTE_CARD = 'Tap a condition to choose the one this copy is recorded under: Save adds the copy with it, and each condition is its own line in your collection. Condition is <b>what you tell us</b>, not something the app can see. The free price feed publishes no per-condition figures, so OP TCG Hub records your condition beside the value and does not silently adjust for it.';
 const COND_NOTE_SEALED = 'A sealed product has <b>no condition to record</b>: the market price is for a factory-sealed copy. Opened, it becomes cards, each with its own.';
 let dCur = null, dQty = 1, dCond = 'NM';
 function openDetail(id) {
@@ -4638,9 +4642,24 @@ function openDetail(id) {
   }).join('');
   go('detail');
 }
+/* take 98 (A39 item 7): a condition tap used to repaint the whole sheet through
+   openDetail(), which reset dCond to the owned copy's condition (or NM) -- so
+   the tap did nothing and the page "refreshed". Now it updates in place: the
+   segment, the line, the quantity and the cost basis of the copy in that
+   condition. Save records the copy under the chosen condition. */
+function setCond(c) {
+  if (!dCur || !CONDS.includes(c)) return false;
+  dCond = c;
+  const owned = OWN.items.find(i => i.id === dCur.id && i.condition === dCond);
+  dQty = owned ? owned.qty : 1; $('#dQty').textContent = dQty;
+  $('#dCond').textContent = 'Condition · ' + (COND_NAMES[dCond] || dCond);
+  $('#dCondSeg').innerHTML = CONDS.map(k => `<button class="${k === dCond ? 'on' : ''}" data-cond="${k}">${k}</button>`).join('');
+  $('#dPaid').textContent = owned && owned.paid ? money(owned.paid) : 'Set';
+  return true;
+}
 document.addEventListener('click', e => {
   const c = e.target.closest('[data-cond]'); if (!c) return;
-  dCond = c.dataset.cond; openDetail(dCur.id);
+  setCond(c.dataset.cond);
 });
 $('#dPlus').addEventListener('click', () => { dQty++; $('#dQty').textContent = dQty; });
 $('#dMinus').addEventListener('click', () => { dQty = Math.max(1, dQty - 1); $('#dQty').textContent = dQty; });
@@ -5415,7 +5434,7 @@ async function runSelfTest() {
      day and a hardcoded placeholder is landmine 62 in a text box. */
   $('#allq').placeholder = `Search all ${(CAT.man.cards || 0).toLocaleString()} cards`;
   paintNet(); paintHome();
-  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, HUNT, targetLine, distLine, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
+  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, setCond, toast, HUNT, targetLine, distLine, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
                    cardPic, setPic, picBox, deckRow, paintHome, paintDecks, paintSearch, openDeck,
                    FILT, loadFilter, applyFilter, sortRows, blankFilter, activeCount,
                    DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,
