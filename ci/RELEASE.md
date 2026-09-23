@@ -1,4 +1,4 @@
-# OP TCG Hub — take 90
+# OP TCG Hub — take 91
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,11 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 91:** the More screen opens again — since take 83 the *More*
+link on Home had bounced back to Home, taking Export, Restore, Sync,
+Currency, the self-test and About with it — and the diagnostics report
+now keeps its last errors across a restart.
 
 **New at take 90:** the set chips in Filter & sort work — tapping a set
 shows that set's cards instead of nothing, and a chosen set stays

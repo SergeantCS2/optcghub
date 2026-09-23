@@ -1,4 +1,91 @@
-# HANDOFF — through Take 90
+# HANDOFF — through Take 91
+
+## Take 91 — 2026-09-23 — More opens again: unreachable since take 83; the diagnostics survive a restart
+
+Opened before any code (PROTOCOL §6). Take 90 merged at 01:33 UTC (PR
+#14, merge commit fa85758); build run 38 green, Release take-90 published.
+The owner's message was to carry the diagnostics paste and carried one
+sentence instead, on what he believes is take 88: *"more, settings, export,
+and etc buttons do nothing … clicking more takes me back to the top of the
+main page."* That sentence was enough.
+
+### The cause, read off the code twice (INFERRED, line-exact; PROVEN below)
+
+- **No mode's bottom nav has a More button.** The ways in are Home's
+  bottom link — `<button data-go="settings">More · settings, export,
+  sources</button>` — which is the label the owner was reading out, and
+  the gear on Decks. Hunt has no way in at all.
+- **`<section id="settings">` is not in the markup.** `paintSettings()`
+  creates it on its first run. Since take 83, `go()` checks that the id
+  names an existing `<section>` *before* it paints anything; a missing one
+  is refused: a `nav` record, `id = MODE.home[MODE.cur]`, Home toggled on,
+  `window.scrollTo(0, 0)`. The owner's words exactly. `paintSettings` is
+  never reached, the section is never built, every tap repeats it.
+- **So More has been unreachable on every build since take 83** — eight
+  takes, in Chrome as much as on the Fold — and with it Export, Backup,
+  Restore, Sync now, Currency, the self-test, About and the ×5 gesture to
+  Diagnostics. The ledger asked the owner for a paste three takes running
+  from a screen he could not open; `ci/RELEASE.md` sends every tester to
+  *More → Self-test* in its first lines. Nobody could have followed it.
+- **The error buffer is memory-only.** Every record — the watchdog's
+  included — dies at restart, so a paste after a relaunch would have said
+  *none* anyway.
+- **The take-86 entry is wrong against the code.** It says the watchdog
+  runs "after any navigation, hardware back or history back"; the code runs
+  it in the `finally` of the hardware-back and `popstate` handlers only.
+  Landmine 129. The entry stands as written; this one corrects it.
+- **No test drives that link.** Smoke taps the Diagnostics gesture directly
+  (`V.DIAG.tap()`); render clicks nav buttons only. A section that builds
+  itself is invisible to any sweep over `.screen`. Landmine 128.
+- **Ruled out:** an Android-only cause (Chrome bounces the same way); a
+  boot exception (Home paints and the `data-go` delegate works); a plugin
+  chain throwing (`PLATFORM.plugin` null-checks and try-wraps); WebView
+  syntax (one `||=`, three lookbehinds; a current WebView parses them).
+
+### This VM (MEASURED 2026-09-23 01:45 UTC)
+
+The three package hosts answer 403 as at takes 89 and 90; no pillow, no
+puppeteer; acorn is the global copy linked at take 90. Same route: smoke
+and the DOM fallback here, the runner's `check` as the gate in Chrome, a
+draft PR marked ready on green, no vendor trailer.
+
+### Reproduced, then fixed (PROVEN in this VM, on the shipped app.js)
+
+- **The reproduction, before the fix — smoke on the built take-91 app:**
+  `go('settings')` left the screen stack at `sealed>home` and wrote
+  `go() called with no screen for 'settings'` into the buffer; `#settings`
+  did not exist; the gear on Decks did the same. Eight assertions red, 592
+  green. Watched fail on purpose (AGENTS rule 2). The take-83 assertion
+  (an id with no screen lands on Home with a record) is this block's
+  negative control and stays green on both sides of the fix.
+- **The fix:** `<section id="settings" class="screen"></section>` is markup
+  beside the other screens; `paintSettings()` no longer builds it (the
+  create-on-demand branch is gone). `ERRS` keeps its twenty records in
+  `vault.errs` — written on every push, read at creation, a corrupt value
+  loads empty. `DIAG.report()` prints them as before, so a paste after the
+  relaunch that follows a blank screen carries what happened before it.
+- **After the fix:** smoke **600 passed, 0 failed** — the eight new: More
+  is reached from Home and from the Decks gear with no record, the section
+  is a `<section>` in the markup, its rows paint (About, Export CSV,
+  Sync), a pushed record lands in storage, a fresh load reads it back, a
+  corrupt buffer loads empty (the control). Render's DOM fallback: 10
+  passed, markup only.
+- **In Chrome, on the runner only:** five assertions — Home's More link
+  opens `#settings`, the heading and the About line carry the take, the
+  Self-test, Sync and Export rows exist, five taps on About reach
+  Diagnostics, and the take-83 guard still bounces an unknown id with a
+  record (the control). UNKNOWN until the check runs; recorded below.
+- **The build here** as at take 90: acorn linked from the global copy, no
+  `hashes` step (no pillow), no Chrome; `www/ take 91`.
+
+### DEFERRED this cycle
+
+- **The blank-after-Back cause** — still UNKNOWN. Take 91 makes the
+  diagnostics reachable and persistent; the first paste names it.
+- **A More button in the nav** — Hunt mode has no way to More at all; a
+  design question for the owner, not this fix.
+- The full rebuild and Chrome render in the session VM — the three hosts.
+- The rest of the Priorities order.
 
 ## Take 90 — 2026-09-23 — the set chips return their cards; the VM still cannot rebuild
 

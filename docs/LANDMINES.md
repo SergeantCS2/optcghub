@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 90.*
+*Current as of take 91.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -137,6 +137,9 @@ Start here. Do not read top to bottom.
 | A filter chip returns zero rows | **126** |
 | A chip lights on tap and is off when the sheet reopens | 126 |
 | render.mjs crashes before its first check when Chrome is absent | **127** |
+| Tapping More (or a settings gear) lands on Home, scrolled to the top | **128** |
+| Diagnostics says "none" after a restart | 128 |
+| A ledger describes a guard the code does not have | **129** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -1824,6 +1827,32 @@ not. Landmine 112 is about a seal that does not hear the fallback; this is
 the fallback itself rotting. Rule: a fallback path is exercised on
 purpose at least once per take that touches what it wraps, or its gate
 selftest runs it; "CI has Chrome" is why it rots, not why it is fine.
+
+**128. A screen that builds itself on first paint is refused by a guard
+that runs before the paint — More was unreachable from take 83 to take
+90, and no test opened it.** `<section id="settings">` was never in the
+markup; `paintSettings()` created it on its first run. Take 83's guard in
+`go()` — every screen is a `<section>`, refuse an id that is not one —
+ran first, so `go('settings')` recorded *no screen for 'settings'*, fell
+back to the mode's home and scrolled to the top, and the paint that would
+have built the section never ran. Eight takes; the tester guide's first
+instruction (*More → Self-test*) impossible to follow; the diagnostics
+the ledger kept asking for behind a screen nobody could open; and the
+error buffer that would have said so held in memory only, gone at every
+restart. Smoke tapped the Diagnostics gesture directly and render clicked
+nav buttons — neither ever tapped the one link a person taps. Rule: every
+screen is a `<section>` in the markup — the guard's own premise — and
+every entry point a person can tap is driven by the harness at least
+once; a thing built on demand is invisible to a sweep over what exists.
+
+**129. A ledger sentence that describes the design and not the diff.**
+Take 86's entry says the watchdog runs "after any navigation, hardware
+back or history back"; the code runs it in the `finally` of the two back
+handlers and nowhere else. The sentence was read at takes 87–90 as a
+promise that a bounced navigation would be recorded; it was not, and the
+More bounce (128) left no watchdog record because a screen was on. A
+claim about a mechanism is checked against the lines that built it
+before it is written — `grep` the trigger's call sites and list them.
 
 ## §2 — Inherited from APEX ORV
 

@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 90.* Ranked by blocking-ness, not by interest.
+*Current as of take 91.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -21,8 +21,11 @@ each item got where it is; this block is what to do next.
    and shipped through the runner's `check` instead; merge take 90's PR
    once its check is green. The vendor-name question: take 90 shipped with
    no trailer at your word — say if that stands.
-2. **A Diagnostics paste** (More → About ×5) — the blank-after-Back has a
-   watchdog since take 86 that names its trigger; nothing else can.
+2. **Install take 91, then a Diagnostics paste** (More → About ×5 →
+   Share). More was unreachable on takes 83–90 (A37), so no paste was ever
+   possible; from 91 the last errors also survive a restart. The
+   blank-after-Back's cause is still UNKNOWN and this is the only thing
+   that names it.
 3. **D22** background stock checks; **D21** local stock for unserved zips;
    **D20** a crowd-report inbox. Each caps a Hunt feature until answered.
 4. Shop URLs for stores he knows (A32's storefront list, one entry today).
@@ -41,9 +44,10 @@ each item got where it is; this block is what to do next.
 6. The standing offer: the release-notes trim. (The seed-on-releases
    `build.yml` offer is moot since take 89: takes ship as PRs.)
 
-**Closed since the last audit (takes 57–90):** A26 colour/contrast/desktop,
+**Closed since the last audit (takes 57–91):** A26 colour/contrast/desktop,
 A29 stock decks, A30 the tester report in full, A33 five of six, A34
-currency and splash, A35 all thirteen, A36 the set chips (take 90); A32
+currency and splash, A35 all thirteen, A36 the set chips (take 90), A37
+More unreachable (take 91); A32
 steps 1–3 and Local, Events, storefronts, stock alerts, the calendar tap,
 exact distances.
 
@@ -1016,6 +1020,33 @@ other's.
    probe in smoke that proves the parser against a saved real response and
    a control that fails on a changed shape.
 
+## A37 — More unreachable since take 83 · OPENED AND CLOSED take 91
+
+The owner, on take 88: *"more, settings, export, and etc buttons do nothing
+… clicking more takes me back to the top of the main page."* He was
+reading Home's bottom link — *More · settings, export, sources*.
+
+- **The cause (INFERRED from the code by two readings, PROVEN in smoke
+  before the fix — see the take-91 entry):** `<section id="settings">` was
+  never in the markup; `paintSettings()` built it on first run; take 83's
+  guard in `go()` refuses an id with no section before any paint runs, so
+  every tap on More recorded *no screen for 'settings'*, fell back to the
+  mode's home and scrolled to the top. Eight takes, 83–90, in Chrome as on
+  the Fold. Behind it: Export, Backup, Restore, Sync now, Currency, the
+  self-test, About, and the ×5 gesture to Diagnostics — so the paste the
+  Priorities block asked for since take 86 could not exist, and the error
+  buffer was memory-only besides. Landmines 128 and 129.
+- **Fixed take 91:** the section is static markup like every other screen;
+  the error buffer persists (`vault.errs`, twenty records) so a record
+  survives the restart that follows a blank screen.
+- **Ruled out: an Android-only cause** — Chrome bounced identically.
+  **Ruled out: a boot exception** — Home paints, the `data-go` delegate
+  works. **Ruled out: a plugin chain throwing** — `PLATFORM.plugin`
+  null-checks and try-wraps. **Ruled out: WebView syntax** — one `||=`,
+  three lookbehinds, all current.
+- **Open, the owner's:** whether More belongs in the nav (Hunt has no way
+  to it at all) — a design question, not this fix.
+
 ## A36 — The set chips in the filter sheet return zero cards · OPENED take 89 · REPRODUCED AND CLOSED take 90
 
 Recorded from the take-35 listing-frames session, never written down until
@@ -1060,7 +1091,8 @@ Thirteen items from the Fold, filed in the owner's order with their take:
 1. splash a second longer *(86)*; 2. starter decks their own section in Hunt
 *(87)*; 3. every set open in Sealed, the "4 ▸" gone *(86)*; 4. the Target
 panel's wording *(86)*; 5. back to a blank screen after closing a product —
-a watchdog restores the screen and records the stack *(86)*; 6. packs with
+a watchdog restores the screen and records the stack *(86; the record was
+unreadable until 91 — A37)*; 6. packs with
 no picture (EB03) — retry the photo without the size suffix *(86)*; 7. the
 Events list — MEASURED as real (3.9 One Piece events per store per month),
 so regrouped by store with the store's phone and exact position from the
@@ -1107,7 +1139,8 @@ state:
    tap. `go()` now refuses an id that matches no screen (it falls back to the
    mode's home and records the id in the error buffer), and `NAV.back()`
    pops until it finds a real screen. The record will name the cause the
-   next time. *(take 83)*
+   next time. *(take 83; the record could not be read until take 91 and
+   did not survive a restart until then — A37)*
 6. **Overall "non-uniform and basic"** — the owner's own diagnosis is the
    lack of pictures; item 4 is the first step, and the same treatment for
    Collect's rows and Decks follows once Hunt's is seen. *(next)*
