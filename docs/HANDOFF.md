@@ -103,6 +103,14 @@ if the aab is good. The apk is over 30 MB, it's 56."*
   Chrome and the gate unchanged by a docs-and-guards take; shipped.py's
   controls ran inside the gate. The PR was marked ready without a look
   (no app change) and the owner told.
+- **Merged 17:39:41 UTC (PR #25, merge commit fc5db93); Release take-101
+  published 17:46:13 with both assets** (APK 34,894,938 B, AAB
+  23,826,966 B) on build run 49's first try. The apk job's `what shipped`
+  group printed, for the first time in CI, `AAB signer: Owner: CN=OP TCG
+  Hub upload, OU=play, O=OP TCG Hub` and the breakdown for both artifacts
+  — identical to the table above to the tenth of a megabyte (APK 34.7 MB
+  packed / 58.0 raw; AAB 23.6 / 59.0). Take 102 is measured against that
+  line.
 
 ### DEFERRED this cycle
 
