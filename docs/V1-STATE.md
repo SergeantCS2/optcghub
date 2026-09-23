@@ -62,12 +62,11 @@ refresh from Pages (take 27).
 | Typography | four roles (display / comic / body / heavy), OFL/Apache faces bundled, 232 KB, licensed faces as a file drop in `assets/user/fonts/` | render.mjs: Chrome reports all four LOADED and h2 resolves to the display face, with a missing-file control; smoke 7 |
 | Sync | quiet once-per-open sync holds on cellular unless switched on; Sync now always runs; `UPDATE_URL` points at Pages | smoke 4 controls; **not yet seen on the Fold** |
 
-**Harness totals, take 92:** smoke.mjs 603 assertions (MEASURED in the
-session VM), render.mjs 81 in Chrome at take 91 (unchanged this take; the
-runner's check confirms), gate 23 checks with negative controls, hunt.py
-39 selftest lines including the roster's two shapes and the failure path;
-the session VM has no puppeteer and no pillow, so Chrome and hashes run on
-the runner only.
+**Harness totals, take 92:** smoke.mjs 603 assertions, render.mjs 81 in
+Chrome, gate 23 checks with negative controls, hunt.py 39 selftest lines
+including the roster's two shapes and the failure path — measured on the
+runner by the PR check (run 9); the session VM has no puppeteer and no
+pillow, so Chrome and hashes run on the runner only.
 
 ## DEFERRED, and why
 

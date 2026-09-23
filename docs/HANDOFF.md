@@ -85,6 +85,10 @@ can be proved against the live index before it ships.
   correct read and FAILS a wrong one (the control); the diagnostics build
   line equals the manifest's `built_at`. **603 passed, 0 failed** here.
 - `hunt.py --selftest` green, all 39 lines; the gate runs it.
+- **PROVEN on the runner (check run 9, head ff0ff68, 02:33 UTC):** smoke
+  **603 passed, 0 failed**; render **81 passed, 0 failed (mode: chrome)**;
+  **GATE PASSED**, hash coverage 100.0%, pipeline 26 s with the hashes
+  step this VM could not run.
 
 ### DEFERRED this cycle
 
