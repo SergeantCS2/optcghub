@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 91.*
+*Current as of take 92.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -140,6 +140,8 @@ Start here. Do not read top to bottom.
 | Tapping More (or a settings gear) lands on Home, scrolled to the top | **128** |
 | Diagnostics says "none" after a restart | 128 |
 | A ledger describes a guard the code does not have | **129** |
+| A Hunt file is a 404 on Pages and its sibling is days old, under a green workflow | **130** |
+| The self-test fails a check while quoting a correct answer | **131** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -1853,6 +1855,35 @@ promise that a bounced navigation would be recorded; it was not, and the
 More bounce (128) left no watchdog record because a screen was on. A
 claim about a mechanism is checked against the lines that built it
 before it is written — `grep` the trigger's call sites and list them.
+
+**130. A third-party static file changed shape; the fetch raised; the
+failure branch kept one file and dropped its sibling; the workflow stayed
+green for six days.** `onepieceevents.com/data/evnt_us.json` became a
+chunk index (`format: chunked-events-v1`, `chunks`) on or before 09-18;
+`roster.fetch_events()` indexed `["events"]` and raised `KeyError`. The
+`except` in `hunt.py` printed *stores: FAILED … (kept the last roster)*
+and rewrote the kept roster — and nothing else: the events table is
+written only on a successful rebuild or from a live previous copy, so the
+next deploy had no `events.json`, Pages answered 404, and with no live
+copy to carry the file could never return. Local ran on a 09-17 roster,
+Events was empty, the hourly was green, and the first person to notice
+was the owner with the first diagnostics paste. Rules: a kept-on-failure
+path keeps *every* file the success path writes; a parser of a
+third-party file accepts the shapes it has seen and refuses the ones it
+has not, loudly (the take-69 rule, applied to the roster at last); and a
+source that is fetched at most daily is checked by a selftest against
+its saved real index and one saved real chunk.
+
+**131. The self-test read the right answer and failed it — a field that
+does not exist compared with a string, since take 45.** *OCR reads a code
+the app drew* asserted `m.num === 'OP01-016'`; `parseRead` returns
+`{ number, raw, sp }`. ML Kit read `OP01-016` on the Fold and the line
+said FAIL. Nobody saw it for forty-six takes: More was unreachable for
+the last eight (128), and smoke marks the check SKIP where there is no
+recogniser, so the comparison never ran anywhere. Rule: a check that is
+skipped in the harness gets its comparison exercised with an injected
+answer and a wrong one (the control) — the skip is for the device call,
+never for the assertion.
 
 ## §2 — Inherited from APEX ORV
 

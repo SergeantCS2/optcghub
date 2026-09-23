@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 91.* Paste the block between the rules into a new session
+*Current as of take 92.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 91 takes by previous sessions. The repo is
+built across 92 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -27,7 +27,7 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
 4. Read `docs/HANDOFF.md`, newest entry first, back to take 80 at least. Every
    take ends with a DEFERRED list; the union of those lists is the work.
 5. Read `docs/LANDMINES.md` §0 (the index) and skim §1. When you are about to
-   do something, grep the index first. 129 of them; each is a real failure.
+   do something, grep the index first. 131 of them; each is a real failure.
 6. Read `docs/AGENDA.md`: the Priorities block at the top is the live order.
 
 **The discipline, which the gate enforces:**
@@ -93,9 +93,15 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
 - **The blank-after-Back** has a watchdog since take 86 that heals it and
   writes the trigger to Diagnostics (More → About, five taps). **More was
   unreachable on takes 83–90** (A37, landmine 128) and the buffer died at
-  every restart, so no paste ever existed; from take 91 both are fixed and
-  the owner's first paste names the cause. Nothing else can. The watchdog
-  runs after the two Back paths only (landmine 129), not after `go()`.
+  every restart, so no paste ever existed; from take 91 both are fixed.
+  **The first paste (take 91) showed no blank** — it named instead the
+  events source's shape change (landmine 130) and a false FAIL in the
+  self-test (131), both fixed at take 92. The watchdog runs after the two
+  Back paths only (landmine 129), not after `go()`.
+- **The `hunt` workflow is hourly by schedule and every 4–5 hours in
+  practice** (MEASURED take 92; GitHub delays a public repo's cron). Read
+  the run's `stores:` and `events:` lines before believing a green run: a
+  kept-on-failure roster is green too.
 - **The session VM has had no package registries for two takes** (89, 90:
   `registry.npmjs.org`, `pypi.org`, `files.pythonhosted.org` answer 403, so
   no pillow and no puppeteer). If `bash ci/deps.sh` fails the same way:
@@ -131,6 +137,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 92" and begin with PROTOCOL §0.
+Say "take 93" and begin with PROTOCOL §0.
 
 ---

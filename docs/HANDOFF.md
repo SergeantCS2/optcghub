@@ -1,4 +1,99 @@
-# HANDOFF — through Take 91
+# HANDOFF — through Take 92
+
+## Take 92 — 2026-09-23 — the first paste: the events source changed shape six days ago, and the self-test's one FAIL was its own
+
+Opened before any code (PROTOCOL §6). Take 91 merged at 02:11 UTC (PR
+#15, merge commit aa3c885); build run 39 green, Release take-91
+published; the owner installed it and **the first Diagnostics report ever
+arrived** (take 91, 02:19 UTC — screen stack `settings > diag`, so More
+and Diagnostics open on the Fold: PROVEN). Read as data, it named three
+things. The blank-after-Back has not recurred since the install (*last
+errors: none*) — still UNKNOWN, now recordable.
+
+### What the paste said, and what each line turned out to be
+
+- **`events.json: HTTP 404` and `stores.json … 6 days ago`; events and
+  stores on the phone: none.** MEASURED live from this VM: the roster on
+  Pages carries `fetched_at 2026-09-17T02:02:42Z`; `events.json` is 404.
+  **The hourly's own log (run 37, 00:31 UTC) says why:** `stores: FAILED
+  KeyError: 'events' (kept the last roster)`. **PROVEN by a live probe:**
+  `onepieceevents.com/data/evnt_us.json` is now a 1.1 KB chunk index —
+  `format: chunked-events-v1`, `metadata`, `chunks` — where it used to be
+  `{"events": [...]}`; `roster.fetch_events()` indexes `["events"]` and
+  raises. Every run since 09-17 has failed there and kept the 09-17 roster.
+  **And the failure branch drops the events table:** it rewrites the kept
+  roster only, so the first deploy after the change lost `events.json`
+  and, with no live copy to carry, nothing could bring it back. Six days
+  of Local on a stale roster and an empty Events screen under a **green**
+  workflow. Landmine 130.
+- **`FAIL OCR reads a code the app drew (ML Kit) — read "OP01-016"`.**
+  ML Kit read the drawn code exactly. The check asserts `m.num ===
+  'OP01-016'`; `parseRead` returns `{ number, raw, sp }` — no `num`. A
+  false FAIL on every phone since take 45, and smoke marks that check
+  SKIP in node, so the comparison never ran in the harness. Landmine 131.
+- **`build: ?`.** The manifest's key is `built_at`; About and Diagnostics
+  read `built`. About has shown *built* followed by nothing.
+- **Also in that log, not this take's:** the one verified Shopify storefront
+  answered 503 to the runner; Target 48329 returned 435 after 7 calls (the
+  take-71 throttle rule, handled). And **the "hourly" workflow ran six
+  times in the last day** (04:53, 09:56, 14:51, 18:53, 22:07, 00:31 UTC):
+  GitHub delays a public repo's cron; the app's *checked N ago* labels
+  stay honest, the word "hourly" in the ledgers is the schedule, not the
+  cadence.
+- **Ruled out: the roster fetch being blocked** — the host answers 200
+  from the runner (the log shows a KeyError, not an HTTPError) and from
+  this VM. **Ruled out: an app-side cause for the empty Events** — the
+  app fetches `events.json` when it has none; the file is not there.
+
+### This VM (MEASURED 02:25 UTC)
+
+The three package hosts answer 403 as at takes 89–91; no pillow, no
+puppeteer; acorn linked. Same route: smoke and the DOM fallback here, the
+runner's `check` as the gate, a draft PR marked ready on green, no vendor
+trailer. `onepieceevents.com` is reachable from here, so the new parser
+can be proved against the live index before it ships.
+
+### Built, and proved where it could be
+
+- **`tools/hunt/roster.py`:** `parse_index()` accepts the two shapes the
+  source has had — `{"events": [...]}` and the chunk index — and raises on
+  anything else; `join_chunks()` concatenates in index order and refuses a
+  chunk that carries fewer events than the index promised (AGENTS rule 8);
+  `fetch_events()` walks the chunks one call a second. Fixtures: the real
+  index of 2026-09-22 (1.1 KB) and the real first chunk trimmed to three
+  events (2.4 KB). Selftest: the index parses to its three files with their
+  counts; the old shape still parses; chunks join and a real chunk's records
+  build a roster; controls — a third shape, a chunk entry without a file, an
+  empty chunk list, a chunk short of its count — all refused.
+- **`tools/hunt.py`:** the roster step is `roster_step()`, a function the
+  selftest can drive. A rebuild happens when the live roster is a day old
+  **or the live events table is missing** (a lost table heals on the next
+  run); a failed rebuild keeps the roster *and* the events table and says
+  which roster it kept, by date. Selftest with a fetch that raises: both
+  files kept; control — with no previous table nothing is kept and it says
+  so; control — a fresh roster with no live table is rebuilt, not carried;
+  a rebuild writes both files.
+- **PROVEN against the live source, from this VM:** `fetch_events()` read
+  the chunk index and its three chunks — **50,300 events in 6 s** — and
+  `build()` made a roster of **3,395 stores, 108 in Michigan, 19,369 event
+  rows in the next 31 days, 13 titles** (take 74 measured 12,334 events
+  and ~50 Michigan stores; the source covers more now). The hourly's first
+  run after the merge rebuilds the roster and restores `events.json`; the
+  phone fetches a day-old table when Events opens.
+- **`src/app.html`:** the self-test compares `m.number`; About and
+  Diagnostics read `built_at`. Smoke: the OCR check PASSES an injected
+  correct read and FAILS a wrong one (the control); the diagnostics build
+  line equals the manifest's `built_at`. **603 passed, 0 failed** here.
+- `hunt.py --selftest` green, all 39 lines; the gate runs it.
+
+### DEFERRED this cycle
+
+- **The blank-after-Back** — no record since take 91's install; the next
+  paste that shows one names it.
+- **The Shopify storefront's 503 from the runner** — one store, one
+  observation; watch the next runs before calling it a block.
+- The cadence of the hourly — GitHub's, not ours; the labels are honest.
+- The three hosts; the rest of the Priorities order.
 
 ## Take 91 — 2026-09-23 — More opens again: unreachable since take 83; the diagnostics survive a restart
 
