@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 94
+# V1-STATE — what exists, as of take 95
 
-*Current as of take 94.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 95.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -62,10 +62,11 @@ refresh from Pages (take 27).
 | Typography | four roles (display / comic / body / heavy), OFL/Apache faces bundled, 232 KB, licensed faces as a file drop in `assets/user/fonts/` | render.mjs: Chrome reports all four LOADED and h2 resolves to the display face, with a missing-file control; smoke 7 |
 | Sync | quiet once-per-open sync holds on cellular unless switched on; Sync now always runs; `UPDATE_URL` points at Pages | smoke 4 controls; **not yet seen on the Fold** |
 
-**Harness totals, take 94:** smoke.mjs 634 assertions, render.mjs 93 in
-Chrome (three of them draw the distributor), gate 23 checks with negative
+**Harness totals, take 95:** smoke.mjs 642 assertions, render.mjs 95 in
+Chrome (two of them the Releases tap and the sealed sheet — the second
+caught landmine 136 on the runner), gate 23 checks with negative
 controls, hunt.py 61 selftest lines — measured on the runner by the PR
-check (run 15); the session VM has no puppeteer and no pillow, so Chrome
+check (run 18); the session VM has no puppeteer and no pillow, so Chrome
 and hashes run on the runner only.
 
 ## DEFERRED, and why

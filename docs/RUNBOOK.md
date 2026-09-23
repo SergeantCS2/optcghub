@@ -1,6 +1,6 @@
 # RUNBOOK — from nothing to a repo that builds every night
 
-*Current as of take 94.* **Since take 89 the repo is the record:** a session
+*Current as of take 95.* **Since take 89 the repo is the record:** a session
 works on a branch and opens a pull request; you merge; the merge builds. §6
 is every take. §1–§5 are how the repo was first stood up from a seed zip and
 remain the recovery procedure; you need them again only for a new repo or a
@@ -209,6 +209,7 @@ in the run's last group; the table below maps the common ones.
 | a Release or a Pages deploy from a branch | `branches: [ main ]` was lost from `build.yml`'s push trigger — put it back (landmine 122) |
 | pages skipped or red | §3 — Pages source is not "GitHub Actions" |
 | apk red at "no Android build-tools" | the runner image changed; open an issue with the log |
+| apk red at `Received status code 429 from server: Too Many Requests` from `repo.maven.apache.org` | Maven Central rate-limited the runner's address (first seen take 94, thirty artifacts at once); Actions → the run → *Re-run failed jobs*, once — the second attempt on the same commit passed. A second failure is real |
 | apk red at "APK is not signed by the committed sideload key" | `signing/optcghub.keystore` is missing from the tree — the seed lost it |
 | APK installs beside the old one instead of over it | the signer changed; must not — A8 |
 | Second night: release step red | should not since take 30 (idempotent); if it is, the tag exists and `--clobber` failed — the log says |

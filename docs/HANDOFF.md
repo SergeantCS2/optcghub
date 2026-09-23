@@ -1,4 +1,110 @@
-# HANDOFF — through Take 94
+# HANDOFF — through Take 95
+
+## Take 95 — 2026-09-23 — the take-94 look: a Releases row that does something, a sealed sheet without card conditions, an alert you can find
+
+Opened before any code (PROTOCOL §6). Take 94 merged at 06:56 UTC (PR
+#18, merge commit f2626e9). Build run 42's `apk` job failed on Maven
+Central answering 429 to Gradle for thirty artifacts and passed on one
+re-run of the same commit (07:05 UTC: Release take-94 with the APK and
+the AAB) — RUNBOOK carries the row. The first hourly on the merged code
+(run 40, 06:58 UTC, dispatched by hand) printed
+`gts: 49 of 49 products (20 matched), 37 sold out, 32 allocated, 0
+preorders open, 1 coming, 1 in stock, 6 call; 1 call(s)` — **take 94
+PROVEN live** — and then **PROVEN on the Fold** by the owner's five
+screenshots and paste (07:26 UTC): the panel's six numbers equal the
+runner's; the distributor line fits on the starter-deck display rows and
+on the booster box; the Booster Box Case carries no line (landmine 134's
+fix, visible); Releases lists IB-10, IB-09, ST-37, ST-38, EB-06, DP-14 and
+OP-19 by date; Diagnostics reads `gts 49 products`, 17 of 17, no errors.
+**The owner closed the blank-after-Back** ("Back arrow improved … call it
+fixed") — A33 item 5. His answers name eight things (AGENDA A38); this
+take does the three that are a bug or a control nobody could find.
+
+### Measured first
+
+- **A Releases row did nothing when tapped** (PROVEN by reading the
+  handler; the owner: "I can't click on the release"). `[data-browse-set]`
+  sets the Search filter, paints the Search screen and scrolls to the top
+  — and never calls `go('search')`. In Collect the set browse already
+  lives on Search, so it looked right; in Hunt the row painted a screen
+  the mode keeps hidden. Since take 70, through four looks. Landmine 135.
+- **Card conditions on a sealed product.** The sheet's `#dCondSeg` (NM /
+  LP / MP / HP / DMG) draws for every printing. A sealed box has no
+  condition — the market price is a factory-sealed copy's — and the
+  segment carried no label, so on a card it read as five unexplained
+  buttons ("really not sure what these are").
+- **The stock alert was a circle.** `○` at the right of a Sealed row and
+  no word; the detail sheet, where the owner looks (his screen stack shows
+  `sealed > detail`), had a price alert and no stock alert.
+- **The pictures "still missing" (Dominance of God, Starter Decks
+  31-36):** every one of those printings carries a CDN URL in the
+  catalogue (712901–712909, 712853). The photo is not on the CDN yet;
+  `refArt()` removes a failed image and the drawn tile stands (landmine
+  85). INFERRED from the URLs and the app's path — the CDN is refused from
+  this VM today. Nothing to build: the tile is the honest state until
+  TCGplayer has the photo, and a set's tile appears on its booster box.
+- **This VM (MEASURED 07:00 UTC):** after the owner opened all domain
+  access, this session's proxy refuses every host it allowed at 05:50
+  (GTS, Pages, TCGCSV, Target, the events source); only the GitHub API
+  answers. The setting reaches a new session (INFERRED). Smoke and the DOM
+  render here; Chrome on the runner, as at takes 89–94.
+- **Ruled out:** brand logos on the buy links the owner asked for (take
+  96) — a trademark in a Play-listed app is a rejection ground (landmine
+  29's family); a text chip per source says the same thing. Grouping
+  starter decks, the coloured countdown and the release alert in this
+  take — one mechanism per take (take 97).
+
+### Built
+
+- **A Releases row (any `[data-browse-set]`) shows a screen.** In Hunt:
+  Sealed, searched for the set's name (every fold open, the query in the
+  box so it can be cleared); in Collect: the set browse on Search — each
+  through `go()`. Smoke drives the tap in both modes and asserts the
+  screen is on; the control on the take-94 build failed first.
+- **The sealed sheet:** the condition segment is hidden for a sealed
+  product and its line reads "Sealed — no condition"; on a card the line
+  reads "Condition · Near Mint" (the abbreviation expanded once, in
+  `COND_NAMES`, shared with the bulk picker).
+- **The alert you can find:** *Alert me when in stock* on the sealed
+  sheet beside *Alert me at a price* — the same take-77 watch, reading
+  "Watching for stock — stop" when on — and the row's circle carries the
+  word under it (alert / watching).
+- **Watched fail first:** on the take-94 build the new smoke section died
+  at its first line (no `browseSet`); on the rebuild two assertions were
+  red because the DOM stub's class toggle is not what `go()` is judged by
+  — earlier sections read the navigation stack `go()` records, and these
+  now do too (the class and the drawn height are Chrome's to measure).
+  Then **641 passed, 0 failed** (634 before, 7 new), the DOM render 10,
+  the scrubber clean. Two Chrome assertions for the runner: a real click
+  on a Releases row lands on Sealed with that set's products drawn, and
+  the sealed sheet draws no condition segment and draws the stock alert
+  while the card sheet does the reverse.
+- **The runner's first run (check run 17, head 0b678fd) was red on
+  exactly that second assertion:** smoke 641 green, Chrome 94 passed and
+  one failed — `{"segH":0,"stH":36,"segH2":39,"stH2":36}`: on the card's
+  sheet the stock button still drew at 36 px. `.linkish{display:block}`
+  outranks the browser's `[hidden]{display:none}`; the DOM stub treats
+  `hidden` as a property and cannot see it. The house pattern already
+  existed (`.stale[hidden]`, `#tour[hidden]`, `nav[hidden]`) and the fix is
+  one rule beside the display rule, `.linkish[hidden],.seg[hidden]
+  {display:none}`, with a smoke line that reads it in the shipped page.
+  Landmine 136 — the Chrome measurement earned its keep again (landmine
+  69). **PROVEN on the runner (check run 18, head d539e64, 07:45 UTC):
+  render 95 passed, 0 failed (mode: chrome)** — 93 before, the two new
+  green — smoke **642 passed, 0 failed**, **GATE PASSED**, hash coverage
+  100.0%, pipeline 42 s. Two runner cycles for the take; the first one
+  found a landmine the stub never could.
+
+### DEFERRED this cycle
+
+- **Take 96 — where to buy**, under each sealed listing: TCGplayer (the
+  catalogue's own product link), Target, the shop, the distributor, as
+  text chips; a local shop's address and phone from the roster.
+- **Take 97 — Releases:** starter decks grouped (one row per release
+  day), the countdown coloured by nearness, a release alert and
+  add-to-calendar (the take-78 `.ics`).
+- Then **Southern Hobby** (A32); the distributor state timeline.
+- The three package hosts in this session; More in the nav.
 
 ## Take 94 — 2026-09-23 — A32: GTS Distribution, the first distributor source
 

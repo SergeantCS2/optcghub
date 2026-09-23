@@ -1,4 +1,4 @@
-# OP TCG Hub — take 94
+# OP TCG Hub — take 95
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,12 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 95:** tapping a release opens that set's sealed products;
+a sealed product's sheet no longer shows card conditions and a card's
+sheet names its condition; *Alert me when in stock* sits on the sealed
+product's sheet beside the price alert, and the row's circle says what it
+is.
 
 **New at take 94:** Hunt reads the distributor. GTS Distribution's One
 Piece list — release date, preorder open or not yet, sold out, allocated
