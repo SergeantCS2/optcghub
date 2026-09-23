@@ -90,6 +90,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
 :root[data-mode="hunt"] body::before{background:radial-gradient(60% 40% at 50% 0%,#1E4A2C 0%,transparent 70%)}
 .swords{display:inline-block;width:18px;height:18px;vertical-align:-3px;margin-right:6px;color:var(--brass)}
 .rel{border-bottom:1px solid var(--line)}
+.rel .cd1{color:var(--up);font-weight:700} .rel .cd2{color:var(--brass)} .rel .cd3{color:var(--fg)} .rel .cd4{color:var(--dim2)}   /* take 97: the countdown by nearness */
 .rel:last-child{border-bottom:0}
 #splash{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:var(--bg);
   background-image:radial-gradient(60% 45% at 50% 35%,color-mix(in srgb,var(--brass) 18%,transparent) 0%,transparent 70%);
@@ -3649,12 +3650,49 @@ function icsFor(e) {
   const esc2 = v => String(v || '').replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
   const d = e.d.replace(/-/g, ''); const next = new Date(Date.parse(e.d + 'T00:00:00Z') + 864e5).toISOString().slice(0, 10).replace(/-/g, '');
   const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
-  const where = [e.store.name, e.store.addr, e.store.city, e.store.state, e.store.zip].filter(Boolean).join(', ');
-  const notes = [`${e.fee > 0 ? 'Fee ' + money(e.fee) : 'Free'}${e.cap ? ' · ' + e.cap + ' seats' : ''}`, e.url ? 'Register: ' + e.url : '', 'From OP TCG Hub'].filter(Boolean).join('\n');
-  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//OP TCG Hub//Hunt//EN', 'BEGIN:VEVENT', `UID:optcghub-event-${e.id || d + '-' + (e.store.zip || '')}@optcghub`, `DTSTAMP:${stamp}`,
-    `DTSTART;VALUE=DATE:${d}`, `DTEND;VALUE=DATE:${next}`, `SUMMARY:${esc2(e.title.replace(/^\[[^\]]*\]\s*/, ''))} — ${esc2(e.store.name)}`, `LOCATION:${esc2(where)}`, `DESCRIPTION:${esc2(notes)}`,
+  const st = e.store || {};                                  /* take 97: a release has no store -- no LOCATION, no store suffix */
+  const where = [st.name, st.addr, st.city, st.state, st.zip].filter(Boolean).join(', ');
+  const notes = [e.notes != null ? e.notes : `${e.fee > 0 ? 'Fee ' + money(e.fee) : 'Free'}${e.cap ? ' · ' + e.cap + ' seats' : ''}`, e.url ? (e.urlLabel || 'Register') + ': ' + e.url : '', 'From OP TCG Hub'].filter(Boolean).join('\n');
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//OP TCG Hub//Hunt//EN', 'BEGIN:VEVENT', `UID:optcghub-event-${e.id || d + '-' + (st.zip || '')}@optcghub`, `DTSTAMP:${stamp}`,
+    `DTSTART;VALUE=DATE:${d}`, `DTEND;VALUE=DATE:${next}`, `SUMMARY:${esc2(e.title.replace(/^\[[^\]]*\]\s*/, ''))}${st.name ? ' — ' + esc2(st.name) : ''}`, where ? `LOCATION:${esc2(where)}` : null, `DESCRIPTION:${esc2(notes)}`,
     e.url ? `URL:${e.url}` : null, 'END:VEVENT', 'END:VCALENDAR'].filter(Boolean).join('\r\n') + '\r\n';
 }
+/* take 97 (A38 item 5): a release as an all-day calendar event, and the
+   reminder the day before it. */
+function releaseEvent(s, label) {
+  return { id: 'release-' + s.id, d: s.pub, title: (label || s.name) + ' \u2014 release day', notes: `${label || s.name}${s.abbr ? ' (' + s.abbr + ')' : ''} releases ${s.pub}. Date: TCGplayer via TCGCSV.`,
+           url: 'https://www.tcgplayer.com/search/one-piece-card-game/product?q=' + encodeURIComponent(label || s.name) + '&view=grid', urlLabel: 'Listing' };
+}
+const RELALERTS = {
+  KEY: 'vault.relAlerts',
+  list: (() => { try { return JSON.parse(localStorage.getItem('vault.relAlerts') || '[]'); } catch (e) { return []; } })(),
+  save() { try { localStorage.setItem(this.KEY, JSON.stringify(this.list)); } catch (e) {} },
+  has(id) { return this.list.some(a => a.id === id); },
+  nid(id) { return 7000 + (Math.abs(hashStr('rel:' + id)) % 1000); },
+  dayBefore(pub) { return new Date(Date.parse(pub + 'T00:00:00Z') - 864e5).toISOString().slice(0, 10); },
+  /* on: a notification at 09:00 local the day before (scheduled; INFERRED plugin
+     API) and the on-open check below; off: the schedule cancelled, the entry gone */
+  toggle(id, name, pub) {
+    if (this.has(id)) { this.list = this.list.filter(a => a.id !== id); this.save(); PLATFORM.cancelNotify(this.nid(id)); return false; }
+    this.list.push({ id, name, pub, created: new Date().toISOString(), fired: null }); this.save();
+    const at = new Date(this.dayBefore(pub) + 'T09:00:00'); if (at.getTime() > Date.now()) PLATFORM.notifyAt(this.nid(id), `${name} releases tomorrow`, `${pub} \u2014 from OP TCG Hub`, at);
+    return true;
+  },
+  /* once, on or after the day before: the app opened and the day has come */
+  async check(today = new Date().toISOString().slice(0, 10)) {
+    const fired = [];
+    for (const a of this.list) {
+      if (a.fired || today < this.dayBefore(a.pub)) continue;
+      a.fired = today; fired.push(a);
+      await PLATFORM.notify(this.nid(a.id), `${a.name} releases ${today >= a.pub ? (today === a.pub ? 'today' : 'on ' + a.pub) : 'tomorrow'}`, `${a.pub} \u2014 from OP TCG Hub`);
+    }
+    if (fired.length) this.save();
+    return fired;
+  }
+};
+/* the countdown's colour by nearness: a week, a month, three months, further or past */
+function relBand(days) { return days < 0 ? 'cd4' : days <= 7 ? 'cd1' : days <= 30 ? 'cd2' : days <= 90 ? 'cd3' : 'cd4'; }
+const RELF = { open: new Set() };
 async function addEventToCalendar(e) {
   const ics = icsFor(e); const name = `optcg-event-${e.d}.ics`;
   const r = await PLATFORM.shareFile(name, ics, 'Add to calendar');
@@ -3707,18 +3745,47 @@ function paintReleases() {
   const forSet = s => { const cs = setCodes(s); return gi.filter(it => (it.catalog_id && (CAT.byId.get(it.catalog_id) || {}).set === s.id) || (it.codes || []).some(c => cs.has(c))); };
   const known = new Set(); for (const s of CAT.sets.values()) for (const it of forSet(s)) known.add(it.sku);
   const unlisted = gi.filter(it => (it.codes || []).length && !known.has(it.sku)).sort((a, b) => (a.release || '9').localeCompare(b.release || '9') || a.name.localeCompare(b.name));
-  const distPanel = G ? `<div class="panel"><h3>At the distributor, not in the catalogue yet</h3>${unlisted.length ? unlisted.map(it => `<div class="row"><div class="nm" style="min-width:0"><b style="white-space:normal">${esc(it.name)}</b><span>${esc((it.codes || []).join(', '))}</span>${distLine(it, G)}</div></div>`).join('')
-      : `<div class="note">${G.ok ? 'Everything GTS Distribution lists is in the catalogue.' : 'Could not reach GTS Distribution since ' + esc((G.stale_since || G.fetched_at || '?').slice(0, 16)) + '.'}</div>`}
-    <div class="note" style="margin-top:8px">What Bandai has announced to stores, with the distributor's release date, before TCGplayer has a page for it. Sold out here before release is the print run spoken for. Checked ${esc(HUNT.ageLabel(G.fetched_at))}.</div></div>` : '';
   /* take 86: the row is two lines -- picture, a wrapping title with its meta, the date
-     and countdown at the right; then a Details link that never leaves the box */
-  const line = s => `<div class="rel"><button class="row" style="width:100%;text-align:left;padding:0;gap:10px;min-width:0" data-browse-set="${esc(s.id)}">${picFor(s)}<div class="nm" style="min-width:0"><b style="white-space:normal">${esc(s.name)}</b><span>${esc(s.abbr || '')}${s.n ? ` \u00b7 ${s.n} cards` : ' \u00b7 card list not published yet'}</span>${forSet(s).map(it => distLine(it, G)).join('')}</div><div class="v" style="flex:0 0 auto"><b>${esc(s.pub)}</b><span class="note">${s.pub >= today ? (days(s.pub) === 0 ? 'today' : `in ${days(s.pub)} day${days(s.pub) === 1 ? '' : 's'}`) : `${-days(s.pub)} days ago`}</span></div></button>
-    <div style="display:flex;justify-content:flex-end;padding:0 0 8px"><a class="ghost" href="${esc(detailsUrl(s))}" target="_blank" rel="noopener" style="display:inline-block;padding:6px 12px;font-size:13px" aria-label="Full details for ${esc(s.name)} on TCGplayer">Details \u2197</a></div></div>`;
-  $('#relList').innerHTML = `<div class="panel"><h3>Upcoming</h3>${up.map(line).join('') || '<div class="note">Nothing announced in the catalogue yet.</div>'}
-    <div class="note" style="margin-top:8px">Dates are TCGplayer's publish dates via TCGCSV, updated nightly. A release event at a local store means product on that shelf that morning — store events come with the local view.</div></div>
-    ${distPanel}
-    <div class="panel"><h3>Recent</h3>${past.map(line).join('')}</div>`;
+     and countdown at the right; then a Details link that never leaves the box.
+     Take 97: the countdown carries its band; an upcoming row carries Remind me
+     and Calendar beside Details. */
+  const cdown = pub => `<span class="note ${relBand(days(pub))}">${pub >= today ? (days(pub) === 0 ? 'today' : `in ${days(pub)} day${days(pub) === 1 ? '' : 's'}`) : `${-days(pub)} days ago`}</span>`;
+  const btn = (attrs, text, aria) => `<button class="ghost" ${attrs} style="display:inline-block;padding:6px 12px;font-size:13px" aria-label="${esc(aria)}">${text}</button>`;
+  const foot = (s, label, extra = '') => `<div style="display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;padding:0 0 8px">${extra}${s.pub >= today ? btn(`data-relalert="${esc(s.id)}" data-relname="${esc(label)}" data-relpub="${esc(s.pub)}" aria-pressed="${RELALERTS.has(s.id)}"`, RELALERTS.has(s.id) ? 'Reminder set ✓' : 'Remind me', (RELALERTS.has(s.id) ? 'Remove the reminder for ' : 'Remind me the day before ') + label) + btn(`data-relcal="${esc(s.id)}" data-relname="${esc(label)}"`, 'Calendar', 'Add the release of ' + label + ' to your calendar') : ''}<a class="ghost" href="${esc(detailsUrl({ name: label }))}" target="_blank" rel="noopener" style="display:inline-block;padding:6px 12px;font-size:13px" aria-label="Full details for ${esc(label)} on TCGplayer">Details ↗</a></div>`;
+  const line = s => `<div class="rel"><button class="row" style="width:100%;text-align:left;padding:0;gap:10px;min-width:0" data-browse-set="${esc(s.id)}">${picFor(s)}<div class="nm" style="min-width:0"><b style="white-space:normal">${esc(s.name)}</b><span>${esc(s.abbr || '')}${s.n ? ` \u00b7 ${s.n} cards` : ' \u00b7 card list not published yet'}</span>${forSet(s).map(it => distLine(it, G)).join('')}</div><div class="v" style="flex:0 0 auto"><b>${esc(s.pub)}</b>${cdown(s.pub)}</div></button>
+${foot(s, s.name)}</div>`;
+  /* take 97 (A38 item 1): a run of two or more starter decks on one day is ONE
+     row -- the range, the count, the date -- with a fold to the decks; a single
+     starter deck stays a row; a booster set is the release and is never folded */
+  const isDeck = s => /^Starter Deck/i.test(s.name || '');
+  const grouped = list => { const out = []; for (let i = 0; i < list.length; i++) { const s = list[i]; if (!isDeck(s)) { out.push(s); continue; }
+      const run = [s]; while (i + 1 < list.length && isDeck(list[i + 1]) && list[i + 1].pub === s.pub) run.push(list[++i]);
+      out.push(run.length > 1 ? { group: true, pub: s.pub, sets: run, id: s.id, name: `Starter Decks ${run[0].abbr || ''}\u2013${run[run.length - 1].abbr || ''}` } : s); } return out; };
+  const gline = g => `<div class="rel"><button class="row" style="width:100%;text-align:left;padding:0;gap:10px;min-width:0" data-browse-set="${esc(g.id)}" data-browse-q="Starter Deck">${picFor(g.sets[0])}<div class="nm" style="min-width:0"><b style="white-space:normal">${esc(g.name)}</b><span>${g.sets.length} starter decks, one release day</span>${g.sets.flatMap(s => forSet(s)).slice(0, 1).map(it => distLine(it, G)).join('')}</div><div class="v" style="flex:0 0 auto"><b>${esc(g.pub)}</b>${cdown(g.pub)}</div></button>${foot(g, g.name, `<button class="ghost" data-relfold="${esc(g.pub)}" aria-expanded="${RELF.open.has(g.pub)}" style="display:inline-block;padding:6px 12px;font-size:13px">${RELF.open.has(g.pub) ? 'Hide the decks \u25be' : `Show the ${g.sets.length} decks \u25b8`}</button>`)}${RELF.open.has(g.pub) ? `<div style="padding-left:12px;border-left:2px solid var(--line)">${g.sets.map(line).join('')}</div>` : ''}</div>`;
+  const render = list => grouped(list).map(x => x.group ? gline(x) : line(x)).join('');
+  /* the distributor's unlisted starter-deck displays fold the same way, by release day */
+  const isDeckItem = it => (it.codes || []).some(c => /^ST\d+$/.test(c)) && /STARTER DECK/i.test(it.name || '');
+  const ditem = it => `<div class="row"><div class="nm" style="min-width:0"><b style="white-space:normal">${esc(it.name)}</b><span>${esc((it.codes || []).join(', '))}</span>${distLine(it, G)}</div></div>`;
+  const dgroup = (rel, items) => { const key = 'd:' + rel; const codes = items.map(it => (it.codes || [])[0]).filter(Boolean); const same = items.every(it => it.status === items[0].status && it.allocated === items[0].allocated);
+    return `<div class="row" style="flex-wrap:wrap"><div class="nm" style="min-width:0;flex:1"><b style="white-space:normal">Starter Decks ${esc(codes[0] || '')}\u2013${esc(codes[codes.length - 1] || '')}</b><span>${items.length} starter deck displays, one release day \u00b7 ${esc(codes.join(', '))}</span>${same ? distLine(items[0], G) : `<span style="display:block;color:var(--brass)">GTS Distribution \u00b7 mixed \u00b7 release ${esc(rel)}</span>`}</div>
+      <button class="ghost" data-relfold="${esc(key)}" aria-expanded="${RELF.open.has(key)}" style="flex:0 0 auto;padding:6px 12px;font-size:13px">${RELF.open.has(key) ? 'Hide \u25be' : `Show ${items.length} \u25b8`}</button>${RELF.open.has(key) ? `<div style="flex-basis:100%;padding-left:12px;border-left:2px solid var(--line)">${items.map(ditem).join('')}</div>` : ''}</div>`; };
+  const drender = list => { const out = []; for (let i = 0; i < list.length; i++) { const it = list[i]; if (!isDeckItem(it)) { out.push(ditem(it)); continue; }
+      const run = [it]; while (i + 1 < list.length && isDeckItem(list[i + 1]) && list[i + 1].release === it.release) run.push(list[++i]);
+      out.push(run.length > 1 ? dgroup(it.release || '?', run) : ditem(it)); } return out.join(''); };
+  const distPanel2 = G ? `<div class="panel"><h3>At the distributor, not in the catalogue yet</h3>${unlisted.length ? drender(unlisted) : `<div class="note">${G.ok ? 'Everything GTS Distribution lists is in the catalogue.' : 'Could not reach GTS Distribution since ' + esc((G.stale_since || G.fetched_at || '?').slice(0, 16)) + '.'}</div>`}
+    <div class="note" style="margin-top:8px">What Bandai has announced to stores, with the distributor's release date, before TCGplayer has a page for it. Sold out here before release is the print run spoken for. Checked ${esc(HUNT.ageLabel(G.fetched_at))}.</div></div>` : '';
+  $('#relList').innerHTML = `<div class="panel"><h3>Upcoming</h3>${render(up) || '<div class="note">Nothing announced in the catalogue yet.</div>'}
+    <div class="note" style="margin-top:8px">Dates are TCGplayer's publish dates via TCGCSV, updated nightly. A release event at a local store means product on that shelf that morning — store events come with the local view. <i>Remind me</i> is a notification the day before; <i>Calendar</i> hands the day to your calendar app.</div></div>
+    ${distPanel2}
+    <div class="panel"><h3>Recent</h3>${render(past)}</div>`;
 }
+$('#releases').addEventListener('click', e => {
+  const f = e.target.closest('[data-relfold]'); if (f) { e.stopPropagation(); const k = f.dataset.relfold; if (RELF.open.has(k)) RELF.open.delete(k); else RELF.open.add(k); paintReleases(); return; }
+  const a = e.target.closest('[data-relalert]'); if (a) { e.stopPropagation(); const on = RELALERTS.toggle(+a.dataset.relalert, a.dataset.relname, a.dataset.relpub);
+    if (on) PLATFORM.notifyPermission().then(perm => toast(perm === 'denied' ? 'Reminder set — notifications are off, so it will show here instead' : `Reminder set for the day before ${a.dataset.relpub}`)); else toast('Reminder removed');
+    paintReleases(); return; }
+  const c = e.target.closest('[data-relcal]'); if (c) { e.stopPropagation(); const s = CAT.sets.get(+c.dataset.relcal); if (s) addEventToCalendar(releaseEvent(s, c.dataset.relname)); }
+});
 $('#sealed').addEventListener('click', e => { const k = e.target.closest('[data-skind]'); if (k) { SEALED.kind = k.dataset.skind; paintSealed(); return; }
   const f = e.target.closest('[data-setfold]'); if (f) { const id = isNaN(+f.dataset.setfold) ? f.dataset.setfold : +f.dataset.setfold; if (SEALED.closed.has(id)) SEALED.closed.delete(id); else SEALED.closed.add(id); paintSealed(); return; }
   const b = e.target.closest('[data-stock]'); if (b) { e.stopPropagation(); const on = STOCK.toggle(+b.dataset.stock); if (on) { PLATFORM.notifyPermission().then(perm => toast(perm === 'denied' ? 'Watching \u2014 notifications are off, so it will show here instead' : 'Watching for stock')); STOCK.check(); } paintSealed(); } });
@@ -3759,9 +3826,9 @@ $('#allq').addEventListener('input', paintSearch);
    it -- in Hunt a tapped release did nothing. In Hunt: the set's sealed
    products on Sealed (every fold open, the query in the box to clear); in
    Collect: the set browse on Search. Either way the screen is SHOWN. */
-function browseSet(id) {
+function browseSet(id, q) {
   if (MODE.cur === 'hunt') {
-    const s = CAT.sets.get(id); SEALED.q = (s && s.name) || ''; SEALED.kind = 'all';
+    const s = CAT.sets.get(id); SEALED.q = q || (s && s.name) || ''; SEALED.kind = 'all';
     const inp = $('#sealedQ'); if (inp) inp.value = SEALED.q;
     paintSealed(); go('sealed'); window.scrollTo(0, 0); return;
   }
@@ -3770,7 +3837,7 @@ function browseSet(id) {
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-browse-set]'); if (!b) return;
-  browseSet(+b.dataset.browseSet);
+  browseSet(+b.dataset.browseSet, b.dataset.browseQ);
 });
 
 /* ---- scanner ----------------------------------------------------------- */
@@ -4090,6 +4157,19 @@ const PLATFORM = {
     if (!N) { toast(`${title} \u2014 ${body}`); return false; }
     try { await N.schedule({ notifications: [{ id, title, body, smallIcon: 'ic_launcher', iconColor: '#C9A24A' }] }); return true; }
     catch (e) { console.warn('notify failed', e); toast(`${title} \u2014 ${body}`); return false; }
+  },
+  /* take 97: a notification for a future moment (the release reminder), and
+     its cancel by id. The same plugin's schedule: { at } -- INFERRED from
+     its public API; the on-open check in RELALERTS is the path the harness
+     proves, this one is the owner's to see. No plugin: nothing scheduled. */
+  async notifyAt(id, title, body, at) {
+    const N = this.plugin('LocalNotifications'); if (!N) return false;
+    try { await N.schedule({ notifications: [{ id, title, body, smallIcon: 'ic_launcher', iconColor: '#C9A24A', schedule: { at, allowWhileIdle: true } }] }); return true; }
+    catch (e) { console.warn('notifyAt failed', e); return false; }
+  },
+  async cancelNotify(id) {
+    const N = this.plugin('LocalNotifications'); if (!N) return false;
+    try { await N.cancel({ notifications: [{ id }] }); return true; } catch (e) { return false; }
   },
   /* Android Photo Picker via @capacitor/camera: no permission at all
      (landmine 38). */
@@ -5308,6 +5388,7 @@ async function runSelfTest() {
   MODE.set(MODE.cur, false); if (MODE.cur !== 'collect') go(MODE.home[MODE.cur] || 'home');   // take 81: Hunt used to reopen on Collect's Home
   splashDone();
   ALERTS.check().then(f => { if (f.length) toast(`${f.length} price alert${f.length === 1 ? '' : 's'} fired`); });
+  RELALERTS.check();                                       /* take 97: a release reminder whose day has come, once */
   if (navigator.onLine && CAT.man.updateUrl && PLATFORM.quietSyncAllowed()) setTimeout(() => PLATFORM.refreshCatalogue({ quiet: true }), 1500);
   /* A17 at boot. Constants from the manifest (D10), gate on only where an ad
      can actually be shown. */
@@ -5334,7 +5415,7 @@ async function runSelfTest() {
      day and a hardcoded placeholder is landmine 62 in a text box. */
   $('#allq').placeholder = `Search all ${(CAT.man.cards || 0).toLocaleString()} cards`;
   paintNet(); paintHome();
-  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, openDetail, HUNT, targetLine, distLine, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
+  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, HUNT, targetLine, distLine, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
                    cardPic, setPic, picBox, deckRow, paintHome, paintDecks, paintSearch, openDeck,
                    FILT, loadFilter, applyFilter, sortRows, blankFilter, activeCount,
                    DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,

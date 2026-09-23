@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 96
+# V1-STATE — what exists, as of take 97
 
-*Current as of take 96.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 97.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -62,11 +62,12 @@ refresh from Pages (take 27).
 | Typography | four roles (display / comic / body / heavy), OFL/Apache faces bundled, 232 KB, licensed faces as a file drop in `assets/user/fonts/` | render.mjs: Chrome reports all four LOADED and h2 resolves to the display face, with a missing-file control; smoke 7 |
 | Sync | quiet once-per-open sync holds on cellular unless switched on; Sync now always runs; `UPDATE_URL` points at Pages | smoke 4 controls; **not yet seen on the Fold** |
 
-**Harness totals, take 96:** smoke.mjs 652 assertions, render.mjs 98 in
-Chrome (three of them the buy chips at both Fold widths and the sheet's
-panel), gate 23 checks with negative controls, hunt.py 61 selftest lines
-— measured on the runner by the PR check (run 20); the session VM has no
-puppeteer and no pillow, so Chrome and hashes run on the runner only.
+**Harness totals, take 97:** smoke.mjs 666 assertions (measured here),
+render.mjs 98 in Chrome at take 96 plus three for the Releases fold, the
+countdown colour and Remind me (the runner measures the Chrome total),
+gate 23 checks with negative controls, hunt.py 61 selftest lines; the
+session VM has no puppeteer and no pillow, so Chrome and hashes run on
+the runner only.
 
 ## DEFERRED, and why
 
@@ -84,7 +85,7 @@ puppeteer and no pillow, so Chrome and hashes run on the runner only.
 | Whether the faces themselves fit | the colour and contrast are fixed (take 60); whether Luckiest Guy and Bangers are the right faces is D16 | A26 |
 | A TalkBack session on a phone | every control has a name and the roles are right (take 66); whether the order and wording make sense needs a person | A30 |
 | Focus order | the ring exists (take 80); tab order across screens is unreviewed | A30 |
-| Hunt mode — local shops, reprints, the preorder watch, per-user zips | Sealed, Releases (take 70) and the hourly Target feed — online stock for all of the US, shelf stock per served zip with a zip pop-up, a fortnight of hourly history turned into dated restocks per store, and Local — 2,967 event-running shops with distances from your zip, the distance dropdown, your own notes, verified local shops' online sealed stock hourly, and Events — every event near you for a month with fee, seats and a TCG+ Register link (the source became a chunked index on 2026-09-22 and the roster froze for six days under a green hourly; read both shapes since take 92, landmine 130) — in a Zoro-green palette, with stock alerts that fire on the flip at any tracked source, any event onto the calendar as an .ics, exact distances on request (takes 71–79), and the first distributor — GTS Distribution's One Piece list with release and preorder dates, sold out and allocated in its own words under each product it lists, the products it has before the catalogue does on Releases, and a distributor restock as an alert source (take 94; proven live on the runner and on the Fold), a tapped release opening the set's products and a stock alert on the sealed sheet (take 95), and where to buy — a chip per seller under each sealed row and a panel on its sheet, the seller's own page, a shop's address and Call, no logo and no referral (take 96) BUILT; Southern Hobby and the rest follow in A32 order | A32 |
+| Hunt mode — local shops, reprints, the preorder watch, per-user zips | Sealed, Releases (take 70) and the hourly Target feed — online stock for all of the US, shelf stock per served zip with a zip pop-up, a fortnight of hourly history turned into dated restocks per store, and Local — 2,967 event-running shops with distances from your zip, the distance dropdown, your own notes, verified local shops' online sealed stock hourly, and Events — every event near you for a month with fee, seats and a TCG+ Register link (the source became a chunked index on 2026-09-22 and the roster froze for six days under a green hourly; read both shapes since take 92, landmine 130) — in a Zoro-green palette, with stock alerts that fire on the flip at any tracked source, any event onto the calendar as an .ics, exact distances on request (takes 71–79), and the first distributor — GTS Distribution's One Piece list with release and preorder dates, sold out and allocated in its own words under each product it lists, the products it has before the catalogue does on Releases, and a distributor restock as an alert source (take 94; proven live on the runner and on the Fold), a tapped release opening the set's products and a stock alert on the sealed sheet (take 95), and where to buy — a chip per seller under each sealed row and a panel on its sheet, the seller's own page, a shop's address and Call, no logo and no referral (take 96), and Releases with starter decks folded per release day, the countdown coloured by nearness, Remind me (a notification the day before, scheduled and checked on open) and Calendar (an all-day event through the take-78 path) (take 97) BUILT; Southern Hobby and the rest follow in A32 order | A32 |
 | Importing from other apps (Collectr) | needs one real exported file; guessing the format would mis-key printings | A31 |
 | Colour direction | D15; parked, not a priority | A24 |
 | Icon motif | D7; the take-16 placeholder is back by request | A16 |

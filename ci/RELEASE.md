@@ -1,4 +1,4 @@
-# OP TCG Hub — take 96
+# OP TCG Hub — take 97
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,11 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 97:** Releases — starter decks that share a release day
+fold into one row you can open; the countdown changes colour as the day
+nears; every upcoming release has *Remind me* (a notification the day
+before) and *Calendar* (an all-day event for your phone's calendar).
 
 **New at take 96:** where to buy — under every sealed product and on its
 sheet, a chip per seller the app knows (TCGplayer always; Target; a local

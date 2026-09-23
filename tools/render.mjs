@@ -370,6 +370,24 @@ if (puppeteer) {
     V.HUNT.feed = null; V.MODE.set('collect', true); return { h: Math.round(panel.height), rows, h2: Math.round(panel2.height) }; });
   ok('the sealed sheet draws the Where to buy panel with its rows; the card sheet draws none', s96.h > 0 && s96.rows >= 2 && s96.h2 === 0, JSON.stringify(s96));
   await new Promise(r => setTimeout(r, 200));
+  /* take 97 -- Releases: the folded starter-deck row draws and opens on a real
+     click; an upcoming countdown draws in a colour that is not the past one;
+     Remind me draws and toggles. */
+  const r97 = await page.evaluate(() => { const V = window.VAULT; V.MODE.set('hunt', true); V.RELF.open = new Set(); V.RELALERTS.list = []; V.go('releases'); V.paintReleases();
+    const fold = document.querySelector('#relList [data-relfold]'); const before = document.querySelectorAll('#relList [data-browse-set]').length;
+    if (fold) fold.click();
+    const after = document.querySelectorAll('#relList [data-browse-set]').length;
+    const up = document.querySelector('#relList .note.cd1, #relList .note.cd2, #relList .note.cd3'); const past = document.querySelector('#relList .note.cd4');
+    const cu = up && getComputedStyle(up).color, cp = past && getComputedStyle(past).color;
+    const rem = document.querySelector('#relList [data-relalert]'); const r0 = rem && rem.textContent; if (rem) rem.click();
+    const rem2 = document.querySelector('#relList [data-relalert]'); const r1 = rem2 && rem2.textContent; const pressed = rem2 && rem2.getAttribute('aria-pressed');
+    const n = V.RELALERTS.list.length; if (rem2) rem2.click(); const n2 = V.RELALERTS.list.length;
+    V.RELF.open = new Set(); V.RELALERTS.list = []; V.MODE.set('collect', true);
+    return { fold: !!fold, before, after, cu, cp, r0, r1, pressed, n, n2, scroll: document.body.scrollWidth, vw: document.documentElement.clientWidth }; });
+  ok('Releases: the folded starter-deck row opens on a click and the decks appear as rows', r97.fold && r97.after > r97.before, JSON.stringify(r97));
+  ok('Releases: an upcoming countdown draws in a colour that is not the past countdown\'s', !!r97.cu && !!r97.cp && r97.cu !== r97.cp, JSON.stringify({ cu: r97.cu, cp: r97.cp }));
+  ok('Releases: Remind me draws, a click sets it (the button says so, pressed) and a second click removes it, no sideways scroll', /Remind me/.test(r97.r0 || '') && /Reminder set/.test(r97.r1 || '') && r97.pressed === 'true' && r97.n === 1 && r97.n2 === 0 && r97.scroll <= r97.vw + 1, JSON.stringify(r97));
+  await new Promise(r => setTimeout(r, 200));
 
   /* Take 60: Pages serves this same file to a desktop browser, where the app
      used to run edge to edge. It stays a phone-width column there. */
