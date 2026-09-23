@@ -265,10 +265,17 @@ if (puppeteer) {
     const imgs = pics.map(b => [b, b.querySelector('img.ref')]).filter(([, i]) => i);
     const fits = imgs.every(([b, i]) => { const B = b.getBoundingClientRect(), I = i.getBoundingClientRect(); return I.width <= B.width + 1 && I.height <= B.height + 1 && I.left >= B.left - 1 && I.top >= B.top - 1; });
     const b0 = pics[0] && pics[0].getBoundingClientRect(), r0 = rows[0] && rows[0].getBoundingClientRect();
-    return { rows: rows.length, pics: pics.length, imgs: imgs.length, fits, boxW: b0 && Math.round(b0.width), boxH: b0 && Math.round(b0.height), rowH: r0 && Math.round(r0.height) };
+    const nm = rows[0] && rows[0].querySelector('.nm'); const nmH = nm ? nm.getBoundingClientRect().height : 0;
+    const cs = rows[0] && getComputedStyle(rows[0]); const pad = cs ? parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) + parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth) : 0;
+    return { rows: rows.length, pics: pics.length, imgs: imgs.length, fits, boxW: b0 && Math.round(b0.width), boxH: b0 && Math.round(b0.height), rowH: r0 && Math.round(r0.height), nmH: Math.round(nmH), pad: Math.round(pad) };
   });
   ok('search hits: a picture box per row, and images are drawn inside their boxes', srch.rows > 0 && srch.pics === srch.rows && srch.imgs > 0 && srch.fits, JSON.stringify(srch));
-  ok('search hits: the box is card-shaped (36x50) and the row stays one line tall', srch.boxW === 36 && srch.boxH === 50 && srch.rowH <= 72, JSON.stringify(srch));
+  /* The row is no taller than its tallest child plus its own padding: the
+     picture sits beside the text, never under it (the first run measured 117
+     px -- baseline alignment -- and the second 83 px, which was three lines
+     of subtitle, not the picture: a fixed bound was landmine 62's shape). */
+  ok('search hits: the box is card-shaped (36x50) and the picture does not stretch the row',
+     srch.boxW === 36 && srch.boxH === 50 && srch.rowH <= Math.max(srch.boxH, srch.nmH) + srch.pad + 1, JSON.stringify(srch));
   for (const [w, name] of [[360, 'small phone'], [412, 'Fold outer'], [673, 'Fold inner'], [820, 'tablet']]) {
     await page.setViewport({ width: w, height: 900, deviceScaleFactor: 2 }); await new Promise(r => setTimeout(r, 120));
     const m = await page.evaluate(() => ({ scroll: document.body.scrollWidth, vw: document.documentElement.clientWidth }));

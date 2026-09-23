@@ -92,6 +92,13 @@ Chrome, a draft PR marked ready on green, no vendor trailer.
   could not — landmine 69's lesson again. The seven rows that gained a
   picture are centred now (`align-items:center` on the row, as `.dkrow`
   always was); Hunt's rows, seen and accepted on the Fold, are untouched.
+  **The second run (check run 12, head c766977) was red on the same line at
+  83 px** — and that was the assertion's fault, not the row's: the first
+  hit's subtitle (a long set name and a provenance) wraps to three lines,
+  65 px of text beside a 50 px picture. A fixed "≤ 72" pinned a number to
+  text the test does not control — landmine 62's shape. The assertion now
+  says the honest thing: the row is no taller than its tallest child plus
+  its own padding, so the picture sits beside the text, never under it.
 - **The ledger corrected:** PROVISION's "two entries" and "in the gate",
   PROTOCOL §8's control 1, and a parenthetical on landmine 28 — the gate
   checks that a host is declared; the purpose is prose.
