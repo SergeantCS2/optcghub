@@ -389,6 +389,32 @@ if (puppeteer) {
   ok('Releases: Remind me draws, a click sets it (the button says so, pressed) and a second click removes it, no sideways scroll', /Remind me/.test(r97.r0 || '') && /Reminder set/.test(r97.r1 || '') && r97.pressed === 'true' && r97.n === 1 && r97.n2 === 0 && r97.scroll <= r97.vw + 1, JSON.stringify(r97));
   await new Promise(r => setTimeout(r, 200));
 
+  /* take 98 (landmine 137) -- Back from a card's sheet, on the real path: the
+     browser's history Back runs the same handler as the phone's button
+     (closeAnyOverlay, then the stack, then the watchdog). It must land on the
+     screen the sheet came from and write no blank record. */
+  const r98a = await page.evaluate(async () => { const V = window.VAULT; V.MODE.set('hunt', true); V.go('sealed');
+    const row = document.querySelector('#sealedList [data-open]'); if (row) row.click(); await new Promise(r => setTimeout(r, 120));
+    const onSheet = [...document.querySelectorAll('.screen.on')].map(e => e.id).join(','); const before = V.ERRS.list.length;
+    window.dispatchEvent(new PopStateEvent('popstate', { state: null })); await new Promise(r => setTimeout(r, 200));
+    const after = [...document.querySelectorAll('.screen.on')].map(e => e.id).join(','); const recs = V.ERRS.list.slice(0, V.ERRS.list.length - before).map(e => e.kind + ':' + e.msg);
+    V.MODE.set('collect', true); V.go('home'); return { row: !!row, onSheet, after, recs }; });
+  ok('Back from a card\'s sheet lands on the list it came from and the watchdog writes no blank record', r98a.row && r98a.onSheet === 'detail' && r98a.after === 'sealed' && r98a.recs.length === 0, JSON.stringify(r98a));
+  /* Home's most-valuable rows open the card on a real click */
+  const r98b = await page.evaluate(async () => { const V = window.VAULT; V.go('home'); V.paintHome(); const b = document.querySelector('#topList button[data-open]'); if (b) b.click(); await new Promise(r => setTimeout(r, 120));
+    const on = [...document.querySelectorAll('.screen.on')].map(e => e.id).join(','); const name = (document.querySelector('#dName') || {}).textContent || ''; V.go('home'); return { b: !!b, on, name }; });
+  ok('Home: a most-valuable row opens the card\'s sheet on a click', r98b.b && r98b.on === 'detail' && r98b.name.length > 0, JSON.stringify(r98b));
+  /* the toast wraps inside the screen; the splash rule is one literal colour */
+  const r98c = await page.evaluate(async () => { const V = window.VAULT; const vw = document.documentElement.clientWidth;
+    V.toast('Reminder set for the day before Premium Booster: The Best — One Piece Card Game Vol. 2 releases (2026-11-20), and once more on the day.'); await new Promise(r => setTimeout(r, 50));
+    const t = document.querySelector('#toast').getBoundingClientRect(); const long = { left: Math.round(t.left), right: Math.round(t.right), h: Math.round(t.height) };
+    V.toast('Saved'); await new Promise(r => setTimeout(r, 50)); const s = document.querySelector('#toast').getBoundingClientRect(); const short = { h: Math.round(s.height) };
+    document.querySelector('#toast').classList.remove('on');
+    let splash = ''; for (const sh of document.styleSheets) { try { for (const r of sh.cssRules) if (r.selectorText === '#splash') splash = r.style.backgroundColor; } catch (e) {} }
+    return { vw, long, short, splash }; });
+  ok('a long toast stays inside the screen on both sides and wraps to more than one line; a short one is one line', r98c.long.left >= 0 && r98c.long.right <= r98c.vw && r98c.long.h > r98c.short.h * 1.6, JSON.stringify(r98c));
+  ok('the splash rule is one literal colour, Collect\'s blue', r98c.splash === 'rgb(11, 22, 34)', JSON.stringify(r98c.splash));
+
   /* Take 60: Pages serves this same file to a desktop browser, where the app
      used to run edge to edge. It stays a phone-width column there. */
   await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });

@@ -1,4 +1,4 @@
-# OP TCG Hub — take 97
+# OP TCG Hub — take 98
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,14 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 98:** the phone's Back button from a card's sheet returns
+to the list you came from, not to Home (the blank page after Back, found
+by its own record); Home's most-valuable rows open the card; the opening
+screen is one colour; a long message wraps instead of running off the
+screen; the Starter decks section on Sealed starts folded; tapping a
+condition on a card's sheet updates the sheet in place and says what it
+records.
 
 **New at take 97:** Releases — starter decks that share a release day
 fold into one row you can open; the countdown changes colour as the day
