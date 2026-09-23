@@ -1,6 +1,6 @@
 # V1-STATE — what exists, as of take 100
 
-*Current as of take 100.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 101.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -26,8 +26,17 @@ refresh from Pages (take 27).
 - **CI, end to end on GitHub's runner:** run #3 on take 31 — seed 6 s,
   bundle 42 s, apk 4 m 36 s, pages 14 s — Release take-31, Pages live at
   `sergeantcs2.github.io/optcghub` (read off the repo at take 34). The owner
-  installed the APK it built. The AAB is dev-signed and named unfit until the
-  upload-key secrets exist.
+  installed the APK it built. **The AAB is signed with the Play upload key**
+  (the four `PLAY_UPLOAD_*` secrets are set): every build's `apk` job reads
+  the signer back off the bundle and prints `AAB signer: Owner: CN=OP TCG
+  Hub upload, OU=play` — PROVEN from run 48's log at take 101, and the
+  file carries no `DEVKEY-DO-NOT-UPLOAD` suffix. Since take 101 an
+  unreadable signer fails the build. **Sizes (MEASURED from Release
+  take-100's files):** APK 34.7 MB packed / 58.0 MB raw (what the phone
+  reports as installed); AAB 23.6 MB packed. Dex 23.0 MB raw, the OCR
+  engine 11.1 MB (arm64) + 6.8 MB (armeabi-v7a), the app and catalogue
+  8.6 MB raw / 1.8 packed, the OCR language models 5.5 MB raw. The apk
+  job prints this breakdown every build since take 101 (`tools/shipped.py`).
 - **Play:** the app exists in the console as `com.optcghub.app` on a personal
   account; version code 35 accepted into internal testing; advertising-ID
   declaration and Data Safety done to landmine 94; listing copy in; closed

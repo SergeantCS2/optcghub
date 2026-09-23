@@ -1,4 +1,4 @@
-# OP TCG Hub — take 100
+# OP TCG Hub — take 101
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,9 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 101:** nothing visible; the Play bundle's signing is now
+verified and recorded from the build's own log on every release.
 
 **New at take 100:** pictures for the boxes, packs and cards whose first
 image address is empty, whenever TCGplayer's second address has one —
