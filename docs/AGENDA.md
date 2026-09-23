@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 93.* Ranked by blocking-ness, not by interest.
+*Current as of take 94.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -35,22 +35,23 @@ each item got where it is; this block is what to do next.
 **Mine, in order**
 1. Whatever the next diagnostics paste names.
 2. **A32**: retailer sources one session each with the real page in hand
-   (GTS and Southern Hobby are reachable; GameStop, Walmart, Meijer, eBay
-   need a residential IP → the sideload build); the restock pattern
-   sentence once a fortnight of hourly history exists on Pages.
+   (GTS built at take 94; Southern Hobby next, its host is open; GameStop,
+   Walmart, Meijer, eBay need a residential IP → the sideload build); the
+   restock pattern sentence once a fortnight of hourly history exists on
+   Pages; the distributor state timeline from the history rows.
 3. **A23** the sim's tail — modal effects, ordering, protection, the
    opponent's hidden choices — one mechanism per take, when wanted.
 4. **A31** Collectr import, the day a real exported file exists.
 5. The standing offer: the release-notes trim. (The seed-on-releases
    `build.yml` offer is moot since take 89: takes ship as PRs.)
 
-**Closed since the last audit (takes 57–93):** A26 colour/contrast/desktop,
+**Closed since the last audit (takes 57–94):** A26 colour/contrast/desktop,
 A29 stock decks, A30 the tester report in full, A33 all six (item 6 at
 take 93), A34 currency and splash, A35 all thirteen, A36 the set chips
 (take 90), A37 More unreachable (take 91), the first paste's three items
 (take 92); A32
 steps 1–3 and Local, Events, storefronts, stock alerts, the calendar tap,
-exact distances.
+exact distances, the first distributor (take 94).
 
 **Stale and marked so:** A19 other games and A11 Japanese printings stay
 ruled out; A20's backlog is where ideas wait, not a queue.
@@ -1038,6 +1039,27 @@ Proved against the live source from the session VM before it shipped.
 (GitHub delays a public repo's cron); the *checked N ago* labels are honest.
 **Ruled out: a block on the roster host** — 200 from the runner and from the
 VM; the log said KeyError, not HTTPError.
+
+### Take 94 — GTS Distribution, the first distributor source
+
+The owner opened the hosts in the environment's network policy and chose
+GTS. **Read off the real pages (MEASURED):** a Website Pipeline storefront
+whose listing page embeds `var productResults = {"count", "products"}`;
+Brand `ONE PIECE` × Manufacturer `BANDAI JAPAN` is 49 products and
+`rpp=60` returns them in one call; per product the name, SKU, UPC, MSRP,
+release and preorder dates, the stock words and `flags[1]`. **PROVEN:**
+`flags[1]` is the allocation flag — the product page's template shows
+"This product may be allocated" on it, and the Allocated facet holds
+exactly the 32 flagged products of the 49. Today every booster from OP-16
+to OP-19, EB-05, EB-06 and the ST-31 to ST-38 displays are sold out and
+allocated months before release (OP-19: 2027-03-05). **Built:**
+`tools/hunt/gts.py` (strict parser, fixture, controls), the feed's second
+source with the keep-the-last-good path, the distributor line under a
+Sealed row, the panel, the Releases line and the *not in the catalogue
+yet* list, the `gts:` alert source. The matcher learned the wholesale
+names (a normaliser on the source side), three set-code families and a
+tie-break (landmine 134). **Next:** Southern Hobby, same shape, its own
+take; the state timeline from the history rows.
 
 ## A37 — More unreachable since take 83 · OPENED AND CLOSED take 91
 

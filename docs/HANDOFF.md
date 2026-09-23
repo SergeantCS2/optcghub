@@ -1,4 +1,162 @@
-# HANDOFF — through Take 93
+# HANDOFF — through Take 94
+
+## Take 94 — 2026-09-23 — A32: GTS Distribution, the first distributor source
+
+Opened before any code (PROTOCOL §6). Take 93 merged (PR #17, merge
+commit 1a523d1); the owner's take-93 paste read 17 of 17 self-test PASS,
+`build:` filled, pictures on every list, no blank-screen record.
+**Take 92 is PROVEN on the runner:** the owner hand-ran the `hunt`
+workflow (run 38, 03:27 UTC, green); Pages serves `stores.json` fetched
+2026-09-23T03:28:16Z with 3,395 stores and `events.json` (200) with
+19,369 rows over 31 days — the first roster rebuild since 09-17. The
+owner chose A32's next source, **GTS Distribution**, and opened the hosts
+in the environment's network policy: `www.gtsdistribution.com`,
+`www.southernhobby.com` and `southernhobby.com` answer 200 from this VM
+now (the apex `gtsdistribution.com` and the three package hosts still
+403; none of them is needed).
+
+### Measured first: what GTS publishes, read off the real pages
+
+- **The platform:** Website Pipeline on classic ASP. One faceted listing,
+  `pc_combined_results.asp`, takes `faceted_search_terms=Brand~<id>|
+  Manufacturer~<id>`, `range=release_date~[~from~to~]`, `page=N` and
+  `rpp=N` (12/36/60/90/120/240; `pagesize` belongs to the ERP pages and is
+  ignored here). There is no JSON endpoint — but every listing page embeds
+  `var productResults = {"count": N, "products": [...]}`, the object its
+  own view model renders. The parser reads that object and never the HTML
+  around it; the product page embeds the same shape as `var product`.
+- **The facets:** Brand `ONE PIECE` and Manufacturer `BANDAI JAPAN`, ids
+  read off the facet panel's checkboxes. **49 products; `rpp=60` returns
+  all 49 in one call** (PROVEN: count 49, 49 on the page). The keyword
+  search "one piece" gives 92 — sleeves, puzzles, a board game — so the
+  brand-and-maker pair is the list.
+- **Per product:** name, SKU, UPC(s), link, MSRP (`SRetailPrice`; the
+  wholesale price sits behind a login — `require_login_for_price_and_atc`
+  — and the project never logs in), `inventoryStatus` in/out, a stock
+  message in HTML ("Sold Out", "Call to Order", "in stock" or empty), the
+  stock label ("50+", "24+", "99+", "Sold Out", "call"), `release_date`,
+  `preorder_date` (when preorders opened; a 1924 placeholder on sleeves),
+  `approximate_restock` (1/1/1900 = none), an "Early Release Date" field,
+  the case configuration, and `flags[1]`.
+- **`flags[1]` is the allocation flag, PROVEN two ways:** the product
+  page's template shows "This product may be allocated" exactly when
+  `flags()[1]` is set; and the Narrow By → Allocated facet (59 products
+  across the brand, two pages) holds exactly the 32 of the 49 Bandai
+  products whose flag is set and none of the 17 whose flag is clear.
+  Today every booster from OP-16 to OP-19, EB-05, EB-06, the ST-31 to
+  ST-38 displays, DP-11 to DP-14 and the gift collection are sold out and
+  allocated, months before release: **OP-19 releases 2027-03-05 and is
+  sold out at the distributor on 2026-09-23.** That is the signal A32
+  named at take 69 — the print run spoken for before a shelf sees it.
+- **The states the site distinguishes, and the feed's words for them:**
+  sold out (the message or the label says so; `inventoryStatus` reads
+  `in` on six sold-out displays, so the words win), call (Call to Order),
+  in stock (`in` with a quantity label), preorder (`out`, releases in the
+  future, preorders open), coming (`out`, releases in the future,
+  preorders open on a later date — PEB-01 opens 2026-10-14 for
+  2027-04-23), out (`out`, already released), else unknown.
+- **Terms:** robots.txt answers a 500 (none published); the terms page
+  names no automation or scraping clause. One call a run, a second's
+  pause between pages if there are pages, a User-Agent naming the
+  project, no account, no cart — Target's footing (take 71).
+- **The matcher would match 2 of 49 (MEASURED):** the distributor names
+  case packs. "BOOSTER (OP-16) (24CT)" is the retail Booster Box (24
+  packs); "STARTER DECKS DISPLAY (ST-31) (6CT)" is the catalogue's "…
+  Display"; "DOUBLE PACK SET VOLUME 11 (DP-11) (8CT)" is "Double Pack Set
+  Vol. 11 Display". A normaliser on the GTS side turns the wholesale name
+  into the retail one before the shared `match()` sees it, and `match()`
+  learns three things every source needs: DP, IB and PEB numbers are set
+  codes (a code pins the set, so DP-14 with no catalogue product matches
+  nothing instead of Vol. 13 at 0.8 — rule 4); "Vol. 7" is one token, so
+  Vol. 7 and Vol. 8 differ by a whole word; and **a tie is broken toward
+  the product with fewer extra words** — "Booster Box" and "Booster Box
+  Case" have both scored 1.0 for every booster-box title since take 71,
+  and the Box won by row order (landmine 134). Loading the script for
+  that measurement found landmine 133 first.
+- **Not in the catalogue yet** (TCGplayer lists nothing): OP-19, EB-06,
+  PEB-01, ST-37 to ST-44, DP-13/14, IB-09/10, TS03. Those go on Releases
+  as *at the distributor, not in the catalogue yet* — the earliest list
+  there is, dated by the distributor.
+- **Ruled out:** the app fetching GTS (PROTOCOL §8: the runner fetches,
+  Pages serves); an account or key; showing the MSRP as a price the
+  collector can pay (it is the suggested retail for the case pack, and the
+  line says MSRP and the pack count); Southern Hobby in the same take
+  (one source per take, the take-69 rule).
+
+### This VM (MEASURED 03:5x UTC)
+
+The three package hosts answer 403 as at takes 89–93: smoke and the DOM
+fallback here, the runner's `check` as the gate in Chrome, a draft PR
+marked ready on green, no vendor trailer. The live fetch runs from here
+before it ships, against the opened host.
+
+### Built, and proved where it could be
+
+- **`tools/hunt/gts.py`** — the constants (the two facet ids, `rpp` 60),
+  `listing_url(page)`, `get`, `parse_listing(html)` (the embedded object
+  or `ValueError`; count and products), `parse_product(p, today)` (the
+  fields above, the six states, `allocated`, the set codes in the name,
+  the URL), `retail_title(name)` (the wholesale name as a retail one),
+  `fetch(max_pages, pause)` that never raises and refuses a page set that
+  carries fewer products than the count promised (AGENTS rule 8), and a
+  selftest against `tools/fixtures/gts_listing.html` — the real page
+  trimmed to eleven products with descriptions cut, `count` kept at the
+  49 the site said — with controls: no object, a product without its
+  inventory block, a short page set.
+- **`tools/hunt.py`** — `feed["sources"]["gts"]` beside `target` with the
+  same keep-the-last-good path; every item matched through
+  `retail_title()` and `match()`; `--from-fixtures` builds it from the
+  saved page at a fixed date so its states are stable; the run log prints
+  `gts: 49 products (N matched), N sold out, N allocated, N preorders
+  open, N coming; 1 call`; the history row records each SKU's state so
+  a flip is dated from now on (read in a later take). `tokens()` and
+  `match()` as above, with named expectations and controls.
+- **The app** — `distLine(it, G)` under a Sealed row: `GTS Distribution
+  · sold out · allocated · MSRP $119.76 (24 packs) · release 2026-11-20 ·
+  checked 2 h ago`, in the distributor's own words; a GTS panel under
+  Target's with the counts and what a distributor is (sells to stores;
+  sold out here months early means the run is spoken for), and `Could not
+  reach GTS Distribution since …` when the source is down; Releases: a
+  status line under a set the distributor lists, and *At the distributor,
+  not in the catalogue yet* — every coded product no set matches, by
+  release date; `STOCK.sourcesFor()` gains `gts:<sku>`, available when
+  the distributor shows stock or an open preorder, so the flip fires the
+  take-77 alert; Diagnostics prints the distributor's count and age.
+- **Tests** — smoke: the feed carries the source, the eleven states
+  read as measured, allocation true and false where the page says,
+  OP-16 → the Booster Box and not the Case, ST-36 → the Display, DP-11 →
+  Vol. 11 Display, IB-07 → Vol. 7, PEB-01 and OP-19 and DP-14 → nothing
+  (controls), the panel, the row line, the dead-source text, the Releases
+  panel and line, the alert firing once on a flip and not again; render
+  (Chrome): the Sealed row with a distributor line and the Releases panel
+  draw without sideways scroll, and the control without the source.
+- **Watched fail first:** on the take-93 build the new smoke section died
+  at its second line (`distByCatalogId` is not a function) after one FAIL;
+  on the rebuild two assertions were red — the Releases panel's row count
+  (the regex assumed no whitespace between panels: the test's fault) and
+  the set rows' distributor line, which I had added to the starter-decks
+  row template and not to the per-set one: the harness caught a half-done
+  edit before a phone did. Then **634 passed, 0 failed** (615 before, 19
+  new), the DOM render 10, `hunt.py --selftest` 61 lines (39 before), the
+  scrubber clean. The three Chrome assertions run on the runner.
+- **The live run from this VM:** the host answered 200 for the twelve
+  pages saved between 05:50 and 06:25 UTC — the fixture is one of them,
+  fetched with the module's own URL shape — and the proxy has refused
+  CONNECT since 06:43 UTC (403: the environment's policy, per its README
+  not retried). `fetch()` is PROVEN end to end against the saved page in
+  the selftest (the count check, the short-page control, the refused-host
+  control) and runs live first on the runner's next hourly after the merge,
+  whose log prints the `gts:` line; the `check` workflow does not fetch it.
+
+### DEFERRED this cycle
+
+- **Southern Hobby** — the next source, its own take; Alliance (503 at
+  take 69); the residential-IP sources (GameStop, Walmart, Meijer, eBay)
+  wait for the sideload build.
+- **The state timeline** — recorded per SKU in the history rows from this
+  take; the app reads it (sold out since, preorder opened on) later.
+- **The blank-after-Back** — no record yet since take 91's install. More
+  in the nav (design, the owner's). The three package hosts.
 
 ## Take 93 — 2026-09-23 — A33 item 6: a picture beside every card and set in the lists that had none
 

@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 93
+# V1-STATE — what exists, as of take 94
 
-*Current as of take 93.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 94.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -62,11 +62,11 @@ refresh from Pages (take 27).
 | Typography | four roles (display / comic / body / heavy), OFL/Apache faces bundled, 232 KB, licensed faces as a file drop in `assets/user/fonts/` | render.mjs: Chrome reports all four LOADED and h2 resolves to the display face, with a missing-file control; smoke 7 |
 | Sync | quiet once-per-open sync holds on cellular unless switched on; Sync now always runs; `UPDATE_URL` points at Pages | smoke 4 controls; **not yet seen on the Fold** |
 
-**Harness totals, take 93:** smoke.mjs 615 assertions, render.mjs 90 in
-Chrome (nine of them measure the pictures drawn), gate 23 checks with
-negative controls, hunt.py 39 selftest lines — measured on the runner by
-the PR check (run 13); the session VM has no puppeteer and no pillow, so
-Chrome and hashes run on the runner only.
+**Harness totals, take 94:** smoke.mjs 634 assertions (measured here),
+render.mjs 90 in Chrome at take 93 plus three for the distributor (the
+runner measures the Chrome total), gate 23 checks with negative controls,
+hunt.py 61 selftest lines; the session VM has no puppeteer and no pillow,
+so Chrome and hashes run on the runner only.
 
 ## DEFERRED, and why
 
@@ -84,7 +84,7 @@ Chrome and hashes run on the runner only.
 | Whether the faces themselves fit | the colour and contrast are fixed (take 60); whether Luckiest Guy and Bangers are the right faces is D16 | A26 |
 | A TalkBack session on a phone | every control has a name and the roles are right (take 66); whether the order and wording make sense needs a person | A30 |
 | Focus order | the ring exists (take 80); tab order across screens is unreviewed | A30 |
-| Hunt mode — local shops, reprints, the preorder watch, per-user zips | Sealed, Releases (take 70) and the hourly Target feed — online stock for all of the US, shelf stock per served zip with a zip pop-up, a fortnight of hourly history turned into dated restocks per store, and Local — 2,967 event-running shops with distances from your zip, the distance dropdown, your own notes, verified local shops' online sealed stock hourly, and Events — every event near you for a month with fee, seats and a TCG+ Register link (the source became a chunked index on 2026-09-22 and the roster froze for six days under a green hourly; read both shapes since take 92, landmine 130) — in a Zoro-green palette, with stock alerts that fire on the flip at any tracked source, any event onto the calendar as an .ics, exact distances on request (takes 71–79) BUILT; the TCG+ roster and the rest follow in A32 order | A32 |
+| Hunt mode — local shops, reprints, the preorder watch, per-user zips | Sealed, Releases (take 70) and the hourly Target feed — online stock for all of the US, shelf stock per served zip with a zip pop-up, a fortnight of hourly history turned into dated restocks per store, and Local — 2,967 event-running shops with distances from your zip, the distance dropdown, your own notes, verified local shops' online sealed stock hourly, and Events — every event near you for a month with fee, seats and a TCG+ Register link (the source became a chunked index on 2026-09-22 and the roster froze for six days under a green hourly; read both shapes since take 92, landmine 130) — in a Zoro-green palette, with stock alerts that fire on the flip at any tracked source, any event onto the calendar as an .ics, exact distances on request (takes 71–79), and the first distributor — GTS Distribution's One Piece list with release and preorder dates, sold out and allocated in its own words under each product it lists, the products it has before the catalogue does on Releases, and a distributor restock as an alert source (take 94; the runner's first hourly after the merge is the live proof) BUILT; Southern Hobby and the rest follow in A32 order | A32 |
 | Importing from other apps (Collectr) | needs one real exported file; guessing the format would mis-key printings | A31 |
 | Colour direction | D15; parked, not a priority | A24 |
 | Icon motif | D7; the take-16 placeholder is back by request | A16 |

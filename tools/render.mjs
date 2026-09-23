@@ -15,8 +15,10 @@
  * genuinely can and NAMES what it cannot.
  */
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import vm from 'node:vm';
+import { execSync } from 'node:child_process';
 
 const ROOT = path.dirname(path.dirname(new URL(import.meta.url).pathname));
 const W = p => path.join(ROOT, 'www', p);
@@ -303,6 +305,34 @@ if (puppeteer) {
        const ph = d.querySelector('.ph'); const r = { text: ph && ph.textContent.trim(), img: !!d.querySelector('img'), shown: !!ph && getComputedStyle(ph).display !== 'none' }; d.remove();
        return r.text === p.num.split('-').pop() && !r.img && r.shown; }));
   await page.evaluate(() => { const V = window.VAULT; V.DECKS.list = V.DECKS.list.filter(d => d.name !== 'take 93 probe'); V.DECKS.save(); V.MODE.set('collect', false); document.querySelector('nav button[data-go="collection"]').click(); });
+  await new Promise(r => setTimeout(r, 200));
+  /* take 94 -- the distributor: the panel and a row's line draw inside the
+     phone column, the Releases panel draws its rows, and without the source
+     neither panel exists. The feed is built from the saved real page. */
+  const gtsFx = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-gts-')), 'feed-fixture.json');
+  execSync(`python3 tools/hunt.py --from-fixtures --out ${gtsFx}`, { cwd: ROOT, stdio: 'pipe' });
+  const F94 = JSON.parse(fs.readFileSync(gtsFx, 'utf8'));
+  await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
+  const g94 = await page.evaluate(F => {
+    const V = window.VAULT; V.HUNT.feed = F; V.HUNT.setZip(''); V.MODE.set('hunt', true);
+    for (const id of Object.keys(V.HUNT.distByCatalogId())) { const p = V.CAT.byId.get(+id); if (p) { V.SEALED.closed.delete(p.set); V.SEALED.open.add(p.set); } }
+    V.paintSealed();
+    const panel = [...document.querySelectorAll('#sealedList .panel h3')].find(h => h.textContent === 'GTS Distribution');
+    const line = [...document.querySelectorAll('#sealedList [data-open] span')].find(s => /^GTS Distribution/.test(s.textContent));
+    const row = line && line.closest('[data-open]'); const r = row && row.getBoundingClientRect(); const l = line && line.getBoundingClientRect();
+    return { panel: !!panel && panel.getBoundingClientRect().height > 0, line: !!line, text: line && line.textContent.slice(0, 60), inRow: !!r && l.left >= r.left - 1 && l.right <= r.right + 1 && l.height > 0,
+             scroll: document.body.scrollWidth, vw: document.documentElement.clientWidth };
+  }, F94);
+  ok('Hunt: the distributor panel draws, and a matched row\'s distributor line draws inside its row with no sideways scroll', g94.panel && g94.line && g94.inRow && g94.scroll <= g94.vw + 1, JSON.stringify(g94));
+  const r94 = await page.evaluate(() => { const V = window.VAULT; V.go('releases'); V.paintReleases();
+    const h = [...document.querySelectorAll('#relList .panel h3')].find(x => x.textContent === 'At the distributor, not in the catalogue yet');
+    const rows = h ? [...h.parentElement.querySelectorAll('.row')] : []; const rr = rows.map(x => x.getBoundingClientRect());
+    return { panel: !!h && h.getBoundingClientRect().height > 0, rows: rows.length, drawn: rr.every(b => b.height > 0), scroll: document.body.scrollWidth, vw: document.documentElement.clientWidth }; });
+  ok('Releases: the not-in-the-catalogue-yet panel draws its rows without sideways scroll', r94.panel && r94.rows === 3 && r94.drawn && r94.scroll <= r94.vw + 1, JSON.stringify(r94));
+  const c94 = await page.evaluate(F => { const V = window.VAULT; const f = JSON.parse(JSON.stringify(F)); delete f.sources.gts; V.HUNT.feed = f; V.paintSealed(); V.paintReleases();
+    const a = [...document.querySelectorAll('#sealedList .panel h3')].some(h => h.textContent === 'GTS Distribution'); const b = /At the distributor/.test(document.querySelector('#relList').innerHTML);
+    V.HUNT.feed = null; V.MODE.set('collect', true); return { a, b }; }, F94);
+  ok('negative control: without the source in the feed, neither distributor panel draws', !c94.a && !c94.b, JSON.stringify(c94));
   await new Promise(r => setTimeout(r, 200));
 
   /* Take 60: Pages serves this same file to a desktop browser, where the app
