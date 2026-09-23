@@ -1,6 +1,6 @@
 # PROVISION
 
-*Current as of take 95.*
+*Current as of take 96.*
 
 Every host this project touches, in either phase, with its purpose, licence and
 cadence. The gate refuses an undeclared host in `www/` or in `tools/`.
@@ -43,7 +43,8 @@ the airplane-mode invariant in PROTOCOL §8 holds without every one of them.
 | GitHub Releases | catalogue and price sync | user taps Sync, or once per 24 h on wifi | No — the app runs on its last catalogue and every price shows its date |
 | `sergeantcs2.github.io` (Pages) | the nightly `bundle/manifest.json` and `bundle/catalog.json` | More → Sync, and once on open when online | **Yes** — written to `Directory.Data` as the live catalogue; the APK's bundled copy is the fallback. Take 27. `UPDATE_URL` set at take 33; empty disables it |
 | `tcgplayer-cdn.tcgplayer.com` | reference image for a card the collector has **not** scanned | collection tiles, the picker, card detail (take 12); Hunt's rows (take 83); every card and set row that lists a printing — search, movers, Home, the set browse, a card's other printings, deck rows, the card browse, Trade (take 93) — through one `refArt()` and one box | No — DISPLAY-ONLY by design, not by a gate check. `loading="lazy"`, memory cache, never written to disk, fails silently to a text placeholder. A scanned card uses the collector's own photograph (landmines 27, 28). Every image carries the publisher's SAMPLE watermark, as the reference app's do |
-| `www.tcgplayer.com` | a set's full listing, opened by the *Details ↗* link on every Releases row (take 82) — a search of the set's name on TCGplayer | the collector taps the link | No — the app never fetches it; the OS browser opens it. No affiliate or tracking parameter |
+| `www.tcgplayer.com` | a set's full listing, opened by the *Details ↗* link on every Releases row (take 82) — a search of the set's name on TCGplayer; and a sealed product's own page, `…/product/<id>` with the catalogue's product id, from the chip under its Sealed row and the *Where to buy* panel on its sheet (take 96) | the collector taps the link | No — the app never fetches it; the OS browser opens it. No affiliate or tracking parameter |
+| the sellers the feed names — Target, a shop's Shopify storefront, the distributor | the *Where to buy* chips and panel (take 96): each item's own link as the feed carries it, plus the roster's address and phone for a shop (a `tel:` link) | the collector taps a chip | No — data in `hunt/*.json`, never a literal in the app and never fetched by it; the OS browser or dialler opens it |
 | `play.google.com` | the app's OWN Play listing, handed to the OS by More → *Rate this app* and *Tell someone about the app* (take 65) | the collector taps one of those two rows | No — the app never fetches it. The URL is `…/details?id=com.optcghub.app` and carries no referral, campaign or tracking parameter (A30) |
 
 ## Citation hosts — displayed, never requested

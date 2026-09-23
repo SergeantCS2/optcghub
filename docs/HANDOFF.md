@@ -1,4 +1,88 @@
-# HANDOFF — through Take 95
+# HANDOFF — through Take 96
+
+## Take 96 — 2026-09-23 — A38 item 4: where to buy, under each sealed listing and on its sheet
+
+Opened before any code (PROTOCOL §6). Take 95 merged at 07:49 UTC (PR
+#19, merge commit a94ed5b) after two runner cycles (the second earned
+landmine 136); its build (run 43) went green on the first attempt and
+Release take-95 was published at 07:55 UTC.
+The owner's fourth item, in his words: *"Add links to where I can buy
+these under each listing with a picture representing where such as the
+TCGplayer logo, online or local link/address/phone whatever."*
+
+### Measured first
+
+- **Every printing's TCGplayer URL carries the catalogue's own product
+  id** (MEASURED: 7,659 of 7,659 `tcg_url` rows match
+  `/product/<product_id>/`), so the app builds
+  `https://www.tcgplayer.com/product/<id>` from what the bundle already
+  has — no new column, no bundle growth, and no parameter on the link
+  (take 82's rule: no affiliate or tracking).
+- **The other three sources already carry a URL per item:** Target's
+  `it.url` (take 71), a shop's `it.url` into its own storefront (take 75),
+  the distributor's `it.url` (take 94). The roster (`hunt/stores.json`)
+  carries `addr`, `city`, `state`, `zip`, `phone` and a point per shop, and
+  `shopLines()` already finds the roster entry by name and zip for the
+  distance — the address and phone ride the same lookup.
+- **"A picture representing where":** four small glyphs in the house
+  sprite (`assets/glyphs.svg`, one file, inlined at build), one per kind
+  of seller — a cart for an online marketplace, a pin for a local shop, a
+  truck for the distributor, a handset for a call. A brand logo is ruled
+  out (below); the seller's name says which one.
+- **Where a link can live:** a Sealed row is a `<button data-open>` beside
+  the alert button inside a flex row; an anchor inside a button is invalid
+  HTML and its tap would open the sheet. The chips go in the outer row on
+  their own line (`flex-wrap`), outside the button.
+- **This VM:** as at take 95 — smoke and the DOM render here, Chrome on
+  the runner; the seller hosts are data in the feed, never fetched.
+- **Ruled out:** brand logos (a trademark in a Play-listed app is a
+  rejection ground, landmine 29's family); any affiliate or tracking
+  parameter (PROVISION, take 82); the app fetching a seller's page
+  (PROTOCOL §8: the OS browser opens it); calling any source "the
+  cheapest" (A32's standing rule: source, price, fetched-when); a chip
+  inside the row's button.
+
+### Built
+
+- **`buySources(p)`** — TCGplayer always (the market price and its date
+  as the note), then each Target listing (price, shipping status, age),
+  each shop listing (price, in stock or sold out online, age, the
+  roster's street address, phone and distance), each distributor listing
+  (the state, allocated, "to stores", age).
+- **`buyChips(p)`** — the strip under each Sealed row, in both row
+  templates: a glyph, the seller's name and ↗ per source, opening the
+  seller's own page in the OS browser; a *Call* chip when the roster has
+  the shop's phone. Outside the row's button.
+- **The sealed sheet's *Where to buy* panel** — a row per source with its
+  note, address and distance, *Open ↗* and *Call*; hidden on a card's
+  sheet (`.panel[hidden]`, landmine 136's rule); a note that every link
+  opens the seller's own page, nothing is bought or fetched in the app,
+  and no link carries a referral.
+- **PROVISION:** the `www.tcgplayer.com` row gains the product page; a row
+  says the feed-carried seller links are data the OS opens, never fetched.
+- **Watched fail first:** on the take-95 build the new smoke section died
+  at its first `buySources` call; on the rebuild **652 passed, 0 failed**
+  (642 before, 10 new) — TCGplayer first at the catalogue id with no
+  parameter, the distributor "to stores", a shop with the roster's
+  address, phone and distance (a synthetic roster entry makes that path
+  deterministic), a strip per row and every strip after the row's buttons,
+  the glyphs and ↗ per chip, the `tel:` Call chip, the sheet's panel and
+  the card control, the four glyphs in the sprite, the literal-host rule.
+  The DOM render 10, the scrubber clean. Three Chrome assertions for the
+  runner: the strip inside the row at 412 and 673 px, and the sheet's
+  panel drawn for a sealed product and not for a card. **PROVEN on the
+  runner, first run (check run 20, head fc6f4d8, 07:58 UTC): render 98
+  passed, 0 failed (mode: chrome)** — 95 before, the three new green —
+  smoke **652 passed, 0 failed**, **GATE PASSED**, hash coverage 100.0%,
+  pipeline 33 s. One runner cycle for the take.
+
+### DEFERRED this cycle
+
+- **Take 97 — Releases:** starter decks grouped (one row per release
+  day), the countdown coloured by nearness, a release alert and
+  add-to-calendar (the take-78 `.ics`).
+- Then **Southern Hobby** (A32); the distributor state timeline.
+- The three package hosts in this session; More in the nav.
 
 ## Take 95 — 2026-09-23 — the take-94 look: a Releases row that does something, a sealed sheet without card conditions, an alert you can find
 

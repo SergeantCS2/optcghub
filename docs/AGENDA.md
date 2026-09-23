@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 95.* Ranked by blocking-ness, not by interest.
+*Current as of take 96.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -30,9 +30,10 @@ each item got where it is; this block is what to do next.
 
 **Mine, in order**
 1. **A38, in take order:** 95 (the Releases tap, the sealed sheet, the
-   alert you can find) → 96 (where to buy, under each listing) → 97
-   (Releases: starter decks grouped, the countdown coloured, a release
-   alert and add-to-calendar); then whatever the next release answers name.
+   alert you can find — merged) → 96 (where to buy, under each listing)
+   → 97 (Releases: starter decks grouped, the countdown coloured, a
+   release alert and add-to-calendar); then whatever the next release
+   answers name.
 2. **A32**: retailer sources one session each with the real page in hand
    (GTS built at take 94; Southern Hobby next, its host is open; GameStop,
    Walmart, Meijer, eBay need a residential IP → the sideload build); the
@@ -1080,6 +1081,10 @@ errors) and named, in his words:
    picture representing where"** — TCGplayer, online, local
    address/phone. → take 96, as text chips per source (a brand logo in a
    Play-listed app is a rejection ground; the name says the same thing).
+   *(built take 96: a chip per seller under each Sealed row — a glyph for
+   the kind, the name, ↗ — and a Where-to-buy panel on the sheet with the
+   roster's address, distance and a Call button; TCGplayer's product page
+   from the catalogue's own id, no parameter)*
 5. **Releases: "make days change through different colors as it gets
    closer, add the ability to add an alert, or to add an event to my
    phone's cal"** → take 97 (the take-78 `.ics` path for the calendar).

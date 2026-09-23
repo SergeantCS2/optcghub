@@ -351,6 +351,25 @@ if (puppeteer) {
     return { segH: Math.round(seg.height), stH: Math.round(st.height), segH2: Math.round(seg2.height), stH2: Math.round(st2.height) }; });
   ok('the sealed sheet draws no condition segment and draws the stock alert; the card sheet the reverse', d95.segH === 0 && d95.stH > 0 && d95.segH2 > 0 && d95.stH2 === 0, JSON.stringify(d95));
   await new Promise(r => setTimeout(r, 200));
+  /* take 96 -- where to buy: the chip strip draws under the row, inside its
+     width, at both Fold widths; the sheet's panel draws for a sealed product
+     and not for a card. The same fixture feed as take 94. */
+  for (const [w, name] of [[412, 'Fold outer'], [673, 'Fold inner']]) {
+    await page.setViewport({ width: w, height: 915, deviceScaleFactor: 2 }); await new Promise(r => setTimeout(r, 120));
+    const m = await page.evaluate(F => { const V = window.VAULT; V.HUNT.feed = F; V.HUNT.setZip(''); V.MODE.set('hunt', true); V.SEALED.q = ''; V.SEALED.kind = 'all';
+      for (const id of Object.keys(V.HUNT.distByCatalogId())) { const p = V.CAT.byId.get(+id); if (p) { V.SEALED.closed.delete(p.set); V.SEALED.open.add(p.set); } } V.paintSealed();
+      const strip = document.querySelector('#sealedList .chips.buy'); const row = strip && strip.parentElement; const r = row && row.getBoundingClientRect(); const s = strip && strip.getBoundingClientRect();
+      const btn = row && row.querySelector('[data-open]'); const b = btn && btn.getBoundingClientRect();
+      return { strip: !!strip, inRow: !!s && s.left >= r.left - 1 && s.right <= r.right + 1 && s.height > 0, below: !!b && s.top >= b.bottom - 1, chips: strip ? strip.querySelectorAll('a.chip').length : 0, scroll: document.body.scrollWidth, vw: document.documentElement.clientWidth }; }, F94);
+    ok(`Hunt: the buy chips draw under the row inside its width, ${name} (${w}px), no sideways scroll`, m.strip && m.inRow && m.below && m.chips >= 1 && m.scroll <= m.vw + 1, JSON.stringify(m));
+  }
+  await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
+  const s96 = await page.evaluate(() => { const V = window.VAULT; const g = Object.keys(V.HUNT.distByCatalogId())[0]; const p = V.CAT.byId.get(+g); V.openDetail(p.id); V.go('detail');
+    const panel = document.querySelector('#dBuy').getBoundingClientRect(); const rows = document.querySelectorAll('#dBuyList .row').length;
+    const card = V.CAT.rows.find(x => !x.sealed && x.market > 0); V.openDetail(card.id); const panel2 = document.querySelector('#dBuy').getBoundingClientRect();
+    V.HUNT.feed = null; V.MODE.set('collect', true); return { h: Math.round(panel.height), rows, h2: Math.round(panel2.height) }; });
+  ok('the sealed sheet draws the Where to buy panel with its rows; the card sheet draws none', s96.h > 0 && s96.rows >= 2 && s96.h2 === 0, JSON.stringify(s96));
+  await new Promise(r => setTimeout(r, 200));
 
   /* Take 60: Pages serves this same file to a desktop browser, where the app
      used to run edge to edge. It stays a phone-width column there. */
