@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 98
+# V1-STATE — what exists, as of take 99
 
-*Current as of take 98.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 99.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -62,6 +62,25 @@ refresh from Pages (take 27).
 | Typography | four roles (display / comic / body / heavy), OFL/Apache faces bundled, 232 KB, licensed faces as a file drop in `assets/user/fonts/` | render.mjs: Chrome reports all four LOADED and h2 resolves to the display face, with a missing-file control; smoke 7 |
 | Sync | quiet once-per-open sync holds on cellular unless switched on; Sync now always runs; `UPDATE_URL` points at Pages | smoke 4 controls; **not yet seen on the Fold** |
 
+**The look (take 99, A40):** `tools/look.mjs` — the session's own review,
+not CI: the built app in the VM's Chromium (Playwright, installed globally
+there) at the Fold's two sizes, a per-take step list of real clicks and
+`window.VAULT` calls (`tools/look/steps.mjs`), a PNG and a measured line
+per step under `look/` (gitignored), read by the session and sent to the
+owner before a PR is marked ready. Its first run, on take 98's changes,
+found the toast wrapping into a tall half-width pill and a sealed sheet's
+subtitle ending in two stray dots — both fixed the same take. Limits:
+no camera, notifications, share sheet or native Back; no CDN pictures
+from the VM. An emulator was measured impossible here (no KVM, no SDK,
+no network).
+
+**Harness totals, take 99:** smoke.mjs 685 assertions (5 new: the look
+exists and `look/` is ignored at the root only with a `git check-ignore`
+control, the toast rule, the sealed subtitle with a card control),
+render.mjs 106 in Chrome, gate 23 checks, hunt.py 61 — measured on the
+runner by the PR check (run 26, gate passed); the look 20 steps at two
+viewports, 24 PNGs, on the session VM.
+
 **Harness totals, take 98:** smoke.mjs 680 assertions (14 new: the back
 path from a sheet with two controls, the most-valuable rows, the splash,
 the toast, the decks fold, the condition tap with a control), render.mjs
@@ -69,10 +88,11 @@ the toast, the decks fold, the condition tap with a control), render.mjs
 no blank record and its control with a prompt open, a most-valuable
 row's click, the long toast inside the screen, the splash rule), gate 23
 checks with negative controls, hunt.py
-61 selftest lines — smoke and the DOM render measured here; the Chrome
-count is the runner's until the take-98 check reports it; the session VM
-has no puppeteer and no pillow, so Chrome and hashes run on the runner
-only.
+61 selftest lines — measured on the runner by the PR check (run 25,
+gate passed); the session VM has no puppeteer and no pillow, so the
+harness's Chrome and the hashes run on the runner only (a globally
+installed playwright with Chromium exists on the VM since take 98 for
+reproductions, outside the harness).
 
 ## DEFERRED, and why
 

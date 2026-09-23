@@ -1,4 +1,4 @@
-# OP TCG Hub — take 98
+# OP TCG Hub — take 99
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,10 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 99:** nothing visible; every change is now clicked through
+and screenshotted in a real browser before a take ships, and the pictures
+go to the owner for review.
 
 **New at take 98:** the phone's Back button from a card's sheet returns
 to the list you came from, not to Home (the blank page after Back, found

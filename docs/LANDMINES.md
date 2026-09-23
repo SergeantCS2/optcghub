@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 98.*
+*Current as of take 99.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -148,6 +148,7 @@ Start here. Do not read top to bottom.
 | Tapping a row does nothing, in one mode | **135** |
 | An element set `hidden` still draws | **136** |
 | Back from a card's sheet lands on Home (the blank page after Back) | **137** |
+| An unanchored `.gitignore` pattern swallows a same-named directory anywhere | **138** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -1962,6 +1963,18 @@ an overlay list holds overlays only — never a section; a back-path test
 drives the handler's exact sequence from a sheet and asserts the previous
 screen is on and no blank record was written; a "closed" item stays open
 until its record says so.
+
+**138. An unanchored `.gitignore` pattern ignores a same-named directory at
+any depth, and `git add` refuses the file without failing the chain you
+expected.** Take 99 added `look/` for the harness's output at the root;
+the harness's step lists live in `tools/look/`, which the same pattern
+matched. `git add` printed a hint, exited non-zero, the `&&` chain stopped
+before `git commit`, and the push that followed pushed nothing — the
+log's last line still read the previous commit, which is the only place
+it showed. Rule: a pattern for a root directory starts with `/`; after
+`git add`, `git status --short` shows nothing untracked among the named
+paths, and the push's output names a new commit or the take is not
+pushed. Smoke asserts `git check-ignore` refuses the step list.
 
 ## §2 — Inherited from APEX ORV
 

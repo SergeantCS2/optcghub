@@ -1,4 +1,111 @@
-# HANDOFF — through Take 98
+# HANDOFF — through Take 99
+
+## Take 99 — 2026-09-23 — the look: a click-and-screenshot review in the session's own browser, run before a take ships (A40)
+
+Opened before any code (PROTOCOL §6). Take 98 merged at 09:08:51 UTC (PR
+#22, merge commit d4bf525) on its second runner cycle — run 24 was red on
+one wrong Chrome test, run 25 green: smoke 680, render 106 in Chrome, gate
+passed; Release take-98 published 09:13:57 with both assets. The runner's
+numbers commit landed after the merge; it is rebased onto main and rides
+here. The take-98 release report went to the owner with four numbered
+questions (his steps; the `viewport` line from the open Fold; the two
+picture URLs; where the guide lives).
+
+**The owner's ask, mid-take:** a way for the session to test new features
+and bug fixes itself — "not directly in the app build … in fact it prob
+shouldn't be" — by clicking and screenshotting, findings run by him for
+input, before a take is finished; he floated an Android emulator. His two
+answers to the plan: the harness first (take 99), the pictures probe next
+(take 100); the screenshots and findings sent to the owner, every take.
+
+### Measured first
+
+- **An emulator cannot run in this environment:** no `/dev/kvm`, no
+  `vmx`/`svm` flag in `/proc/cpuinfo` (4 CPUs, 15 GB), no Android SDK or
+  `adb`, and the proxy refuses every host but GitHub (the SDK could not be
+  downloaded; the harness's own fetch tool answers `EGRESS_BLOCKED` for
+  TCGplayer and Southern Hobby too). RULED OUT here, MEASURED.
+- **A real browser is already here and proven:** Playwright is installed
+  globally (`/opt/node22/lib/node_modules/playwright`; ESM ignores
+  `NODE_PATH`, so it is imported by absolute path) with Chromium under
+  `/opt/pw-browsers`. At take 98 the back-path bug was reproduced and its
+  fix verified in it at phone size — real clicks, the app's `window.VAULT`
+  surface, `history.back()` running the same handler chain as the phone's
+  Back, `page.screenshot`. The session can read a PNG (the Read tool shows
+  images) and send it to the owner.
+- **The CI harness is not a review:** `tools/render.mjs` takes one
+  screenshot per run (`www/render.png`, the `render` artifact) and is
+  pass/fail by design; the artifact's blob host is refused from here.
+- **Limits, so nobody mistakes the look for the phone:** no camera, no
+  notifications, no share sheet, no native Back (history Back is the same
+  handler chain); no pictures from the CDN in this VM (egress), so every
+  picture is its label box in the look and the phone stays the proof for
+  A39 item 3. The Fold's inner viewport is INFERRED (~840×757 CSS px at
+  DPR 2) until the owner pastes Diagnostics' `viewport` line from the open
+  screen; the cover screen is the harness's 412×915.
+- **A39 item 4 answered by reading:** More → *How it works* → *Show the
+  guide again* exists (`#guideAgain` → `guideOpen`).
+- **Ruled out:** the emulator, as above; testing inside the app build (the
+  owner's word and PROTOCOL §8); the look in CI for now (a puppeteer port
+  and an artifact gallery — deferred, the owner's call); a pass/fail-only
+  look (the point is the picture he reviews, so every step writes one).
+
+### Built
+
+- `tools/look.mjs` — serves `www/` on a local port, opens the built app in
+  Chromium through the global Playwright at two viewports (cover, inner),
+  walks a take's step list, and after every step writes
+  `look/<take>/<viewport>/NN-<name>.png` and a line of
+  `look/<take>/report.json` (`{step, expect, measured, ok}`); prints a
+  summary. `--selftest` runs a knowingly-wrong expectation (must FAIL) and
+  a blank-page PNG-size control (must FAIL) — the harness watched to fail
+  before it is trusted. Never in CI; `look/` is gitignored — the PNGs
+  go to the owner.
+- `tools/look/steps.mjs` — the step lists as data, one per take; take 98's
+  is the first: the splash colour in the first 100 ms; Home → a
+  most-valuable row → the sheet; a condition tap moving the segment, the
+  line and the quantity in place; Back from the sheet → Sealed with no
+  blank record; the folded Starter decks; a long toast wrapping.
+- PROTOCOL §6 gains the step; the NSP carries it; AGENDA A40 records it.
+- **The first look, on take 98's changes (20 steps, both viewports, all
+  measured ok; 24 PNGs read here):** the splash is one colour; a
+  most-valuable row opens the sheet; LP then MP move the segment and the
+  line in place; Back from a sealed sheet lands on Sealed with no record;
+  Starter decks start folded and open on a tap; Releases carries the
+  bands and the buttons; the guide's row reopens the tour. **Three
+  findings from the pictures, not the numbers** — which is the point:
+  1. The harness screenshotted Home before the splash lifted (the splash
+     lingers, take 86): `open()` now waits for it to go.
+  2. **The long toast wrapped into a tall half-width pill** at cover
+     width (206 px wide, seven lines): `left:50%` halves the available
+     width of a fixed box, so `max-width` never applied. Fixed with
+     `width:max-content` — 380 px wide, three lines now. Take 98's
+     measurement ("inside the screen, more than one line") was true and
+     not enough; the picture was.
+  3. **A sealed sheet's subtitle read "The Dominance of God · ·"** —
+     the line joined rarity and number a sealed product does not have.
+     Built from the parts it has now.
+  Both fixes have smoke assertions watched to fail on the take-98 build
+  (smoke 684).
+- **Landmine 138, from the first commit attempt:** the unanchored
+  `look/` ignore also matched `tools/look/`, `git add` refused the step
+  list and the `&&` chain stopped before the commit — the push pushed
+  nothing and only the log's last line showed it. Anchored to `/look/`;
+  smoke asserts `git check-ignore` refuses the step list (smoke 685).
+- **The runner (check run 26, head e15382a, first run): smoke 685, render
+  106 in Chrome, GATE PASSED** — 45 s with the catalogue cache warm; run
+  27 green on the numbers commit. The owner reviewed the eight pictures
+  ("Screenshots look good, go") and the PR was marked ready — the first
+  take shipped through A40's loop.
+
+### DEFERRED this cycle
+
+- **Take 100 — the pictures** (A39 item 3): the sealed images and
+  TCGplayer's second host measured on the runner; the design is in the
+  plan and in A39.
+- The look on the runner as a PR-check artifact gallery.
+- **Southern Hobby** (A32) and the distributor timeline: a new session
+  with the opened domain list.
 
 ## Take 98 — 2026-09-23 — the take-97 look: Back from a sheet goes back (landmine 137), and six small things the third install named
 
@@ -77,9 +184,13 @@ other side: the watchdog healed the blank by putting Home back.
   the most-valuable rows twice, the splash, the toast, the decks fold, the
   condition handler, the tap on an unowned card, the tap on an owned copy
   with quantity and cost basis, the refused sixth condition, the note);
-  the DOM render 10 here; Chrome 106 on the runner (five new) — the
-  runner's numbers are recorded below when the check reports them. Two
-  tests were wrong before the product was: `OWN.add()` takes no cost
+  the DOM render 10 here; **the runner (check run 25, head 74bf3c6):
+  smoke 680, render 106 in Chrome, GATE PASSED** — run 24 was red on
+  one Chrome assertion, below. The same run's hash step says what the
+  picture question is worth: **219 images known to be unavailable at
+  the catalogue's CDN, retried every run, 0 recovered** (MEASURED) —
+  those are the blanks on Releases and the newest packs. Two tests were
+  wrong before the product was: `OWN.add()` takes no cost
   basis (it is set on the sheet), so the smoke test sets it on the
   returned copy; and the Chrome back-path test opened Sealed with no zip
   set, so the zip prompt sheet was open when the history event fired and
