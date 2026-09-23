@@ -193,6 +193,24 @@ def selftest():
         print("  skip  no catalogue here; match checks run where catalog.sqlite exists")
     ev = json.load(open(os.path.join(fx, "events_us.json")))["events"]
     ok &= roster.selftest(ev, roster.zcta())
+    # take 92, landmine 130: a failed rebuild keeps the roster AND the events table
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        sp = os.path.join(td, "stores.json")
+        old_st = {"fetched_at": "2026-09-01T00:00:00Z", "source": "x", "stores": [{"name": "A"}]}
+        old_ev = {"fetched_at": "2026-09-01T00:00:00Z", "window_days": 31, "titles": ["t"], "rows": [[0, "2026-09-02", 0, 1, "0", 8]], "url": "u"}
+        def boom(): raise ValueError("the source changed shape")
+        r = roster_step(sp, fetch=boom, load=lambda p, n: old_st if n == "stores.json" else old_ev, out=lambda *_: None)
+        check("a failed rebuild keeps the roster and the events table", r["how"] == "failed" and os.path.exists(sp) and os.path.exists(sp.replace("stores", "events")) and r["events"] == 1, str(r))
+        os.remove(sp); os.remove(sp.replace("stores", "events"))
+        r = roster_step(sp, fetch=boom, load=lambda p, n: old_st if n == "stores.json" else None, out=lambda *_: None)
+        check("control: with no previous events table there is nothing to keep, and it says so", r["how"] == "failed" and os.path.exists(sp) and not os.path.exists(sp.replace("stores", "events")) and r["events"] is None, str(r))
+        fresh_st = {"fetched_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "source": "x", "stores": [{"name": "A"}]}
+        r = roster_step(sp, fetch=boom, load=lambda p, n: fresh_st if n == "stores.json" else None, out=lambda *_: None)
+        check("control: a fresh roster with no live events table is rebuilt, not carried (a lost table heals)", r["how"] == "failed", str(r))
+        good = json.load(open(os.path.join(fx, "events_us.json")))["events"]
+        r = roster_step(sp, fetch=lambda: good, load=lambda p, n: None, out=lambda *_: None)
+        check("a rebuild writes both files", r["how"] == "rebuilt" and r["stores"] and os.path.exists(sp.replace("stores", "events")), str(r))
     ok &= shops.selftest(json.load(open(os.path.join(fx, "shopify_products.json"))))
     # controls: a changed shape is a failure, not a quiet empty
     for name, fn, bad in (("stores", target.parse_stores, {"data": {}}), ("search", target.parse_search, {"data": {"search": {}}}), ("fulfillment", target.parse_fulfillment, {"data": {"product": {}}})):
@@ -204,6 +222,51 @@ def selftest():
 
 
 HUNT_FILES = ("feed.json", "history.json", "stores.json", "events.json", "shops.json")
+
+
+def roster_step(stores_path, from_fixtures=False, fetch=None, load=None, out=print):
+    """The store roster and its events table (takes 74, 76). Rebuilt when the
+    live roster is a day old or the live events table is missing; else both
+    are carried over. Take 92, landmine 130: a failed rebuild keeps BOTH files
+    -- the failure path used to keep the roster and drop the events table, so
+    one bad night made Events a 404 that no later night could heal. Returns
+    what happened, for the selftest."""
+    fetch = fetch or roster.fetch_events; load = load or load_previous
+    ev_path = stores_path.replace("stores", "events")
+    prev_st = None if from_fixtures else load(stores_path, "stores.json")
+    prev_ev = None if from_fixtures else load(ev_path, "events.json")
+    have_ev = bool(prev_ev and prev_ev.get("rows") is not None)
+    fresh = bool(prev_st and prev_st.get("fetched_at") and (time.time() - time.mktime(time.strptime(prev_st["fetched_at"], "%Y-%m-%dT%H:%M:%SZ"))) < 24 * 3600)
+    carried = fresh and have_ev
+    result = {"stores": None, "events": None, "how": None}
+    try:
+        if from_fixtures:
+            ev = json.load(open(os.path.join(ROOT, "tools", "fixtures", "events_us.json")))["events"]
+            st = roster.build(ev, roster.zcta(), now="2026-09-01")
+        elif carried:
+            st = prev_st
+            st["events"] = {k: prev_ev[k] for k in ("window_days", "titles", "rows", "url") if k in prev_ev}
+        else:
+            st = roster.build(fetch(), roster.zcta())
+        ev_tab = st.pop("events", None) if isinstance(st, dict) else None
+        json.dump(st, open(stores_path, "w"), separators=(",", ":"))
+        if ev_tab:
+            json.dump({"fetched_at": st["fetched_at"], "stores_fetched_at": st["fetched_at"], **ev_tab}, open(ev_path, "w"), separators=(",", ":"))
+            out(f"   events: {len(ev_tab['rows'])} in the next {ev_tab['window_days']} days, {os.path.getsize(ev_path) // 1024} KB")
+            result["events"] = len(ev_tab["rows"])
+        result["how"] = "carried" if carried else "rebuilt"; result["stores"] = len(st["stores"])
+        out(f"   stores: {len(st['stores'])} with events on file ({'carried over' if carried else 'rebuilt'}), {os.path.getsize(stores_path) // 1024} KB")
+    except Exception as e:                                   # noqa: BLE001
+        result["how"] = "failed"; result["error"] = f"{type(e).__name__}: {str(e)[:100]}"
+        out(f"   stores: FAILED {result['error']}" + (f" (kept the roster of {prev_st.get('fetched_at')})" if prev_st else " (no roster to keep)"))
+        if prev_st:
+            json.dump(prev_st, open(stores_path, "w"), separators=(",", ":")); result["stores"] = len(prev_st.get("stores", []))
+        if have_ev:
+            json.dump(prev_ev, open(ev_path, "w"), separators=(",", ":")); result["events"] = len(prev_ev["rows"])
+            out(f"   events: kept the table of {prev_ev.get('fetched_at')}, {len(prev_ev['rows'])} rows")
+        else:
+            out("   events: nothing to keep -- the Events screen stays empty until a rebuild succeeds")
+    return result
 
 
 def carry_over(out_dir):
@@ -241,30 +304,7 @@ if __name__ == "__main__":
     json.dump(feed, open(a.out, "w"), separators=(",", ":"))
     # the store roster: rebuilt when the last one is a day old, else carried over (take 74)
     stores_path = os.path.join(os.path.dirname(a.out), os.path.basename(a.out).replace("feed", "stores"))
-    prev_st = None if a.from_fixtures else load_previous(stores_path, "stores.json")
-    age_ok = prev_st and prev_st.get("fetched_at") and (time.time() - time.mktime(time.strptime(prev_st["fetched_at"], "%Y-%m-%dT%H:%M:%SZ"))) < 24 * 3600
-    try:
-        if a.from_fixtures:
-            ev = json.load(open(os.path.join(ROOT, "tools", "fixtures", "events_us.json")))["events"]
-            st = roster.build(ev, roster.zcta(), now="2026-09-01")
-        elif age_ok:
-            st = prev_st
-            prev_ev = load_previous(stores_path.replace("stores", "events"), "events.json")
-            if prev_ev and prev_ev.get("rows") is not None:
-                st["events"] = {k: prev_ev[k] for k in ("window_days", "titles", "rows", "url") if k in prev_ev}
-        else:
-            st = roster.build(roster.fetch_events(), roster.zcta())
-        ev_tab = st.pop("events", None) if isinstance(st, dict) else None
-        json.dump(st, open(stores_path, "w"), separators=(",", ":"))
-        if ev_tab:
-            ev_path = stores_path.replace("stores", "events")
-            json.dump({"fetched_at": st["fetched_at"], "stores_fetched_at": st["fetched_at"], **ev_tab}, open(ev_path, "w"), separators=(",", ":"))
-            print(f"   events: {len(ev_tab['rows'])} in the next {ev_tab['window_days']} days, {os.path.getsize(ev_path) // 1024} KB")
-        print(f"   stores: {len(st['stores'])} with events on file ({'carried over' if age_ok and not a.from_fixtures else 'rebuilt'}), {os.path.getsize(stores_path) // 1024} KB")
-    except Exception as e:                                   # noqa: BLE001
-        print(f"   stores: FAILED {type(e).__name__}: {str(e)[:100]}" + (" (kept the last roster)" if prev_st else ""))
-        if prev_st:
-            json.dump(prev_st, open(stores_path, "w"), separators=(",", ":"))
+    roster_step(stores_path, a.from_fixtures)
     # local shops' online stock (take 75): every verified Shopify storefront, hourly
     shops_path = os.path.join(os.path.dirname(a.out), os.path.basename(a.out).replace("feed", "shops"))
     sealed_cat = catalogue_sealed(); shop_out = {"fetched_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "shops": []}

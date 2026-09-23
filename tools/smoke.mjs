@@ -1001,6 +1001,19 @@ ok('the catalogue, index, gate and search checks PASS against the real catalogue
 ok('plugin checks SKIP where there is no plugin, never PASS by default',
    ['Backup file round-trip (Filesystem)', 'Share sheet available', 'OCR reads a code the app drew (ML Kit)', 'Notifications permission', 'Ads plugin present, test units'].every(n => by[n] && by[n].s === 'SKIP'));
 ok('offline, the sync check SKIPs rather than failing', by['Sync URL answers'].s === 'SKIP');
+/* take 92, landmine 131: the OCR check was SKIP everywhere but a phone, and on
+   the phone it failed a correct read for forty-six takes (`m.num`, a field
+   parseRead never had). Exercise the comparison with an injected answer. */
+{
+  const P = V.PLATFORM, hadOcr = P.hasOcr, ocr = P.ocr;
+  P.hasOcr = () => true; P.ocr = async () => 'OP01-016';
+  const good = Object.fromEntries((await V.SELFTEST.run()).checks.map(c => [c.name, c]))['OCR reads a code the app drew (ML Kit)'];
+  ok('the OCR self-test PASSES a correct read of the code it drew', good && good.s === 'PASS' && /OP01-016/.test(good.note), JSON.stringify(good));
+  P.ocr = async () => 'nothing like a code';
+  const bad = Object.fromEntries((await V.SELFTEST.run()).checks.map(c => [c.name, c]))['OCR reads a code the app drew (ML Kit)'];
+  ok('negative control: a wrong read FAILS it', bad && bad.s === 'FAIL', JSON.stringify(bad));
+  P.hasOcr = hadOcr; P.ocr = ocr;
+}
 ok('the report is shareable text with a summary line', /pass, \d+ fail, \d+ skipped/.test(V.SELFTEST.text()) && V.SELFTEST.text().split('\n').length > 14);
 ok('the sim log is shareable text (take 52)', /data-sim="sharelog"/.test(js) && typeof V.simLogText === 'function');
 const saved = V.CAT.rows; V.CAT.rows = saved.slice(0, 100);
@@ -1552,6 +1565,7 @@ ok('the nightly carries the hourly\'s hunt files forward before it deploys (the 
   V.ERRS.push('error', 'planted error for the test', 'app.js:1');
   ctx.navigator.onLine = false;
   const rep = await V.DIAG.report();
+  ok('the diagnostics build line carries the manifest\'s build time, not a question mark (take 92)', rep.includes('build: ' + manifest.built_at) && !/^build: \?$/m.test(rep), (rep.match(/^build: .*$/m) || [''])[0]);
   ok('the report carries every section a troubleshooter needs: app, device, catalogue, sync, hunt, storage, counts, errors, self-test', ['## app', '## device', '## catalogue', '## sync', '## hunt', '## storage', '## counts', '## last errors', '## self-test'].every(h => rep.includes(h)));
   ok('...the live endpoint probes, one per hunt file, saying offline when offline', /feed\.json: offline/.test(rep) && /zcta\.json: offline/.test(rep));
   ok('...the planted error, and never a collection\'s contents', /planted error for the test/.test(rep) && !/"qty"/.test(rep));
