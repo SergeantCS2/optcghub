@@ -334,6 +334,23 @@ if (puppeteer) {
     V.HUNT.feed = null; V.MODE.set('collect', true); return { a, b }; }, F94);
   ok('negative control: without the source in the feed, neither distributor panel draws', !c94.a && !c94.b, JSON.stringify(c94));
   await new Promise(r => setTimeout(r, 200));
+  /* take 95 -- landmine 135: a tapped release SHOWS Sealed with that set's
+     products drawn; the sealed sheet draws no condition segment and draws the
+     stock alert, the card sheet the reverse. */
+  const r95 = await page.evaluate(() => { const V = window.VAULT; V.MODE.set('hunt', true); V.go('releases'); V.paintReleases();
+    const row = document.querySelector('#relList [data-browse-set]'); const setId = +row.dataset.browseSet; row.click();
+    const rows = [...document.querySelectorAll('#sealedList [data-open]')].map(b => V.CAT.byId.get(+b.dataset.open)).filter(Boolean);
+    return { on: document.querySelector('#sealed').classList.contains('on'), vis: document.querySelector('#sealed').getBoundingClientRect().height > 0, q: V.SEALED.q, rows: rows.length, allSet: rows.every(p => p.set === setId) }; });
+  await new Promise(r => setTimeout(r, 300));
+  ok('Hunt: tapping a release shows Sealed with that set\'s products drawn (landmine 135)', r95.on && r95.vis && r95.rows > 0 && r95.allSet, JSON.stringify(r95));
+  const d95 = await page.evaluate(() => { const V = window.VAULT; const box = V.CAT.rows.find(p => V.SEALED.isProduct(p)); V.openDetail(box.id); V.go('detail');
+    const seg = document.querySelector('#dCondSeg').getBoundingClientRect(), st = document.querySelector('#dStock').getBoundingClientRect();
+    const card = V.CAT.rows.find(p => !p.sealed && p.market > 0); V.openDetail(card.id);
+    const seg2 = document.querySelector('#dCondSeg').getBoundingClientRect(), st2 = document.querySelector('#dStock').getBoundingClientRect();
+    V.SEALED.q = ''; document.querySelector('#sealedQ').value = ''; V.MODE.set('collect', true);
+    return { segH: Math.round(seg.height), stH: Math.round(st.height), segH2: Math.round(seg2.height), stH2: Math.round(st2.height) }; });
+  ok('the sealed sheet draws no condition segment and draws the stock alert; the card sheet the reverse', d95.segH === 0 && d95.stH > 0 && d95.segH2 > 0 && d95.stH2 === 0, JSON.stringify(d95));
+  await new Promise(r => setTimeout(r, 200));
 
   /* Take 60: Pages serves this same file to a desktop browser, where the app
      used to run edge to edge. It stays a phone-width column there. */

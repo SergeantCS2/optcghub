@@ -667,7 +667,7 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
       <div class="v mono" id="dPrice">$0.00<span id="dDelta"></span></div>
     </div>
     <div class="seg" id="dCondSeg"></div>
-    <div class="note">
+    <div class="note" id="dCondNote">
       Condition is <b>what you tell us</b>, not something the app can see. The free
       price feed publishes no per-condition figures, so OP TCG Hub records your
       condition beside the value and does not silently adjust for it.
@@ -688,6 +688,7 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
     <div id="dGradedList"></div>
     <button class="linkish" id="dWant">Want this card</button>
     <button class="linkish" id="dAlert">Alert me at a price</button>
+    <button class="linkish" id="dStock" hidden>Alert me when in stock</button>
     <button class="linkish" id="dAddGraded">+ Add a Graded Card</button>
     <div class="note">
       A slab is recorded, not scanned. The camera cannot read a card through
@@ -2976,8 +2977,7 @@ $('#bulkCond').addEventListener('click', () => {
   if (!bulk || !bulk.size) return toast('Nothing selected');
   $('#pkTitle').textContent = `Condition for ${bulk.size} line${bulk.size === 1 ? '' : 's'}`;
   $('#pkWhy').innerHTML = 'Condition is what you tell the app. It is shown beside the value and never multiplied into it (PROTOCOL §10).';
-  $('#pkOpts').innerHTML = CONDS.map(c => `<button class="opt" data-bulkcond="${c}"><div class="oi"><b>${c}</b><span>${
-    { NM: 'Near Mint', LP: 'Lightly Played', MP: 'Moderately Played', HP: 'Heavily Played', DMG: 'Damaged' }[c]}</span></div></button>`).join('');
+  $('#pkOpts').innerHTML = CONDS.map(c => `<button class="opt" data-bulkcond="${c}"><div class="oi"><b>${c}</b><span>${COND_NAMES[c]}</span></div></button>`).join('');
   $('#picker').classList.add('on');
 });
 document.addEventListener('click', e => {
@@ -3420,7 +3420,7 @@ function paintSealed() {
   /* starter decks, their own section (take 87): every deck product, newest set first */
   if (SEALED.kind === 'all' && !SEALED.q) { const decks = CAT.rows.filter(p => SEALED.isProduct(p) && SEALED.kindOf(p) === 'deck').sort((a, b) => (CAT.sets.get(b.set)?.pub || '').localeCompare(CAT.sets.get(a.set)?.pub || '') || a.name.localeCompare(b.name));
     if (decks.length) out.push(`<button class="fgrp" data-setfold="decks" aria-expanded="${!SEALED.closed.has('decks')}" style="display:flex;width:100%;justify-content:space-between;align-items:center;text-align:left;padding:8px 0"><span>Starter decks <span class="note">\u00b7 ${decks.length}</span></span><span class="note" aria-hidden="true">${SEALED.closed.has('decks') ? '\u25b8' : '\u25be'}</span></button>`);
-    if (decks.length && !SEALED.closed.has('decks')) for (const p of decks.slice(0, 80)) out.push(`<div class="row" style="gap:8px"><button class="row" style="flex:1;min-width:0;text-align:left;padding:0;gap:10px" data-open="${p.id}">${productPic(p)}<div class="nm" style="min-width:0"><b>${esc(p.name)}</b><span>${esc(CAT.sets.get(p.set)?.name || '')} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}</span>${(byCat[p.id] || []).map(i => targetLine(i, T)).join('')}${(byDist[p.id] || []).map(i => distLine(i, G)).join('')}</div><div class="v"><b>${money(p.market)}</b>${deltaHtml(p, { pctOnly: true })}</div></button><button class="ghost" data-stock="${p.id}" aria-label="${STOCK.has(p.id) ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${STOCK.has(p.id)}" style="flex:0 0 auto;padding:8px 10px;${STOCK.has(p.id) ? 'color:var(--brass);border-color:var(--brass)' : ''}">${STOCK.has(p.id) ? '\u25cf' : '\u25cb'}</button></div>`); }
+    if (decks.length && !SEALED.closed.has('decks')) for (const p of decks.slice(0, 80)) out.push(`<div class="row" style="gap:8px"><button class="row" style="flex:1;min-width:0;text-align:left;padding:0;gap:10px" data-open="${p.id}">${productPic(p)}<div class="nm" style="min-width:0"><b>${esc(p.name)}</b><span>${esc(CAT.sets.get(p.set)?.name || '')} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}</span>${(byCat[p.id] || []).map(i => targetLine(i, T)).join('')}${(byDist[p.id] || []).map(i => distLine(i, G)).join('')}</div><div class="v"><b>${money(p.market)}</b>${deltaHtml(p, { pctOnly: true })}</div></button><button class="ghost" data-stock="${p.id}" aria-label="${STOCK.has(p.id) ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${STOCK.has(p.id)}" style="flex:0 0 auto;padding:8px 10px;${STOCK.has(p.id) ? 'color:var(--brass);border-color:var(--brass)' : ''}">${STOCK.has(p.id) ? '\u25cf' : '\u25cb'}<span style="display:block;font-size:10px;line-height:1.1;margin-top:2px">${STOCK.has(p.id) ? 'watching' : 'alert'}</span></button></div>`); }
   /* stock alerts: what is watched, and where it was last seen */
   if (STOCK.list.length) out.push(`<div class="panel"><h3>Stock alerts</h3>${STOCK.list.map(a => { const srcs = STOCK.sourcesFor(a.id); const on = srcs.filter(x => x.available);
     return `<div class="row"><div class="nm"><b>${esc(a.name)}</b><span>${on.length ? 'in stock: ' + esc(on.map(x => x.label).join(', ')) : srcs.length ? 'not in stock at ' + srcs.length + ' watched source' + (srcs.length === 1 ? '' : 's') : 'no source carries it yet'}${a.fired && a.fired.length ? ' \u00b7 last alert ' + esc(HUNT.ageLabel(a.fired[0].t)) : ''}</span></div><div class="v"><button class="ghost" data-stock="${a.id}" aria-label="Stop watching ${esc(a.name)}">\u00d7</button></div></div>`; }).join('')}
@@ -3462,7 +3462,7 @@ function paintSealed() {
     out.push(`<div class="row" style="gap:8px"><button class="row" style="flex:1;min-width:0;text-align:left;padding:0;gap:10px" data-open="${p.id}">
       ${productPic(p)}<div class="nm" style="min-width:0"><b>${esc(p.name)}</b><span>${esc(SEALED_KINDS.find(k => k[0] === SEALED.kindOf(p))?.[1] || '')} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}</span>${tl}</div>
       <div class="v"><b>${money(p.market)}</b>${deltaHtml(p, { pctOnly: true })}</div></button>
-      <button class="ghost" data-stock="${p.id}" aria-label="${STOCK.has(p.id) ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${STOCK.has(p.id)}" style="flex:0 0 auto;padding:8px 10px;${STOCK.has(p.id) ? 'color:var(--brass);border-color:var(--brass)' : ''}">${STOCK.has(p.id) ? '\u25cf' : '\u25cb'}</button></div>`);
+      <button class="ghost" data-stock="${p.id}" aria-label="${STOCK.has(p.id) ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${STOCK.has(p.id)}" style="flex:0 0 auto;padding:8px 10px;${STOCK.has(p.id) ? 'color:var(--brass);border-color:var(--brass)' : ''}">${STOCK.has(p.id) ? '\u25cf' : '\u25cb'}<span style="display:block;font-size:10px;line-height:1.1;margin-top:2px">${STOCK.has(p.id) ? 'watching' : 'alert'}</span></button></div>`);
     }
   }
   $('#sealedList').innerHTML = out.join('') || `<div class="empty">Nothing matches.</div>`;
@@ -3717,10 +3717,22 @@ function paintSearch() {
   }).join('') || '<div class="note">Nothing matched.</div>'}</div>`;
 }
 $('#allq').addEventListener('input', paintSearch);
+/* take 95, landmine 135: the tap painted the Search screen and never showed
+   it -- in Hunt a tapped release did nothing. In Hunt: the set's sealed
+   products on Sealed (every fold open, the query in the box to clear); in
+   Collect: the set browse on Search. Either way the screen is SHOWN. */
+function browseSet(id) {
+  if (MODE.cur === 'hunt') {
+    const s = CAT.sets.get(id); SEALED.q = (s && s.name) || ''; SEALED.kind = 'all';
+    const inp = $('#sealedQ'); if (inp) inp.value = SEALED.q;
+    paintSealed(); go('sealed'); window.scrollTo(0, 0); return;
+  }
+  Object.assign(FILT.all, blankFilter('all'), { set: [id], sort: 'num', dir: 1 });
+  FILT.save('all'); paintSearch(); go('search'); window.scrollTo(0, 0);
+}
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-browse-set]'); if (!b) return;
-  Object.assign(FILT.all, blankFilter('all'), { set: [+b.dataset.browseSet], sort: 'num', dir: 1 });
-  FILT.save('all'); paintSearch(); window.scrollTo(0, 0);
+  browseSet(+b.dataset.browseSet);
 });
 
 /* ---- scanner ----------------------------------------------------------- */
@@ -4414,6 +4426,9 @@ document.addEventListener('click', e => {
 
 /* ---- detail ------------------------------------------------------------ */
 const CONDS = ['NM', 'LP', 'MP', 'HP', 'DMG'];
+const COND_NAMES = { NM: 'Near Mint', LP: 'Lightly Played', MP: 'Moderately Played', HP: 'Heavily Played', DMG: 'Damaged' };
+const COND_NOTE_CARD = 'Condition is <b>what you tell us</b>, not something the app can see. The free price feed publishes no per-condition figures, so OP TCG Hub records your condition beside the value and does not silently adjust for it.';
+const COND_NOTE_SEALED = 'A sealed product has <b>no condition to record</b>: the market price is for a factory-sealed copy. Opened, it becomes cards, each with its own.';
 let dCur = null, dQty = 1, dCond = 'NM';
 function openDetail(id) {
   const p = CAT.byId.get(id); if (!p) return;
@@ -4444,9 +4459,18 @@ function openDetail(id) {
             : p.d1a < -0.004 ? '<i class="down" style="font-style:normal">\u25bc</i> ' : '';
   $('#dPrice').innerHTML = `${tri}${money(p.market)}<span>${deltaHtml(p)}</span>`;
   $('#dQty').textContent = dQty;
-  $('#dCond').textContent = dCond;
-  $('#dCondSeg').innerHTML = CONDS.map(c =>
+  /* take 95 (A38 item 2): a sealed product has no condition -- the market
+     price is a factory-sealed copy's -- so the segment goes and the line says
+     so; on a card the line names the condition, not an abbreviation */
+  const sealedP = !!p.sealed;
+  $('#dCond').textContent = sealedP ? 'Sealed — no condition' : 'Condition · ' + (COND_NAMES[dCond] || dCond);
+  $('#dCondSeg').hidden = sealedP;
+  $('#dCondSeg').innerHTML = sealedP ? '' : CONDS.map(c =>
     `<button class="${c === dCond ? 'on' : ''}" data-cond="${c}">${c}</button>`).join('');
+  $('#dCondNote').innerHTML = sealedP ? COND_NOTE_SEALED : COND_NOTE_CARD;
+  /* take 95 (A38 item 7): the stock alert where the owner looks -- the take-77 watch, from the sheet */
+  $('#dStock').hidden = !sealedP;
+  $('#dStock').textContent = STOCK.has(id) ? 'Watching for stock — stop' : 'Alert me when in stock';
 
   const graded = OWN.items.filter(i => i.id === id && i.graded);
   $('#dGradedList').innerHTML = graded.length ? graded.map(i =>
@@ -4522,6 +4546,12 @@ $('#dAlert').addEventListener('click', async () => {
   const perm = await PLATFORM.notifyPermission();
   ALERTS.add(dCur.id, dir, at);
   toast(perm === 'denied' ? 'Watching \u2014 notifications are off, so it will show here instead' : `Watching ${dCur.name} ${dir} ${money(at)}`);
+});
+$('#dStock').addEventListener('click', () => {
+  if (!dCur) return; const on = STOCK.toggle(dCur.id);
+  if (on) { PLATFORM.notifyPermission().then(perm => toast(perm === 'denied' ? 'Watching — notifications are off, so it will show here instead' : 'Watching for stock')); STOCK.check(); }
+  else toast('Stopped watching');
+  $('#dStock').textContent = on ? 'Watching for stock — stop' : 'Alert me when in stock';
 });
 $('#dWant').addEventListener('click', () => {
   if (!dCur) return; const on = WANT.toggle(dCur.num, dCur.id);
@@ -5262,7 +5292,7 @@ async function runSelfTest() {
      day and a hardcoded placeholder is landmine 62 in a text box. */
   $('#allq').placeholder = `Search all ${(CAT.man.cards || 0).toLocaleString()} cards`;
   paintNet(); paintHome();
-  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, openDetail, HUNT, targetLine, distLine, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
+  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, openDetail, HUNT, targetLine, distLine, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
                    cardPic, setPic, picBox, deckRow, paintHome, paintDecks, paintSearch, openDeck,
                    FILT, loadFilter, applyFilter, sortRows, blankFilter, activeCount,
                    DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,

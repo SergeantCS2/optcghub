@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 94.* Ranked by blocking-ness, not by interest.
+*Current as of take 95.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -13,27 +13,26 @@ The live order, top first. Everything below this block is the record of how
 each item got where it is; this block is what to do next.
 
 **The owner's, gating everything else**
-1. **Take 89 is merged and Release take-89 is up** (read at take 90; the
-   five failure issues are closed). Still yours: confirm the first
-   post-merge nightly (09-23, 21:30 UTC) is green; open
-   `registry.npmjs.org`, `pypi.org` and `files.pythonhosted.org` in the
-   session's environment — takes 89 and 90 could not rebuild without them
-   and shipped through the runner's `check` instead; merge take 90's PR
-   once its check is green. The vendor-name question: take 90 shipped with
-   no trailer at your word — say if that stands.
-2. **The first paste arrived (take 91) and take 92 answers it.** Next:
-   install take 92; open Hunt → Events once the hourly has run after the
-   merge (the roster rebuilds on its first run; the phone fetches a day-old
-   table when Events opens); then the next Diagnostics paste after any
-   blank screen — the last errors survive a restart since 91, and the
-   blank-after-Back has not recurred yet (UNKNOWN).
+1. **Takes 90–94 are merged and Release take-94 is up**, installed and
+   answered (A38). Still yours: merge each take's PR once its check is
+   green; answer the release report's numbered questions after a take that
+   carries big changes; domain access stays open through the source takes
+   (you are told when to narrow it). The blank-after-Back is closed at your
+   word (take 94).
+2. **Hunt → Local and Events after the install**: the take-94 paste read
+   *stores on phone: none, events on phone: none* because neither screen
+   had been opened yet — open each once and say whether they fill (the
+   roster and the events table are live on Pages since run 38).
 3. **D22** background stock checks; **D21** local stock for unserved zips;
    **D20** a crowd-report inbox. Each caps a Hunt feature until answered.
 4. Shop URLs for stores he knows (A32's storefront list, one entry today).
 5. D7 the icon; D16 the faces; the `.aab` filename before production.
 
 **Mine, in order**
-1. Whatever the next diagnostics paste names.
+1. **A38, in take order:** 95 (the Releases tap, the sealed sheet, the
+   alert you can find) → 96 (where to buy, under each listing) → 97
+   (Releases: starter decks grouped, the countdown coloured, a release
+   alert and add-to-calendar); then whatever the next release answers name.
 2. **A32**: retailer sources one session each with the real page in hand
    (GTS built at take 94; Southern Hobby next, its host is open; GameStop,
    Walmart, Meijer, eBay need a residential IP → the sideload build); the
@@ -1061,6 +1060,52 @@ names (a normaliser on the source side), three set-code families and a
 tie-break (landmine 134). **Next:** Southern Hobby, same shape, its own
 take; the state timeline from the history rows.
 
+## A38 — The take-94 look: eight items from the first install with a distributor · OPENED take 94
+
+The owner installed take 94, answered the release questions in order
+(five screenshots, the Diagnostics paste: 17 of 17, `gts 49 products`, no
+errors) and named, in his words:
+
+1. **"Starter decks flood the release page"** — their own section on
+   Releases, grouped by release day. → take 97.
+2. **"NM, LP, MP, HP, DMG don't do anything if they're buttons — they
+   shouldn't show on boxes"** — the condition segment on a sealed
+   product's sheet; unexplained on a card's. → take 95: hidden on sealed,
+   labelled on cards.
+3. **"Some pictures are still missing (Dominance of God, Starter Decks
+   31-36)"** — INFERRED: the catalogue carries their CDN URLs and the CDN
+   has not published the photos; the tile is the honest state. Nothing to
+   build; watched.
+4. **"Add links to where I can buy these under each listing with a
+   picture representing where"** — TCGplayer, online, local
+   address/phone. → take 96, as text chips per source (a brand logo in a
+   Play-listed app is a rejection ground; the name says the same thing).
+5. **Releases: "make days change through different colors as it gets
+   closer, add the ability to add an alert, or to add an event to my
+   phone's cal"** → take 97 (the take-78 `.ics` path for the calendar).
+6. **"I can't click on the release"** → take 95, landmine 135.
+7. **"Not sure where to add alerts"** → take 95: *Alert me when in stock*
+   on the sealed sheet beside the price alert; the row's circle labelled.
+8. **The MSRP configuration text** stays as the distributor writes it
+   ("12 cards / 24 packs / 12 displays" — his call). No change.
+
+Also decided with the paste: the blank-after-Back is **closed** by the
+owner ("call it fixed" — A33 item 5); domain access stays open through
+the source takes and he is told when to narrow it; after a release with
+big changes or open questions, the report is what changed, his testing
+steps and numbered questions (NEW-SESSION-PROMPT carries the rule).
+
+**Order:** take 95 (6, 7, 2) → take 96 (4) → take 97 (1, 5) → A32
+Southern Hobby.
+
+**Ruled out:** brand logos on the buy links (a trademark in a Play-listed
+app is a rejection ground — landmine 29's family; a name says the same);
+building anything for the missing pictures (the CDN publishes the photo
+when TCGplayer has it, and the tile is the honest state until then);
+hiding the condition segment on a *card* (the condition is the
+collector's own assertion, PROTOCOL §10, and stays); doing items 1, 4 and
+5 inside take 95 (one mechanism per take, the take-69 rule).
+
 ## A37 — More unreachable since take 83 · OPENED AND CLOSED take 91
 
 The owner, on take 88: *"more, settings, export, and etc buttons do nothing
@@ -1183,7 +1228,9 @@ state:
    mode's home and records the id in the error buffer), and `NAV.back()`
    pops until it finds a real screen. The record will name the cause the
    next time. *(take 83; the record could not be read until take 91 and
-   did not survive a restart until then — A37)*
+   did not survive a restart until then — A37; **closed take 94**: the
+   owner, after takes 91–94 on the Fold with no record and no repeat —
+   "Back arrow improved … call it fixed")*
 6. **Overall "non-uniform and basic"** — the owner's own diagnosis is the
    lack of pictures; item 4 is the first step, and the same treatment for
    Collect's rows and Decks follows once Hunt's is seen. *(take 93: a card

@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 94.*
+*Current as of take 95.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -145,6 +145,7 @@ Start here. Do not read top to bottom.
 | A thumbnail shows a corner of the card, not the card | **132** |
 | Importing a tools script gets a package with none of its functions | **133** |
 | A test says "matched" and the product is the wrong one | **134** |
+| Tapping a row does nothing, in one mode | **135** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -1923,6 +1924,16 @@ failure. Rule: a match test names the product it expects and a control
 names the product it must not pick; a tie between a product and its
 superset breaks toward the fewer extra words (the closer name), never
 toward order.
+
+**135. A tap handler that paints a screen without showing it.** The
+Releases row (any `[data-browse-set]`) set the Search filter, painted the
+Search screen and scrolled to the top — and never called `go('search')`.
+In Collect the set browse already lived on Search, so it looked like it
+worked; in Hunt the row painted a screen the mode keeps hidden, and the
+owner reported "I can't click on the release." Since take 70, through
+four looks on the Fold. Rule: a handler that paints a screen calls `go()`
+for it, and the smoke test for a tap asserts the target screen is on
+afterwards, in every mode the control appears in.
 
 ## §2 — Inherited from APEX ORV
 
