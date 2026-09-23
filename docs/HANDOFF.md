@@ -95,6 +95,18 @@ can measure the question instead of the owner.
   116); the PR's runner wrote them into a checkout that was discarded.
   The list of the 23 is readable from `catalog/hashes.json` after the
   first nightly.
+- **The owner's answer (09:5x UTC), which closes A39 item 3 with the
+  measurement:** he opened TCGplayer's own page for 712901 — *"they have
+  no image"* — so the newest boxes and packs have no picture anywhere
+  TCGplayer serves, and the label box is the honest picture. He reviewed
+  the two look screenshots ("overall very good", with "a tiny bit of
+  work" he has not yet named) and said go; the PR was marked ready. He
+  will not install 98 or 99: the take-98 report's answers (his steps,
+  the `viewport` line) come from take 100's install. He raised a new
+  question — *"there may be other parts of the app we can source images
+  for that are missing"* — which needs his list of the parts and the
+  source before anything is built (landmine 26: display-only, never
+  hosted; PROVISION per host). Opened as A41.
 
 ### DEFERRED this cycle
 

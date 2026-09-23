@@ -26,11 +26,13 @@ each item got where it is; this block is what to do next.
 5. D7 the icon; D16 the faces; the `.aab` filename before production.
 
 **Mine, in order**
-1. **A39 item 3, take 100:** the pictures — the sealed images and
-   TCGplayer's second host measured on the runner, what serves exported;
-   the owner's two-URL answer is the independent check.
-2. **A40 (take 99), A39 (take 98) and A38 (takes 95–97)** — done, merged
-   and released; the look runs on every take from here.
+1. **A41** — waits on the owner's list of the parts and the source;
+   then one take per source, measured on the runner first.
+2. **A39 item 3 (take 100, measured and closed by the owner's check),
+   A40 (take 99), A39 (take 98), A38 (takes 95–97)** — done; the look
+   runs on every take from here.
+3. **The look's "tiny bit of work"** — the owner's note on the take-100
+   screenshots, not yet named; asked.
 4. **A32**: retailer sources one session each with the real page in hand
    (GTS built at take 94; Southern Hobby next, its host is open; GameStop,
    Walmart, Meijer, eBay need a residential IP → the sideload build); the
@@ -1058,6 +1060,22 @@ names (a normaliser on the source side), three set-code families and a
 tie-break (landmine 134). **Next:** Southern Hobby, same shape, its own
 take; the state timeline from the history rows.
 
+## A41 — Missing images elsewhere in the app, sourced from somewhere other than TCGplayer · OPENED take 100
+
+The owner, on closing A39 item 3: *"there may be other parts of the app
+we can source images for that are missing."* Nothing is built until he
+names the parts and the source. What is known: the 219 card images the
+CDN refuses (recorded nightly in the sidecar's `missing`; the list is
+readable there), the 23 sealed images (`missing_sealed` after the first
+nightly), the stock-deck covers (drawn by the app on purpose, take 62),
+Local and Events (no images by design). Any new source is a PROVISION
+row and a display-only reference (landmine 26: art is never hosted);
+the runner measures availability before a URL ships (the take-100
+pattern — one constant per host).
+
+**Ruled out:** hosting or caching any image; a source without terms
+the app can cite; shipping a URL the runner has not seen serve.
+
 ## A40 — The look: the session clicks through and screenshots every change before a take ships · OPENED take 99
 
 The owner, mid-take 98: *"add a way for you to directly test these new
@@ -1113,9 +1131,13 @@ for takes 95–97 with five screenshots and the Diagnostics paste, and named:
    Diagnostics carries the counts. The owner's two-URL answer stays the
    independent check. *MEASURED, check run 29:* 23 of 674 sealed images
    unavailable at the first host; the second host serves 1 of 242
-   missing and 404s the rest — real host, wrong place for these. Next:
-   the image address from TCGplayer's own page for 712901 (the owner);
-   one constant changes and the runner measures the new pattern.
+   missing and 404s the rest — real host, wrong place for these. *Closed
+   take 100* by the owner's own check of TCGplayer's page for 712901:
+   "they have no image". The newest boxes and packs have no picture
+   anywhere TCGplayer serves; the label box is the honest picture, and
+   the runner keeps measuring every build so a picture appears the night
+   it exists. His follow-on — other parts of the app whose missing
+   images could be sourced elsewhere — is A41.
 4. **"I haven't seen the tutorial popup in a while"** — the guide shows
    once per install (`GUIDE_KEY`). *Closed take 99 by reading:* the row to
    reopen it already exists — More → *How it works* → *Show the guide
