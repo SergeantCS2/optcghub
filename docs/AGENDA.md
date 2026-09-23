@@ -1111,7 +1111,11 @@ for takes 95–97 with five screenshots and the Diagnostics paste, and named:
    second host probed for every missing id, what serves exported as the
    product's `img`, what nothing serves stays the label box, and
    Diagnostics carries the counts. The owner's two-URL answer stays the
-   independent check.
+   independent check. *MEASURED, check run 29:* 23 of 674 sealed images
+   unavailable at the first host; the second host serves 1 of 242
+   missing and 404s the rest — real host, wrong place for these. Next:
+   the image address from TCGplayer's own page for 712901 (the owner);
+   one constant changes and the runner measures the new pattern.
 4. **"I haven't seen the tutorial popup in a while"** — the guide shows
    once per install (`GUIDE_KEY`). *Closed take 99 by reading:* the row to
    reopen it already exists — More → *How it works* → *Show the guide

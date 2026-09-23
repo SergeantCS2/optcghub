@@ -6,8 +6,9 @@ Opened before any code (PROTOCOL §6). Take 99 merged at 09:41 UTC (PR
 #23, merge commit 00132d1) after the owner reviewed the look's eight
 pictures ("Screenshots look good, go") — the first take through A40's
 loop; check runs 26–28 green, smoke 685, render 106 in Chrome. Release
-take-99's build was running when this entry opened; its landing is
-recorded below.
+take-99's build was running when this entry opened: **Release take-99
+published 09:47:12 UTC with both assets** (APK 34.9 MB, AAB 23.8 MB) on
+its first build run.
 
 **The item:** the owner's "still some missing pictures, namely releases
 and some newer packs — these 100% have pictures on TCG or elsewhere"
@@ -72,7 +73,28 @@ can measure the question instead of the owner.
   `img` column; a probe fires on an undeclared one.
 - `src/app.html`: one Diagnostics line, `pictures:`, from the manifest.
 - PROVISION rows; smoke section take 100; the look's step list for 100.
-- The runner's two lines and its numbers: below, once the check runs.
+- **The runner (check run 29, head 8167e71, first run; smoke 691, render
+  106 in Chrome, GATE PASSED; the hash step 32 s with the probes) — the
+  measurement, verbatim:**
+  `sealed images: 23 of 674 unavailable at the first host (recorded, not
+  counted)` and `second host (product-images.tcgplayer.com): serves 1 of
+  242 missing (cards 1 of 219, sealed 0 of 23; 404×241 served×1)`; the
+  app step: `images: 1 rows carry the second host`. **Read plainly:** 23
+  sealed products have no picture at TCGplayer's CDN — the newest boxes
+  and packs the owner sees blank — and the second host, at the pattern
+  its pages use, has an image for one of the 242 missing ids and answers
+  404 for the other 241. The host and the pattern are real (one served);
+  the missing pictures are not there either. INFERRED: an unreleased
+  product has no image at TCGplayer yet, whatever the listing page shows
+  (a placeholder), or the site draws it from a third address. The next
+  measurement is the owner's: the image address from TCGplayer's own page
+  for 712901 (long-press the picture → copy its address) — one constant
+  changes and the probe measures the new pattern the next run. Nothing
+  shipped unmeasured: one id's `img` moved to the second host.
+- The sidecar's new keys are the nightly's to write on main (landmine
+  116); the PR's runner wrote them into a checkout that was discarded.
+  The list of the 23 is readable from `catalog/hashes.json` after the
+  first nightly.
 
 ### DEFERRED this cycle
 

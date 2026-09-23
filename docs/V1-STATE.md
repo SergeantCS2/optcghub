@@ -81,10 +81,12 @@ second host for every id the first refused, records `missing_sealed`,
 `alt` and `alt_host` in the sidecar, and the app build ships the second
 host's URL for an id the runner saw it serve — nothing guessed. The gate
 reads the bundle's image hosts against PROVISION (a host in data shipped
-unseen before). Diagnostics prints the counts. The first measured
-numbers are the PR check's (recorded in the HANDOFF when it runs); the
-phone's picture is the proof, the owner's two-URL check the independent
-one.
+unseen before). Diagnostics prints the counts. **MEASURED (check run
+29):** 23 of 674 sealed images are unavailable at the first host; the
+second host serves 1 of the 242 missing ids and answers 404 for 241 —
+the pattern is real and the missing pictures are not there either. The
+owner's image address from TCGplayer's own page is the next measurement;
+the phone's picture is the proof.
 
 **Harness totals, take 100:** smoke.mjs 691 assertions (6 new: both hosts
 in their shape with a third refused, the sidecar's `alt` ids ship the
