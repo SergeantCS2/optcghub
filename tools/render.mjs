@@ -393,13 +393,21 @@ if (puppeteer) {
      browser's history Back runs the same handler as the phone's button
      (closeAnyOverlay, then the stack, then the watchdog). It must land on the
      screen the sheet came from and write no blank record. */
-  const r98a = await page.evaluate(async () => { const V = window.VAULT; V.MODE.set('hunt', true); V.go('sealed');
+  const r98a = await page.evaluate(async () => { const V = window.VAULT; const ov = () => ['#askSheet', '#picker', '#tour', '#simCurtain'].filter(id => { const el = document.querySelector(id); return el && el.classList.contains('on'); });
+    const screens = () => [...document.querySelectorAll('.screen.on')].map(e => e.id).join(',');
+    V.NAV.zipAsked = true; V.MODE.set('hunt', true); V.go('sealed'); while (V.closeAnyOverlay()) {}   /* the claim is about the sheet alone: no prompt left by an earlier block, no zip prompt from this one (check run 24: the zip prompt was open, Back closed it first, rightly, and the test read that as the sheet staying) */
     const row = document.querySelector('#sealedList [data-open]'); if (row) row.click(); await new Promise(r => setTimeout(r, 120));
-    const onSheet = [...document.querySelectorAll('.screen.on')].map(e => e.id).join(','); const before = V.ERRS.list.length;
+    const onSheet = screens(); const ovBefore = ov(); const before = V.ERRS.list.length;
     window.dispatchEvent(new PopStateEvent('popstate', { state: null })); await new Promise(r => setTimeout(r, 200));
-    const after = [...document.querySelectorAll('.screen.on')].map(e => e.id).join(','); const recs = V.ERRS.list.slice(0, V.ERRS.list.length - before).map(e => e.kind + ':' + e.msg);
-    V.MODE.set('collect', true); V.go('home'); return { row: !!row, onSheet, after, recs }; });
-  ok('Back from a card\'s sheet lands on the list it came from and the watchdog writes no blank record', r98a.row && r98a.onSheet === 'detail' && r98a.after === 'sealed' && r98a.recs.length === 0, JSON.stringify(r98a));
+    const after = screens(); const recs = V.ERRS.list.slice(0, V.ERRS.list.length - before).map(e => e.kind + ':' + e.msg);
+    /* control: a prompt sheet open over the card sheet -- Back closes the prompt first and the sheet stays (take 81) */
+    const row2 = document.querySelector('#sealedList [data-open]'); if (row2) row2.click(); await new Promise(r => setTimeout(r, 120));
+    V.askZip(); await new Promise(r => setTimeout(r, 60)); const ovCtl = ov(); const beforeCtl = V.ERRS.list.length;
+    window.dispatchEvent(new PopStateEvent('popstate', { state: null })); await new Promise(r => setTimeout(r, 200));
+    const afterCtl = screens(); const ovCtl2 = ov(); const recsCtl = V.ERRS.list.slice(0, V.ERRS.list.length - beforeCtl).map(e => e.kind + ':' + e.msg);
+    V.MODE.set('collect', true); V.go('home'); return { row: !!row, onSheet, ovBefore, after, recs, ovCtl, afterCtl, ovCtl2, recsCtl }; });
+  ok('Back from a card\'s sheet lands on the list it came from and the watchdog writes no blank record', r98a.row && r98a.onSheet === 'detail' && r98a.ovBefore.length === 0 && r98a.after === 'sealed' && r98a.recs.length === 0, JSON.stringify(r98a));
+  ok('...control: with a prompt sheet open over it, Back closes the prompt first and the card sheet stays (take 81)', r98a.ovCtl.includes('#askSheet') && r98a.afterCtl === 'detail' && r98a.ovCtl2.length === 0 && r98a.recsCtl.length === 0, JSON.stringify(r98a));
   /* Home's most-valuable rows open the card on a real click */
   const r98b = await page.evaluate(async () => { const V = window.VAULT; V.go('home'); V.paintHome(); const b = document.querySelector('#topList button[data-open]'); if (b) b.click(); await new Promise(r => setTimeout(r, 120));
     const on = [...document.querySelectorAll('.screen.on')].map(e => e.id).join(','); const name = (document.querySelector('#dName') || {}).textContent || ''; V.go('home'); return { b: !!b, on, name }; });

@@ -65,9 +65,10 @@ refresh from Pages (take 27).
 **Harness totals, take 98:** smoke.mjs 680 assertions (14 new: the back
 path from a sheet with two controls, the most-valuable rows, the splash,
 the toast, the decks fold, the condition tap with a control), render.mjs
-105 in Chrome (four new: Back from a sheet on the real history path with
-no blank record, a most-valuable row's click, the long toast inside the
-screen, the splash rule), gate 23 checks with negative controls, hunt.py
+106 in Chrome (five new: Back from a sheet on the real history path with
+no blank record and its control with a prompt open, a most-valuable
+row's click, the long toast inside the screen, the splash rule), gate 23
+checks with negative controls, hunt.py
 61 selftest lines — smoke and the DOM render measured here; the Chrome
 count is the runner's until the take-98 check reports it; the session VM
 has no puppeteer and no pillow, so Chrome and hashes run on the runner

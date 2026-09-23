@@ -77,10 +77,20 @@ other side: the watchdog healed the blank by putting Home back.
   the most-valuable rows twice, the splash, the toast, the decks fold, the
   condition handler, the tap on an unowned card, the tap on an owned copy
   with quantity and cost basis, the refused sixth condition, the note);
-  the DOM render 10 here; Chrome 105 on the runner (four new) — the
-  runner's numbers are recorded below when the check reports them. One
-  test was wrong before the product was: `OWN.add()` takes no cost basis
-  (it is set on the sheet), so the test sets it on the returned copy.
+  the DOM render 10 here; Chrome 106 on the runner (five new) — the
+  runner's numbers are recorded below when the check reports them. Two
+  tests were wrong before the product was: `OWN.add()` takes no cost
+  basis (it is set on the sheet), so the smoke test sets it on the
+  returned copy; and the Chrome back-path test opened Sealed with no zip
+  set, so the zip prompt sheet was open when the history event fired and
+  Back closed the prompt first, rightly (take 81) — check run 24 read
+  that as the sheet staying (`after: detail`, no record). Reproduced
+  here in a real Chrome (playwright is installed globally on this VM,
+  `/opt/node22/lib/node_modules/playwright`, with Chromium under
+  `/opt/pw-browsers` — the first real browser this session has had; the
+  harness still wants puppeteer, which npm refuses). The test now closes
+  every overlay before the Back and reports the ones it found, and the
+  prompt case is its control.
 - **The condition buttons had never worked** (PROVEN by reading, then by
   the test): the tap set the condition and the repaint reset it to the
   owned copy's, or to NM. The owner's "I click them and the page seems to
