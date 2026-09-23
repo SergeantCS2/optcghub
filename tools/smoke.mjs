@@ -1475,7 +1475,7 @@ ok('pills never wrap onto two lines', /\.pill\{[^}]*white-space:nowrap/.test(htm
 ok('a photo that fails is retried once without the size suffix, then removed', /this\.src=this\.src\.replace\(\/_\\d\+w\\\.\/,'\.'\)/.test(js) && /else\{this\.remove\(\)\}/.test(js));
 ok('the Target panel says it plainly: checked when, N products, N in stock to ship, and what a limit means', /One Piece products online, <b>\$\{ships\}<\/b> in stock to ship/.test(js) && /the next hourly check continues where this one stopped/.test(js) && !/the retailer throttled this run/.test(js));
 ok('the Portfolio caption has its own face and colour, not body text', /\.hero \.who \.cap\{[^}]*font-family:var\(--heavy\)[^}]*color:var\(--brass2\)/.test(html));
-ok('Releases rows: the title wraps, Details sits on its own line inside the row', /<b style="white-space:normal">\$\{esc\(s\.name\)\}/.test(js) && /class="rel"/.test(js) && /padding:0 0 8px"><a class="ghost" href="\$\{esc\(detailsUrl\(s\)\)\}"/.test(js));
+ok('Releases rows: the title wraps, Details sits on its own line inside the row (the footer line, shared with Remind me and Calendar since take 97)', /<b style="white-space:normal">\$\{esc\(s\.name\)\}/.test(js) && /class="rel"/.test(js) && /padding:0 0 8px">\$\{extra\}/.test(js) && /<a class="ghost" href="\$\{esc\(detailsUrl\(\{ name: label \}\)\)\}"/.test(js));
 { /* the watchdog: a page with no screen on is restored and the cause recorded */
   ctx.window.scrollTo = () => {}; ctx.scrollTo = () => {};
   const before = V.ERRS.list.length; V.MODE.set('hunt', false);
@@ -1976,7 +1976,7 @@ V.HUNT.feed = null; V.MODE.set('collect', false);
 section('take 95 — the take-94 look: a tapped release shows a screen (landmine 135), the sealed sheet, the alert you can find');
 const fire95 = el => (el._ev && el._ev.click) ? el._ev.click({ target: el, preventDefault() {} }) : null;
 /* the row's document-level click handler calls browseSet(id); the stub keeps one listener per node, so the function is driven directly here and the real click in Chrome (render.mjs) */
-ok('the release row\'s tap goes through browseSet(), which is what the handler calls', typeof V.browseSet === 'function' && /browseSet\(\+b\.dataset\.browseSet\)/.test(js));
+ok('the release row\'s tap goes through browseSet(), which is what the handler calls (with the row\'s query since take 97)', typeof V.browseSet === 'function' && /browseSet\(\+b\.dataset\.browseSet, b\.dataset\.browseQ\)/.test(js));
 const tapBrowse = setId => V.browseSet(setId);
 const relSet = [...V.CAT.sets.values()].find(s => s.pub && V.CAT.rows.some(p => p.set === s.id && V.SEALED.isProduct(p)));
 const relProd = V.CAT.rows.find(p => p.set === relSet.id && V.SEALED.isProduct(p));
@@ -2039,6 +2039,51 @@ ok('control: a card\'s sheet has no Where to buy panel', ctx.document.getElement
 ok('the four seller glyphs ship in the sprite; the chip and the panel carry their rules (landmine 136)', /id="g-cart"/.test(html) && /id="g-pin"/.test(html) && /id="g-truck"/.test(html) && /id="g-phone"/.test(html) && /\.chip\.buy\{/.test(html) && /\.panel\[hidden\]\{display:none\}/.test(html));
 ok('the only seller host the app names as a literal is TCGplayer\'s product page, on the declared host; the rest are data in the feed', /https:\/\/www\.tcgplayer\.com\/product\/' \+ p\.id/.test(js) && !/gtsdistribution\.com|blackvaultgaming\.com|redsky\.target\.com/.test(js));
 V.HUNT.feed = null; V.LOCAL.shops = null; V.LOCAL.stores = null; V.HUNT.setZip(''); V.MODE.set('collect', false); V.go('home');
+}
+
+{
+section('take 97 — Releases: starter decks fold into one row, the countdown carries its band, Remind me and Calendar on every upcoming release');
+const count97 = (h, re) => (h.match(re) || []).length;
+const today97 = new Date().toISOString().slice(0, 10); const days97 = d => Math.round((Date.parse(d + 'T00:00:00Z') - Date.parse(today97 + 'T00:00:00Z')) / 864e5);
+ok('the band: within a week, a month, three months, further or past', V.relBand(0) === 'cd1' && V.relBand(7) === 'cd1' && V.relBand(8) === 'cd2' && V.relBand(30) === 'cd2' && V.relBand(31) === 'cd3' && V.relBand(90) === 'cd3' && V.relBand(91) === 'cd4' && V.relBand(-1) === 'cd4');
+V.MODE.set('hunt', false); V.HUNT.feed = null; V.RELF.open = new Set(); V.RELALERTS.list = []; V.paintReleases();
+const r97 = ctx.document.getElementById('relList').innerHTML;
+const decks97 = [...V.CAT.sets.values()].filter(s => s.pub && /^Starter Deck/i.test(s.name)); const byDay = {}; for (const s of decks97) (byDay[s.pub] ||= []).push(s);
+const runDay = Object.keys(byDay).find(d => byDay[d].length >= 2); const run = byDay[runDay] || [];
+ok('a run of starter decks on one release day is ONE row naming the range and the count, its decks folded away (the six ST31–ST36 rows the owner saw)', !!runDay && new RegExp('Starter Decks [^<]*' + run[0].abbr + '[^<]*' + run[run.length - 1].abbr).test(r97) && new RegExp(run.length + ' starter decks, one release day').test(r97) && !new RegExp('data-browse-set="' + run[1].id + '"').test(r97) && new RegExp('data-relfold="' + runDay + '"').test(r97), `${runDay}: ${run.length} decks`);
+const single = Object.keys(byDay).find(d => byDay[d].length === 1); const one = single && byDay[single][0];
+ok('control: a single starter deck on its day stays its own row', !one || new RegExp('data-browse-set="' + one.id + '"').test(r97), String(one && one.abbr));
+V.RELF.open.add(runDay); V.paintReleases(); const r97b = ctx.document.getElementById('relList').innerHTML;
+ok('opening the fold shows every deck of the run as its own row, and the fold says Hide', run.every(s => new RegExp('data-browse-set="' + s.id + '"').test(r97b)) && /Hide the decks/.test(r97b));
+ok('the group\'s tap searches Sealed for every starter deck, not one set', /data-browse-q="Starter Deck"/.test(r97b) && (() => { V.SEALED.q = ''; V.browseSet(run[0].id, 'Starter Deck'); const q = V.SEALED.q; V.SEALED.q = ''; ctx.document.getElementById('sealedQ').value = ''; return q === 'Starter Deck'; })());
+V.RELF.open = new Set(); V.paintReleases(); const r97c = ctx.document.getElementById('relList').innerHTML;
+const upcoming97 = [...V.CAT.sets.values()].filter(s => s.pub && s.pub >= today97);
+ok('every upcoming row\'s countdown carries the band of its distance, and a recent row carries the past band', upcoming97.every(s => new RegExp('data-browse-set="' + s.id + '"[\\s\\S]*?<span class="note ' + V.relBand(days97(s.pub)) + '">').test(r97c)) && /<span class="note cd4">\d+ days ago<\/span>/.test(r97c), `${upcoming97.length} upcoming`);
+ok('every upcoming row and group has Remind me and Calendar beside Details; a recent one has Details only', count97(r97c, /data-relalert="/g) >= upcoming97.length && count97(r97c, /data-relcal="/g) === count97(r97c, /data-relalert="/g) && (() => { const rec = r97c.slice(r97c.indexOf('<h3>Recent</h3>')); return !/data-relalert=/.test(rec) && /Details ↗/.test(rec); })());
+/* the reminder: on, the day before, once; off */
+const s97 = upcoming97.sort((a, b) => a.pub.localeCompare(b.pub))[0];
+if (s97) {
+  const on = V.RELALERTS.toggle(s97.id, s97.name, s97.pub); V.paintReleases();
+  ok('Remind me stores the set and its date and the row says Reminder set', on && V.RELALERTS.has(s97.id) && V.RELALERTS.list[0].pub === s97.pub && /Reminder set ✓/.test(ctx.document.getElementById('relList').innerHTML) && new RegExp('data-relalert="' + s97.id + '" [^>]*aria-pressed="true"').test(ctx.document.getElementById('relList').innerHTML));
+  const early = await V.RELALERTS.check(V.RELALERTS.dayBefore(V.RELALERTS.dayBefore(s97.pub)));
+  const eve = await V.RELALERTS.check(V.RELALERTS.dayBefore(s97.pub));
+  const again = await V.RELALERTS.check(s97.pub);
+  ok('the on-open check fires once on the day before the release and not before, not again on the day', early.length === 0 && eve.length === 1 && eve[0].id === s97.id && again.length === 0, `${early.length} ${eve.length} ${again.length}`);
+  ok('the same button removes it', !V.RELALERTS.toggle(s97.id, s97.name, s97.pub) && !V.RELALERTS.has(s97.id));
+  const ics = V.icsFor(V.releaseEvent(s97));
+  ok('Calendar hands the release to the phone as an all-day event on its date, named, with the listing as its link and no store location', new RegExp('DTSTART;VALUE=DATE:' + s97.pub.replace(/-/g, '')).test(ics) && ics.includes('SUMMARY:' + s97.name.replace(/,/g, '\\,') + ' — release day') && !/LOCATION:/.test(ics) && /URL:https:\/\/www\.tcgplayer\.com\//.test(ics) && new RegExp('UID:optcghub-event-release-' + s97.id + '@optcghub').test(ics));
+} else { ok('no upcoming set in the catalogue today (the reminder path is exercised when one exists)', true); }
+ok('the reminder rides two paths: a scheduled notification the day before and the on-open check at startup', /notifyAt\(/.test(js) && /schedule: \{ at/.test(js) && /RELALERTS\.check\(\)/.test(js) && /cancelNotify\(/.test(js));
+/* the distributor's unlisted starter-deck displays fold the same way */
+const fxDir97 = fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-rel-')); const feed97 = path.join(fxDir97, 'feed-fixture.json');
+execSync(`python3 tools/hunt.py --from-fixtures --out ${feed97}`, { cwd: ROOT, stdio: 'pipe' });
+const F97 = JSON.parse(fs.readFileSync(feed97, 'utf8')); const st44 = F97.sources.gts.items.find(i => i.sku === 'BJP2904577');
+F97.sources.gts.items.push({ ...st44, sku: 'BJP2904574', name: 'ONE PIECE TCG: TITLE TBA STARTER DECK [ST43] (6CT)', codes: ['ST43'] });   // a second display on the same day, from the saved page's shape
+V.HUNT.feed = F97; V.RELF.open = new Set(); V.paintReleases(); const r97d = ctx.document.getElementById('relList').innerHTML;
+ok('two unlisted starter-deck displays on one release day fold into one distributor row naming the range', /Starter Decks ST43–ST44/.test(r97d) && /2 starter deck displays, one release day/.test(r97d) && !/STARTER DECK \[ST44\]/.test(r97d) && /data-relfold="d:2027-04-23"/.test(r97d));
+V.RELF.open.add('d:2027-04-23'); V.paintReleases();
+ok('...and open, both displays are listed', /STARTER DECK \[ST44\]/.test(ctx.document.getElementById('relList').innerHTML) && /STARTER DECK \[ST43\]/.test(ctx.document.getElementById('relList').innerHTML));
+V.RELF.open = new Set(); V.HUNT.feed = null; V.RELALERTS.list = []; V.MODE.set('collect', false); V.go('home');
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

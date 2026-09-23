@@ -1,4 +1,91 @@
-# HANDOFF — through Take 96
+# HANDOFF — through Take 97
+
+## Take 97 — 2026-09-23 — A38 items 1 and 5: Releases — starter decks grouped, the countdown coloured, a release reminder and the calendar
+
+Opened before any code (PROTOCOL §6). Take 96 merged at 08:01 UTC (PR
+#20, merge commit d0e6bba) on its first runner cycle; its build (run 44)
+was in progress when this take opened. The owner's items, in his words:
+*"we really need to move starter decks to their own section, they flood
+the release page"* and *"make days change from through different colors
+as it gets closer, add the ability to add an alert. or to add an event to
+my phone's cal of choice."*
+
+### Measured first
+
+- **The flood is not Upcoming:** the catalogue has three upcoming sets
+  today (EB05 10-30, OP18 RE 11-13, OP18 11-20). It is **Recent**, where
+  ST31 to ST36 are six rows for one release day (07-31), and the
+  distributor's list, where ST-37/38 (12-18) and ST-39 to ST-44 (2027-04-23)
+  are eight rows for two days. A starter-deck set is one whose name starts
+  "Starter Deck"; a run of two or more on one day is what floods.
+- **The calendar path exists** (take 78): `icsFor(e)` and
+  `addEventToCalendar(e)` take an event with a store; a release has no
+  store, so `icsFor` learns to omit LOCATION and the store suffix when
+  there is none, and a release becomes an all-day event on its date with
+  the TCGplayer listing as its URL.
+- **The notification path exists** (take 27): `PLATFORM.notify()` fires at
+  once through `LocalNotifications.schedule()`. The same plugin schedules
+  for a future time with `schedule: { at }` and cancels by id — INFERRED
+  from the plugin's public API (the session cannot read its definitions
+  here: npm is closed), so the reminder rides **two** paths: a scheduled
+  notification at 09:00 local on the day before the release, and an
+  on-open check that fires once on or after that day if the scheduled one
+  never did. The on-open path is the tested one; the scheduled one is the
+  owner's to see on the Fold.
+- **The countdown's colour:** the palette's own tokens, in every mode —
+  within a week `--up` and bold, within a month `--brass`, within three
+  months `--fg`, further or past `--dim2`. No new colour.
+- **Ruled out:** a background check (D22, the owner's); a second alert
+  store (the release reminder is its own small list, `vault.relAlerts`,
+  beside price and stock alerts, because it keys on a set and a date, not
+  a printing); grouping anything but starter decks (a booster set is the
+  release).
+
+### Built
+
+- **Grouped starter decks** on Upcoming, Recent and the distributor's
+  list: a run of two or more on one day is one row — "Starter Decks
+  ST31–ST36", the count, the date and countdown — with *Show the 6 decks*
+  to unfold them (`RELF.open`, the house fold pattern); a single starter
+  deck stays a row. The group's tap opens Sealed searched for "Starter
+  Deck".
+- **The countdown coloured by nearness** (`relBand(days)`: `cd1` within a
+  week, `cd2` within a month, `cd3` within three months, `cd4` further or
+  past).
+- **Remind me** on every upcoming row and group (`RELALERTS`): a
+  notification the day before the release — scheduled, and checked on
+  open — toggled off by the same button; **Calendar** hands the release
+  to the phone's calendar as an all-day event through the take-78 path.
+- **Watched fail first:** on the take-96 build the new smoke section died
+  at its first `relBand` call; on the rebuild two older assertions were
+  red because their anchors had moved with the take — take 86's footer
+  markup (the line now carries Remind me and Calendar beside Details) and
+  take 95's regex on the tap handler's call (it passes the row's query
+  now); both were re-pointed at the new truth, neither weakened. Then
+  **666 passed, 0 failed** (652 before, 14 new): the four bands, the run
+  of ST31–ST36 as one row with its fold and the single deck left alone,
+  the fold opening to six rows, the group's tap searching every starter
+  deck, every upcoming countdown carrying its band and a recent one the
+  past band, Remind me and Calendar on every upcoming row and none on a
+  recent one, the reminder stored and shown, the on-open check firing
+  once on the day before and never before or again, the same button
+  removing it, the calendar event on the date with no location, the two
+  reminder paths in the shipped code, the distributor's two unlisted
+  displays folding into one row and opening. The DOM render 10, the
+  scrubber clean. Three Chrome assertions for the runner: the fold opens
+  on a real click, an upcoming countdown's colour differs from a past
+  one's, Remind me draws, sets and clears. **PROVEN on the runner, first
+  run (check run 22, head 1a0a7bc, 08:10 UTC): render 101 passed, 0
+  failed (mode: chrome)** — 98 before, the three new green — smoke **666
+  passed, 0 failed**, **GATE PASSED**, hash coverage 100.0%, pipeline
+  31 s. One runner cycle for the take.
+
+### DEFERRED this cycle
+
+- **Southern Hobby** (A32), its own take; the distributor state timeline.
+- The scheduled notification's proof is the owner's (the day before EB05,
+  2026-10-29, if he sets one).
+- The three package hosts in this session; More in the nav.
 
 ## Take 96 — 2026-09-23 — A38 item 4: where to buy, under each sealed listing and on its sheet
 

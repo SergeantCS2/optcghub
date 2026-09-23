@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 96.* Ranked by blocking-ness, not by interest.
+*Current as of take 97.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -30,9 +30,9 @@ each item got where it is; this block is what to do next.
 
 **Mine, in order**
 1. **A38, in take order:** 95 (the Releases tap, the sealed sheet, the
-   alert you can find — merged) → 96 (where to buy, under each listing)
-   → 97 (Releases: starter decks grouped, the countdown coloured, a
-   release alert and add-to-calendar); then whatever the next release
+   alert you can find — merged) → 96 (where to buy, under each listing —
+   merged) → 97 (Releases: starter decks grouped, the countdown coloured,
+   a release reminder and add-to-calendar); then whatever the next release
    answers name.
 2. **A32**: retailer sources one session each with the real page in hand
    (GTS built at take 94; Southern Hobby next, its host is open; GameStop,
@@ -1068,7 +1068,9 @@ The owner installed take 94, answered the release questions in order
 errors) and named, in his words:
 
 1. **"Starter decks flood the release page"** — their own section on
-   Releases, grouped by release day. → take 97.
+   Releases, grouped by release day. → take 97. *(built take 97: a run of
+   two or more starter decks on one day is one row with a fold — on
+   Upcoming, Recent and the distributor's list)*
 2. **"NM, LP, MP, HP, DMG don't do anything if they're buttons — they
    shouldn't show on boxes"** — the condition segment on a sealed
    product's sheet; unexplained on a card's. → take 95: hidden on sealed,
@@ -1088,6 +1090,9 @@ errors) and named, in his words:
 5. **Releases: "make days change through different colors as it gets
    closer, add the ability to add an alert, or to add an event to my
    phone's cal"** → take 97 (the take-78 `.ics` path for the calendar).
+   *(built take 97: four colour bands from the palette's own tokens;
+   Remind me — a notification the day before, scheduled and checked on
+   open; Calendar — an all-day event through the take-78 path)*
 6. **"I can't click on the release"** → take 95, landmine 135.
 7. **"Not sure where to add alerts"** → take 95: *Alert me when in stock*
    on the sealed sheet beside the price alert; the row's circle labelled.
