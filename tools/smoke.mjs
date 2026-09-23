@@ -2120,5 +2120,16 @@ ok('a condition tap no longer repaints the sheet through openDetail() (which res
   ok('the card note says what a tap does: the copy is recorded under that condition on Save', /Tap a condition to choose the one this copy is recorded under/.test(ctx.document.getElementById('dCondNote').innerHTML));
   V.OWN.items = keep98; V.go('home'); }
 
+section('take 99 — the look (A40): the harness exists and stays out of the tree; what its first run on take 98 found');
+ok('the look harness and its step lists exist beside the other tools, and look/ is gitignored (the pictures go to the owner)', fs.existsSync(path.join(ROOT, 'tools/look.mjs')) && fs.existsSync(path.join(ROOT, 'tools/look/steps.mjs')) && /^\/look\/$/m.test(fs.readFileSync(path.join(ROOT, '.gitignore'), 'utf8')));
+ok('...and the ignore is anchored to the root: tools/look/ (the step lists) is not ignored (landmine 138), while look/ is', (() => { try { execSync('git check-ignore -q tools/look/steps.mjs', { cwd: ROOT, stdio: 'pipe' }); return false; } catch (e) { return e.status === 1; } })() && (() => { try { execSync('git check-ignore -q look/x/report.json', { cwd: ROOT, stdio: 'pipe' }); return true; } catch (e) { return false; } })());
+ok('a long toast is as wide as its text up to the cap, not half the screen (left:50% halves the available width — the look\'s first finding)', /\.toast\{[^}]*width:max-content/.test(html));
+{ const box99 = V.CAT.rows.find(p => V.SEALED.isProduct(p) && !p.prov); const card99 = V.CAT.rows.find(p => !p.sealed && p.rarity && p.num);
+  V.openDetail(box99.id); const subBox = ctx.document.getElementById('dSub').textContent;
+  ok('a sealed product\'s sheet subtitle is built from the parts it has — no "· ·" after the set name (the look\'s second finding)', !/· ·/.test(subBox) && !/·\s*$/.test(subBox) && subBox.length > 0, JSON.stringify(subBox));
+  V.openDetail(card99.id); const subCard = ctx.document.getElementById('dSub').textContent;
+  ok('...control: a card\'s subtitle still carries set · rarity · number', subCard.split(' · ').length >= 3 && subCard.includes(card99.num) && subCard.includes(card99.rarity), JSON.stringify(subCard));
+  V.go('home'); }
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

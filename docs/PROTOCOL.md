@@ -1,6 +1,6 @@
 # PROTOCOL
 
-*Current as of take 98.*
+*Current as of take 99.*
 
 The working rules for this project. The gate enforces the ones it can.
 
@@ -137,7 +137,14 @@ order:
 
 1. Write the HANDOFF entry **first**.
 2. Update LANDMINES / AGENDA / ROADMAP if the take taught anything.
-3. Build, gate, ship.
+3. Build and run the harnesses (smoke, render).
+4. **The look (take 99, A40):** `node tools/look.mjs N` clicks through the
+   take's changes in the session's own browser and writes a PNG per step
+   under `look/`. Read every PNG yourself, send them to the owner with one
+   line of findings each, and mark the PR ready only after his input or
+   his "go". The step list is the take's, in `tools/look/steps.mjs`; a
+   take that changes what the collector sees adds its steps there.
+5. Gate, ship.
 
 If a response runs out of room, what is lost is the build — one message away and
 obviously missing — instead of the record, which is silently gone forever.

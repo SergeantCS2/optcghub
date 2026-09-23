@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 98
+# V1-STATE — what exists, as of take 99
 
-*Current as of take 98.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 99.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -61,6 +61,18 @@ refresh from Pages (take 27).
 | Scrubber | comments stripped from the shipped app on every build; the gate refuses a first name, an AI-vendor name, the conversational word, a credential, a container path or a leftover to-do marker anywhere public | scrub.py --selftest 6 controls; smoke 5 (take 35) |
 | Typography | four roles (display / comic / body / heavy), OFL/Apache faces bundled, 232 KB, licensed faces as a file drop in `assets/user/fonts/` | render.mjs: Chrome reports all four LOADED and h2 resolves to the display face, with a missing-file control; smoke 7 |
 | Sync | quiet once-per-open sync holds on cellular unless switched on; Sync now always runs; `UPDATE_URL` points at Pages | smoke 4 controls; **not yet seen on the Fold** |
+
+**The look (take 99, A40):** `tools/look.mjs` — the session's own review,
+not CI: the built app in the VM's Chromium (Playwright, installed globally
+there) at the Fold's two sizes, a per-take step list of real clicks and
+`window.VAULT` calls (`tools/look/steps.mjs`), a PNG and a measured line
+per step under `look/` (gitignored), read by the session and sent to the
+owner before a PR is marked ready. Its first run, on take 98's changes,
+found the toast wrapping into a tall half-width pill and a sealed sheet's
+subtitle ending in two stray dots — both fixed the same take. Limits:
+no camera, notifications, share sheet or native Back; no CDN pictures
+from the VM. An emulator was measured impossible here (no KVM, no SDK,
+no network).
 
 **Harness totals, take 98:** smoke.mjs 680 assertions (14 new: the back
 path from a sheet with two controls, the most-valuable rows, the splash,

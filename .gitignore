@@ -28,3 +28,6 @@ catalog/catalog.json.gz
 # a seed zip is the RECOVERY route (RUNBOOK §6) and lives outside the tree:
 # committed, the seed job would unpack it over everything (landmine 122)
 optcghub-seed*.zip
+# the look (take 99): screenshots and the report of the session's browser review — they go to the owner, never into the tree.
+# Anchored: an unanchored `look/` also ignored tools/look/ and the step lists vanished from the commit (landmine 138)
+/look/

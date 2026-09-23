@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 98.* Paste the block between the rules into a new session
+*Current as of take 99.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 98 takes by previous sessions. The repo is
+built across 99 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -27,7 +27,7 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
 4. Read `docs/HANDOFF.md`, newest entry first, back to take 80 at least. Every
    take ends with a DEFERRED list; the union of those lists is the work.
 5. Read `docs/LANDMINES.md` §0 (the index) and skim §1. When you are about to
-   do something, grep the index first. 137 of them; each is a real failure.
+   do something, grep the index first. 138 of them; each is a real failure.
 6. Read `docs/AGENDA.md`: the Priorities block at the top is the live order.
 
 **The discipline, which the gate enforces:**
@@ -48,6 +48,11 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
   must end `(mode: chrome)`. If a host is blocked, name it and stop — the
   owner opens it. A clean run from an empty directory after any pipeline
   change (PROTOCOL §6b).
+- **The look, before a take ships (A40, take 99):** `node tools/look.mjs N`
+  opens the built app in the VM's own Chromium and writes a PNG per step
+  under `look/`. Read every PNG yourself, send them to the owner with one
+  line of findings each, and mark the PR ready only after his input or his
+  "go". The step list for the take lives in `tools/look/steps.mjs`.
 - Seal with `bash tools/seal.sh --gate-only`, bare, never piped (landmine
   103). Then restore the runner-owned files — `git checkout --
   catalog/prices_daily.json catalog/hashes.json` (landmine 116) — commit
@@ -141,6 +146,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 99" and begin with PROTOCOL §0.
+Say "take 100" and begin with PROTOCOL §0.
 
 ---

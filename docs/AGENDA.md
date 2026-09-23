@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 98.* Ranked by blocking-ness, not by interest.
+*Current as of take 99.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -13,28 +13,26 @@ The live order, top first. Everything below this block is the record of how
 each item got where it is; this block is what to do next.
 
 **The owner's, gating everything else**
-1. **Takes 90–94 are merged and Release take-94 is up**, installed and
-   answered (A38). Still yours: merge each take's PR once its check is
-   green; answer the release report's numbered questions after a take that
-   carries big changes; domain access stays open through the source takes
-   (you are told when to narrow it). The blank-after-Back is closed at your
-   word (take 94).
-2. **Hunt → Local and Events after the install**: the take-94 paste read
-   *stores on phone: none, events on phone: none* because neither screen
-   had been opened yet — open each once and say whether they fill (the
-   roster and the events table are live on Pages since run 38).
-3. **D22** background stock checks; **D21** local stock for unserved zips;
+1. **Takes 90–98 are merged; Release take-98 is up** (09:13 UTC). Still
+   yours: install 98 and answer its report's four questions (the steps;
+   the `viewport` line from the open Fold; the two picture URLs; the
+   guide's row); merge each take's PR once its check is green **and you
+   have seen the look's screenshots** (A40); domain access stays open
+   through the source takes — and a *new* session is what receives it
+   (this one is refused every host but GitHub, MEASURED take 99).
+2. **D22** background stock checks; **D21** local stock for unserved zips;
    **D20** a crowd-report inbox. Each caps a Hunt feature until answered.
 4. Shop URLs for stores he knows (A32's storefront list, one entry today).
 5. D7 the icon; D16 the faces; the `.aab` filename before production.
 
 **Mine, in order**
-1. **A39, take 98:** Back from a sheet (landmine 137), the most-valuable
-   rows, one splash colour, a toast that wraps, the Starter decks fold,
-   the condition segment in place and explained. Then the owner's picture
-   answer decides A39 item 3.
-2. **A38** — all eight done (takes 95–97, merged and released).
-2. **A32**: retailer sources one session each with the real page in hand
+1. **A40, take 99:** the look — `tools/look.mjs`, proven on take 98's
+   changes, the PNGs to the owner; PROTOCOL §6 carries the step.
+2. **A39 item 3, take 100:** the pictures — the sealed images and
+   TCGplayer's second host measured on the runner, what serves exported;
+   the owner's two-URL answer is the independent check.
+3. **A39 (take 98) and A38 (takes 95–97)** — done, merged and released.
+4. **A32**: retailer sources one session each with the real page in hand
    (GTS built at take 94; Southern Hobby next, its host is open; GameStop,
    Walmart, Meijer, eBay need a residential IP → the sideload build); the
    restock pattern sentence once a fortnight of hourly history exists on
@@ -1061,6 +1059,38 @@ names (a normaliser on the source side), three set-code families and a
 tie-break (landmine 134). **Next:** Southern Hobby, same shape, its own
 take; the state timeline from the history rows.
 
+## A40 — The look: the session clicks through and screenshots every change before a take ships · OPENED take 99
+
+The owner, mid-take 98: *"add a way for you to directly test these new
+features and bug fixes … it prob shouldn't be in the app build … maybe an
+Android phone emulator where you can click buttons and test yourself and
+run your findings by me … We don't need to test every line of code, just
+new features, bug fixes … This should be ran before the task is finished.
+We will use screenshot testing and browser testing."* His two decisions:
+the harness first (take 99), the pictures probe next (take 100); the
+screenshots and findings sent to the owner, every take.
+
+**What it is (take 99):** `tools/look.mjs` opens the built `www/` in the
+session VM's own Chromium (Playwright is installed globally there) at the
+Fold's two sizes, walks a per-take step list (`tools/look/steps.mjs`:
+real clicks, typed text, `history.back()`, the app's `window.VAULT`
+surface), and writes a PNG and a measured line per step under `look/`
+(gitignored). The session reads every PNG and sends them with findings
+before the PR is marked ready; the owner's input closes the loop.
+PROTOCOL §6 carries the step.
+
+**Limits (MEASURED at take 99):** no camera, notifications, share sheet or
+native Back (history Back runs the same handler chain — landmine 137's
+test); no CDN pictures from this VM (every host but GitHub is refused), so
+pictures are label boxes in the look; the inner viewport is INFERRED until
+the owner's Diagnostics `viewport` line arrives.
+
+**Ruled out:** an Android emulator in this environment — no `/dev/kvm`,
+no virtualization flag, no SDK, no network (MEASURED); anything inside the
+app build; the CI harness as the review (pass/fail by design); the look in
+CI for now (a puppeteer port and an artifact gallery — deferred, the
+owner's call).
+
 ## A39 — The take-97 look: seven items from the third install · OPENED take 97
 
 The owner installed 97 (over 96, in place), answered the release report
@@ -1079,8 +1109,9 @@ for takes 95–97 with five screenshots and the Diagnostics paste, and named:
    two-URL question to the owner decides whether a second host is worth a
    take (PROVISION, landmine 29). Open.
 4. **"I haven't seen the tutorial popup in a while"** — the guide shows
-   once per install (`GUIDE_KEY`); there is no row to reopen it. Answered;
-   a More row is a later item.
+   once per install (`GUIDE_KEY`). *Closed take 99 by reading:* the row to
+   reopen it already exists — More → *How it works* → *Show the guide
+   again* (`#guideAgain`); the release report tells the owner where.
 5. **"The loading screen has the default color, then changes to the
    color of … whatever I was doing last. It should be the same constant
    color"** → take 98.
