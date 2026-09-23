@@ -1,6 +1,6 @@
 # PROTOCOL
 
-*Current as of take 92.*
+*Current as of take 93.*
 
 The working rules for this project. The gate enforces the ones it can.
 
@@ -196,12 +196,16 @@ not the price, not a licence check.
 
 Three controls:
 
-1. **Runtime assets carry no remote origins** except the declared allowlist.
-   The allowlist has exactly two entries and both are user-tap-only: the
-   catalogue/price sync host, and the TCGplayer image CDN for browsing cards the
-   collector has not scanned. Neither is load-bearing — the airplane-mode
-   invariant above is untouched, because a scanned card uses the collector's own
-   photograph.
+1. **Runtime assets carry no remote origins** except the declared allowlist —
+   `docs/PROVISION.md`'s table, which the gate enforces by refusing any other
+   host in `www/`. It began as two entries (the sync host and the TCGplayer
+   image CDN for cards the collector has not scanned) and carries five since
+   take 65 (the Pages sync, the CDN, and three links the OS browser opens).
+   Only the sync is load-bearing — the airplane-mode invariant above is
+   untouched, because a scanned card uses the collector's own photograph and
+   every hot-linked picture fails to a labelled placeholder. *(Wording
+   corrected take 93; the count and the "in the gate" purpose check were
+   stale — landmine 129's shape.)*
 2. **The app wraps `fetch` and `XMLHttpRequest`** and shows a NET badge.
 3. **Every provisioning host is declared** in `docs/PROVISION.md` with its
    purpose, licence and refresh cadence. The gate refuses an undeclared host.

@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 92.* Ranked by blocking-ness, not by interest.
+*Current as of take 93.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -33,22 +33,22 @@ each item got where it is; this block is what to do next.
 5. D7 the icon; D16 the faces; the `.aab` filename before production.
 
 **Mine, in order**
-1. Whatever the diagnostics paste names.
-2. **A33 item 6** — pictures on Collect's rows and Decks as on Hunt's.
-3. **A32**: retailer sources one session each with the real page in hand
+1. Whatever the next diagnostics paste names.
+2. **A32**: retailer sources one session each with the real page in hand
    (GTS and Southern Hobby are reachable; GameStop, Walmart, Meijer, eBay
    need a residential IP → the sideload build); the restock pattern
    sentence once a fortnight of hourly history exists on Pages.
-4. **A23** the sim's tail — modal effects, ordering, protection, the
+3. **A23** the sim's tail — modal effects, ordering, protection, the
    opponent's hidden choices — one mechanism per take, when wanted.
-5. **A31** Collectr import, the day a real exported file exists.
-6. The standing offer: the release-notes trim. (The seed-on-releases
+4. **A31** Collectr import, the day a real exported file exists.
+5. The standing offer: the release-notes trim. (The seed-on-releases
    `build.yml` offer is moot since take 89: takes ship as PRs.)
 
-**Closed since the last audit (takes 57–91):** A26 colour/contrast/desktop,
-A29 stock decks, A30 the tester report in full, A33 five of six, A34
-currency and splash, A35 all thirteen, A36 the set chips (take 90), A37
-More unreachable (take 91); A32
+**Closed since the last audit (takes 57–93):** A26 colour/contrast/desktop,
+A29 stock decks, A30 the tester report in full, A33 all six (item 6 at
+take 93), A34 currency and splash, A35 all thirteen, A36 the set chips
+(take 90), A37 More unreachable (take 91), the first paste's three items
+(take 92); A32
 steps 1–3 and Local, Events, storefronts, stock alerts, the calendar tap,
 exact distances.
 
@@ -1164,7 +1164,15 @@ state:
    did not survive a restart until then — A37)*
 6. **Overall "non-uniform and basic"** — the owner's own diagnosis is the
    lack of pictures; item 4 is the first step, and the same treatment for
-   Collect's rows and Decks follows once Hunt's is seen. *(next)*
+   Collect's rows and Decks follows once Hunt's is seen. *(take 93: a card
+   picture beside every row that had none — search hits, Market Movers,
+   Home's top list, the set browse and set progress (the set's box), the
+   card sheet's other printings, a deck's card rows and add-card results,
+   the Cards browse, Trade's results — through one box helper over the
+   take-12 path, so every row gets the retry, the silent failure and the
+   labelled placeholder; and the four thumbnails that drew unsized are
+   sized, landmine 132. The grid, the card sheet, the binder, the checklist
+   and the Decks list already had art.)*
 
 - **Ruled out: a fourth typeface.** The mismatch is scale and pairing, not
   a missing font.
