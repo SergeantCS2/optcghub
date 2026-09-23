@@ -74,7 +74,11 @@ my phone's cal of choice."*
   displays folding into one row and opening. The DOM render 10, the
   scrubber clean. Three Chrome assertions for the runner: the fold opens
   on a real click, an upcoming countdown's colour differs from a past
-  one's, Remind me draws, sets and clears. The runner's numbers follow.
+  one's, Remind me draws, sets and clears. **PROVEN on the runner, first
+  run (check run 22, head 1a0a7bc, 08:10 UTC): render 101 passed, 0
+  failed (mode: chrome)** — 98 before, the three new green — smoke **666
+  passed, 0 failed**, **GATE PASSED**, hash coverage 100.0%, pipeline
+  31 s. One runner cycle for the take.
 
 ### DEFERRED this cycle
 
