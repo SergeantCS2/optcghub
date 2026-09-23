@@ -63,6 +63,29 @@ the workflow files travel in the PR and the paste in RUNBOOK §5b is the
 fallback only. The branch push started no workflow run (PROVEN on the
 Actions tab) — landmine 122's fix holds.
 
+### The runner as the clean run (PROTOCOL §6b)
+
+The owner opened PR #13 from the app and its first `check` run (00:08
+UTC, 09-23) was the clean run this VM could not do: a fresh checkout, only
+`ci/deps.sh`'s installs, the pipeline from ingest. What it PROVED:
+
+- **The hashes guard, on the real night's data:** *220 images known to be
+  unavailable — retrying 220; canary: served (3 known-good images); new
+  77: hashed 57, unpublished 20 (recorded), failed 0; retried 220: hashed
+  21; 6 s.* The 20 unpublished ids no longer stop the pipeline — and **21
+  of the 220 "known unavailable" images were there all along**; nothing had
+  asked since the night they first failed. Coverage 98.8% of reachable.
+- **The runner-owned-files guard** ran on the merge commit and passed.
+- **The Events block under the pinned clock passed on the runner** — the
+  three-night failure is gone — and so did the rest: **582 passed, 1
+  failed.** The one: the take-35 assertion that read `bundle.sh` for the
+  literal install line, which take 89 moved into `ci/deps.sh`. My miss: I
+  had read `smoke.mjs` for the events block and not for every assertion
+  that reads a CI script. The assertion now reads `deps.sh`, and a second
+  one asserts that `bundle.sh` and `check.sh` both call it and that
+  `hunt.yml` installs the parser itself — the guard take 84 deferred.
+- A second push carries the fix; the check's rerun is the record.
+
 ### Built
 
 - **The smoke clock.** The Events and calendar block runs under a `Date`
