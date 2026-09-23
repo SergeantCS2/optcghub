@@ -1082,10 +1082,14 @@ take; the state timeline from the history rows.
 The owner, on closing A39 item 3: *"there may be other parts of the app
 we can source images for that are missing."* Nothing is built until he
 names the parts and the source. What is known: the 219 card images the
-CDN refuses (recorded nightly in the sidecar's `missing`; the list is
-readable there), the 23 sealed images (`missing_sealed` after the first
-nightly), the stock-deck covers (drawn by the app on purpose, take 62),
-Local and Events (no images by design). Any new source is a PROVISION
+CDN refuses (recorded in the sidecar's `missing`; the list is readable
+there), the 23 sealed images (`missing_sealed` — read at take 101: ten
+are the unreleased OP18 and EB05 boxes, packs, cases and the Double Pack
+Set; the other thirteen are displays, cases, DON!! cards, a dash pack, a
+bonus pack and a judge pack TCGplayer never photographed — the full list
+with ids is in the take-100 HANDOFF entry), the stock-deck covers (drawn
+by the app on purpose, take 62), Local and Events (no images by design).
+The second host served one id of 242 (599838, a card). Any new source is a PROVISION
 row and a display-only reference (landmine 26: art is never hosted);
 the runner measures availability before a URL ships (the take-100
 pattern — one constant per host).

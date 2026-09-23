@@ -211,10 +211,22 @@ can measure the question instead of the owner.
   for 712901 (long-press the picture → copy its address) — one constant
   changes and the probe measures the new pattern the next run. Nothing
   shipped unmeasured: one id's `img` moved to the second host.
-- The sidecar's new keys are the nightly's to write on main (landmine
-  116); the PR's runner wrote them into a checkout that was discarded.
-  The list of the 23 is readable from `catalog/hashes.json` after the
-  first nightly.
+- **The sidecar's new keys landed on main at the take-100 merge build**
+  (run 48's `bundle` job commits the sidecars on every main build, not
+  only the scheduled night — commit 9a157fe, 10:02:48 UTC). Read at
+  22:05: `missing_sealed` 23, `alt` `['599838']` (Crocodile, a card),
+  `alt_host product-images.tcgplayer.com`. **The 23 sealed products with
+  no picture at the CDN, by set:** OP18 (2026-11-20) — 712901 Booster
+  Box, 712902 Box Case, 712903 Sleeved Pack, 712904 Pack, 712907 Double
+  Pack Set Vol. 13, 712909 its Display; EB05 (2026-10-30) — 711383 Pack,
+  711384 Sleeved Pack, 711385 Box, 711386 Box Case; ST31 712853 Starter
+  Decks 31–36; OP15-EB04 686290 Dash Pack; EB03 677570, 677571, 710745,
+  710746 DON!! Cards and 679503 Sleeved Pack; ST29 672894 Bonus Pack;
+  OP-PR 657218 Tin Pack Set Vol. 2 Display, 657219 its Case, 711511
+  Illustration Box Vol. 7 Case, 711512 Vol. 8 Case, 717406 Judge Pack
+  Vol. 8. Ten of the 23 are the two unreleased sets — the owner's
+  "releases and newer packs"; the rest are displays, cases, DON!! cards
+  and promo packs TCGplayer never photographed. Re-measured every build.
 - **The owner's answer (09:5x UTC), which closes A39 item 3 with the
   measurement:** he opened TCGplayer's own page for 712901 — *"they have
   no image"* — so the newest boxes and packs have no picture anywhere
