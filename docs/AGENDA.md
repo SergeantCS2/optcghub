@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 91.* Ranked by blocking-ness, not by interest.
+*Current as of take 92.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -21,11 +21,12 @@ each item got where it is; this block is what to do next.
    and shipped through the runner's `check` instead; merge take 90's PR
    once its check is green. The vendor-name question: take 90 shipped with
    no trailer at your word — say if that stands.
-2. **Install take 91, then a Diagnostics paste** (More → About ×5 →
-   Share). More was unreachable on takes 83–90 (A37), so no paste was ever
-   possible; from 91 the last errors also survive a restart. The
-   blank-after-Back's cause is still UNKNOWN and this is the only thing
-   that names it.
+2. **The first paste arrived (take 91) and take 92 answers it.** Next:
+   install take 92; open Hunt → Events once the hourly has run after the
+   merge (the roster rebuilds on its first run; the phone fetches a day-old
+   table when Events opens); then the next Diagnostics paste after any
+   blank screen — the last errors survive a restart since 91, and the
+   blank-after-Back has not recurred yet (UNKNOWN).
 3. **D22** background stock checks; **D21** local stock for unserved zips;
    **D20** a crowd-report inbox. Each caps a Hunt feature until answered.
 4. Shop URLs for stores he knows (A32's storefront list, one entry today).
@@ -1020,6 +1021,24 @@ other's.
    probe in smoke that proves the parser against a saved real response and
    a control that fails on a changed shape.
 
+### Take 92 — the events source changed shape; the roster froze for six days under a green hourly
+
+The first diagnostics paste (take 91) said `events.json: HTTP 404`,
+`stores.json … 6 days ago`. **PROVEN:** `onepieceevents.com/data/evnt_us.json`
+became a chunk index on 2026-09-22 (`format: chunked-events-v1`, three
+`evnt_us_part_NNNN.json` files, 50,300 events, ~108 MB raw); the fetcher
+indexed `["events"]`, raised `KeyError`, and the hourly's failure path kept
+the 09-17 roster and dropped the events table — a 404 no later run could
+heal, under a green workflow (landmine 130). **Fixed:** the parser accepts
+both shapes and refuses a third; chunks are joined in index order and
+checked against the counts the index promises; a failed rebuild keeps both
+files; a fresh roster with no live events table is rebuilt, not carried.
+Proved against the live source from the session VM before it shipped.
+**MEASURED, not ours to fix:** the "hourly" ran six times in the last day
+(GitHub delays a public repo's cron); the *checked N ago* labels are honest.
+**Ruled out: a block on the roster host** — 200 from the runner and from the
+VM; the log said KeyError, not HTTPError.
+
 ## A37 — More unreachable since take 83 · OPENED AND CLOSED take 91
 
 The owner, on take 88: *"more, settings, export, and etc buttons do nothing
@@ -1354,6 +1373,15 @@ tapping every feature.
   plugin is the most likely field failure; it is SKIP with the reason.
 - **Ruled out: running it at boot.** It writes files and calls plugins; a
   tester runs it on purpose and pastes the report.
+
+- **Take 92, from the first real report (take 91, the Fold):** 16 pass, 1
+  fail — and the fail was the check's own: *OCR reads a code the app drew*
+  compared `m.num`, a field `parseRead` never had, against the code, so ML
+  Kit's correct read of `OP01-016` was marked FAIL on every phone since
+  take 45 (landmine 131). Fixed to `m.number`; smoke now runs the
+  comparison with an injected read and a wrong one. Everything else on the
+  Fold PASSED: camera, Filesystem round-trip, share sheet, notifications
+  prompt, test ad units, the sim probe, the sync URL.
 
 ## A24 — The colour scheme, again · OPENED take 28 · NOT A PRIORITY
 

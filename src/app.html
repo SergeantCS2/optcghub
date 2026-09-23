@@ -4532,7 +4532,7 @@ function paintSettings() {
         cannot read its old backups by itself, though Restore lets you pick one.</div>
     </div>
     <div class="panel"><h3>About</h3>
-      <div class="row"><div class="nm"><b id="aboutTake">Take ${TAKE} \u00b7 built ${esc((CAT.man.built || '').slice(0, 16))}</b><span>${CAT.man.cards ? CAT.man.cards.toLocaleString() + ' cards' : ''} \u00b7 prices ${esc((CAT.man.source_updated_at || '?').slice(0, 10))}</span></div></div></div>
+      <div class="row"><div class="nm"><b id="aboutTake">Take ${TAKE} \u00b7 built ${esc((CAT.man.built_at || '').slice(0, 16))}</b><span>${CAT.man.cards ? CAT.man.cards.toLocaleString() + ' cards' : ''} \u00b7 prices ${esc((CAT.man.source_updated_at || '?').slice(0, 10))}</span></div></div></div>
     <div class="panel"><h3>Self-test</h3>
       <div class="row"><div class="nm"><b>Does this phone run the app?</b><span>catalogue, scanner gate, OCR, backup, camera, fonts, sync \u2014 in one tap</span></div>
         <button class="ghost" id="stRun">Run</button></div>
@@ -5089,7 +5089,7 @@ const DIAG = {
   async report() {
     const L = []; const line = (k, v) => L.push(`${k}: ${v}`);
     L.push(`OP TCG Hub diagnostics \u2014 take ${TAKE} \u2014 ${new Date().toISOString().slice(0, 16)}Z`);
-    L.push('', '## app'); line('build', CAT.man.built || '?'); line('mode', MODE.cur); line('screen stack', NAV.stack.join(' > ') || '-');
+    L.push('', '## app'); line('build', CAT.man.built_at || '?'); line('mode', MODE.cur); line('screen stack', NAV.stack.join(' > ') || '-');
     line('screens on', [...document.querySelectorAll('.screen.on')].map(e => e.id).join(',') || 'NONE'); line('overlays on', ['#askSheet', '#picker', '#detail', '#tour', '#simCurtain'].filter(id => { const el = $(id); return el && el.classList && el.classList.contains('on'); }).join(',') || 'none'); line('splash', $('#splash') ? 'still in the page' : 'gone');
     line('currency', CUR.active() + (CAT.man.rates ? ` (rates ${CAT.man.rates.date}${CAT.man.rates.stale ? ', stale' : ''})` : ' (no rates)')); line('online', navigator.onLine); line('native', !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())); line('plugins', ['Camera', 'Filesystem', 'Share', 'LocalNotifications', 'Network', 'App', 'AdMob'].filter(n => PLATFORM.plugin(n)).join(', ') || 'none (browser)');
     L.push('', '## device'); line('ua', String(navigator.userAgent || '?').slice(0, 120)); line('viewport', `${typeof innerWidth === 'number' ? innerWidth + 'x' + innerHeight : '?'} @${devicePixelRatio || 1}`); line('language', navigator.language || '?'); line('tz', (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return '?'; } })());
@@ -5129,7 +5129,7 @@ const SELFTEST = {
       if (!PLATFORM.hasOcr()) return null;
       const c = document.createElement('canvas'); c.width = 600; c.height = 160;
       const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 600, 160); x.fillStyle = '#000'; x.font = 'bold 72px sans-serif'; x.fillText('OP01-016', 40, 110);
-      const txt = await PLATFORM.ocr(c); const m = parseRead(txt || ''); return { ok: !!m && m.num === 'OP01-016', note: txt ? `read "${String(txt).trim().slice(0, 30)}"` : 'no text returned' };
+      const txt = await PLATFORM.ocr(c); const m = parseRead(txt || ''); return { ok: !!m && m.number === 'OP01-016', note: txt ? `read "${String(txt).trim().slice(0, 30)}"` : 'no text returned' };
     });
     await check('Notifications permission', async () => { const N = PLATFORM.plugin('LocalNotifications'); if (!N) return null; const r = await N.checkPermissions(); return { ok: r.display !== 'denied', note: `display: ${r.display}` }; });
     await check('Ads plugin present, test units', () => { const A = PLATFORM.plugin('AdMob'); if (!A) return null; return { ok: !!(CAT.man.ads && CAT.man.ads.test), note: CAT.man.ads && CAT.man.ads.test ? 'Google test units' : 'REAL units in a test build' }; });

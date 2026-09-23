@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 91
+# V1-STATE — what exists, as of take 92
 
-*Current as of take 91.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 92.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -57,16 +57,16 @@ refresh from Pages (take 27).
 | Onboarding | first-run tour v2 (6 cards), versioned; picture slots in assets/user; **New in this update** on Home once per take, from the release note (take 53) | render; smoke 3 |
 | Packaging | signed APK (committed sideload key), AAB branch for Play (needs 4 secrets), icon + splash from SVG, play-assets, CAMERA + POST_NOTIFICATIONS + AD_ID in the manifest | built every take since 9; signer verified by aapt2/apksigner |
 | CI | build.yml on `main` only (seed → bundle → pages + apk), nightly 21:30 UTC with sidecar commit-back and one labelled failure thread; **check.yml runs the whole pipeline on every PR with a read-only token (take 89)**; hunt.yml hourly; bootstrap.yml as recovery. Since take 89 the workflows live in git, byte-identical to their `ci/` copies, and a take is a PR the owner squash-merges | **ran green on a runner at take 32; APK installed by the owner.** Four red nights 09-18..21 read at take 89: the Events fixture's clock and the hashes guard's treatment of unpublished images (landmines 123, 124); both fixed with controls |
-| Self-test | More → Self-test: 14 on-device checks (catalogue, gate, search, fonts, storage, Filesystem, share, camera, ML Kit on a drawn code, notifications, ads, sync), shareable report | smoke 7 (take 45); **not yet run on the Fold** |
+| Self-test | More → Self-test: 17 on-device checks (catalogue, gate, search, fonts, storage, Filesystem, share, camera, ML Kit on a drawn code, notifications, ads, sim, sync), shareable report | smoke 9; **run on the Fold at take 91: 16 pass, and the one FAIL was the check's own (`m.num`, landmine 131) — fixed take 92** |
 | Scrubber | comments stripped from the shipped app on every build; the gate refuses a first name, an AI-vendor name, the conversational word, a credential, a container path or a leftover to-do marker anywhere public | scrub.py --selftest 6 controls; smoke 5 (take 35) |
 | Typography | four roles (display / comic / body / heavy), OFL/Apache faces bundled, 232 KB, licensed faces as a file drop in `assets/user/fonts/` | render.mjs: Chrome reports all four LOADED and h2 resolves to the display face, with a missing-file control; smoke 7 |
 | Sync | quiet once-per-open sync holds on cellular unless switched on; Sync now always runs; `UPDATE_URL` points at Pages | smoke 4 controls; **not yet seen on the Fold** |
 
-**Harness totals, take 91:** smoke.mjs 600 assertions, render.mjs 81 in
-Chrome, gate 23 checks with negative controls, zero console errors across
-14 screens in both modes — measured on the runner by the PR check (run 7);
-the session VM, with no puppeteer, ran smoke and the DOM fallback (10,
-markup only) and could not run the hashes step.
+**Harness totals, take 92:** smoke.mjs 603 assertions, render.mjs 81 in
+Chrome, gate 23 checks with negative controls, hunt.py 39 selftest lines
+including the roster's two shapes and the failure path — measured on the
+runner by the PR check (run 9); the session VM has no puppeteer and no
+pillow, so Chrome and hashes run on the runner only.
 
 ## DEFERRED, and why
 
@@ -84,7 +84,7 @@ markup only) and could not run the hashes step.
 | Whether the faces themselves fit | the colour and contrast are fixed (take 60); whether Luckiest Guy and Bangers are the right faces is D16 | A26 |
 | A TalkBack session on a phone | every control has a name and the roles are right (take 66); whether the order and wording make sense needs a person | A30 |
 | Focus order | the ring exists (take 80); tab order across screens is unreviewed | A30 |
-| Hunt mode — local shops, reprints, the preorder watch, per-user zips | Sealed, Releases (take 70) and the hourly Target feed — online stock for all of the US, shelf stock per served zip with a zip pop-up, a fortnight of hourly history turned into dated restocks per store, and Local — 2,967 event-running shops with distances from your zip, the distance dropdown, your own notes, verified local shops' online sealed stock hourly, and Events — every event near you for a month with fee, seats and a TCG+ Register link — in a Zoro-green palette, with stock alerts that fire on the flip at any tracked source, any event onto the calendar as an .ics, exact distances on request (takes 71–79) BUILT; the TCG+ roster and the rest follow in A32 order | A32 |
+| Hunt mode — local shops, reprints, the preorder watch, per-user zips | Sealed, Releases (take 70) and the hourly Target feed — online stock for all of the US, shelf stock per served zip with a zip pop-up, a fortnight of hourly history turned into dated restocks per store, and Local — 2,967 event-running shops with distances from your zip, the distance dropdown, your own notes, verified local shops' online sealed stock hourly, and Events — every event near you for a month with fee, seats and a TCG+ Register link (the source became a chunked index on 2026-09-22 and the roster froze for six days under a green hourly; read both shapes since take 92, landmine 130) — in a Zoro-green palette, with stock alerts that fire on the flip at any tracked source, any event onto the calendar as an .ics, exact distances on request (takes 71–79) BUILT; the TCG+ roster and the rest follow in A32 order | A32 |
 | Importing from other apps (Collectr) | needs one real exported file; guessing the format would mis-key printings | A31 |
 | Colour direction | D15; parked, not a priority | A24 |
 | Icon motif | D7; the take-16 placeholder is back by request | A16 |

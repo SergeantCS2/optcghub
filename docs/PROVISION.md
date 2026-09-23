@@ -1,6 +1,6 @@
 # PROVISION
 
-*Current as of take 91.*
+*Current as of take 92.*
 
 Every host this project touches, in either phase, with its purpose, licence and
 cadence. The gate refuses an undeclared host in `www/` or in `tools/`.
@@ -16,7 +16,7 @@ wifi and may fetch. **Scanning** happens anywhere and may not.
 |---|---|---|---|---|
 | `tcgcsv.com` | TCGplayer categories, groups, products, prices for `categoryId 68` | build | nightly, after 20:00 UTC | Free public mirror of TCGplayer data. Community-run (`CptSpaceToaster/tcgcsv`), Patreon-supported. Attribution required in-app. |
 | `sergeantcs2.github.io` (Pages) | the nightly `bundle/manifest.json` and `bundle/catalog.json` | More → Sync, and once on open when online | **Yes** — written to `Directory.Data` as the live catalogue; the APK's bundled copy is the fallback. Take 27. `UPDATE_URL` set at take 33; empty disables it |
-| `onepieceevents.com` | the static `data/evnt_us.json` — every US One Piece event with its store's name, address, city, zip (derived from Bandai TCG+, where stores register to run events) | the hourly `hunt` workflow, at most once a day | daily | Third-party aggregator, keyless, public static files (a `manifest.json` lists them). The roster ships as `hunt/stores.json` naming its source and fetch time (take 74) |
+| `onepieceevents.com` | the static `data/evnt_us.json` — since 2026-09-22 a chunk index (`chunked-events-v1`) naming `evnt_us_part_NNNN.json` files, three today, ~108 MB raw, ~50,300 US One Piece events with each store's name, address, city, zip and point (derived from Bandai TCG+, where stores register to run events); the take-74 shape `{"events": [...]}` is still accepted (landmine 130) | the `hunt` workflow (scheduled hourly; GitHub runs it every 4–5 h in practice), at most once a day | daily | Third-party aggregator, keyless, public static files (a `manifest.json` lists them). The roster ships as `hunt/stores.json` naming its source and fetch time (take 74) |
 | `www2.census.gov` | the ZCTA gazetteer: a centroid per US zip | once, cached as `catalog/zcta.json` in the tree | never again unless removed | US Census, public domain. 758 KB compacted to two decimals; the app ships only the ~900 3-digit-prefix means (take 74) |
 | local game stores' Shopify storefronts (`hunt/storefronts.json`, hand-verified: today `blackvaultgaming.com`) | `/products.json` and `/collections/…/products.json` — the store's own public listings: One Piece sealed product with price and availability | the hourly `hunt` workflow | hourly | Public by design on every Shopify store; keyless; ~20 requests a store at most. The feed names the shop, links into its store, and says a shop lists what it chooses (take 75) |
 | `api.frankfurter.dev` | the day's ECB reference exchange rates, USD to seven currencies, for the display-currency option | build (nightly and hourly), keyless | daily | ECB data via a free public mirror; cached as `catalog/rates.json` so a failed fetch shows the last rates with their date. Every converted price carries ≈ and the picker names the rate's date (take 85) |

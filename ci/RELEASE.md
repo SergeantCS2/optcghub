@@ -1,4 +1,4 @@
-# OP TCG Hub — take 91
+# OP TCG Hub — take 92
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,11 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 92:** Hunt → Local and Events fill again — the events
+source changed its file format six days ago and the store roster had
+frozen; the self-test's one FAIL (the ML Kit read) was the test's own
+mistake and is fixed; About shows when the app was built.
 
 **New at take 91:** the More screen opens again — since take 83 the *More*
 link on Home had bounced back to Home, taking Export, Restore, Sync,
