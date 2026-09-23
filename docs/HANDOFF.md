@@ -70,8 +70,11 @@ TCGplayer logo, online or local link/address/phone whatever."*
   the card control, the four glyphs in the sprite, the literal-host rule.
   The DOM render 10, the scrubber clean. Three Chrome assertions for the
   runner: the strip inside the row at 412 and 673 px, and the sheet's
-  panel drawn for a sealed product and not for a card. The runner's
-  numbers follow.
+  panel drawn for a sealed product and not for a card. **PROVEN on the
+  runner, first run (check run 20, head fc6f4d8, 07:58 UTC): render 98
+  passed, 0 failed (mode: chrome)** — 95 before, the three new green —
+  smoke **652 passed, 0 failed**, **GATE PASSED**, hash coverage 100.0%,
+  pipeline 33 s. One runner cycle for the take.
 
 ### DEFERRED this cycle
 
