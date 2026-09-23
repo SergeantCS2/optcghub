@@ -2772,9 +2772,22 @@ function blankFilter(scope) {
   return { sort: 'value', dir: -1, set: [], rarity: [], color: [], type: [], treat: [],
            cond: [], min: null, max: null, only: [], _scope: scope };
 }
+/* Take 90 (A36, landmine 126): a set id is an int everywhere the catalogue
+   keys it, but a filter saved by the chip handler before this take carries
+   the DOM's string, and one saved by the browse-set rows carries the int.
+   Normalise on load so the two writers meet one comparison. A parse that
+   fails loads blank: a filter is a preference, never the collection. */
+const NUMERIC_FACETS = ['set'];
+function loadFilter(scope) {
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem('vault.filt.' + scope) || '{}') || {}; } catch (e) { saved = {}; }
+  const f = Object.assign(blankFilter(scope), saved, { _scope: scope });
+  for (const k of NUMERIC_FACETS) f[k] = (Array.isArray(f[k]) ? f[k] : []).map(Number).filter(Number.isFinite);
+  return f;
+}
 const FILT = {
-  own: Object.assign(blankFilter('own'), JSON.parse(localStorage.getItem('vault.filt.own') || '{}')),
-  all: Object.assign(blankFilter('all'), JSON.parse(localStorage.getItem('vault.filt.all') || '{}')),
+  own: loadFilter('own'),
+  all: loadFilter('all'),
   save(scope) { localStorage.setItem('vault.filt.' + scope, JSON.stringify(this[scope])); }
 };
 function activeCount(f) {
@@ -2885,7 +2898,9 @@ function paintFilterCount() {
 $('#filters').addEventListener('click', e => {
   const f = FILT[sheetScope];
   const c = e.target.closest('[data-fk]');
-  if (c) { const k = c.dataset.fk, v = c.dataset.fv;
+  if (c) { const k = c.dataset.fk;
+           /* dataset is always a string; the set facet is keyed by int (landmine 126) */
+           const v = NUMERIC_FACETS.includes(k) ? +c.dataset.fv : c.dataset.fv;
            const i = f[k].indexOf(v); i >= 0 ? f[k].splice(i, 1) : f[k].push(v);
            c.classList.toggle('on'); paintFilterCount(); return; }
   const o = e.target.closest('[data-only]');
@@ -5182,7 +5197,7 @@ async function runSelfTest() {
   $('#allq').placeholder = `Search all ${(CAT.man.cards || 0).toLocaleString()} cards`;
   paintNet(); paintHome();
   window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, openDetail, HUNT, targetLine, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, NAV, go, closeAnyOverlay,
-                   FILT, applyFilter, sortRows, blankFilter, activeCount,
+                   FILT, loadFilter, applyFilter, sortRows, blankFilter, activeCount,
                    DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,
                    backupJson, scheduleBackup,
                    scan: { PLATFORM, detectQuad, parseRead, normaliseRead, starScore,

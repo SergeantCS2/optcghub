@@ -380,6 +380,46 @@ if (puppeteer) {
   ok('filter sheet: chips are tall enough to tap (>=32px)', sheet.minH >= 32, String(sheet.minH));
   ok('filter sheet: facet chips carry live counts', sheet.counts >= 4, String(sheet.counts));  // fixture has 3 cards
   ok('filter sheet: the button says how many rows will show', /^\d+ card/.test(sheet.showText), sheet.showText);
+
+  /* take 90 -- A36, landmine 126. A set chip tapped in a real DOM must show
+     that set's cards (it showed none from take 11 to take 89: the chip
+     stored the dataset string, the filter compared an int) and must still
+     be lit when the sheet reopens. The control below is the old shape. */
+  const chipTap = async () => { await page.evaluate(() => document.querySelector('#fSet .chip').click());
+                                await new Promise(r => setTimeout(r, 250)); };
+  await chipTap();
+  const c1 = await page.evaluate(() => {
+    const chip = document.querySelector('#fSet .chip');
+    return { n: +((chip.querySelector('small') || {}).textContent || 0), lit: chip.classList.contains('on'),
+             fN: document.querySelector('#fN').textContent, stored: window.VAULT.FILT.own.set.slice() };
+  });
+  ok("set chip: a tap shows that set's cards, not zero", c1.n > 0 && new RegExp('^' + c1.n + ' card').test(c1.fN),
+     `${c1.fN} for a chip counting ${c1.n}`);
+  ok('set chip: the stored id is a number, as the catalogue keys it',
+     c1.stored.length === 1 && typeof c1.stored[0] === 'number', JSON.stringify(c1.stored));
+  ok('set chip: lit after the tap', c1.lit);
+  await page.evaluate(() => document.querySelector('#fApply').click());
+  await new Promise(r => setTimeout(r, 300));
+  const tiles1 = await page.$$eval('#colGrid .tile', e => e.length);
+  ok('set chip: Show draws exactly that many tiles', tiles1 === c1.n, `${tiles1} vs ${c1.n}`);
+  await page.evaluate(() => document.querySelector('#sortBtn').click());
+  await new Promise(r => setTimeout(r, 250));
+  ok('set chip: still lit when the sheet reopens',
+     await page.evaluate(() => document.querySelector('#fSet .chip').classList.contains('on')));
+  await chipTap();
+  const c2 = await page.evaluate(() => ({ fN: document.querySelector('#fN').textContent,
+                                          stored: window.VAULT.FILT.own.set.length,
+                                          pool: window.VAULT.OWN.items.length }));
+  ok('set chip: a second tap un-selects it and every card is back',
+     c2.stored === 0 && new RegExp('^' + c2.pool + ' card').test(c2.fN), c2.fN);
+  ok('negative control: the DOM string stored as it came matches nothing (the take-89 shape)',
+     await page.evaluate(() => {
+       const V = window.VAULT, id = V.CAT.byId.get(V.OWN.items[0].id).set;
+       const pool = V.OWN.items.map(i => ({ i, p: V.CAT.byId.get(i.id) }));
+       return V.applyFilter(pool, Object.assign(V.blankFilter('own'), { set: [String(id)] })).length === 0;
+     }));
+  await page.evaluate(() => document.querySelector('#fClear').click());   // leaves a blank filter for what follows
+  await new Promise(r => setTimeout(r, 250));
   await page.evaluate(() => document.querySelector('#filters').classList.remove('on'));
 
   /* Landmine 82: nothing interactive under the simulated status bar or gesture bar. */
@@ -498,6 +538,10 @@ if (puppeteer) {
     fetch: async u => ({ json: async () =>
       String(u).includes('manifest') ? manifest : catalog })
   };
+  /* take 90: the error buffer (take 82) registers on window; the DOM fallback
+     had no addEventListener and crashed here for eight takes unseen, because
+     every one of them had Chrome (landmine 127). */
+  ctx.addEventListener = () => {}; ctx.removeEventListener = () => {};
   ctx.window = ctx;
   vm.createContext(ctx);
   vm.runInContext(js, ctx, { filename: 'www/app.js' });
