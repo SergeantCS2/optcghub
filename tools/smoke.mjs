@@ -1543,7 +1543,7 @@ ok('the Portfolio label is a small caption above the name, which keeps the displ
 { const boxes = V.CAT.rows.filter(p => V.SEALED.isProduct(p));
   ok('every sealed product carries a product photo url (343 of 343 today)', boxes.length > 300 && boxes.every(p => p.img));
   const pic = V.productPic(boxes[0]);
-  ok('a product picture is the take-12 display-only image -- lazy, hot-linked, retried once then removed on failure -- over a drawn tile that shows the set code', /<img class="ref" loading="lazy"/.test(pic) && /this\.remove\(\)/.test(pic) && /class="ph"/.test(pic) && /tcgplayer-cdn\.tcgplayer\.com/.test(pic));
+  ok('a product picture is the take-12 display-only image -- lazy, hot-linked, retried once then removed on failure -- over a drawn tile that shows the set code', /<img class="ref" loading="lazy"/.test(pic) && /this\.remove\(\)/.test(pic) && /class="ph"/.test(pic) && /(tcgplayer-cdn|product-images)\.tcgplayer\.com/.test(pic));   // either declared host since take 100
   const np = V.productPic({ ...boxes[0], img: null });
   ok('with no photo the tile stands alone -- no image tag, no hole', !/<img/.test(np) && /class="ph"/.test(np));
   V.MODE.set('hunt', false); V.SEALED.open = new Set([boxes[0].set]); V.paintSealed();
@@ -2130,6 +2130,17 @@ ok('a long toast is as wide as its text up to the cap, not half the screen (left
   V.openDetail(card99.id); const subCard = ctx.document.getElementById('dSub').textContent;
   ok('...control: a card\'s subtitle still carries set · rarity · number', subCard.split(' · ').length >= 3 && subCard.includes(card99.num) && subCard.includes(card99.rarity), JSON.stringify(subCard));
   V.go('home'); }
+
+section('take 100 — the pictures (A39 item 3): what the runner measured ships, nothing is guessed');
+{ const rows100 = V.CAT.rows; const HOSTS = /^https:\/\/(tcgplayer-cdn\.tcgplayer\.com\/product\/\d+_200w\.jpg|product-images\.tcgplayer\.com\/fit-in\/200x279\/\d+\.jpg)$/;
+  ok('every printing\'s picture URL is on one of the two declared hosts, in the declared shape', rows100.every(p => !p.img || HOSTS.test(p.img)), String((rows100.find(p => p.img && !HOSTS.test(p.img)) || {}).img));
+  ok('...control: a third host, and a malformed id, are refused by the same rule', !HOSTS.test('https://evil.example.com/product/1_200w.jpg') && !HOSTS.test('https://product-images.tcgplayer.com/fit-in/200x279/x.jpg'));
+  const side = JSON.parse(fs.readFileSync(path.join(ROOT, 'catalog/hashes.json'), 'utf8')); const alt = new Set((side.alt || []).map(String)); const byId = new Map(rows100.map(p => [String(p.id), p]));
+  ok('every id the sidecar says the second host served ships the second host\'s URL, and every other id keeps the first host\'s', [...alt].every(id => !byId.has(id) || /product-images\.tcgplayer\.com\/fit-in\/200x279\/\d+\.jpg$/.test(byId.get(id).img)) && rows100.every(p => alt.has(String(p.id)) || !p.img || /tcgplayer-cdn\.tcgplayer\.com/.test(p.img)), `${alt.size} in alt`);
+  ok('the manifest carries the picture measurement as counts', !!manifest.images && ['missing_cards', 'missing_sealed', 'alt_served', 'exported'].every(k => Number.isInteger(manifest.images[k])) && typeof manifest.images.measured === 'boolean', JSON.stringify(manifest.images));
+  ok('a product picture through the second host keeps the take-12 chain: lazy, display-only, removed on failure', (() => { const pic = V.productPic({ ...rows100.find(p => V.SEALED.isProduct(p)), img: 'https://product-images.tcgplayer.com/fit-in/200x279/712901.jpg' }); return /<img class="ref" loading="lazy"/.test(pic) && /this\.remove\(\)/.test(pic) && /product-images\.tcgplayer\.com/.test(pic); })());
+  ok('Diagnostics prints the picture line from the manifest', /line\('pictures'/.test(js) && /have no picture at the first host/.test(js));
+}
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

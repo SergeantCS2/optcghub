@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 99.* Ranked by blocking-ness, not by interest.
+*Current as of take 100.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -26,12 +26,11 @@ each item got where it is; this block is what to do next.
 5. D7 the icon; D16 the faces; the `.aab` filename before production.
 
 **Mine, in order**
-1. **A40, take 99:** the look — `tools/look.mjs`, proven on take 98's
-   changes, the PNGs to the owner; PROTOCOL §6 carries the step.
-2. **A39 item 3, take 100:** the pictures — the sealed images and
+1. **A39 item 3, take 100:** the pictures — the sealed images and
    TCGplayer's second host measured on the runner, what serves exported;
    the owner's two-URL answer is the independent check.
-3. **A39 (take 98) and A38 (takes 95–97)** — done, merged and released.
+2. **A40 (take 99), A39 (take 98) and A38 (takes 95–97)** — done, merged
+   and released; the look runs on every take from here.
 4. **A32**: retailer sources one session each with the real page in hand
    (GTS built at take 94; Southern Hobby next, its host is open; GameStop,
    Walmart, Meijer, eBay need a residential IP → the sideload build); the
@@ -1107,7 +1106,12 @@ for takes 95–97 with five screenshots and the Diagnostics paste, and named:
    these 100% have pictures on TCG"** — the catalogue's CDN URLs answer
    404 for them; TCGplayer's own pages use a second image host. A
    two-URL question to the owner decides whether a second host is worth a
-   take (PROVISION, landmine 29). Open.
+   take (PROVISION, landmine 29). *Take 100:* the runner measures it
+   instead — the 674 sealed images probed every run (never before), the
+   second host probed for every missing id, what serves exported as the
+   product's `img`, what nothing serves stays the label box, and
+   Diagnostics carries the counts. The owner's two-URL answer stays the
+   independent check.
 4. **"I haven't seen the tutorial popup in a while"** — the guide shows
    once per install (`GUIDE_KEY`). *Closed take 99 by reading:* the row to
    reopen it already exists — More → *How it works* → *Show the guide

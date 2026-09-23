@@ -75,6 +75,17 @@ def catalogue_json(db):
           LEFT JOIN printing_hash h ON h.product_id = p.product_id
           LEFT JOIN price_delta dl ON dl.product_id = p.product_id
          ORDER BY p.is_sealed, p.number""").fetchall()
+    # Take 100 (A39 item 3): a product whose first image host refused it ships
+    # the second host's URL -- only when the runner's probe saw it serve (the
+    # sidecar's `alt`, written by hashes.py, which runs before this step). Nothing
+    # is guessed: an id outside `alt` keeps the URL TCGCSV gave it.
+    import hashes as _h
+    alt = _h.read_alt(); ci = cols.index("img"); n_alt = 0
+    rows = [list(r) for r in rows]
+    for r in rows:
+        u = _h.export_url(r[1], r[ci], alt) if r[ci] else r[ci]
+        if u != r[ci]:
+            r[ci] = u; n_alt += 1
     ids = [r[1] for r in rows]
     if len(set(ids)) != len(ids):
         raise SystemExit(f"build_app: {len(ids)-len(set(ids))} duplicate printings "
@@ -113,7 +124,7 @@ def catalogue_json(db):
                     hist[pid][di] = round(m, 2)
     except Exception as e:                                # noqa: BLE001
         print(f"   note: price history not bundled: {e}")
-    return {"sets": sets, "cols": cols, "rows": rows, "ng": ng, "ngs": ngs,
+    return {"sets": sets, "cols": cols, "rows": rows, "ng": ng, "ngs": ngs, "alt_images": n_alt,
             "valid_numbers": valid, "star": star, "days": days, "hist": hist}
 
 
@@ -282,6 +293,22 @@ def build(verbose=True):
                   "decksFree": DECKS_FREE, "decksPerAd": DECKS_PER_AD}
     man["take"] = n
     man["printings"] = len(cat["rows"])
+    # Take 100: the picture measurement, as counts, for Diagnostics and the harness.
+    try:
+        import hashes as _h
+        raw_side = json.load(open(_h.SIDECAR)) if os.path.exists(_h.SIDECAR) else {}
+    except Exception:                                     # noqa: BLE001
+        raw_side = {}
+    man["images"] = {"missing_cards": len(raw_side.get("missing", [])),
+                     "missing_sealed": len(raw_side.get("missing_sealed", [])),
+                     "alt_served": len(raw_side.get("alt", [])),
+                     "exported": cat.get("alt_images", 0),
+                     "measured": "missing_sealed" in raw_side}
+    if verbose:
+        im = man["images"]
+        print(f"   images: {im['exported']} rows carry the second host "
+              f"({im['missing_cards']} cards and {im['missing_sealed']} sealed missing at the first; "
+              f"{'measured' if im['measured'] else 'sealed images not yet measured on this sidecar'})")
     man["hashed"] = sum(1 for r in cat["rows"]
                         if r[cat["cols"].index("hash")] is not None)
     d1 = cat["cols"].index("d1p")

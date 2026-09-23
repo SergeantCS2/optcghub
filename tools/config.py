@@ -17,6 +17,12 @@ CATEGORY_NAME = "One Piece Card Game"
 TCGCSV = "https://tcgcsv.com/tcgplayer"
 LAST_UPDATED = "https://tcgcsv.com/last-updated.txt"
 IMAGE_CDN = "https://tcgplayer-cdn.tcgplayer.com/product/{pid}_200w.jpg"
+# Take 100 (A39 item 3): TCGplayer's second image host, the pattern its own
+# pages use. INFERRED until the runner's probe serves from it -- hashes.py
+# probes it for every id the first host refuses and records what served;
+# build_app.py exports a served URL as that product's img. Never guessed
+# into the app: a URL ships only after it answered with an image.
+ALT_IMAGE_CDN = "https://product-images.tcgplayer.com/fit-in/200x279/{pid}.jpg"
 
 # Landmine 5: a blocked fetch returns an empty list, not an error. Declare who
 # we are, go sequentially, and assert non-empty per group.

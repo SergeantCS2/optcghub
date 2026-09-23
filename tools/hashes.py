@@ -17,9 +17,9 @@ roger, reprint) do not, and are flagged `same_art` in the catalogue so the
 scanner shows a picker instead of pretending.
 """
 import concurrent.futures as cf
-import io, os, sqlite3, sys, time, urllib.error, urllib.request
+import io, os, sqlite3, sys, time, urllib.error, urllib.parse, urllib.request
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import CATALOG_DB, USER_AGENT, ROOT
+from config import CATALOG_DB, USER_AGENT, ROOT, ALT_IMAGE_CDN
 try:
     from PIL import Image, ImageOps
 except ImportError:                                      # --selftest fetches nothing; run() refuses below
@@ -90,6 +90,101 @@ def _fetch(url, tries=2):
     return None, status
 
 
+ALT_HOST = urllib.parse.urlparse(ALT_IMAGE_CDN).netloc
+
+
+def alt_url(pid):
+    """The second host's URL for a product id (take 100, A39 item 3). Refuses
+    anything that is not an id: a URL is built from the catalogue's key only."""
+    if not str(pid).isdigit():
+        raise ValueError(f"alt_url: not a product id: {pid!r}")
+    return ALT_IMAGE_CDN.format(pid=int(pid))
+
+
+def export_url(pid, url, alt_ids):
+    """What the catalogue ships as a product's img: the second host's URL when
+    the runner saw it serve (`alt_ids`, the sidecar's `alt`), the first host's
+    URL unchanged otherwise. Pure, so its control runs without a network."""
+    return alt_url(pid) if str(pid) in alt_ids else url
+
+
+def read_alt():
+    """The ids the second host served on the last run, from the sidecar."""
+    import json
+    if not os.path.exists(SIDECAR):
+        return set()
+    try:
+        return set(str(x) for x in json.load(open(SIDECAR)).get("alt", []))
+    except Exception:                                    # noqa: BLE001
+        return set()
+
+
+def _is_image(raw):
+    """(w, h) when the bytes decode as an image, else None. The bytes are not
+    kept (landmine 26): a placeholder page with a 200 is a miss, not a picture."""
+    if not raw or Image is None:
+        return None
+    try:
+        img = Image.open(io.BytesIO(raw)); img.load(); wh = img.size
+        del img
+        return wh
+    except Exception:                                    # noqa: BLE001
+        return None
+
+
+def probe(jobs, getter=None, is_image=None, workers=8):
+    """Availability only, never hashed: -> [(pid, served, status, size)].
+    `getter` and `is_image` are injected so the controls run without a network
+    (the shape hunt/gts.py's fetch uses)."""
+    get = getter or _fetch
+    isi = is_image or _is_image
+
+    def one(job):
+        pid, url = job
+        raw, status = get(url)
+        wh = isi(raw) if raw else None
+        del raw
+        return (pid, wh is not None, status, wh)
+    with cf.ThreadPoolExecutor(workers) as ex:
+        return list(ex.map(one, jobs))
+
+
+def measure_alt(ids, getter=None, is_image=None, workers=4):
+    """The second host, for every id the first host refused:
+    -> (the ids it served, a count per outcome: served / an HTTP status / 0)."""
+    res = probe([(pid, alt_url(pid)) for pid in sorted(ids, key=int)], getter, is_image, workers)
+    served = set(str(pid) for pid, ok, _, _ in res if ok)
+    counts = {}
+    for _, ok, status, _ in res:
+        k = "served" if ok else str(status)
+        counts[k] = counts.get(k, 0) + 1
+    return served, counts
+
+
+def _measure_extras(sealed, missing, have, extra, verbose=True, workers=8, limit=None):
+    """Take 100 (A39 item 3). The sealed images' availability (never hashed: the
+    scanner is for cards) and the second host for every id the first refused.
+    Recorded in the sidecar and printed with source totals (AGENTS rule 8);
+    never a reason to stop the run -- verdict() is the cards' guard."""
+    jobs = sealed[:limit] if limit else sealed
+    res = probe(jobs, workers=workers)
+    missing_sealed = sorted((str(pid) for pid, ok, _, _ in res if not ok), key=int)
+    if verbose:
+        print(f"   sealed images: {len(missing_sealed)} of {len(jobs)} unavailable at the first host (recorded, not counted)")
+    ids = set(str(x) for x in missing) | set(missing_sealed)
+    if limit:
+        ids = set(sorted(ids, key=int)[:limit])
+    served, counts = measure_alt(ids, workers=min(workers, 4)) if ids else (set(), {})
+    if verbose:
+        st = " ".join(f"{k}\u00d7{v}" for k, v in sorted(counts.items())) or "nothing to probe"
+        ms = set(missing_sealed)
+        cards = sum(1 for i in served if i not in ms); sl = sum(1 for i in served if i in ms)
+        print(f"   second host ({ALT_HOST}): serves {len(served)} of {len(ids)} missing "
+              f"(cards {cards} of {len(ids) - len(ms)}, sealed {sl} of {len(ms)}; {st})")
+    extra.update({"missing_sealed": missing_sealed, "alt": sorted(served, key=int), "alt_host": ALT_HOST})
+    _save(have, missing, extra)
+
+
 def tally(results, is_new):
     """Count one pass. `results` are (pid, hash or None, status); `is_new` the
     ids never tried before. A miss with an UNPUBLISHED status is recorded, not
@@ -147,10 +242,16 @@ def run(limit=None, verbose=True, workers=8, retry_missing=True):
     # retried each run (~30 s for a few hundred at the measured 8/s), kept out
     # of the failure rate, and leaves the list the night its image arrives.
     missing = set(str(x) for x in raw.get("missing", []))
+    # take 100: the sidecar's other keys ride through every save (the mid-pass
+    # one included) or last night's `alt` is erased before the probe rewrites it
+    extra = {k: raw[k] for k in ("missing_sealed", "alt", "alt_host") if k in raw}
     db = sqlite3.connect(CATALOG_DB)
     printed = db.execute(
         "SELECT product_id, image_url FROM printing "
         "WHERE is_sealed=0 AND image_url IS NOT NULL").fetchall()
+    sealed = db.execute(
+        "SELECT product_id, image_url FROM printing "
+        "WHERE is_sealed=1 AND image_url IS NOT NULL").fetchall()
     db.close()                                           # released immediately
     new = [r for r in printed if str(r[0]) not in have and str(r[0]) not in missing]
     retry = [r for r in printed if str(r[0]) in missing] if retry_missing else []
@@ -162,6 +263,7 @@ def run(limit=None, verbose=True, workers=8, retry_missing=True):
     if not rows:
         if verbose:
             print("   nothing to fetch")
+        _measure_extras(sealed, missing, have, extra, verbose, workers, limit)   # the card pass is empty, not the night
         return 0, 0
     t0 = time.time()
 
@@ -203,12 +305,12 @@ def run(limit=None, verbose=True, workers=8, retry_missing=True):
                 missing.discard(str(pid))
                 have[str(pid)] = h
             if i % 500 == 0:
-                _save(have, missing)                     # crash-safe, resumable
+                _save(have, missing, extra)              # crash-safe, resumable
                 if verbose:
                     r = i / (time.time() - t0)
                     print(f"   {i}/{len(rows)}  {r:.0f}/s  "
                           f"eta {(len(rows)-i)/r/60:.1f} min", flush=True)
-    _save(have, missing)
+    _save(have, missing, extra)
 
     # An ETA is not evidence of completion (landmine 48). Say what landed,
     # new and retried apart: the rate that matters is over cards we have NEVER
@@ -229,24 +331,18 @@ def run(limit=None, verbose=True, workers=8, retry_missing=True):
     if new and c["failed_new"] and len(new) < 20:
         print(f"   {c['failed_new']} of {len(new)} new image(s) failed — recorded, not fatal "
               f"(sample too small for a rate; landmine 106)")
+    _measure_extras(sealed, missing, have, extra, verbose, workers, limit)   # after the verdict: a refused night measures nothing more
     return c["ok"], c["unpublished"] + c["failed"]
 
 
-def _save(have, missing):
+def _save(have, missing, extra=None):
+    """Landmine 46: the hashes live outside the disposable catalogue. Take 100:
+    the sidecar's other keys (`missing_sealed`, `alt`, `alt_host`) ride through
+    every save -- a saver that knew two keys would erase them mid-pass."""
     import json
-    json.dump({"hashes": have, "missing": sorted(missing)}, open(SIDECAR, "w"))
-
-
-def save_sidecar(db):
-    """Landmine 46. catalog.sqlite is DISPOSABLE and is deleted on every rebuild,
-    which took every hash with it — 14 minutes of re-downloading artwork per
-    build, for values that had not changed. productId is stable (landmine 23),
-    so a hash is valid forever. Keep them outside the thing that gets deleted."""
-    import json
-    rows = dict(db.execute("SELECT product_id, dhash FROM printing_hash").fetchall())
-    raw = json.load(open(SIDECAR)) if os.path.exists(SIDECAR) else {}
-    _save({str(k): v for k, v in rows.items()}, set(raw.get("missing", [])))
-    return len(rows)
+    d = {"hashes": have, "missing": sorted(missing)}
+    d.update(extra or {})
+    json.dump(d, open(SIDECAR, "w"))
 
 
 def load_sidecar(db):
@@ -287,7 +383,61 @@ def selftest():
         good = (c["unpublished"] == 1) == unpub
         ok_all &= good
         print(f"  {'ok  ' if good else 'FAIL'}  a miss with status {status} is {'unpublished' if unpub else 'a failure'}")
+    # take 100 (A39 item 3): the availability probes' pure parts, without a network
+    img_ok = lambda b: (200, 279)                          # noqa: E731
+    cases100 = [
+        ("a 200 whose bytes are an image is served",
+         lambda: probe([(1, "u")], getter=lambda u: (b"IMG", 200), is_image=img_ok)[0][1], True),
+        ("control: a 404 is not served",
+         lambda: probe([(1, "u")], getter=lambda u: (None, 404), is_image=img_ok)[0][1], False),
+        ("control: a 200 whose bytes are not an image (a placeholder page) is not served",
+         lambda: probe([(1, "u")], getter=lambda u: (b"<html>", 200), is_image=lambda b: None)[0][1], False),
+        ("the second host: the ids it serves, counted by status",
+         lambda: measure_alt({"1", "2"}, getter=lambda u: (b"IMG", 200) if u.endswith("/1.jpg") else (None, 404), is_image=img_ok), ({"1"}, {"served": 1, "404": 1})),
+        ("control: a host that serves nothing yields no id",
+         lambda: measure_alt({"1", "2"}, getter=lambda u: (None, 404), is_image=img_ok)[0], set()),
+        ("export: an id outside `alt` keeps the first host's URL; one inside ships the second's",
+         lambda: (export_url(1, "https://tcgplayer-cdn.tcgplayer.com/product/1_200w.jpg", {"2"}),
+                  export_url(1, "cdn", {"1"}) == alt_url(1), alt_url(712901).endswith("/712901.jpg")),
+         ("https://tcgplayer-cdn.tcgplayer.com/product/1_200w.jpg", True, True)),
+        ("control: a non-id is refused by alt_url",
+         lambda: (lambda: (alt_url("x"), False))() if False else _refused(lambda: alt_url("x")), True),
+        ("the sidecar round-trip keeps the new keys through a second save, and read_alt() reads them",
+         _sidecar_roundtrip, True),
+    ]
+    for name, fn, want in cases100:
+        try:
+            got = fn()
+        except Exception as e:                            # noqa: BLE001
+            got = f"raised {type(e).__name__}: {e}"
+        good = got == want
+        ok_all &= good
+        print(f"  {'ok  ' if good else 'FAIL'}  {name}" + ("" if good else f": got {got!r}"))
     return ok_all
+
+
+def _refused(fn):
+    try:
+        fn()
+        return False
+    except ValueError:
+        return True
+
+
+def _sidecar_roundtrip():
+    import json, tempfile
+    global SIDECAR
+    old = SIDECAR
+    SIDECAR = os.path.join(tempfile.mkdtemp(), "hashes.json")
+    try:
+        _save({"1": 5}, {"2"}, {"alt": ["3"], "missing_sealed": ["4"], "alt_host": "h"})
+        raw = json.load(open(SIDECAR))
+        extra = {k: raw[k] for k in ("missing_sealed", "alt", "alt_host") if k in raw}
+        _save({"1": 5}, {"2"}, extra)                     # a second save, as the mid-pass save is
+        raw2 = json.load(open(SIDECAR))
+        return raw2.get("alt") == ["3"] and raw2.get("missing_sealed") == ["4"] and raw2.get("alt_host") == "h" and read_alt() == {"3"}
+    finally:
+        SIDECAR = old
 
 
 if __name__ == "__main__":
