@@ -253,6 +253,51 @@ if (puppeteer) {
     ok(`${name} (${w}px): nothing off-screen`,
        m.scroll <= m.vw + 1 && m.off === 0, JSON.stringify(m));
   }
+  /* take 93 -- A33 item 6: a picture beside every row that had none. Measured
+     drawn: the box is card-shaped and the row stays one line tall, every image
+     sits inside its box (landmine 132: four thumbnails had drawn at natural
+     size), and no screen that gained pictures scrolls sideways at any width. */
+  await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
+  await page.evaluate(() => { const V = window.VAULT; V.MODE.set('collect', false); V.go('search'); document.querySelector('#allq').value = 'nami'; V.paintSearch(); });
+  await new Promise(r => setTimeout(r, 600));
+  const srch = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll('#allRes [data-open]')], pics = [...document.querySelectorAll('#allRes .pic')];
+    const imgs = pics.map(b => [b, b.querySelector('img.ref')]).filter(([, i]) => i);
+    const fits = imgs.every(([b, i]) => { const B = b.getBoundingClientRect(), I = i.getBoundingClientRect(); return I.width <= B.width + 1 && I.height <= B.height + 1 && I.left >= B.left - 1 && I.top >= B.top - 1; });
+    const b0 = pics[0] && pics[0].getBoundingClientRect(), r0 = rows[0] && rows[0].getBoundingClientRect();
+    return { rows: rows.length, pics: pics.length, imgs: imgs.length, fits, boxW: b0 && Math.round(b0.width), boxH: b0 && Math.round(b0.height), rowH: r0 && Math.round(r0.height) };
+  });
+  ok('search hits: a picture box per row, and images are drawn inside their boxes', srch.rows > 0 && srch.pics === srch.rows && srch.imgs > 0 && srch.fits, JSON.stringify(srch));
+  ok('search hits: the box is card-shaped (36x50) and the row stays one line tall', srch.boxW === 36 && srch.boxH === 50 && srch.rowH <= 72, JSON.stringify(srch));
+  for (const [w, name] of [[360, 'small phone'], [412, 'Fold outer'], [673, 'Fold inner'], [820, 'tablet']]) {
+    await page.setViewport({ width: w, height: 900, deviceScaleFactor: 2 }); await new Promise(r => setTimeout(r, 120));
+    const m = await page.evaluate(() => ({ scroll: document.body.scrollWidth, vw: document.documentElement.clientWidth }));
+    ok(`search with pictures, ${name} (${w}px): no sideways scroll`, m.scroll <= m.vw + 1, JSON.stringify(m));
+  }
+  await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
+  const dkId = await page.evaluate(() => {
+    const V = window.VAULT; const L = V.CAT.rows.find(p => p.num === 'OP01-001' && p.img) || V.CAT.rows.find(p => p.type === 'Leader' && p.img);
+    const c = V.CAT.rows.find(p => p.type === 'Character' && p.img && V.colourLegal(p, L));
+    const d = V.DECKS.blank(); d.name = 'take 93 probe'; d.leader = L.id; d.cards.push({ id: c.id, n: 4 }); V.DECKS.list.push(d); V.DECKS.save();
+    V.MODE.set('play', false); V.paintDecks(); V.go('decks'); return d.id;
+  });
+  await new Promise(r => setTimeout(r, 700));
+  const lead = await page.evaluate(() => { const box = document.querySelector('#dkList .lead.pic'); const img = box && box.querySelector('img.ref');
+    const b = box && box.getBoundingClientRect(), i = img && img.getBoundingClientRect();
+    return { box: !!box, img: !!img, fits: !!i && Math.abs(i.width - b.width) <= 1 && Math.abs(i.height - b.height) <= 1, boxW: b && Math.round(b.width), imgW: i && Math.round(i.width) }; });
+  ok('Decks list: the Leader thumbnail fills its box exactly (landmine 132)', lead.box && lead.img && lead.fits, JSON.stringify(lead));
+  await page.evaluate(id => window.VAULT.openDeck(id), dkId);
+  await new Promise(r => setTimeout(r, 400));
+  const dkRows = await page.evaluate(() => ({ rows: document.querySelectorAll('#deck .dkrow').length, pics: document.querySelectorAll('#deck .dkrow .pic').length,
+    scroll: document.body.scrollWidth, vw: document.documentElement.clientWidth }));
+  ok("a deck's card rows carry a picture each and the screen does not scroll sideways", dkRows.rows > 0 && dkRows.pics === dkRows.rows && dkRows.scroll <= dkRows.vw + 1, JSON.stringify(dkRows));
+  ok('negative control: a printing with no image draws the labelled tile and no img',
+     await page.evaluate(() => { const V = window.VAULT; const p = V.CAT.rows.find(x => x.img && x.num && !x.sealed); const d = document.createElement('div'); d.innerHTML = V.cardPic({ ...p, img: null }); document.body.appendChild(d);
+       const ph = d.querySelector('.ph'); const r = { text: ph && ph.textContent.trim(), img: !!d.querySelector('img'), shown: !!ph && getComputedStyle(ph).display !== 'none' }; d.remove();
+       return r.text === p.num.split('-').pop() && !r.img && r.shown; }));
+  await page.evaluate(() => { const V = window.VAULT; V.DECKS.list = V.DECKS.list.filter(d => d.name !== 'take 93 probe'); V.DECKS.save(); V.MODE.set('collect', false); document.querySelector('nav button[data-go="collection"]').click(); });
+  await new Promise(r => setTimeout(r, 200));
+
   /* Take 60: Pages serves this same file to a desktop browser, where the app
      used to run edge to edge. It stays a phone-width column there. */
   await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });

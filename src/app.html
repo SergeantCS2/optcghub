@@ -1508,7 +1508,7 @@ function paintDecks() {
   $('#dkList').innerHTML = list.length ? list.map(d => {
     const A = analysis(d); const L = A.leader;
     return `<button class="panel" style="width:100%;text-align:left;display:flex;gap:12px;align-items:center" data-deck="${d.id}">
-      <div class="lead" style="width:44px;flex:0 0 44px;aspect-ratio:.716;border-radius:6px;background:var(--card2);overflow:hidden;position:relative">${L ? refArt(L) : ''}</div>
+      <div class="lead pic" style="width:44px;flex:0 0 44px;aspect-ratio:.716;border-radius:6px;background:var(--card2);overflow:hidden;position:relative">${L ? refArt(L) : ''}</div>
       <div style="flex:1;min-width:0"><b>${esc(d.name || 'Untitled deck')}</b>
         <div class="note" style="margin:2px 0 0">${L ? esc(L.name) + ' · ' + colsOf(L).join('/') : 'No Leader'} ·
           ${A.total}/50 · ${A.legal ? '<span class="up">legal</span>' : `<span class="down">${A.problems.length} issue${A.problems.length === 1 ? '' : 's'}</span>`}</div></div>
@@ -1624,6 +1624,7 @@ function deckRow(p, n, L, adding = false) {
   const kws = ['Blocker', 'Rush', 'Trigger', 'Counter', 'Double Attack', 'Banish'].filter(k => hasKw(p, k));
   return `<div class="dkrow${ok ? '' : ' illegal'}" data-dk="${p.id}">
     <div class="cost">${p.cost != null && p.cost !== '' ? esc(p.cost) : '·'}</div>
+    ${cardPic(p, 30)}
     <div class="n"><b>${esc(p.name)}${p.treat !== 'base' ? ` <span class="badge">${esc(TREAT[p.treat] || p.treat)}</span>` : ''}</b>
       <span>${esc(p.num)} · ${colsOf(p).join('/')}${p.power ? ' · ' + Number(p.power).toLocaleString() : ''}${
         p.counter ? ' · +' + Number(p.counter).toLocaleString() : ''}${kws.map(k => `<i class="kwtag">${KW_GLYPH[k] ? G(KW_GLYPH[k], 11) + ' ' : ''}${k}</i>`).join('')}${
@@ -1868,7 +1869,7 @@ function tradeRow(side, r) {
   const p = CAT.byId.get(r.id); if (!p) return '';
   const own = OWN.items.filter(i => i.id === p.id).reduce((a, i) => a + i.qty, 0);
   return `<div class="dkrow" data-tr="${side}:${p.id}">
-    <div class="oa" style="width:34px;flex:0 0 34px;aspect-ratio:.716;border-radius:5px;background:#182A3A;overflow:hidden">${refArt(p)}</div>
+    <div class="oa pic" style="width:34px;flex:0 0 34px;aspect-ratio:.716;border-radius:5px;background:#182A3A;overflow:hidden;position:relative">${refArt(p)}</div>
     <div class="n"><b>${esc(p.name)}${p.treat !== 'base' ? ` <span class="badge">${esc(TREAT[p.treat] || p.treat)}</span>` : ''}</b>
       <span>${esc(p.num)} \u00b7 ${money(p.market)} each${side === 'give' && own < r.n ? ` \u00b7 <span class="down">you own ${own}</span>` : ''}</span></div>
     <div class="cnt"><button data-trdec="${side}:${p.id}">\u2212</button><b>${r.n}</b><button data-trinc="${side}:${p.id}" aria-label="One more ${esc(p.name)}">+</button></div>
@@ -1905,7 +1906,7 @@ function tradeSearch(side) {
   const hits = pool.filter(p => (p.full + ' ' + p.num).toLowerCase().includes(q)).slice(0, 12);
   out.innerHTML = hits.length ? `<div style="border:1px solid var(--line);border-radius:10px;margin-bottom:8px">${hits.map(p =>
     `<button class="row" style="width:100%;text-align:left;padding:8px 10px" data-tradd="${side}:${p.id}">
-      <div class="nm"><b>${esc(p.name)}${p.treat !== 'base' ? ` <span class="badge">${esc(TREAT[p.treat] || p.treat)}</span>` : ''}</b>
+      ${cardPic(p)}<div class="nm"><b>${esc(p.name)}${p.treat !== 'base' ? ` <span class="badge">${esc(TREAT[p.treat] || p.treat)}</span>` : ''}</b>
       <span>${esc(p.num)} \u00b7 ${esc((CAT.sets.get(p.set) || {}).abbr || '')}</span></div>
       <div class="v mono">${money(p.market)}</div></button>`).join('')}</div>` : '<div class="note">No match.</div>';
 }
@@ -2079,7 +2080,7 @@ function paintPlay() {
     const L = pl.leader ? CAT.byId.get(pl.leader) : null;
     return `<div class="panel" style="${(!PLAY.hotseat && i === 0) ? 'transform:rotate(180deg)' : ''}">
       <div style="display:flex;gap:12px;align-items:center">
-        <button class="lead" data-plleader="${i}" aria-label="Choose this player's Leader" style="width:48px;flex:0 0 48px;aspect-ratio:.716;border-radius:6px;background:var(--card2);overflow:hidden;position:relative">${L ? refArt(L) : ''}</button>
+        <button class="lead pic" data-plleader="${i}" aria-label="Choose this player's Leader" style="width:48px;flex:0 0 48px;aspect-ratio:.716;border-radius:6px;background:var(--card2);overflow:hidden;position:relative">${L ? refArt(L) : ''}</button>
         <div style="flex:1;min-width:0"><b style="font-family:var(--display);font-weight:400;font-size:17px">${L ? esc(L.name) : pl.name}</b>
           <div class="note" style="margin:2px 0 0">${L ? colsOf(L).join('/') + ' \u00b7 starts at ' + (L.life || 5) + ' life' : 'tap the card to choose a Leader'}</div></div>
       </div>
@@ -2194,6 +2195,7 @@ function paintCards() {
     const kws = ['Blocker', 'Rush', 'Trigger', 'Counter', 'Double Attack', 'Banish'].filter(k => hasKw(p, k));
     return `<div class="dkrow" data-cd="${p.id}">
       <div class="cost">${p.cost != null && p.cost !== '' ? esc(p.cost) : '\u00b7'}</div>
+      ${cardPic(p, 30)}
       <div class="n" data-open="${p.id}"><b>${esc(p.name)}</b>
         <span>${esc(p.num)} \u00b7 ${colsOf(p).join('/')}${p.power ? ' \u00b7 ' + Number(p.power).toLocaleString() : ''}${
           p.counter ? ' \u00b7 +' + Number(p.counter).toLocaleString() : ''}${kws.map(k => `<i class="kwtag">${KW_GLYPH[k] ? G(KW_GLYPH[k], 11) + ' ' : ''}${k}</i>`).join('')}</span>
@@ -2244,7 +2246,7 @@ function paintWants() {
         `<div class="row"><div class="nm"><span>${esc((CAT.sets.get(sid) || {}).name || '')}</span></div><div class="v mono" style="font-size:13px;color:var(--dim)">${money(v)}</div></div>`).join('')
     : '<div class="note">Nothing wanted yet. Open a set from Home and tap the cards you are missing.</div>';
   $('#wtRows').innerHTML = rows.map(({ w, p }) => `<div class="dkrow">
-      <div class="oa" style="width:34px;flex:0 0 34px;aspect-ratio:.716;border-radius:5px;background:var(--card2);overflow:hidden">${refArt(p)}</div>
+      <div class="oa pic" style="width:34px;flex:0 0 34px;aspect-ratio:.716;border-radius:5px;background:var(--card2);overflow:hidden;position:relative">${refArt(p)}</div>
       <div class="n" data-open="${p.id}"><b>${esc(p.name)}${p.treat !== 'base' ? ` <span class="badge">${esc(TREAT[p.treat] || p.treat)}</span>` : ''}</b>
         <span>${esc(p.num)} \u00b7 ${esc((CAT.sets.get(p.set) || {}).abbr || '')} \u00b7 ${money(p.market)}</span></div>
       <div class="cnt"><button data-want="${esc(p.num)}" title="Remove">\u2212</button></div>
@@ -2570,7 +2572,7 @@ function paintHome() {
     .map(i => ({ i, p: CAT.byId.get(i.id) })).filter(x => x.p)
     .sort((a, b) => (b.p.market || 0) * b.i.qty - (a.p.market || 0) * a.i.qty).slice(0, 4);
   $('#topList').innerHTML = top.length ? top.map(({ i, p }) => `
-    <div class="row"><div class="nm">
+    <div class="row">${cardPic(p)}<div class="nm">
       <b>${esc(p.name)}${p.treat !== 'base'
         ? ` <span class="badge">${esc(TREAT[p.treat] || p.treat)}</span>` : ''}</b>
       <span>${esc(i.condition)} \u00b7 ${esc(p.sub || 'Normal')} \u00b7 ${esc(p.num)}</span>
@@ -2582,7 +2584,7 @@ function paintHome() {
   const prog = setProgress();
   $('#setDone').innerHTML = prog.length ? prog.slice(0, 8).map(x => {
     const pct = x.all ? Math.round(100 * x.have / x.all) : 0;
-    return `<button class="row" style="width:100%;text-align:left" data-checklist="${x.s.id}"><div class="nm">
+    return `<button class="row" style="width:100%;text-align:left" data-checklist="${x.s.id}">${setPic(x.s, 36)}<div class="nm">
         <b>${esc(x.s.name || '?')}</b>
         <span>${x.have} of ${x.all} numbers \u00b7 ${pct}% \u00b7 tap for the checklist</span>
         <span class="spreadbar" style="display:block;margin-top:6px;height:4px">
@@ -3076,7 +3078,7 @@ function showMovers() {
   const day = (CAT.man.history_days || []).slice(-1)[0] || '';
   const prev = (CAT.man.history_days || []).slice(-2)[0] || '';
   const line = (p, extra) => `<button class="row" style="width:100%;text-align:left" data-open="${p.id}">
-      <div class="nm"><b>${esc(p.name)}${p.treat !== 'base'
+      ${cardPic(p)}<div class="nm"><b>${esc(p.name)}${p.treat !== 'base'
         ? ` <span class="badge">${esc(TREAT[p.treat] || p.treat)}</span>` : ''}</b>
       <span>${esc(p.num)} \u00b7 ${money(p.market)}${extra || ''}</span></div>
       <div class="v">${deltaHtml(p)}</div></button>`;
@@ -3365,16 +3367,31 @@ const SEALED = {
       .sort((a, b) => (CAT.sets.get(b.set)?.pub || '').localeCompare(CAT.sets.get(a.set)?.pub || '') || a.name.localeCompare(b.name)); }
 };
 const SEALED_KINDS = [['all', 'All'], ['box', 'Boxes'], ['pack', 'Packs'], ['deck', 'Decks'], ['case', 'Cases'], ['collection', 'Collections'], ['other', 'Other']];
-/* Take 83. A picture beside every sealed product: TCGplayer's product photo
-   through the take-12 path (hot-linked, lazy, never stored). Under it, and
-   in its place when there is none, a drawn tile in the set's colours -- so
-   the row never has a hole. */
-function productPic(p, size = 52) {
-  const st = CAT.sets.get(p.set) || {}; const cs = String(p.color || '').split(/[;/,]/).map(x => x.trim()).filter(x => CCLASS[x]);
+/* Take 83 (products), take 93 (cards and sets, A33 item 6). One picture box
+   for every row: TCGplayer's photo through the take-12 path (hot-linked,
+   lazy, never stored). Under it, and in its place when there is none, a
+   drawn tile in the card's colour with a label -- so a row never has a hole
+   (landmine 85). The .pic rules size the image; nothing else is needed. */
+function picBox(p, w, h, label, radius = 8) {
+  const cs = String(p.color || '').split(/[;/,]/).map(x => x.trim()).filter(x => CCLASS[x]);
   const a = cs[0] ? `var(--c-${CCLASS[cs[0]]})` : 'var(--brass2)';
+  return `<div class="pic" style="width:${w}px;height:${h}px;flex:0 0 auto;position:relative;border-radius:${radius}px;overflow:hidden;background:linear-gradient(160deg,${a},var(--card2));">
+    <div class="ph" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:${Math.round(w / 4)}px;color:rgba(0,0,0,.65)">${label}</div>${refArt(p)}</div>`;
+}
+function productPic(p, size = 52) {
+  const st = CAT.sets.get(p.set) || {};
   const code = esc((st.abbr || '').replace(/-/g, '').slice(0, 5) || (p.num || '').split('-')[0]);
-  return `<div class="pic" style="width:${size}px;height:${Math.round(size * 1.25)}px;flex:0 0 auto;position:relative;border-radius:8px;overflow:hidden;background:linear-gradient(160deg,${a},var(--card2));">
-    <div class="ph" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:${Math.round(size / 4)}px;color:rgba(0,0,0,.65)">${code}</div>${refArt(p)}</div>`;
+  return picBox(p, size, Math.round(size * 1.25), code);
+}
+/* a card at the card's ratio, its number as the label */
+function cardPic(p, w = 36) {
+  return picBox(p, w, Math.round(w / 0.716), esc((p.num || '').split('-').pop() || ''), 6);
+}
+/* a set's booster box (Releases had this as a local since take 83) */
+function setPic(s, w = 44) {
+  const ps = CAT.rows.filter(p => p.set === s.id && SEALED.isProduct(p));
+  const box = ps.find(p => /booster box/i.test(p.name)) || ps[0];
+  return box ? productPic(box, w) : `<div class="pic" style="width:${w}px;height:${Math.round(w * 1.25)}px;flex:0 0 auto;border-radius:8px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:11px;color:var(--dim2)">${esc((s.abbr || '').replace(/-/g, '').slice(0, 5))}</div>`;
 }
 function paintSealed() {
   const asOf = $('#sealedAsOf'); if (asOf) asOf.textContent = 'prices ' + ((CAT.man.source_updated_at || '').slice(0, 10) || '?');
@@ -3615,7 +3632,7 @@ function paintReleases() {
   const past = sets.filter(s => s.pub < today).sort((a, b) => b.pub.localeCompare(a.pub)).slice(0, 12);
   const days = d => Math.round((Date.parse(d + 'T00:00:00Z') - Date.parse(today + 'T00:00:00Z')) / 864e5);
   const detailsUrl = s => 'https://www.tcgplayer.com/search/one-piece-card-game/product?q=' + encodeURIComponent(s.name) + '&view=grid';
-  const picFor = s => { const ps = CAT.rows.filter(p => p.set === s.id && SEALED.isProduct(p)); const box = ps.find(p => /booster box/i.test(p.name)) || ps[0]; return box ? productPic(box, 44) : `<div class="pic" style="width:44px;height:55px;flex:0 0 auto;border-radius:8px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:11px;color:var(--dim2)">${esc((s.abbr || '').replace(/-/g, '').slice(0, 5))}</div>`; };
+  const picFor = s => setPic(s, 44);                       // take 93: shared with the set browse and Home
   /* take 86: the row is two lines -- picture, a wrapping title with its meta, the date
      and countdown at the right; then a Details link that never leaves the box */
   const line = s => `<div class="rel"><button class="row" style="width:100%;text-align:left;padding:0;gap:10px;min-width:0" data-browse-set="${esc(s.id)}">${picFor(s)}<div class="nm" style="min-width:0"><b style="white-space:normal">${esc(s.name)}</b><span>${esc(s.abbr || '')}${s.n ? ` \u00b7 ${s.n} cards` : ' \u00b7 card list not published yet'}</span></div><div class="v" style="flex:0 0 auto"><b>${esc(s.pub)}</b><span class="note">${s.pub >= today ? (days(s.pub) === 0 ? 'today' : `in ${days(s.pub)} day${days(s.pub) === 1 ? '' : 's'}`) : `${-days(s.pub)} days ago`}</span></div></button>
@@ -3641,7 +3658,7 @@ function paintSearch() {
     $('#setPanel').style.display = 'block';
     $('#setList').innerHTML = [...CAT.sets.values()].map(s =>
       `<button class="row" style="width:100%;text-align:left" data-browse-set="${s.id}">
-        <div class="nm"><b>${esc(s.name)}</b>
+        ${setPic(s, 36)}<div class="nm"><b>${esc(s.name)}</b>
         <span>${esc(s.abbr || '')} \u00b7 ${s.n} cards</span></div>
        <div class="v" style="color:var(--dim)">${esc((s.pub || '').slice(0, 4))}</div></button>`).join('');
     return;
@@ -3652,7 +3669,7 @@ function paintSearch() {
   $('#allRes').innerHTML = `<div class="panel">${hits.map(p => {
     const s = CAT.sets.get(p.set) || {};
     return `<button class="row" style="width:100%;text-align:left" data-open="${p.id}">
-      <div class="nm"><b>${esc(p.name)}${p.treat !== 'base'
+      ${cardPic(p)}<div class="nm"><b>${esc(p.name)}${p.treat !== 'base'
         ? ` <span class="badge">${esc(TREAT[p.treat] || p.treat)}</span>` : ''}</b>
       <span>${esc(p.num)} \u00b7 ${esc(s.abbr || s.name || '')}${
         p.prov ? ' \u00b7 ' + esc(p.prov) : ''}</span></div>
@@ -4428,7 +4445,7 @@ function openDetail(id) {
   $('#dSiblings').innerHTML = sibs.map(q => {
     const qs = CAT.sets.get(q.set) || {};
     return `<button class="row" style="width:100%;text-align:left" data-open="${q.id}">
-      <div class="nm"><b>${esc(TREAT[q.treat] || q.treat)}${
+      ${cardPic(q)}<div class="nm"><b>${esc(TREAT[q.treat] || q.treat)}${
         q.id === p.id ? ' \u2190 this one' : ''}</b>
       <span>${esc(qs.abbr || qs.name || '')}${q.prov ? ' \u00b7 ' + esc(q.prov) : ''}</span></div>
       <div class="v mono">${money(q.market)}</div></button>`;
@@ -5205,7 +5222,8 @@ async function runSelfTest() {
      day and a hardcoded placeholder is landmine 62 in a text box. */
   $('#allq').placeholder = `Search all ${(CAT.man.cards || 0).toLocaleString()} cards`;
   paintNet(); paintHome();
-  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, openDetail, HUNT, targetLine, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, NAV, go, closeAnyOverlay,
+  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, openDetail, HUNT, targetLine, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
+                   cardPic, setPic, picBox, deckRow, paintHome, paintDecks, paintSearch, openDeck,
                    FILT, loadFilter, applyFilter, sortRows, blankFilter, activeCount,
                    DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,
                    backupJson, scheduleBackup,
