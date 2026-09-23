@@ -74,7 +74,13 @@ draft PR marked ready on green, no vendor trailer.
   opens `#settings`, the heading and the About line carry the take, the
   Self-test, Sync and Export rows exist, five taps on About reach
   Diagnostics, and the take-83 guard still bounces an unknown id with a
-  record (the control). UNKNOWN until the check runs; recorded below.
+  record (the control). **PROVEN on the runner (check run 7, head
+  caf547f, 02:06 UTC): render 81 passed, 0 failed (mode: chrome)** — 76
+  before, the five new all green on the first run; smoke **600 passed, 0
+  failed** there too; **GATE PASSED**, hash coverage 100.0%, pipeline 34 s
+  with the hashes step this VM could not run. The receipt is the run's
+  `render` artifact. More opens in a real DOM for the first time since
+  take 83.
 - **The build here** as at take 90: acorn linked from the global copy, no
   `hashes` step (no pillow), no Chrome; `www/ take 91`.
 

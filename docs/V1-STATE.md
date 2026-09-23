@@ -62,12 +62,11 @@ refresh from Pages (take 27).
 | Typography | four roles (display / comic / body / heavy), OFL/Apache faces bundled, 232 KB, licensed faces as a file drop in `assets/user/fonts/` | render.mjs: Chrome reports all four LOADED and h2 resolves to the display face, with a missing-file control; smoke 7 |
 | Sync | quiet once-per-open sync holds on cellular unless switched on; Sync now always runs; `UPDATE_URL` points at Pages | smoke 4 controls; **not yet seen on the Fold** |
 
-**Harness totals, take 91:** smoke.mjs 600 assertions (MEASURED in the
-session VM on the built app), render.mjs 76 in Chrome at take 90 plus 5
-new that open More and reach Diagnostics — the Chrome total is UNKNOWN
-until the PR check runs (no puppeteer here; the DOM fallback reports 10,
-markup only), gate 23 checks with negative controls, zero console errors
-across 14 screens in both modes at take 90 on the runner.
+**Harness totals, take 91:** smoke.mjs 600 assertions, render.mjs 81 in
+Chrome, gate 23 checks with negative controls, zero console errors across
+14 screens in both modes — measured on the runner by the PR check (run 7);
+the session VM, with no puppeteer, ran smoke and the DOM fallback (10,
+markup only) and could not run the hashes step.
 
 ## DEFERRED, and why
 

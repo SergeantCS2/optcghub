@@ -1038,7 +1038,9 @@ reading Home's bottom link — *More · settings, export, sources*.
   buffer was memory-only besides. Landmines 128 and 129.
 - **Fixed take 91:** the section is static markup like every other screen;
   the error buffer persists (`vault.errs`, twenty records) so a record
-  survives the restart that follows a blank screen.
+  survives the restart that follows a blank screen. **PROVEN green on the
+  runner's check (render 81, mode chrome):** Home's link opens More and
+  five taps on About reach Diagnostics in a real DOM.
 - **Ruled out: an Android-only cause** — Chrome bounced identically.
   **Ruled out: a boot exception** — Home paints, the `data-go` delegate
   works. **Ruled out: a plugin chain throwing** — `PLATFORM.plugin`
