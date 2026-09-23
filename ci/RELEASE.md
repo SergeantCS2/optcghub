@@ -1,4 +1,4 @@
-# OP TCG Hub — take 95
+# OP TCG Hub — take 96
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,11 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 96:** where to buy — under every sealed product and on its
+sheet, a chip per seller the app knows (TCGplayer always; Target; a local
+shop with its address, distance and a Call button; the distributor) that
+opens the seller's own page in your browser. No link carries a referral.
 
 **New at take 95:** tapping a release opens that set's sealed products;
 a sealed product's sheet no longer shows card conditions and a card's

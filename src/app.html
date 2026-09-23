@@ -343,6 +343,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .chip{border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13px;
   font-weight:600;color:var(--dim);background:var(--card2)}
 .chip.on{background:#2A2414;border-color:var(--brass2);color:var(--brass)}
+.chip.buy{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:var(--brass);padding:5px 10px}   /* take 96: an anchor as a chip */
+.panel[hidden]{display:none}   /* landmine 136 */
 .chip small{opacity:.6;font-weight:600;margin-left:4px}
 .range{display:flex;gap:8px;align-items:center}
 .range input{width:100px;background:#151a1c;color:var(--fg);border:1px solid var(--line);
@@ -675,6 +677,12 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
     </div>
     <div class="spread" id="dSpread"></div>
     <div class="prov" id="dProv"></div>
+  </div>
+
+  <div class="panel" id="dBuy" hidden>
+    <h3>Where to buy</h3>
+    <div id="dBuyList"></div>
+    <div class="note">Each link opens the seller's own page in your browser. Nothing is bought in the app, nothing is fetched, and no link carries a referral. A shop lists what it chooses; the distributor sells to stores.</div>
   </div>
 
   <div class="panel">
@@ -3365,6 +3373,32 @@ function distLine(it, G) {
   if (it.release) parts.push(`release ${esc(it.release)}`);
   return `<span style="display:block;color:var(--brass)">GTS Distribution \u00b7 ${parts.join(' \u00b7 ')} \u00b7 ${esc(HUNT.ageLabel(G && G.fetched_at))}</span>`;
 }
+/* ---- where to buy (A38 item 4, take 96) --------------------------------
+   Every seller the app knows for a sealed product, as a link to the seller's
+   OWN page opened by the OS browser: nothing is bought here, nothing is
+   fetched, no link carries a referral (PROVISION). TCGplayer always -- its
+   product URL is the catalogue's own id -- then each Target, shop and
+   distributor listing the feed matched. A shop brings the roster's street
+   address, phone and distance. The glyph says the KIND of seller; a brand
+   logo is a Play rejection ground (landmine 29's family), so the name does. */
+const BUY_GLYPH = { online: 'cart', local: 'pin', dist: 'truck' };
+function buySources(p) {
+  const out = [{ kind: 'online', label: 'TCGplayer', url: 'https://www.tcgplayer.com/product/' + p.id, note: `${money(p.market)} market \u00b7 ${(CAT.man.source_updated_at || '').slice(0, 10)}` }];
+  const T = HUNT.feed && HUNT.feed.sources && HUNT.feed.sources.target;
+  for (const it of (HUNT.byCatalogId()[p.id] || [])) if (it.url) out.push({ kind: 'online', label: 'Target', url: it.url,
+    note: `${money(it.price)} \u00b7 ${it.online ? (it.online.status === 'IN_STOCK' ? 'ships' : String(it.online.status || '?').toLowerCase().replace(/_/g, ' ') + ' online') : 'online stock not checked yet'} \u00b7 ${HUNT.ageLabel(it.online_at || (T && T.fetched_at))}` });
+  for (const l of LOCAL.shopLines(p.id)) if (l.url) out.push({ kind: 'local', label: l.shop, url: l.url, addr: l.addr, phone: l.phone, mi: l.mi,
+    note: `${money(l.price)} \u00b7 ${l.available ? 'in stock online' : 'sold out online'} \u00b7 ${HUNT.ageLabel(LOCAL.shops && LOCAL.shops.fetched_at)}` });
+  const Gs = HUNT.feed && HUNT.feed.sources && HUNT.feed.sources.gts;
+  for (const it of (HUNT.distByCatalogId()[p.id] || [])) if (it.url) out.push({ kind: 'dist', label: 'GTS Distribution', url: it.url,
+    note: `${DIST_WORDS[it.status] || it.status}${it.allocated ? ' \u00b7 allocated' : ''} \u00b7 to stores \u00b7 ${HUNT.ageLabel(Gs && Gs.fetched_at)}` });
+  return out;
+}
+function buyChips(p) {
+  const chip = s => `<a class="chip buy" href="${esc(s.url)}" target="_blank" rel="noopener" aria-label="${esc(s.label)}: open the seller's page for ${esc(p.name)}">${G(BUY_GLYPH[s.kind], 12)} ${esc(s.label)} \u2197</a>`
+    + (s.phone ? `<a class="chip buy" href="tel:${esc(s.phone)}" aria-label="Call ${esc(s.label)}">${G('phone', 12)} Call</a>` : '');
+  return `<div class="chips buy" style="flex-basis:100%">${buySources(p).map(chip).join('')}</div>`;
+}
 const SEALED = {
   q: '', kind: 'all', open: new Set(), closed: new Set(),
   /* TCGCSV files DON!! cards as sealed because they have no number; they are
@@ -3421,7 +3455,7 @@ function paintSealed() {
   /* starter decks, their own section (take 87): every deck product, newest set first */
   if (SEALED.kind === 'all' && !SEALED.q) { const decks = CAT.rows.filter(p => SEALED.isProduct(p) && SEALED.kindOf(p) === 'deck').sort((a, b) => (CAT.sets.get(b.set)?.pub || '').localeCompare(CAT.sets.get(a.set)?.pub || '') || a.name.localeCompare(b.name));
     if (decks.length) out.push(`<button class="fgrp" data-setfold="decks" aria-expanded="${!SEALED.closed.has('decks')}" style="display:flex;width:100%;justify-content:space-between;align-items:center;text-align:left;padding:8px 0"><span>Starter decks <span class="note">\u00b7 ${decks.length}</span></span><span class="note" aria-hidden="true">${SEALED.closed.has('decks') ? '\u25b8' : '\u25be'}</span></button>`);
-    if (decks.length && !SEALED.closed.has('decks')) for (const p of decks.slice(0, 80)) out.push(`<div class="row" style="gap:8px"><button class="row" style="flex:1;min-width:0;text-align:left;padding:0;gap:10px" data-open="${p.id}">${productPic(p)}<div class="nm" style="min-width:0"><b>${esc(p.name)}</b><span>${esc(CAT.sets.get(p.set)?.name || '')} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}</span>${(byCat[p.id] || []).map(i => targetLine(i, T)).join('')}${(byDist[p.id] || []).map(i => distLine(i, G)).join('')}</div><div class="v"><b>${money(p.market)}</b>${deltaHtml(p, { pctOnly: true })}</div></button><button class="ghost" data-stock="${p.id}" aria-label="${STOCK.has(p.id) ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${STOCK.has(p.id)}" style="flex:0 0 auto;padding:8px 10px;${STOCK.has(p.id) ? 'color:var(--brass);border-color:var(--brass)' : ''}">${STOCK.has(p.id) ? '\u25cf' : '\u25cb'}<span style="display:block;font-size:10px;line-height:1.1;margin-top:2px">${STOCK.has(p.id) ? 'watching' : 'alert'}</span></button></div>`); }
+    if (decks.length && !SEALED.closed.has('decks')) for (const p of decks.slice(0, 80)) out.push(`<div class="row" style="gap:8px;flex-wrap:wrap"><button class="row" style="flex:1;min-width:0;text-align:left;padding:0;gap:10px" data-open="${p.id}">${productPic(p)}<div class="nm" style="min-width:0"><b>${esc(p.name)}</b><span>${esc(CAT.sets.get(p.set)?.name || '')} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}</span>${(byCat[p.id] || []).map(i => targetLine(i, T)).join('')}${(byDist[p.id] || []).map(i => distLine(i, G)).join('')}</div><div class="v"><b>${money(p.market)}</b>${deltaHtml(p, { pctOnly: true })}</div></button><button class="ghost" data-stock="${p.id}" aria-label="${STOCK.has(p.id) ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${STOCK.has(p.id)}" style="flex:0 0 auto;padding:8px 10px;${STOCK.has(p.id) ? 'color:var(--brass);border-color:var(--brass)' : ''}">${STOCK.has(p.id) ? '\u25cf' : '\u25cb'}<span style="display:block;font-size:10px;line-height:1.1;margin-top:2px">${STOCK.has(p.id) ? 'watching' : 'alert'}</span></button>${buyChips(p)}</div>`); }
   /* stock alerts: what is watched, and where it was last seen */
   if (STOCK.list.length) out.push(`<div class="panel"><h3>Stock alerts</h3>${STOCK.list.map(a => { const srcs = STOCK.sourcesFor(a.id); const on = srcs.filter(x => x.available);
     return `<div class="row"><div class="nm"><b>${esc(a.name)}</b><span>${on.length ? 'in stock: ' + esc(on.map(x => x.label).join(', ')) : srcs.length ? 'not in stock at ' + srcs.length + ' watched source' + (srcs.length === 1 ? '' : 's') : 'no source carries it yet'}${a.fired && a.fired.length ? ' \u00b7 last alert ' + esc(HUNT.ageLabel(a.fired[0].t)) : ''}</span></div><div class="v"><button class="ghost" data-stock="${a.id}" aria-label="Stop watching ${esc(a.name)}">\u00d7</button></div></div>`; }).join('')}
@@ -3460,10 +3494,10 @@ function paintSealed() {
     if (!open) continue;
     for (const p of ps) {
     const tl = (byCat[p.id] || []).map(i => targetLine(i, T)).join('') + (byDist[p.id] || []).map(i => distLine(i, G)).join('') + LOCAL.shopLines(p.id).map(l => `<span style="display:block;color:var(--brass)">${esc(l.shop)}${l.mi != null ? ' ~' + l.mi + ' mi' : ''} ${money(l.price)} \u00b7 ${l.available ? 'in stock online' : 'sold out online'} \u00b7 ${esc(HUNT.ageLabel(LOCAL.shops.fetched_at))}</span>`).join('');
-    out.push(`<div class="row" style="gap:8px"><button class="row" style="flex:1;min-width:0;text-align:left;padding:0;gap:10px" data-open="${p.id}">
+    out.push(`<div class="row" style="gap:8px;flex-wrap:wrap"><button class="row" style="flex:1;min-width:0;text-align:left;padding:0;gap:10px" data-open="${p.id}">
       ${productPic(p)}<div class="nm" style="min-width:0"><b>${esc(p.name)}</b><span>${esc(SEALED_KINDS.find(k => k[0] === SEALED.kindOf(p))?.[1] || '')} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}</span>${tl}</div>
       <div class="v"><b>${money(p.market)}</b>${deltaHtml(p, { pctOnly: true })}</div></button>
-      <button class="ghost" data-stock="${p.id}" aria-label="${STOCK.has(p.id) ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${STOCK.has(p.id)}" style="flex:0 0 auto;padding:8px 10px;${STOCK.has(p.id) ? 'color:var(--brass);border-color:var(--brass)' : ''}">${STOCK.has(p.id) ? '\u25cf' : '\u25cb'}<span style="display:block;font-size:10px;line-height:1.1;margin-top:2px">${STOCK.has(p.id) ? 'watching' : 'alert'}</span></button></div>`);
+      <button class="ghost" data-stock="${p.id}" aria-label="${STOCK.has(p.id) ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${STOCK.has(p.id)}" style="flex:0 0 auto;padding:8px 10px;${STOCK.has(p.id) ? 'color:var(--brass);border-color:var(--brass)' : ''}">${STOCK.has(p.id) ? '\u25cf' : '\u25cb'}<span style="display:block;font-size:10px;line-height:1.1;margin-top:2px">${STOCK.has(p.id) ? 'watching' : 'alert'}</span></button>${buyChips(p)}</div>`);
     }
   }
   $('#sealedList').innerHTML = out.join('') || `<div class="empty">Nothing matches.</div>`;
@@ -3525,7 +3559,10 @@ const LOCAL = {
     try { const r = await fetch(u.replace(/feed\.json$/, 'shops.json'), { cache: 'no-store' }); if (!r.ok) return false; const j = await r.json(); if (!j || !Array.isArray(j.shops)) return false;
       this.shops = j; try { localStorage.setItem('vault.hunt.shops', JSON.stringify(j)); } catch (e) {} return true; } catch (e) { return false; } },
   /* per catalogue sealed product: the local-shop listings that matched it */
-  shopLines(catId) { const out = []; for (const sh of ((this.shops && this.shops.shops) || [])) for (const it of (sh.sealed || [])) if (it.catalog_id === catId) out.push({ shop: sh.name, ...it, mi: this.miles((this.stores && this.stores.stores || []).find(s => s.zip === sh.zip && s.name === sh.name)?.ll) }); return out; },
+  shopLines(catId) { const out = []; for (const sh of ((this.shops && this.shops.shops) || [])) for (const it of (sh.sealed || [])) if (it.catalog_id === catId) {
+      const st = (this.stores && this.stores.stores || []).find(s => s.zip === sh.zip && s.name === sh.name);   // the roster entry: distance since take 75, address and phone since take 96
+      out.push({ shop: sh.name, ...it, mi: this.miles(st && st.ll), addr: st ? [st.addr, st.city].filter(Boolean).join(', ') || null : null, phone: (st && st.phone) || null }); }
+    return out; },
   /* Exact distances (take 79): the full zip-centroid table, fetched once on
      request and kept on the phone when it fits (~758 KB); a zip found in it
      is placed within a mile or two instead of the prefix area's ten. */
@@ -4472,6 +4509,10 @@ function openDetail(id) {
   /* take 95 (A38 item 7): the stock alert where the owner looks -- the take-77 watch, from the sheet */
   $('#dStock').hidden = !sealedP;
   $('#dStock').textContent = STOCK.has(id) ? 'Watching for stock — stop' : 'Alert me when in stock';
+  /* take 96 (A38 item 4): where to buy -- every seller the app knows, the seller's own page */
+  $('#dBuy').hidden = !sealedP;
+  $('#dBuyList').innerHTML = sealedP ? buySources(p).map(s => `<div class="row" style="align-items:center"><div class="nm" style="min-width:0"><b>${G(BUY_GLYPH[s.kind], 14)} ${esc(s.label)}</b><span>${esc(s.note)}${s.addr ? ' · ' + esc(s.addr) : ''}${s.mi != null ? ' · ~' + s.mi + ' mi' : ''}</span></div>
+      <div class="v" style="flex:0 0 auto;display:flex;gap:6px"><a class="ghost" href="${esc(s.url)}" target="_blank" rel="noopener" style="display:inline-block;padding:8px 12px">Open ↗</a>${s.phone ? `<a class="ghost" href="tel:${esc(s.phone)}" style="display:inline-block;padding:8px 12px">Call</a>` : ''}</div></div>`).join('') : '';
 
   const graded = OWN.items.filter(i => i.id === id && i.graded);
   $('#dGradedList').innerHTML = graded.length ? graded.map(i =>
@@ -5293,7 +5334,7 @@ async function runSelfTest() {
      day and a hardcoded placeholder is landmine 62 in a text box. */
   $('#allq').placeholder = `Search all ${(CAT.man.cards || 0).toLocaleString()} cards`;
   paintNet(); paintHome();
-  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, openDetail, HUNT, targetLine, distLine, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
+  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, openDetail, HUNT, targetLine, distLine, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
                    cardPic, setPic, picBox, deckRow, paintHome, paintDecks, paintSearch, openDeck,
                    FILT, loadFilter, applyFilter, sortRows, blankFilter, activeCount,
                    DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,
