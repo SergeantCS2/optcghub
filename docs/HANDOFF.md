@@ -1,4 +1,122 @@
-# HANDOFF — through Take 92
+# HANDOFF — through Take 93
+
+## Take 93 — 2026-09-23 — A33 item 6: a picture beside every card and set in the lists that had none
+
+Opened before any code (PROTOCOL §6). Take 92 merged at 02:36 UTC (PR
+#16, merge commit b5626aa); build run 40 green, Release take-92
+published. No hourly has run since 00:31 UTC, so Pages still serves the
+09-17 roster and a 404 for `events.json` until the first run after the
+merge — read, not assumed. The owner chose the next Priorities item and
+its scope: A33 item 6, **all of the rows that lack a picture**.
+
+### Measured first: what has art, what has none
+
+- **Has art already (PROVEN by reading the code):** Collect's grid tiles
+  (the scan photo, else reference art over a name-and-number
+  placeholder), the card sheet's hero, the binder pockets, the checklist
+  cells, the Decks list's Leader, the deck header, the Leader and printing
+  pickers, and everything in Hunt since take 83.
+- **Has none:** Collect's search hits, Market Movers, Home's top list, the
+  set browse and Home's set progress, the card sheet's other-printings
+  list, a deck's card rows and its add-card results, the Cards browse in
+  Prep & Play, Trade's search results.
+- **Four thumbnails draw unsized (INFERRED from the CSS, measured in
+  Chrome below):** the Decks list's Leader box, the Trade and Wants rows'
+  `.oa` boxes and the Play board's Leader button carry `refArt()` but none
+  of the classes that size an `<img>` (`.art`, `.pic`, `.opt .oa`,
+  `.dkhead .lead`, `.pocket`, `.ck`), so the image draws at its natural
+  size, clipped to the box. Since takes 20–29; no test ever measured an
+  image's box. Landmine 132.
+- **One image path, already guarded:** every picture goes through
+  `refArt(p)` — the bundle's `img` (TCGCSV's `imageUrl`, `_200w`), lazy,
+  hides its placeholder on load, retries once without the size suffix,
+  removes itself on failure (take 86). The CDN host is data, not code;
+  PROVISION declares it; the gate refuses an undeclared host in `www/`.
+  Nothing new is fetched, stored or bundled (landmines 26, 27, 28, 85).
+- **A ledger claim without code, corrected (landmine 129's shape):**
+  PROVISION said the allowlist is "two entries" (its table has five rows)
+  and that the CDN is "DISPLAY-ONLY in the gate"; `check_offline()` checks
+  that a host in `www/` is declared and nothing about purpose. The purpose
+  is prose, and now says so.
+- **Ruled out:** bundling any art (26); a second image path (one function,
+  one set of failure rules); product box shots on the ready-made decks
+  (A29 — the drawn cover stays); counting `<img>` loads in the NET badge
+  (they are not fetches and never load-bearing, PROTOCOL §8).
+
+### This VM (MEASURED 02:45 UTC)
+
+The three package hosts answer 403 as at takes 89–92; the same route:
+smoke and the DOM fallback here, the runner's `check` as the gate in
+Chrome, a draft PR marked ready on green, no vendor trailer.
+
+### Built, and proved where it could be
+
+- **One box, three callers.** `picBox(p, w, h, label, radius)` is the box
+  Hunt's rows had since take 83 (the gradient in the card's first colour, a
+  label in the display face, `refArt(p)` over it); `productPic()` now calls
+  it with the set code at the product ratio, byte-for-byte what it returned
+  before (the take-83 smoke assertions are the control); `cardPic(p, w = 36)`
+  calls it at the card ratio (36 × 50) with the number's last part as the
+  label; `setPic(s, w)` is Releases' local `picFor` hoisted — the set's
+  booster box through `productPic`, else the drawn abbreviation tile.
+- **Where they went:** search hits, Market Movers, Home's top list, the set
+  browse and Home's set progress (set boxes), the card sheet's other
+  printings, `deckRow` (so a deck's card list and its add-card results,
+  at 30 px between the cost pip and the name), the Cards browse rows, and
+  Trade's results. Nothing else changed shape; `.pic img.ref` sizes every
+  image; no new CSS rule.
+- **The four unsized thumbnails** — the Decks list's Leader, the Trade and
+  Wants rows, the Play board's Leader button — carry the `pic` class now
+  (and `position:relative` where the inline style lacked it), so the same
+  rule sizes them. Landmine 132.
+- **Watched fail first:** on the unchanged take-92 build the new smoke
+  section went red at its first line (no `cardPic`) and died at
+  `V.paintSearch` (not exported), then the rebuild: **615 passed, 0
+  failed** — cardPic's shape and its no-image control, setPic on a set with
+  a box and on one without (the control), a picture per search hit, a box
+  per set in the browse, a deck row's picture between cost and name, a
+  picture per other printing on the card sheet, Home's top list and set
+  progress, the Decks list's box, the re-classed thumbnails in the shipped
+  source. The DOM render: 10 passed.
+- **In Chrome, on the runner:** nine assertions — a box per search hit
+  with every image inside its box, the 36 × 50 box and a one-line row, no
+  sideways scroll on the Search screen at 360/412/673/820, the Decks
+  list's Leader image filling its box exactly (the landmine-132
+  measurement), a deck's card rows with a picture each and no sideways
+  scroll, and the control: a printing with no image draws the labelled tile
+  and no `<img>`. **The first run (check run 11, head e1e1dce) was red on
+  exactly one: the search row drew 117 px tall.** Every hit had its box, every
+  image fit; but `.row` aligns its items on the *baseline*, so a 50 px box
+  with no text put the name's baseline at the box's bottom and the row
+  stretched under it. The measurement caught what the markup assertions
+  could not — landmine 69's lesson again. The seven rows that gained a
+  picture are centred now (`align-items:center` on the row, as `.dkrow`
+  always was); Hunt's rows, seen and accepted on the Fold, are untouched.
+  **The second run (check run 12, head c766977) was red on the same line at
+  83 px** — and that was the assertion's fault, not the row's: the first
+  hit's subtitle (a long set name and a provenance) wraps to three lines,
+  65 px of text beside a 50 px picture. A fixed "≤ 72" pinned a number to
+  text the test does not control — landmine 62's shape. The assertion now
+  says the honest thing: the row is no taller than its tallest child plus
+  its own padding, so the picture sits beside the text, never under it.
+  **PROVEN on the runner (check run 13, head 3eaf2eb, 02:58 UTC): render
+  90 passed, 0 failed (mode: chrome)** — 81 before, the nine new green,
+  the landmine-132 measurement included; smoke **615 passed, 0 failed**
+  there too; **GATE PASSED**, hash coverage 100.0%, pipeline 29 s with the
+  hashes step this VM could not run. Three runner cycles for one take: two
+  of them the harness learning what a row is, which is what a harness is
+  for (landmine 69).
+- **The ledger corrected:** PROVISION's "two entries" and "in the gate",
+  PROTOCOL §8's control 1, and a parenthetical on landmine 28 — the gate
+  checks that a host is declared; the purpose is prose.
+
+### DEFERRED this cycle
+
+- **How the sizes and the set-box choice look on the Fold** — the owner's,
+  after installing; the next look decides the sizes.
+- **The blank-after-Back** — no record yet since take 91's install.
+- The three hosts; More in the nav (design, the owner's); the rest of the
+  Priorities order.
 
 ## Take 92 — 2026-09-23 — the first paste: the events source changed shape six days ago, and the self-test's one FAIL was its own
 

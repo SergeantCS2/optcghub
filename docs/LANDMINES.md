@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 92.*
+*Current as of take 93.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -142,6 +142,7 @@ Start here. Do not read top to bottom.
 | A ledger describes a guard the code does not have | **129** |
 | A Hunt file is a 404 on Pages and its sibling is days old, under a green workflow | **130** |
 | The self-test fails a check while quoting a correct answer | **131** |
+| A thumbnail shows a corner of the card, not the card | **132** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -356,7 +357,9 @@ constrained.
 scanned, load `imageUrl` from the TCGplayer CDN
 (`tcgplayer-cdn.tcgplayer.com/product/{productId}_200w.jpg`), memory-cache only,
 declared in `PROVISION.md`, allowlisted in the gate as DISPLAY-ONLY with that
-reasoning recorded. It is never load-bearing: PROTOCOL §8's airplane-mode
+reasoning recorded *(correction, take 93: the gate checks that the host is
+declared, nothing about purpose; DISPLAY-ONLY is the declaration's prose —
+landmine 129's shape)*. It is never load-bearing: PROTOCOL §8's airplane-mode
 invariant covers scanning, which uses the collector's own photo.
 
 **29. Attribution is not optional and it is not bureaucracy.** TCGCSV is one
@@ -1884,6 +1887,20 @@ recogniser, so the comparison never ran anywhere. Rule: a check that is
 skipped in the harness gets its comparison exercised with an injected
 answer and a wrong one (the control) — the skip is for the device call,
 never for the assertion.
+
+**132. A thumbnail box that is none of the classes that size an `<img>`
+shows the image at its natural size, clipped — four rows shipped that
+way for sixty takes and no test ever measured an image's box.** The
+Decks list's Leader, the Trade and Wants rows' thumbnails and the Play
+board's Leader button carried `refArt()` inside a box styled inline
+(width, aspect-ratio, overflow) but with none of `.art`, `.pic`,
+`.opt .oa`, `.dkhead .lead`, `.pocket` or `.ck` — the only rules that give
+the image `width:100%; height:100%; object-fit:cover`. A 200-pixel photo
+drew at 200 pixels inside a 34-pixel box: the corner of a card. Found
+reading the CSS for take 93; measured in Chrome the same take. Rule: an
+`<img>` gets its box from one shared class (`pic`), never from a
+container's inline style alone, and a render assertion measures the
+image's rectangle against its box — the box alone proves nothing.
 
 ## §2 — Inherited from APEX ORV
 

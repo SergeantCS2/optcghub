@@ -1,6 +1,6 @@
 # PROVISION
 
-*Current as of take 92.*
+*Current as of take 93.*
 
 Every host this project touches, in either phase, with its purpose, licence and
 cadence. The gate refuses an undeclared host in `www/` or in `tools/`.
@@ -30,14 +30,18 @@ sequentially, with a non-empty assertion per group (landmine 5).
 
 ## Runtime hosts — `www/`
 
-The allowlist is two entries. Both are user-tap-only, neither is load-bearing,
-and the airplane-mode invariant in PROTOCOL §8 holds without either.
+The table below is the allowlist: the gate (`check_offline`) refuses any host
+named in `www/` that is not declared here, and that is all it checks —
+"DISPLAY-ONLY" and "user-tap-only" below describe purpose, which is prose,
+not a gate (corrected take 93; the earlier "two entries … in the gate" wording
+described takes 12–26). Only Pages is load-bearing, and only for the sync;
+the airplane-mode invariant in PROTOCOL §8 holds without every one of them.
 
 | Host | Role | Trigger | Load-bearing? |
 |---|---|---|---|
 | GitHub Releases | catalogue and price sync | user taps Sync, or once per 24 h on wifi | No — the app runs on its last catalogue and every price shows its date |
 | `sergeantcs2.github.io` (Pages) | the nightly `bundle/manifest.json` and `bundle/catalog.json` | More → Sync, and once on open when online | **Yes** — written to `Directory.Data` as the live catalogue; the APK's bundled copy is the fallback. Take 27. `UPDATE_URL` set at take 33; empty disables it |
-| `tcgplayer-cdn.tcgplayer.com` | reference image for a card the collector has **not** scanned | collection tiles, search rows, the picker, card detail — **live since take 12** | No — DISPLAY-ONLY. `loading="lazy"`, memory cache, never written to disk, fails silently to a text placeholder. A scanned card uses the collector's own photograph (landmines 27, 28). Every image carries the publisher's SAMPLE watermark, as the reference app's do |
+| `tcgplayer-cdn.tcgplayer.com` | reference image for a card the collector has **not** scanned | collection tiles, the picker, card detail (take 12); Hunt's rows (take 83); every card and set row that lists a printing — search, movers, Home, the set browse, a card's other printings, deck rows, the card browse, Trade (take 93) — through one `refArt()` and one box | No — DISPLAY-ONLY by design, not by a gate check. `loading="lazy"`, memory cache, never written to disk, fails silently to a text placeholder. A scanned card uses the collector's own photograph (landmines 27, 28). Every image carries the publisher's SAMPLE watermark, as the reference app's do |
 | `www.tcgplayer.com` | a set's full listing, opened by the *Details ↗* link on every Releases row (take 82) — a search of the set's name on TCGplayer | the collector taps the link | No — the app never fetches it; the OS browser opens it. No affiliate or tracking parameter |
 | `play.google.com` | the app's OWN Play listing, handed to the OS by More → *Rate this app* and *Tell someone about the app* (take 65) | the collector taps one of those two rows | No — the app never fetches it. The URL is `…/details?id=com.optcghub.app` and carries no referral, campaign or tracking parameter (A30) |
 

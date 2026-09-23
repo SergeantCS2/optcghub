@@ -1,4 +1,4 @@
-# OP TCG Hub — take 92
+# OP TCG Hub — take 93
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,11 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 93:** a picture beside every card and set in the lists that
+had none — search results, biggest moves, the set browse, a card's other
+printings, a deck's cards and its add-card results, the card browse, Trade
+— and the small Leader thumbnails draw at their proper size.
 
 **New at take 92:** Hunt → Local and Events fill again — the events
 source changed its file format six days ago and the store roster had

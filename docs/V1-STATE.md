@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 92
+# V1-STATE — what exists, as of take 93
 
-*Current as of take 92.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 93.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -45,7 +45,7 @@ refresh from Pages (take 27).
 | Scanner | quad detect → warp → code crop → OCR → catalogue check → face (SP text / star template) → 3-frame vote → confidence gate → auto or picker; batch persists; likelihood-ordered picker | render.mjs pixel stages, smoke parse/vote, star port 30/30 vs Python (takes 10, 16) |
 | Catalogue | 6,862 cards + 658 sealed, 87 sets, from TCGCSV cat 68; keywords extracted (line-start rule); cleaned text; 3 days of price history, growing nightly | pipeline gate, validate.py 6 guards with negative controls |
 | Values | market/low/high per printing; deltas labelled with the horizon they measured, never "yesterday" across a missed night (take 58); Market Movers; chart from snapshots (record) or history (estimate, dashed, purchase-date-aware) | smoke arithmetic vs the catalogue's own deltas |
-| Collection | portfolios, conditions, graded, cost basis, favourites, bulk actions, filter/sort sheet (two scopes; the set chips returned nothing from take 11 to 89 — fixed take 90, landmine 126), export CSV **via the share sheet on a device** (take 34, landmine 110), a self-contained share page (8.12, take 42), import CSV, auto-backup to Documents on every save, restore with a file-picker fallback | smoke 255, render 51; **export/restore not yet seen on a phone** |
+| Collection | portfolios, conditions, graded, cost basis, favourites, bulk actions, filter/sort sheet (two scopes; the set chips returned nothing from take 11 to 89 — fixed take 90, landmine 126), a picture beside every card and set in every list (take 93; the grid, the sheet, the binder and the checklist had them since take 12), export CSV **via the share sheet on a device** (take 34, landmine 110), a self-contained share page (8.12, take 42), import CSV, auto-backup to Documents on every save, restore with a file-picker fallback | smoke 255, render 51; **export/restore not yet seen on a phone** |
 | Stock decks | 17 legal decks built from the ST sets, with covers the app draws from the Leader colours and set code (take 62), shown as *ready-made*, playable in the sim, **never in the collection** (take 61) | smoke 10 incl. the never-owned guard with a control; stockdecks.py 9 guards in the gate |
 | Decks | legality per Comprehensive Rules §5-1 by section; advisor (curve, counters, blockers, triggers, life); Leader sheet; printing swap; import 5 list formats; export; value + history; sim-readiness and *Play this deck in Sim* (take 53) | smoke, two guards on R6 (number-keying) |
 | Hunt | a third mode with its own palette; **Sealed** — 343 sealed products with market/low/high, nightly delta, search, kinds, alerts through the detail sheet; **Releases** — every set's publish date, upcoming with a countdown (take 70) | smoke 16, render 3 in Chrome |
@@ -62,11 +62,11 @@ refresh from Pages (take 27).
 | Typography | four roles (display / comic / body / heavy), OFL/Apache faces bundled, 232 KB, licensed faces as a file drop in `assets/user/fonts/` | render.mjs: Chrome reports all four LOADED and h2 resolves to the display face, with a missing-file control; smoke 7 |
 | Sync | quiet once-per-open sync holds on cellular unless switched on; Sync now always runs; `UPDATE_URL` points at Pages | smoke 4 controls; **not yet seen on the Fold** |
 
-**Harness totals, take 92:** smoke.mjs 603 assertions, render.mjs 81 in
-Chrome, gate 23 checks with negative controls, hunt.py 39 selftest lines
-including the roster's two shapes and the failure path — measured on the
-runner by the PR check (run 9); the session VM has no puppeteer and no
-pillow, so Chrome and hashes run on the runner only.
+**Harness totals, take 93:** smoke.mjs 615 assertions, render.mjs 90 in
+Chrome (nine of them measure the pictures drawn), gate 23 checks with
+negative controls, hunt.py 39 selftest lines — measured on the runner by
+the PR check (run 13); the session VM has no puppeteer and no pillow, so
+Chrome and hashes run on the runner only.
 
 ## DEFERRED, and why
 
