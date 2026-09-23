@@ -17,10 +17,13 @@ roger, reprint) do not, and are flagged `same_art` in the catalogue so the
 scanner shows a picker instead of pretending.
 """
 import concurrent.futures as cf
-import io, os, sqlite3, sys, time, urllib.request
+import io, os, sqlite3, sys, time, urllib.error, urllib.request
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from config import CATALOG_DB, USER_AGENT, ROOT
-from PIL import Image, ImageOps
+try:
+    from PIL import Image, ImageOps
+except ImportError:                                      # --selftest fetches nothing; run() refuses below
+    Image = ImageOps = None
 
 # The art window as a fraction of the card face. A One Piece card puts the
 # illustration in the upper two-thirds; cropping to it keeps the frame, the cost
@@ -63,18 +66,62 @@ def art_crop(img):
                      int(w * ART[2]), int(h * ART[3])))
 
 
+# The CDN's answer for an image it does not have: a 403 for an id it has not
+# published yet (a set's first week -- landmine 124), a 404 for one it never
+# will. Either is a definite answer about that id, not about us.
+UNPUBLISHED = (403, 404)
+
+
 def _fetch(url, tries=2):
+    """-> (bytes or None, HTTP status; 0 when nothing answered)."""
+    status = 0
     for a in range(tries):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
             with urllib.request.urlopen(req, timeout=20) as r:
-                return r.read()
+                return r.read(), r.status
+        except urllib.error.HTTPError as e:
+            status = e.code
+            if e.code in UNPUBLISHED:
+                return None, status                      # retrying does not change it
         except Exception:                                # noqa: BLE001
-            time.sleep(0.4 * (a + 1))
+            status = 0
+        time.sleep(0.4 * (a + 1))
+    return None, status
+
+
+def tally(results, is_new):
+    """Count one pass. `results` are (pid, hash or None, status); `is_new` the
+    ids never tried before. A miss with an UNPUBLISHED status is recorded, not
+    blamed; anything else that missed is a failure of the fetch."""
+    c = dict(ok=0, ok_new=0, unpublished=0, unpublished_new=0, failed=0, failed_new=0)
+    for pid, h, status in results:
+        k = "ok" if h is not None else ("unpublished" if status in UNPUBLISHED else "failed")
+        c[k] += 1
+        if str(pid) in is_new:
+            c[k + "_new"] += 1
+    return c
+
+
+def verdict(n_new, failed_new, canary_ok):
+    """The guard as a function, so its controls run without a network.
+    Returns the reason to stop, or None.
+
+    Landmine 124: 'not published yet' never enters `failed_new`; the rate is
+    over NEW ids only, never over a retry pass of known misses (landmine 51);
+    and a rate needs a sample (landmine 106). The canary replaces the old
+    'every fetch failed' rule: with retries in the pass, every fetch failing
+    is a normal night in a week with no new images."""
+    if not canary_ok:
+        return ("hashes: the CDN served none of the canary images it served before "
+                "— it is refusing us, not a data problem")
+    if n_new >= 20 and failed_new > n_new * 0.20:
+        return (f"hashes: {failed_new}/{n_new} new images failed ({100*failed_new/n_new:.1f}%) "
+                f"— too many to be dead links (a 403/404 is recorded, not counted here)")
     return None
 
 
-def run(limit=None, verbose=True, workers=8, retry_missing=False):
+def run(limit=None, verbose=True, workers=8, retry_missing=True):
     """Writes to the SIDECAR, not to the catalogue.
 
     Landmine 47: this ran for minutes against catalog.sqlite while another
@@ -87,6 +134,8 @@ def run(limit=None, verbose=True, workers=8, retry_missing=False):
     The catalogue is read once for the work list, then released.
     """
     import json
+    if Image is None:
+        raise SystemExit("hashes: pillow is not installed (bash ci/deps.sh)")
     raw = json.load(open(SIDECAR)) if os.path.exists(SIDECAR) else {}
     # Sidecar was a flat id->hash map through take 3. Read either shape.
     have = raw.get("hashes", raw if "missing" not in raw else {})
@@ -94,18 +143,26 @@ def run(limit=None, verbose=True, workers=8, retry_missing=False):
     # is the difference between a guard and a nuisance -- on a resumed pass the
     # only work left was the known-bad 203, so a blunt 5% miss rule reported
     # 100% and stopped the pipeline. Same shape as landmine 42.
+    # Landmine 124: a miss is a queue entry, not a verdict. Every known miss is
+    # retried each run (~30 s for a few hundred at the measured 8/s), kept out
+    # of the failure rate, and leaves the list the night its image arrives.
     missing = set(str(x) for x in raw.get("missing", []))
     db = sqlite3.connect(CATALOG_DB)
-    rows = [r for r in db.execute(
+    printed = db.execute(
         "SELECT product_id, image_url FROM printing "
         "WHERE is_sealed=0 AND image_url IS NOT NULL").fetchall()
-        if str(r[0]) not in have and (retry_missing or str(r[0]) not in missing)]
     db.close()                                           # released immediately
-    if verbose and missing:
-        print(f"   skipping {len(missing)} images known to be unavailable")
+    new = [r for r in printed if str(r[0]) not in have and str(r[0]) not in missing]
+    retry = [r for r in printed if str(r[0]) in missing] if retry_missing else []
     if limit:
-        rows = rows[:limit]
-    ok = miss = 0
+        new, retry = new[:limit], retry[:limit]
+    rows = new + retry
+    if verbose and missing:
+        print(f"   {len(missing)} images known to be unavailable — retrying {len(retry)}")
+    if not rows:
+        if verbose:
+            print("   nothing to fetch")
+        return 0, 0
     t0 = time.time()
 
     # Parallel is safe HERE and was not safe for the catalogue (landmine 5).
@@ -116,26 +173,35 @@ def run(limit=None, verbose=True, workers=8, retry_missing=False):
     # still never a valid answer.
     def one(job):
         pid, url = job
-        raw = _fetch(url)
+        raw, status = _fetch(url)
         if not raw:
-            return pid, None
+            return pid, None, status
         try:
             img = Image.open(io.BytesIO(raw)).convert("RGB")
             h = to_sqlite(dhash(art_crop(img)))
             del raw, img                                 # landmine 26: never kept
-            return pid, h
+            return pid, h, status
         except Exception:                                # noqa: BLE001
-            return pid, None
+            return pid, None, 0                          # bytes that are not an image
 
+    # The canary (landmine 124): three images this sidecar already holds are
+    # fetched first. If the CDN serves none of them it is refusing us -- an
+    # address, a block, an outage -- and no per-id count below means anything.
+    # With nothing hashed yet there is no canary and the rate guard decides.
+    canary = [r for r in printed if str(r[0]) in have][:3]
+    canary_ok = not canary or any(h is not None for _, h, _ in map(one, canary))
+    if verbose and canary:
+        print(f"   canary: {'served' if canary_ok else 'REFUSED'} ({len(canary)} known-good images)")
+
+    results = []
     with cf.ThreadPoolExecutor(workers) as ex:
-        for i, (pid, h) in enumerate(ex.map(one, rows), 1):
+        for i, (pid, h, status) in enumerate(ex.map(one, rows), 1):
+            results.append((pid, h, status))
             if h is None:
-                miss += 1
                 missing.add(str(pid))
             else:
                 missing.discard(str(pid))
                 have[str(pid)] = h
-                ok += 1
             if i % 500 == 0:
                 _save(have, missing)                     # crash-safe, resumable
                 if verbose:
@@ -144,26 +210,26 @@ def run(limit=None, verbose=True, workers=8, retry_missing=False):
                           f"eta {(len(rows)-i)/r/60:.1f} min", flush=True)
     _save(have, missing)
 
-    # An ETA is not evidence of completion (landmine 48). Say what landed.
-    # The rate that matters is over cards we have NEVER hashed, not over a
-    # resumed pass whose remaining work is all known-bad (landmine 51).
-    if rows and miss == len(rows) and miss > 20:
-        raise SystemExit(f"hashes: every one of {miss} fetches failed "
-                         f"— the CDN is refusing us, not a data problem")
+    # An ETA is not evidence of completion (landmine 48). Say what landed,
+    # new and retried apart: the rate that matters is over cards we have NEVER
+    # tried, not over a pass whose remaining work is all known-bad (landmine 51).
+    c = tally(results, set(str(r[0]) for r in new))
+    if verbose:
+        print(f"   new {len(new)}: hashed {c['ok_new']}, unpublished {c['unpublished_new']} (recorded), "
+              f"failed {c['failed_new']}; retried {len(retry)}: hashed {c['ok'] - c['ok_new']}; "
+              f"{time.time()-t0:.0f}s")
+    why = verdict(len(new), c["failed_new"], canary_ok)
+    if why:
+        raise SystemExit(why)
     # A percentage needs a sample (landmine 106). The first run on a GitHub
     # runner had ONE new printing to fetch; it failed; 1/1 read as 100% and the
-    # pipeline stopped with 97% coverage already on file. Below twenty
-    # attempts a failure is recorded as unavailable (above, _save) and the
-    # gate's coverage check -- the real guard -- decides whether to ship.
-    if rows and len(rows) >= 20 and miss > len(rows) * 0.20:
-        raise SystemExit(f"hashes: {miss}/{len(rows)} images failed "
-                         f"({100*miss/len(rows):.1f}%) — too many to be dead links")
-    if rows and miss and len(rows) < 20:
-        print(f"   {miss} of {len(rows)} new image(s) unavailable — recorded, not fatal "
+    # pipeline stopped with 97% coverage already on file. Below twenty new
+    # attempts a failure is recorded (above, _save) and the gate's coverage
+    # check -- the real guard -- decides whether to ship.
+    if new and c["failed_new"] and len(new) < 20:
+        print(f"   {c['failed_new']} of {len(new)} new image(s) failed — recorded, not fatal "
               f"(sample too small for a rate; landmine 106)")
-    if verbose:
-        print(f"   hashed {ok}, missing {miss}, in {time.time()-t0:.0f}s")
-    return ok, miss
+    return c["ok"], c["unpublished"] + c["failed"]
 
 
 def _save(have, missing):
@@ -195,6 +261,39 @@ def load_sidecar(db):
     return len(d)
 
 
+def selftest():
+    """Negative controls for the guard (landmine 124), no network. Each case is
+    a night that happened or nearly did; the guard must fire on exactly the
+    ones that were the CDN's fault or ours."""
+    def night(n_new, unpublished, failed, canary_ok):
+        rs = ([(i, 1, 200) for i in range(n_new - unpublished - failed)]
+              + [(100 + i, None, 403) for i in range(unpublished)]
+              + [(200 + i, None, 0) for i in range(failed)])
+        c = tally(rs, set(str(p) for p, _, _ in rs))
+        return verdict(n_new, c["failed_new"], canary_ok)
+    cases = [("the CDN refuses every canary (a block)",          night(30, 0, 0, False),  True),
+             ("30 new, 9 timeouts (30%)",                         night(30, 0, 9, True),   True),
+             ("30 new, 9 unpublished 403s, none failed (09-21)", night(30, 9, 0, True),   False),
+             ("1 new, 1 failed (landmine 106)",                   night(1, 0, 1, True),    False),
+             ("nothing new, a retry pass only",                   night(0, 0, 0, True),    False)]
+    ok_all = True
+    for name, why, should_fire in cases:
+        fired = why is not None
+        good = fired == should_fire
+        ok_all &= good
+        print(f"  {'ok  ' if good else 'FAIL'}  {name}: {'guard fires' if fired else 'passes'}")
+    for status, unpub in ((403, True), (404, True), (500, False), (0, False)):
+        c = tally([(1, None, status)], {"1"})
+        good = (c["unpublished"] == 1) == unpub
+        ok_all &= good
+        print(f"  {'ok  ' if good else 'FAIL'}  a miss with status {status} is {'unpublished' if unpub else 'a failure'}")
+    return ok_all
+
+
 if __name__ == "__main__":
-    run(limit=int(sys.argv[1]) if len(sys.argv) > 1 else None,
-        workers=int(sys.argv[2]) if len(sys.argv) > 2 else 8)
+    if "--selftest" in sys.argv:
+        print("hashes.py negative controls:")
+        raise SystemExit(0 if selftest() else 1)
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    run(limit=int(args[0]) if args else None,
+        workers=int(args[1]) if len(args) > 1 else 8)

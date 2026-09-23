@@ -1,6 +1,6 @@
 # PROVISION
 
-*Current as of take 88.*
+*Current as of take 89.*
 
 Every host this project touches, in either phase, with its purpose, licence and
 cadence. The gate refuses an undeclared host in `www/` or in `tools/`.
@@ -21,7 +21,9 @@ wifi and may fetch. **Scanning** happens anywhere and may not.
 | local game stores' Shopify storefronts (`hunt/storefronts.json`, hand-verified: today `blackvaultgaming.com`) | `/products.json` and `/collections/…/products.json` — the store's own public listings: One Piece sealed product with price and availability | the hourly `hunt` workflow | hourly | Public by design on every Shopify store; keyless; ~20 requests a store at most. The feed names the shop, links into its store, and says a shop lists what it chooses (take 75) |
 | `api.frankfurter.dev` | the day's ECB reference exchange rates, USD to seven currencies, for the display-currency option | build (nightly and hourly), keyless | daily | ECB data via a free public mirror; cached as `catalog/rates.json` so a failed fetch shows the last rates with their date. Every converted price carries ≈ and the picker names the rate's date (take 85) |
 | `redsky.target.com` | Target's own product JSON: search, price, nearby stores, per-store availability for the configured zip (A32) | the hourly `hunt` workflow on the runner — **never the app** | hourly | Keyless; the key is the public constant in every Target page. The feed ships as `hunt/feed.json` with the fetch time on every source (take 71) |
-| `tcgplayer-cdn.tcgplayer.com` | Card art, downloaded to compute dHash then **discarded** | build | on catalogue change | Bandai / Shueisha / Toei / Viz artwork. Never redistributed. Only the 64-bit hash ships (landmine 26). |
+| `tcgplayer-cdn.tcgplayer.com` | Card art, downloaded to compute dHash then **discarded** | build | on catalogue change; every known miss retried each run (take 89) | Bandai / Shueisha / Toei / Viz artwork. Never redistributed. Only the 64-bit hash ships (landmine 26). A 403/404 means the CDN has not published that id; a canary of known-good ids tells refusal from absence (landmine 124) |
+| `registry.npmjs.org` | `puppeteer` and `acorn` for `ci/deps.sh` (the render receipt and the comment strip); the Capacitor packages for `ci/apk.sh` | build, on the runner and in the session's rebuild | every run | npm's public registry. A session whose environment closes it cannot render in Chrome or gate (take 89: it was closed, and named) |
+| `pypi.org`, `files.pythonhosted.org` | `pillow` for `ci/deps.sh` (hashes, the star template) | build, on the runner and in the session's rebuild | every run | PyPI. Same note as npm |
 
 `tcgcsv.com` is fetched with a declared User-Agent naming this project,
 sequentially, with a non-empty assertion per group (landmine 5).

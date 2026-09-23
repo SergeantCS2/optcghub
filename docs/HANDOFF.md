@@ -1,4 +1,151 @@
-# HANDOFF — through Take 88
+# HANDOFF — through Take 89
+
+## Take 89 — 2026-09-22 — the repo works on a branch and a PR; four red nights read; the gate green again
+
+Opened before any code (PROTOCOL §6). The first take made with git rather
+than a seed zip: the session works on a branch, opens a PR titled *take N —
+…*, the owner merges, and the merge to `main` runs `build.yml`, which
+publishes Release take-N and deploys Pages. No product changes.
+
+### Read first, on the runner's own record
+
+- **Four red nights, not one (MEASURED, Actions runs 32–35).** 09-18, 09-19
+  and 09-20 died in `smoke`: the Events fixture carries only 09-16 and 09-17
+  dates, `hunt.py --from-fixtures` builds it with `now="2026-09-01"`, and
+  smoke ran the app on the real clock (the host `Date` handed to the vm
+  context), so from 09-18 `EVENTS.rows()` was empty and `icsFor(undefined)`
+  threw. 09-21 died one step earlier, in `hashes`: 18 of 69 new images
+  failed, 26.1%, over the 20% guard — so smoke never ran and the fixture's
+  expiry hid behind it. Landmines 123 and 124.
+- **The prices are safe (PROVEN in the run-35 log):** `bundle.sh` records
+  and pushes the day's prices before the pipeline; 10 days on file on
+  `main`, 11 on the live Pages manifest, which the hourly `hunt` workflow
+  keeps fresh (take 88, source 2026-09-22). What stalled since 09-17: the
+  Release assets and the nightly's own Pages deploy.
+- **Four open issues for one failure (MEASURED, #8–#11).** The label
+  `nightly-failure` never existed, so `gh issue create --label` failed, the
+  fallback created an unlabelled issue, and the next night's `gh issue list
+  --label` found nothing to append to. Landmine 125.
+- **`branches: [ main ]` is live (PROVEN):** the owner's commit d0b2c91 on
+  09-22, before anything here. `ci/build.yml` lacked the line (drift; fixed,
+  and the gate now compares the copies). Landmine 122 records the hazard.
+- **Node 20 (PROVEN from the logs):** the `v4`/`v5` actions already run
+  "forced to Node 24" with a warning; nothing broke. The bump is hygiene.
+- **The image CDN still refuses id 718642 (MEASURED 23:14 UTC from this
+  VM):** the guard would fire again tonight without the fix below.
+- **AGENTS named `signing/vault.keystore`;** the file, `ci/apk.sh` and the
+  gate say `signing/optcghub.keystore`. Fixed.
+- **The set chips in the filter sheet return zero cards (INFERRED from the
+  code, unreproduced):** a chip pushes `dataset.fv`, a string, and
+  `applyFilter` asks `f.set.includes(p.set)` with `p.set` an int; the chip's
+  `on` state and the saved filters share the mismatch. A product change, so
+  not this take — A36.
+
+### This VM
+
+`registry.npmjs.org`, `pypi.org` and `files.pythonhosted.org` answered 403
+(MEASURED with curl and `npm view`), and the proxy denied
+`storage.googleapis.com` (puppeteer's Chrome download). Reachable:
+`tcgcsv.com`, the image CDN, `api.frankfurter.dev`, Pages. The owner opens
+the first three; Chromium is preinstalled and puppeteer takes it through
+`PUPPETEER_EXECUTABLE_PATH`, so the fourth is not needed. The Ubuntu
+archives answered 403 too, so no `apt` route either. Until the hosts are
+open there is no rebuild, no Chrome render and no gate — and nothing ships
+on an unrun gate. What could run here, ran: every new guard's controls
+(`hashes.py --selftest`, `check.sh --selftest`, `gate.py --selftest` with
+the two new probes, the seal's refusal of an output folder inside the
+tree, `git check-ignore` on a seed zip), the scrubber over the ledgers, and
+every gate check that needs no build.
+
+**The push of `.github/workflows/*` from the session was accepted
+(PROVEN, 23:40 UTC):** the GitHub App holds the Workflows permission, so
+the workflow files travel in the PR and the paste in RUNBOOK §5b is the
+fallback only. The branch push started no workflow run (PROVEN on the
+Actions tab) — landmine 122's fix holds.
+
+### The runner as the clean run (PROTOCOL §6b)
+
+The owner opened PR #13 from the app and its first `check` run (00:08
+UTC, 09-23) was the clean run this VM could not do: a fresh checkout, only
+`ci/deps.sh`'s installs, the pipeline from ingest. What it PROVED:
+
+- **The hashes guard, on the real night's data:** *220 images known to be
+  unavailable — retrying 220; canary: served (3 known-good images); new
+  77: hashed 57, unpublished 20 (recorded), failed 0; retried 220: hashed
+  21; 6 s.* The 20 unpublished ids no longer stop the pipeline — and **21
+  of the 220 "known unavailable" images were there all along**; nothing had
+  asked since the night they first failed. Coverage 98.8% of reachable.
+- **The runner-owned-files guard** ran on the merge commit and passed.
+- **The Events block under the pinned clock passed on the runner** — the
+  three-night failure is gone — and so did the rest: **582 passed, 1
+  failed.** The one: the take-35 assertion that read `bundle.sh` for the
+  literal install line, which take 89 moved into `ci/deps.sh`. My miss: I
+  had read `smoke.mjs` for the events block and not for every assertion
+  that reads a CI script. The assertion now reads `deps.sh`, and a second
+  one asserts that `bundle.sh` and `check.sh` both call it and that
+  `hunt.yml` installs the parser itself — the guard take 84 deferred.
+- **The rerun (check run 2, 00:11 UTC, head 852fd64) is green:** smoke **584
+  passed, 0 failed**; render **69 passed (mode: chrome)** with the receipt
+  uploaded as the run's artifact; **GATE PASSED** — 23 checks, hash
+  coverage 98.8%; `pipeline complete in 24s`. The runner's hashes pass
+  also warmed the sidecar by 78 images (57 new + 21 retried); the nightly
+  on `main` commits that, the PR check never does.
+
+**smoke.mjs 584, render.mjs 69 (Chrome), gate 23 checks — on the runner.
+Gate green; PR #13 open, its check green.**
+
+### Built
+
+- **The smoke clock.** The Events and calendar block runs under a `Date`
+  pinned to the fixture's own window and restores the real one after.
+  Control: the same rows under the real clock are empty once the fixture's
+  last date has passed — the runner's exact failure, asserted live against
+  live.
+- **The hashes guard.** A canary of three already-hashed images proves the
+  CDN is serving us before the batch; an HTTP 403 or 404 is *not published*
+  — recorded as missing, not counted toward the 20% rate; timeouts, 5xx and
+  undecodable bytes still count; and every missing id is retried each run,
+  so a printing whose image arrives later is hashed later. Controls in
+  `hashes.py --selftest`, run by the gate.
+- **The failure issue.** The label is created before it is used, so one
+  thread carries every red night; a green night closes it.
+- **The seal.** `seal.sh --gate-only` for the PR flow: stamp, the gate
+  unpiped, no zip. The zip path refuses an output folder inside the tree
+  (control: pointing it at `.` exits non-zero), and `.gitignore` carries
+  `optcghub-seed*.zip` so a stray zip can never be committed and unpacked
+  over the tree by the seed job.
+- **The gate** compares each `ci/*.yml` with its live copy under
+  `.github/workflows/` when that directory exists (an unpacked seed has
+  none). Control: the one-line drift found today.
+- **CI.** `ci/deps.sh` holds every install once; `bundle.sh` (the nightly)
+  and the new `ci/check.sh` (the PR check) both source it — landmine 121.
+  `check.yml` runs the whole pipeline on every PR to `main` with
+  `contents: read`, its own concurrency group, no commit, no Pages, no
+  release, and refuses a PR that carries `catalog/prices_daily.json` or
+  `catalog/hashes.json` (landmine 116: the runner is the record). Action
+  majors moved to the lowest major whose `action.yml` says `node24`, each
+  read at its tag (PROVEN): checkout v5, setup-node v5, setup-python v6,
+  setup-java v5, cache v5, upload-artifact v6 (v5 is still node20),
+  download-artifact v7 (v5 and v6 still node20), deploy-pages v5, and
+  upload-pages-artifact v5 — a composite whose inner upload-artifact is
+  v7.0.0 (v4's inner is v4.6.2, node20); its new `include-hidden-files`
+  default drops dotfiles, and `www/` has none. The `action.yml` diffs from
+  the tags in use to these carry only the runtime line, apart from added
+  optional inputs (setup-node's `package-manager-cache` is a no-op here:
+  `package.json` has no `packageManager` field). Newer majors exist and
+  were not taken: their changes are unread.
+- **The ledgers** say the branch flow: AGENTS, PROTOCOL §0, RUNBOOK §5b/§6,
+  NEW-SESSION-PROMPT, V1-STATE, PROVISION. The seed path stays documented
+  as the recovery route.
+
+### DEFERRED this cycle
+
+- **A36, the set chips** — reproduce in Chrome first, then compare as
+  strings on both sides and migrate the saved filters.
+- **Closing issues #8–#10 by hand** — the owner's; #11 is the live thread.
+- **The Priorities block**, in its order, once the diagnostics paste is in.
+- The vendor-name question for git metadata (branch name, trailers) is the
+  owner's; the scrubber cannot see git metadata.
 
 ## Take 88 — 2026-09-17 — the audit the owner asked for
 

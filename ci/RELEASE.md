@@ -1,4 +1,4 @@
-# OP TCG Hub — take 88
+# OP TCG Hub — take 89
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,10 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 89:** nothing visible; the project now ships from a branch and
+a pull request instead of a seed zip, and the nightly build is green again
+after four red nights.
 
 **New at take 88:** nothing visible; an audit of the project's records.
 

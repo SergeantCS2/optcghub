@@ -1,145 +1,129 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 88.* Paste the block between the rules into a new session
-whose project carries `AGENDA.md`, `LANDMINES.md` and `HANDOFF.md` (the three
-project files) and has the newest seed attached.
+*Current as of take 89.* Paste the block between the rules into a new session
+opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
+The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
+`docs/`; nothing is attached any more.
 
 ---
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
-tracker and deck builder for Android, built across 88 takes by previous
-sessions. The repo lives at `github.com/SergeantCS2/optcghub`; the seed
-`optcghub-seed-t88.zip` is the whole tree. CI builds on every seed drop and
-has run green end to end; the APK the owner installs comes from the Release.
+tracker, deck builder, simulator and sealed-product Hunt mode for Android,
+built across 89 takes by previous sessions. The repo is
+`github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
+Since take 89 a session works on a branch and opens a pull request; the owner
+merges; the merge to `main` runs `build.yml`, which publishes Release
+`take-N` (the APK the owner sideloads) and deploys Pages. The nightly at
+21:30 UTC commits the day's prices and rebuilds the same take.
 
 **Before anything else, in this order:**
 
-1. Unzip the seed to `~/vault-seed`. Read `AGENTS.md` — it is
-   short and it is the contract.
-2. Read `docs/PROTOCOL.md` §0 (the start-of-session checklist) and do it.
+1. Read `AGENTS.md` — it is short and it is the contract.
+2. Read `docs/PROTOCOL.md` §0 (the start-of-session checklist) and do it:
+   confirm the branch and `BUILD`; read the last nightly and the latest
+   Release *before* trusting any brief about them; rebuild once in full.
 3. Read `docs/V1-STATE.md` — what exists, PROVEN / BUILT / DEFERRED, with the
    measured numbers you must not re-derive.
-4. Read `docs/HANDOFF.md`, newest entry first, back to take 28 at least. Every
+4. Read `docs/HANDOFF.md`, newest entry first, back to take 80 at least. Every
    take ends with a DEFERRED list; the union of those lists is the work.
 5. Read `docs/LANDMINES.md` §0 (the index) and skim §1. When you are about to
-   do something, grep the index first. 121 of them; each is a real failure.
-6. Read `docs/AGENDA.md` for what is open and whose it is.
+   do something, grep the index first. 125 of them; each is a real failure.
+6. Read `docs/AGENDA.md`: the Priorities block at the top is the live order.
 
 **The discipline, which the gate enforces:**
 
 - Open the HANDOFF entry for your take **before** writing code (PROTOCOL §6).
-  Bump `BUILD` first. The gate fails a seal without it. Write the take's
-  **New at take N** paragraph in `ci/RELEASE.md` before the build: the build
-  refuses a take without one, and Home shows it to every tester (take 53).
+  Bump `BUILD` first. Write the take's **New at take N** paragraph in
+  `ci/RELEASE.md` before the build: the build refuses a take without one, and
+  Home shows it to every tester (take 53).
 - A ledger write is its own command, never chained behind a build
   (landmine 104). Grep the file for what you wrote before you say you wrote it.
 - Every guard gets a negative control the same take (landmine 55).
 - Read a plugin's `definitions.d.ts` before calling it (landmine 73).
 - Measure before designing; the ledger names what was ruled out and why.
-- Before a seed drop after 20:05 UTC, run a fresh `ingest` and smoke: the
-  catalogue moved and a pinned count expires (landmine 114). Every constant
-  in a test is a date at which it expires, and one that expires in
-  `bundle.sh` used to take a night of prices with it (landmine 115).
-- **`ci/bundle.sh` and `tools/history.py` changed at takes 58–59** and the seed carries them, so a seed
-  drop is enough; no paste.
-- Seal with `bash tools/seal.sh`, bare, never piped (landmine 103). Present
-  the seed, the APK, and the three project files loose.
+- Every constant in a test is a date at which it expires: a price (62), a
+  count (114), a fixture's calendar (123). Assert the shape, or pin the
+  clock the fixture was built under.
+- Rebuild with `bash ci/deps.sh` then `python3 tools/pipeline.py`; render
+  must end `(mode: chrome)`. If a host is blocked, name it and stop — the
+  owner opens it. A clean run from an empty directory after any pipeline
+  change (PROTOCOL §6b).
+- Seal with `bash tools/seal.sh --gate-only`, bare, never piped (landmine
+  103). Then restore the runner-owned files — `git checkout --
+  catalog/prices_daily.json catalog/hashes.json` (landmine 116) — commit
+  named paths, push the branch, open the PR titled `take N — …`. The `check`
+  workflow must be green. **Never open a PR on a red gate. Never commit a
+  seed zip** (landmine 122).
+- The workflow files travel in the PR; `.github/workflows/*.yml` and
+  `ci/*.yml` are one file each. If the push is refused, hand the owner the
+  `ci/` copy and say so (RUNBOOK §5b).
 - The repo is public. Never write the owner's first name, an AI vendor's
-  name or the conversational word into a ledger: the gate's scrubber refuses
-  the seal (A27). "The owner" and "session" are the words.
-- End every reply with the agenda: closed, in flight, the owner's, yours.
+  name or the conversational word into a ledger, a comment or a commit: the
+  scrubber refuses the gate (A27), and git metadata is public too. "The
+  owner" and "session" are the words.
+- Label every claim PROVEN / MEASURED / INFERRED / UNKNOWN. Ask rather than
+  guess. Push back when the owner is wrong. Keep replies short, TLDR first —
+  he often reads on his phone. End every reply with the agenda: closed, in
+  flight, the owner's, yours.
 
 **What is in flight when you arrive:**
 
+- **The Priorities block at the top of `AGENDA.md`** is the live order: the
+  owner's items (the diagnostics paste, D20–D22, shop URLs, D7, D16, the
+  `.aab`), then the session's (A36 the set chips, whatever the diagnostics
+  paste names, A33 item 6, A32's remaining sources, A23's tail, A31).
 - **A21 — the Play clock.** The closed-testing release is **approved** (take
   52). What is left is the owner's: the opt-in link to 16–18 testers, twelve
   opted in, fourteen days, then *Apply for production*. `ci/RELEASE.md` is the
   guide testers read; keep it true. **UNKNOWN and worth asking first:** which
   `.aab` was uploaded first — if the DEVKEY one, the upload key must be
-  reset (RUNBOOK-play §2). Every seed dropped now becomes a Play update for
-  the testers: seal only what you would ship.
-- **A32 — Hunt** is the owner's large item and the mode EXISTS (take 70:
-  Sealed and Releases; take 71 the hourly Target feed with shelf stock near
-  48329; take 72 the two-layer feed — online for all of the US, shelf stock per
-  served zip, a zip pop-up — under a MEASURED quota of ~30 retailer calls per
-  run, so the feed rotates with a cursor and every check carries its time;
-  `ci/hunt.yml` is a one-time paste; take 73 the hourly history, kept on
-  Pages and read back by the runner; take 74 Local — the TCG+ roster via
-  onepieceevents.com, Census centroids, the distance dropdown, own notes).
-  Take 75 the storefront layer over a hand-verified list
-  (`hunt/storefronts.json`, one shop today; the owner adds URLs); take 76
-  Events near you (fee, seats, a TCG+ Register link) and the Zoro palette.
-  Take 77 stock alerts (renamed from the anti-scalper alert at the owner's
-  word; national sellers are not keylessly readable, so it runs over the
-  sources the feed has); take 78 events onto the calendar as an .ics. Next:
-  D22 (background checks, filed, the owner's), then national sellers from
-  a residential IP in the sideload build — which needs the device
-  (TCG+ roster, distance dropdown, own store notes), then the restock time
-  series. Two rules from take 71: retailers throttle (one call a second,
-  stop on 435), and a Japanese release is never matched to the English
-  catalogue. Sealed shows 343 products; 660 are
-  priced nightly, and Target's product JSON is PROVEN keyless from the
-  runner. Two scrapers, one feed: the runner publishes `hunt/feed.json` for
-  the Play build; the sideload build adds phone-side sources. No keys, no
-  accounts (the owner's decision, take 68). Facebook is out because it does
-  not work, not because of a rule.
-- **Read the Priorities block at the top of AGENDA.md first** (take 88's
-  audit): it is the live order, the owner's items then mine. The thirty-five
-  items below it are history.
-- **A35 was the owner's list at takes 86–87, all thirteen closed.** (take 86 did ten of thirteen). Take
-  87 is next: starter decks as a section in Hunt, Events regrouped by store
-  with the phone and exact position the events file carries, MAX behind a
-  rewarded ad. The blank-after-Back has a watchdog now; Diagnostics → last
-  errors will name the trigger.
-- **A33 was the owner's previous list from the Fold** (takes 81–83): five of
-  six done; item 6 — pictures on Collect's rows and Decks like Hunt's — is
-  next when he has seen Hunt's. The blank-after-Back cause is unknown and
-  instrumented: Diagnostics → last errors will name it.
-- **A30 carries the agreed order** after the tester report: the owner's tour
-  check (open) → A26 colour and contrast (done take 60) → A29 stock decks
-  (done take 61) → **Rate and Share rows** → a TalkBack pass → A31 (importing
-  from Collectr and friends, which waits on one real exported file).
-- **A26 and A29 were the owner's two named items at take 57** (take 57,
-  not built at his instruction): the typography reads weak and ungolden —
-  A26 names the one-line cause found at take 57 and says to measure before
-  editing — and **stock decks**, the ST lists shipped by default so a player
-  with no collection can use the sim, never touching the collection (A29 has
-  both rules and the sourcing order).
-- **The listing screenshots** — the owner has a frames kit and the take-37
-  showcase files (`showcase/`); graded copies, alerts and photos are set by
-  hand before shooting.
-- **Landmine 110's device half** — the first *Export CSV* on the Fold that
-  opens a share sheet closes it.
-- **app-ads.txt is live** at the root user site (take 40); AdMob verifies it
-  once the listing's website is set. Nothing to build.
-- **The simulator (A23)** — step (1), the hot-seat board (take 46), and
-  step (2) (takes 47–51: effects parsed from card text into data,
-  28.6% of lines: chains, costs, statics, keyword grants, cost changes, searches, Events, honest durations) and
-  step (3), an opponent that is legal and not clever (take 55), are BUILT and
-  unseen on a phone. Coverage grows only by adding whole templates
-  to `tools/effects.py` with their tests — never by loosening one. D17 (the
-  word Portfolio) and D18 (a relay) are open.
+  reset (RUNBOOK-play §2). Every merged take becomes a Play update for the
+  testers: merge only what you would ship.
+- **A32 — Hunt** is the owner's large item and the mode EXISTS (takes
+  70–87: Sealed and Releases; the hourly Target feed for all of the US with
+  shelf stock per served zip; the hourly history; Local — the TCG+ roster,
+  Census centroids, distances, own notes; the storefront layer over a
+  hand-verified list in `hunt/storefronts.json`; Events by store with a Call
+  button and a calendar tap; stock alerts; the Zoro palette; starter decks;
+  MAX behind a rewarded ad). Next: D22 (background checks, the owner's),
+  then national sellers from a residential IP in the sideload build, then
+  the restock time series. Two rules from take 71: retailers throttle (one
+  call a second, stop on 435), and a Japanese release is never matched to
+  the English catalogue. No keys, no accounts (the owner's decision, take 68).
+- **The blank-after-Back** has a watchdog since take 86 that heals it and
+  writes the trigger to Diagnostics (More → About, five taps); the owner's
+  paste names the cause. Nothing else can.
+- **A36 — the set chips** in the filter sheet return zero cards: a chip
+  pushes a string, `applyFilter` compares it with an int (INFERRED from the
+  code at take 89, not yet reproduced). Reproduce in Chrome first; the fix is
+  one comparison and a migration of the saved filters.
+- **The simulator (A23)** — the hot-seat board (take 46), effects parsed from
+  card text (takes 47–51, 28.6% of lines) and a legal, stupid opponent (take
+  55) are BUILT and unseen on a phone. Coverage grows only by adding whole
+  templates to `tools/effects.py` with their tests — never by loosening one.
 - **The self-test (A28)** is built and not yet run on the Fold; the first
   report the owner pastes is the next measurement.
-- **D16 (fonts), D11 (AdMob unit IDs, later), D7 (icon: the console shows
-  the jolly roger, the tree ships the compass), D15 (colour).** Do not
-  build ahead of them.
+- **D16 (fonts), D11 (AdMob unit IDs, later), D7 (icon), D15 (colour), D17
+  (the word Portfolio).** Do not build ahead of them.
+- **A31 (Collectr import)** waits on one real exported file; the owner's own
+  71-line transcription exists outside the repo in the Hub's export schema
+  and is not that file.
 
-**What the owner has said he wants, in order:** the core (done) → scanner (proven)
-→ collection with filtering (done) → deck builder (done) → the backlog in
-ROADMAP Phase 8 order (8.9–8.11, 8.13, 8.14, 8.16 each wait on a device, a
-source or a decision) → other games (A19, after Play) → a simulator (A23,
-step 1 built; the owner calls it the draw).
+**What the owner has said he wants, in order:** the core (done) → scanner
+(proven) → collection with filtering (done) → deck builder (done) → Hunt
+(built, the owner's list drives it) → the backlog in ROADMAP Phase 8 order →
+other games (A19, after Play) → the simulator's tail (A23).
 
 **What you may change:** anything in the tree, with the ledger updated the
-same take. `build.yml` and `bootstrap.yml` are hand-pasted by the owner and can
-only be changed by giving him a new file and saying so in the runbook.
+same take — the workflow files included, through the PR.
 
 **What you may not do:** ship character art or publisher marks — including
-official product box shots, which the owner asked for at take 62 and which
-were declined with reasons in A29 (landmines 26, 30, A16); gate scanning (A17); multiply condition into a price (PROTOCOL §10);
-send the collection anywhere (PROTOCOL §9); seal with a red gate.
+official product box shots, declined with reasons in A29 (landmines 26, 30,
+A16); gate scanning (A17); multiply condition into a price (PROTOCOL §10);
+send the collection anywhere (PROTOCOL §9); key anything off a card number
+instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
+zip or the runner-owned price and hash files from a branch.
 
-Say "take 89" and begin with PROTOCOL §0.
+Say "take 90" and begin with PROTOCOL §0.
 
 ---

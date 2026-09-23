@@ -3,20 +3,28 @@ name: build
 # OP TCG Hub. Adapted from APEX ORV's workflow; the structural landmines it
 # carries were paid for over there and cost nothing here.
 #
-#   seed   -> unpack the uploaded seed zip and commit it
-#   bundle -> build the catalogue, the app, run smoke + gate
+#   seed   -> unpack a seed zip at the root and commit it (the RECOVERY route)
+#   bundle -> build the catalogue, the app, run smoke + gate, commit the prices
 #   pages  -> browser build + privacy policy (Play requires a live URL)
-#   apk    -> signed APK for sideload, AAB for Play
+#   apk    -> signed APK for sideload, AAB for Play, Release take-N
 #
-# THIS FILE IS PASTED BY HAND into .github/workflows/build.yml. The seed cannot
-# write it (APEX landmine 46: GITHUB_TOKEN cannot write .github/workflows).
-# If it is ever rewritten: the `seed` job and 'optcghub-seed*.zip' in push.paths
-# are LOAD-BEARING and a paste has dropped them before, after which every run
-# rebuilt the same stale take at full green for a week (APEX landmine 202).
+# Since take 89 this file lives in git like everything else: changed on a
+# branch, reviewed in the PR, kept BYTE-IDENTICAL to ci/build.yml (the gate
+# compares the two). If a push of .github/workflows is ever refused, paste
+# ci/build.yml here by hand (RUNBOOK §5b) -- and after any paste check that the
+# `seed` job and 'optcghub-seed*.zip' under push.paths are still there: a paste
+# dropped them once and every run rebuilt the same stale take at full green
+# for a week (APEX landmine 202).
+#
+# `branches: [ main ]` is LOAD-BEARING (landmine 122): without it a branch
+# commit touching any path below runs all of this on that branch -- cancels
+# the nightly, commits prices to the branch, clobbers the Release, deploys
+# Pages. Pull requests get check.yml, which can do none of those things.
 
 on:
   workflow_dispatch:
   push:
+    branches: [ main ]
     paths:
       - 'optcghub-seed*.zip'
       - BUILD
@@ -47,7 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.ref_name }}
       - name: Unpack any seed zip at the repo root and commit it
@@ -81,14 +89,14 @@ jobs:
       # `ref` is REQUIRED. checkout defaults to the commit that TRIGGERED the
       # run; the seed job pushes a newer one, so a default checkout lands on a
       # tree without ci/bundle.sh (APEX landmine 85).
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.ref_name }}
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'    # Capacitor 8 requires Node 22+
 
@@ -96,7 +104,7 @@ jobs:
       # HASHES rather than the images means a rebuild is seconds and no
       # copyrighted bytes ever persist anywhere in this repo's infrastructure.
       - name: Restore catalogue cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             tcgcsv_cache
@@ -112,18 +120,29 @@ jobs:
       # appends to it on each further failure, so three bad nights are three
       # comments on one thread rather than nothing. GitHub also emails the
       # owner on workflow failure; the issue is what survives the email.
+      # Landmine 125: the label must exist before anything is filed under it,
+      # or every night opens a fresh unlabelled issue (#8-#11).
       - name: Report a failed night
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          n=$(gh issue list --label nightly-failure --state open --json number -q '.[0].number' 2>/dev/null || true)
+          gh label create nightly-failure --color B60205 --description "A9: the nightly catalogue build went red" --force >/dev/null
+          n=$(gh issue list --label nightly-failure --state open --json number -q '.[0].number')
           body="Nightly build failed — run ${{ github.run_id }} on $(date -u +%Y-%m-%d). See the Actions log. The app keeps running on its last catalogue; the Home screen will show a stale banner after three days (A9)."
           if [ -n "$n" ]; then gh issue comment "$n" --body "$body"
-          else gh issue create --title "Nightly catalogue build is failing" --label nightly-failure --body "$body" 2>/dev/null \
-               || gh issue create --title "Nightly catalogue build is failing" --body "$body"; fi
+          else gh issue create --title "Nightly catalogue build is failing" --label nightly-failure --body "$body"; fi
 
-      - uses: actions/upload-artifact@v4
+      - name: Close the failure thread on a green night
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          n=$(gh issue list --label nightly-failure --state open --json number -q '.[0].number' 2>/dev/null || true)
+          if [ -n "$n" ]; then
+            gh issue close "$n" --comment "Green again: run ${{ github.run_id }} on $(date -u +%Y-%m-%d)."
+          fi
+
+      - uses: actions/upload-artifact@v6
         with:
           name: www
           path: www
@@ -138,12 +157,12 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with: { name: www, path: www }
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with: { path: www }
       - id: deploy
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
   # ── package ─────────────────────────────────────────────────────────────
   apk:
@@ -151,19 +170,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.ref_name }}          # APEX landmine 85, again
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with: { name: www, path: www }
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with: { distribution: temurin, java-version: '21' }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with: { node-version: '22' }
 
       # Every job is a FRESH runner — the bundle job's pip install does not carry
-      # over (APEX landmine 83). All logic lives in ci/apk.sh, which the seed can
-      # update; this file cannot be (APEX landmine 84).
+      # over (APEX landmine 83). All logic lives in ci/apk.sh, which travels in
+      # the tree; this file changes rarely and only through a PR.
       #
       # The Play upload key is a repository SECRET and never enters the tree
       # (landmine 23). With no secrets set the AAB is still built, dev-key-signed
@@ -177,9 +196,9 @@ jobs:
           PLAY_UPLOAD_KEY_PASS:     ${{ secrets.PLAY_UPLOAD_KEY_PASS }}
         run: bash ci/apk.sh
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with: { name: apk, path: "${{ steps.pkg.outputs.apk }}" }
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with: { name: aab, path: "${{ steps.pkg.outputs.aab }}" }
 
       # Release notes come from ci/RELEASE.md, in the REPO. Inline here they

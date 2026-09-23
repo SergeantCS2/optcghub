@@ -90,13 +90,35 @@ def check_docs_complete():
     for fn in REQUIRED:
         path = os.path.join(DOCS, fn)
         if not os.path.exists(path):
-            fail("docs", f"docs/{fn} is missing from the seed")
+            fail("docs", f"docs/{fn} is missing from the tree")
         elif os.path.getsize(path) < 500:
             fail("docs", f"docs/{fn} is {os.path.getsize(path)} bytes — a stub is not a doc")
     for fn in ("AGENTS.md", "README.md", "BUILD", "ci/RELEASE.md", "ci/build.yml",
-               "ci/bootstrap.yml", "ci/apk.sh", "ci/bundle.sh"):
+               "ci/bootstrap.yml", "ci/hunt.yml", "ci/check.yml", "ci/apk.sh",
+               "ci/bundle.sh", "ci/check.sh", "ci/deps.sh"):
         if not os.path.exists(os.path.join(ROOT, fn)):
-            fail("docs", f"{fn} is missing from the seed")
+            fail("docs", f"{fn} is missing from the tree")
+
+
+def check_workflow_copies():
+    """Take 89. Every workflow lives in the tree twice: `.github/workflows/` is
+    what runs; `ci/` is the copy the gate, the scrubber and the seed path read.
+    They drifted by one line the day the branch flow began (landmine 122's fix
+    landed in one and not the other). Byte-equal, or nothing ships. An unpacked
+    seed has no `.github/` (the seed job excludes it): noted there, not silent."""
+    live = os.path.join(ROOT, ".github", "workflows")
+    if not os.path.isdir(live):
+        return note("no .github/workflows here (an unpacked seed) -- workflow copies not compared")
+    ci_ymls = {fn for fn in os.listdir(os.path.join(ROOT, "ci")) if fn.endswith(".yml")}
+    live_ymls = {fn for fn in os.listdir(live) if fn.endswith((".yml", ".yaml"))}
+    for fn in sorted(ci_ymls | live_ymls):
+        a, b = read("ci", fn), read(".github", "workflows", fn)
+        if not b:
+            fail("workflows", f"ci/{fn} has no live copy at .github/workflows/{fn}")
+        elif not a:
+            fail("workflows", f".github/workflows/{fn} has no copy at ci/{fn} (the gate and the scrubber read ci/)")
+        elif a != b:
+            fail("workflows", f"ci/{fn} and .github/workflows/{fn} differ — they are one file; copy one over the other")
 
 
 def check_ledger_integrity():
@@ -367,7 +389,9 @@ def check_secrets():
         fail("secrets", "signing/optcghub.keystore missing — every take must sign "
                         "with the same key or it will not install over the last (A8)")
     gi = read(".gitignore")
-    for pat in ("*upload*.jks", "tcgcsv_cache/", "catalog/"):
+    # optcghub-seed*.zip: a seed zip committed to the tree is unpacked over it
+    # by the seed job (landmine 122) -- the zip is the recovery route and lives outside
+    for pat in ("*upload*.jks", "tcgcsv_cache/", "catalog/", "optcghub-seed*.zip"):
         if pat not in gi:
             fail("secrets", f".gitignore is missing '{pat}'")
 
@@ -441,6 +465,14 @@ def check_selftests():
                        capture_output=True, text=True)
     if r.returncode:
         fail("selftest", "scrub.py negative controls did not all fire:\n" + r.stdout)
+    r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "hashes.py"), "--selftest"],
+                       capture_output=True, text=True)
+    if r.returncode:
+        fail("selftest", "hashes.py guard controls did not all fire (landmine 124):\n" + r.stdout)
+    r = subprocess.run(["bash", os.path.join(ROOT, "ci", "check.sh"), "--selftest"],
+                       capture_output=True, text=True, cwd=ROOT)
+    if r.returncode:
+        fail("selftest", "check.sh runner-owned-files guard controls did not all fire (landmine 116):\n" + r.stdout)
 
 
 # --------------------------------------------------------------------------
@@ -452,7 +484,7 @@ def selftest():
     def probe(name, mutate):
         global FAILS, NOTES, ROOT
         tmp = tempfile.mkdtemp()
-        for item in ("docs", "BUILD", "src", "tools", ".gitignore", "www"):
+        for item in ("docs", "BUILD", "src", "tools", ".gitignore", "www", "ci", ".github"):
             src = os.path.join(ROOT, item)
             if os.path.exists(src):
                 (shutil.copytree if os.path.isdir(src) else shutil.copy2)(
@@ -465,6 +497,7 @@ def selftest():
             n = take()
             check_docs_current(n); check_handoff(n); check_agenda()
             check_landmine_citations(); check_secrets(); check_render_receipt()
+            check_workflow_copies()
             fired = bool(FAILS)
         finally:
             globals()["ROOT"] = old
@@ -491,6 +524,16 @@ def selftest():
     probe("upload key in the tree",
           lambda t: open(os.path.join(t, "apex-upload.jks"), "w").write("x"))
 
+    def drift(t):
+        # the live copy and the ci/ copy of one workflow, one byte apart (take 89)
+        os.makedirs(os.path.join(t, ".github", "workflows"), exist_ok=True)
+        open(os.path.join(t, ".github", "workflows", "probe.yml"), "w").write("name: probe\n")
+        open(os.path.join(t, "ci", "probe.yml"), "w").write("name: probe # drifted\n")
+    probe("workflow copies drift (ci/ vs .github/workflows)", drift)
+    probe("seed zip not ignored",
+          lambda t: open(os.path.join(t, ".gitignore"), "w")
+          .write(read(".gitignore").replace("optcghub-seed*.zip", "")))
+
     w = max(len(n) for n, _ in results)
     for name, fired in results:
         print(f"  {'ok  ' if fired else 'FAIL'}  {name:<{w}}  "
@@ -511,6 +554,7 @@ if __name__ == "__main__":
     check_landmine_citations()
     check_ledger_integrity()
     check_docs_complete()
+    check_workflow_copies()
     check_stale_copy()
     check_play_readiness()
     check_escapes_in_markup()

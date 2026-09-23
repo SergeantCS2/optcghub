@@ -1,9 +1,10 @@
 name: hunt
 
-# OP TCG Hub — the hourly stock feed (A32, take 71). PASTED BY HAND ONCE into
-# .github/workflows/hunt.yml, like build.yml and bootstrap.yml (APEX landmine
-# 46: GITHUB_TOKEN cannot write workflows). Everything it runs lives in the
-# tree, so the seed updates the behaviour; only this file needs a paste.
+# OP TCG Hub — the hourly stock feed (A32, take 71). Since take 89 it lives in
+# git like every workflow: changed on a branch, kept BYTE-IDENTICAL to
+# ci/hunt.yml (the gate compares the two); pasted by hand only if a push of
+# .github/workflows is refused (RUNBOOK §5b). Everything it runs lives in the
+# tree, so a merged take updates the behaviour without touching this file.
 #
 # What it does, every hour: rebuild www/ from the committed tree (no smoke, no
 # render, no commit), fetch the retailer feed for the configured zip with
@@ -35,13 +36,13 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.ref_name }}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
       - name: Rebuild www/ from the committed tree, then fetch the feed
@@ -56,7 +57,7 @@ jobs:
         env:
           HUNT_ZIPS: ${{ vars.HUNT_ZIPS }}
           HUNT_RADIUS: ${{ vars.HUNT_RADIUS }}
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with: { path: www }
       - id: deploy
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

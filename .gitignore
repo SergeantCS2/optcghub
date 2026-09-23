@@ -21,3 +21,6 @@ catalog/catalog.json.gz
 # NEVER commit the Play upload key (RUNBOOK-play A.3, landmine 23)
 *upload*.jks
 *upload*.b64
+# a seed zip is the RECOVERY route (RUNBOOK §6) and lives outside the tree:
+# committed, the seed job would unpack it over everything (landmine 122)
+optcghub-seed*.zip

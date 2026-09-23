@@ -4,12 +4,7 @@
 set -euo pipefail
 
 echo "::group::deps"
-pip install --quiet --break-system-packages pillow
-# render.mjs falls back to a DOM check without this and says so. CI is the place
-# pixels actually get verified, so CI is where Chrome has to exist.
-# acorn: the scrubber's parser (tools/strip_comments.mjs, take 35). Without it
-# build_app.py stops at the strip and says so.
-npm install --silent --no-save puppeteer acorn
+bash ci/deps.sh        # one install list for the nightly and the PR check (landmine 121)
 echo "::endgroup::"
 
 echo "::group::source present?"
@@ -21,7 +16,7 @@ done
 if [ -n "$missing" ]; then
   echo "::error::This repo has no OP TCG Hub source. Missing:$missing"
   echo "Files at root:"; ls -A | sed 's/^/  /'
-  echo "Upload optcghub-seed-tNNN.zip to the repo ROOT and re-run."
+  echo "Merge a take, or (recovery, RUNBOOK §6) upload optcghub-seed-tNNN.zip to the repo ROOT and re-run."
   exit 1
 fi
 echo "take $(grep -oP 'VAULT_TAKE=\K[0-9]+' BUILD)"
