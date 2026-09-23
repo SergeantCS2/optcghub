@@ -1047,9 +1047,10 @@ leaves nothing in the list.
   (`+c.dataset.fv`, the file's own pattern for `bnset`, `browseSet`,
   `setpick`); `loadFilter()` normalises a saved filter's set ids to ints
   when it loads and loads blank on a corrupt one; both scopes go through
-  it. Eight smoke assertions with two controls; seven in Chrome on the
-  runner — tap, count, Show's tiles, lit on reopen, un-select — with the
-  string shape as the control. Landmine 126.
+  it. Eight smoke assertions with two controls; seven in Chrome — tap,
+  count, Show's tiles, lit on reopen, un-select — with the string shape
+  as the control, **PROVEN green on the runner's check (render 76, mode
+  chrome)**. Landmine 126.
 - **Ruled out: comparing as strings on both sides** (take 89's sketch): two
   writers with two types, and the toggle-off `indexOf` still wrong for one.
 

@@ -97,8 +97,12 @@ commits).
   count, the stored id is a number, the chip is lit, Show draws exactly
   that many tiles in `#colGrid`, the chip is still lit when the sheet
   reopens, a second tap un-selects with every card back, and the string
-  shape as the control. UNKNOWN until the check runs; recorded below when
-  it has.
+  shape as the control. **PROVEN on the runner (check run 4, head
+  9d74309, 01:20 UTC): render 76 passed, 0 failed (mode: chrome)** —
+  69 before, the seven new all green on the first run; smoke **592
+  passed, 0 failed** there too; **GATE PASSED**, hash coverage 100.0%,
+  pipeline 26 s with the hashes step this VM could not run. The receipt is
+  the run's `render` artifact.
 - **Found on the way — render's DOM fallback was dead (landmine 127):**
   it threw on `window.addEventListener` at boot, the error buffer's
   registration from take 82, because the DOM context never had the stub
