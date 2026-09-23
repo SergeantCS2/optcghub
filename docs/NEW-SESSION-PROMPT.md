@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 100.* Paste the block between the rules into a new session
+*Current as of take 101.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 100 takes by previous sessions. The repo is
+built across 101 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -146,6 +146,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 101" and begin with PROTOCOL §0.
+Say "take 102" and begin with PROTOCOL §0.
 
 ---

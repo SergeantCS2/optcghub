@@ -209,8 +209,10 @@ echo "::group::APK size — ABI filter"
 # x86 and x86_64. The two x86 variants exist for emulators; no phone on earth
 # runs this app on them. Landmine 58.
 #
-# The Play AAB splits per-ABI automatically, so this only shapes the SIDELOAD
-# APK -- which is the artifact the owner actually installs.
+# The filter sits in defaultConfig, so it shapes the Play AAB too: the bundle
+# carries the two ARM ABIs only and Play serves nothing to an x86 device (an
+# emulator or a Chromebook) -- no phone is affected. Take 101 corrected this
+# comment, which had said the sideload APK alone.
 python3 - <<'PYABI'
 import re
 A = "android/app/build.gradle"
@@ -297,8 +299,14 @@ if [ -n "${PLAY_UPLOAD_KEYSTORE_B64:-}" ]; then
   # burned versionCode (landmine 33).
   SIGNER=$(unzip -p "$AAB" META-INF/*.RSA 2>/dev/null | keytool -printcert 2>/dev/null | grep -m1 'Owner:' || echo "unreadable")
   echo "  AAB signer: $SIGNER"
-  case "$SIGNER" in *"OP TCG Hub, OU=sideload"*)
-    echo "::error::AAB is signed with the SIDELOAD key, not the upload key"; exit 1;; esac
+  case "$SIGNER" in
+    *"OP TCG Hub, OU=sideload"*)
+      echo "::error::AAB is signed with the SIDELOAD key, not the upload key"; exit 1;;
+    unreadable)
+      # take 101: a signer that cannot be read is not a pass -- a bundle with no
+      # signature block, or a keytool that failed, would have shipped as "fine"
+      echo "::error::AAB signer could not be read off the bundle (no META-INF/*.RSA, or keytool failed)"; exit 1;;
+  esac
 else
   # No secrets set: still build, but NAME it unfit so nobody uploads a
   # dev-signed bundle and burns a versionCode on a rejection (landmine 33).
@@ -312,6 +320,10 @@ echo "::endgroup::"
 
 echo "::group::what shipped"
 ls -lh "$APK" "$AAB"
+# Take 101: the breakdown by component, raw (installed) and packed (downloaded),
+# for both artifacts -- the owner read 56 MB on the phone for a 34.9 MB file and
+# the answer is this table. A size take is measured against it, never guessed.
+python3 tools/shipped.py "$APK" "$AAB"
 unzip -l "$APK" | grep -c 'assets/public' || true
 # The catalogue must actually be inside the APK. An app that ships without it
 # shows an empty binder and the only thing that catches that is a count.

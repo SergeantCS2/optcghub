@@ -479,6 +479,10 @@ def check_selftests():
                        capture_output=True, text=True)
     if r.returncode:
         fail("selftest", "hashes.py guard controls did not all fire (landmine 124):\n" + r.stdout)
+    r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "shipped.py"), "--selftest"],
+                       capture_output=True, text=True)
+    if r.returncode:
+        fail("selftest", "shipped.py controls did not all pass (take 101):\n" + r.stdout)
     r = subprocess.run(["bash", os.path.join(ROOT, "ci", "check.sh"), "--selftest"],
                        capture_output=True, text=True, cwd=ROOT)
     if r.returncode:

@@ -1,6 +1,6 @@
 # RUNBOOK — Google Play, from the repo to a running 14-day clock
 
-*Current as of take 100.* The whole procedure, in the order it must happen,
+*Current as of take 101.* The whole procedure, in the order it must happen,
 with who does each step. Everything on the repo side is already built; what
 follows is the owner's, and none of it is hard. The gate at the end is calendar
 time: **12 testers opted in for 14 continuous days** (landmine 35; re-checked
@@ -72,6 +72,29 @@ right failure.)
 **Back the folder up** somewhere that is not the PC. It never enters the
 tree, a seed, or a session (landmine 23). Losing it is recoverable through Play
 App Signing's upload-key reset, but it is a support ticket and days.
+
+**The reset, when Play expects a different key (take 101).** Two cases
+end here: the key folder is lost, or the *first* bundle ever uploaded was a
+`DEVKEY-DO-NOT-UPLOAD` one, so Play registered the sideload key as the
+upload key and refuses every upload-key-signed bundle since with "wrong
+key". Tell them apart in one look: **Play Console → Test and release →
+Setup → App signing → Upload key certificate.** The sideload key's SHA-1 is
+`8A:17:C1:B9:8C:44:4F:AE:36:12:54:0E:1A:E5:95:92:45:5C:65:68` (the
+committed `signing/optcghub.keystore`, `CN=OP TCG Hub, OU=sideload`). If
+that is the fingerprint shown, reset; any other fingerprint is the upload
+key and uploads work. The reset, in order:
+
+1. On that page, **Request upload key reset** → Google asks for a new
+   upload certificate (`.pem`). Make it from the *existing* upload
+   keystore the script generated (`keytool -export -rfc -keystore
+   upload.jks -alias <alias> -file upload_cert.pem`) — the key in the
+   secrets is fine; only Play's record of it is wrong.
+2. Upload the `.pem` in the form. Google confirms by email in a few days;
+   the old key stops working then.
+3. Nothing changes on the repo: the secrets already hold that key. Run
+   **Actions → build → Run workflow** once after the confirmation and read
+   the `AAB signer:` line — `CN=OP TCG Hub upload` — then upload that
+   take's bundle.
 
 ## 3. Create the app — The owner, Play Console
 
@@ -202,16 +225,27 @@ the free hobbyist tier is worth ten minutes when the console offers it (A12).
 
 ## Every take after the first
 
-Drop the seed at the repo root → the build runs → the Release carries
-`optcghub-take-N.aab` signed with the upload key. Upload it to the closed
-track. `versionCode` is the take number and never goes backwards (landmine
-33).
+Merge the take's PR → the build runs → the Release carries
+`optcghub-take-N.aab` signed with the upload key (the `apk` job's log line
+`AAB signer: Owner: CN=OP TCG Hub upload` is the proof; since take 101 an
+unreadable signer fails the build). Upload it to the closed track.
+`versionCode` is the take number and never goes backwards (landmine 33).
+Two things per take:
+
+- **Upload each take once.** The nightly rebuilds the same take and
+  replaces the Release's files with the same `versionCode`; a second upload
+  of take N is refused as "already used" (landmine 33). The next upload is
+  take N+1.
+- **Your own phone (landmine 34):** the Play build and the sideloaded take
+  share `com.optcghub.app` but not a signer, so the Play build cannot
+  install over the sideload. Before installing from Play: More → Export
+  CSV, uninstall, install from Play, More → Import.
 
 ## If something goes wrong
 
 | symptom | look at |
 |---|---|
-| Play: "signed in debug mode" or "wrong key" | the bundle still has the DEVKEY suffix — §2, the secrets, then re-run the build |
+| Play: "signed in debug mode" or "wrong key" | two causes: the bundle still has the DEVKEY suffix (§2, the secrets, then re-run the build) — or the file is upload-key-signed (the log's `AAB signer:` line says `CN=OP TCG Hub upload`) and Play registered the *sideload* key from a DEVKEY first upload: check the upload key certificate's SHA-1 against `8A:17:C1:B9:…` and reset (§2, "The reset") |
 | Play: "Version code N has already been used" | landmine 33 — a burned code; the next take's number is new, upload that |
 | The Play build will not install on the Fold | landmine 34 — same id, different signer; export, uninstall the sideload build, install, restore |
 | "Your app must have a privacy policy" | §5 — the URL must open; Pages source must be *GitHub Actions* (RUNBOOK §3) |

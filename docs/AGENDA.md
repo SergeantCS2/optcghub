@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 100.* Ranked by blocking-ness, not by interest.
+*Current as of take 101.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -23,7 +23,12 @@ each item got where it is; this block is what to do next.
 2. **D22** background stock checks; **D21** local stock for unserved zips;
    **D20** a crowd-report inbox. Each caps a Hunt feature until answered.
 4. Shop URLs for stores he knows (A32's storefront list, one entry today).
-5. D7 the icon; D16 the faces; the `.aab` filename before production.
+5. D7 the icon; D16 the faces. *(The `.aab` filename before production:
+   closed take 101 — the Release's bundle is `optcghub-take-N.aab`, upload-key
+   signed, PROVEN from the build log.)* **Take 100 to Play:** read the
+   upload key certificate's SHA-1 in Play Console → App signing (RUNBOOK-play
+   §2, "The reset" — optional, his word) and upload `optcghub-take-100.aab`;
+   export before ever installing from Play (landmine 34).
 
 **Mine, in order**
 1. **A41** — waits on the owner's list of the parts and the source;
@@ -503,6 +508,18 @@ from.
 
 ## A21 — Google Play · CLOSED TEST APPROVED take 52 · the clock starts at the twelfth tester
 
+*Take 101 addendum:* the owner asked whether take 100's bundle is fit for
+Play. Verified from the build's own log: upload-key signed, versionCode
+100, targetSdk 36, `com.optcghub.app`. The 56 MB he sees is the installed
+size (the file is 34.9 MB; Play serves splits from the 23 MB bundle). The
+sizes were then measured from the release files (the table in the take-101
+HANDOFF entry): dex 23 MB raw, the OCR engine 11.1 + 6.8 MB, the OCR
+language models 5.5 MB raw, the app and catalogue 8.6 MB raw. **He picked
+R8 and the non-Latin OCR models for take 102** (A14). The upload-key
+question he set aside — "not an issue" — so the fingerprint check in
+RUNBOOK-play §2 is optional reference. Landmine 34 applies to his own
+phone: export before installing from Play.
+
 The owner wants the closed-testing clock started in a few days. The gate is
 **12 testers opted in for 14 continuous days** (landmine 35). Everything below
 is what stands between the seed and that clock, in order, with who does it.
@@ -511,7 +528,7 @@ is what stands between the seed and that clock, in order, with who does it.
 |---|---|---|---|
 | 1 | **D14 — one game or many, and therefore the package name** | The owner | DONE take 24; `com.optcghub.app` registered with Play at the take-35 upload, permanent |
 | 2 | Stand up the repo: RUNBOOK §1–4 | The owner | **DONE** — read off the repo at take 34: public, run #3 green end to end (seed 6 s, bundle 42 s, apk 4 m 36 s, pages 14 s), Release **take-31**, Pages live. PROVEN |
-| 3 | First CI build produces the AAB | CI | built, dev-key-signed, named unfit (correct). Loses the suffix the first build after `tools/play-key.sh` sets the four secrets — RUNBOOK-play §2 |
+| 3 | First CI build produces the AAB | CI | **DONE** — the four secrets are set; every build's `apk` job prints `AAB signer: Owner: CN=OP TCG Hub upload, OU=play` and names the file `optcghub-take-N.aab` (PROVEN from run 48's log, take 101). Still UNKNOWN: which bundle registered the upload key at the take-35 upload — the owner's fingerprint check settles it (RUNBOOK-play §2) |
 | 4 | Play Console: create the app, Play App Signing, the four secrets | The owner | **DONE** — personal account; app created; version code 35 accepted into internal testing (two optional warnings). **UNKNOWN: whether the upload-key bundle or the DEVKEY one was the first upload** — RUNBOOK-play §2 says how to reset if the latter |
 | 5 | Listing: title, short and full description opening with the disclaimer, screenshots, icon 512, feature graphic 1024×500 | The owner | copy pasted (take 36); screenshots from the Fold with the take-37 showcase files; the console shows the jolly roger icon — swap to `play-assets-t33/icon-512.png` or say so (D7) |
 | 6 | Privacy policy live on Pages, naming AdMob | take 30 | Pages deployed at `https://sergeantcs2.github.io/optcghub/` (run #3); the policy is `/privacy.html` there |
@@ -2106,6 +2123,18 @@ he will send more screenshots.
   accents; whether the splash is the icon large or something else.
 
 ## A14 — Trimming the ML Kit language models · OPEN, UNVERIFIED
+
+*Take 101 addendum — MEASURED from Release take-100's files (`tools/shipped.py`):*
+the OCR language models are **5.5 MB raw / 3.7 MB packed** in the APK, of
+which the non-Latin recognisers (Hani 0.89, Jpan 0.89, Kore 0.80, Deva
+0.44, Beng 0.44 MB) are ~3.5 MB raw — the "~10 MB" above was an estimate.
+The native pipeline is 11.1 MB (arm64) + 6.8 MB (armeabi-v7a), stored
+uncompressed in the APK, 4.4 + 3.5 MB in the bundle. Dex is 23.0 MB raw /
+8.7 packed with R8 off. **The owner picked R8 and the non-Latin models for
+take 102**; the 32-bit ABI in the sideload APK (6.8 MB) and a gzipped
+catalogue (~4.4 MB installed) stay listed, unpicked. The proof for 102 is
+the Fold's self-test (the ML Kit read included) and a manual pass — the
+harness cannot see a `NoClassDefFoundError` on a phone.
 
 - **MEASURED take 5:** `@capacitor-mlkit/text-recognition` pulls Latin, Chinese,
   Devanagari, Japanese and Korean recognisers and ships each one's LSTM model

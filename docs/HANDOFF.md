@@ -1,4 +1,112 @@
-# HANDOFF — through Take 100
+# HANDOFF — through Take 101
+
+## Take 101 — 2026-09-23 — the Play upload of take 100: the bundle's signing verified from the build's own log, the record corrected, one guard
+
+Opened before any code (PROTOCOL §6). Take 100 merged at 10:00:48 UTC
+(PR #24, merge commit 1af6cb1, every commit included); **Release
+take-100 published 10:07:40 with both assets** (APK 34.9 MB, AAB
+23.8 MB) on build run 48's first try. The owner is installing it and
+asked: *"is the aab good? … I want to get this version on google play
+if the aab is good. The apk is over 30 MB, it's 56."*
+
+### Measured first
+
+- **The bundle is signed with the Play upload key — PROVEN by the
+  runner's own readback.** Run 48's `apk` job printed `AAB signer:
+  Owner: CN=OP TCG Hub upload, OU=play, O=OP TCG Hub` after
+  `bundleRelease -Pupload=1`, and the file is `optcghub-take-100.aab`
+  with no `DEVKEY-DO-NOT-UPLOAD` suffix (`ci/apk.sh` 289–301: the suffix
+  and the dev key are the path taken only when the four
+  `PLAY_UPLOAD_*` secrets are absent). So the secrets exist and have
+  for some time; `docs/V1-STATE.md` still said the bundle was dev-signed
+  "until the upload-key secrets exist" — stale, corrected this take.
+- `versionCode` 100 (`VAULT_TAKE`), `versionName` 1.0.100,
+  `compileSdk`/`targetSdk` 36 (`android/variables.gradle`, landmine 37),
+  `applicationId com.optcghub.app`. Play's floor is met; the code is
+  above the last upload (35).
+- **The sizes, MEASURED from the release files themselves** (both
+  downloaded from Release take-100 and broken down by component; raw =
+  as installed, packed = as downloaded):
+
+  | component | APK raw | APK packed | AAB packed |
+  |---|---|---|---|
+  | dex — the app, Capacitor, AdMob, Play services, ML Kit client (3 files) | 23.0 MB | 8.7 MB | 8.7 MB |
+  | `libmlkit_google_ocr_pipeline.so` arm64-v8a — the scanner's OCR engine | 11.1 MB | 11.1 MB (stored) | 4.4 MB |
+  | the same `.so` for armeabi-v7a (32-bit phones) | 6.8 MB | 6.8 MB | 3.5 MB |
+  | `assets/public` — the app, `catalog.json` 5.07 MB, hunt files 2.7 MB, fonts | 8.6 MB | 1.8 MB | 1.8 MB |
+  | ML Kit OCR models — Hani 0.89, Jpan 0.89, Kore 0.80, Deva 0.44, Beng 0.44, Latn 0.31, detectors | 5.5 MB | 3.7 MB | 3.5 MB |
+  | res | 2.8 MB | 2.5 MB | 1.5 MB |
+  | **total** | **58.0 MB** | **34.7 MB** | **23.6 MB** |
+
+  **The owner's 56 MB is the unpacked APK (58.0 MB raw)** — Android
+  installs the archive extracted and reports that; the 34.9 MB file is
+  the same bytes compressed. **The bundle is smaller than the APK**
+  because a bundle compresses the native libraries (11.1 → 4.4 MB)
+  where an APK must store them, and Play serves each phone its own ABI:
+  an arm64 phone downloads about 20 MB and installs about 51 MB. The
+  levers, measured: R8 (dex 23 MB raw, typically halves; the riskiest —
+  reflection in the plugins, each of which ships consumer ProGuard
+  rules), the non-Latin OCR models (3.5 MB raw — A14's "~10 MB" was an
+  estimate, this is the number), the 32-bit ABI in the sideload APK
+  (6.8 MB), the catalogue gzipped (~4.4 MB installed). **The owner
+  picked R8 and the non-Latin models for take 102**; the other two
+  stay listed. The apk job now prints this table on every build
+  (`tools/shipped.py`), so 102 is measured against a log line.
+- **The owner on the upload key (13:5x UTC):** *"not sure we need to do
+  this new cert work — I don't think that's an issue. I was more
+  concerned with the file size differences."* So nothing is asked of him
+  about keys; the reset steps written into RUNBOOK-play §2 stay as the
+  reference the record had promised, and the fingerprint check is
+  optional.
+- **A risk on paper, UNKNOWN since take 35 and not the owner's concern:** which bundle registered
+  the upload key at Play. If a DEVKEY bundle went first, Play expects
+  the sideload key (`CN=OP TCG Hub, OU=sideload`, SHA-1
+  `8A:17:C1:B9:8C:44:4F:AE:36:12:54:0E:1A:E5:95:92:45:5C:65:68`) and
+  refuses take 100 as "wrong key". The owner settles it in Play
+  Console → App signing → the upload key certificate's SHA-1: that
+  fingerprint means a reset; any other means the upload key, and
+  take 100 uploads cleanly. Optional, by his word.
+- Landmine 34 applies to his own phone: the Play build cannot install
+  over the sideload (same id, different signer) — export first.
+- Two gaps the review found in `ci/apk.sh`: the signer readback passes
+  when it is *unreadable* (only the sideload key fails it), and the
+  comment at line 212 says `abiFilters` shapes the sideload APK only —
+  it sits in `defaultConfig`, so the bundle is ARM-only too (phones
+  unaffected; x86 excluded). `docs/RUNBOOK-play.md` §2 promised reset
+  steps it did not contain, and its "wrong key" row named one cause of
+  two.
+- **Ruled out:** uploading the APK (Play takes bundles); changing the
+  key or the id (A8); shrinking or trimming ML Kit here (a size change
+  is its own measured take).
+
+### Built
+
+- `ci/apk.sh`: an unreadable AAB signer fails the build; the
+  `abiFilters` comment tells the truth. Negative control: the readback
+  against a zip with no signature block.
+- `docs/V1-STATE.md`: the Play-bundle line reads the measured state.
+- `docs/RUNBOOK-play.md`: §2 gains the upload-key reset steps; the
+  "wrong key" row names both causes and the fingerprint check; "Every
+  take after the first" carries the export-first line (landmine 34)
+  and the nightly-rebuild note (landmine 33).
+- `docs/AGENDA.md`: A21 addendum; the ".aab filename before
+  production" item closed by the log line; A14 and R8 named as the size
+  items.
+- `tools/shipped.py`: the component breakdown of an APK or bundle (raw =
+  installed, packed = downloaded, the biggest files), with controls the
+  gate runs (`--selftest`: both dex spellings, a stored `.so`, the app's
+  assets apart from the OCR models, the totals, and a stray name landing
+  in `other` rather than vanishing). The apk job prints it for both
+  artifacts in `what shipped`; the numbers above are its first run.
+- No app change, so no look: nothing the collector sees moves.
+
+### DEFERRED this cycle
+
+- The owner's upload-key fingerprint and the upload itself (his).
+- A14 and R8 (size); A41 (the owner's list); Southern Hobby (a new
+  session with the opened domain list); the take-98 report's answers
+  from the take-100 install; tonight's nightly writes the 23 missing
+  sealed ids (read at 22:05 UTC).
 
 ## Take 100 — 2026-09-23 — A39 item 3: the missing pictures, measured on the runner — the sealed images and TCGplayer's second host
 
