@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 90
+# V1-STATE — what exists, as of take 91
 
-*Current as of take 90.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 91.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -49,7 +49,7 @@ refresh from Pages (take 27).
 | Stock decks | 17 legal decks built from the ST sets, with covers the app draws from the Leader colours and set code (take 62), shown as *ready-made*, playable in the sim, **never in the collection** (take 61) | smoke 10 incl. the never-owned guard with a control; stockdecks.py 9 guards in the gate |
 | Decks | legality per Comprehensive Rules §5-1 by section; advisor (curve, counters, blockers, triggers, life); Leader sheet; printing swap; import 5 list formats; export; value + history; sim-readiness and *Play this deck in Sim* (take 53) | smoke, two guards on R6 (number-keying) |
 | Hunt | a third mode with its own palette; **Sealed** — 343 sealed products with market/low/high, nightly delta, search, kinds, alerts through the detail sheet; **Releases** — every set's publish date, upcoming with a countdown (take 70) | smoke 16, render 3 in Chrome |
-| Diagnostics | hidden behind five taps on More → About: live endpoint probes, storage, the last twenty errors, the self-test, copy or share (take 82) | smoke 5 |
+| Diagnostics | hidden behind five taps on More → About: live endpoint probes, storage, the last twenty errors — kept across restarts since take 91 — the self-test, copy or share (take 82). **More itself was unreachable from take 83 to take 90** (its section was built on demand and the take-83 guard refused it first; A37, landmine 128); a static section since take 91 | smoke 5 + the take-91 More and persistence assertions; render opens More and reaches Diagnostics in Chrome (take 91) |
 | Prep & Play | mode slider + palette; Cards browse (keywords, colour, cost, text, for-this-deck); Play counter with §6-4-1 first turn and a *pass the phone* mode (take 44); **Sim: the hot-seat board** — two legal decks, the rules of RULES.md §3 enforced with sections cited, effects by hand through a tray, the curtain at every hand-over (take 46); **scripted effects** parsed from card text at build time, 2,161 of 7,553 lines (28.6%): chains, costs, continuous effects and keywords, follow-ons, searches in every phrasing, Events at both timings, cost changes, modifiers with honest expiries that follow their card, offered under their conditions with engine-computed targets (takes 47–51); **an opponent** — legal, not clever, never reads the hand — so one person can play (take 55) | render draws the dealt board; smoke 22 against §3, 40 on the effect classes, two whole bot games under a conservation invariant |
 | Trade | two lists valued with spread; paste their list; share summary | smoke |
 | Wants & alerts | want list valued at likeliest printing; set checklist grid; binder pages; price alerts via local notifications, idempotent per catalogue date | smoke |
@@ -62,9 +62,9 @@ refresh from Pages (take 27).
 | Typography | four roles (display / comic / body / heavy), OFL/Apache faces bundled, 232 KB, licensed faces as a file drop in `assets/user/fonts/` | render.mjs: Chrome reports all four LOADED and h2 resolves to the display face, with a missing-file control; smoke 7 |
 | Sync | quiet once-per-open sync holds on cellular unless switched on; Sync now always runs; `UPDATE_URL` points at Pages | smoke 4 controls; **not yet seen on the Fold** |
 
-**Harness totals, take 90:** smoke.mjs 592 assertions, render.mjs 76 in
+**Harness totals, take 91:** smoke.mjs 600 assertions, render.mjs 81 in
 Chrome, gate 23 checks with negative controls, zero console errors across
-14 screens in both modes — measured on the runner by the PR check (run 4);
+14 screens in both modes — measured on the runner by the PR check (run 7);
 the session VM, with no puppeteer, ran smoke and the DOM fallback (10,
 markup only) and could not run the hashes step.
 

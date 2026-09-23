@@ -590,6 +590,9 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
   <div class="row" style="gap:8px;margin-bottom:10px"><button class="ghost go" id="diagRun">Run</button><button class="ghost" id="diagCopy" disabled>Copy report</button><button class="ghost" id="diagShare" disabled>Share</button></div>
   <pre id="diagOut" style="white-space:pre-wrap;font-size:12px;line-height:1.45;color:var(--dim);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;min-height:80px"></pre>
 </section>
+<!-- take 91: More is markup like every screen; built on demand it was refused by go() (landmine 128) -->
+<section id="settings" class="screen"></section>
+
 <section id="releases" class="screen">
   <div class="bar"><span class="tab on" role="heading" aria-level="1"><svg class="swords" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 15L13 5M6 16L16 6M2 12L12 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Releases</span></div>
   <div id="relList"></div>
@@ -4504,11 +4507,10 @@ $('#dAddGraded').addEventListener('click', async () => {
 
 /* ---- settings ---------------------------------------------------------- */
 function paintSettings() {
-  let s = $('#settings');
-  if (!s) {
-    s = document.createElement('section');
-    s.id = 'settings'; s.className = 'screen'; document.body.appendChild(s);
-  }
+  /* take 91: the section is markup like every other screen (landmine 128).
+     It was created here on first paint, and the take-83 guard in go()
+     refused the id before this ran -- so More bounced to Home for eight takes. */
+  const s = $('#settings');
   const m = CAT.man;
   s.innerHTML = `
     <div class="bar"><span class="tab on" role="heading" aria-level="1">More</span></div>
@@ -5069,7 +5071,14 @@ $('#simCurtain').addEventListener('click', () => { $('#simCurtain').classList.re
 const SPLASH_T0 = Date.now();
 function splashDone() { const sp = $('#splash'); if (!sp || sp.classList.contains('off')) return; const wait = Math.max(0, 1600 - (Date.now() - SPLASH_T0)); setTimeout(() => { sp.classList.add('off'); setTimeout(() => sp.remove(), 400); }, wait); }
 setTimeout(splashDone, 3500);
-const ERRS = { list: [], push(kind, msg, where) { this.list.unshift({ t: new Date().toISOString(), kind, msg: String(msg).slice(0, 200), where: String(where || '').slice(0, 120) }); this.list = this.list.slice(0, 20); } };
+/* take 91: the buffer outlives a restart -- a blank screen is followed by a
+   relaunch, and a record that dies with the page names nothing (A37). */
+const ERRS = { KEY: 'vault.errs', list: [],
+  load() { try { const l = JSON.parse(localStorage.getItem(this.KEY) || '[]'); return Array.isArray(l) ? l.slice(0, 20) : []; } catch (e) { return []; } },
+  push(kind, msg, where) {
+    this.list.unshift({ t: new Date().toISOString(), kind, msg: String(msg).slice(0, 200), where: String(where || '').slice(0, 120) }); this.list = this.list.slice(0, 20);
+    try { localStorage.setItem(this.KEY, JSON.stringify(this.list)); } catch (e) {} } };
+ERRS.list = ERRS.load();
 window.addEventListener('error', e => ERRS.push('error', e.message, (e.filename || '') + ':' + (e.lineno || '')));
 window.addEventListener('unhandledrejection', e => ERRS.push('rejection', (e.reason && (e.reason.message || e.reason)) || 'unknown'));
 const DIAG = {
@@ -5091,7 +5100,7 @@ const DIAG = {
     line('feed on phone', HUNT.feed ? `${HUNT.ageLabel(HUNT.feed.fetched_at)}, target ${HUNT.feed.sources && HUNT.feed.sources.target && HUNT.feed.sources.target.ok ? 'ok' : 'not ok'}` : 'none'); line('history on phone', HUNT.hist ? `${HUNT.hist.runs.length} runs` : 'none'); line('stores on phone', LOCAL.stores ? `${LOCAL.stores.stores.length}, ${HUNT.ageLabel(LOCAL.stores.fetched_at)}${HUNT.zip ? ', ' + LOCAL.stores.stores.filter(s => s.zip && s.zip.slice(0, 3) === HUNT.zip.slice(0, 3)).length + ' in your zip area' : ''}` : 'none'); line('events on phone', EVENTS.tab ? `${EVENTS.tab.rows.length} rows` : 'none'); line('shops on phone', LOCAL.shops ? `${LOCAL.shops.shops.length}` : 'none'); line('exact distances', LOCAL.exact()); line('stock alerts', STOCK.list.length); line('local notes', LOCAL.notes.length);
     L.push('', '## storage'); for (const k of ['vault.collection', 'vault.decks', 'vault.hunt', 'vault.hunt.hist', 'vault.hunt.stores', 'vault.hunt.events', 'vault.hunt.shops', 'vault.hunt.zcta', 'vault.alerts', 'vault.stockAlerts']) line(k, this.kb(k));
     L.push('', '## counts (never contents)'); line('collection items', OWN.items.length); line('decks', DECKS.list.length); line('price alerts', ALERTS.list.length);
-    L.push('', '## last errors'); if (!ERRS.list.length) L.push('none'); else for (const e of ERRS.list) L.push(`${e.t.slice(11, 19)} ${e.kind}: ${e.msg}${e.where ? ' @ ' + e.where : ''}`);
+    L.push('', '## last errors'); if (!ERRS.list.length) L.push('none'); else for (const e of ERRS.list) L.push(`${e.t.slice(0, 19).replace('T', ' ')} ${e.kind}: ${e.msg}${e.where ? ' @ ' + e.where : ''}`);   /* take 91: records outlive the day now */
     L.push('', '## self-test'); try { await runSelfTest(); L.push(...(SELFTEST.text() || 'no result').split('\n').slice(1)); } catch (e) { L.push('self-test threw: ' + (e.message || e)); }
     return L.join('\n');
   }

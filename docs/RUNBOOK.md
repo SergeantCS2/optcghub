@@ -1,6 +1,6 @@
 # RUNBOOK — from nothing to a repo that builds every night
 
-*Current as of take 90.* **Since take 89 the repo is the record:** a session
+*Current as of take 91.* **Since take 89 the repo is the record:** a session
 works on a branch and opens a pull request; you merge; the merge builds. §6
 is every take. §1–§5 are how the repo was first stood up from a seed zip and
 remain the recovery procedure; you need them again only for a new repo or a
