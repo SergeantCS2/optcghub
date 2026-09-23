@@ -92,7 +92,9 @@ answers to the plan: the harness first (take 99), the pictures probe next
   list and the `&&` chain stopped before the commit — the push pushed
   nothing and only the log's last line showed it. Anchored to `/look/`;
   smoke asserts `git check-ignore` refuses the step list (smoke 685).
-- The runner's numbers: below, when the check reports them.
+- **The runner (check run 26, head e15382a, first run): smoke 685, render
+  106 in Chrome, GATE PASSED** — 45 s with the catalogue cache warm. The
+  PR stays draft until the owner has replied to the pictures (A40).
 
 ### DEFERRED this cycle
 

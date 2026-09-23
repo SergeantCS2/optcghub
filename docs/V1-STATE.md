@@ -74,6 +74,13 @@ no camera, notifications, share sheet or native Back; no CDN pictures
 from the VM. An emulator was measured impossible here (no KVM, no SDK,
 no network).
 
+**Harness totals, take 99:** smoke.mjs 685 assertions (5 new: the look
+exists and `look/` is ignored at the root only with a `git check-ignore`
+control, the toast rule, the sealed subtitle with a card control),
+render.mjs 106 in Chrome, gate 23 checks, hunt.py 61 — measured on the
+runner by the PR check (run 26, gate passed); the look 20 steps at two
+viewports, 24 PNGs, on the session VM.
+
 **Harness totals, take 98:** smoke.mjs 680 assertions (14 new: the back
 path from a sheet with two controls, the most-valuable rows, the splash,
 the toast, the decks fold, the condition tap with a control), render.mjs
