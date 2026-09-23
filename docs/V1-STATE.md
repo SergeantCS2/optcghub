@@ -69,10 +69,11 @@ the toast, the decks fold, the condition tap with a control), render.mjs
 no blank record and its control with a prompt open, a most-valuable
 row's click, the long toast inside the screen, the splash rule), gate 23
 checks with negative controls, hunt.py
-61 selftest lines — smoke and the DOM render measured here; the Chrome
-count is the runner's until the take-98 check reports it; the session VM
-has no puppeteer and no pillow, so Chrome and hashes run on the runner
-only.
+61 selftest lines — measured on the runner by the PR check (run 25,
+gate passed); the session VM has no puppeteer and no pillow, so the
+harness's Chrome and the hashes run on the runner only (a globally
+installed playwright with Chromium exists on the VM since take 98 for
+reproductions, outside the harness).
 
 ## DEFERRED, and why
 

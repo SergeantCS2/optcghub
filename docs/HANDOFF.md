@@ -77,9 +77,13 @@ other side: the watchdog healed the blank by putting Home back.
   the most-valuable rows twice, the splash, the toast, the decks fold, the
   condition handler, the tap on an unowned card, the tap on an owned copy
   with quantity and cost basis, the refused sixth condition, the note);
-  the DOM render 10 here; Chrome 106 on the runner (five new) — the
-  runner's numbers are recorded below when the check reports them. Two
-  tests were wrong before the product was: `OWN.add()` takes no cost
+  the DOM render 10 here; **the runner (check run 25, head 74bf3c6):
+  smoke 680, render 106 in Chrome, GATE PASSED** — run 24 was red on
+  one Chrome assertion, below. The same run's hash step says what the
+  picture question is worth: **219 images known to be unavailable at
+  the catalogue's CDN, retried every run, 0 recovered** (MEASURED) —
+  those are the blanks on Releases and the newest packs. Two tests were
+  wrong before the product was: `OWN.add()` takes no cost
   basis (it is set on the sheet), so the smoke test sets it on the
   returned copy; and the Chrome back-path test opened Sealed with no zip
   set, so the zip prompt sheet was open when the history event fired and
