@@ -146,6 +146,7 @@ Start here. Do not read top to bottom.
 | Importing a tools script gets a package with none of its functions | **133** |
 | A test says "matched" and the product is the wrong one | **134** |
 | Tapping a row does nothing, in one mode | **135** |
+| An element set `hidden` still draws | **136** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -1934,6 +1935,17 @@ owner reported "I can't click on the release." Since take 70, through
 four looks on the Fold. Rule: a handler that paints a screen calls `go()`
 for it, and the smoke test for a tap asserts the target screen is on
 afterwards, in every mode the control appears in.
+
+**136. The `hidden` attribute loses to any `display` rule, and the DOM
+stub cannot tell.** `.linkish{display:block…}` outranks the browser's own
+`[hidden]{display:none}`, so a button set `hidden` on a card's sheet drew
+at 36 px in Chrome while smoke, whose stub treats `hidden` as a plain
+property, passed. The house already knew: `.stale[hidden]`,
+`#tour[hidden]` and `nav[hidden]` each carry their own rule. Found by the
+runner's Chrome assertion on take 95's first run (check run 17). Rule: an
+element hidden by attribute gets a `<selector>[hidden]{display:none}`
+rule beside its display rule, and the render measures its height, not
+its attribute.
 
 ## §2 — Inherited from APEX ORV
 

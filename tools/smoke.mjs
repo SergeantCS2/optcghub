@@ -2004,6 +2004,8 @@ ok('a card\'s sheet shows the segment under a line that names the condition, the
 V.MODE.set('hunt', false); V.paintSealed();
 ok('the row\'s circle carries its word: alert, or watching', />alert<\/span><\/button>/.test(ctx.document.getElementById('sealedList').innerHTML) && (V.STOCK.toggle(box95.id), V.paintSealed(), />watching<\/span><\/button>/.test(ctx.document.getElementById('sealedList').innerHTML)));
 V.STOCK.toggle(box95.id); V.STOCK.list = []; V.MODE.set('collect', false); V.go('home');
+/* landmine 136 (check run 17): .linkish{display:block} and .seg{display:flex} outrank the browser's [hidden] rule; the stub cannot see that, so the shipped CSS is read here and Chrome measures the height */
+ok('the sheet\'s button and segment carry their own [hidden] rule, so the attribute hides them in a real engine (landmine 136)', /\.linkish\[hidden\],\.seg\[hidden\]\{display:none\}/.test(html));
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

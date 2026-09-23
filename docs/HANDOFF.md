@@ -78,7 +78,18 @@ take does the three that are a bug or a control nobody could find.
   the scrubber clean. Two Chrome assertions for the runner: a real click
   on a Releases row lands on Sealed with that set's products drawn, and
   the sealed sheet draws no condition segment and draws the stock alert
-  while the card sheet does the reverse. The runner's numbers follow.
+  while the card sheet does the reverse.
+- **The runner's first run (check run 17, head 0b678fd) was red on
+  exactly that second assertion:** smoke 641 green, Chrome 94 passed and
+  one failed — `{"segH":0,"stH":36,"segH2":39,"stH2":36}`: on the card's
+  sheet the stock button still drew at 36 px. `.linkish{display:block}`
+  outranks the browser's `[hidden]{display:none}`; the DOM stub treats
+  `hidden` as a property and cannot see it. The house pattern already
+  existed (`.stale[hidden]`, `#tour[hidden]`, `nav[hidden]`) and the fix is
+  one rule beside the display rule, `.linkish[hidden],.seg[hidden]
+  {display:none}`, with a smoke line that reads it in the shipped page.
+  Landmine 136 — the Chrome measurement earned its keep again (landmine
+  69). The runner's numbers follow.
 
 ### DEFERRED this cycle
 
