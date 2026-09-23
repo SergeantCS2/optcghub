@@ -63,7 +63,7 @@ refresh from Pages (take 27).
 | Sync | quiet once-per-open sync holds on cellular unless switched on; Sync now always runs; `UPDATE_URL` points at Pages | smoke 4 controls; **not yet seen on the Fold** |
 
 **Harness totals, take 93:** smoke.mjs 615 assertions (MEASURED in the
-session VM), render.mjs 81 in Chrome at take 92 plus 11 new that measure
+session VM), render.mjs 81 in Chrome at take 92 plus 9 new that measure
 the pictures drawn — the Chrome total is UNKNOWN until the PR check runs —
 gate 23 checks with negative controls, hunt.py 39 selftest lines; the
 session VM has no puppeteer and no pillow, so Chrome and hashes run on the

@@ -78,13 +78,20 @@ Chrome, a draft PR marked ready on green, no vendor trailer.
   picture per other printing on the card sheet, Home's top list and set
   progress, the Decks list's box, the re-classed thumbnails in the shipped
   source. The DOM render: 10 passed.
-- **In Chrome, on the runner only:** eleven assertions — a box per search
-  hit with every image inside its box, the 36 × 50 box and a one-line row,
-  no sideways scroll on the Search screen at 360/412/673/820, the Decks
+- **In Chrome, on the runner:** nine assertions — a box per search hit
+  with every image inside its box, the 36 × 50 box and a one-line row, no
+  sideways scroll on the Search screen at 360/412/673/820, the Decks
   list's Leader image filling its box exactly (the landmine-132
   measurement), a deck's card rows with a picture each and no sideways
   scroll, and the control: a printing with no image draws the labelled tile
-  and no `<img>`. UNKNOWN until the check runs; recorded below.
+  and no `<img>`. **The first run (check run 11, head e1e1dce) was red on
+  exactly one: the search row drew 117 px tall.** Every hit had its box, every
+  image fit; but `.row` aligns its items on the *baseline*, so a 50 px box
+  with no text put the name's baseline at the box's bottom and the row
+  stretched under it. The measurement caught what the markup assertions
+  could not — landmine 69's lesson again. The seven rows that gained a
+  picture are centred now (`align-items:center` on the row, as `.dkrow`
+  always was); Hunt's rows, seen and accepted on the Fold, are untouched.
 - **The ledger corrected:** PROVISION's "two entries" and "in the gate",
   PROTOCOL §8's control 1, and a parenthetical on landmine 28 — the gate
   checks that a host is declared; the purpose is prose.
