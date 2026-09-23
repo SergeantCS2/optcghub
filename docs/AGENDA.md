@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 89.* Ranked by blocking-ness, not by interest.
+*Current as of take 90.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -13,11 +13,14 @@ The live order, top first. Everything below this block is the record of how
 each item got where it is; this block is what to do next.
 
 **The owner's, gating everything else**
-1. **Merge take 89's PR** (squash), then confirm the next nightly is green
-   and the four failure issues are down to one closed thread. Open
+1. **Take 89 is merged and Release take-89 is up** (read at take 90; the
+   five failure issues are closed). Still yours: confirm the first
+   post-merge nightly (09-23, 21:30 UTC) is green; open
    `registry.npmjs.org`, `pypi.org` and `files.pythonhosted.org` in the
-   session's environment (take 89 could not rebuild without them). Decide
-   the vendor-name question for git metadata (take 89's HANDOFF).
+   session's environment — takes 89 and 90 could not rebuild without them
+   and shipped through the runner's `check` instead; merge take 90's PR
+   once its check is green. The vendor-name question: take 90 shipped with
+   no trailer at your word — say if that stands.
 2. **A Diagnostics paste** (More → About ×5) — the blank-after-Back has a
    watchdog since take 86 that names its trigger; nothing else can.
 3. **D22** background stock checks; **D21** local stock for unserved zips;
@@ -26,24 +29,23 @@ each item got where it is; this block is what to do next.
 5. D7 the icon; D16 the faces; the `.aab` filename before production.
 
 **Mine, in order**
-1. **A36** — the set chips in the filter sheet return zero cards (take 89,
-   INFERRED from the code; reproduce in Chrome first).
-2. Whatever the diagnostics paste names.
-3. **A33 item 6** — pictures on Collect's rows and Decks as on Hunt's.
-4. **A32**: retailer sources one session each with the real page in hand
+1. Whatever the diagnostics paste names.
+2. **A33 item 6** — pictures on Collect's rows and Decks as on Hunt's.
+3. **A32**: retailer sources one session each with the real page in hand
    (GTS and Southern Hobby are reachable; GameStop, Walmart, Meijer, eBay
    need a residential IP → the sideload build); the restock pattern
    sentence once a fortnight of hourly history exists on Pages.
-5. **A23** the sim's tail — modal effects, ordering, protection, the
+4. **A23** the sim's tail — modal effects, ordering, protection, the
    opponent's hidden choices — one mechanism per take, when wanted.
-6. **A31** Collectr import, the day a real exported file exists.
-7. The standing offer: the release-notes trim. (The seed-on-releases
+5. **A31** Collectr import, the day a real exported file exists.
+6. The standing offer: the release-notes trim. (The seed-on-releases
    `build.yml` offer is moot since take 89: takes ship as PRs.)
 
-**Closed since the last audit (takes 57–88):** A26 colour/contrast/desktop,
+**Closed since the last audit (takes 57–90):** A26 colour/contrast/desktop,
 A29 stock decks, A30 the tester report in full, A33 five of six, A34
-currency and splash, A35 all thirteen; A32 steps 1–3 and Local, Events,
-storefronts, stock alerts, the calendar tap, exact distances.
+currency and splash, A35 all thirteen, A36 the set chips (take 90); A32
+steps 1–3 and Local, Events, storefronts, stock alerts, the calendar tap,
+exact distances.
 
 **Stale and marked so:** A19 other games and A11 Japanese printings stay
 ruled out; A20's backlog is where ideas wait, not a queue.
@@ -1014,7 +1016,7 @@ other's.
    probe in smoke that proves the parser against a saved real response and
    a control that fails on a changed shape.
 
-## A36 — The set chips in the filter sheet return zero cards · OPENED take 89 · unreproduced
+## A36 — The set chips in the filter sheet return zero cards · OPENED take 89 · REPRODUCED AND CLOSED take 90
 
 Recorded from the take-35 listing-frames session, never written down until
 the pre-move review. Tapping a set chip in Filter & sort — either scope —
@@ -1037,6 +1039,19 @@ leaves nothing in the list.
   rows) with the mismatch as the negative control; then compare as strings
   on both sides and migrate the saved filters on load. One function. A
   product change, so a take of its own after 89.
+- **PROVEN take 90, in smoke on the shipped app before the fix:** the real
+  `#filters` click handler, handed a chip whose `dataset.fv` is the string a
+  DOM gives, stored `["3188"]`; `applyFilter` returned 0 of 1; the sheet
+  said *0 cards*. Three assertions red on the unfixed build, green after.
+- **Fixed take 90:** the handler coerces the set facet at the DOM boundary
+  (`+c.dataset.fv`, the file's own pattern for `bnset`, `browseSet`,
+  `setpick`); `loadFilter()` normalises a saved filter's set ids to ints
+  when it loads and loads blank on a corrupt one; both scopes go through
+  it. Eight smoke assertions with two controls; seven in Chrome on the
+  runner — tap, count, Show's tiles, lit on reopen, un-select — with the
+  string shape as the control. Landmine 126.
+- **Ruled out: comparing as strings on both sides** (take 89's sketch): two
+  writers with two types, and the toggle-off `indexOf` still wrong for one.
 
 ## A35 — The fourth look, after Hunt's first live run · OPENED take 86
 
