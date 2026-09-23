@@ -105,7 +105,7 @@ def check(db, man, prev=None, strict_hashes=True):
     try:
         import json, hashes as _h
         if os.path.exists(_h.SIDECAR):
-            unavailable = len(json.load(open(_h.SIDECAR)).get("missing", []))
+            unavailable = exempt(json.load(open(_h.SIDECAR)))
     except Exception:                                     # noqa: BLE001
         pass
     reachable = max(1, want - unavailable)
@@ -114,6 +114,14 @@ def check(db, man, prev=None, strict_hashes=True):
         _fail(bad, f"hash coverage {100*cov:.1f}% of {reachable} reachable "
                    f"printings (need 98%; {unavailable} images are 403 and excluded)")
     return bad, {"hash_coverage": cov, "auto_accept": safe / tot if tot else 0}
+
+
+def exempt(raw):
+    """How many printings the coverage check leaves out: the CARD images the CDN
+    refused (`missing`), and only those. Take 100 added `missing_sealed` to the
+    sidecar; sealed products are never hashed, so their misses must not widen
+    this exemption -- pinned here with a control."""
+    return len(raw.get("missing", []))
 
 
 def selftest():
@@ -153,6 +161,10 @@ def selftest():
     if good:
         bad, st = check(good, json.load(open(MANIFEST)), strict_hashes=False)
         ok.append(("real catalogue passes", not bad))
+
+    # take 100: the exemption counts card misses only (a sidecar with sealed misses too)
+    ok.append(("sealed misses never widen the hash exemption",
+               exempt({"missing": list(range(219)), "missing_sealed": list(range(600)), "alt": [1]}) == 219))
 
     width = max(len(n) for n, _ in ok)
     for name, fired in ok:

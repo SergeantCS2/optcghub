@@ -269,6 +269,16 @@ def check_offline(prov_hosts):
     if not js:
         return note("www/ not built — offline check skipped")
     found = set(re.findall(r"https?://([a-z0-9.-]+)", js + html, re.I))
+    # Take 100: a host can ride in DATA -- the bundle's `img` column carries the
+    # second image host for the products the runner saw it serve -- and until
+    # then this check read only the code. Every host in the bundle is declared too.
+    b = os.path.join(ROOT, "www", "bundle", "catalog.json")
+    if os.path.exists(b):
+        cat = json.load(open(b))
+        ci = cat["cols"].index("img")
+        for r in cat["rows"]:
+            if r[ci]:
+                found |= set(re.findall(r"https?://([a-z0-9.-]+)", r[ci], re.I))
     # XML namespace URIs are identifiers, never fetched: the inline SVG compass
     # carries xmlns="http://www.w3.org/2000/svg". Named here, not in PROVISION,
     # because PROVISION lists hosts the app TALKS to and this is not one.
@@ -497,7 +507,7 @@ def selftest():
             n = take()
             check_docs_current(n); check_handoff(n); check_agenda()
             check_landmine_citations(); check_secrets(); check_render_receipt()
-            check_workflow_copies()
+            check_workflow_copies(); check_offline(provision_hosts())
             fired = bool(FAILS)
         finally:
             globals()["ROOT"] = old
@@ -523,6 +533,16 @@ def selftest():
           lambda t: os.path.exists(os.path.join(t, "www", "render.png")) and os.remove(os.path.join(t, "www", "render.png")))
     probe("upload key in the tree",
           lambda t: open(os.path.join(t, "apex-upload.jks"), "w").write("x"))
+
+    def bad_host(t):
+        # take 100: an undeclared host carried in the bundle's img column, not in the code
+        d = os.path.join(t, "www", "bundle"); os.makedirs(d, exist_ok=True)
+        b = os.path.join(d, "catalog.json")
+        cat = json.load(open(b)) if os.path.exists(b) else {"cols": ["sealed", "id", "img"], "rows": [[0, 1, ""]]}
+        ci = cat["cols"].index("img")
+        cat["rows"][0][ci] = "https://evil.example.com/product/1.jpg"
+        json.dump(cat, open(b, "w"))
+    probe("undeclared host in the bundle's img column (take 100)", bad_host)
 
     def drift(t):
         # the live copy and the ci/ copy of one workflow, one byte apart (take 89)

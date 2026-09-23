@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 99
+# V1-STATE — what exists, as of take 100
 
-*Current as of take 99.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 100.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -73,6 +73,30 @@ subtitle ending in two stray dots — both fixed the same take. Limits:
 no camera, notifications, share sheet or native Back; no CDN pictures
 from the VM. An emulator was measured impossible here (no KVM, no SDK,
 no network).
+
+**Pictures (take 100, A39 item 3):** every printing's `img` is TCGCSV's
+URL on the first host; the runner's hash step now probes the 674 sealed
+images every run (availability only, never hashed) and TCGplayer's
+second host for every id the first refused, records `missing_sealed`,
+`alt` and `alt_host` in the sidecar, and the app build ships the second
+host's URL for an id the runner saw it serve — nothing guessed. The gate
+reads the bundle's image hosts against PROVISION (a host in data shipped
+unseen before). Diagnostics prints the counts. **MEASURED (check run
+29):** 23 of 674 sealed images are unavailable at the first host; the
+second host serves 1 of the 242 missing ids and answers 404 for 241 —
+the pattern is real and the missing pictures are not there either. The
+owner's image address from TCGplayer's own page is the next measurement;
+the phone's picture is the proof.
+
+**Harness totals, take 100:** smoke.mjs 691 assertions (6 new: both hosts
+in their shape with a third refused, the sidecar's `alt` ids ship the
+second host's URL — watched to fail on a hand-edited sidecar against the
+take-99 build — the manifest's counts, the second-host chain in
+`productPic`, the Diagnostics line), hashes.py selftest +8 (the probes'
+pure parts, the sidecar round-trip), validate.py +1 (sealed misses never
+widen the exemption, shown to refuse the tempting sum), gate +1 probe (an
+undeclared host in the bundle's `img` column); render.mjs 106 in Chrome;
+the look 2 steps for take 100 on the session VM.
 
 **Harness totals, take 99:** smoke.mjs 685 assertions (5 new: the look
 exists and `look/` is ignored at the root only with a `git check-ignore`

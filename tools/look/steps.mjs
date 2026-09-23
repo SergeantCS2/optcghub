@@ -130,4 +130,29 @@ export const CONTROLS = [
   { name: 'control-blank-page', run: async (page) => { await page.goto('about:blank'); return { ok: true }; } }
 ];
 
-export const STEPS = { 98: take98 };
+/* ---- take 100 — the pictures, measured on the runner ------------------------ */
+const take100 = [
+  { name: 'diagnostics-pictures-line', run: async (page, ctx) => {
+      /* More → About ×5 → Diagnostics: the report names how many products have no picture at either host */
+      await ctx.open();
+      return page.evaluate(async () => {
+        const V = window.VAULT; V.MODE.set('collect', true); V.go('diag');
+        const rep = await V.DIAG.report(); const out = document.querySelector('#diagOut'); if (out) out.textContent = rep;
+        const m = /pictures\s*[:=]\s*(.*)/.exec(rep); window.scrollTo(0, 0);
+        return { ok: !!m, line: m ? m[1].slice(0, 140) : '(no pictures line)' };
+      });
+    } },
+  { name: 'sealed-newest-set-rows', run: async (page) => {
+      /* the newest set's boxes and packs: a picture box per row. Here they are label boxes -- the VM has no CDN access; the phone is the proof */
+      return page.evaluate(async () => {
+        const V = window.VAULT; V.NAV.zipAsked = true; V.MODE.set('hunt', true); V.go('sealed'); while (V.closeAnyOverlay()) {}
+        await new Promise(r => setTimeout(r, 400));   /* the mode knob animates; a picture mid-slide is not the screen */
+        V.SEALED.q = 'Dominance'; V.paintSealed(); window.scrollTo(0, 0);
+        const h = document.querySelector('#sealedList').innerHTML; const boxes = (h.match(/class="pic"/g) || []).length; const imgs = (h.match(/<img class="ref"/g) || []).length;
+        V.SEALED.q = '';
+        return { ok: boxes >= 3 && imgs >= 3, boxes, imgs, note: 'label boxes here: no CDN from the VM' };
+      });
+    } }
+];
+
+export const STEPS = { 98: take98, 100: take100 };

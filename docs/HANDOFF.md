@@ -1,4 +1,120 @@
-# HANDOFF — through Take 99
+# HANDOFF — through Take 100
+
+## Take 100 — 2026-09-23 — A39 item 3: the missing pictures, measured on the runner — the sealed images and TCGplayer's second host
+
+Opened before any code (PROTOCOL §6). Take 99 merged at 09:41 UTC (PR
+#23, merge commit 00132d1) after the owner reviewed the look's eight
+pictures ("Screenshots look good, go") — the first take through A40's
+loop; check runs 26–28 green, smoke 685, render 106 in Chrome. Release
+take-99's build was running when this entry opened: **Release take-99
+published 09:47:12 UTC with both assets** (APK 34.9 MB, AAB 23.8 MB) on
+its first build run.
+
+**The item:** the owner's "still some missing pictures, namely releases
+and some newer packs — these 100% have pictures on TCG or elsewhere"
+(A39 item 3, from the take-97 answers), left at take 98 as a two-URL
+question because nothing but GitHub is reachable from this session. The
+runner has open network and already fetches every card image nightly; it
+can measure the question instead of the owner.
+
+### Measured first
+
+- Every one of 7,659 printings carries `img` = TCGCSV's `imageUrl` on
+  `tcgplayer-cdn.tcgplayer.com` (`…/product/<pid>_200w.jpg`; 674 of 674
+  sealed products have one). The app has no URL builder: `refArt()` draws
+  `p.img`, retries once without `_200w`, then removes the image — the
+  label box the owner calls a missing picture.
+- The hash step (`tools/hashes.py`) fetches **cards only** (`is_sealed=0`),
+  hashes and discards, and records every miss in the runner-owned
+  sidecar `catalog/hashes.json` under `missing` — 219 today, retried
+  every run, 0 recovered (check run 25's log). A miss there is any miss
+  (a timeout too), not only a 403/404; only `tally()` tells them apart.
+  **Sealed images have never been probed**, so the boxes and packs the
+  owner sees blank are unmeasured. Newest sealed: EB05 711383–711386
+  (2026-10-30), OP18 712901–712904 (2026-11-20).
+- The second host's URL pattern is INFERRED
+  (`https://product-images.tcgplayer.com/fit-in/200x279/<pid>.jpg`, what
+  TCGplayer's own pages use) and unverifiable from here: the VM's proxy
+  and the harness's fetch tool both answer `EGRESS_BLOCKED` for it. The
+  runner's probe is the measurement; the owner's phone check of the two
+  URLs (asked in the take-98 report) is the independent one.
+- `tools/gate.py check_offline()` scans `www/app.js` and `www/index.html`
+  for undeclared hosts and never the bundle's `img` column: a host carried
+  in the catalogue would ship past the gate unseen (the Plan review's
+  finding). Closed this take with a probe.
+- Pipeline order: catalog → hashes → validate → app, so the app build can
+  read what the hash step measured; `tools/validate.py` reads the
+  sidecar's `missing` to exempt cards from the 98% coverage check, so
+  sealed misses must live under their own key or they would widen the
+  exemption.
+- **Ruled out:** fetching from this session; mirroring or caching any
+  image (landmine 26); a second host on a guess in the app (only a URL
+  the runner saw serve is exported); committing the sidecar from the
+  branch (landmine 116 — the nightly writes its new keys); hashing sealed
+  images (the scanner is for cards; the sealed probe is availability
+  only).
+
+### Built
+
+- `tools/config.py`: `ALT_IMAGE_CDN`, one source of truth.
+- `tools/hashes.py`: the 674 sealed images probed every run (fetched and
+  discarded, never hashed) → sidecar `missing_sealed`; the second host
+  probed for every pid in `missing ∪ missing_sealed`, a 200 whose bytes
+  decode as an image = served → sidecar `alt` (recomputed each run) and
+  `alt_host`; `_save()` carries the new keys (it also runs mid-pass);
+  the "nothing to fetch" early return ends only the card pass; the dead
+  `save_sidecar()` removed; two log lines with source totals; neither
+  probe enters `verdict()`. Selftest controls for each pure piece.
+- `tools/build_app.py`: `img` rewritten through `hashes.export_url()`
+  for pids in `alt` only; the manifest gains `images` (counts).
+- `tools/validate.py`: the exemption pinned as `exempt(raw)` — cards
+  only — with a control.
+- `tools/gate.py`: `check_offline()` also reads the hosts in the bundle's
+  `img` column; a probe fires on an undeclared one.
+- `src/app.html`: one Diagnostics line, `pictures:`, from the manifest.
+- PROVISION rows; smoke section take 100; the look's step list for 100.
+- **The runner (check run 29, head 8167e71, first run; smoke 691, render
+  106 in Chrome, GATE PASSED; the hash step 32 s with the probes) — the
+  measurement, verbatim:**
+  `sealed images: 23 of 674 unavailable at the first host (recorded, not
+  counted)` and `second host (product-images.tcgplayer.com): serves 1 of
+  242 missing (cards 1 of 219, sealed 0 of 23; 404×241 served×1)`; the
+  app step: `images: 1 rows carry the second host`. **Read plainly:** 23
+  sealed products have no picture at TCGplayer's CDN — the newest boxes
+  and packs the owner sees blank — and the second host, at the pattern
+  its pages use, has an image for one of the 242 missing ids and answers
+  404 for the other 241. The host and the pattern are real (one served);
+  the missing pictures are not there either. INFERRED: an unreleased
+  product has no image at TCGplayer yet, whatever the listing page shows
+  (a placeholder), or the site draws it from a third address. The next
+  measurement is the owner's: the image address from TCGplayer's own page
+  for 712901 (long-press the picture → copy its address) — one constant
+  changes and the probe measures the new pattern the next run. Nothing
+  shipped unmeasured: one id's `img` moved to the second host.
+- The sidecar's new keys are the nightly's to write on main (landmine
+  116); the PR's runner wrote them into a checkout that was discarded.
+  The list of the 23 is readable from `catalog/hashes.json` after the
+  first nightly.
+- **The owner's answer (09:5x UTC), which closes A39 item 3 with the
+  measurement:** he opened TCGplayer's own page for 712901 — *"they have
+  no image"* — so the newest boxes and packs have no picture anywhere
+  TCGplayer serves, and the label box is the honest picture. He reviewed
+  the two look screenshots ("overall very good", with "a tiny bit of
+  work" he has not yet named) and said go; the PR was marked ready. He
+  will not install 98 or 99: the take-98 report's answers (his steps,
+  the `viewport` line) come from take 100's install. He raised a new
+  question — *"there may be other parts of the app we can source images
+  for that are missing"* — which needs his list of the parts and the
+  source before anything is built (landmine 26: display-only, never
+  hosted; PROVISION per host). Opened as A41.
+
+### DEFERRED this cycle
+
+- Hashing card art from the second host (its geometry is unmeasured
+  against the crop); a canary for it (no baseline, landmine 106);
+  `img = null` for a pid no host serves.
+- Southern Hobby (A32) and the distributor timeline: a new session with
+  the opened domain list.
 
 ## Take 99 — 2026-09-23 — the look: a click-and-screenshot review in the session's own browser, run before a take ships (A40)
 
