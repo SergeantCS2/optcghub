@@ -99,6 +99,10 @@ if the aab is good. The apk is over 30 MB, it's 56."*
   in `other` rather than vanishing). The apk job prints it for both
   artifacts in `what shipped`; the numbers above are its first run.
 - No app change, so no look: nothing the collector sees moves.
+- **The runner (check run 32, head b32f373, first run): green** — smoke,
+  Chrome and the gate unchanged by a docs-and-guards take; shipped.py's
+  controls ran inside the gate. The PR was marked ready without a look
+  (no app change) and the owner told.
 
 ### DEFERRED this cycle
 
