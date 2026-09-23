@@ -99,6 +99,13 @@ Chrome, a draft PR marked ready on green, no vendor trailer.
   text the test does not control — landmine 62's shape. The assertion now
   says the honest thing: the row is no taller than its tallest child plus
   its own padding, so the picture sits beside the text, never under it.
+  **PROVEN on the runner (check run 13, head 3eaf2eb, 02:58 UTC): render
+  90 passed, 0 failed (mode: chrome)** — 81 before, the nine new green,
+  the landmine-132 measurement included; smoke **615 passed, 0 failed**
+  there too; **GATE PASSED**, hash coverage 100.0%, pipeline 29 s with the
+  hashes step this VM could not run. Three runner cycles for one take: two
+  of them the harness learning what a row is, which is what a harness is
+  for (landmine 69).
 - **The ledger corrected:** PROVISION's "two entries" and "in the gate",
   PROTOCOL §8's control 1, and a parenthetical on landmine 28 — the gate
   checks that a host is declared; the purpose is prose.
