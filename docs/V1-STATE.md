@@ -62,9 +62,11 @@ refresh from Pages (take 27).
 | Typography | four roles (display / comic / body / heavy), OFL/Apache faces bundled, 232 KB, licensed faces as a file drop in `assets/user/fonts/` | render.mjs: Chrome reports all four LOADED and h2 resolves to the display face, with a missing-file control; smoke 7 |
 | Sync | quiet once-per-open sync holds on cellular unless switched on; Sync now always runs; `UPDATE_URL` points at Pages | smoke 4 controls; **not yet seen on the Fold** |
 
-**Harness totals, take 88:** smoke.mjs 580 assertions, render.mjs 69 in
-Chrome, gate 22 checks with negative controls (the render receipt is new), zero console errors across 14
-screens in both modes.
+**Harness totals, take 89:** smoke.mjs 584 assertions, render.mjs 69 in
+Chrome, gate 23 checks with negative controls (the workflow-copies check is
+new; the hashes guard and the runner-owned-files guard carry their own
+selftests), zero console errors across 14 screens in both modes — measured
+on the runner by the PR check, not in the session VM.
 
 ## DEFERRED, and why
 

@@ -84,7 +84,15 @@ UTC, 09-23) was the clean run this VM could not do: a fresh checkout, only
   that reads a CI script. The assertion now reads `deps.sh`, and a second
   one asserts that `bundle.sh` and `check.sh` both call it and that
   `hunt.yml` installs the parser itself — the guard take 84 deferred.
-- A second push carries the fix; the check's rerun is the record.
+- **The rerun (check run 2, 00:11 UTC, head 852fd64) is green:** smoke **584
+  passed, 0 failed**; render **69 passed (mode: chrome)** with the receipt
+  uploaded as the run's artifact; **GATE PASSED** — 23 checks, hash
+  coverage 98.8%; `pipeline complete in 24s`. The runner's hashes pass
+  also warmed the sidecar by 78 images (57 new + 21 retried); the nightly
+  on `main` commits that, the PR check never does.
+
+**smoke.mjs 584, render.mjs 69 (Chrome), gate 23 checks — on the runner.
+Gate green; PR #13 open, its check green.**
 
 ### Built
 
