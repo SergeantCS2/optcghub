@@ -1,4 +1,132 @@
-# HANDOFF — through Take 89
+# HANDOFF — through Take 90
+
+## Take 90 — 2026-09-23 — the set chips return their cards; the VM still cannot rebuild
+
+Opened before any code (PROTOCOL §6). The first product change of the
+branch flow: one bug, A36, the first item in the session's Priorities
+block. No diagnostics paste has arrived, so nothing else moved.
+
+### Read first, on the runner's own record
+
+- **Release take-89 exists (PROVEN, read off the API):** APK and AAB
+  published 2026-09-23 00:22 UTC by the merge build (run 37, green).
+- **The 09-22 scheduled nightly was red — on the tree BEFORE the merge
+  (PROVEN, run 36, 23:41 UTC, head d0b2c91):** `hashes: 20/77 images
+  failed (26.0%)`, landmine 124's exact shape on the unfixed guard. The
+  merge build on the same night's data passed twenty minutes later and
+  committed the sidecar (60358dc, `catalog/hashes.json` only; run 36 had
+  already pushed the prices before it died). Zero open issues: #8–#12 are
+  closed. **The first true post-merge nightly is tonight, 21:30 UTC** —
+  unread until it runs; the owner's item to confirm.
+- **The tree at 60358dc is the take-89 tree plus one sidecar commit**, so
+  the runner's green at run 37 is the "green before any change" of
+  PROTOCOL §0 step 3 for this take. This VM could not repeat it (below).
+
+### This VM (MEASURED 2026-09-23 00:50 UTC)
+
+`registry.npmjs.org`, `pypi.org` and `files.pythonhosted.org` answer 403
+again — they sit on the proxy's no-proxy list and the direct route is
+refused; `npm view` and `pip index` fail the same way. No pillow on any
+python here, so `hashes.py` refuses to run; no puppeteer, so `render.mjs`
+can only run in DOM mode and the gate's render receipt (landmine 112)
+cannot pass here by design. What is here: `acorn 8.16.0` in the npm cache
+(an offline install), Chromium under `/opt/pw-browsers` with nothing to
+drive it, and `tcgcsv.com`, the image CDN, the rates mirror and Pages, all
+reachable. The owner's item 1 — open the three hosts — stands.
+
+**The owner's decisions, asked before any code:** the take ships as a
+**draft PR** whose `check` run on the runner is the gate in Chrome —
+nothing is marked ready for review until that run is green — and commits
+carry no vendor trailer (AGENTS; the scrubber's marker; take 89's own
+commits).
+
+### A36 — the cause, read then run
+
+- **The chip handler pushes a string; the filter compares an int.** A
+  `dataset` value is a string whatever went in: `c.dataset.fv` is `"17675"`,
+  `p.set` is `17675` (the bundle emits `group_id`; `CAT.sets` is keyed by
+  int), and `f.set.includes(p.set)` is strict. So every row failed the set
+  test, the sheet said *0 cards*, and on reopening the chip drew unlit
+  because its `on` test compared the same string with the int from
+  `bySet`. Tapping the lit chip again could not un-select it either:
+  `indexOf` of the string found the string only if the string was what
+  was stored — and the browse-set path (`+b.dataset.browseSet`) stores
+  ints, so a saved filter could hold either or both.
+- **`set` is the only numeric facet.** `rarity`, `color`, `type`, `treat`,
+  `cond` are strings on both sides; `min`/`max` go through `parseFloat`.
+- **No test drove the chip.** Smoke built its filters by hand since take
+  11 (the right type, always); render opened the sheet and never clicked
+  a chip. Seventy-eight takes. Landmine 126.
+- **Ruled out: comparing as strings on both sides** (take 89's sketch).
+  It leaves two writers with two types and the toggle-off `indexOf` still
+  wrong for one of them. Ints are the set's identity everywhere else in
+  the file (`+st.dataset.bnset`, `+b.dataset.setpick`), so the chip
+  coerces at the DOM boundary and a saved filter is normalised to ints
+  when it loads.
+
+### Reproduced, then fixed (PROVEN in this VM, on the shipped app.js)
+
+- **The build that could run:** `acorn 8.16.0` linked from the global
+  eslint copy into `node_modules` (the offline `npm install` refused —
+  it wants the whole package tree from the cache and the cache holds only
+  acorn), then `pipeline.py ingest history catalog validate app`:
+  TCGCSV still serving 09-22, 6,766 hashes restored from the sidecar,
+  coverage 100.0% of reachable, `www/ take 90`. No `hashes` step (no
+  pillow), no Chrome.
+- **The reproduction, before the fix — smoke on the built app:** the real
+  `#filters` click handler, handed a chip whose `dataset.fv` is the string
+  a DOM gives, stored `["3188"]`; `applyFilter` returned **0 of 1**; the
+  sheet's count read *0 cards*. Four assertions red — those three and
+  the not-yet-exported `loadFilter` — 586 green. Watched fail on purpose
+  (AGENTS rule 2).
+- **The fix:** the chip handler coerces the set facet at the DOM boundary
+  (`NUMERIC_FACETS`, one entry; `+c.dataset.fv`); `loadFilter(scope)`
+  replaces the two inline parses, guards the parse, merges over the blank
+  filter and normalises the set ids to ints — so a filter saved by the
+  chip before this take and one saved by the browse-set rows meet one
+  comparison; a corrupt one loads blank. `applyFilter` is unchanged.
+- **After the fix:** smoke **592 passed, 0 failed** — the eight new: the
+  tap stores a number, the set shows its one card, the count line says
+  so, a second tap un-selects, the DOM string still matches nothing (the
+  control), `loadFilter` normalises `["3188","x"]` to `[3188]` keeping
+  the rarity, a corrupt string loads blank (the control). The always-true
+  take-11 persistence assertion (`a || true`-shaped) now reads the saved
+  JSON back.
+- **In Chrome, on the runner only:** seven render assertions in the
+  filter-sheet block — a tapped chip's count line equals the chip's own
+  count, the stored id is a number, the chip is lit, Show draws exactly
+  that many tiles in `#colGrid`, the chip is still lit when the sheet
+  reopens, a second tap un-selects with every card back, and the string
+  shape as the control. **PROVEN on the runner (check run 4, head
+  9d74309, 01:20 UTC): render 76 passed, 0 failed (mode: chrome)** —
+  69 before, the seven new all green on the first run; smoke **592
+  passed, 0 failed** there too; **GATE PASSED**, hash coverage 100.0%,
+  pipeline 26 s with the hashes step this VM could not run. The receipt is
+  the run's `render` artifact.
+- **Found on the way — render's DOM fallback was dead (landmine 127):**
+  it threw on `window.addEventListener` at boot, the error buffer's
+  registration from take 82, because the DOM context never had the stub
+  smoke's has. Eight takes of Chrome hid it. One line; **10 passed, 0
+  failed (mode: dom)** here — markup only, and it says so; the gate still
+  refuses that as a receipt (landmine 112), correctly.
+- **`.gitignore` gains the rest of `www/`** — the subset fonts, `hunt/`,
+  `privacy.html`, `render.png`: `build_app.py` writes them and only
+  `bundle/`, `app.js` and `index.html` were listed, so the first build
+  in a git checkout left six untracked files a careless `git add` would
+  have shipped. Named paths are the rule; the ignore is the guard.
+- **The scrubber** is clean over the ledgers; `catalog/rates.json`, which
+  the app build refreshes, is restored — only the seed drops ever
+  committed it and it is not this take's.
+
+### DEFERRED this cycle
+
+- **The full rebuild, the Chrome render and a bare green gate in the
+  session VM** — the three hosts, the owner's item 1; until then the
+  runner's `check` is the only place the gate runs whole.
+- **Tonight's nightly** (21:30 UTC) — the first since the merge; read it
+  if the session is still up, otherwise the owner's.
+- The Priorities order, unchanged: whatever the diagnostics paste names,
+  A33 item 6, A32's remaining sources, A23's tail, A31.
 
 ## Take 89 — 2026-09-22 — the repo works on a branch and a PR; four red nights read; the gate green again
 

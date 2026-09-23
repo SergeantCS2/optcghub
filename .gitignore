@@ -2,6 +2,10 @@
 www/bundle/
 www/app.js
 www/index.html
+www/fonts/
+www/hunt/
+www/privacy.html
+www/render.png
 android/
 node_modules/
 __pycache__/

@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 89.* Paste the block between the rules into a new session
+*Current as of take 90.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 89 takes by previous sessions. The repo is
+built across 90 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -27,7 +27,7 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
 4. Read `docs/HANDOFF.md`, newest entry first, back to take 80 at least. Every
    take ends with a DEFERRED list; the union of those lists is the work.
 5. Read `docs/LANDMINES.md` §0 (the index) and skim §1. When you are about to
-   do something, grep the index first. 125 of them; each is a real failure.
+   do something, grep the index first. 126 of them; each is a real failure.
 6. Read `docs/AGENDA.md`: the Priorities block at the top is the live order.
 
 **The discipline, which the gate enforces:**
@@ -70,8 +70,8 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
 
 - **The Priorities block at the top of `AGENDA.md`** is the live order: the
   owner's items (the diagnostics paste, D20–D22, shop URLs, D7, D16, the
-  `.aab`), then the session's (A36 the set chips, whatever the diagnostics
-  paste names, A33 item 6, A32's remaining sources, A23's tail, A31).
+  `.aab`), then the session's (whatever the diagnostics paste names, A33
+  item 6, A32's remaining sources, A23's tail, A31).
 - **A21 — the Play clock.** The closed-testing release is **approved** (take
   52). What is left is the owner's: the opt-in link to 16–18 testers, twelve
   opted in, fourteen days, then *Apply for production*. `ci/RELEASE.md` is the
@@ -93,10 +93,14 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
 - **The blank-after-Back** has a watchdog since take 86 that heals it and
   writes the trigger to Diagnostics (More → About, five taps); the owner's
   paste names the cause. Nothing else can.
-- **A36 — the set chips** in the filter sheet return zero cards: a chip
-  pushes a string, `applyFilter` compares it with an int (INFERRED from the
-  code at take 89, not yet reproduced). Reproduce in Chrome first; the fix is
-  one comparison and a migration of the saved filters.
+- **The session VM has had no package registries for two takes** (89, 90:
+  `registry.npmjs.org`, `pypi.org`, `files.pythonhosted.org` answer 403, so
+  no pillow and no puppeteer). If `bash ci/deps.sh` fails the same way:
+  name the hosts, run what runs (smoke, DOM render, the scrubber, every
+  gate check that needs neither), and ship through the runner's `check`
+  as a **draft PR**, marked ready only when green — take 90's route, at
+  the owner's word. Never claim a Chrome render or a green gate you did
+  not see.
 - **The simulator (A23)** — the hot-seat board (take 46), effects parsed from
   card text (takes 47–51, 28.6% of lines) and a legal, stupid opponent (take
   55) are BUILT and unseen on a phone. Coverage grows only by adding whole
@@ -124,6 +128,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 90" and begin with PROTOCOL §0.
+Say "take 91" and begin with PROTOCOL §0.
 
 ---

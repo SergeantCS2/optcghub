@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 89.*
+*Current as of take 90.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -134,6 +134,9 @@ Start here. Do not read top to bottom.
 | Smoke goes red on a date, with no code change, on a saved fixture | **123** |
 | Pipeline stops in hashes the week a set drops | **124** |
 | A new failure issue every night instead of one thread | **125** |
+| A filter chip returns zero rows | **126** |
+| A chip lights on tap and is off when the sheet reopens | 126 |
+| render.mjs crashes before its first check when Chrome is absent | **127** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -1791,6 +1794,36 @@ the design promised. Fix: `gh label create nightly-failure --force`
 a step that depends on a label, a tag or a secret existing creates it or
 checks for it first; a fallback that hides the failure is worse than the
 failure.
+
+**126. A `dataset` value is a string whatever went in, and `includes`
+against an int never matches — the set chips in Filter & sort returned
+zero cards from take 11 to take 89, and no test ever drove one.** The
+chip handler pushed `c.dataset.fv` (`"17675"`) onto `f.set`; `applyFilter`
+asked `f.set.includes(p.set)` with `p.set` the int the bundle carries;
+strict equality, no match, *0 cards*. The chip's `on` test on reopening
+compared the same string with the int from the count map, so a chosen
+set never showed as chosen; a second writer, the browse-set rows, stored
+the int, so a saved filter could hold either type. Smoke had tested
+`applyFilter` since take 11 with arrays it built by hand — the right type
+every time — and render opened the sheet without clicking a chip, so
+seventy-eight takes of green covered a control that did nothing. Rule:
+an id read off the DOM is coerced at the boundary (`+el.dataset.x`, as
+the file already does for `bnset`, `browseSet` and `setpick`), stored
+state is normalised to that type when it loads, and a test of a handler
+that reads `dataset` hands it a string — or drives the element in Chrome
+and counts the rows.
+
+**127. A fallback nobody runs is dead code with a green history. Take 90,
+the first take that needed render's DOM mode since take 82.** The error
+buffer (take 82) registers `window.addEventListener('error', …)` at boot;
+render's DOM-mode context had no `addEventListener`, so the fallback threw
+before its first assertion — for eight takes — and nobody saw it because
+every one of those takes had Chrome, and the one that did not (89) had no
+build at all. Smoke's context had the stub since take 82; render's did
+not. Landmine 112 is about a seal that does not hear the fallback; this is
+the fallback itself rotting. Rule: a fallback path is exercised on
+purpose at least once per take that touches what it wraps, or its gate
+selftest runs it; "CI has Chrome" is why it rots, not why it is fine.
 
 ## §2 — Inherited from APEX ORV
 

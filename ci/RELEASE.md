@@ -1,4 +1,4 @@
-# OP TCG Hub — take 89
+# OP TCG Hub — take 90
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,10 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 90:** the set chips in Filter & sort work — tapping a set
+shows that set's cards instead of nothing, and a chosen set stays
+selected when the sheet reopens.
 
 **New at take 89:** nothing visible; the project now ships from a branch and
 a pull request instead of a seed zip, and the nightly build is green again

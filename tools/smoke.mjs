@@ -482,7 +482,50 @@ const O = V.blankFilter('own'); O.cond = ['LP'];
 ok('condition filter is item-level', V.applyFilter(OWNROWS, O).length === 1 && V.applyFilter(OWNROWS, O)[0].i.condition === 'LP');
 O.cond = []; O.only = ['multi'];
 ok('"Qty 2+" is item-level', V.applyFilter(OWNROWS, O).length === 1 && V.applyFilter(OWNROWS, O)[0].i.qty === 2);
-ok('filter state persists per scope', !!store['vault.filt.own'] || V.FILT.own._scope === 'own');
+V.FILT.save('own');
+ok('filter state persists per scope', JSON.parse(store['vault.filt.own'] || '{}')._scope === 'own');
+
+/* take 90 -- A36, landmine 126. Every filter above was built by hand with
+   the right type, so the chips were never driven and the set facet returned
+   zero rows for seventy-eight takes. Drive the REAL #filters click handler
+   with what a DOM hands it -- a dataset value, which is always a string --
+   and count the rows the way the sheet does. */
+section('take 90 — the set chips (A36, landmine 126)');
+{
+  const setId = V.CAT.byId.get(c[0].id).set;               // OWNROWS above: three items, from c[0]'s and c[1]'s sets
+  const inSet = OWNROWS.filter(x => x.p.set === setId).length;
+  const filters = ctx.document.getElementById('filters');
+  const chip = { dataset: { fk: 'set', fv: String(setId) }, classList: { toggle() {} } };
+  const tap = () => filters._ev.click({ target: { closest: sel => sel === '[data-fk]' ? chip : null, id: '' } });
+  V.FILT.own.set = [];                                       // sheetScope is 'own' until a sheet opens
+  tap();
+  ok('a chip tap stores the set id as the catalogue keys it (a number, not the DOM string)',
+     V.FILT.own.set.length === 1 && V.FILT.own.set[0] === setId && typeof V.FILT.own.set[0] === 'number',
+     JSON.stringify(V.FILT.own.set));
+  const shown = V.applyFilter(OWNROWS, V.FILT.own).length;
+  ok('the tapped set shows its cards, not zero', inSet > 0 && shown === inSet, `${shown} of ${inSet}`);
+  const fN = ctx.document.getElementById('fN').textContent;
+  ok("the sheet's count line says so", new RegExp('^' + inSet + ' card').test(fN), fN);
+  tap();
+  ok('a second tap un-selects it', V.FILT.own.set.length === 0, JSON.stringify(V.FILT.own.set));
+  const asString = Object.assign(V.blankFilter('own'), { set: [String(setId)] });
+  ok('negative control: the DOM string, stored as it came, matches nothing -- the take-89 shape',
+     V.applyFilter(OWNROWS, asString).length === 0);
+  /* a filter saved before this take carries the string; it is normalised when it loads */
+  ok('loadFilter is exported for this test', typeof V.loadFilter === 'function');
+  if (typeof V.loadFilter === 'function') {
+    store['vault.filt.all'] = JSON.stringify({ set: [String(setId), 'x'], rarity: ['SEC'] });
+    const mig = V.loadFilter('all');
+    ok('a saved filter with string set ids loads as numbers, drops what is not one, keeps the rest',
+       mig.set.length === 1 && mig.set[0] === setId && mig.rarity[0] === 'SEC' && mig._scope === 'all',
+       JSON.stringify(mig.set));
+    store['vault.filt.all'] = 'not json';
+    const bad = V.loadFilter('all');
+    ok('negative control: a corrupt saved filter loads blank instead of throwing',
+       bad.set.length === 0 && bad.sort === 'value' && bad._scope === 'all');
+    delete store['vault.filt.all'];
+  }
+}
 
 section('take 13 — the deck builder (Comprehensive Rules v1.2.0 §5-1)');
 const leaders = V.CAT.rows.filter(p => p.type === 'Leader' && p.color && !/;/.test(p.color));
