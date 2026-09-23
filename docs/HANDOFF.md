@@ -89,7 +89,11 @@ take does the three that are a bug or a control nobody could find.
   one rule beside the display rule, `.linkish[hidden],.seg[hidden]
   {display:none}`, with a smoke line that reads it in the shipped page.
   Landmine 136 — the Chrome measurement earned its keep again (landmine
-  69). The runner's numbers follow.
+  69). **PROVEN on the runner (check run 18, head d539e64, 07:45 UTC):
+  render 95 passed, 0 failed (mode: chrome)** — 93 before, the two new
+  green — smoke **642 passed, 0 failed**, **GATE PASSED**, hash coverage
+  100.0%, pipeline 42 s. Two runner cycles for the take; the first one
+  found a landmine the stub never could.
 
 ### DEFERRED this cycle
 
