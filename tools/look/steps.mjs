@@ -155,4 +155,35 @@ const take100 = [
     } }
 ];
 
-export const STEPS = { 98: take98, 100: take100 };
+/* ---- take 104 — the owner's PC Diagnostics run, answered --------------------- */
+const take104 = [
+  { name: 'selftest-camera-line-in-a-browser', run: async (page, ctx) => {
+      /* the owner's route: More → About ×5 → Diagnostics; the report runs the self-test and prints it. In a browser a
+         missing camera is a SKIP with its reason, never "FAIL 0 camera(s)"; a browser that lists a camera reads PASS
+         with the count -- the invariant is that 0 cameras is never a FAIL here */
+      await ctx.open();
+      return page.evaluate(async () => {
+        const V = window.VAULT; V.MODE.set('collect', true); V.go('diag');
+        const rep = await V.DIAG.report(); const out = document.querySelector('#diagOut'); if (out) out.textContent = rep;
+        const lines = rep.split('\n'); const i = lines.findIndex(l => /Camera reachable/.test(l)); const line = lines[i] || '';
+        const skipWithReason = /SKIP/.test(line) && /no camera listed on this device/.test(line);
+        const passWithCount = /PASS/.test(line) && /[1-9]\d* camera/.test(line);
+        const failZero = /FAIL/.test(line) && /0 camera/.test(line);
+        if (out && i >= 0) { const lh = parseFloat(getComputedStyle(out).lineHeight) || 17; window.scrollTo(0, Math.max(0, out.getBoundingClientRect().top + window.scrollY + i * lh - 160)); }
+        return { ok: (skipWithReason || passWithCount) && !failZero, line: line.trim().slice(0, 120) };
+      });
+    } },
+  { name: 'diagnostics-effects-line-says-its-unit', run: async (page) => {
+      /* the ## catalogue block: "effects scripted" counts effect lines and says so, with the cards beside */
+      return page.evaluate(async () => {
+        const V = window.VAULT; V.go('diag');
+        const rep = await V.DIAG.report(); const out = document.querySelector('#diagOut'); if (out) out.textContent = rep;
+        const m = /effects scripted\s*[:=]\s*(\d+) of (\d+) effect lines \((\d+) cards\)/.exec(rep);
+        const lines = rep.split('\n'); const i = lines.findIndex(l => /effects scripted/.test(l));
+        if (out && i >= 0) { const lh = parseFloat(getComputedStyle(out).lineHeight) || 17; window.scrollTo(0, Math.max(0, out.getBoundingClientRect().top + window.scrollY + i * lh - 160)); }
+        return { ok: !!m && +m[1] <= +m[2] && +m[3] > 0, line: (lines[i] || '(no effects line)').trim().slice(0, 120) };
+      });
+    } }
+];
+
+export const STEPS = { 98: take98, 100: take100, 104: take104 };

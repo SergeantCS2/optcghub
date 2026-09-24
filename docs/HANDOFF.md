@@ -1,4 +1,98 @@
-# HANDOFF — through Take 103
+# HANDOFF — through Take 104
+
+## Take 104 — 2026-09-24 — three fixes from the owner's own Diagnostics run: a browser without a camera skips with its reason, the effects line says what it counts, the size table keeps the R8 map out of the bundle's raw total
+
+Opened before any code (PROTOCOL §6). Take 103 merged 01:20 UTC and
+Release take-103 published 01:28 with three assets (the post-merge note
+under take 103 carries the numbers). The owner did not install; he ran
+the Pages build on his PC (`#diag`, 01:32 UTC, take 103, `native:
+false`, `plugins: none`) and pasted the report. **UI design and
+refinement now belong to a separate UI/UX session (the owner, 24 Sept):
+this session changes UI only when something is broken or off course.**
+The three fixes are his ask, verbatim: "Go, take 104 with those three
+fixes."
+
+### Measured first (his report, read line by line)
+
+- The web build of take 103 deployed (build stamp 01:21:34Z); catalogue
+  6,987 cards / 7,661 printings; prices dated 23 Sept; 12 history days;
+  sync answering (manifest 200); every Hunt feed 200; no errors.
+- Self-test 11 pass, 1 fail, 5 skipped. The FAIL: "Camera reachable — 0
+  camera(s) listed" on a Windows PC with no webcam. The check returns
+  `ok: devices.length > 0` whatever the platform, so a desktop without a
+  camera reads as a failure of the app. On the phone that verdict is
+  right; in a browser with no camera the honest line is SKIP with the
+  reason. The five SKIPs are the native plugins, as expected of a browser.
+- `effects scripted: 2187/7697` (Diagnostics) beside `1926 cards
+  scripted` (the self-test): the first counts effect lines (the
+  manifest's `effects.scripted` / `effects.lines`), the second cards with
+  any scripted effect (`Object.keys(CAT.effects).length`). Both right,
+  neither says its unit, and 7697 sits beside 7661 printings as if it
+  were the same thing.
+- `pictures: 221 cards and 23 sealed products have no picture at the first
+  host; 1 served by the second, 1 shipped that way` — the A41 count, now
+  on a line the owner can read; his list of where in the app is still what
+  A41 needs.
+- His viewport was 1920×991 @1, a desktop; the look covers the Fold's two.
+  Nothing in the report shows a UI problem.
+- From take 103's release table: `shipped.py` printed the bundle as 90.5
+  MB raw with a 52.8 MB "other" group — `BUNDLE-METADATA/…/proguard.map`,
+  the R8 map Play reads for crash reports and never installs. A raw total
+  that counts it is wrong by a factor of two.
+- **What his run cannot prove:** R8 and the Latin-only model live in the
+  APK; the ML Kit line skipped. A14 stays BUILT + MEASURED until the
+  take-103 (or later) APK's self-test passes on the Fold.
+- **Ruled out:** softening the camera line everywhere (on a phone, no
+  camera is a real failure); counting cards instead of lines on the
+  Diagnostics line (the lines are the honest denominator for "how much
+  of the game is scripted"; the cards are added, not substituted).
+
+### Built
+
+- `src/app.html`: `cameraVerdict(devices, native)` lifted out of the
+  self-test (landmine 135's rule: a named function the stub can call):
+  no camera and not native → SKIP "no camera listed on this device — the
+  scanner needs one"; no camera on the phone → FAIL; a camera → PASS
+  with the count. The self-test's `check` learns a `skip` result with
+  its own note (before, only `null` skipped, always as "not available
+  here"). `effectsLine(effects, cards)` → "2187 of 7697 effect lines
+  (1926 cards)"; the Diagnostics line uses it.
+- `tools/shipped.py`: a `BUNDLE-METADATA` group ("the R8 map Play reads;
+  never installed"); the bundle's raw total excludes it and says so; a
+  control plants a `proguard.map` and expects the group and the smaller
+  total — watched to fail first.
+- `tools/smoke.mjs` take-104 section: the three camera verdicts, the
+  skip result through the self-test's own `check`, the effects line's
+  text, the Diagnostics line calling it. `tools/look/steps.mjs`
+  `take104`: Diagnostics opened in real Chromium (no camera there), the
+  self-test run, the camera line and the effects line read off the
+  screen and pictured for the owner.
+- The record: A14's proof line; the UI/UX session rule in the AGENDA's
+  priorities, the NSP and the root session file.
+- Tests: smoke 697 (6 new, watched to fail on the take-103 build — the
+  stub reproduced the owner's line, `FAIL "0 camera(s) listed"`, before
+  the fix); shipped.py 8 controls (+2, watched to fail: the second
+  crashed with a NameError before `installed_raw` existed, which is a
+  failure, not a pass); the take-103 bundle now reads "37.9 MB raw …;
+  the R8 map (52.7 MB raw) left out of that"; render 105 of 106 in local
+  Chrome (the CDN thumbnail, as before); local smoke's two history
+  assertions fail on the sidecar mismatch (the root session file's
+  note), the runner's check counts.
+- **The look, take 104 (4 of 4 at both viewports, the PNGs to the
+  owner):** the first camera step clicked `#stRun` and timed out — the
+  Run button lives on More's self-test panel, not on the Diagnostics
+  screen — so the step took the owner's own route instead: the
+  Diagnostics report, which runs the self-test and prints it. In real
+  headless Chromium the line reads `SKIP Camera reachable — no camera
+  listed on this device — the scanner needs one`; the effects line reads
+  `2186 of 7694 effect lines (1925 cards)` (the VM's cached 22 Sept
+  catalogue; the owner's 23 Sept numbers were 2187/7697 and 1926).
+
+### DEFERRED this cycle
+
+- A14 PROVEN: the Fold's self-test on an installed APK (the owner's).
+- D11 the day the unit IDs arrive; A41 his list; A32 a new session.
+- The 32-bit ABI and the gzipped catalogue: listed in A14, unpicked.
 
 ## Take 103 — 2026-09-24 — optimize: R8 shrinks the code, only the Latin OCR model ships, the mapping rides the Release, the upload key's fingerprint pinned
 

@@ -1,4 +1,4 @@
-# OP TCG Hub — take 103
+# OP TCG Hub — take 104
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,12 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 104:** two honest lines. The self-test, run in a browser on
+a computer with no camera, now says so and skips instead of failing —
+on the phone a missing camera is still a failure. The Diagnostics
+"effects scripted" line says what it counts: effect lines, with the
+number of cards beside it. Nothing else moves.
 
 **New at take 103:** smaller. The app's code is shrunk (R8) and only the
 Latin text model ships — One Piece codes are Latin, and the four other

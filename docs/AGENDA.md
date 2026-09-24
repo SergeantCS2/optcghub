@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 103.* Ranked by blocking-ness, not by interest.
+*Current as of take 104.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -31,13 +31,17 @@ each item got where it is; this block is what to do next.
    receives it (this one is refused every host but GitHub and the package
    registries, MEASURED again after the restart at take 102).
 
+**UI design and refinement belong to a separate UI/UX session (the
+owner, 24 Sept, take 104).** This session changes the UI only when
+something is broken or off course; refinement is that session's.
+
 **Mine, in order**
-1. **Take 103 — optimize** (in flight; 102 merged 24 Sept 01:05): R8,
-   the Latin-only OCR model, the mapping on the Release, the upload key's
-   fingerprint pinned from the take-102 build's printed line. The
-   measurement is the `apk` job's size table beside take 102's; the proof
-   is the Fold's self-test and a manual pass — the harness cannot see a
-   `NoClassDefFoundError` on a phone.
+1. **Take 104 — three fixes from the owner's Diagnostics run** (in
+   flight; 103 merged 01:20 and released 01:28, APK 34.9 → 26.4 MB): the
+   camera line skips with its reason in a browser without one, the
+   effects line says what it counts, the size table keeps the R8 map out
+   of the bundle's raw total. A14 stays BUILT + MEASURED until the Fold's
+   self-test passes on an installed APK.
 2. **A41** — waits on the owner's list of the parts and the source;
    then one take per source, measured on the runner first.
 2. **A39 item 3 (take 100, measured and closed by the owner's check),
