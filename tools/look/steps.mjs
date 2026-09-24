@@ -762,12 +762,12 @@ const take110 = [
   { name: 'review-home-performance-set-completion-hidden', run: async (page) => {
       await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('collect', true); await ${pause}; while (V.closeAnyOverlay()) {} V.go('home'); V.setHomeTab(true); await ${pause}; window.scrollTo(0, 0); })()`);
       await wait(300);
-      const m = await page.evaluate(() => { const mv = document.getElementById('topList').closest('.panel').getBoundingClientRect(); const o = { w: innerWidth, mv: Math.round(mv.width), comp: getComputedStyle(document.getElementById('setComp')).display };
-        window.VAULT.setHomeTab(false); return o; });
+      /* the tab stays on Performance for the picture; the next step turns it back */
+      const m = await page.evaluate(() => { const mv = document.getElementById('topList').closest('.panel').getBoundingClientRect(); return { w: innerWidth, mv: Math.round(mv.width), comp: getComputedStyle(document.getElementById('setComp')).display }; });
       return { ok: m.comp === 'none' && (m.w < 700 || m.mv > 0.8 * m.w), ...m };
     } },
   { name: 'review-market-movers-heading-across', run: async (page) => {
-      await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('collect', true); await ${pause}; while (V.closeAnyOverlay()) {} document.querySelector('#allq').value = '';
+      await page.evaluate(`(async () => { const V = window.VAULT; V.setHomeTab(false); V.MODE.set('collect', true); await ${pause}; while (V.closeAnyOverlay()) {} document.querySelector('#allq').value = '';
         document.querySelector('[data-act="movers"]').click(); await ${pause}; window.scrollTo(0, 0); })()`);
       await wait(300);
       const m = await page.evaluate(() => { const p = document.querySelector('#allRes > .panel'), h = p && p.querySelector(':scope > h3'); return { h3: h ? Math.round(h.getBoundingClientRect().width) : 0, panel: p ? p.clientWidth : 0 }; });
