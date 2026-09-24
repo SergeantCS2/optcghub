@@ -142,18 +142,40 @@ h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.015em}
    --fg and went pale everywhere at once. The colour belongs to the ROLE,
    here, once, so it follows the palette into Prep & Play. */
 h1,h2{font-family:var(--display);font-weight:400;letter-spacing:.01em;color:var(--accent-ink)}
-.tab,.fgrp{font-family:var(--comic);font-weight:400;letter-spacing:.04em}
+.fgrp{font-family:var(--comic);font-weight:400;letter-spacing:.04em}
 .total,.dkcount,.big{font-family:var(--heavy);font-weight:900;letter-spacing:-.01em;font-variant-numeric:lining-nums tabular-nums}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
 .screen{display:none;padding:0 var(--pad) calc(66px + 34px + var(--sab))}   /* take 86: the bar is 66px + 10px off the bottom; the last control must clear it */
 .screen.on{display:block}
 .mono{font-variant-numeric:tabular-nums}
 
-/* ---- top bar ------------------------------------------------------------ */
-.bar{display:flex;align-items:center;gap:14px;padding:14px 0 6px;min-height:56px}   /* take 83: one height, every screen */
-.tab{font-size:21px;color:var(--dim2)}
-.tab.on{color:var(--fg);border-bottom:2px solid var(--brass);padding-bottom:4px}
-.pill{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap;
+/* ---- the header (take 107, A42): one on every screen ------------------ */
+/* The title's place, face and size belong to the header alone. A screen
+   fills its slots -- the title, one line under it, the actions -- and never
+   places a title itself. Every screen in a mode's nav ends its actions with
+   the gear to More (A37); every screen one level down starts with Back.
+   Take 83's one minimum height, every screen, is kept. */
+.appbar{display:flex;align-items:flex-start;gap:var(--sp-2);min-height:56px;padding:var(--sp-3) 0 var(--sp-2)}
+.ab-back{margin-left:-10px}   /* the 44 px tap box overhangs the gutter; the arrow itself stays inside it */
+.ab-text{flex:1;min-width:0;padding-top:calc((44px - 1.1 * var(--fs-head)) / 2)}   /* the title's first line centred on the 44 px row of Back and the actions, with or without a line under it */
+.ab-title{margin:0;font-size:var(--fs-head);line-height:1.1;overflow-wrap:anywhere;text-wrap:balance}
+.ab-sub{margin:3px 0 0;font-size:var(--fs-sm);line-height:1.35;color:var(--dim)}
+.ab-sub:empty{display:none}
+.ab-sub b{color:var(--accent-ink)}
+.ab-act{display:flex;align-items:center;gap:var(--sp-2);flex:0 0 auto;min-height:44px}
+.ab-act .icb:last-child{margin-right:-10px}   /* the same on the right: the gear lines up with the content's edge */
+.icb{width:44px;height:44px;flex:0 0 44px;display:grid;place-items:center;border-radius:var(--r-pill);color:var(--fg)}
+.icb svg.g{color:inherit;vertical-align:0}
+/* the deck's name is its title, and stays a field you can type in */
+h1.ab-title input{display:block;width:100%;margin:0;padding:0 0 2px;background:none;border:0;border-radius:0;
+  border-bottom:1px dashed var(--line-strong);font:inherit;letter-spacing:inherit;color:inherit}
+h1.ab-title input:focus{border-bottom:1px solid var(--brass)}
+/* Home's two views: tabs under the title, unlike the mode slider's pill */
+.segtabs{display:flex;border-bottom:1px solid var(--line);margin:0 0 var(--sp-3)}
+.segtabs button{flex:1;min-height:44px;font-size:var(--fs-body);font-weight:700;color:var(--dim);
+  border-bottom:2px solid transparent;margin-bottom:-1px}
+.segtabs button.on{color:var(--accent-ink);border-bottom-color:var(--brass)}
+.pill{display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap;
   color:var(--dim);background:var(--card2);border-radius:999px;padding:5px 11px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--up)}
 .dot.warn{background:var(--gold)}
@@ -185,6 +207,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .panel h3{font-size:16px;margin-bottom:12px;font-family:var(--display);font-weight:400;letter-spacing:.01em;color:var(--accent-ink)}
 #home .panel{background:none;border:0;border-top:1px solid var(--line);border-radius:0;
   padding:18px 0 4px;margin-bottom:6px}
+#home .segtabs + .stale + #whatsNew{border-top:0;padding-top:6px}   /* take 107: under the tab row's own line, a second rule doubled it */
+#wnOk{flex:0 0 auto;white-space:nowrap}   /* "Got it" wrapped to two lines beside a long note (seen at take 106) */
 .row{display:flex;align-items:baseline;gap:10px;padding:9px 0}
 .row+.row{border-top:1px solid var(--line)}
 .row .nm{flex:1;min-width:0}
@@ -254,7 +278,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 #scan{padding:0}
 .scanwrap{position:relative;height:calc(100vh - 76px - var(--sat) - var(--sab));background:#050607;
   display:flex;flex-direction:column;align-items:center}
-.scanhead{display:flex;align-items:center;gap:10px;width:100%;padding:14px var(--pad) 8px}
+#scan .appbar{align-self:stretch;padding-left:var(--pad);padding-right:var(--pad)}   /* the camera surface has no side padding; the header brings its own */
 .setchip{display:flex;align-items:center;gap:7px;background:var(--card2);
   border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:13.5px;font-weight:600}
 .setchip b{color:var(--accent-ink)}
@@ -294,6 +318,10 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   border-radius:22px 22px 0 0;border-top:1px solid var(--line);
   padding:20px var(--pad) calc(28px + var(--sab))}
 .grab{width:38px;height:4px;border-radius:2px;background:var(--line-strong);margin:0 auto 16px}
+/* take 107: a sheet's title in the header's face, and a way out beside it */
+.sheethead{display:flex;align-items:flex-start;gap:var(--sp-2);margin:0 0 var(--sp-3)}
+.sheethead h2{flex:1;min-width:0;margin:10px 0 0;font-size:var(--fs-title);line-height:1.25}
+.sheethead .icb{margin:0 -10px 0 0}
 .why{background:var(--warn-bg);border:1px solid var(--brass2);color:var(--gold);border-radius:12px;
   padding:11px 14px;font-size:13px;line-height:1.45;margin-bottom:14px}
 .why b{color:var(--gold)}
@@ -317,9 +345,6 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .opt .op span{display:block;font-size:var(--fs-cap);color:var(--dim2);font-weight:600}
 
 /* ---- detail ------------------------------------------------------------- */
-.detail .hd{font-size:13px;color:var(--dim);padding:14px 0 2px}
-.detail .hd b{color:var(--accent-ink)}
-.detail h2{font-size:23px;margin:2px 0 2px;letter-spacing:-.02em}
 .detail .sub{color:var(--dim);font-size:13.5px;margin-bottom:14px}
 .stepper{display:flex;align-items:center;gap:16px}
 .stepper button{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--brass2);
@@ -519,11 +544,13 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
 
 <!-- ============================= HOME ================================== -->
 <section id="home" class="screen on">
-  <div class="bar">
-    <span class="tab on" id="tabOver" role="tab" tabindex="0" aria-selected="true">Overview</span>
-    <span class="tab" id="tabPerf" role="tab" tabindex="0" aria-selected="false">Performance</span>
-    <span class="pill" role="status" aria-live="polite"><i class="dot" id="netdot" aria-hidden="true"></i><span id="netlbl">offline ok</span></span>
-    <span id="curPillHome"></span>
+  <header class="appbar">
+    <div class="ab-text"><h1 class="ab-title">Home</h1></div>
+    <div class="ab-act"><span class="pill" role="status" aria-live="polite"><i class="dot" id="netdot" aria-hidden="true"></i><span id="netlbl">offline ok</span></span><span id="curPillHome"></span><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
+  </header>
+  <div class="segtabs" role="tablist" aria-label="Home">
+    <button class="on" id="tabOver" role="tab" aria-selected="true" tabindex="0">Overview</button>
+    <button id="tabPerf" role="tab" aria-selected="false" tabindex="-1">Performance</button>
   </div>
   <div class="stale" id="staleBanner" hidden></div>
   <div class="panel" id="whatsNew" hidden style="border-color:var(--brass)"></div>
@@ -563,6 +590,10 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
 
 <!-- ========================== COLLECTION =============================== -->
 <section id="collection" class="screen">
+  <header class="appbar">
+    <div class="ab-text"><h1 class="ab-title">Collection</h1></div>
+    <div class="ab-act"><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
+  </header>
   <div class="actions">
     <button data-act="movers"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-trigger"/></svg></span>Market Movers</button>
     <button data-act="trade"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-rope"/></svg></span>Trade Analyzer</button>
@@ -597,8 +628,10 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
 
 <!-- ============================= HUNT ================================== -->
 <section id="sealed" class="screen">
-  <div class="bar"><span class="tab on" role="heading" aria-level="1"><svg class="swords" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 15L13 5M6 16L16 6M2 12L12 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M12 5l2 2M15 6l1 1M11 2l2 2" stroke="currentColor" stroke-width="1.2"/></svg>Sealed</span>
-    <span class="pill" role="status" id="sealedAsOf"></span><span id="curPillSealed"></span></div>
+  <header class="appbar">
+    <div class="ab-text"><h1 class="ab-title">Sealed</h1><p class="ab-sub" id="sealedAsOf"></p></div>
+    <div class="ab-act"><span id="curPillSealed"></span><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
+  </header>
   <div class="search" style="margin:6px 0 10px"><svg class="g" width="18" height="18" aria-hidden="true"><use href="#g-spyglass"/></svg>
     <input id="sealedQ" placeholder="Search boxes, packs, decks" aria-label="Search sealed product"></div>
   <div class="row" id="sealedKinds" style="gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
@@ -606,32 +639,50 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
   <div id="sealedList"></div>
 </section>
 <section id="local" class="screen">
-  <div class="bar"><span class="tab on" role="heading" aria-level="1"><svg class="swords" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 15L13 5M6 16L16 6M2 12L12 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Local</span>
-    <select id="localRadius" aria-label="Distance"><option value="10">10 mi</option><option value="25">25 mi</option><option value="50" selected>50 mi</option><option value="100">100 mi</option><option value="0">Any</option></select></div>
+  <header class="appbar">
+    <div class="ab-text"><h1 class="ab-title">Local</h1></div>
+    <div class="ab-act"><select id="localRadius" aria-label="Distance"><option value="10">10 mi</option><option value="25">25 mi</option><option value="50" selected>50 mi</option><option value="100">100 mi</option><option value="0">Any</option></select><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
+  </header>
   <div id="localList"></div>
 </section>
 <section id="events" class="screen">
-  <div class="bar"><span class="tab on" role="heading" aria-level="1"><svg class="swords" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 15L13 5M6 16L16 6M2 12L12 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Events</span>
-    <select id="eventsRadius" aria-label="Distance"><option value="10">10 mi</option><option value="25">25 mi</option><option value="50">50 mi</option><option value="100">100 mi</option><option value="0">Any</option></select></div>
+  <header class="appbar">
+    <div class="ab-text"><h1 class="ab-title">Events</h1></div>
+    <div class="ab-act"><select id="eventsRadius" aria-label="Distance"><option value="10">10 mi</option><option value="25">25 mi</option><option value="50">50 mi</option><option value="100">100 mi</option><option value="0">Any</option></select><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
+  </header>
   <div id="eventsList"></div>
 </section>
 <section id="diag" class="screen">
-  <div class="bar"><span class="tab on" role="heading" aria-level="1">Diagnostics</span></div>
+  <header class="appbar"><button class="icb ab-back" data-back aria-label="Back"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-back"/></svg></button>
+    <div class="ab-text"><h1 class="ab-title">Diagnostics</h1></div>
+  </header>
   <div class="note" style="margin:6px 0 10px">Everything needed to read this phone from a report: endpoints and their live status, what is stored, the last errors, the self-test. No collection contents. Copy it and send it.</div>
   <div class="row" style="gap:8px;margin-bottom:10px"><button class="ghost go" id="diagRun">Run</button><button class="ghost" id="diagCopy" disabled>Copy report</button><button class="ghost" id="diagShare" disabled>Share</button></div>
   <pre id="diagOut" style="white-space:pre-wrap;font-size:12px;line-height:1.45;color:var(--dim);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;min-height:80px"></pre>
 </section>
 <!-- take 91: More is markup like every screen; built on demand it was refused by go() (landmine 128) -->
-<section id="settings" class="screen"></section>
+<section id="settings" class="screen">
+  <header class="appbar"><button class="icb ab-back" data-back aria-label="Back"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-back"/></svg></button>
+    <div class="ab-text"><h1 class="ab-title">More</h1></div>
+  </header>
+  <div id="setBody"></div>
+</section>
 
 <section id="releases" class="screen">
-  <div class="bar"><span class="tab on" role="heading" aria-level="1"><svg class="swords" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 15L13 5M6 16L16 6M2 12L12 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Releases</span></div>
+  <header class="appbar">
+    <div class="ab-text"><h1 class="ab-title">Releases</h1></div>
+    <div class="ab-act"><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
+  </header>
   <div id="relList"></div>
 </section>
 
 <!-- ============================ SEARCH ================================= -->
 <section id="search" class="screen">
-  <div class="search" style="margin-top:14px">
+  <header class="appbar">
+    <div class="ab-text"><h1 class="ab-title">Search</h1></div>
+    <div class="ab-act"><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
+  </header>
+  <div class="search">
     <button data-go="scan" aria-label="Scan a card" title="Scan">📷</button>
     <input id="allq" placeholder="Search the catalogue">
     <button id="sortBtnAll" title="Filter &amp; sort" aria-label="Filter and sort">⚙<span class="fcount" id="fBadgeAll" style="display:none"></span></button>
@@ -646,10 +697,10 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
 <!-- ============================ SCANNER ================================ -->
 <section id="scan" class="screen">
   <div class="scanwrap">
-    <div class="scanhead">
-      <button class="setchip" id="setChip">Set: <b>Any</b> ▾</button>
-      <span class="pill" style="margin-left:auto">⚙</span>
-    </div>
+    <header class="appbar">
+      <div class="ab-text"><h1 class="ab-title">Scan</h1></div>
+      <div class="ab-act"><button class="setchip" id="setChip">Set: <b>Any</b> ▾</button><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
+    </header>
     <div class="guide" id="guide">
       <video id="cam" playsinline muted autoplay
              style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:12px;background:#000"></video>
@@ -678,11 +729,12 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
 
 <!-- ============================ DETAIL ================================= -->
 <section id="detail" class="screen detail">
-  <div class="hd">Adding to <b id="dTarget">One Piece</b></div>
+  <header class="appbar"><button class="icb ab-back" data-back aria-label="Back"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-back"/></svg></button>
+    <div class="ab-text"><h1 class="ab-title" id="dName">—</h1><p class="ab-sub">Adding to <b id="dTarget">One Piece</b></p></div>
+  </header>
   <div style="display:flex;gap:14px;align-items:flex-start;margin-top:6px">
     <div class="art" id="dArt" style="width:112px;flex:0 0 112px;margin:0"></div>
     <div style="flex:1;min-width:0">
-      <h2 id="dName">—</h2>
       <div class="sub" id="dSub">—</div>
       <div class="chips" id="dStats" style="margin-top:6px"></div>
     </div>
@@ -750,9 +802,10 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
 
 <!-- ============================ DECKS ================================== -->
 <section id="decks" class="screen">
-  <div class="bar"><span class="tab on" role="heading" aria-level="1">Decks</span>
-    <button class="ghost" data-go="settings" style="margin-left:auto">&#9881;</button>
-    <button class="ghost go" id="dkNew">+ New deck</button></div>
+  <header class="appbar">
+    <div class="ab-text"><h1 class="ab-title">Decks</h1></div>
+    <div class="ab-act"><button class="ghost go" id="dkNew">+ New deck</button><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
+  </header>
   <div id="dkList"></div>
   <div class="panel"><h3>The rules, in one breath</h3>
     <div class="note">One Leader. Exactly fifty cards, all sharing a colour with it. No
@@ -762,11 +815,12 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
 </section>
 
 <section id="deck" class="screen">
+  <header class="appbar"><button class="icb ab-back" data-back aria-label="Back"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-back"/></svg></button>
+    <div class="ab-text"><h1 class="ab-title"><input id="dkName" placeholder="Deck name" aria-label="Deck name"></h1></div>
+  </header>
   <div class="dkhead">
     <button class="lead" id="dkLead" aria-label="Choose this deck's Leader"></button>
     <div style="flex:1;min-width:0">
-      <input id="dkName" placeholder="Deck name"
-        style="background:none;border:0;border-bottom:1px solid var(--line);color:var(--fg);font:inherit;font-size:17px;font-weight:650;width:100%;padding:4px 0">
       <div class="note" id="dkLeadLine">Tap the card to choose a Leader</div>
     </div>
     <div style="text-align:right"><div class="dkcount" id="dkN">0<span style="font-size:13px;color:var(--dim2)">/50</span></div></div>
@@ -798,8 +852,9 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
 
 <!-- ============================ BINDER ================================== -->
 <section id="binder" class="screen">
-  <div class="bar"><span class="tab on" role="heading" aria-level="1">Binder</span>
-    <span class="note" id="bnPage" style="margin-left:auto"></span></div>
+  <header class="appbar"><button class="icb ab-back" data-back aria-label="Back"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-back"/></svg></button>
+    <div class="ab-text"><h1 class="ab-title">Binder</h1><p class="ab-sub" id="bnPage"></p></div>
+  </header>
   <div class="chips" id="bnSets" style="margin:2px 0 10px"></div>
   <div class="bnpage" id="bnGrid"></div>
   <div class="row" style="justify-content:space-between;margin-top:12px">
@@ -811,8 +866,10 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
 
 <!-- ============================ SET CHECKLIST ============================ -->
 <section id="checklist" class="screen">
-  <div class="bar"><span class="tab on" id="ckTitle" role="heading" aria-level="1">Set</span>
-    <button class="ghost" id="ckWantAll" style="margin-left:auto">Want the rest</button></div>
+  <header class="appbar"><button class="icb ab-back" data-back aria-label="Back"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-back"/></svg></button>
+    <div class="ab-text"><h1 class="ab-title" id="ckTitle">Set</h1></div>
+    <div class="ab-act"><button class="ghost" id="ckWantAll">Want the rest</button></div>
+  </header>
   <div class="note" id="ckSummary" style="margin:2px 0 12px"></div>
   <div class="chips" id="ckFilter" style="margin-bottom:10px"></div>
   <div class="ckgrid" id="ckGrid"></div>
@@ -820,8 +877,10 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
 
 <!-- ============================ WANT LIST ================================ -->
 <section id="wants" class="screen">
-  <div class="bar"><span class="tab on" role="heading" aria-level="1">Want list</span>
-    <button class="ghost" id="wtClear" style="margin-left:auto">Clear</button></div>
+  <header class="appbar"><button class="icb ab-back" data-back aria-label="Back"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-back"/></svg></button>
+    <div class="ab-text"><h1 class="ab-title">Want list</h1></div>
+    <div class="ab-act"><button class="ghost" id="wtClear">Clear</button></div>
+  </header>
   <div class="note" style="margin:2px 0 12px">Cards you are after, valued the same way as the ones you have. Add from a set checklist, a search result or a card's page.</div>
   <div class="panel" id="wtSummary"></div>
   <div id="wtRows"></div>
@@ -832,8 +891,10 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
 
 <!-- ============================ CARDS (P&P browse) ====================== -->
 <section id="cards" class="screen">
-  <div class="bar"><span class="tab on" role="heading" aria-level="1">Cards</span>
-    <button class="ghost" id="cdForDeck" style="margin-left:auto">for this deck: off</button></div>
+  <header class="appbar">
+    <div class="ab-text"><h1 class="ab-title">Cards</h1></div>
+    <div class="ab-act"><button class="ghost" id="cdForDeck">for this deck: off</button><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
+  </header>
   <div class="search"><span><svg class="g" width="16" height="16"><use href="#g-spyglass"/></svg></span>
     <input id="cdq" placeholder="Name, number, or card text"></div>
   <div class="chips" id="cdKw" style="margin:10px 0 6px"></div>
@@ -845,8 +906,10 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
 
 <!-- ============================ PLAY (counter) ========================== -->
 <section id="play" class="screen">
-  <div class="bar"><span class="tab on" role="heading" aria-level="1">Play</span>
-    <button class="ghost" id="plReset" style="margin-left:auto">New game</button></div>
+  <header class="appbar">
+    <div class="ab-text"><h1 class="ab-title">Play</h1></div>
+    <div class="ab-act"><button class="ghost" id="plReset">New game</button><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
+  </header>
   <div class="note" style="margin:2px 0 12px">Life and DON!! for a table game. Two Leaders, one phone. Nothing here is saved or sent.</div>
   <div id="plBoard"></div>
   <div id="plCurtain" class="curtain"></div>
@@ -858,14 +921,19 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
 
 <!-- ============================ SIM (placeholder) ======================== -->
 <section id="sim" class="screen">
-  <div class="bar"><span class="tab on" role="heading" aria-level="1">Sim</span><span class="note" style="margin-left:auto">hot-seat · rules by the app, effects by hand</span></div>
+  <header class="appbar">
+    <div class="ab-text"><h1 class="ab-title">Sim</h1><p class="ab-sub">hot-seat · rules by the app, effects by hand</p></div>
+    <div class="ab-act"><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
+  </header>
   <div id="simBoard"></div>
   <div id="simCurtain" class="curtain"></div>
 </section>
 
 <!-- ========================== TRADE ANALYZER =========================== -->
 <section id="trade" class="screen">
-  <div class="bar"><span class="tab on" role="heading" aria-level="1">Trade</span></div>
+  <header class="appbar"><button class="icb ab-back" data-back aria-label="Back"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-back"/></svg></button>
+    <div class="ab-text"><h1 class="ab-title">Trade</h1></div>
+  </header>
   <div class="note" style="margin:4px 0 14px">Two lists, valued the same way. What you give, what you get, and
     the difference at today's market. Paste the other side's list as <b>4 OP01-016</b> lines, or
     pick from your collection.</div>
@@ -895,7 +963,7 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
 <div class="sheet" id="picker">
   <div class="sheetbody">
     <div class="grab"></div>
-    <h3 id="pkTitle">Which printing is this?</h3>
+    <div class="sheethead"><h2 id="pkTitle">Which printing is this?</h2><button class="icb" data-close="picker" aria-label="Close"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-close"/></svg></button></div>
     <div class="why" id="pkWhy"></div>
     <div id="pkOpts"></div>
     <button class="ghost" id="pkCancel" style="width:100%;padding:13px 0">Cancel</button>
@@ -905,7 +973,7 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
 <div class="sheet" id="filters">
   <div class="sheetbody">
     <div class="grab"></div>
-    <h3 id="fTitle">Filter &amp; sort</h3>
+    <div class="sheethead"><h2 id="fTitle">Filter &amp; sort</h2><button class="icb" data-close="filters" aria-label="Close"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-close"/></svg></button></div>
     <div class="fgrp">Sort by</div>
     <div class="chips" id="fSort"></div>
     <div class="fgrp">Set</div>
@@ -960,7 +1028,7 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
 <div class="sheet" id="askSheet">
   <div class="sheetbody">
     <div class="grab"></div>
-    <h3 id="askTitle"></h3>
+    <div class="sheethead"><h2 id="askTitle"></h2><button class="icb" data-close="askSheet" aria-label="Close"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-close"/></svg></button></div>
     <div class="note" id="askWhy" style="margin:0 0 12px"></div>
     <div id="askField"></div>
     <div class="row" style="gap:10px;margin-top:14px">
@@ -973,7 +1041,7 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
 <div class="sheet" id="leaderPick">
   <div class="sheetbody">
     <div class="grab"></div>
-    <h3>Choose a Leader</h3>
+    <div class="sheethead"><h2>Choose a Leader</h2><button class="icb" data-close="leaderPick" aria-label="Close"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-close"/></svg></button></div>
     <div class="note" style="margin:0 0 10px">The Leader sets the deck's colours and its Life (§5-1-2-2, §2-9).</div>
     <div class="search" style="margin-bottom:10px"><span>🔍</span>
       <input id="lpq" placeholder="Name or number"></div>
@@ -986,7 +1054,7 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
 <div class="sheet" id="printPick">
   <div class="sheetbody">
     <div class="grab"></div>
-    <h3 id="ppTitle">Which printing is in the deck?</h3>
+    <div class="sheethead"><h2 id="ppTitle">Which printing is in the deck?</h2><button class="icb" data-close="printPick" aria-label="Close"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-close"/></svg></button></div>
     <div class="note" style="margin:0 0 10px">The rules count copies by number; the printing only changes what it is worth (R6).</div>
     <div id="ppList"></div>
     <button class="ghost" id="ppCancel" style="width:100%;padding:13px 0;margin-top:10px">Cancel</button>
@@ -2486,7 +2554,7 @@ const NAV = { stack: [], silent: false,
    It heals the symptom and names the cause. */
 function screenWatchdog(trigger) {
   setTimeout(() => { const on = document.querySelector('.screen.on'); if (on) return;
-    const overlays = ['#askSheet', '#picker', '#detail', '#tour', '#simCurtain', '#splash'].filter(id => { const el = $(id); return el && el.classList && el.classList.contains('on'); });
+    const overlays = ['#askSheet', '#picker', '#filters', '#leaderPick', '#printPick', '#detail', '#tour', '#simCurtain', '#splash'].filter(id => { const el = $(id); return el && el.classList && el.classList.contains('on'); });
     ERRS.push('blank', `no screen on after ${trigger}; stack ${NAV.stack.join('>') || '-'}; overlays ${overlays.join(',') || 'none'}; mode ${MODE.cur}`, 'watchdog');
     NAV.silent = true; go(MODE.home[MODE.cur] || 'home'); NAV.silent = false; }, 60);
 }
@@ -2496,8 +2564,26 @@ function closeAnyOverlay() {
      pushes it on the stack -- and closing it here returned before NAV.back()
      ran, so every Back from a card's sheet left no screen on and the watchdog
      put Home back. An overlay list holds overlays only. */
-  for (const id of ['#picker', '#tour', '#simCurtain']) { const el = $(id); if (el && el.classList.contains('on')) { el.classList.remove('on'); return true; } }
+  /* take 107: Back left the filter, Leader and printing sheets open while the
+     screen under them changed (PROVEN in Chrome: the filter sheet over Home,
+     the Leader sheet over Decks). They are overlays; Back closes them first. */
+  for (const id of ['#picker', '#filters', '#leaderPick', '#printPick', '#tour', '#simCurtain']) { const el = $(id); if (el && el.classList.contains('on')) { el.classList.remove('on'); return true; } }
   return false;
+}
+/* take 107: the header's back arrow is the phone's Back, not a second route.
+   In the app it runs the back button's own path and never leaves the app; in
+   a browser it asks the browser, so its history and the screen stack stay one. */
+function backArrow() {
+  const APP = PLATFORM.plugin('App');
+  if (APP && APP.addListener) { try { if (closeAnyOverlay()) return; NAV.back(); } finally { screenWatchdog('back arrow'); } return; }
+  if (NAV.stack.length > 1) { history.back(); return; }
+  try { NAV.back(); } finally { screenWatchdog('back arrow'); }
+}
+/* take 107: a sheet's close button does what Back does to that sheet -- the
+   prompt answers no (its promise resolves), every other sheet closes. */
+function closeSheet(id) {
+  if (id === 'askSheet') { $('#askCancel').click(); return; }
+  const el = document.getElementById(id); if (el) el.classList.remove('on');
 }
 function go(id) {
   /* Take 83. A screen id that matches nothing left every screen off and the
@@ -2526,6 +2612,8 @@ function go(id) {
 }
 document.addEventListener('click', e => {
   const g = e.target.closest('[data-go]'); if (g) go(g.dataset.go);
+  if (e.target.closest('[data-back]')) backArrow();
+  const x = e.target.closest('[data-close]'); if (x) closeSheet(x.dataset.close);
 });
 function toast(msg) {
   const t = $('#toast'); t.textContent = msg; t.classList.add('on');
@@ -2674,6 +2762,8 @@ function setHomeTab(perf) {
   $('#tabOver').classList.toggle('on', !perfOn);
   $('#tabPerf').setAttribute('aria-selected', String(perfOn));
   $('#tabOver').setAttribute('aria-selected', String(!perfOn));
+  $('#tabPerf').setAttribute('tabindex', perfOn ? '0' : '-1');   // take 107: one tab stop for the pair, the selected one
+  $('#tabOver').setAttribute('tabindex', perfOn ? '-1' : '0');
   $('#perfPanel').style.display = perfOn ? 'block' : 'none';
   for (const id of HOME_OVERVIEW) { const el = $('#' + id); if (el) el.style.display = perfOn ? 'none' : ''; }
   if (perfOn) paintPerf(); else paintHome();
@@ -2681,7 +2771,8 @@ function setHomeTab(perf) {
 $('#tabPerf').addEventListener('click', () => setHomeTab(true));
 $('#tabOver').addEventListener('click', () => setHomeTab(false));
 for (const id of ['#tabOver', '#tabPerf']) $(id).addEventListener('keydown', e => {
-  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setHomeTab(id === '#tabPerf'); } });
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setHomeTab(id === '#tabPerf'); }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); const perf = id === '#tabOver'; setHomeTab(perf); $(perf ? '#tabPerf' : '#tabOver').focus(); } });
 function paintPerf() {
   if (!perfOn) return;
   const withCost = OWN.items.filter(i => i.paid > 0);
@@ -4779,10 +4870,9 @@ function paintSettings() {
   /* take 91: the section is markup like every other screen (landmine 128).
      It was created here on first paint, and the take-83 guard in go()
      refused the id before this ran -- so More bounced to Home for eight takes. */
-  const s = $('#settings');
+  const s = $('#setBody');   // take 107: the header above it is markup, like every screen's
   const m = CAT.man;
   s.innerHTML = `
-    <div class="bar"><span class="tab on" role="heading" aria-level="1">More</span></div>
     <div class="panel"><h3>Your collection</h3>
       <div class="row"><div class="nm"><b>${OWN.items.length} lines</b>
         <span>${OWN.items.reduce((a, i) => a + i.qty, 0)} cards \u00b7 ${money(OWN.total())}</span>
@@ -5488,7 +5578,7 @@ async function runSelfTest() {
      day and a hardcoded placeholder is landmine 62 in a text box. */
   $('#allq').placeholder = `Search all ${(CAT.man.cards || 0).toLocaleString()} cards`;
   paintNet(); paintHome();
-  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, setCond, toast, cameraVerdict, effectsLine, HUNT, targetLine, distLine, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
+  window.VAULT = { backArrow, closeSheet, setHomeTab, CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, setCond, toast, cameraVerdict, effectsLine, HUNT, targetLine, distLine, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
                    cardPic, setPic, picBox, deckRow, paintHome, paintDecks, paintSearch, openDeck,
                    FILT, loadFilter, applyFilter, sortRows, blankFilter, activeCount,
                    DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,

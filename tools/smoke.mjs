@@ -1520,8 +1520,9 @@ section('take 91 — More is a screen (A37, landmine 128)');
   ok("go('settings') lands on More, not on Home", V.NAV.stack[V.NAV.stack.length - 1] === 'settings', V.NAV.stack.slice(-2).join('>'));
   ok('...and records no "no screen" error', V.ERRS.list.length === before, JSON.stringify(V.ERRS.list[0] || null));
   ok('#settings is a <section> in the markup, not built on demand', !!el && el.tagName === 'SECTION');
+  const body91 = ctx.document.getElementById('setBody');   // take 107: More's header is markup; its rows are painted under it
   ok('More painted its rows: About (the Diagnostics gesture), Export CSV, Sync',
-     !!el && /id="aboutTake"/.test(el.innerHTML) && /Export CSV/.test(el.innerHTML) && /id="syncBtn"/.test(el.innerHTML));
+     !!body91 && /id="aboutTake"/.test(body91.innerHTML) && /Export CSV/.test(body91.innerHTML) && /id="syncBtn"/.test(body91.innerHTML));
   V.MODE.set('play', false); V.go('settings');
   ok('the gear on Decks reaches the same screen', V.NAV.stack[V.NAV.stack.length - 1] === 'settings' && V.ERRS.list.length === before);
   V.MODE.set('collect', false); V.go('home');
@@ -1540,7 +1541,7 @@ section('take 91 — More is a screen (A37, landmine 128)');
 }
 ok('NAV.back() pops past anything that is not a screen', (() => { V.NAV.stack = ['sealed', 'ghost', 'local']; const r = V.NAV.back(); return r && V.NAV.stack[V.NAV.stack.length - 1] === 'sealed'; })());
 ok('the bottom bar is one bar in every mode: fixed height, near-black, items stretch equally, the accent only on the active item', /nav\{[^}]*height:66px[^}]*#0B0D10/.test(html) && /nav button\{flex:1 1 0/.test(html) && /nav button\.on\{color:var\(--accent-ink\)\}/.test(html));
-ok('every screen title bar has the same minimum height', /\.bar\{[^}]*min-height:56px/.test(html));
+ok('every screen title bar has the same minimum height', /\.appbar\{[^}]*min-height:56px/.test(html));   // take 107: the header, one per screen
 ok('the Portfolio label is a small caption above the name, which keeps the display face at the hero\'s size', /\.hero \.who \.cap\{[^}]*text-transform:uppercase/.test(html) && /<span class="cap">Portfolio<\/span><em id="pfName">/.test(html) && /\.hero \.who em\{[^}]*font-size:24px/.test(html));
 { const boxes = V.CAT.rows.filter(p => V.SEALED.isProduct(p));
   ok('every sealed product carries a product photo url (343 of 343 today)', boxes.length > 300 && boxes.every(p => p.img));
@@ -1619,7 +1620,7 @@ const nameless = buttons.filter(([, attrs, inner]) => {
 });
 ok('every button that a reader would announce as nothing carries an aria-label', nameless.length === 0,
    nameless.slice(0, 3).map(n => n[0].replace(/\s+/g, ' ').slice(0, 70)).join(' | '));
-ok('a screen title announces as a heading, not as a tab', (html.match(/class="tab on"[^>]*role="heading"/g) || []).length >= 8);
+ok('a screen title announces as a heading, not as a tab', (html.match(/<h1 class="ab-title"/g) || []).length >= 20 && !/class="tab on"/.test(html));   // take 107: a real h1 in every screen's header
 ok('the only real tabs keep role="tab" and a selected state', /id="tabOver"[^>]*role="tab"[^>]*aria-selected/.test(html) && /id="tabPerf"[^>]*role="tab"[^>]*aria-selected/.test(html));
 ok('the network badge is a live status, not a control', /class="pill" role="status" aria-live="polite"/.test(html));
 ok('decorative glyphs inside labelled controls are hidden from the reader', /<span class="ic" aria-hidden="true">/.test(html));
@@ -1652,7 +1653,7 @@ ok('the store link is the app id and nothing else: no referral, no campaign, no 
 const tabOver = ctx.document.querySelector('#tabOver'), tabPerf = ctx.document.querySelector('#tabPerf');
 ok('Overview is a real tab with an id, a handler and a selected state', !!tabOver && /tabOver'\)\.addEventListener\('click'/.test(js) && /aria-selected/.test(html));
 const fire = el => (el._ev && el._ev.click) ? el._ev.click({ target: el, preventDefault() {} }) : null;
-ok('on load, Overview carries the on class from the markup', /id="tabOver"[^>]*class|class="tab on" id="tabOver"/.test(html));
+ok('on load, Overview carries the on class from the markup', /<button class="on" id="tabOver"/.test(html));
 fire(tabPerf);
 ok('clicking Performance turns Overview OFF -- the reported bug', tabPerf.classList.contains('on') && !tabOver.classList.contains('on'), `over=${tabOver.className} perf=${tabPerf.className}`);
 ok('...and the overview blocks give way to the performance panel', ctx.document.querySelector('#perfPanel').style.display === 'block' && ctx.document.querySelector('#hero').style.display === 'none');
@@ -1829,7 +1830,7 @@ ctx.Date = RealDate; V.LOCAL.radius = 0;
 ok('negative control (landmine 123): read with the real clock, once the fixture\'s last event day has passed the same fixture yields no rows -- the runner\'s three red nights, asserted live against live', RealDate.now() <= RealDate.parse(fxDays[fxDays.length - 1] + 'T23:59:59Z') || V.EVENTS.rows().length === 0);
 ok('the real clock is back for everything after this block', vm.runInContext('Date.now()', ctx) > pinnedNow + 864e5 && vm.runInContext('Date', ctx) === RealDate);
 V.LOCAL.radius = 50; V.EVENTS.tab = null; V.HUNT.setZip('');
-ok('Hunt is green: the palette is Zoro\'s and it clears AA (checked with the other two above)', /:root\[data-mode="hunt"\]\{\s*--bg:#0B1B12/.test(html) && /\.swords\{/.test(html) && (html.match(/class="swords"/g) || []).length >= 4);
+ok('Hunt is green: the palette is Zoro\'s and it clears AA (checked with the other two above)', /:root\[data-mode="hunt"\]\{\s*--bg:#0B1B12/.test(html) && /\.swords\{/.test(html) && (html.match(/class="swords"/g) || []).length === 1);   // take 107: the swords stay on the splash; Hunt's titles are the header's like every mode's
 ok('the mark is three strokes of original geometry -- no image, no likeness', !/<image/.test(html.slice(html.indexOf('class="swords"'), html.indexOf('class="swords"') + 400)));
 /* take 77: stock alerts -- fire on the flip, once, per source */
 {
@@ -2090,7 +2091,7 @@ V.RELF.open = new Set(); V.HUNT.feed = null; V.RELALERTS.list = []; V.MODE.set('
 
 section('take 98 — the take-97 look: Back from a sheet goes back (landmine 137), the most-valuable rows open, one splash colour, a toast that wraps, the decks fold, a condition tap that works');
 /* landmine 137: the card sheet is a screen; it must not be in the overlay list, and the handler's sequence must land on the previous screen */
-ok('closeAnyOverlay() lists overlays only: the picker, the tour and the curtain — never the card sheet', /for \(const id of \['#picker', '#tour', '#simCurtain'\]\)/.test(js) && !/for \(const id of \[[^\]]*'#detail'/.test(js));
+ok('closeAnyOverlay() lists overlays only: the sheets, the tour and the curtain — never the card sheet', /for \(const id of \['#picker', '#filters', '#leaderPick', '#printPick', '#tour', '#simCurtain'\]\)/.test(js) && !/for \(const id of \[[^\]]*'#detail'/.test(js));   // take 107 added the three sheets Back skipped
 { const box98 = V.CAT.rows.find(p => V.SEALED.isProduct(p)); V.MODE.set('hunt', false); V.go('sealed'); V.openDetail(box98.id);
   const top0 = V.NAV.stack[V.NAV.stack.length - 1]; const closed = V.closeAnyOverlay(); const back = V.NAV.back(); const top1 = V.NAV.stack[V.NAV.stack.length - 1];
   ok('the back handler\'s sequence from a sheet: closeAnyOverlay() has nothing to close, NAV.back() pops to the screen the sheet came from', top0 === 'detail' && closed === false && back === true && top1 === 'sealed', `${top0} → closed=${closed} back=${back} → ${top1}`);
@@ -2234,6 +2235,73 @@ section('take 106 — the UI series\' foundation (A42): one set of tokens, the a
   const keep106 = V.OWN.items; V.OWN.items = []; V.go('collection');   // go() paints through the screen map (landmine 135)
   ok('the empty collection draws the scan card it points at, not the removed skull', /#g-scancard/.test(ctx.document.querySelector('#colEmpty').innerHTML) && !/g-roger/.test(ctx.document.querySelector('#colEmpty').innerHTML), ctx.document.querySelector('#colEmpty').innerHTML.slice(0, 120));
   V.OWN.items = keep106; V.go('home'); }
+
+section('take 107 — one header on every screen (A42): the title in one place, Back one level down, the gear to More on every main screen, Home\'s two views as tabs, every sheet closable, Back closes every sheet');
+{ /* the header is markup in every section (landmines 128, 135), so each screen's own markup is read */
+  const PUSH = ['deck', 'detail', 'checklist', 'binder', 'wants', 'trade', 'diag', 'settings'];
+  const GEAR_TAIL = /aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"\/><\/svg><\/button><\/div>\s*$/;
+  const audit = src => [...src.matchAll(/<section id="([\w-]+)"[^>]*>([\s\S]*?)<\/section>/g)].map(([, id, body]) => {
+    const hm = body.match(/<header class="appbar">([\s\S]*?)<\/header>/), h = hm ? hm[1] : '';
+    return { id, headers: (body.match(/<header class="appbar">/g) || []).length, h1s: (body.match(/<h1\b/g) || []).length,
+      title: (h.match(/<h1 class="ab-title"/g) || []).length === 1,
+      first: body.replace(/^\s*(<div class="scanwrap">\s*)?/, '').startsWith('<header class="appbar">'),   // the scanner's header opens its camera surface
+      back: /^<button class="icb ab-back" data-back aria-label="Back">/.test(h), gear: GEAR_TAIL.test(h), glyph: /class="swords"/.test(h) }; });
+  const bad = src => audit(src).filter(a => a.headers !== 1 || a.h1s !== 1 || !a.title || !a.first || a.glyph
+    || a.back !== PUSH.includes(a.id) || a.gear === PUSH.includes(a.id)).map(a => a.id);
+  const all = audit(html);
+  ok('twenty screens, and every one opens with one header holding its one h1: where a title sits is the header\'s alone', all.length === 20 && bad(html).length === 0, bad(html).join(',') || String(all.length));
+  ok('the eight screens one level down start with Back; the twelve in a mode\'s nav end with the gear to More, in all three modes (A37)',
+     all.filter(a => a.back).map(a => a.id).sort().join() === [...PUSH].sort().join() && all.filter(a => a.gear).length === 12 && (html.match(/data-go="settings" aria-label="More"/g) || []).length === 12);
+  ok('...control: a screen with its header taken out is caught', bad(html.replace('<section id="trade" class="screen">\n  <header class="appbar">', '<section id="trade" class="screen">\n  <div class="bar">')).includes('trade'));
+  ok('...control: a gear that is not the last action is caught', bad('<section id="cards" class="screen"><header class="appbar"><div class="ab-text"><h1 class="ab-title">Cards</h1></div><div class="ab-act"><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button><button class="ghost">x</button></div></header></section>').includes('cards'));
+  ok('...control: a title with a mark in it, or a Back on a nav screen, is caught', bad('<section id="sealed" class="screen"><header class="appbar"><div class="ab-text"><h1 class="ab-title"><svg class="swords"></svg>Sealed</h1></div><div class="ab-act"><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div></header></section>').includes('sealed')
+     && bad('<section id="play" class="screen"><header class="appbar"><button class="icb ab-back" data-back aria-label="Back"></button><div class="ab-text"><h1 class="ab-title">Play</h1></div><div class="ab-act"><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div></header></section>').includes('play'));
+  ok('one look for every title: the display face and the mode\'s accent (the h1 rule), one size, one minimum height; the tab style is gone',
+     /\nh1,h2\{font-family:var\(--display\)[^}]*color:var\(--accent-ink\)\}/.test(html) && /\.ab-title\{[^}]*font-size:var\(--fs-head\)/.test(html) && /\.appbar\{[^}]*min-height:56px/.test(html) && !/\n\.tab\{/.test(html) && !/\n\.bar\{/.test(html) && !/class="tab/.test(html));
+  ok('the new controls are 44 px targets: the header\'s icon buttons and Home\'s two tabs', /\.icb\{width:44px;height:44px/.test(html) && /\.segtabs button\{[^}]*min-height:44px/.test(html));
+  ok('back, close and the gear are symbols in the sprite, plain geometry drawn here', ['back', 'close', 'gear'].every(g => new RegExp(`<symbol id="g-${g}" viewBox="0 0 24 24"`).test(html)));
+  ok('the deck\'s name is its title and stays a field, labelled, with no inline style', /<h1 class="ab-title"><input id="dkName" placeholder="Deck name" aria-label="Deck name"><\/h1>/.test(html) && /h1\.ab-title input\{[^}]*font:inherit/.test(html));
+  ok('a card\'s name is its title; the collection it is added to is the line under it', /<h1 class="ab-title" id="dName">/.test(html) && /<p class="ab-sub">Adding to <b id="dTarget">/.test(html) && !/<h2 id="dName"/.test(html));
+  ok('More\'s header is markup like every screen\'s; the rows are painted under it', /<section id="settings" class="screen">\s*<header class="appbar">/.test(html) && /const s = \$\('#setBody'\)/.test(js) && !/<span class="tab on"/.test(js));
+  ok('the date of Sealed\'s prices and the binder\'s page are the line under their titles', /<h1 class="ab-title">Sealed<\/h1><p class="ab-sub" id="sealedAsOf"><\/p>/.test(html) && /<h1 class="ab-title">Binder<\/h1><p class="ab-sub" id="bnPage"><\/p>/.test(html));
+  /* Home's two views */
+  ok('Home\'s two views are a tab row under its title: a tablist, two button tabs, one selected, one tab stop',
+     /<div class="segtabs" role="tablist" aria-label="Home">\s*<button class="on" id="tabOver" role="tab" aria-selected="true" tabindex="0">Overview<\/button>\s*<button id="tabPerf" role="tab" aria-selected="false" tabindex="-1">Performance<\/button>/.test(html));
+  ok('under the tab row the release note draws no second rule, and "Got it" keeps to one line (both seen at take 106, left for this take)', /#home \.segtabs \+ \.stale \+ #whatsNew\{border-top:0/.test(html) && /#wnOk\{flex:0 0 auto;white-space:nowrap\}/.test(html));
+  /* the sheets */
+  const sheets = ['picker', 'filters', 'askSheet', 'leaderPick', 'printPick'];
+  ok('every sheet has a title in the header\'s face and a close button of its own', sheets.every(id => new RegExp(`<div class="sheet" id="${id}">\\s*<div class="sheetbody">\\s*<div class="grab"></div>\\s*<div class="sheethead"><h2[^>]*>[^<]*</h2><button class="icb" data-close="${id}" aria-label="Close">`).test(html)) && /\.sheethead h2\{[^}]*font-size:var\(--fs-title\)/.test(html));
+  for (const id of ['#filters', '#leaderPick', '#printPick']) {
+    const el = ctx.document.querySelector(id); el.classList.add('on');
+    ok(`Back closes ${id} first (it stayed open while the screen under it changed -- PROVEN in Chrome before this take)`, V.closeAnyOverlay() === true && !el.classList.contains('on'));
+    el.classList.remove('on');
+  }
+  ok('...control: with nothing open, Back has no sheet to close', V.closeAnyOverlay() === false);
+  ok('the watchdog names the three sheets too when it records a blank screen', /const overlays = \['#askSheet', '#picker', '#filters', '#leaderPick', '#printPick'/.test(js));
+  /* the behaviour, through the named handlers (landmine 136: a document-level click handler is out of the stub's reach) */
+  const has107 = ['setHomeTab', 'closeSheet', 'backArrow'].every(f => typeof V[f] === 'function');   // an older build fails here instead of throwing
+  ok('the header\'s handlers are named and reachable: Home\'s tabs, a sheet\'s close, the back arrow', has107);
+  if (has107) {
+    const tO = ctx.document.querySelector('#tabOver'), tP = ctx.document.querySelector('#tabPerf');
+    V.setHomeTab(true);
+    ok('selecting Performance moves the tab stop with it', tP.getAttribute('tabindex') === '0' && tO.getAttribute('tabindex') === '-1' && tP.getAttribute('aria-selected') === 'true');
+    tP._ev.keydown({ key: 'ArrowLeft', preventDefault() {} });
+    ok('the arrow keys move between the two views', tO.classList.contains('on') && !tP.classList.contains('on') && tO.getAttribute('tabindex') === '0');
+    V.setHomeTab(false);
+    { const el = ctx.document.querySelector('#filters'); el.classList.add('on'); V.closeSheet('filters');
+      ok('a sheet\'s close button closes that sheet', !el.classList.contains('on')); }
+    /* the back arrow is the phone's Back */
+    V.MODE.set('collect', false); V.go('home'); V.go('collection'); V.go('wants');
+    V.backArrow();
+    ok('in a browser the arrow asks the browser to go back, and the screen stack follows (wants -> collection)', V.NAV.stack[V.NAV.stack.length - 1] === 'collection', V.NAV.stack.slice(-3).join('>'));
+    const plug0 = V.PLATFORM.plugin; let minimised = 0;
+    V.PLATFORM.plugin = n => n === 'App' ? { addListener() {}, minimizeApp() { minimised++; } } : plug0.call(V.PLATFORM, n);
+    V.go('binder'); V.backArrow();
+    ok('in the app the arrow runs the back button\'s own path (binder -> collection)', V.NAV.stack[V.NAV.stack.length - 1] === 'collection', V.NAV.stack.slice(-3).join('>'));
+    V.NAV.stack = ['home']; V.backArrow();
+    ok('...control: from the mode\'s home the arrow does nothing, and never leaves the app', minimised === 0 && V.NAV.stack.join() === 'home');
+    V.PLATFORM.plugin = plug0; V.go('home');
+  } }
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

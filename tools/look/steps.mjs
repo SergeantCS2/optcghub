@@ -288,4 +288,118 @@ const take106 = [
     } }
 ];
 
-export const STEPS = { 98: take98, 100: take100, 104: take104, 105: take105, 106: take106 };
+/* ---- take 107 — one header on every screen (A42) --------------------------- */
+/* The header's measure, run in the page: where the title sits and how it is set, whether
+   anything in the header is clipped, overlaps or leaves the screen, and where the gear is.
+   Every title is compared with the first one measured (Decks), so a title that moves fails. */
+const HEADER = `(id) => { const sec = document.getElementById(id), s = sec.getBoundingClientRect();
+  const h = sec.querySelector('header.appbar'), t = h && h.querySelector('.ab-title'); if (!t) return { id, missing: true };
+  const r = t.getBoundingClientRect(), cs = getComputedStyle(t), txt = h.querySelector('.ab-text').getBoundingClientRect();
+  const act = h.querySelector('.ab-act'), a = act ? act.getBoundingClientRect() : null, g = h.querySelector('[data-go="settings"]'), gr = g && g.getBoundingClientRect();
+  const inside = [...h.querySelectorAll('*')].every(e => { const b = e.getBoundingClientRect(); return b.width === 0 || (b.left >= -0.5 && b.right <= innerWidth + 0.5); });
+  return { id, title: (t.textContent || (t.querySelector('input') || {}).value || '').trim().slice(0, 24), top: +(r.top - s.top).toFixed(1), left: +(r.left - s.left).toFixed(1),
+    size: cs.fontSize, face: cs.fontFamily.split(',')[0].replace(/"/g, ''), colour: cs.color, back: !!h.querySelector('[data-back]'),
+    gear: gr ? [Math.round(gr.left - s.left), Math.round(gr.top - s.top)] : null, clipped: t.scrollWidth > t.clientWidth + 1, overlap: a ? txt.right > a.left + 0.5 : false, inside }; }`;
+const hdr = (page, id) => page.evaluate(`(${HEADER})(${JSON.stringify(id)})`);
+const clean = m => !m.missing && !m.clipped && !m.overlap && m.inside;
+const likeRef = (ctx, m) => !!ctx.ref && m.top === ctx.ref.top && m.size === ctx.ref.size && m.face === ctx.ref.face;
+const gearAtRef = (ctx, m) => !!m.gear && !!ctx.ref && m.gear[0] === ctx.ref.gear[0] && m.gear[1] === ctx.ref.gear[1];
+const pause = `new Promise(r => setTimeout(r, 450))`;
+const take107 = [
+  { name: 'play-decks-title-and-gear', run: async (page, ctx) => {
+      /* Prep & Play first. Decks: the title in the display face at 26px in the mode's red, "+ New deck", then the gear */
+      await ctx.open();
+      await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('play', true); V.go('decks'); await ${pause}; window.scrollTo(0, 0); })()`);
+      const m = await hdr(page, 'decks'); ctx.ref = m;
+      return { ok: clean(m) && m.size === '26px' && m.face === 'OPH Display' && m.colour === 'rgb(229, 112, 92)' && !m.back && !!m.gear, ...m };
+    } },
+  { name: 'play-deck-name-is-the-title-back-returns', run: async (page, ctx) => {
+      /* one level down: the back arrow, the deck's name as the title and still a field; the arrow returns to Decks */
+      await page.click('#dkNew'); await page.waitForTimeout(350);
+      await page.fill('#dkName', 'Red Shanks'); await page.evaluate(() => { document.activeElement && document.activeElement.blur(); window.scrollTo(0, 0); });
+      const m = await hdr(page, 'deck'); const shot = await ctx.shot('02a-deck-with-its-name');
+      await page.click('#deck .ab-back'); await page.waitForTimeout(350);
+      const on = await page.evaluate(() => (document.querySelector('.screen.on') || {}).id);
+      return { ok: clean(m) && likeRef(ctx, m) && m.back && !m.gear && m.title === 'Red Shanks' && on === 'decks', afterBack: on, shot, ...m };
+    } },
+  { name: 'play-cards-and-sim-titles-hold-their-place', run: async (page, ctx) => {
+      /* Cards carries a text action, Sim a line under its title: neither moves the title or the gear */
+      await page.evaluate(`(async () => { window.VAULT.go('cards'); await ${pause}; window.scrollTo(0, 0); })()`);
+      const c = await hdr(page, 'cards'); const shot = await ctx.shot('03a-cards');
+      await page.evaluate(`(async () => { window.VAULT.go('sim'); await ${pause}; window.scrollTo(0, 0); })()`);
+      const m = await hdr(page, 'sim');
+      return { ok: clean(c) && clean(m) && likeRef(ctx, c) && likeRef(ctx, m) && gearAtRef(ctx, c) && gearAtRef(ctx, m), cards: c.top, sim: m.top, gear: m.gear, shot };
+    } },
+  { name: 'hunt-sealed-prices-line-no-swords', run: async (page, ctx) => {
+      /* Hunt: the prices' date is the line under the title, the currency and the gear at the right; no swords in the title */
+      await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('hunt', true); V.go('sealed'); await ${pause}; while (V.closeAnyOverlay()) {} window.scrollTo(0, 0); })()`);
+      const m = await hdr(page, 'sealed');
+      const extra = await page.evaluate(() => ({ swords: !!document.querySelector('#sealed header .swords'), sub: (document.querySelector('#sealedAsOf') || {}).textContent || '' }));
+      return { ok: clean(m) && likeRef(ctx, m) && gearAtRef(ctx, m) && m.colour === 'rgb(214, 176, 76)' && !extra.swords && /prices/.test(extra.sub), ...extra, ...m };
+    } },
+  { name: 'hunt-local-distance-and-gear', run: async (page, ctx) => {
+      await page.evaluate(`(async () => { const V = window.VAULT; V.go('local'); await ${pause}; while (V.closeAnyOverlay()) {} window.scrollTo(0, 0); })()`);
+      const m = await hdr(page, 'local');
+      return { ok: clean(m) && likeRef(ctx, m) && gearAtRef(ctx, m), ...m };
+    } },
+  { name: 'collect-home-title-and-two-tabs', run: async (page, ctx) => {
+      /* Collect: Home's title with the network badge, the currency and the gear; Overview and Performance a tab row under it */
+      await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('collect', true); V.go('home'); await ${pause}; window.scrollTo(0, 0); })()`);
+      const m = await hdr(page, 'home');
+      await page.click('#tabPerf'); await page.waitForTimeout(200);
+      const perf = await page.evaluate(() => ({ sel: document.querySelector('#tabPerf').getAttribute('aria-selected'), panel: getComputedStyle(document.querySelector('#perfPanel')).display }));
+      const shot = await ctx.shot('06a-home-performance');
+      await page.click('#tabOver'); await page.waitForTimeout(200);
+      const tabs = await page.evaluate(() => { const o = document.querySelector('#tabOver').getBoundingClientRect(); const wn = document.querySelector('#whatsNew'), ok = document.querySelector('#wnOk');
+        return { h: Math.round(o.height), over: document.querySelector('#tabOver').getAttribute('aria-selected'),
+                 note: wn && !wn.hidden ? { rule: getComputedStyle(wn).borderTopWidth, gotIt: Math.round(ok.getBoundingClientRect().height) } : null }; });
+      /* with the release note showing: no second rule under the tabs, and "Got it" on one line (it wrapped at take 106) */
+      const noteOk = !tabs.note || (tabs.note.rule === '0px' && tabs.note.gotIt <= 48);
+      return { ok: clean(m) && likeRef(ctx, m) && gearAtRef(ctx, m) && m.colour === 'rgb(201, 162, 74)' && perf.sel === 'true' && perf.panel === 'block' && tabs.over === 'true' && tabs.h >= 44 && noteOk, perf, tabs, shot, ...m };
+    } },
+  { name: 'collect-search-and-scan-open-with-a-title', run: async (page, ctx) => {
+      /* the two screens that opened with a search box and a set chip now open with their titles, in the same place */
+      await page.evaluate(`(async () => { window.VAULT.go('search'); await ${pause}; window.scrollTo(0, 0); })()`);
+      const a = await hdr(page, 'search'); const shot = await ctx.shot('07a-search');
+      await page.evaluate(`(async () => { window.VAULT.go('scan'); await ${pause}; window.scrollTo(0, 0); })()`);
+      const b = await hdr(page, 'scan');
+      return { ok: clean(a) && clean(b) && likeRef(ctx, a) && likeRef(ctx, b) && gearAtRef(ctx, a) && gearAtRef(ctx, b), search: [a.top, a.left], scan: [b.top, b.left], shot };
+    } },
+  { name: 'collect-card-name-title-back-returns', run: async (page, ctx) => {
+      /* a card's own page: the arrow, its name as the title, the collection it is added to under it; the arrow returns */
+      await page.evaluate(`(async () => { const V = window.VAULT; V.go('home'); await ${pause}; const p = V.CAT.rows.find(r => /OP01-016/.test(r.num || '')); V.openDetail(p.id); await ${pause}; window.scrollTo(0, 0); })()`);
+      const m = await hdr(page, 'detail'); const shot = await ctx.shot('08a-card');
+      await page.click('#detail .ab-back'); await page.waitForTimeout(350);
+      const on = await page.evaluate(() => (document.querySelector('.screen.on') || {}).id);
+      return { ok: clean(m) && likeRef(ctx, m) && m.back && m.title.length > 0 && on === 'home', afterBack: on, shot, ...m };
+    } },
+  { name: 'collect-gear-opens-more-back-returns', run: async (page, ctx) => {
+      /* the gear on Home opens More; More's arrow comes back */
+      await page.click('#home header [data-go="settings"]'); await page.waitForTimeout(350);
+      const m = await hdr(page, 'settings'); const shot = await ctx.shot('09a-more');
+      await page.click('#settings .ab-back'); await page.waitForTimeout(350);
+      const on = await page.evaluate(() => (document.querySelector('.screen.on') || {}).id);
+      return { ok: clean(m) && likeRef(ctx, m) && m.back && m.title === 'More' && on === 'home', afterBack: on, shot, ...m };
+    } },
+  { name: 'collect-filter-sheet-closes-on-back-and-on-its-cross', run: async (page, ctx) => {
+      /* the filter sheet: a title in the header's face and a cross. Back closed nothing before this take -- the sheet stayed over the next screen */
+      await page.evaluate(`(async () => { window.VAULT.go('collection'); await ${pause}; window.scrollTo(0, 0); })()`);
+      await page.click('#sortBtn'); await page.waitForTimeout(300);
+      const open = await page.evaluate(() => { const h = document.querySelector('#filters .sheethead h2'), x = document.querySelector('#filters [data-close]'); const cs = h && getComputedStyle(h); const xr = x && x.getBoundingClientRect();
+        return { on: document.querySelector('#filters').classList.contains('on'), face: cs && cs.fontFamily.split(',')[0].replace(/"/g, ''), size: cs && cs.fontSize, cross: xr ? [Math.round(xr.width), Math.round(xr.height)] : null }; });
+      const shot = await ctx.shot('10a-filter-sheet');
+      await page.evaluate(() => history.back()); await page.waitForTimeout(400);
+      const afterBack = await page.evaluate(() => ({ on: document.querySelector('#filters').classList.contains('on'), screen: (document.querySelector('.screen.on') || {}).id }));
+      await page.click('#sortBtn'); await page.waitForTimeout(300); await page.click('#filters [data-close]'); await page.waitForTimeout(250);
+      const afterCross = await page.evaluate(() => ({ on: document.querySelector('#filters').classList.contains('on'), screen: (document.querySelector('.screen.on') || {}).id }));
+      return { ok: open.on && open.face === 'OPH Display' && open.cross && open.cross[0] >= 44 && !afterBack.on && afterBack.screen === 'collection' && !afterCross.on && afterCross.screen === 'collection', open, afterBack, afterCross, shot };
+    } },
+  { name: 'collect-checklist-title-and-action', run: async (page, ctx) => {
+      /* a set's checklist: the arrow, the set as the title, "Want the rest" at the right, nothing overlapping */
+      await page.evaluate(`(async () => { const V = window.VAULT; const set = [...V.CAT.sets.values()].find(s => s.abbr === 'OP01') || [...V.CAT.sets.values()][0]; V.openChecklist(set.id); await ${pause}; window.scrollTo(0, 0); })()`);
+      const m = await hdr(page, 'checklist');
+      return { ok: clean(m) && likeRef(ctx, m) && m.back, ...m };
+    } }
+];
+
+export const STEPS = { 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107 };
