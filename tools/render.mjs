@@ -706,11 +706,14 @@ if (puppeteer) {
       else V.go(id);
       await wait(220); while (V.closeAnyOverlay()) {} window.scrollTo(0, 0);
       const sec = document.getElementById(id), s = sec.getBoundingClientRect(), h = sec.querySelector('header.appbar'), t = h && h.querySelector('.ab-title');
+      /* take 109: a screen with an art hero puts its header right under it (A's slot) -- measured from there */
+      const hero = sec.querySelector(':scope > .arthero:not([hidden])'), off = hero ? hero.getBoundingClientRect().bottom - s.top : 0;
       if (!t) { rows.push({ id, missing: true }); continue; }
       const r = t.getBoundingClientRect(), cs = getComputedStyle(t), txt = h.querySelector('.ab-text').getBoundingClientRect(), act = h.querySelector('.ab-act');
       const a = act && act.getBoundingClientRect(), g = h.querySelector('[data-go="settings"]'), gr = g && g.getBoundingClientRect();
-      rows.push({ id, on: sec.classList.contains('on'), top: Math.round((r.top - s.top) * 10) / 10, left: Math.round(r.left - s.left), size: cs.fontSize, face: cs.fontFamily,
-        back: !!h.querySelector('[data-back]'), gear: gr ? `${Math.round(gr.left - s.left)},${Math.round(gr.top - s.top)}` : '',
+      rows.push({ id, on: sec.classList.contains('on'), top: Math.round((r.top - s.top - off) * 10) / 10, left: Math.round(r.left - s.left), size: cs.fontSize, face: cs.fontFamily,
+        hero: !!hero, headerUnderHero: !hero || Math.abs(h.getBoundingClientRect().top - hero.getBoundingClientRect().bottom) < 0.6,
+        back: !!h.querySelector('[data-back]'), gear: gr ? `${Math.round(gr.left - s.left)},${Math.round(gr.top - s.top - off)}` : '',
         clipped: t.scrollWidth > t.clientWidth + 1, overlap: !!a && txt.right > a.left + 0.5,
         outside: [...h.querySelectorAll('*')].some(e => { const b = e.getBoundingClientRect(); return b.width > 0 && (b.left < -0.5 || b.right > innerWidth + 0.5); }) });
     }
@@ -727,6 +730,8 @@ if (puppeteer) {
      JSON.stringify({ nav: [...new Set(nav107.map(r => r.left))], down: [...new Set(down107.map(r => r.left))] }));
   ok('take 107: the gear to More sits in one spot on all twelve screens in a nav, in all three modes (A37)', nav107.length === 12 && nav107.every(r => r.gear) && one(nav107, 'gear') && down107.every(r => !r.gear),
      JSON.stringify([...new Set(nav107.map(r => r.gear))]));
+  ok('take 109: the art hero is on Decks alone, with its header directly under it (A\'s slot); Home has none', got107.filter(r => r.hero).map(r => r.id).join() === 'decks' && got107.every(r => r.headerUnderHero),
+     JSON.stringify(got107.filter(r => r.hero || !r.headerUnderHero).map(r => r.id)));
   ok('take 107: nothing in a header is clipped, overlaps the title or leaves the screen', got107.length === 20 && got107.every(r => !r.clipped && !r.overlap && !r.outside),
      JSON.stringify(got107.filter(r => r.clipped || r.overlap || r.outside).map(r => r.id)));
   /* the arrow, Back over the sheets, the ask sheet's cross -- real clicks and the browser's own Back */
@@ -840,6 +845,63 @@ if (puppeteer) {
   ok('take 108: a pressed control lightens and gives a little', !!pressed && /brightness\(1\.25\)/.test(pressed.filter) && /matrix\(0\.96/.test(pressed.transform), JSON.stringify(pressed));
   const disabled = await page.evaluate(async () => { window.VAULT.go('diag'); await new Promise(r => setTimeout(r, 200)); const b = document.querySelector('#diagCopy'); const o = { disabled: b.disabled, opacity: getComputedStyle(b).opacity }; window.VAULT.go('home'); return o; });
   ok('take 108: a disabled button looks switched off', disabled.disabled && disabled.opacity === '0.45', JSON.stringify(disabled));
+
+  /* ---- take 109 (A42): the art layer, part 1 -- the grounds, the crop, the places ----
+     What a person sees when a picture is slow or refused is the box's own ground: it must be the
+     card's colours (the owner: "the color blur should match the color of whatever card you're
+     looking at"). Every picture shown as art is cut above the SAMPLE stamp (landmine 151). */
+  const t109 = await page.evaluate(async () => {
+    const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
+    /* an older build lacks these: its checks then fail on their own instead of the run stopping */
+    for (const [k, v] of [['heroLeader', () => null], ['artColours', () => []], ['paintDeckHero', () => {}], ['paintBack', () => {}]]) if (typeof V[k] !== 'function') V[k] = v;
+    const rgb = v => { const e = document.createElement('i'); e.style.color = v; document.body.appendChild(e); const c = getComputedStyle(e).color; e.remove(); return c; };
+    const read = () => {
+      const sec = document.getElementById('decks'), hero = sec.querySelector('.arthero'), bg = hero && hero.querySelector('.artbg'), peek = hero && hero.querySelector('.peek');
+      return { shown: !!hero && !hero.hidden, bg: bg ? getComputedStyle(bg).backgroundImage : '', peekBg: peek ? getComputedStyle(peek).backgroundImage : '',
+        peekBottom: peek ? Math.round(peek.getBoundingClientRect().bottom * 10) / 10 : -1, barTop: Math.round(sec.querySelector('header.appbar').getBoundingClientRect().top * 10) / 10,
+        bgTop: bg ? Math.round(bg.getBoundingClientRect().top) : 999, pillTop: Math.round(document.querySelector('.modebar .mode').getBoundingClientRect().top),
+        slider: getComputedStyle(document.querySelector('.modebar')).backgroundImage, atTop: document.documentElement.classList.contains('at-top'),
+        views: [hero && hero.querySelector('.artbg'), hero && hero.querySelector('.peek')].filter(Boolean).map(box => { const i = document.createElement('img'); i.className = 'above'; box.appendChild(i); const v = getComputedStyle(i).objectViewBox; i.remove(); return v; }),
+        marked: hero ? (V.paintDeckHero(), (hero.innerHTML.match(/<img class="(ref )?above"/g) || []).length) : 0 };   // read at once: a refused picture removes itself later
+    };
+    V.MODE.set('play', true); await wait(300); V.go('decks'); await wait(250); window.scrollTo(0, 0); await wait(120);
+    const f = V.heroLeader(), want = f ? V.artColours(f.L).map(rgb) : [];
+    const clean = read();
+    /* the controls: no ground under the art, no cut on the pictures, and the page scrolled */
+    const st = document.createElement('style'); st.textContent = '.artbg,.peek{background:none!important}img.above{object-view-box:none!important}'; document.head.appendChild(st); await wait(60);
+    const control = read(); st.remove();
+    window.scrollTo(0, 240); await wait(160); const scrolled = read(); window.scrollTo(0, 0); await wait(120);
+    /* a card's own page: a two-colour card's ground, and the card centred */
+    const two = V.CAT.rows.find(p => !p.sealed && /_200w\.jpg$/.test(p.img || '') && /^[A-Z][a-z]+;[A-Z][a-z]+$/.test(p.color || ''));
+    V.MODE.set('collect', true); await wait(250); V.openDetail(two.id); await wait(250); window.scrollTo(0, 0); await wait(80);
+    const db = document.getElementById('dBack') || document.body.appendChild(document.createElement('div')), art = document.getElementById('dArt').getBoundingClientRect();   // an older build has no backdrop: its checks fail, the run goes on
+    const probe = document.createElement('img'); probe.className = 'above'; db.appendChild(probe); const view = getComputedStyle(probe).objectViewBox; probe.remove();
+    V.paintBack(db, two); const marked = /<img class="above"/.test(db.innerHTML);   // read at once, as above
+    const detail = { bg: getComputedStyle(db).backgroundImage, want: V.artColours(two).map(rgb), view, marked,
+      artW: Math.round(art.width), artMid: Math.round(art.left + art.width / 2), mid: Math.round(innerWidth / 2), backTop: Math.round(db.getBoundingClientRect().top), sideways: document.documentElement.scrollWidth > innerWidth + 0.5 };
+    V.go('home'); return { want, clean, control, scrolled, detail };
+  });
+  const has = (bg, cols) => cols.length > 0 && cols.every(c => bg.includes(c));
+  ok('take 109: Decks opens under its Leader: the hero is shown, the art\'s ground is that card\'s own colours', t109.clean.shown && has(t109.clean.bg, t109.want.slice(0, 1)) && has(t109.clean.peekBg, t109.want.slice(0, 1)), JSON.stringify({ want: t109.want, bg: t109.clean.bg.slice(0, 90) }));
+  ok('take 109: ...control: with the ground taken away the check sees no colour', !has(t109.control.bg, t109.want.slice(0, 1)) && !has(t109.control.peekBg, t109.want.slice(0, 1)));
+  ok('take 109: every picture shown as art is cut above the stamp (object-view-box, landmine 151) -- the backdrop and the rising card are both marked', t109.clean.views.length === 2 && t109.clean.views.every(v => /58%/.test(v)) && t109.clean.marked === 2, JSON.stringify({ views: t109.clean.views, marked: t109.clean.marked }));
+  ok('take 109: ...control: without the cut the check sees it', t109.control.views.length >= 2 && t109.control.views.every(v => !/58%/.test(v)), JSON.stringify(t109.control.views));
+  ok('take 109: the card rising from behind the title stops at the header, never over it', t109.clean.peekBottom > 0 && t109.clean.peekBottom <= t109.clean.barTop + 0.5, `${t109.clean.peekBottom} vs ${t109.clean.barTop}`);
+  ok('take 109: at the top the art reaches behind the slider and the slider\'s fade steps aside', t109.clean.atTop && t109.clean.bgTop <= t109.clean.pillTop && t109.clean.slider === 'none', JSON.stringify({ bgTop: t109.clean.bgTop, pillTop: t109.clean.pillTop, slider: t109.clean.slider.slice(0, 40) }));
+  ok('take 109: ...control: scrolled, the fade is back over whatever passes under the slider', !t109.scrolled.atTop && /gradient/.test(t109.scrolled.slider), t109.scrolled.slider.slice(0, 60));
+  ok('take 109: a card\'s own page: its two colours under its blurred art, cut above the stamp, the card centred at 196 px', has(t109.detail.bg, t109.detail.want) && /58%/.test(t109.detail.view) && t109.detail.marked && t109.detail.artW === 196 && Math.abs(t109.detail.artMid - t109.detail.mid) <= 1 && !t109.detail.sideways,
+     JSON.stringify(t109.detail));
+  /* no sideways scroll on the two screens that changed, at a narrow phone, this phone and the unfolded Fold */
+  const wide109 = [];
+  for (const w of [360, 412, 820]) {
+    await page.setViewport({ width: w, height: 915, deviceScaleFactor: 2 });
+    wide109.push(await page.evaluate(async w => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)), out = { w };
+      V.MODE.set('play', true); await wait(250); V.go('decks'); await wait(200); out.decks = document.documentElement.scrollWidth <= innerWidth + 0.5;
+      V.MODE.set('collect', true); await wait(250); V.openDetail(V.CAT.rows.find(p => !p.sealed && p.img).id); await wait(200); out.detail = document.documentElement.scrollWidth <= innerWidth + 0.5;
+      V.go('home'); return out; }, w));
+  }
+  await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
+  ok('take 109: Decks and a card\'s own page never scroll sideways at 360, 412 or 820 px', wide109.every(r => r.decks && r.detail), JSON.stringify(wide109));
 
   await browser.close();
 } else {

@@ -1474,7 +1474,8 @@ ok('the roster carries a phone and an exact point for every store the file has t
 /* take 86: the fourth look */
 ok('every screen ends with room for the bottom bar (nothing hides behind it)', /\.screen\{display:none;padding:0 var\(--pad\) calc\(66px \+ 34px \+ var\(--sab\)\)\}/.test(html));
 ok('pills never wrap onto two lines', /\.pill\{[^}]*white-space:nowrap/.test(html));
-ok('a photo that fails is retried once without the size suffix, then removed', /this\.src=this\.src\.replace\(\/_\\d\+w\\\.\/,'\.'\)/.test(js) && /else\{this\.remove\(\)\}/.test(js));
+ok('a picture that fails drops from the large size to its thumbnail, and a thumbnail that fails is removed; the retry to <id>.jpg is gone (403 for 241 of 241 -- landmine 150)',
+   /onerror="var t=this\.dataset\.thumb;if\(t\)\{delete this\.dataset\.thumb;this\.src=t\}else\{this\.remove\(\)\}"/.test(js) && !/this\.src=this\.src\.replace\(\/_\\d\+w/.test(js));
 ok('the Target panel says it plainly: checked when, N products, N in stock to ship, and what a limit means', /One Piece products online, <b>\$\{ships\}<\/b> in stock to ship/.test(js) && /the next hourly check continues where this one stopped/.test(js) && !/the retailer throttled this run/.test(js));
 ok('the Portfolio caption has its own face and colour, not body text', /\.hero \.who \.cap\{[^}]*font-family:var\(--heavy\)[^}]*color:var\(--dim\)/.test(html));   // take 106: --brass2 as text was 2.68-4.40:1
 ok('Releases rows: the title wraps, Details sits on its own line inside the row (the footer line, shared with Remind me and Calendar since take 97)', /<b style="white-space:normal">\$\{esc\(s\.name\)\}/.test(js) && /class="rel"/.test(js) && /padding:0 0 8px">\$\{extra\}/.test(js) && /<a class="ghost" href="\$\{esc\(detailsUrl\(\{ name: label \}\)\)\}"/.test(js));
@@ -1597,12 +1598,20 @@ ok('a stock deck is not in the saved deck list either (it is never written to st
 ok('negative control: the collection DOES move when a card is actually added', (V.OWN.add(stock[0].cards[0].id, { qty: 1 }), V.OWN.items.length === 1));
 V.OWN.items = [];
 ok('the sim offers them, so a player with no collection can start', /DECKS\.all\(\)\.filter\(d => d\.leader/.test(js));
-ok('Decks shows them under their own heading, marked ready-made', /id="dkStock"/.test(html) && /ready-made/.test(js) && /not in your collection/.test(js));
+/* take 109 (landmine 149): where they are is read from the screen that holds them -- the old
+   line asked only whether the id existed, and they sat in the deck editor from take 66 at the latest */
+const secOf = (src, id) => { const i = src.indexOf(`id="${id}"`); if (i < 0) return null; const s0 = src.lastIndexOf('<section id="', i); return s0 < 0 ? null : src.slice(s0 + 13, src.indexOf('"', s0 + 13)); };
+ok('Decks shows them under their own heading, marked ready-made -- on the Decks screen itself', secOf(html, 'dkStock') === 'decks' && /ready-made/.test(js) && /not in your collection/.test(js), String(secOf(html, 'dkStock')));
+ok('...control: the take-108 place (the bottom of a deck\'s editor) is caught', secOf(html.replace('  <div id="dkStock"></div>\n', '').replace('<div class="panel" id="dkSim"></div>', '<div class="panel" id="dkSim"></div><div id="dkStock"></div>'), 'dkStock') === 'deck');
 /* take 62: covers are drawn, never downloaded (landmines 26, 30) */
 const cover = V.deckCover(stock[0]);
 ok('a deck cover is inline SVG with no image, no request and no publisher mark',
    /^<svg /.test(cover.trim()) && !/<image|https?:|url\((?!#)/.test(cover) && !/One Piece|Bandai|BANDAI/i.test(cover), cover.slice(0, 80));
-ok('...it says the set code and the Leader, from the catalogue', cover.includes(stock[0].set) && cover.includes((V.CAT.byId.get(stock[0].leader).name || '').slice(0, 6)));
+ok('...it says the set code, from the catalogue, and no 7 px name (take 109: the row names the Leader)', cover.includes(stock[0].set) && !/font-size="7"/.test(cover));
+{ V.paintStock(); const sh = ctx.document.querySelector('#dkStock').innerHTML, L0 = V.CAT.byId.get(stock[0].leader), stockPic = V.stockPic || (() => ''), sp = stockPic(stock[0]);   // an older build has no stockPic: fail, don't crash
+  ok('...each ready-made row names its Leader and shows the Leader\'s own picture over the drawn cover (take 109)',
+     sh.includes(String(L0.name).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))) && /<img class="ref" loading="lazy"/.test(sp) && sp.includes(L0.img) && /class="ph"[^>]*><svg /.test(sp));
+  ok('...control: a deck whose Leader the catalogue lacks shows the drawn cover alone', !/<img/.test(stockPic({ ...stock[0], leader: -1 })) && /<svg /.test(stockPic({ ...stock[0], leader: -1 }))); }
 ok('...and carries a label for a screen reader', /role="img"/.test(cover) && /aria-label=/.test(cover));
 /* take 66: nothing a screen reader reaches is nameless (A30's last item) */
 {
@@ -2244,7 +2253,7 @@ section('take 107 — one header on every screen (A42): the title in one place, 
     const hm = body.match(/<header class="appbar">([\s\S]*?)<\/header>/), h = hm ? hm[1] : '';
     return { id, headers: (body.match(/<header class="appbar">/g) || []).length, h1s: (body.match(/<h1\b/g) || []).length,
       title: (h.match(/<h1 class="ab-title"/g) || []).length === 1,
-      first: body.replace(/^\s*(<div class="scanwrap">\s*)?/, '').startsWith('<header class="appbar">'),   // the scanner's header opens its camera surface
+      first: body.replace(/^\s*(<div class="scanwrap">\s*|<div class="(?:arthero|artbg)[^"]*"[^>]*><\/div>\s*)?/, '').startsWith('<header class="appbar">'),   // the scanner's header opens its camera surface; take 109: an empty art layer may sit above it
       back: /^<button class="icb ab-back" data-back aria-label="Back">/.test(h), gear: GEAR_TAIL.test(h), glyph: /class="swords"/.test(h) }; });
   const bad = src => audit(src).filter(a => a.headers !== 1 || a.h1s !== 1 || !a.title || !a.first || a.glyph
     || a.back !== PUSH.includes(a.id) || a.gear === PUSH.includes(a.id)).map(a => a.id);
@@ -2253,6 +2262,9 @@ section('take 107 — one header on every screen (A42): the title in one place, 
   ok('the eight screens one level down start with Back; the twelve in a mode\'s nav end with the gear to More, in all three modes (A37)',
      all.filter(a => a.back).map(a => a.id).sort().join() === [...PUSH].sort().join() && all.filter(a => a.gear).length === 12 && (html.match(/data-go="settings" aria-label="More"/g) || []).length === 12);
   ok('...control: a screen with its header taken out is caught', bad(html.replace('<section id="trade" class="screen">\n  <header class="appbar">', '<section id="trade" class="screen">\n  <div class="bar">')).includes('trade'));
+  ok('...control (take 109): anything but an empty art layer above a header is still caught',
+     bad('<section id="cards" class="screen"><div class="panel">x</div><header class="appbar"><div class="ab-text"><h1 class="ab-title">Cards</h1></div><div class="ab-act"><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div></header></section>').includes('cards')
+     && !bad('<section id="cards" class="screen"><div class="arthero" id="x" hidden></div><header class="appbar"><div class="ab-text"><h1 class="ab-title">Cards</h1></div><div class="ab-act"><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div></header></section>').includes('cards'));
   ok('...control: a gear that is not the last action is caught', bad('<section id="cards" class="screen"><header class="appbar"><div class="ab-text"><h1 class="ab-title">Cards</h1></div><div class="ab-act"><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button><button class="ghost">x</button></div></header></section>').includes('cards'));
   ok('...control: a title with a mark in it, or a Back on a nav screen, is caught', bad('<section id="sealed" class="screen"><header class="appbar"><div class="ab-text"><h1 class="ab-title"><svg class="swords"></svg>Sealed</h1></div><div class="ab-act"><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div></header></section>').includes('sealed')
      && bad('<section id="play" class="screen"><header class="appbar"><button class="icb ab-back" data-back aria-label="Back"></button><div class="ab-text"><h1 class="ab-title">Play</h1></div><div class="ab-act"><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div></header></section>').includes('play'));
@@ -2351,6 +2363,87 @@ section('take 108 — controls and icons (A42): every icon a sprite symbol with 
   ok('the actions keep their width: flex:0 0 auto beside the 44 px minimum (a min-width alone squeezed the row -- seen in this take)', /\.actions button\{flex:0 0 auto;min-width:44px;min-height:44px\}/.test(html));
   ok('the scanner\'s height takes the sticky mode slider off too (its shutter row sat 52 px under the nav)', /\.scanwrap\{position:relative;height:calc\(100vh - 76px - var\(--sat\) - var\(--sab\) - var\(--modebar-h\)\)/.test(html) && /--modebar-h:53px/.test(html));
   ok('the deck\'s name is a 44 px target that keeps its title\'s place', /h1\.ab-title input\{display:block;width:100%;min-height:0;margin:-6px 0 -8px;padding:6px 0 8px/.test(html)); }
+
+section('take 109 — the art layer, part 1 (A42): the picture measured, Decks under its Leader, the ready-made decks back on Decks, a deck\'s Leader large, a card\'s own page over its own colours');
+{ const man = V.CAT.man, keepImg = man.images, nof = () => undefined;
+  /* an older build lacks these: each check then fails on its own instead of the run stopping */
+  const largeOk = V.largeOk || nof, artUrl = V.artUrl || nof, artColours = V.artColours || (() => []), paintBack = V.paintBack || nof, heroLeader = V.heroLeader || (() => ({}));
+  const hesc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));   // the app's own esc
+  const first = p => !p.sealed && /_200w\.jpg$/.test(p.img || '');
+  const two = V.CAT.rows.find(p => first(p) && /^[A-Z][a-z]+;[A-Z][a-z]+$/.test(p.color || ''));
+  const one = V.CAT.rows.find(p => first(p) && /^(Red|Green|Blue|Purple|Black|Yellow)$/.test(p.color || ''));
+  const prod = V.CAT.rows.find(p => p.sealed && p.img), alt = V.CAT.rows.find(p => /product-images\.tcgplayer\.com/.test(p.img || ''));
+  /* the large size: the printing's own URL, only when this build measured it */
+  man.images = { ...(keepImg || {}), large: { suffix: '_in_1000x1000', probed: 40, served: 40, w: 600, h: 838, min_w: 408 } };
+  ok('measured: the large picture is the printing\'s own URL with the size swapped (AGENTS rule 3)',
+     largeOk() && artUrl(one, 'large') === one.img.replace(/_200w\.jpg$/, '_in_1000x1000.jpg') && artUrl(one) === one.img, artUrl(one, 'large'));
+  ok('...a second-host picture keeps its own URL, and a printing without a picture has none', (!alt || artUrl(alt, 'large') === alt.img) && artUrl({ num: 'OP01-001' }, 'large') === '');
+  man.images = { ...(keepImg || {}), large: { suffix: '_in_1000x1000', probed: 40, served: 3, w: 600, h: 838, min_w: 600 } };
+  ok('...control: a build where the large size mostly failed keeps the thumbnail', !largeOk() && artUrl(one, 'large') === one.img);
+  man.images = { ...(keepImg || {}), large: {} };
+  ok('...control: a build that did not measure it keeps the thumbnail (a VM without the image hosts)', !largeOk() && artUrl(one, 'large') === one.img);
+  const byNum = f => /\.num\b|\bnumber\b/.test(String(f));
+  ok('the picture\'s address is never made from a card number', typeof V.artUrl === 'function' && !byNum(V.artUrl) && !byNum(V.largeOk));
+  ok('...control: an address made from the number is caught', byNum(p => `https://x/${p.num}.png`));
+  ok('this build\'s own manifest says what the runner measured (served, of, the median size)',
+     keepImg && keepImg.large && typeof keepImg.large.served === 'number' && keepImg.large.suffix === '_in_1000x1000', JSON.stringify(keepImg && keepImg.large));
+  man.images = { ...(keepImg || {}), large: { suffix: '_in_1000x1000', probed: 40, served: 40, w: 600, h: 838, min_w: 408 } };
+  /* the ground under the art: the card's own colours, never a generic tint */
+  const cv = c => `var(--c-${c.toLowerCase()})`, [c1, c2] = two.color.split(';');
+  const own = (p, got) => !p.color ? got[0] === 'var(--brass2)' : got[0] === cv(p.color.split(';')[0]) && (p.color.includes(';') ? got[1] === cv(p.color.split(';')[1]) : got[1].includes(cv(p.color)));
+  ok('the ground is the card\'s own colours: both of a two-colour card, the one and its shade for one colour, the mode\'s for a product',
+     own(two, artColours(two)) && artColours(two)[1] === cv(c2) && own(one, artColours(one)) && /color-mix\(in srgb,var\(--c-/.test(artColours(one)[1]) && own(prod, artColours(prod)), JSON.stringify([artColours(two), artColours(one)]));
+  ok('...control: a generic tint is caught', !own(one, ['var(--brass2)', 'var(--card2)']));
+  { const db = ctx.document.querySelector('#dBack'); paintBack(db, two);
+    ok('a card\'s own page: the backdrop takes that card\'s colours and its blurred thumbnail, cut above the stamp',
+       db.style.cssText === `--a1:${cv(c1)};--a2:${cv(c2)}` && db.innerHTML.includes(`src="${two.img}"`) && /<img class="above"/.test(db.innerHTML), db.style.cssText);
+    V.openDetail(one.id);
+    ok('...openDetail paints it, and the card itself is the large picture with its thumbnail to fall back to',
+       db.innerHTML.includes(one.img) && ctx.document.querySelector('#dArt').innerHTML.includes(one.img.replace(/_200w\.jpg$/, '_in_1000x1000.jpg')) && ctx.document.querySelector('#dArt').innerHTML.includes(`data-thumb="${one.img}"`)); }
+  ok('the page itself: the backdrop first, the card centred in its own row, the old 112 px column gone',
+     /<section id="detail" class="screen detail">\s*<div class="artbg dback" id="dBack" aria-hidden="true"><\/div>\s*<header class="appbar">/.test(html) && /<div class="dhero"><div class="art" id="dArt"><\/div><\/div>/.test(html) && !/id="dArt" style="width:112px/.test(html));
+  /* the stamp: anything shown as art rather than as the card is cut to the card's top 42 % */
+  ok('the stamp band is never shown as art: img.above cuts every picture to the card\'s top 42 % (landmine 151)',
+     /img\.above\{object-view-box:inset\(0 0 58% 0\)\}/.test(html) && /class="peek"[^`]*refArt\(L, \{ size: 'large', cls: 'above' \}\)/.test(js) && /<img class="above" alt=""/.test(js));
+  ok('...control: an art picture without the cut is caught', !/<img class="above"/.test('<img class="blur" alt="">'));
+  /* Decks: the hero, its Leader, the counts; Home has none (the owner's ruling) */
+  const heroes = [...html.matchAll(/<section id="([\w-]+)"[^>]*>\s*<div class="arthero"/g)].map(m => m[1]);
+  ok('the art hero sits above the header on Decks and nowhere else -- none on Home (the owner: "I don\'t really like A in collect")', heroes.join() === 'decks', heroes.join());
+  ok('...control: a hero put on Home is caught', [...html.replace('<section id="home" class="screen on">', '<section id="home" class="screen on">\n  <div class="arthero" id="hmHero" hidden></div>').matchAll(/<section id="([\w-]+)"[^>]*>\s*<div class="arthero"/g)].map(m => m[1]).includes('home'));
+  const keepDecks = V.DECKS.list.slice(); const st0 = V.CAT.stock[0], L1 = V.CAT.byId.get(st0.leader), L2 = V.CAT.byId.get(V.CAT.stock[1].leader);
+  V.DECKS.list.length = 0; V.DECKS.list.push({ id: 'd1', name: 'old', leader: L1.id, cards: [], created: 1 }, { id: 'd2', name: 'new', leader: L2.id, cards: [], created: 2 });
+  ok('the hero features the newest of the collector\'s decks that has a Leader, by printing id', heroLeader().L === L2 && /your newest deck/.test(heroLeader().why));
+  V.DECKS.list[1].leader = null;
+  ok('...control: the newest deck without a Leader passes it to the one before', heroLeader().L === L1);
+  V.DECKS.list.length = 0;
+  ok('...with no deck of the collector\'s own, a ready-made deck\'s Leader', heroLeader().L === L1 && /ready-made/.test(heroLeader().why));
+  V.DECKS.list.push({ id: 'd3', name: 'mine', leader: L2.id, cards: [], created: 3 });
+  V.paintDecks(); const hero = ctx.document.querySelector('#dkHero');
+  ok('...painted: the blurred art on its colours, the card rising from behind the title at the large size, a credit that names it',
+     hero.hidden === false && /<div class="artbg" aria-hidden="true" style="--a1:/.test(hero.innerHTML) && /class="peek"/.test(hero.innerHTML) && hero.innerHTML.includes(L2.img.replace(/_200w\.jpg$/, '_in_1000x1000.jpg'))
+     && hero.innerHTML.includes(`${hesc(L2.num)} ${hesc(L2.name)}`), hero.innerHTML.slice(0, 160));
+  ok('...the line under the title counts the decks and the legal ones', /^1 deck \u00b7 [01] legal$/.test(ctx.document.querySelector('#dkSub').textContent), ctx.document.querySelector('#dkSub').textContent);
+  V.DECKS.list.length = 0; const keepStock = V.CAT.stock; V.CAT.stock = []; V.paintDecks();
+  ok('...control: with no Leader anywhere the hero hides and the plain header stands', hero.hidden === true && hero.innerHTML === '');
+  V.CAT.stock = keepStock; V.DECKS.list.push(...keepDecks); V.paintDecks();
+  ok('the slider\'s fade steps aside only while a screen with art is at the top, from a passive scroll listener',
+     /:root\.at-top:has\(\.screen\.on > \.arthero:not\(\[hidden\]\)\) \.modebar,\s*:root\.at-top:has\(\.screen\.on > \.artbg\) \.modebar\{background:transparent\}/.test(html)
+     && /addEventListener\('scroll', atTop, \{ passive: true \}\)/.test(js));
+  ok('the hero keeps its height in the flow and only its art reaches up behind the slider (a negative margin would move the screen)',
+     /\.arthero\{position:relative;height:var\(--hero-h\)\}/.test(html) && /\.arthero > \.artbg\{position:absolute;[^}]*top:calc\(-1 \* \(var\(--modebar-h\) \+ var\(--sat\)\)\)/.test(html));
+  ok('the art fades into the page\'s own ground by a mask -- a scrim ending in a flat --bg drew a seam across the textured page (the take-109 look)',
+     /\.artbg\{[^}]*mask-image:linear-gradient\(#000 55%,transparent\)/.test(html) && !/\.artbg::after\{[^}]*var\(--bg\)\)/.test(html));
+  { V.openDetail(prod.id); const pa = ctx.document.querySelector('#dArt'); const isProd = pa.classList.contains('product'); V.openDetail(one.id);
+    ok('a product\'s photo fits whole on its page (square on white, not cut at both sides); a card\'s fills its frame',
+       isProd && !pa.classList.contains('product') && /\.dhero \.art\.product img\{object-fit:contain\}/.test(html)); }
+  /* a deck, one level down: the Leader large */
+  { const d = { id: 'dL', name: 'Leader test', leader: L1.id, cards: [], created: 9 }; V.DECKS.list.push(d); V.openDeck('dL');
+    const ln = ctx.document.querySelector('#dkLeadLine').innerHTML, ld = ctx.document.querySelector('#dkLead').innerHTML;
+    ok('a deck\'s Leader at 96 px from the large picture, its name in the display face, its number, Life and colours',
+       /\.dkhead \.lead\{width:96px;flex:0 0 96px/.test(html) && ld.includes(L1.img.replace(/_200w\.jpg$/, '_in_1000x1000.jpg')) && ln.startsWith(`<b>${hesc(L1.name)}</b><span class="meta">${hesc(L1.num)} \u00b7 Leader`) && /Life<\/span>/.test(ln)
+       && /\.dklead b\{display:block;font-family:var\(--display\)/.test(html) && /\.dklead \.meta\{display:block/.test(html) && !/\.dklead span\{/.test(html), ln.slice(0, 120));
+    V.DECKS.list.splice(V.DECKS.list.indexOf(d), 1); V.go('decks'); }
+  man.images = keepImg; }
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

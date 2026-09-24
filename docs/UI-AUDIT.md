@@ -1,6 +1,6 @@
 # UI-AUDIT — the UI series' checklist (A42)
 
-*Current as of take 108.*
+*Current as of take 109.*
 
 The audit behind the UI series, taken on the take-104 source by four
 independent read-throughs (headings and copy; components, icons and
@@ -39,7 +39,7 @@ compact bar one level down, no banner on Collect's Home.
 **Text under 12 px** (25 rules)
 - [x] nav 10.5 (446); `.kwtag` 9.5 (410); `.art .own` "YOUR SCAN" 9 (214); `.free` "AD" 9 (156); `.hero .who .cap` 11 (147); `.art .ph` 11 (212); `.tile .px .dl` 10.5 (225); `.badge` 10 (226); `.opt .op span` 11 (293); `.prov` 11.5 (303); `.fcount` 10 (354); `.pocket .tag` 9.5 (365); `.pocket .n` 9 (367); `.ck` 10 (374); `.ck .qty` 9 (379); `.curve` labels 10 (395-396); `.dkrow .n > span` 11.5 (403); `.dkrow .cost` 11 (409). *(take 106)*
 - [x] Inline and JS: the "Leader" placeholder 10 (1590); card-text preview 11 (2213); `picBox` label `w/4` → 8-11 (3435); `setPic` fallback 11 (3450); "alert"/"watching" captions 10 (3463, 3505); the picker placeholder 9 (4532); the detail art number 10 (4567). *(take 106)*
-- [ ] `deckCover`'s 7 px name inside its SVG (1550) — goes with the covers at the art take. *(open: the art take)*
+- [x] `deckCover`'s 7 px name inside its SVG (1550) — goes with the covers at the art take. *(take 109: the name is gone; the row names the Leader)*
 
 **Hard-coded colours → tokens**
 - [x] `#1A1408` (155, 263, 354, 422, 429) → `--on-accent`; the Prep & Play override `#F1EFE6` (423) goes. *(take 106)*
@@ -84,13 +84,16 @@ compact bar one level down, no banner on Collect's Home.
 
 ## 4. The art layer
 
-- [ ] The record first: landmines 26 and 28 corrected (display-only, hot-linked, used boldly; nothing bundled; offline falls back to the colour tile); 30 and 31 stand; NSP's "may not ship" line; A6, A16, A29, A41; V1-STATE; PROVISION's runtime rows; PLAY-LISTING; `assets/user/README.md` (whose first line also names the owner and is outside the scrubber's list); the comments in the Hunt palette, `deckCover`, `refArt` and More's data sources.
-- [ ] `artUrl()` from the stored URL only (never a card number, AGENTS §3); the large size measured on the runner (`_in_1000x1000` served 600 x 838 at take 6; `{id}.jpg` unmeasured; the SAMPLE watermark unmeasured).
-- [ ] Decks: C (the Leader's art blurred behind the crisp card; the title in the shared slot). Sealed: A (an art banner). Home: no banner. The card sheet: the backdrop from the card's own art. Offline: the card's game colours.
-- [ ] Leader-art deck covers (user decks show the Leader at 44 px, ready-made decks a drawn SVG: one idea, two treatments).
+- [x] The record first: landmines 26 and 28 corrected (display-only, hot-linked, used boldly; nothing bundled; offline falls back to the colour tile); 30 and 31 stand; NSP's "may not ship" line; A6, A16, A29, A41; V1-STATE; PROVISION's runtime rows; PLAY-LISTING; `assets/user/README.md` (whose first line also names the owner and is outside the scrubber's list); the comments in the Hunt palette, `deckCover`, `refArt` and More's data sources. *(take 109; More's data sources stayed true -- display is not storage)*
+- [x] `artUrl()` from the stored URL only (never a card number, AGENTS §3); the large size measured on the runner (`_in_1000x1000` served 600 x 838 at take 6; `{id}.jpg` unmeasured; the SAMPLE watermark unmeasured). *(take 109: measured every build, 40 of 40, median 600x838; `{id}.jpg` 403 for 241 of 241, the retry gone; the stamp on 38 of 40 card pictures, one band at 45-60 %, so art is cut above 42 %)*
+- [ ] Decks: C (the Leader's art blurred behind the crisp card; the title in the shared slot). Sealed: A (an art banner). Home: no banner. The card sheet: the backdrop from the card's own art. Offline: the card's game colours. *(take 109: all but Sealed's banner, which is take 110's)*
+- [x] Leader-art deck covers (user decks show the Leader at 44 px, ready-made decks a drawn SVG: one idea, two treatments). *(take 109: the Leader's picture over the drawn cover)*
 - [ ] Set headers in Sealed and Releases with an art strip; the Play board's Leader art; art empty states.
-- [ ] The runner's look: `check` runs the look and keeps the PNGs, since this session's VM reaches no image host.
+- [x] The runner's look: `check` runs the look and keeps the PNGs, since this session's VM reaches no image host. *(take 109: not needed -- the VM reaches the image hosts, and the look fetches its pictures in Node behind the proxy, landmine 152)*
 - [ ] Thumbnails: seven widths (30 34 36 44 48 52 56), five radii, three ratios → the three `--thumb-*`.
+- [x] The ready-made decks drawn at the bottom of the deck editor since take 66 at the latest, though take 61 put them on Decks, and a smoke line named for the place that never checked it (landmine 149). *(take 109: back on Decks; smoke reads the section)*
+- [x] The picture retry to `<id>.jpg` never served (403 for 241 of 241, landmine 150). *(take 109: gone)*
+- [ ] Whole-card pictures (thumbnails, a deck's Leader, a card's own page) show the SAMPLE stamp wherever the publisher's picture has it -- the owner's call whether they show the card above the stamp instead. *(asked at take 109)*
 
 ## 5. The voice
 

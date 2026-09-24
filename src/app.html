@@ -46,6 +46,7 @@
   --thumb-sm:36px; --thumb-md:52px; --thumb-lg:112px;
   --dur-press:120ms; --dur-ui:220ms; --dur-sheet:320ms;
   --modebar-h:53px;   /* take 108: the sticky mode slider's height (52.3 px MEASURED in Chrome); render checks the scanner against it */
+  --hero-h:160px;     /* take 109: an art hero's height under the slider; Decks now, Sealed at take 110 */
   --z-screen:1; --z-modebar:20; --z-nav:30; --z-sheet:40; --z-overlay:60; --z-toast:70; --z-splash:100;
   --on-accent:#1A1408; --accent-ink:#C9A24A; --line-strong:#6B7377;
   --accent-bg:color-mix(in srgb,var(--brass) 12%,var(--card));
@@ -104,8 +105,9 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
 /* On the table the glow is the lamp over a playmat, not a compass. */
 /* Hunt is Zoro's (take 76): a forest-green ground, cream text, the gold of
    three earrings as the accent, and the sash's red only where something has
-   gone down. A palette and a three-stroke mark, nothing more -- no likeness,
-   no art (landmine 26). */
+   gone down. A palette and a three-stroke mark, nothing more -- the mark is
+   drawn and carries no likeness; card art is shown hot-linked, never drawn
+   (landmines 26, 28). */
 :root[data-mode="hunt"]{
   --bg:#0B1B12; --card:#132A1C; --card2:#1B3A27; --line:#2E5A3D;
   --fg:#EEF3E6; --dim:#A9C2AC; --dim2:#8FAA93;
@@ -201,6 +203,48 @@ a.ghost{display:inline-flex;align-items:center;justify-content:center;gap:6px;te
 :is(.chip,button.pill,.setchip,.range,.cnt button,.mode button)::after{content:"";position:absolute;left:50%;top:50%;
   width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
 input[type="checkbox"]{width:20px;height:20px;accent-color:var(--brass)}   /* its <label> row is the 44 px target */
+/* ---- the art layer (take 109, A42): card art used boldly, hot-linked, never drawn ---- */
+/* The publisher's SAMPLE stamp sits in one band, about 45-60 % down every stamped card
+   (MEASURED on 38 of 40 pictures at two hosts, landmine 151). Art shown as a picture
+   rather than as the card itself is cut to the card's top 42 % first, whatever the
+   box's shape, so the stamp cannot show. */
+img.above{object-view-box:inset(0 0 58% 0)}
+/* C's backdrop: the card's own art, blurred, over the card's own colours (offline, the
+   colours are what shows -- never a generic tint). */
+.artbg{overflow:hidden;background:linear-gradient(160deg,var(--a1,var(--brass2)),var(--a2,var(--card2)));
+  -webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent)}   /* fades into the page's own ground: a scrim that ended in --bg drew a seam across Prep & Play's textured page (the take-109 look) */
+.artbg img{position:absolute;left:-24px;top:-24px;width:calc(100% + 48px);height:calc(100% + 48px);object-fit:cover;
+  filter:blur(18px) brightness(.55) saturate(1.1);opacity:0;transition:opacity var(--dur-ui) ease-out}
+.artbg img.ok{opacity:1}
+.artbg::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.35),transparent 34%)}   /* the slider and the status bar read over any art */
+/* The hero keeps its own height in the flow; only its art reaches up behind the slider
+   and the status bar, so the section's top -- and every title under it -- stays put. */
+.arthero{position:relative;height:var(--hero-h)}
+.arthero > .artbg{position:absolute;left:calc(-1 * var(--pad));right:calc(-1 * var(--pad));top:calc(-1 * (var(--modebar-h) + var(--sat)));bottom:0}
+/* The card rising from behind the title: its top 42 %, crisp, fading into the page. */
+.peek{position:absolute;left:0;bottom:0;width:128px;aspect-ratio:1.705;border-radius:8px 8px 0 0;overflow:hidden;
+  background:linear-gradient(160deg,var(--a1,var(--brass2)),var(--a2,var(--card2)));box-shadow:0 -6px 22px rgba(0,0,0,.45);
+  -webkit-mask-image:linear-gradient(#000 78%,transparent);mask-image:linear-gradient(#000 78%,transparent)}
+.peek img{display:block;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity var(--dur-ui) ease-out}
+.peek img.ok{opacity:1}
+.credit{position:absolute;right:0;bottom:10px;max-width:55%;margin:0;text-align:right;text-wrap:balance;font-size:var(--fs-cap);line-height:1.3;
+  color:rgba(255,255,255,.82);text-shadow:0 1px 3px rgba(0,0,0,.9)}
+/* While a screen with art is at the top, the slider's fade steps aside so the art shows
+   behind the pill; scrolled, the fade is back over whatever passes under it. */
+:root.at-top:has(.screen.on > .arthero:not([hidden])) .modebar,
+:root.at-top:has(.screen.on > .artbg) .modebar{background:transparent}
+/* A card's own page: its art blurred behind the top, the card large and centred. */
+.artbg.dback{position:absolute;left:0;right:0;top:calc(-1 * (var(--modebar-h) + var(--sat)));   /* the page is its own containing block: its padding box is already edge to edge */
+  height:calc(var(--modebar-h) + var(--sat) + 330px)}
+#detail > :not(.dback){position:relative}
+.dhero{display:flex;justify-content:center;margin:2px 0 14px}
+.dhero .art{width:min(48vw,196px);margin:0;box-shadow:0 12px 30px rgba(0,0,0,.5)}
+.dhero .art.product{background:#fff}
+.dhero .art.product img{object-fit:contain}   /* a product photo is square on white: whole, not cut at both sides (the take-109 look) */
+/* A deck's Leader, one level down: the card large, its name in the display face. */
+.dklead{flex:1;min-width:0}
+.dklead b{display:block;font-family:var(--display);font-weight:400;font-size:var(--fs-title);line-height:1.15;letter-spacing:.01em;color:var(--accent-ink)}
+.dklead .meta{display:block;margin:2px 0 6px;font-size:var(--fs-sm);color:var(--dim)}   /* not every span: the colour chip is one */
 .pill{display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap;
   color:var(--dim);background:var(--card2);border-radius:999px;padding:5px 11px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--up)}
@@ -461,7 +505,7 @@ input[type="checkbox"]{width:20px;height:20px;accent-color:var(--brass)}   /* it
 
 /* ---- deck builder --------------------------------------------------------- */
 .dkhead{display:flex;gap:12px;align-items:center;padding:12px 0 6px}
-.dkhead .lead{width:56px;flex:0 0 56px;aspect-ratio:.716;border-radius:7px;background:var(--card2);overflow:hidden;position:relative}
+.dkhead .lead{width:96px;flex:0 0 96px;aspect-ratio:.716;border-radius:7px;background:var(--card2);overflow:hidden;position:relative}
 .dkhead .lead img{width:100%;height:100%;object-fit:cover}
 .dkcount{font-size:26px;font-weight:750;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .dkcount.ok{color:var(--up)} .dkcount.over{color:var(--down)}
@@ -755,16 +799,13 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
 
 <!-- ============================ DETAIL ================================= -->
 <section id="detail" class="screen detail">
+  <div class="artbg dback" id="dBack" aria-hidden="true"></div>
   <header class="appbar"><button class="icb ab-back" data-back aria-label="Back"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-back"/></svg></button>
     <div class="ab-text"><h1 class="ab-title" id="dName">—</h1><p class="ab-sub">Adding to <b id="dTarget">One Piece</b></p></div>
   </header>
-  <div style="display:flex;gap:14px;align-items:flex-start;margin-top:6px">
-    <div class="art" id="dArt" style="width:112px;flex:0 0 112px;margin:0"></div>
-    <div style="flex:1;min-width:0">
-      <div class="sub" id="dSub">—</div>
-      <div class="chips" id="dStats" style="margin-top:6px"></div>
-    </div>
-  </div>
+  <div class="dhero"><div class="art" id="dArt"></div></div>
+  <div class="sub" id="dSub">—</div>
+  <div class="chips" id="dStats" style="margin-top:6px"></div>
 
   <div class="panel">
     <h3>Ungraded</h3>
@@ -828,11 +869,13 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
 
 <!-- ============================ DECKS ================================== -->
 <section id="decks" class="screen">
+  <div class="arthero" id="dkHero" hidden></div>
   <header class="appbar">
-    <div class="ab-text"><h1 class="ab-title">Decks</h1></div>
+    <div class="ab-text"><h1 class="ab-title">Decks</h1><p class="ab-sub" id="dkSub"></p></div>
     <div class="ab-act"><button class="ghost go" id="dkNew">+ New deck</button><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
   </header>
   <div id="dkList"></div>
+  <div id="dkStock"></div>
   <div class="panel"><h3>The rules, in one breath</h3>
     <div class="note">One Leader. Exactly fifty cards, all sharing a colour with it. No
     more than four of any card number. Ten DON!! cards ride alongside and are not
@@ -847,7 +890,7 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
   <div class="dkhead">
     <button class="lead" id="dkLead" aria-label="Choose this deck's Leader"></button>
     <div style="flex:1;min-width:0">
-      <div class="note" id="dkLeadLine">Tap the card to choose a Leader</div>
+      <div class="dklead" id="dkLeadLine"><span class="meta">Tap the card to choose a Leader</span></div>
     </div>
     <div style="text-align:right"><div class="dkcount" id="dkN">0<span style="font-size:13px;color:var(--dim2)">/50</span></div></div>
   </div>
@@ -867,7 +910,6 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
   <div class="panel" id="dkValue"></div>
   <div class="panel"><h3>Main deck <span class="note" id="dkTypes"></span></h3><div id="dkRows"></div></div>
   <div class="panel" id="dkSim"></div>
-  <div id="dkStock"></div>
   <div class="row" style="gap:10px;margin-bottom:30px">
     <button class="ghost" id="dkImport" style="flex:1">Import</button>
     <button class="ghost" id="dkExport" style="flex:1">Export</button>
@@ -1405,17 +1447,56 @@ const MAXLOCK = {
 };
 const price = id => { const p = CAT.byId.get(id); return p ? p.market : null; };
 
+/* Take 109 (A42): the largest picture TCGplayer serves -- `_in_1000x1000`, 600x838
+   and up (MEASURED) -- made from the printing's own stored URL, never from a card
+   number (AGENTS rule 3), and only when this build's runner saw that size served
+   (manifest.images.large); otherwise the thumbnail. A second-host URL keeps its own. */
+const LARGE = { from: /_200w\.jpg$/, to: '_in_1000x1000.jpg' };
+function largeOk() {
+  const L = ((CAT.man || {}).images || {}).large;
+  return !!(L && L.probed > 0 && L.served >= 0.9 * L.probed && L.w >= 400);
+}
+function artUrl(p, size = 'thumb') {
+  const u = (p && p.img) || '';
+  return size === 'large' && u && LARGE.from.test(u) && largeOk() ? u.replace(LARGE.from, LARGE.to) : u;
+}
 /* Reference art for a card the collector has not scanned. Hot-linked, memory
    cache only, loading="lazy", and it fails silently to the text placeholder --
-   the airplane-mode invariant (PROTOCOL §8) does not depend on it. */
-function refArt(p) {
+   the airplane-mode invariant (PROTOCOL §8) does not depend on it. A large
+   picture that fails drops to the thumbnail; a thumbnail that fails is removed
+   and the box under it stays. (Take 109: the old retry to `<id>.jpg` never
+   served -- 403 for 241 of 241 ids, landmine 150.) */
+function refArt(p, { size = 'thumb', cls = '' } = {}) {
   if (!p.img) return '';
+  const src = artUrl(p, size);
   /* The placeholder is absolutely positioned and therefore stacks ABOVE the
      image; hide it on load rather than fight z-index. */
-  return `<img class="ref" loading="lazy" decoding="async" src="${esc(p.img)}" alt=""
+  return `<img class="ref${cls ? ' ' + cls : ''}" loading="lazy" decoding="async" src="${esc(src)}" alt=""${src !== p.img ? ` data-thumb="${esc(p.img)}"` : ''}
             onload="this.classList.add('ok');var q=this.parentNode.querySelector('.ph');if(q)q.style.display='none'"
-            onerror="if(!this.dataset.r&&/_\d+w\./.test(this.src)){this.dataset.r=1;this.src=this.src.replace(/_\d+w\./,'.')}else{this.remove()}">`;
+            onerror="var t=this.dataset.thumb;if(t){delete this.dataset.thumb;this.src=t}else{this.remove()}">`;
 }
+/* The card's own colours for the art's ground: both of a two-colour card, the one
+   and a darker shade of it for a single colour; a product has none, so the mode's. */
+function artColours(p) {
+  const cs = String((p && p.color) || '').split(/[;/,]/).map(x => x.trim()).filter(x => CCLASS[x]);
+  if (!cs.length) return ['var(--brass2)', 'var(--card2)'];
+  const a = `var(--c-${CCLASS[cs[0]]})`;
+  return [a, cs[1] ? `var(--c-${CCLASS[cs[1]]})` : `color-mix(in srgb,${a} 45%,var(--bg))`];
+}
+/* C's backdrop, into a box that already exists (a card's own page) or as a new one
+   (a hero): the colours, then the blurred thumbnail cut above the stamp. */
+function paintBack(el, p) {
+  if (!el) return; const [a1, a2] = artColours(p);
+  el.style.cssText = `--a1:${a1};--a2:${a2}`;   /* the box's only inline style */
+  el.innerHTML = p && p.img ? `<img class="above" alt="" decoding="async" src="${esc(p.img)}" onload="this.classList.add('ok')" onerror="this.remove()">` : '';
+}
+function artBack(p) {
+  const [a1, a2] = artColours(p);
+  return `<div class="artbg" aria-hidden="true" style="--a1:${a1};--a2:${a2}">${p.img ? `<img class="above" alt="" decoding="async" src="${esc(p.img)}" onload="this.classList.add('ok')" onerror="this.remove()">` : ''}</div>`;
+}
+/* the slider's fade steps aside while a screen with art is at the top */
+const atTop = () => { const r = document.documentElement; if (r && r.classList) r.classList.toggle('at-top', (window.scrollY || 0) < 8); };
+addEventListener('scroll', atTop, { passive: true }); atTop();
 const CCLASS = { Red: 'red', Green: 'green', Blue: 'blue', Purple: 'purple', Black: 'black', Yellow: 'yellow' };
 /* Colour as a chip, for the detail hero and the deck builder: one dot per
    colour, named, so a dual-colour card reads as "Green Red" not as a gradient. */
@@ -1647,9 +1728,27 @@ function analysis(deck) {
 
 /* ---- screens ------------------------------------------------------------ */
 let dkCur = null;
+/* Take 109 (A42, C): Decks opens under the featured deck's Leader -- the newest of
+   the collector's own decks that has one, else the first ready-made deck's -- by
+   printing id, never by number (AGENTS rule 3). */
+function heroLeader() {
+  const own = DECKS.list.filter(d => d.leader && CAT.byId.get(d.leader)).sort((a, b) => (b.created || 0) - (a.created || 0))[0];
+  if (own) return { L: CAT.byId.get(own.leader), why: 'your newest deck\u2019s Leader' };
+  const st = (CAT.stock || []).find(d => d.leader && CAT.byId.get(d.leader));
+  return st ? { L: CAT.byId.get(st.leader), why: 'a ready-made deck\u2019s Leader' } : null;
+}
+function paintDeckHero() {
+  const h = $('#dkHero'); if (!h) return; const f = heroLeader();
+  h.hidden = !f; if (!f) { h.innerHTML = ''; return; }
+  const L = f.L, [a1, a2] = artColours(L);
+  h.innerHTML = artBack(L) + `<div class="peek" aria-hidden="true" style="--a1:${a1};--a2:${a2}">${refArt(L, { size: 'large', cls: 'above' })}</div>
+    <p class="credit">${esc(L.num || '')} ${esc(L.name)} \u00b7 ${f.why}</p>`;
+}
 function paintDecks() {
   const list = DECKS.list;
-  paintStock();
+  paintStock(); paintDeckHero();
+  const legal = list.filter(d => analysis(d).legal).length, st = (CAT.stock || []).length;
+  $('#dkSub').textContent = list.length ? `${list.length} deck${list.length === 1 ? '' : 's'} \u00b7 ${legal} legal` : st ? `${st} ready-made to try` : '';
   $('#dkList').innerHTML = list.length ? list.map(d => {
     const A = analysis(d); const L = A.leader;
     return `<button class="panel" style="width:100%;text-align:left;display:flex;gap:12px;align-items:center" data-deck="${d.id}">
@@ -1664,10 +1763,10 @@ document.addEventListener('click', e => {
   const b = e.target.closest('[data-deck]'); if (b) openDeck(b.dataset.deck);
 });
 /* A deck's cover, drawn by the app from data it already has: the Leader's
-   colour or colours as the field, the set code large in the display face,
-   the Leader's name under it. No character art, no publisher mark, no file
-   and no request (landmines 26 and 30). A licensed image, if one is ever
-   obtained, would replace the <svg> and nothing else. */
+   colour or colours as the field, the set code large in the display face. No
+   file and no request. Since take 109 it is the fallback UNDER the Leader's own
+   picture (the owner's ruling, A42) -- what shows offline or when the picture
+   fails; the row itself names the Leader. */
 function deckCover(d, { w = 56 } = {}) {
   const L = CAT.byId.get(d.leader) || {};
   const cs = String(L.color || '').split(/[;/,]/).map(x => x.trim()).filter(x => CCLASS[x]);
@@ -1680,12 +1779,17 @@ function deckCover(d, { w = 56 } = {}) {
       <stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>
     <rect width="56" height="78" rx="6" fill="url(#${gid})"/>
     <rect x="3" y="3" width="50" height="72" rx="4" fill="none" stroke="rgba(0,0,0,.35)"/>
-    <text x="28" y="34" text-anchor="middle" font-family="OPH Display, Impact, sans-serif" font-size="17" fill="rgba(0,0,0,.72)">${esc(code)}</text>
-    <text x="28" y="50" text-anchor="middle" font-family="OPH Body, sans-serif" font-size="7" fill="rgba(0,0,0,.6)">${esc((L.name || '').slice(0, 14))}</text>
+    <text x="28" y="40" text-anchor="middle" font-family="OPH Display, Impact, sans-serif" font-size="17" fill="rgba(0,0,0,.72)">${esc(code)}</text>
     <circle cx="28" cy="62" r="5" fill="none" stroke="rgba(0,0,0,.5)" stroke-width="1.5"/>
   </svg>`;
 }
 
+/* take 109: a ready-made deck shows its Leader's picture like the collector's
+   own decks do -- one treatment for one idea -- with the drawn cover under it */
+function stockPic(d) {
+  const L = CAT.byId.get(d.leader);
+  return `<div class="pic" style="width:44px;height:61px;flex:0 0 auto;position:relative;border-radius:6px;overflow:hidden"><div class="ph" style="position:absolute;inset:0">${deckCover(d, { w: 44 })}</div>${L ? refArt(L) : ''}</div>`;
+}
 /* Stock decks: browsable, playable in the sim, copyable into your own decks.
    Never owned cards -- the Decks screen says so once, plainly. */
 function paintStock() {
@@ -1693,8 +1797,8 @@ function paintStock() {
   box.innerHTML = !stock.length ? '' : `<div class="fgrp">Ready-made decks</div>
     <div class="note" style="margin-bottom:8px">${stock.length} legal decks built from the starter-deck sets, so you can try the Sim and the browse before you own anything. They are not in your collection and never count toward its value.</div>
     ${stock.map(d => `<button class="panel" style="width:100%;text-align:left;display:flex;gap:12px;align-items:center" data-stock="${esc(d.id)}">
-      ${deckCover(d)}
-      <div style="flex:1;min-width:0"><b>${esc(d.name)}</b><div class="note">${d.cards.reduce((a, c) => a + c.n, 0)} cards \u00b7 ${esc(d.set)}</div></div>
+      ${stockPic(d)}
+      <div style="flex:1;min-width:0"><b>${esc(d.name)}</b><div class="note">${CAT.byId.get(d.leader) ? esc(CAT.byId.get(d.leader).name) + ' \u00b7 ' : ''}${d.cards.reduce((a, c) => a + c.n, 0)} cards \u00b7 ${esc(d.set)}</div></div>
       <span class="badge">ready-made</span></button>`).join('')}`;
 }
 document.addEventListener('click', e => {
@@ -1721,10 +1825,10 @@ function paintDeck() {
   if (!dkCur) return go('decks');
   const A = analysis(dkCur), L = A.leader;
   $('#dkName').value = dkCur.name || '';
-  $('#dkLead').innerHTML = L ? refArt(L) : '<div class="ph" style="font-size:12px">Leader</div>';
-  $('#dkLeadLine').innerHTML = L
-    ? `<b>${esc(L.name)}</b> · ${colourDots(L)} · ${G('life', 13)} ${L.life || '?'} · ${esc(L.num)}`
-    : 'Tap the card to choose a Leader';
+  $('#dkLead').innerHTML = L ? refArt(L, { size: 'large' }) : '<div class="ph" style="font-size:12px">Leader</div>';
+  $('#dkLeadLine').innerHTML = L   /* take 109 (A42): the Leader large, its name in the display face */
+    ? `<b>${esc(L.name)}</b><span class="meta">${esc(L.num)} \u00b7 Leader \u00b7 ${G('life', 13)} ${L.life || '?'} Life</span>${colourDots(L)}`
+    : '<span class="meta">Tap the card to choose a Leader</span>';
   const n = $('#dkN'); n.innerHTML = `${A.total}<span style="font-size:13px;color:var(--dim2)">/50</span>`;
   n.className = 'dkcount' + (A.total === 50 ? ' ok' : A.total > 50 ? ' over' : '');
   const sr = simReadiness(dkCur); const simBox = $('#dkSim');
@@ -4729,7 +4833,9 @@ function openDetail(id) {
   $('#dSub').textContent = [s.name, p.rarity, p.num, p.prov].filter(Boolean).join(' \u00b7 ');
   $('#dFinish').textContent = p.sub || 'Normal';
   $('#dWant').textContent = WANT.has(p.num) ? 'On your want list \u2014 remove' : 'Want this card';
-  $('#dArt').innerHTML = `<div class="ph" style="font-size:12px">${esc(p.num)}</div>${refArt(p)}`;
+  $('#dArt').innerHTML = `<div class="ph" style="font-size:12px">${esc(p.num)}</div>${refArt(p, { size: 'large' })}`;
+  paintBack($('#dBack'), p);   /* take 109 (A42, C): the card's own art and colours behind the top */
+  $('#dArt').classList.toggle('product', !!p.sealed);
   const stats = [];
   if (p.type) stats.push([(TYPE_GLYPH[p.type] ? G(TYPE_GLYPH[p.type], 14) + ' ' : '') + esc(p.type), '']);
   if (p.cost != null && p.cost !== '') stats.push([G('don', 14) + ' ' + esc(p.cost), 'cost']);
@@ -5612,7 +5718,7 @@ async function runSelfTest() {
      day and a hardcoded placeholder is landmine 62 in a text box. */
   $('#allq').placeholder = `Search all ${(CAT.man.cards || 0).toLocaleString()} cards`;
   paintNet(); paintHome();
-  window.VAULT = { backArrow, closeSheet, setHomeTab, CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, setCond, toast, cameraVerdict, effectsLine, HUNT, targetLine, distLine, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
+  window.VAULT = { backArrow, closeSheet, setHomeTab, artUrl, artColours, largeOk, heroLeader, paintDeckHero, paintBack, stockPic, CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, setCond, toast, cameraVerdict, effectsLine, HUNT, targetLine, distLine, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
                    cardPic, setPic, picBox, deckRow, paintHome, paintDecks, paintSearch, openDeck,
                    FILT, loadFilter, applyFilter, sortRows, blankFilter, activeCount,
                    DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,

@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 108.* Paste the block between the rules into a new session
+*Current as of take 109.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 108 takes by previous sessions. The repo is
+built across 109 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -27,7 +27,7 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
 4. Read `docs/HANDOFF.md`, newest entry first, back to take 80 at least. Every
    take ends with a DEFERRED list; the union of those lists is the work.
 5. Read `docs/LANDMINES.md` §0 (the index) and skim §1. When you are about to
-   do something, grep the index first. 148 of them; each is a real failure.
+   do something, grep the index first. 152 of them; each is a real failure.
 6. Read `docs/AGENDA.md`: the Priorities block at the top is the live order.
 
 **The discipline, which the gate enforces:**
@@ -89,7 +89,13 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
   screen (`header.appbar`: the title, back one level down, the More
   gear on every main screen); take 108 made every icon a sprite symbol
   with one meaning, every control a 44 px target with a pressed and a
-  disabled look; then the art layer, the voice, polish. `docs/UI-AUDIT.md` is its checklist, with
+  disabled look; take 109 put the first card art in (Decks under its
+  Leader, the ready-made decks back on Decks, a deck's Leader large, a
+  card's own page over its own colours) and measured the picture: most
+  card pictures carry a SAMPLE stamp at both hosts, always in one band
+  (about 45-60 % of the card), so a banner shows only the card above
+  42 % (landmine 151); take 110 is Sealed's banner and the rest of the
+  art; then the voice, polish. `docs/UI-AUDIT.md` is its checklist, with
   line numbers. Touch the UI only to fix what is broken, and read the
   tokens in `:root` before writing a size or a colour.
 
@@ -127,6 +133,11 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
   practice** (MEASURED take 92; GitHub delays a public repo's cron). Read
   the run's `stores:` and `events:` lines before believing a green run: a
   kept-on-failure roster is green too.
+- **The network, since take 109:** the session VM reaches TCGCSV, both
+  TCGplayer image hosts and Bandai's site (MEASURED, HTTP 200), so the
+  full pipeline runs here with a fresh ingest. The VM's browsers do not
+  trust the proxy's certificate (landmine 152): the look fetches its
+  pictures through Node, which checks it.
 - **The session VM has had no package registries for two takes** (89, 90:
   `registry.npmjs.org`, `pypi.org`, `files.pythonhosted.org` answer 403, so
   no pillow and no puppeteer). If `bash ci/deps.sh` fails the same way:
@@ -155,13 +166,15 @@ other games (A19, after Play) → the simulator's tail (A23).
 **What you may change:** anything in the tree, with the ledger updated the
 same take — the workflow files included, through the PR.
 
-**What you may not do:** ship character art or publisher marks — including
-official product box shots, declined with reasons in A29 (landmines 26, 30,
-A16); gate scanning (A17); multiply condition into a price (PROTOCOL §10);
+**What you may not do:** bundle, commit or cache card art — it is shown
+hot-linked, display-only, and never drawn from scratch (landmines 26, 28;
+the owner's ruling at A42); put a character or a publisher mark in the
+app's name, icon, splash or store listing (landmines 30, 31; A16); gate
+scanning (A17); multiply condition into a price (PROTOCOL §10);
 send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 109" and begin with PROTOCOL §0.
+Say "take 110" and begin with PROTOCOL §0.
 
 ---
