@@ -775,4 +775,74 @@ const take110 = [
     } }
 ];
 
-export const STEPS = { 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110 };
+/* ---- take 111 — the last look: every screen and the sheets, both sizes, over a seeded phone ----
+   The answer given overnight to "how many takes ... until we can hit our end goal for this redesign":
+   about four more -- the voice, polish, the Fold's inner layout, and one for what the last look turns
+   up. This is that look: the twenty screens and the sheets in the three modes, over a collection (a
+   booster box and a DON!! card among it -- the printings with no number), a deck, a want, an alert and a
+   trade, every picture read. */
+const view = (name, js, { art = null, y = 0 } = {}) => ({ name, run: async (page) => {
+  /* y < 0: the step placed the page itself (scrollIntoView) -- keep it */
+  await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} ${js}; await ${pause}; ${y >= 0 ? `window.scrollTo(0, ${y});` : ''} })()`);
+  if (art) await waitArt(page, art);
+  await wait(400);
+  const m = await page.evaluate(() => { const on = [...document.querySelectorAll('.screen.on')].map(e => e.id).join(','), sh = [...document.querySelectorAll('.sheet.on')].map(e => e.id).join(','), t = document.querySelector('.screen.on .ab-title');
+    return { on, sheet: sh, title: t ? t.textContent.trim() : '' }; });
+  return { ok: !!m.on, ...m };
+} });
+const take111 = [
+  { name: 'collect-home-seeded', run: async (page, ctx) => {
+      await ctx.open();
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {}
+        V.OWN.items = []; V.DECKS.list.length = 0; V.DECKS.save();
+        const cards = V.CAT.rows.filter(p => !p.sealed && p.market > 20 && p.hash).sort((a, b) => b.market - a.market).slice(0, 9);
+        cards.forEach((p, i) => V.OWN.add(p.id, { qty: 1 + (i % 3), condition: ['NM', 'LP', 'NM', 'MP'][i % 4] }));
+        const box = V.CAT.rows.find(p => V.SEALED.isProduct(p) && p.market > 50 && p.img); if (box) V.OWN.add(box.id, { qty: 1 });
+        /* a printing with no number that is not a product: every one is a DON!! card filed as sealed (the first
+           seed asked for !p.sealed and found none) */
+        const bare = V.CAT.rows.find(p => p.sealed && !p.num && /don!! card/i.test(p.name) && p.market > 1 && p.img); if (bare) V.OWN.add(bare.id, { qty: 1 });
+        V.OWN.save(); V.OWN.snapshot();   /* the app's own paths take the day's reading; the seed does it by hand */
+        const w = V.CAT.rows.find(p => !p.sealed && p.num && p.market > 5 && !V.OWN.items.some(i => i.id === p.id)); if (w && !V.WANT.has(w.num)) V.WANT.toggle(w.num, w.id);
+        if (!V.ALERTS.list.length) V.ALERTS.add(cards[0].id, 'below', Math.round(cards[0].market * 0.9));
+        if (!V.TRADE.give.length) { V.TRADE.add('give', cards[1].id, 1); V.TRADE.add('get', cards[2].id, 1); }
+        V.MODE.set('collect', true); await ${pause}; V.go('home'); V.setHomeTab(false); V.paintHome(); window.scrollTo(0, 0);
+        return { lines: V.OWN.items.length, bare: bare ? bare.name : null }; })()`);
+      await waitArt(page, '#topList img'); await wait(300);
+      return { ok: m.lines >= 9, ...m };
+    } },
+  view('collect-home-lists', `V.go('home'); V.setHomeTab(false); await ${pause}; document.getElementById('topList').scrollIntoView({ block: 'start' }); window.scrollBy(0, -60)`, { art: '#topList img', y: -1 }),
+  view('collect-home-performance', `V.go('home'); V.setHomeTab(true)`),
+  view('collect-search-sets', `V.setHomeTab(false); document.querySelector('#allq').value = ''; V.go('search'); V.paintSearch()`, { art: '#setList img' }),
+  view('collect-search-results', `V.go('search'); const q = document.querySelector('#allq'); q.value = 'zoro'; V.paintSearch()`, { art: '#allRes img' }),
+  view('collect-market-movers', `document.querySelector('#allq').value = ''; document.querySelector('[data-act="movers"]').click()`, { art: '#allRes img' }),
+  view('collect-filter-sheet', `V.go('search'); document.querySelector('#sortBtnAll').click()`),
+  view('collect-collection-grid', `document.querySelector('#allq').value = ''; V.go('collection')`, { art: '#colGrid img' }),
+  view('collect-collection-no-number', `V.go('collection'); await ${pause}; const b = V.OWN.items.map(i => V.CAT.byId.get(i.id)).find(p => V.SEALED.isProduct(p)); const t = b && document.querySelector('#colGrid [data-open="' + b.id + '"]'); if (t) t.scrollIntoView({ block: 'center' })`, { art: '#colGrid img', y: -1 }),
+  view('collect-collection-bulk', `V.go('collection'); document.querySelector('[data-act="bulk"]').click(); await ${pause}; const t = document.querySelector('#colGrid [data-open]'); if (t) t.click()`, { art: '#colGrid img' }),
+  view('collect-card-page', `document.querySelector('#bulkX') && document.querySelector('#bulkX').click(); V.openDetail(V.OWN.items[0].id)`, { art: '#dArt img' }),
+  view('collect-card-page-lower', `V.openDetail(V.OWN.items[0].id); await ${pause}; document.querySelector('#dCondSeg').scrollIntoView({ block: 'start' })`, { y: -1 }),
+  view('collect-sealed-page', `V.openDetail(V.CAT.rows.find(p => V.SEALED.isProduct(p) && p.market > 50 && p.img).id)`, { art: '#dArt img' }),
+  view('collect-don-card-page', `V.openDetail(V.OWN.items.map(i => V.CAT.byId.get(i.id)).find(p => p.sealed && !V.SEALED.isProduct(p)).id)`, { art: '#dArt img' }),
+  view('collect-don-card-page-lower', `V.openDetail(V.OWN.items.map(i => V.CAT.byId.get(i.id)).find(p => p.sealed && !V.SEALED.isProduct(p)).id); await ${pause}; document.querySelector('#dCondSeg').scrollIntoView({ block: 'start' })`, { y: -1 }),
+  view('collect-set-checklist', `V.openChecklist(V.CAT.byId.get(V.OWN.items[0].id).set)`, { art: '#checklist img' }),
+  view('collect-binder', `V.go('binder')`, { art: '#binder img' }),
+  view('collect-wants-and-alerts', `V.go('wants')`, { art: '#wants img' }),
+  view('collect-trade', `V.go('trade')`, { art: '#trade img' }),
+  view('collect-more', `V.go('settings')`),
+  view('collect-more-lower', `V.go('settings'); await ${pause}; window.scrollTo(0, document.body.scrollHeight)`, { y: -1 }),
+  view('collect-currency-picker', `V.go('home'); document.querySelector('[data-act="currency"]').click()`),
+  view('collect-diagnostics', `V.go('diag')`),
+  view('collect-scan', `V.go('scan')`),
+  view('play-decks', `V.MODE.set('play', true); await ${pause}; if (!V.DECKS.list.length) { const L = V.CAT.byId.get(V.CAT.stock[0].leader); const d = V.DECKS.blank(); d.name = 'My first deck'; d.leader = L.id; d.created = Date.now(); V.DECKS.list.push(d); V.DECKS.save(); } V.go('decks')`, { art: '#dkHero img' }),
+  view('play-deck', `V.MODE.set('play', true); await ${pause}; V.openDeck(V.DECKS.list[0].id)`, { art: '#deck img' }),
+  view('play-cards', `V.MODE.set('play', true); await ${pause}; V.go('cards')`, { art: '#cdRes img' }),
+  view('play-counter', `V.MODE.set('play', true); await ${pause}; V.go('play')`),
+  view('play-sim', `V.MODE.set('play', true); await ${pause}; V.go('sim')`),
+  view('hunt-sealed', `V.NAV.zipAsked = true; V.MODE.set('hunt', true); await ${pause}; V.go('sealed')`, { art: '#sealedHero img' }),   /* the zip is asked once; the look has seen that sheet */
+  view('hunt-sealed-strips', `V.MODE.set('hunt', true); await ${pause}; V.go('sealed'); await ${pause}; const st = document.querySelectorAll('#sealedList .setstrip')[2]; if (st) st.scrollIntoView({ block: 'start' }); window.scrollBy(0, -70)`, { art: '#sealedList .setstrip img', y: -1 }),
+  view('hunt-releases', `V.MODE.set('hunt', true); await ${pause}; V.go('releases')`),
+  view('hunt-local', `V.MODE.set('hunt', true); await ${pause}; V.go('local')`),
+  view('hunt-events', `V.MODE.set('hunt', true); await ${pause}; V.go('events')`)
+];
+
+export const STEPS = { 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111 };

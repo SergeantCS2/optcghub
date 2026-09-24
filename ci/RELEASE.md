@@ -1,4 +1,4 @@
-# OP TCG Hub — take 110
+# OP TCG Hub — take 111
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,12 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 111:** the redesign's last pass. Every screen was looked
+at on both of the Fold's screens, and what it found is put right: a
+card's page saves to the collection it names, a second graded copy of a
+card keeps its own grade, a DON!! card has a card's page, and Set
+completion counts numbered cards only. Nothing you have saved changes.
 
 **New at take 110:** the redesign's second half. Hunt's Sealed opens
 under the top card of the newest set, and each set's heading carries its

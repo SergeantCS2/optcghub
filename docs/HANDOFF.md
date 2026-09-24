@@ -1,4 +1,190 @@
-# HANDOFF — through Take 110
+# HANDOFF — through Take 111
+
+## Take 111 — 2026-09-24 — the last look: every screen at both sizes after the UI series, and what it turned up
+
+Opened before any code (PROTOCOL §6): the last take of A42 as planned
+overnight. The owner marked take 110's PR (#34) ready at 14:05 UTC and
+merged it at 14:07, then: "Merged, continue - monitor and continue with
+111". Take 110 (PR #34: `check` green on its head 9b8ec1f -- smoke
+916/916, render 161/161 in Chrome, the gate passed) merged at 14:07 UTC;
+build.yml run 59 on the merge commit 9d601c7 published Release take-110
+at 14:16:31 (the APK, 26,461,582 bytes; the AAB, 19,647,562; the mapping,
+51,817,038), its body headed "take 110" -- the first Release under the
+heading tripwire (landmine 154). The last nightly (run 50, 23:50 UTC the
+night before) was green.
+
+The answer given overnight to "how many takes do you think until we can
+hit our end goal for this redesign": about four more after the art
+layer's second half -- the voice, polish, the Fold's inner layout, and
+one for what the last look turns up. Take 110 carried the first three at
+the owner's word ("Ensure 110 has as many planned changes in it as
+possible"); this is the fourth.
+
+### The plan
+
+- **The last look:** a tour of every screen (twenty) and the sheets, in
+  all three modes, at the Fold's two sizes, over a seeded collection, a
+  deck and a want -- every picture read. What it turns up is this take.
+- **Seen already in take 110's pictures:** rows for a printing with no
+  card number open with a bare "·" (a DON!! card, a sealed product, in
+  Market movers); Home says "One reading so far — $0.00." beside an $808
+  total when the day's only reading was taken before the cards went in.
+- **The record:** the agenda's Priorities block, last rewritten at the
+  take-88 audit, still names take 105 in flight -- rewritten to the live
+  order; A42 marked done at the owner's merge; UI-AUDIT's one routed
+  finding (bulk delete) marked fixed at take 110.
+
+### What the look turned up, and what changed
+
+The tour (`node tools/look.mjs 111`: 34 views, each at the cover screen,
+411 x 960, and the open Fold, 840 x 757; 68 of 68 ran) was read picture by
+picture twice: once on take 110's app, once on the fixes. Every row below is
+something a picture showed or its reading led to.
+
+*Home and Search*
+- Set completion rows ended "· tap for the checklist" (the row is the
+  button); the words went. The Performance tab now leads with its own panel
+  ("Against what you paid"), which sat under Most valuable.
+- Set completion counted a printing with no number as a held number: a
+  starter deck still in its wrapper listed its set as "1 of 17 numbers ·
+  6%", under a note that says sealed product is left out; and a set's value
+  added every collection's copies while its count took the one on screen.
+  Both fixed in `setProgress` (landmine 162).
+- A sealed product in Most valuable read "NM · Normal · " -- a condition and
+  a finish it has not got, and a dot left hanging -- and now reads its kind
+  and set ("Box · OP01").
+- A printing with no number opened its small line with a dot: " · OP01" in
+  search, " · $55.49 each" in a trade, " · below $1.00" on an alert, " · OP01
+  · $4,680.11" on the want list, and the same in Market movers and the scan
+  result. `dotJoin` joins the parts a line has.
+- The filter sheet said "Show 7,661 printings" beside "Search all 6,987
+  cards" (the catalogue holds the sealed products too), and "N cards" over
+  the collection, which counts lines as More does: now "results" and
+  "lines".
+- A name that carries its printing's badge was cut by the ellipsis on the
+  phone: "Roronoa Zoro ..." hid "Alternate Art", "Donquixote Rosinante ..."
+  hid "SP" -- the one word that tells two printings apart (AGENTS rule 3). A
+  badged name now wraps (landmine 164).
+
+*The collection*
+- The bulk bar put four buttons on one line; at 411 px they ran off the
+  phone and over the count. On a phone: what is selected and Done, then
+  Condition, Move and Delete; one line on the open Fold.
+- A sealed product's tile showed a lone "·" over "NM · Normal"; it says
+  "Box" over "Sealed". A DON!! card's tile read "DON!! ·"; it reads "DON!!".
+
+*A card's page*
+- The Graded panel held Want and the two alerts; they have a Watch panel,
+  and Graded holds the graded copies.
+- A sealed product's page repeated its name under its name (the 40
+  products named for their set, every starter deck), said "Normal" under
+  "Ungraded", showed the day's triangle twice (on the price and on the
+  move -- every page did), offered a Graded panel and "Want this card", and
+  listed the 674 printings with no number as "Every printing of this
+  number". It now says "Sealed", its kind ("Box", "Deck", ...), one
+  triangle, and has none of the rest.
+- The 253 DON!! cards are filed as sealed (they have no number) and take
+  95's page treated each as a product: no condition, the stock alert,
+  Where to buy. A DON!! card's page is a card's: its finish, a condition,
+  Graded; with no number, no Want and no list of printings (landmine 162).
+- "Want this card" on a printing with no number: the want list is kept by
+  number, so `WANT.has('')` answered for every product and DON!! card once
+  one was wanted. Hidden where there is no number.
+- Save, the stepper, a condition tap and the cost basis took the
+  printing's first line in any collection: on the Trade pile's page, Save
+  set the main collection's count. The page's line is now the one in the
+  collection it names ("Adding to …"), and the button says "Save" on a copy
+  you have, "Add to collection" on one you have not (landmine 163).
+- A second slab of one printing was counted into the first and wrote its
+  grader, grade and cert over the first one's; a slab is now a line of its
+  own (landmine 163). A cost basis set on a card not yet owned added it
+  without the day's reading; it takes one.
+
+*Collect's other screens*
+- The binder opened a set at its first page -- nine empty pockets when the
+  collector's cards sit further in. It opens at the page of the first held
+  card, and a page the collector turned to is kept, the first one too.
+- An alert's line was cut at "fired Sep 23 at …"; it wraps.
+- The currency pill and picker said "CHF CHF" (the franc's sign is its
+  code); now "CHF", while "$ USD" and "€ EUR" keep their sign.
+- Scan's note under the camera ran edge to edge with the camera; it keeps
+  the page's margins. More → About gave the prices' day as "2026-09-23";
+  now "Sep 23", as every other day.
+
+*Prep & Play*
+- A ready-made deck's badge sat beside its name and took its width; it
+  rides the line under the name, with the count.
+- A deck's search prompt, "Add cards — search the catalogue", was 253 px of
+  text in a 208 px box at 411 px; now "Add cards".
+- A deck's value left its Leader out while the deck's history counted it
+  (an empty deck read $0.00 beside a move of its Leader's price); the Leader
+  is counted, and an empty deck says "no cards in it yet", not "you own
+  every card in it".
+
+*Hunt*
+- Sealed and Releases rows sat askew: `.row{align-items:baseline}` put a
+  textless picture's foot on the first line of text, 33 to 55 px off
+  centre. A row that leads with a picture centres it; the Sealed row's
+  bell, which then hung from the picture's foot, centres too (landmine
+  161).
+- Local, before the shop list was fetched: "From Bandai TCG+, ."; now
+  "From Bandai TCG+.".
+
+*The tour itself*
+- Its seed asked for a printing with no number as `!p.sealed && !p.num`
+  and found none (every one is filed as sealed); it seeds a DON!! card, and
+  the tour gained the tiles and the DON!! card's page. It also took no
+  day's reading (the app's own paths take one) and the zip sheet covered
+  Hunt's first view; both fixed.
+- Not the app's: Home's "One reading so far — $0.00" beside the total, seen
+  in take 110's pictures, was the seed's reading taken before its cards
+  went in.
+
+### Tests
+
+- smoke **956/956**: take 110's 916 with six changed on purpose (the
+  filter's words, the deck's value, the sealed page's line and subtitle),
+  and 40 new in "take 111 — the last look". render **176/176** in Chrome:
+  161 with three changed on purpose (the filter's "lines") and 15 new.
+- Watched to fail on take 110's app, built from `origin/main`: 41 in smoke
+  and 10 in render -- every check of this take but those that hold on both
+  builds by design: the controls, the fixtures, the binder keeping a page
+  turned to, the open Fold's one-line bar, and landmine 16's merge.
+- The harness: smoke's DOM stub gained `document.removeEventListener` (the
+  ask sheet's cleanup calls it; a browser always has it).
+
+### What I got wrong
+
+- The first cut made a DON!! card's page a product's (landmine 162): it
+  took `p.sealed` for "a sealed product", as take 95 had. A probe of the
+  catalogue before the tests caught it -- 253 DON!! cards with a finish and
+  a rarity.
+- Centring the rows moved the Sealed bell; the second reading of the
+  pictures found it (landmine 161).
+- The badge check was first written at 411 px, where the look saw the
+  fault; in the runner's Chrome the row fits with 6 px to spare, so the
+  control could not fail. It reads 360 px now (landmine 164).
+
+### Ruled out
+
+- Fitting a binder page to the open Fold (three pockets of about 400 px
+  across; a page of nine needs a scroll there) -- a page that fits is
+  pockets near 110 px wide: a design trade-off for the UI/UX session, not a
+  fault.
+- Splitting a slab merged before this take: its first grade was written
+  over, and nothing kept it.
+
+### DEFERRED this cycle
+
+- The binder on the open Fold, above -- the UI/UX session's.
+- The Cards list shows "·" in the cost circle for the 16 of 2,712 playable
+  numbers the feed gives no cost (Barrier Bulls OP15-019, OP12's Haki
+  events, EB04-009 ...) and sorts them with the zeros. A data gap: the feed
+  or the rules text would have to supply it.
+- A want of a printing with no number saved before this take stays on the
+  list (its row now reads without the dot); remove it by hand.
+- Sealed's banner on the open Fold is the top card cut to 840 px wide, the
+  face filling the band -- take 110's design, merged without a note.
 
 ## Take 110 — 2026-09-24 — the UI series' second half in one take, overnight: the art layer's second half, the voice, polish, the Fold's inner screen, and the planned leftovers
 

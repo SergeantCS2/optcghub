@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 110.* Paste the block between the rules into a new session
+*Current as of take 111.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 110 takes by previous sessions. The repo is
+built across 111 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -27,7 +27,7 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
 4. Read `docs/HANDOFF.md`, newest entry first, back to take 80 at least. Every
    take ends with a DEFERRED list; the union of those lists is the work.
 5. Read `docs/LANDMINES.md` §0 (the index) and skim §1. When you are about to
-   do something, grep the index first. 160 of them; each is a real failure.
+   do something, grep the index first. 164 of them; each is a real failure.
 6. Read `docs/AGENDA.md`: the Priorities block at the top is the live order.
 
 **The discipline, which the gate enforces:**
@@ -102,7 +102,12 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
   899 px), and a review of the whole take after its first push fixed what
   it found (bulk actions on the lines on screen, a currency label that
   matches its figure, words over art measured readable, landmines
-  157-160). What is left is the owner's review. `docs/UI-AUDIT.md` is its
+  157-160); the owner merged it without a note, and take 111 is the last
+  look the series planned -- every screen at both sizes, and what it
+  turned up (a card page that saved to another collection's line, a slab
+  that took over another's grade, the 253 DON!! cards filed as sealed and
+  treated as products, rows askew on their picture; landmines 161-164).
+  After it, refinement is the owner's call, take by take. `docs/UI-AUDIT.md` is its
   checklist, with line numbers. Touch the UI only to fix what is broken, and read the
   tokens in `:root` before writing a size or a colour.
 
@@ -182,6 +187,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 111" and begin with PROTOCOL §0.
+Say "take 112" and begin with PROTOCOL §0.
 
 ---

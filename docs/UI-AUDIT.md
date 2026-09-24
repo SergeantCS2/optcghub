@@ -1,6 +1,6 @@
 # UI-AUDIT — the UI series' checklist (A42)
 
-*Current as of take 110.*
+*Current as of take 111.*
 
 The audit behind the UI series, taken on the take-104 source by four
 independent read-throughs (headings and copy; components, icons and
@@ -111,6 +111,16 @@ compact bar one level down, no banner on Collect's Home.
 - [x] Loading, empty and error states per list; tabular figures on every number. *(take 110: one empty state -- glyph, what is missing, what to do -- on every list that fills a screen, and Sealed's empty search, which had shown nothing since the stock panels arrived; loading and error were already there (a Refresh disables, a failure toasts); tabular figures are the body's default)*
 - [x] The ui-ux-pro-max pre-delivery checklist, item by item, in the PR. *(take 110: the take's pull request carries it -- accessibility, touch, layout, type and colour, motion, forms, navigation, charts, content -- each item with what was measured)*
 
+## 7. The last look — take 111
+
+Every screen and sheet at both of the Fold's sizes (`node tools/look.mjs 111`, 34 views each), read twice. The HANDOFF's take-111 entry has each finding with its before and after.
+
+- [x] Lines and words: a leading "·" on a printing with no number (search, movers, trade, wants, alerts, the scan result); the filter's "printings" and "cards" (now results and lines); "· tap for the checklist"; "CHF CHF"; About's ISO day; "From Bandai TCG+, ."; the deck prompt cut at 411 px; a badged name cut by the ellipsis on the phone (landmine 164).
+- [x] Layout: the bulk bar off a 411 px phone; Scan's note edge to edge; the Performance tab's panel under Most valuable; rows askew on a textless picture, then the Sealed bell (landmine 161); the ready-made deck's badge beside its name.
+- [x] A card's page: Want and the alerts out of Graded (a Watch panel); a sealed product's page (its kind, one triangle, no Graded, Want or list of printings); a DON!! card's page a card's (landmine 162); Save and the cost basis on the collection the page names, and a slab its own line (landmine 163).
+- [x] Figures: Set completion counting products and every collection's value; a deck's value without its Leader; the binder opening on empty pockets; a cost basis added without the day's reading.
+- [ ] A binder page on the open Fold: three pockets of about 400 px across, so a page of nine needs a scroll there -- pockets near 110 px wide would fit it. A design choice, left to the UI/UX session.
+
 ## Found in passing, routed elsewhere
 
-- Bulk delete removes a card's lines in every portfolio and condition, and its confirm values the selection without quantity (2966-2972). A data-loss risk (AGENTS rule 5), outside the UI series: offered to the owner as its own task.
+- Bulk delete removes a card's lines in every portfolio and condition, and its confirm values the selection without quantity (2966-2972). A data-loss risk (AGENTS rule 5), outside the UI series: offered to the owner as its own task. *(Fixed at take 110, landmine 155: Delete, Move and Condition take the lines on screen -- the collection, the star, the filter, the search -- and the bar and the confirm count them with their quantities.)*

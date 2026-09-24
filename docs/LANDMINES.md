@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 110.*
+*Current as of take 111.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -171,6 +171,11 @@ Start here. Do not read top to bottom.
 | Words over art are hard to read on one colour | **158** |
 | A double tap closes the sheet it opened | **159** |
 | A heading or an empty state takes half a line on the open Fold | **160** |
+| A row's picture or button sits off the middle of its row | **161** |
+| A DON!! card's page reads like a sealed product's | **162** |
+| A save on one collection's page changes another's count | **163** |
+| A second slab of a card took over the first one's grade | **163** |
+| A check at the width where the look saw a fault passes anyway | **164** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -2239,6 +2244,47 @@ column alone, a lone Events panel half the screen, and Local's one panel of
 sixty shops stood beside the Target panel over 8,000 px of empty column.
 Rule: a container made a grid names what spans (anything that is not a row
 of the list), and a container of sections is not made a grid.
+
+**161. A flex row's baseline comes from somewhere.** `.row{align-items:
+baseline}` lines a textless picture's foot up with the first line of the
+words beside it: every Sealed and Releases row sat 33 to 55 px off centre,
+and nothing measured it until take 111's look. Centring those rows
+(`.row:has(> .pic)`) then moved the row that held one: a flex container none
+of whose items align by baseline takes its baseline from its first item --
+here the picture's foot -- and the Sealed row's bell, aligned to that
+baseline, dropped (it was 13 to 24 px off on take 110 already). Rule: a row
+that holds a picture or another row centres explicitly, and render measures
+centres, not boxes.
+
+**162. "Sealed" in the catalogue means "no card number".** TCGCSV files 253
+DON!! cards with the sealed products because they have no number; each is a
+single card with a finish, a grade and a condition. Take 95's card page keyed
+on `p.sealed` and gave every DON!! card a product's page (no condition, the
+stock alert, Where to buy), and take 111's first cut went further ("Sealed",
+"Sealed product", no Graded panel). The empty number is shared by all 674:
+`candidates('')` listed them as one card's printings, `WANT.has('')`
+answered for every one once one was wanted, and Set completion counted ''
+as a held number. The look's own seed asked for `!p.sealed && !p.num`,
+found nothing, and its step still said ok. Rule: a product is
+`p.sealed && !SEALED.isDon(p)`; nothing keys on the empty number; a fixture
+that can come back empty is asserted.
+
+**163. A line is found by everything that makes it a different line.** The
+card page's Save, stepper, condition tap and cost basis took the printing's
+first line in any collection: on the Trade pile's page, Save set the main
+collection's count (3 became 2 in the check). `OWN.add` merged by printing,
+condition and collection, and a slab's condition is "GRADED": a second slab
+of one printing was counted into the first and wrote its grader, grade and
+cert over the first one's. Both from before take 88; found by take 111's
+reading of the card page. Rule: the page's line is the one in the
+collection it names (`dLine`), and a slab never merges (AGENTS rule 5).
+
+**164. A width that is borderline in one engine passes in another.** The
+look (Playwright's Chromium) showed "Roronoa Zoro ..." with its "Alternate
+Art" badge cut at 411 px; the runner's Chrome fits the same row with 6 px
+to spare, so a check at 411 passed with the fault in place and its control
+could not fail. Rule: a control is read where the fault cannot help but
+happen (360 px), and the rule is held at every width it names.
 
 ## §2 — Inherited from APEX ORV
 
