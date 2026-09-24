@@ -167,6 +167,10 @@ Start here. Do not read top to bottom.
 | A Release's body names the take before it | **154** |
 | A bulk action reaches lines the screen does not show | **155** |
 | A control grown for thumbs spills off a narrow phone | **156** |
+| A price says € on a dollar figure, with no ≈ | **157** |
+| Words over art are hard to read on one colour | **158** |
+| A double tap closes the sheet it opened | **159** |
+| A heading or an empty state takes half a line on the open Fold | **160** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -1978,7 +1982,10 @@ property, passed. The house already knew: `.stale[hidden]`,
 runner's Chrome assertion on take 95's first run (check run 17). Rule: an
 element hidden by attribute gets a `<selector>[hidden]{display:none}`
 rule beside its display rule, and the render measures its height, not
-its attribute.
+its attribute. *Take 110:* again -- `#detail > .panel{display:flow-root}`, in
+the open Fold's range only, outranked `.panel[hidden]` and put an empty
+"Where to buy" under every card at 700-899 px; the phone never showed it.
+Found by the review's Chrome run; `:not([hidden])` and a render check at 840 px.
 
 **137. A screen listed as an overlay: Back turns it off and navigates
 nowhere, and a watchdog that heals the symptom hides the cause.**
@@ -2182,6 +2189,13 @@ and every condition, including lines the screen did not show -- while Move and
 Condition beside it kept to the collection on screen; its confirm valued one of
 each printing whatever the quantities. Rule: a bulk action acts on the lines on
 screen (`PF.scope`), and says their value with their quantities (AGENTS rule 5).
+*Take 110's review, before the merge:* the collection on screen was half of
+it. A filter, the favourites star and the search hide lines too, and the
+selection is by printing: with Near Mint filtered in, Delete still took the
+graded copy of the printing whose tile was tapped, and Move and Condition
+changed it; the bar beside them valued a printing at the first line found in
+any collection. Rule, whole: an action takes `shownLines()` -- what
+`paintCollection` draws -- and the bar and the confirm count the same lines.
 
 **156. A control grown for thumbs must be measured at the narrowest width on
 every screen that holds it.** Take 108's 44 px steppers made the Play counter's
@@ -2191,6 +2205,40 @@ changed, and the Play counter was not one -- and take 110's `overflow:hidden`
 (for the art) turned it into a + cut in half. Rule: a size change in a shared
 control adds every screen holding it to the narrow-width checks, and a panel
 that clips is measured for what it would hide.
+
+**157. A figure's label and its value read from two places part when one
+falls back.** `money()` converted at the active currency's rate -- US
+dollars when the saved code has no rate in this build -- and took its
+symbol from `CUR.sym()`, which read the saved code: a euro chosen once and a
+build whose rates failed drew "€10.00" for ten dollars, with no ≈. From take
+85 on; take 110 added the price filter's "min €" on the same symbol. Found by
+take 110's review. Rule: a label is read from the same resolved value as the
+figure it labels (`sym()` reads `active()`), and a check runs the fallback.
+
+**158. Words over art are measured, not assumed.** Take 110's first push
+measured the SAMPLE stamp under every art layer and not the words over them:
+the Play counter's labels read 2.0:1 over a yellow Leader (3.5 red, 4.4
+black), a card's line beside it on the open Fold 1.0:1, a Sealed strip's
+date 2.3:1 over bright art. The review measured them from pixels -- the
+words made transparent, the page shot, the ground under them read back.
+Rule: every text over an art layer is measured that way at the worst colour
+(yellow), offline and with art, and render keeps the check (take 110:
+`groundContrast`).
+
+**159. A motion that moves a target moves it out from under the finger.**
+A sheet that rises for 320 ms is not yet where it will be: the second tap
+of a double tap on its button landed on the scrim where the sheet was about
+to be, and closed what the first had opened. With the motion reduced it
+stayed open -- the bug is the animation's. Rule: while a sheet rises, a tap
+on its scrim is ignored (`risingScrim`), and render double-taps.
+
+**160. A list turned into a grid puts every child in a cell.** The open
+Fold's two columns were set on containers by id: Market movers' heading
+took half its line beside the first mover, Decks' empty state the left
+column alone, a lone Events panel half the screen, and Local's one panel of
+sixty shops stood beside the Target panel over 8,000 px of empty column.
+Rule: a container made a grid names what spans (anything that is not a row
+of the list), and a container of sections is not made a grid.
 
 ## §2 — Inherited from APEX ORV
 

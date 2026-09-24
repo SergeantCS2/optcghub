@@ -740,6 +740,38 @@ const take110 = [
       const m = await page.evaluate(() => { const n = document.querySelector('#dCond'), cs = getComputedStyle(n), lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.45, st = document.querySelector('.dqrow .stepper').getBoundingClientRect(), nm = document.querySelector('.dqrow .nm').getBoundingClientRect();
         return { line: n.textContent, lines: Math.round(n.getBoundingClientRect().height / lh), stepperUnder: st.top >= nm.bottom - 1 }; });   /* lines by height: getClientRects counts inline fragments */
       return { ok: m.lines === 1 && m.stepperUnder, card, ...m };   /* take 110: the condition on one line, the quantity under it */
+    } },
+  /* take 110's review, before the merge: what two reviewers found on the first push, as the owner will see it */
+  { name: 'review-play-counter-labels-over-a-yellow-leader', run: async (page) => {
+      const leader = await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('play', true); await ${pause}; while (V.closeAnyOverlay()) {} V.go('play');
+        const L = V.CAT.rows.find(x => x.type === 'Leader' && x.color === 'Yellow' && x.img && !x.sealed); V.PLAY.hotseat = false; V.PLAY.p.forEach(p => { p.leader = L.id; }); V.paintPlay(); window.scrollTo(0, 0); return L.num + ' ' + L.name; })()`);
+      await waitArt(page, '#plBoard .plpanel img'); await wait(400);
+      const m = await page.evaluate(() => { const pn = document.querySelector('#plBoard .plpanel'), a = pn && pn.querySelector(':scope > .artbg');
+        return { label: getComputedStyle(pn.querySelector('.plcols .note')).color, shade: a ? getComputedStyle(a, '::after').backgroundColor : '' }; });
+      return { ok: m.shade === 'rgba(0, 0, 0, 0.45)', leader, ...m };
+    } },
+  { name: 'review-card-page-a-yellow-card-its-line-on-the-page', run: async (page) => {
+      const card = await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('collect', true); await ${pause}; while (V.closeAnyOverlay()) {}
+        const p = V.CAT.rows.find(x => x.type === 'Leader' && x.color === 'Yellow' && x.img && !x.sealed); V.openDetail(p.id); await ${pause}; window.scrollTo(0, 0); return p.num + ' ' + p.name; })()`);
+      await waitArt(page, '#dBack img'); await wait(300);
+      const m = await page.evaluate(() => { const bk = document.getElementById('dBack').getBoundingClientRect(), rg = document.createRange(); rg.selectNodeContents(document.getElementById('dSub'));
+        const t = rg.getClientRects()[0]; return { w: innerWidth, artRight: Math.round(bk.right), lineLeft: t ? Math.round(t.left) : -1, lineTop: t ? Math.round(t.top) : -1, buy: getComputedStyle(document.getElementById('dBuy')).display }; });
+      /* the open Fold: the art behind the card's column and the line beside it; a phone: the line under the card, as it was */
+      return { ok: m.buy === 'none' && (m.w < 700 || m.artRight <= m.lineLeft), card, ...m };
+    } },
+  { name: 'review-home-performance-set-completion-hidden', run: async (page) => {
+      await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('collect', true); await ${pause}; while (V.closeAnyOverlay()) {} V.go('home'); V.setHomeTab(true); await ${pause}; window.scrollTo(0, 0); })()`);
+      await wait(300);
+      const m = await page.evaluate(() => { const mv = document.getElementById('topList').closest('.panel').getBoundingClientRect(); const o = { w: innerWidth, mv: Math.round(mv.width), comp: getComputedStyle(document.getElementById('setComp')).display };
+        window.VAULT.setHomeTab(false); return o; });
+      return { ok: m.comp === 'none' && (m.w < 700 || m.mv > 0.8 * m.w), ...m };
+    } },
+  { name: 'review-market-movers-heading-across', run: async (page) => {
+      await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('collect', true); await ${pause}; while (V.closeAnyOverlay()) {} document.querySelector('#allq').value = '';
+        document.querySelector('[data-act="movers"]').click(); await ${pause}; window.scrollTo(0, 0); })()`);
+      await wait(300);
+      const m = await page.evaluate(() => { const p = document.querySelector('#allRes > .panel'), h = p && p.querySelector(':scope > h3'); return { h3: h ? Math.round(h.getBoundingClientRect().width) : 0, panel: p ? p.clientWidth : 0 }; });
+      return { ok: m.h3 > 0.8 * m.panel, ...m };
     } }
 ];
 

@@ -241,12 +241,14 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .setstrip{position:relative;display:flex;width:100%;min-height:64px;justify-content:space-between;align-items:flex-end;gap:10px;text-align:left;
   padding:0 14px 10px;margin:12px 0 6px;border-radius:12px;overflow:hidden;background:linear-gradient(160deg,var(--brass2),var(--card2))}
 .setstrip > .artbg{position:absolute;inset:0;-webkit-mask-image:none;mask-image:none}
-.setstrip > .artbg::after{background:linear-gradient(90deg,rgba(0,0,0,.8),rgba(0,0,0,.25) 70%,rgba(0,0,0,.15))}
+.setstrip > .artbg::after{background:linear-gradient(90deg,rgba(0,0,0,.8),rgba(0,0,0,.55) 70%,rgba(0,0,0,.45))}   /* take 110's review: a date at the end of a long name measured 2.3:1 over bright art at .25; 5.4 at .55 */
 .setstrip > span{position:relative;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85)}
 .setstrip .note{color:rgba(255,255,255,.82);white-space:nowrap}   /* a date breaks nowhere, least of all at its own hyphens (the take-110 look: "2026-10-" / "30") */
 /* The Play counter: each player's Leader behind their side, faint, fading before the numbers. */
 .plpanel{position:relative;overflow:hidden}
 .plpanel > .artbg{position:absolute;inset:0;opacity:.6}
+.plpanel > .artbg::after{background:rgba(0,0,0,.45)}   /* take 110's review: the labels measured 2.0:1 over a yellow Leader; with this and --dim, 5.1 offline and 6.7 over the art */
+.plpanel .note{color:var(--dim)}
 .plpanel > :not(.artbg){position:relative}
 /* Three steppers of two 44 px buttons (take 108) need 332 px at the old gaps; a 360 px phone's panel
    has 296. The gaps give way below 412 px and the buttons keep their size (MEASURED in Chrome: the
@@ -631,18 +633,22 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
   /* a card's own page: the card large on the left; what it is and what it is worth beside it */
   #detail .dhero{float:left;margin:4px 28px 16px 0}
   #detail .dhero .art{width:300px}
-  #detail > .panel{display:flow-root}
+  #detail .artbg.dback{right:auto;width:calc(var(--pad) + 320px);   /* the art behind the card's column; the text beside it on the page's own ground */
+    -webkit-mask-image:linear-gradient(#000 55%,transparent),linear-gradient(90deg,#000 75%,transparent);-webkit-mask-composite:source-in;
+    mask-image:linear-gradient(#000 55%,transparent),linear-gradient(90deg,#000 75%,transparent);mask-composite:intersect}
+  #detail > .panel:not([hidden]){display:flow-root}   /* :not([hidden]) -- the id beat .panel[hidden] and "Where to buy" showed on every card (the review) */
   /* Home: the value and its chart across, Most valuable and Set completion side by side under them */
   #home.screen.on{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px;align-items:start}
   #home.screen.on > *{grid-column:1/-1}
   #home.screen.on > .panel:has(#topList),#home.screen.on > .panel:has(#setDone){grid-column:auto}
+  #home.perf.screen.on > .panel:has(#topList){grid-column:1/-1}   /* Performance: no Set completion beside it */
   /* lists of rows, two to a line; a heading, a note or a panel of their own spans both */
   #allRes > .panel,#relList > .panel{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px;align-content:start}
-  #relList > .panel > :not(.rel){grid-column:1/-1}   /* a release is a .rel: its row and its buttons */
-  #sealedList,#dkList,#dkStock,#cdRes,#eventsList,#localList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px;align-items:start}
-  #sealedList > :not(.row),#dkStock > .fgrp,#eventsList > :not(.panel),#localList > :not(.panel){grid-column:1/-1}
+  #allRes > .panel > :not(.row),#relList > .panel > :not(.rel){grid-column:1/-1}   /* a release is a .rel: its row and its buttons; Market movers' heading and notes span (the review) */
+  #sealedList,#dkList,#dkStock,#cdRes,#eventsList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px;align-items:start}   /* not #localList: one panel of 60 shops beside the Target panel left 8,000 px of empty column (the review) */
+  #sealedList > :not(.row),#dkList > :not(.panel),#cdRes > :not(.dkrow),#dkStock > .fgrp,#eventsList > :not(.panel),#eventsList:not(:has(> .panel ~ .panel)) > .panel{grid-column:1/-1}
   /* two to a line, the second row is on the first line: no divider above it (.row+.row draws one) */
-  #allRes > .panel > .row:nth-child(2),#cdRes > .row:nth-child(2),#sealedList > .setstrip + .row + .row{border-top:0}
+  #allRes > .panel > .row:nth-child(2 of .row),#cdRes > .dkrow:nth-child(2),#sealedList > .setstrip + .row + .row{border-top:0}
   #dkList,#dkStock{align-items:stretch}   /* a line of deck panels at one height */
   #colGrid{grid-template-columns:repeat(4,minmax(0,1fr))}
   /* a sheet: centred at a readable width, rising from the bottom as on the phone */
@@ -713,7 +719,7 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
     <div id="perfBody"></div>
   </div>
 
-  <div class="panel">
+  <div class="panel" id="setComp">
     <h3>Set completion</h3>
     <div class="note" style="margin:0 0 10px">
       Cards you own, by set. Sealed product is excluded — it has no card number.
@@ -798,7 +804,7 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
     <div class="ab-text"><h1 class="ab-title">Diagnostics</h1></div>
   </header>
   <div class="note" style="margin:6px 0 10px">Everything needed to read this phone from a report: endpoints and their live status, what is stored, the last errors, the self-test. No collection contents. Copy it and send it.</div>
-  <div class="row" style="gap:8px;margin-bottom:10px"><button class="ghost go" id="diagRun">Run</button><button class="ghost" id="diagCopy" disabled>Copy report</button><button class="ghost" id="diagShare" disabled>Share</button><button class="ghost" id="devEarn">+20 test credits</button></div>
+  <div class="row" style="gap:8px;margin-bottom:10px;flex-wrap:wrap"><button class="ghost go" id="diagRun">Run</button><button class="ghost" id="diagCopy" disabled>Copy report</button><button class="ghost" id="diagShare" disabled>Share</button><button class="ghost" id="devEarn">+20 test credits</button></div>
   <pre id="diagOut" style="white-space:pre-wrap;font-size:12px;line-height:1.45;color:var(--dim);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;min-height:80px"></pre>
 </section>
 <!-- take 91: More is markup like every screen; built on demand it was refused by go() (landmine 128) -->
@@ -1257,7 +1263,9 @@ const CUR = {
   rates() { return (typeof CAT !== 'undefined' && CAT.man && CAT.man.rates) || null; },
   rate(code) { if (code === 'USD') return 1; const r = this.rates(); return r && r.rates && r.rates[code] > 0 ? r.rates[code] : null; },
   set(code) { if (!this.rate(code)) code = 'USD'; this.code = code; localStorage.setItem('vault.currency', code); },
-  sym() { return (this.list.find(c => c[0] === this.code) || this.list[0])[1]; },
+  /* take 110's review: the symbol of the currency SHOWN -- a saved code with no rate in this build shows
+     dollars, and read from the saved code the symbol had put "\u20ac" on a dollar figure with no \u2248 */
+  sym() { const a = this.active(); return (this.list.find(c => c[0] === a) || this.list[0])[1]; },
   active() { return this.rate(this.code) ? this.code : 'USD'; }
 };
 const money = n => { if (n == null) return '—'; const code = CUR.active(); const r = CUR.rate(code) || 1;
@@ -1268,15 +1276,18 @@ const moneyUSD = n => (n == null ? '—' : '$' + n.toLocaleString('en-US', { min
    dropped the "$" of dollars and the "\u2248" of a converted currency -- and a percentage has one
    rule: one decimal, none from 100 % up. */
 const signedMoney = n => { const m = money(Math.abs(n)), sg = n >= 0 ? '+' : '\u2212'; return m.startsWith('\u2248') ? '\u2248' + sg + m.slice(1) : sg + m; };
-const pctNum = p => { const a = Math.abs(p); return a.toFixed(a >= 100 ? 0 : 1) + '%'; };
+const pctNum = p => { const a = Math.abs(p), r = Math.round(a * 10) / 10; return r >= 100 ? Math.round(a) + '%' : r.toFixed(1) + '%'; };
+/* signed: the sign only on a figure that is not zero once rounded ("\u22120.0%" said a move the figure does not show) */
+const signedPct = (p, plus = false) => { const t = pctNum(p); return (t === '0.0%' ? '' : p < 0 ? '\u2212' : plus ? '+' : '') + t; };
 /* the price filter in the currency on screen: kept in US dollars (the market’s), typed and shown converted */
 const curRate = () => CUR.rate(CUR.active()) || 1;
 const fromShown = v => { const x = parseFloat(v); return x > 0 ? x / curRate() : null; };
 const toShown = usd => (usd == null ? '' : String(+(usd * curRate()).toFixed(2)));
 /* one way to write a day -- "Sep 23", the year only when it is not this one -- and a moment --
    "Sep 24, 6:23 AM" -- where screens wrote ISO dates, and times with a literal T */
-const dayText = iso => { const m = /^(\d{4})-(\d\d)-(\d\d)/.exec(iso || ''); if (!m) return iso || '?';
-  return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(+m[1] !== new Date().getFullYear() ? { year: 'numeric' } : {}) }); };
+/* { year: true } for what leaves the phone (a shared page, a trade's text): read later, a day needs its year */
+const dayText = (iso, { year = false } = {}) => { const m = /^(\d{4})-(\d\d)-(\d\d)/.exec(iso || ''); if (!m) return iso || '?';
+  return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(year || +m[1] !== new Date().getFullYear() ? { year: 'numeric' } : {}) }); };
 const momentText = iso => { const d = new Date(iso || ''); if (!iso || isNaN(d)) return iso || '?';
   return d.toLocaleString('en-US', { month: 'short', day: 'numeric', ...(d.getFullYear() !== new Date().getFullYear() ? { year: 'numeric' } : {}), hour: 'numeric', minute: '2-digit' }); };
 const RANGE_WORDS = { '1D': 'in the last day', '7D': 'in the last 7 days', '1M': 'in the last month', '3M': 'in the last 3 months', '6M': 'in the last 6 months', MAX: 'since the first day on file' };
@@ -1284,7 +1295,7 @@ async function pickCurrency() {
   const R = CUR.rates(); const opts = CUR.list.map(([c, sym, name]) => { const ok = c === 'USD' || !!(R && R.rates && R.rates[c]); return { c, sym, name, ok }; });
   const v = await new Promise(res => {
     $('#pkTitle').textContent = 'Show prices in\u2026';
-    $('#pkWhy').innerHTML = `Prices are US dollars from TCGplayer. Another currency is a conversion at the ECB reference rate${R && R.date ? ' of ' + esc(R.date) : ''}, marked \u2248 \u2014 an estimate, not a quote.${R && R.stale ? ' <b>' + esc(R.stale) + '</b>' : ''}${!R ? ' <b>No rates in this build \u2014 USD only.</b>' : ''}`;
+    $('#pkWhy').innerHTML = `Prices are US dollars from TCGplayer. Another currency is a conversion at the ECB reference rate${R && R.date ? ' of ' + esc(dayText(R.date)) : ''}, marked \u2248 \u2014 an estimate, not a quote.${R && R.stale ? ' <b>' + esc(R.stale) + '</b>' : ''}${!R ? ' <b>No rates in this build \u2014 USD only.</b>' : ''}`;
     $('#pkOpts').innerHTML = opts.map(o => `<button class="opt" data-cur="${o.c}" ${o.ok ? '' : 'disabled'} aria-pressed="${CUR.active() === o.c}"><div class="oi"><b>${esc(o.sym.trim())} ${esc(o.c)}</b><span>${esc(o.name)}${o.ok ? (o.c === 'USD' ? '' : ' \u00b7 1 USD = ' + CUR.rate(o.c)) : ' \u00b7 no rate'}</span></div>${CUR.active() === o.c ? '<span class="note">' + tick(16) + '</span>' : ''}</button>`).join('');
     const h = ev => { const b = ev.target.closest('[data-cur]'); if (!b) { if (!ev.target.closest('#picker .opt')) { document.removeEventListener('click', h, true); $('#picker').classList.remove('on'); res(null); } return; } document.removeEventListener('click', h, true); ev.stopPropagation(); $('#picker').classList.remove('on'); res(b.dataset.cur); };
     setTimeout(() => document.addEventListener('click', h, true), 0); $('#picker').classList.add('on');
@@ -1311,7 +1322,7 @@ function D1() { const d = (typeof CAT !== 'undefined' && CAT.days) || []; if (d.
 function sinceLabel({ cap = false } = {}) { const g = D1();
   if (g.gap == null) return cap ? 'No prior day on file' : 'no prior day on file';
   if (g.gap === 1) return cap ? 'Since yesterday' : 'since yesterday';
-  return `${cap ? 'Over' : 'over'} ${g.gap} days (${g.from} \u2192 ${g.to})`;
+  return `${cap ? 'Over' : 'over'} ${g.gap} days (${dayText(g.from)} \u2192 ${dayText(g.to)})`;
 }
 function deltaHtml(p, { pctOnly = false, tile = false } = {}) {
   if (p.d1p == null) return `<span class="flat" title="no prior day on file">\u2014</span>`;
@@ -1320,7 +1331,7 @@ function deltaHtml(p, { pctOnly = false, tile = false } = {}) {
   /* On a 184px tile the triangle already sits before the price; repeating it
      in the delta line pushed the line to two rows. */
   const tri = tile ? '' : cls === 'up' ? '\u25b2 ' : cls === 'down' ? '\u25bc ' : '';
-  const pct = `${pc >= 0 ? '' : '\u2212'}${pctNum(pc)}`;
+  const pct = signedPct(pc);
   if (pctOnly) return `<span class="${cls} mono">${pct}</span>`;
   const abs = a >= 0 ? money(a) : signedMoney(a);
   return `<span class="${cls} mono">${tri}${abs} (${pct})</span>`;
@@ -1573,18 +1584,24 @@ function artColours(p) {
 function paintBack(el, p) {
   if (!el) return; const [a1, a2] = artColours(p);
   el.style.cssText = `--a1:${a1};--a2:${a2}`;   /* the box’s only inline style */
-  el.innerHTML = p && p.img ? `<img class="above" alt="" decoding="async" src="${esc(p.img)}" onload="this.classList.add('ok')" onerror="this.remove()">` : '';
+  el.innerHTML = p && p.img ? `<img class="above${artOk(p.img)}" alt="" decoding="async" src="${esc(p.img)}" onload="${ART_ONLOAD}" onerror="this.remove()">` : '';
 }
+/* take 110's review: a repaint -- a keystroke in Sealed's search, a tap on the Play counter -- rebuilt every
+   art picture at opacity 0 and faded it in again, so the art blinked. A picture that loaded once is drawn at once. */
+window.ART_OK = window.ART_OK || new Set();
+const artOk = src => (window.ART_OK.has(src) ? ' ok' : '');
+const ART_ONLOAD = "this.classList.add('ok');window.ART_OK.add(this.getAttribute('src'))";
 function artBack(p, { crisp = false } = {}) {
   const [a1, a2] = artColours(p), src = crisp ? artUrl(p, 'large') : p.img;
   /* take 110: crisp (A’s banner, a set’s strip) is the large picture, dropping to the thumbnail if it fails */
-  return `<div class="artbg${crisp ? ' crisp' : ''}" aria-hidden="true" style="--a1:${a1};--a2:${a2}">${p.img ? `<img class="above" alt="" loading="lazy" decoding="async" src="${esc(src)}"${src !== p.img ? ` data-thumb="${esc(p.img)}"` : ''} onload="this.classList.add('ok')" onerror="var t=this.dataset.thumb;if(t){delete this.dataset.thumb;this.src=t}else{this.remove()}">` : ''}</div>`;
+  return `<div class="artbg${crisp ? ' crisp' : ''}" aria-hidden="true" style="--a1:${a1};--a2:${a2}">${p.img ? `<img class="above${artOk(src)}" alt="" loading="lazy" decoding="async" src="${esc(src)}"${src !== p.img ? ` data-thumb="${esc(p.img)}"` : ''} onload="${ART_ONLOAD}" onerror="var t=this.dataset.thumb;if(t){delete this.dataset.thumb;this.src=t}else{this.remove()}">` : ''}</div>`;
 }
 /* The owner’s own picture in a hero’s place (assets/user, copied into the build; the owner’s
    choice and exposure -- the folder’s README). Uncut: it is not a card. */
 const ownPic = name => (CAT.man.user || []).includes(name);
 function ownBack(name) {
-  return `<div class="artbg crisp" aria-hidden="true"><img class="own" alt="" decoding="async" src="bundle/user/${esc(name)}" onload="this.classList.add('ok')" onerror="this.remove()"></div>`;
+  const src = `bundle/user/${esc(name)}`;
+  return `<div class="artbg crisp" aria-hidden="true"><img class="own${artOk(src)}" alt="" decoding="async" src="${src}" onload="${ART_ONLOAD}" onerror="this.remove()"></div>`;
 }
 /* Take 110: each set’s top card -- the most valuable card whose picture the runner fetched (a hash
    is a picture that served), by printing id -- found in one pass and kept until the catalogue changes. */
@@ -1847,10 +1864,10 @@ function heroLeader() {
   return st ? { L: CAT.byId.get(st.leader), why: 'a ready-made deck\u2019s Leader' } : null;
 }
 function paintDeckHero() {
-  const h = $('#dkHero'); if (!h) return; const f = heroLeader();
-  h.hidden = !f; if (!f) { h.innerHTML = ''; return; }
+  const h = $('#dkHero'); if (!h) return; const own = ownPic('hero-play.jpg'), f = own ? null : heroLeader();
+  h.hidden = !own && !f; if (h.hidden) { h.innerHTML = ''; return; }
   /* take 110, the owner’s word: no card rising from behind the title and no line under the art */
-  h.innerHTML = ownPic('hero-play.jpg') ? ownBack('hero-play.jpg') : artBack(f.L);
+  h.innerHTML = own ? ownBack('hero-play.jpg') : artBack(f.L);
 }
 function paintDecks() {
   const list = DECKS.list;
@@ -2246,7 +2263,7 @@ function paintTrade() {
   v.innerHTML = `
     <div class="row"><div class="nm"><b>You give</b><span>market \u00b7 low ${money(TRADE.low('give'))} to high ${money(TRADE.high('give'))}</span></div><div class="v mono">${money(gv)}</div></div>
     <div class="row"><div class="nm"><b>You get</b><span>market \u00b7 low ${money(TRADE.low('get'))} to high ${money(TRADE.high('get'))}</span></div><div class="v mono">${money(gt)}</div></div>
-    <div class="row"><div class="nm"><b>Difference</b><span>${d > 0.005 ? 'in your favour' : d < -0.005 ? 'against you' : 'even'} at today’s market${pct != null ? ` \u00b7 ${pct >= 0 ? '+' : '\u2212'}${pctNum(pct)}` : ''}</span></div>
+    <div class="row"><div class="nm"><b>Difference</b><span>${d > 0.005 ? 'in your favour' : d < -0.005 ? 'against you' : 'even'} at today’s market${pct != null ? ` \u00b7 ${signedPct(pct, true)}` : ''}</span></div>
       <div class="v mono ${d > 0.005 ? 'up' : d < -0.005 ? 'down' : 'flat'}">${signedMoney(d)}</div></div>
     <div class="note">Market prices are a model of recent sales, not an offer; the low-to-high spread is the honest width.
       Condition is not priced in (the feed has no per-condition data), and a card’s real value to you is yours to decide.</div>`;
@@ -2296,7 +2313,7 @@ $('#trClear').addEventListener('click', () => { TRADE.give = []; TRADE.get = [];
 $('#trShare').addEventListener('click', () => {
   const line = side => TRADE[side].map(r => { const p = CAT.byId.get(r.id); return `${r.n} ${p.num} ${p.name}${p.treat !== 'base' ? ' (' + (TREAT[p.treat] || p.treat) + ')' : ''}`; }).join('\n');
   const gv = TRADE.value('give'), gt = TRADE.value('get');
-  const txt = `Trade \u2014 ${new Date().toISOString().slice(0, 10)}\n\nI give (${money(gv)}):\n${line('give') || '\u2014'}\n\nI get (${money(gt)}):\n${line('get') || '\u2014'}\n\nDifference: ${signedMoney(gt - gv)} at TCGplayer market via OP TCG Hub`;
+  const txt = `Trade \u2014 ${dayText(new Date().toISOString(), { year: true })}\n\nI give (${money(gv)}):\n${line('give') || '\u2014'}\n\nI get (${money(gt)}):\n${line('get') || '\u2014'}\n\nDifference: ${signedMoney(gt - gv)} at TCGplayer market via OP TCG Hub`;
   if (navigator.share) navigator.share({ title: 'Trade', text: txt }).catch(() => {});
   else { navigator.clipboard && navigator.clipboard.writeText(txt); toast('Summary copied'); }
 });
@@ -2452,7 +2469,7 @@ function paintPlay() {
         </div>
         <div style="flex:1;text-align:center">
           <div class="note">${G('don', 13)} DON!! active</div>
-          <div class="big" style="font-size:44px;line-height:1;margin:4px 0">${pl.don - pl.given}<span style="font-size:16px;color:var(--dim2)">/${pl.don}</span></div>
+          <div class="big" style="font-size:44px;line-height:1;margin:4px 0">${pl.don - pl.given}<span style="font-size:16px;color:var(--dim)">/${pl.don}</span></div>
           <div class="stepper" style="justify-content:center"><button data-pl="${i}:don:-1" aria-label="DON!! down">${G('minus', 20)}</button><button data-pl="${i}:don:1" aria-label="DON!! up">${G('plus', 20)}</button></div>
         </div>
         <div style="flex:1;text-align:center">
@@ -3003,7 +3020,7 @@ function paintHome() {
    that was permanently lit. They are a PAIR -- exactly one is on, and the
    one that is on decides what the page shows. */
 let perfOn = false;
-const HOME_OVERVIEW = ['hero', 'setPanel', 'srcPanel'];   // whatsNew has its own hidden flag
+const HOME_OVERVIEW = ['hero', 'setComp', 'srcPanel'];   // whatsNew has its own hidden flag. Take 110's review: 'setPanel' is Search's -- Set completion stayed on Performance and Search's set list went
 function setHomeTab(perf) {
   perfOn = !!perf;
   $('#tabPerf').classList.toggle('on', perfOn);
@@ -3013,6 +3030,7 @@ function setHomeTab(perf) {
   $('#tabPerf').setAttribute('tabindex', perfOn ? '0' : '-1');   // take 107: one tab stop for the pair, the selected one
   $('#tabOver').setAttribute('tabindex', perfOn ? '-1' : '0');
   $('#perfPanel').style.display = perfOn ? 'block' : 'none';
+  $('#home').classList.toggle('perf', perfOn);   /* the open Fold: Most valuable takes the line alone */
   for (const id of HOME_OVERVIEW) { const el = $('#' + id); if (el) el.style.display = perfOn ? 'none' : ''; }
   if (perfOn) paintPerf(); else paintHome();
 }
@@ -3316,6 +3334,12 @@ $('#filters').addEventListener('click', e => {
   }
   if (e.target === $('#filters')) $('#filters').classList.remove('on');
 });
+/* take 110's review: a sheet rises for --dur-sheet, and the second tap of a double tap landed on the scrim
+   where the sheet was about to be, and closed it. A tap on the scrim waits until the sheet is up. */
+const SHEET_UP = new WeakMap();
+document.addEventListener('animationstart', e => { if (e.animationName === 'sheetUp') { const sh = e.target.closest('.sheet'); if (sh) SHEET_UP.set(sh, performance.now() + (parseFloat(getComputedStyle(e.target).animationDuration) || 0) * 1000); } }, true);
+function risingScrim(t) { return !!t && !!t.classList && t.classList.contains('sheet') && performance.now() < (SHEET_UP.get(t) || 0); }
+document.addEventListener('click', e => { if (risingScrim(e.target)) { e.stopPropagation(); e.preventDefault(); } }, true);
 $('#fMin').addEventListener('input', () => { FILT[sheetScope].min = fromShown($('#fMin').value); paintFilterCount(); });
 $('#fMax').addEventListener('input', () => { FILT[sheetScope].max = fromShown($('#fMax').value); paintFilterCount(); });
 $('#sortBtn').addEventListener('click', () => openFilters('own'));
@@ -3333,23 +3357,31 @@ function bulkOn() { bulk = new Set(); paintCollection(); }
 function paintBulk() {
   $('#bulkBar').style.display = bulk ? 'block' : 'none';
   if (!bulk) return;
-  const v = [...bulk].reduce((a, id) => {
-    const it = OWN.items.find(x => x.id === id);
-    return a + (price(id) || 0) * (it ? it.qty : 0);
-  }, 0);
-  $('#bulkN').textContent = `${bulk.size} selected`;
-  $('#bulkV').textContent = money(v);
+  /* take 110's review: the bar counts and values what an action would take, as the confirm does -- it had
+     valued each printing at the quantity of the first line found in any collection */
+  const t = bulkSum(bulk);
+  $('#bulkN').textContent = `${t.n} selected`;
+  $('#bulkV').textContent = money(t.v);
 }
 $('#bulkX').addEventListener('click', () => { bulk = null; paintCollection(); });
 /* Take 110 (AGENTS rule 5, the UI audit's finding in passing): the selection holds printing ids, and Delete
    removed every line of them in every collection and condition -- lines the collector could not see. Move
    and Condition already kept to the collection on screen; Delete does now, and its confirm values the lines
    with their quantities (it had counted one of each printing). */
-function bulkLines(sel) { return sel ? PF.scope(OWN.items).filter(i => sel.has(i.id)) : []; }
+/* Take 110's review: in the collection on screen was not enough -- a filter or the search hides lines too,
+   and the selection is by printing, so Delete took the graded copy of a printing whose Near Mint tile was
+   the one tapped. An action takes the lines on screen: the collection, the star, the filter, the search. */
+function shownLines() {
+  let rows = PF.scope(OWN.items).map(i => ({ i, p: CAT.byId.get(i.id) })).filter(x => x.p);
+  if (favOnly) rows = rows.filter(x => x.i.fav);
+  return applyFilter(rows, FILT.own);
+}
+function bulkLines(sel) { return sel ? shownLines().map(x => x.i).filter(i => sel.has(i.id)) : []; }
+function bulkSum(sel) { const lines = bulkLines(sel); return { lines, n: lines.length, v: lines.reduce((a, i) => a + (price(i.id) || 0) * (i.qty || 1), 0) }; }
 $('#bulkDel').addEventListener('click', () => {
-  const lines = bulkLines(bulk);
-  if (!lines.length) return toast('Nothing selected');
-  const n = lines.length, v = money(lines.reduce((a, i) => a + (price(i.id) || 0) * (i.qty || 1), 0));
+  const { lines, n, v: worth } = bulkSum(bulk);
+  if (!n) return toast('Nothing selected');
+  const v = money(worth);
   if (!confirm(`Delete ${n} line${n > 1 ? 's' : ''} worth ${v}?\n\nThis cannot be undone. ` +
                `Export first if you are not sure.`)) return;
   const gone = new Set(lines);
@@ -3358,8 +3390,8 @@ $('#bulkDel').addEventListener('click', () => {
   toast(`Deleted ${n} line${n > 1 ? 's' : ''}`);
 });
 $('#bulkMove').addEventListener('click', () => {
-  if (!bulk || !bulk.size) return toast('Nothing selected');
-  $('#pkTitle').textContent = `Move ${bulk.size} line${bulk.size === 1 ? '' : 's'} to`;
+  const n = bulkLines(bulk).length; if (!n) return toast('Nothing selected');
+  $('#pkTitle').textContent = `Move ${n} line${n === 1 ? '' : 's'} to`;
   $('#pkWhy').innerHTML = 'A line keeps its condition, quantity and photo. Only the collection changes.';
   $('#pkOpts').innerHTML = PF.list.map(p => `<button class="opt${p.id === PF.active ? '' : ''}" data-pfmove="${p.id}">
       <div class="oi"><b>${esc(p.name)}</b><span>${OWN.items.filter(i => (i.pf || 'main') === p.id).length} lines</span></div></button>`).join('');
@@ -3368,27 +3400,25 @@ $('#bulkMove').addEventListener('click', () => {
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-pfmove]'); if (!b || !bulk) return;
   const to = PF.list.find(p => p.id === b.dataset.pfmove); if (!to) return;
-  OWN.items.forEach(i => { if (bulk.has(i.id) && PF.scope([i]).length) i.pf = to.id; });
+  const lines = new Set(bulkLines(bulk)); OWN.items.forEach(i => { if (lines.has(i)) i.pf = to.id; });
   OWN.save(); bulk = null; $('#picker').classList.remove('on'); paintCollection(); toast(`Moved to ${to.name}`);
 });
 $('#bulkCond').addEventListener('click', () => {
-  if (!bulk || !bulk.size) return toast('Nothing selected');
-  $('#pkTitle').textContent = `Condition for ${bulk.size} line${bulk.size === 1 ? '' : 's'}`;
+  const n = bulkLines(bulk).length; if (!n) return toast('Nothing selected');
+  $('#pkTitle').textContent = `Condition for ${n} line${n === 1 ? '' : 's'}`;
   $('#pkWhy').innerHTML = 'Condition is what you tell the app. It is shown beside the value and never multiplied into it.';
   $('#pkOpts').innerHTML = CONDS.map(c => `<button class="opt" data-bulkcond="${c}"><div class="oi"><b>${c}</b><span>${COND_NAMES[c]}</span></div></button>`).join('');
   $('#picker').classList.add('on');
 });
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-bulkcond]'); if (!b || !bulk) return;
-  OWN.items.forEach(i => { if (bulk.has(i.id) && PF.scope([i]).length) i.condition = b.dataset.bulkcond; });
+  const lines = new Set(bulkLines(bulk)); OWN.items.forEach(i => { if (lines.has(i)) i.condition = b.dataset.bulkcond; });
   OWN.save(); $('#picker').classList.remove('on'); paintCollection(); toast('Condition set to ' + b.dataset.bulkcond);
 });
 
 function paintCollection() {
   paintBadges();
-  let items = PF.scope(OWN.items).map(i => ({ i, p: CAT.byId.get(i.id) })).filter(x => x.p);
-  if (favOnly) items = items.filter(x => x.i.fav);
-  items = sortRows(applyFilter(items, FILT.own), FILT.own);
+  const items = sortRows(shownLines(), FILT.own);   /* take 110's review: what a bulk action takes is what is drawn */
   paintBulk();
   const empty = $('#colEmpty');
   empty.style.display = items.length ? 'none' : 'block';
@@ -3481,7 +3511,7 @@ function showMovers() {
       <span>${esc(p.num)} \u00b7 ${money(p.market)}${extra || ''}</span></div>
       <div class="v">${deltaHtml(p)}</div></button>`;
   $('#allRes').innerHTML = `
-    <div class="panel"><h3>Your collection \u00b7 ${esc(prev)} \u2192 ${esc(day)}</h3>
+    <div class="panel"><h3>Your collection \u00b7 ${esc(dayText(prev))} \u2192 ${esc(dayText(day))}</h3>
       ${rows.length ? rows.slice(0, 10).map(x => line(x.p,
           withQty(x.p.id) > 1 ? ` \u00b7 \u00d7${withQty(x.p.id)} = ${
             signedMoney(x.dollars)}` : '')).join('')
@@ -3650,7 +3680,7 @@ h1{font-size:28px;margin:0 0 4px;color:#C9A24A}h2{font-size:17px;margin:28px 0 8
 td,th{padding:6px 8px;border-bottom:1px solid #26394B;text-align:left;vertical-align:top}th{color:#A08E70;font-weight:600}.n{text-align:right;font-variant-numeric:tabular-nums}
 .bar{height:6px;background:#182A3A;border-radius:3px;overflow:hidden}.bar i{display:block;height:100%;background:#C9A24A}
 .note{color:#A08E70;font-size:13px;margin-top:28px}</style></head><body>
-<h1>${esc(pfName)}</h1><div class="sub">${cards} card${cards === 1 ? '' : 's'} \u00b7 ${scope.length} lines \u00b7 TCGplayer market via TCGCSV, ${esc(asOf)}</div>
+<h1>${esc(pfName)}</h1><div class="sub">${cards} card${cards === 1 ? '' : 's'} \u00b7 ${scope.length} lines \u00b7 TCGplayer market via TCGCSV, ${esc(dayText(asOf, { year: true }))}</div>
 <div class="big">${esc(money(total))}</div>
 <h2>Most valuable</h2><table><tr><th>Number</th><th>Card</th><th>Printing</th><th class="n">Qty</th><th>Condition</th><th class="n">Market</th></tr>${top.map(i => row({ i, p: CAT.byId.get(i.id) })).join('')}</table>
 <h2>Set completion</h2><table>${prog.map(r => `<tr><td>${esc(r.s.name || '')}</td><td class="n">${r.have} / ${r.all}</td><td style="width:40%"><div class="bar"><i style="width:${r.all ? Math.round(100 * r.have / r.all) : 0}%"></i></div></td><td class="n">${esc(money(r.val))}</td></tr>`).join('')}</table>
@@ -3772,7 +3802,7 @@ function distLine(it, G) {
    logo is a Play rejection ground (landmine 29's family), so the name does. */
 const BUY_GLYPH = { online: 'cart', local: 'pin', dist: 'truck' };
 function buySources(p) {
-  const out = [{ kind: 'online', label: 'TCGplayer', url: 'https://www.tcgplayer.com/product/' + p.id, note: `${money(p.market)} market \u00b7 ${(CAT.man.source_updated_at || '').slice(0, 10)}` }];
+  const out = [{ kind: 'online', label: 'TCGplayer', url: 'https://www.tcgplayer.com/product/' + p.id, note: `${money(p.market)} market \u00b7 ${dayText(CAT.man.source_updated_at)}` }];
   const T = HUNT.feed && HUNT.feed.sources && HUNT.feed.sources.target;
   for (const it of (HUNT.byCatalogId()[p.id] || [])) if (it.url) out.push({ kind: 'online', label: 'Target', url: it.url,
     note: `${money(it.price)} \u00b7 ${it.online ? (it.online.status === 'IN_STOCK' ? 'ships' : String(it.online.status || '?').toLowerCase().replace(/_/g, ' ') + ' online') : 'online stock not checked yet'} \u00b7 ${HUNT.ageLabel(it.online_at || (T && T.fetched_at))}` });
@@ -4013,7 +4043,7 @@ function paintLocal() {
     <div class="note" style="margin-top:8px">${SH ? 'Fetched ' + esc(HUNT.ageLabel(SH.fetched_at)) + '. ' : ''}What each shop lists online, hourly; the shelf may hold more \u2014 that is what your notes are for.</div></div>`);
   /* the collector’s own notes */
   out.push(`<div class="panel"><h3>Your notes</h3>
-    ${LOCAL.notes.length ? LOCAL.notes.slice().reverse().map((n, i) => `<div class="row"><div class="nm"><b>${esc(n.store)}</b><span>${esc(n.what)}${n.price ? ' \u00b7 ' + money(n.price) : ''} \u00b7 ${esc(n.when)}</span>${n.phone ? `<span style="display:block"><a href="tel:${esc(n.phone)}" style="color:var(--brass)">Call ${esc(n.phone)}</a></span>` : ''}</div><div class="v"><button class="ghost" data-localdel="${LOCAL.notes.length - 1 - i}" aria-label="Delete this note">\u00d7</button></div></div>`).join('') : '<div class="note">What you saw, where, for how much. A store that publishes nothing online is still a store you walked into.</div>'}
+    ${LOCAL.notes.length ? LOCAL.notes.slice().reverse().map((n, i) => `<div class="row"><div class="nm"><b>${esc(n.store)}</b><span>${esc(n.what)}${n.price ? ' \u00b7 ' + money(n.price) : ''} \u00b7 ${esc(dayText(n.when))}</span>${n.phone ? `<span style="display:block"><a href="tel:${esc(n.phone)}" style="color:var(--brass)">Call ${esc(n.phone)}</a></span>` : ''}</div><div class="v"><button class="ghost" data-localdel="${LOCAL.notes.length - 1 - i}" aria-label="Delete this note">\u00d7</button></div></div>`).join('') : '<div class="note">What you saw, where, for how much. A store that publishes nothing online is still a store you walked into.</div>'}
     <div class="row" style="margin-top:8px"><button class="ghost go" id="localAdd">Add a note</button></div></div>`);
   $('#localList').innerHTML = out.join('');
   const lz = $('#localZip'); if (lz) lz.addEventListener('click', async () => { if (await askZip()) paintLocal(); });
@@ -5030,9 +5060,9 @@ function openDetail(id) {
     `Low ${money(p.low)} \u2013 high ${money(p.high)} on the same day. The market ` +
     `price is a model, not a sale.` +
     (p.d7p != null || p.d30p != null
-      ? `<br>${p.d7p != null ? `7d ${p.d7p >= 0 ? '+' : '\u2212'}${pctNum(p.d7p)}` : ''}` +
+      ? `<br>${p.d7p != null ? `7d ${signedPct(p.d7p, true)}` : ''}` +
         `${p.d7p != null && p.d30p != null ? ' \u00b7 ' : ''}` +
-        `${p.d30p != null ? `30d ${p.d30p >= 0 ? '+' : '\u2212'}${pctNum(p.d30p)}` : ''}`
+        `${p.d30p != null ? `30d ${signedPct(p.d30p, true)}` : ''}`
       : `<br>7-day and 30-day moves appear once ${
           (CAT.man.history_days || []).length} day${(CAT.man.history_days || []).length === 1 ? '' : 's'} ` +
         `of history becomes seven.`);
@@ -5853,7 +5883,7 @@ async function runSelfTest() {
      day and a hardcoded placeholder is landmine 62 in a text box. */
   $('#allq').placeholder = `Search all ${(CAT.man.cards || 0).toLocaleString()} cards`;
   paintNet(); paintHome();
-  window.VAULT = { backArrow, closeSheet, setHomeTab, bulkLines, signedMoney, pctNum, dayText, momentText, fromShown, toShown, setTop, newestTop, paintSealedHero, ownBack, artBack, artUrl, artColours, largeOk, heroLeader, paintDeckHero, paintBack, stockPic, CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, setCond, toast, cameraVerdict, effectsLine, HUNT, targetLine, distLine, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
+  window.VAULT = { backArrow, closeSheet, setHomeTab, bulkLines, bulkSum, shownLines, signedMoney, pctNum, signedPct, dayText, momentText, fromShown, toShown, setTop, newestTop, paintSealedHero, ownBack, artBack, artUrl, artColours, largeOk, heroLeader, paintDeckHero, paintBack, stockPic, CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, setCond, toast, cameraVerdict, effectsLine, HUNT, targetLine, distLine, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
                    cardPic, setPic, picBox, deckRow, paintHome, paintDecks, paintSearch, openDeck,
                    FILT, loadFilter, applyFilter, sortRows, blankFilter, activeCount,
                    DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,

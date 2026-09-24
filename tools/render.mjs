@@ -863,7 +863,7 @@ if (puppeteer) {
         bgTop: bg ? Math.round(bg.getBoundingClientRect().top) : 999, pillTop: Math.round(document.querySelector('.modebar .mode').getBoundingClientRect().top),
         slider: getComputedStyle(document.querySelector('.modebar')).backgroundImage, atTop: document.documentElement.classList.contains('at-top'),
         views: [hero && hero.querySelector('.artbg')].filter(Boolean).map(box => { const i = document.createElement('img'); i.className = 'above'; box.appendChild(i); const v = getComputedStyle(i).objectViewBox; i.remove(); return v; }),
-        marked: hero ? (V.paintDeckHero(), (hero.innerHTML.match(/<img class="(ref )?above"/g) || []).length) : 0 };   // read at once: a refused picture removes itself later
+        marked: hero ? (V.paintDeckHero(), (hero.innerHTML.match(/<img class="(ref )?above( ok)?"/g) || []).length) : 0 };   /* ( ok): a picture that loaded before is drawn at once (take 110's review) */   // read at once: a refused picture removes itself later
     };
     V.MODE.set('play', true); await wait(300); V.go('decks'); await wait(250); window.scrollTo(0, 0); await wait(120);
     const f = V.heroLeader(), want = f ? V.artColours(f.L).map(rgb) : [];
@@ -877,7 +877,7 @@ if (puppeteer) {
     V.MODE.set('collect', true); await wait(250); V.openDetail(two.id); await wait(250); window.scrollTo(0, 0); await wait(80);
     const db = document.getElementById('dBack') || document.body.appendChild(document.createElement('div')), art = document.getElementById('dArt').getBoundingClientRect();   // an older build has no backdrop: its checks fail, the run goes on
     const probe = document.createElement('img'); probe.className = 'above'; db.appendChild(probe); const view = getComputedStyle(probe).objectViewBox; probe.remove();
-    V.paintBack(db, two); const marked = /<img class="above"/.test(db.innerHTML);   // read at once, as above
+    V.paintBack(db, two); const marked = /<img class="above( ok)?"/.test(db.innerHTML);   // read at once, as above
     const detail = { bg: getComputedStyle(db).backgroundImage, want: V.artColours(two).map(rgb), view, marked,
       artW: Math.round(art.width), artMid: Math.round(art.left + art.width / 2), mid: Math.round(innerWidth / 2), backTop: Math.round(db.getBoundingClientRect().top), sideways: document.documentElement.scrollWidth > innerWidth + 0.5 };
     V.go('home'); return { want, clean, control, scrolled, detail };
@@ -919,7 +919,7 @@ if (puppeteer) {
       const sec = document.getElementById('sealed'), hero = sec.querySelector(':scope > .arthero'), bg = hero && hero.querySelector('.artbg');
       const strips = [...sec.querySelectorAll('.setstrip')], withArt = strips.filter(x => x.querySelector(':scope > .artbg'));
       return { shown: !!hero && !hero.hidden, crisp: !!bg && bg.classList.contains('crisp'), bg: bg ? getComputedStyle(bg).backgroundImage : '', pic: probe(bg),
-        marked: hero ? (V.paintSealedHero(), (hero.innerHTML.match(/<img class="above"/g) || []).length) : 0,   // read at once: a refused picture removes itself later
+        marked: hero ? (V.paintSealedHero(), (hero.innerHTML.match(/<img class="above( ok)?"/g) || []).length) : 0,   // read at once: a refused picture removes itself later
         bgTop: bg ? Math.round(bg.getBoundingClientRect().top) : 999, pillTop: Math.round(document.querySelector('.modebar .mode').getBoundingClientRect().top),
         slider: getComputedStyle(document.querySelector('.modebar')).backgroundImage, atTop: document.documentElement.classList.contains('at-top'),
         strips: strips.length, withArt: withArt.length, minH: strips.length ? Math.min(...strips.map(x => R(x).h)) : 0,
@@ -1014,6 +1014,24 @@ if (puppeteer) {
     const a = getComputedStyle(document.querySelector('#filters .sheetbody')); const o = { name: a.animationName, dur: a.animationDuration }; while (V.closeAnyOverlay()) {} V.go('home'); return o; });
   await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
   ok('take 110: ...with reduced motion the sheet is simply there (the animation takes no time)', still.dur === '0s', JSON.stringify(still));
+  /* take 110's review: a picture that has loaded is drawn at once when its screen repaints -- a keystroke in
+     Sealed's search had rebuilt every strip at opacity 0 and faded it in again, and a tap on the Play counter
+     its Leaders. A 1x1 picture in the page: no network, no refusal to remove it mid-measure. */
+  const blink = await page.evaluate(async () => {
+    const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
+    const px = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+    const p = { ...V.CAT.rows.find(q => !q.sealed && q.img), img: px };
+    const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:0;top:0;width:120px;height:120px;z-index:9999'; document.body.appendChild(box);
+    const op = () => { const i = box.querySelector('img'); return i ? getComputedStyle(i).opacity : 'none'; };
+    /* its load event fired by hand: headless Chrome does not fetch a lazy picture drawn at opacity 0 (measured),
+       and the handler under test is the page's own -- this is the event Chrome fires when the picture arrives */
+    box.innerHTML = V.artBack(p); const cold = op(); box.querySelector('img').dispatchEvent(new Event('load')); await wait(500); const loaded = op();
+    box.innerHTML = V.artBack(p); const again = op();   /* the repaint */
+    (window.ART_OK || new Set()).delete(px); box.innerHTML = V.artBack(p); const forgot = op();   /* an older build has no memory: the check fails on its own */   /* the first push: drawn from nothing every time */
+    box.remove(); return { cold, loaded, again, forgot };
+  });
+  ok('take 110 (the review): a picture that has loaded is drawn at once when its screen repaints, not faded in from nothing again', blink.loaded === '1' && blink.again === '1', JSON.stringify(blink));
+  ok('take 110 (the review): ...control: a picture not loaded before starts from nothing', blink.cold === '0' && blink.forgot === '0', JSON.stringify(blink));
   /* ---- take 110 (A42): the Fold's inner screen, measured at 840 px -- two panes where two fit ---- */
   await page.setViewport({ width: 840, height: 757, deviceScaleFactor: 2 });
   const inner = await page.evaluate(async () => {
@@ -1035,6 +1053,92 @@ if (puppeteer) {
   ok('take 110: the open Fold, a card\'s page -- the card 300 px on the left, its page beside it', inner.card.w === 300 && inner.card.left < 40 && inner.card.besideLeft > inner.card.left + inner.card.w && inner.card.besideTop < inner.card.artBottom, JSON.stringify(inner.card));
   ok('take 110: ...Home\'s Most valuable and Set completion side by side', inner.home.mvTop === inner.home.scTop && inner.home.scLeft > inner.home.mvLeft + 100, JSON.stringify(inner.home));
   ok('take 110: ...Search\'s and Releases\' rows two to a line', !!inner.search && inner.search.sameLine && inner.search.apart > 300 && !!inner.releases && inner.releases.sameLine, JSON.stringify([inner.search, inner.releases]));
+  /* take 110's review: a heading, a note or an empty state spans both columns -- Market movers' heading had
+     taken half its line beside the first mover, and Decks' empty state the left column alone */
+  const spans = await page.evaluate(async () => {
+    const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)), W = e => e ? Math.round(e.getBoundingClientRect().width) : 0;
+    const read = async () => {
+      V.MODE.set('collect', true); await wait(200); document.querySelector('#allq').value = ''; document.querySelector('[data-act="movers"]').click(); await wait(250);
+      const mp = document.querySelector('#allRes > .panel'), mh = mp && mp.querySelector(':scope > h3'), o = { h3: W(mh), panel: mp ? mp.clientWidth : 0 };
+      V.MODE.set('play', true); await wait(200); const keep = V.DECKS.list.slice(); V.DECKS.list.length = 0; V.go('decks'); V.paintDecks(); await wait(150);
+      o.empty = W(document.querySelector('#dkList > .empty')); o.list = W(document.querySelector('#dkList'));
+      V.DECKS.list.push(...keep); V.paintDecks(); return o; };
+    const clean = await read();
+    const st = document.createElement('style'); st.textContent = '#allRes > .panel > :not(.row),#dkList > :not(.panel){grid-column:auto!important}'; document.head.appendChild(st);
+    const control = await read(); st.remove();
+    V.MODE.set('collect', true); await wait(200); V.go('home'); return { clean, control };
+  });
+  ok('take 110 (the review): ...Market movers\' heading and Decks\' empty state span both columns', spans.clean.h3 > 0.8 * spans.clean.panel && spans.clean.empty > 0 && spans.clean.empty >= spans.clean.list - 1, JSON.stringify(spans.clean));
+  ok('take 110 (the review): ...control: without the span each takes one column', spans.control.h3 > 0 && spans.control.h3 < 0.6 * spans.control.panel && spans.control.empty < 0.6 * spans.control.list, JSON.stringify(spans.control));
+  /* take 110's review: what the first push got wrong on the open Fold, measured at 840 px */
+  const fold2 = await page.evaluate(async () => {
+    const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)), W = e => e ? Math.round(e.getBoundingClientRect().width) : 0, o = {};
+    const run = async () => { const r = {};
+      V.MODE.set('collect', true); await wait(200); V.openDetail(V.CAT.rows.find(p => !p.sealed && p.img && p.market > 1).id); await wait(250);
+      r.buy = getComputedStyle(document.getElementById('dBuy')).display;
+      /* the line's words, not its box: a block beside a float starts under it and only its lines move aside */
+      const bk = document.getElementById('dBack').getBoundingClientRect(), rg = document.createRange(); rg.selectNodeContents(document.getElementById('dSub'));
+      const tx = rg.getClientRects()[0]; r.artRight = Math.round(bk.right); r.subLeft = tx ? Math.round(tx.left) : -1;
+      V.go('home'); await wait(200); V.setHomeTab(true); await wait(150); r.mv = W(document.getElementById('topList').closest('.panel')); r.home = W(document.getElementById('home')); V.setHomeTab(false);
+      V.MODE.set('hunt', true); await wait(200); const zip = V.HUNT.zip; V.HUNT.zip = ''; V.go('local'); V.paintLocal(); await wait(150); r.local = W(document.querySelector('#localList > .panel')); r.localW = W(document.getElementById('localList'));
+      V.go('events'); V.paintEvents(); await wait(150); r.events = W(document.querySelector('#eventsList > .panel')); r.eventsW = W(document.getElementById('eventsList')); V.HUNT.zip = zip;
+      V.MODE.set('collect', true); await wait(200); V.go('home'); return r; };
+    o.clean = await run();
+    const st = document.createElement('style'); st.textContent = '#detail > .panel{display:flow-root}#detail .artbg.dback{right:0!important;width:auto!important}#home.perf.screen.on > .panel:has(#topList){grid-column:auto!important}'
+      + '#localList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}#eventsList > .panel{grid-column:auto!important}'; document.head.appendChild(st);
+    o.control = await run(); st.remove(); return o; });
+  const f2ok = r => r.buy === 'none' && r.artRight <= r.subLeft && r.mv > 0.8 * r.home && r.local > 0.9 * r.localW && r.events > 0.9 * r.eventsW;
+  ok('take 110 (the review): the open Fold keeps a hidden panel hidden, the art behind the card\'s column, Most valuable across on Performance, Local and a lone Events panel full width', f2ok(fold2.clean), JSON.stringify(fold2.clean));
+  ok('take 110 (the review): ...control: each of the first push\'s rules fails it', fold2.control.buy !== 'none' && fold2.control.artRight > fold2.control.subLeft && fold2.control.mv < 0.6 * fold2.control.home && fold2.control.local < 0.6 * fold2.control.localW && fold2.control.events < 0.6 * fold2.control.eventsW, JSON.stringify(fold2.control));
+  /* words over the art, measured from pixels (the review's method): the words made transparent, the page shot,
+     the ground under them read back -- the darkest tenth of the samples. A yellow card is the worst ground. */
+  const groundContrast = async sel => {
+    const r = await page.evaluate(sel => { const el = document.querySelector(sel); if (!el) return null;
+      const rg = document.createRange(); rg.selectNodeContents(el);
+      const rs = [...rg.getClientRects()].filter(q => q.width > 2 && q.height > 2).map(q => ({ x: q.left, y: q.top, w: q.width, h: q.height }));
+      const col = getComputedStyle(el).color; el.dataset.keepStyle = el.getAttribute('style') || '';
+      for (const c of [el, ...el.querySelectorAll('*')]) { c.style.setProperty('color', 'transparent', 'important'); c.style.setProperty('text-shadow', 'none', 'important'); }
+      return { rs, col }; }, sel);
+    if (!r || !r.rs.length) return null;
+    await new Promise(res => setTimeout(res, 60));
+    const b64 = await page.screenshot({ type: 'png', encoding: 'base64' });
+    return page.evaluate(async (b64, r, sel) => {
+      const el = document.querySelector(sel); el.setAttribute('style', el.dataset.keepStyle); el.querySelectorAll('*').forEach(c => { c.style.removeProperty('color'); c.style.removeProperty('text-shadow'); });
+      const im = new Image(); im.src = 'data:image/png;base64,' + b64; await im.decode();
+      const cv = new OffscreenCanvas(im.naturalWidth, im.naturalHeight), x = cv.getContext('2d'); x.drawImage(im, 0, 0);
+      const k = im.naturalWidth / innerWidth, d = x.getImageData(0, 0, cv.width, cv.height).data;
+      const lum = (a, b, c) => { const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(a) + 0.7152 * f(b) + 0.0722 * f(c); };
+      const m = /rgba?\((\d+), (\d+), (\d+)(?:, ([\d.]+))?\)/.exec(r.col), t = [+m[1], +m[2], +m[3]], ta = m[4] != null ? +m[4] : 1, out = [];
+      for (const q of r.rs) for (let y = Math.max(0, Math.floor(q.y * k)); y < Math.min(cv.height, (q.y + q.h) * k); y += 2) for (let X = Math.max(0, Math.floor(q.x * k)); X < Math.min(cv.width, (q.x + q.w) * k); X += 3) {
+        const i = (y * cv.width + X) * 4, g = [d[i], d[i + 1], d[i + 2]], f = t.map((v, j) => v * ta + g[j] * (1 - ta)), L1 = lum(...f), L2 = lum(...g);
+        out.push((Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05)); }
+      out.sort((a, b) => a - b); return out.length ? +out[Math.floor(0.1 * (out.length - 1))].toFixed(2) : null; }, b64, r, sel);
+  };
+  const yellowL = await page.evaluate(() => (window.VAULT.CAT.rows.find(x => x.type === 'Leader' && x.color === 'Yellow' && x.img && !x.sealed) || {}).id);
+  const ink = async (css) => {
+    const st = css ? await page.evaluate(c => { const s = document.createElement('style'); s.id = 'ink110'; s.textContent = c; document.head.appendChild(s); return true; }, css) : false;
+    const o = {};
+    await page.evaluate(async id => { const V = window.VAULT; V.MODE.set('collect', true); await new Promise(r => setTimeout(r, 200)); V.openDetail(id); window.scrollTo(0, 0); }, yellowL); await new Promise(r => setTimeout(r, 1200));
+    o.sub = await groundContrast('#dSub');
+    await page.evaluate(async id => { const V = window.VAULT; V.MODE.set('play', true); await new Promise(r => setTimeout(r, 200)); V.go('play');
+      V.PLAY.hotseat = true; V.PLAY.p.forEach(p => { p.leader = id; }); V.paintPlay(); window.scrollTo(0, 0);
+      const pn = document.querySelector('#plBoard .plpanel'); pn.querySelector('.plcols .note').id = 'ink110life'; pn.querySelector(':scope > div .note').id = 'ink110lead'; }, yellowL);
+    await new Promise(r => setTimeout(r, 1200));
+    o.life = await groundContrast('#ink110life'); o.lead = await groundContrast('#ink110lead');
+    await page.evaluate(() => { const V = window.VAULT; V.PLAY.p.forEach(p => { p.leader = null; }); V.PLAY.hotseat = false; V.paintPlay(); V.MODE.set('collect', true); V.go('home'); const s = document.getElementById('ink110'); if (s) s.remove(); });
+    return o; };
+  const inkNow = await ink(''), inkThen = await ink('.plpanel > .artbg::after{background:linear-gradient(to bottom,rgba(0,0,0,.35),transparent 34%)!important}.plpanel .note{color:var(--dim2)!important}#detail .artbg.dback{right:0!important;width:auto!important;-webkit-mask-image:linear-gradient(#000 55%,transparent)!important;mask-image:linear-gradient(#000 55%,transparent)!important}');
+  ok('take 110 (the review): words over a yellow card read at 4.5:1 or better -- a card\'s line beside it on the open Fold, the Play counter\'s labels over its Leader', !!yellowL && inkNow.sub >= 4.5 && inkNow.life >= 4.5 && inkNow.lead >= 4.5, JSON.stringify(inkNow));
+  ok('take 110 (the review): ...control: the first push\'s ground measures under it', inkThen.sub < 4.5 && inkThen.life < 4.5, JSON.stringify(inkThen));
+  /* a double tap on a sheet's button: the second tap lands on the scrim while the sheet rises */
+  await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
+  const dbl = await page.evaluate(async () => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)); V.MODE.set('collect', true); await wait(200); V.go('search'); await wait(150);
+    const f = document.getElementById('filters'); document.querySelector('#sortBtnAll').click(); await wait(60); f.dispatchEvent(new MouseEvent('click', { bubbles: true })); await wait(20);
+    const early = f.classList.contains('on'); await wait(450); f.dispatchEvent(new MouseEvent('click', { bubbles: true })); await wait(20); const late = !f.classList.contains('on');
+    while (V.closeAnyOverlay()) {} V.go('home'); return { early, late }; });
+  ok('take 110 (the review): a tap on the scrim while a sheet rises leaves it open (a double tap had closed what it opened)', dbl.early, JSON.stringify(dbl));
+  ok('take 110 (the review): ...control: the same tap once the sheet is up closes it', dbl.late, JSON.stringify(dbl));
+  await page.setViewport({ width: 840, height: 757, deviceScaleFactor: 2 });
   const wideFold = [];
   for (const w of [700, 840, 899]) {
     await page.setViewport({ width: w, height: 757, deviceScaleFactor: 2 });

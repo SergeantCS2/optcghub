@@ -26,8 +26,9 @@ Decks' art is zoomed out, with nothing over it. The words are one voice
 throughout: Collection instead of Portfolio, days like "Sep 23", amounts
 that keep their currency. Sheets rise into place, a mode switch fades
 across, an empty list says what to do, and the open Fold shows two panes
-where two fit. Bulk delete removes only the lines you can see. Nothing
-you have saved changes.
+where two fit. Bulk delete, move and condition act only on the lines
+you can see, and a price's currency sign always matches its figure.
+Nothing you have saved changes.
 
 **New at take 109:** the first card art in the design. Decks opens
 under your newest deck's Leader -- its art behind the title, the card

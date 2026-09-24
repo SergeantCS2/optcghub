@@ -377,6 +377,68 @@ the run if it stops.
   from now on; its control counts the two in take 109's file.
 - **UI-AUDIT §6's last box** is ticked: the PR carries the pre-delivery
   checklist, item by item. smoke 895/895.
+- **The runner's `check` on the review pass** (40c7d7f): smoke 895/895,
+  render 151/151 in Chrome, GATE PASSED.
+- **Two reviewers read the whole diff**, one the script and one the
+  layout, in Chrome where it could be measured. What was real, and fixed:
+  - *Bulk actions still took lines the screen hid* (landmine 155, whole
+    now): with Near Mint filtered in, Delete took the graded copy of the
+    printing tapped, and Move and Condition changed it; the bar valued a
+    printing at the first line found in any collection (4 x where the
+    confirm said 3 x). `shownLines()` is what the grid draws and what an
+    action takes; the bar and the confirm count the same lines.
+  - *A euro sign on a dollar figure* (landmine 157, from take 85): a saved
+    currency with no rate in the build drew "€10.00" for $10, with no ≈.
+    `sym()` reads the currency shown.
+  - *Words over art* (landmine 158), measured from pixels over a yellow
+    card: the Play counter's labels 2.0:1 (4.4 at best, black), now 5.1 to
+    8.3 offline and 6.7 or better over three real pictures, under a 45 %
+    shade in --dim; a card's line beside it on the open Fold 1.0:1, now
+    5.1:1 on every colour with the art behind the card's column only; a
+    Sealed strip's date 2.3:1 over bright art, now 5.1:1 or better with the
+    scrim held to .55.
+  - *The open Fold:* an empty "Where to buy" under every card (landmine
+    136 again); Market movers' heading and the Decks and card-search empty
+    states in half a line, a lone Events panel half the screen, Local's
+    sixty shops beside 8,000 px of empty column (landmine 160, Local now one
+    column); Performance kept Set completion beside a gap -- its list named
+    Search's panel from take 64 on, so Search's set list was what it hid.
+    Set completion has an id now, and Most valuable takes the line alone.
+  - *A double tap closed the sheet it opened* (landmine 159): the second
+    tap landed on the scrim while the sheet rose. A tap on a rising scrim
+    waits.
+  - *The art blinked on every repaint:* a keystroke in Sealed's search
+    rebuilt every strip at opacity 0 and faded it in again, and a tap on the
+    Play counter its Leaders. A picture that loaded once is drawn at once.
+  - Smaller: "−0.0%" and "+0.0%" at one decimal (a sign only on a figure
+    that is not zero), 99.96 as "100.0%", the owner's hero-play.jpg hidden
+    on Decks with no Leader anywhere, the card search's divider rule aimed
+    at a class its rows never have, Diagnostics' four buttons past the edge
+    at 360 px.
+  - *Days still in ISO on a screen*, seen in the look's pictures of the
+    fixes: Market movers' heading ("2026-09-22 → 2026-09-23"), the range
+    label over a gap, the rate's date in the currency picker, Where to buy,
+    your own shop notes. All in words now; the shared collection page and a
+    trade's text carry the year, since they are read later.
+- **Checked and clean by the reviewers:** export, backup and import keep
+  `portfolio`; the price filter stores dollars and round-trips; a day
+  carries no timezone shift; nothing removed is still referenced; every
+  inactive screen stays hidden under the Fold's grid; no sideways scroll at
+  700, 840 or 899 px on twelve screens; no motion left half-run.
+- **Tests:** smoke 916/916, render 161/161 in Chrome. On the review pass's
+  build the new checks fail, 16 in smoke and 5 in render, and both runs go
+  on past a helper that build lacks instead of stopping; each control
+  passes on both builds.
+- **Left as it is:** a width strictly between 899 and 900 px matches
+  neither the Fold's query nor the desktop column's (no device is known to
+  report one); a bulk tap still selects a printing, and the action takes
+  that printing's lines on screen; an alert's "fired" day is the day in UTC
+  (as it was before this take), a day early on a US evening.
+- **What I got wrong:** the first push measured the stamp under the art and
+  not the words over it; the Fold's grid was written per container without
+  going through what each holds; landmine 155's rule stopped at the
+  collection; the session prompt's landmine count sat at 152 through four
+  new ones.
 
 ### Ruled out
 
