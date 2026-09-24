@@ -584,7 +584,7 @@ if (puppeteer) {
   ok('filter sheet: the Show button is on screen without scrolling', sheet.visible);
   ok('filter sheet: chips are tall enough to tap (>=32px)', sheet.minH >= 32, String(sheet.minH));
   ok('filter sheet: facet chips carry live counts', sheet.counts >= 4, String(sheet.counts));  // fixture has 3 cards
-  ok('filter sheet: the button says how many rows will show', /^\d+ card/.test(sheet.showText), sheet.showText);
+  ok('filter sheet: the button says how many rows will show', /^\d+ line/.test(sheet.showText), sheet.showText);
 
   /* take 90 -- A36, landmine 126. A set chip tapped in a real DOM must show
      that set's cards (it showed none from take 11 to take 89: the chip
@@ -598,7 +598,7 @@ if (puppeteer) {
     return { n: +((chip.querySelector('small') || {}).textContent || 0), lit: chip.classList.contains('on'),
              fN: document.querySelector('#fN').textContent, stored: window.VAULT.FILT.own.set.slice() };
   });
-  ok("set chip: a tap shows that set's cards, not zero", c1.n > 0 && new RegExp('^' + c1.n + ' card').test(c1.fN),
+  ok("set chip: a tap shows that set's cards, not zero", c1.n > 0 && new RegExp('^' + c1.n + ' line').test(c1.fN),
      `${c1.fN} for a chip counting ${c1.n}`);
   ok('set chip: the stored id is a number, as the catalogue keys it',
      c1.stored.length === 1 && typeof c1.stored[0] === 'number', JSON.stringify(c1.stored));
@@ -616,7 +616,7 @@ if (puppeteer) {
                                           stored: window.VAULT.FILT.own.set.length,
                                           pool: window.VAULT.OWN.items.length }));
   ok('set chip: a second tap un-selects it and every card is back',
-     c2.stored === 0 && new RegExp('^' + c2.pool + ' card').test(c2.fN), c2.fN);
+     c2.stored === 0 && new RegExp('^' + c2.pool + ' line').test(c2.fN), c2.fN);   /* take 111: the collection counts lines, as More does */
   ok('negative control: the DOM string stored as it came matches nothing (the take-89 shape)',
      await page.evaluate(() => {
        const V = window.VAULT, id = V.CAT.byId.get(V.OWN.items[0].id).set;
@@ -1153,6 +1153,111 @@ if (puppeteer) {
   const phone = await page.evaluate(async () => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)); V.openDetail(V.CAT.rows.find(p => !p.sealed && p.img).id); await wait(250);
     const a = document.querySelector('#dArt').getBoundingClientRect(); const o = { w: Math.round(a.width), mid: Math.round(a.left + a.width / 2), vw: innerWidth }; V.go('home'); return o; });
   ok('take 110: ...and on the phone a card\'s page is as it was: the card centred at 196 px', phone.w === 196 && Math.abs(phone.mid - phone.vw / 2) <= 1, JSON.stringify(phone));
+
+  /* ---- take 111 (A42): the last look, measured -- what the tour found, at the widths it found it ---- */
+  const bulk111 = [];
+  for (const w of [360, 411, 840]) {
+    await page.setViewport({ width: w, height: w === 840 ? 757 : 915, deviceScaleFactor: 2 });
+    bulk111.push(await page.evaluate(async w => {
+      const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)), R = e => e.getBoundingClientRect();
+      const read = () => {
+        const bar = document.getElementById('bulkBar'), br = R(bar), n = R(document.getElementById('bulkN').closest('.nm'));
+        const bs = [...bar.querySelectorAll('button')].filter(b => b.offsetParent);
+        return { w, n: bs.length, side: document.documentElement.scrollWidth <= innerWidth + 0.5,
+          inside: bs.every(b => { const r = R(b); return r.left >= br.left - 0.5 && r.right <= br.right + 0.5; }),
+          clear: bs.every(b => { const r = R(b); return r.right <= n.left + 0.5 || r.left >= n.right - 0.5 || r.bottom <= n.top + 0.5 || r.top >= n.bottom - 0.5; }),
+          whole: bs.every(b => b.scrollWidth <= b.clientWidth + 1), lines: new Set(bs.map(b => Math.round(R(b).top))).size }; };
+      V.MODE.set('collect', true); await wait(200);
+      if (V.OWN.items.length < 2) V.CAT.rows.filter(p => !p.sealed && p.img && p.market > 1).slice(0, 3).forEach(p => V.OWN.add(p.id, { condition: 'NM' }));
+      V.go('collection'); await wait(150); document.querySelector('[data-act="bulk"]').click(); await wait(150);
+      document.querySelector('#colGrid [data-open]').click(); await wait(150);
+      const clean = read(), row = document.querySelector('#bulkBar .row');
+      row.classList.remove('bulkrow'); await wait(60); const control = read(); row.classList.add('bulkrow');
+      document.getElementById('bulkX').click(); await wait(100); V.go('home'); return { clean, control }; }, w));
+  }
+  await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
+  const bulkOk = r => r.n === 4 && r.side && r.inside && r.clear && r.whole;
+  ok('take 111: the bulk bar fits a 360 and a 411 px phone -- the count and Done, then the three actions, every button whole and none over the count',
+     bulk111.slice(0, 2).every(x => bulkOk(x.clean) && x.clean.lines === 2), JSON.stringify(bulk111.map(x => x.clean)));
+  ok('take 111: ...and on the open Fold (840 px) it is one line', bulkOk(bulk111[2].clean) && bulk111[2].clean.lines === 1, JSON.stringify(bulk111[2].clean));
+  ok('take 111: ...control: take 110\'s bar, four buttons in the row, runs off or covers the count on a phone', bulk111.slice(0, 2).every(x => !(x.control.inside && x.control.clear && x.control.whole)), JSON.stringify(bulk111.slice(0, 2).map(x => x.control)));
+  const mid111 = await page.evaluate(async () => {
+    const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
+    const read = sel => [...document.querySelectorAll(sel)].filter(r => r.offsetParent).slice(0, 8).map(r => { const p = r.querySelector(':scope > .pic').getBoundingClientRect(), n = r.querySelector(':scope > .nm').getBoundingClientRect();
+      return Math.round(Math.abs((p.top + p.bottom) / 2 - (n.top + n.bottom) / 2)); });
+    const both = () => ({ sealed: read('#sealedList .row:has(> .pic)'), rel: [] });
+    V.MODE.set('hunt', true); await wait(200); V.go('sealed'); await wait(250); while (V.closeAnyOverlay()) {}
+    const clean = both(); V.go('releases'); await wait(200); clean.rel = read('#relList .row:has(> .pic)');
+    const st = document.createElement('style'); st.textContent = '.row:has(> .pic){align-items:baseline!important}'; document.head.appendChild(st); await wait(60);
+    const control = { rel: read('#relList .row:has(> .pic)') }; V.go('sealed'); await wait(200); while (V.closeAnyOverlay()) {} control.sealed = read('#sealedList .row:has(> .pic)'); st.remove();
+    V.MODE.set('collect', true); await wait(200); V.go('home'); return { clean, control }; });
+  ok('take 111: a row that leads with a picture has it centred on its words, within 2 px (Sealed, Releases)', mid111.clean.sealed.length > 0 && mid111.clean.rel.length > 0 && [...mid111.clean.sealed, ...mid111.clean.rel].every(d => d <= 2), JSON.stringify(mid111.clean));
+  ok('take 111: ...control: take 110\'s baseline puts the picture\'s foot on the first line, well off the middle', [...mid111.control.sealed, ...mid111.control.rel].some(d => d > 6), JSON.stringify(mid111.control));
+  await page.setViewport({ width: 360, height: 915, deviceScaleFactor: 2 });
+  const al111 = await page.evaluate(async () => {
+    const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)), keep = V.ALERTS.list;
+    const p = V.CAT.rows.find(x => !x.sealed && x.num && x.market > 100);
+    V.ALERTS.list = []; const a = V.ALERTS.add(p.id, 'below', 1234.56); a.fired = { at: '2026-09-23T10:00:00Z', price: 1111.11 }; a.armed = false;
+    V.MODE.set('collect', true); await wait(200); V.go('wants'); await wait(200);
+    const sp = document.querySelector('#alRows .dkrow .n > span'), o = { cut: sp.scrollWidth > sp.clientWidth + 1, h: Math.round(sp.getBoundingClientRect().height), lh: parseFloat(getComputedStyle(sp).lineHeight) || 16 };
+    sp.style.whiteSpace = 'nowrap'; o.controlCut = sp.scrollWidth > sp.clientWidth + 1;
+    V.ALERTS.list = keep; V.go('home'); return o; });
+  ok('take 111: an alert\'s line wraps on a 360 px phone, all of it read, where it was cut at "fired Sep 23 at …"', !al111.cut && al111.h > 1.5 * al111.lh, JSON.stringify(al111));
+  ok('take 111: ...control: on one line, as it was, it is cut', al111.controlCut, JSON.stringify(al111));
+  const ph111 = [];
+  for (const w of [360, 411]) {
+    await page.setViewport({ width: w, height: 915, deviceScaleFactor: 2 });
+    ph111.push(await page.evaluate(async w => {
+      const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
+      V.MODE.set('play', true); await wait(200);
+      const d = { id: 'r111', name: 'Render 111', leader: V.CAT.rows.find(p => p.type === 'Leader' && p.img).id, cards: [], created: 1 };
+      V.DECKS.list.push(d); V.openDeck('r111'); await wait(250);
+      const inp = document.getElementById('dkq'), cs = getComputedStyle(inp), cx = document.createElement('canvas').getContext('2d');
+      cx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      const o = { w, box: Math.round(inp.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)), now: Math.round(cx.measureText(inp.placeholder).width), then: Math.round(cx.measureText('Add cards — search the catalogue').width) };
+      V.DECKS.list.splice(V.DECKS.list.indexOf(d), 1); V.MODE.set('collect', true); await wait(200); V.go('home'); return o; }, w));
+  }
+  await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
+  ok('take 111: a deck\'s search box shows the whole of its prompt at 360 and 411 px', ph111.every(r => r.now > 0 && r.now <= r.box), JSON.stringify(ph111));
+  ok('take 111: ...control: take 110\'s prompt did not fit at either', ph111.every(r => r.then > r.box), JSON.stringify(ph111));
+  const sc111 = await page.evaluate(async () => {
+    const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
+    V.MODE.set('collect', true); await wait(200); V.go('scan'); await wait(300);
+    const u = document.getElementById('scanCredits'), pad = parseFloat(getComputedStyle(u).getPropertyValue('--pad')), r = u.getBoundingClientRect();
+    const o = { shown: !!u.offsetParent, pad, left: Math.round(r.left), right: Math.round(innerWidth - r.right) };
+    const st = document.createElement('style'); st.textContent = '#scan .unlim{margin-left:0!important;margin-right:0!important}'; document.head.appendChild(st);
+    const r2 = u.getBoundingClientRect(); o.cLeft = Math.round(r2.left); o.cRight = Math.round(innerWidth - r2.right); st.remove();
+    V.go('home'); return o; });
+  ok('take 111: Scan\'s note under the camera keeps the page\'s side margins (16 px), where the camera runs edge to edge', sc111.shown && sc111.pad === 16 && sc111.left >= 16 && sc111.right >= 16, JSON.stringify(sc111));
+  ok('take 111: ...control: without the rule it touches both edges', sc111.cLeft === 0 && sc111.cRight === 0, JSON.stringify(sc111));
+  /* the second pass of the look: a printing's badge is never cut, and the Sealed bell sits on its row */
+  const badge111 = [];
+  for (const w of [360, 411]) {
+    await page.setViewport({ width: w, height: 915, deviceScaleFactor: 2 });
+    badge111.push(await page.evaluate(async w => {
+      const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
+      const read = () => [...document.querySelectorAll('#allRes .row .nm > b')].filter(b => b.querySelector(':scope > .badge')).map(b => {
+        const r = b.getBoundingClientRect(), g = b.querySelector(':scope > .badge').getBoundingClientRect();
+        return g.right <= r.right + 0.5 && g.bottom <= r.bottom + 0.5 && b.scrollWidth <= b.clientWidth + 1; });
+      V.MODE.set('collect', true); await wait(200); V.go('search'); const q = document.querySelector('#allq'); q.value = 'zoro'; V.paintSearch(); await wait(250);
+      const clean = read(); const st = document.createElement('style'); st.textContent = '.row .nm b:has(> .badge){white-space:nowrap!important}'; document.head.appendChild(st); await wait(60);
+      const control = read(); st.remove(); q.value = ''; V.paintSearch(); V.go('home'); return { w, clean, control }; }, w));
+  }
+  /* 411 px is borderline: "Roronoa Zoro Alternate Art" fits here with 6 px to spare and was cut in the look's
+     Chromium -- font metrics decide it, so the rule holds at both widths and the control is read at 360 */
+  ok('take 111: at 360 and 411 px every printing\'s badge in the search rows is whole -- a name that carries one wraps', badge111.every(x => x.clean.length >= 4 && x.clean.every(Boolean)), JSON.stringify(badge111.map(x => x.clean)));
+  ok('take 111: ...control: on one line, as it was, the ellipsis cuts some at 360 ("Roronoa Zoro ..." hid "Alternate Art" in the look at 411)', badge111[0].control.some(x => !x), JSON.stringify(badge111[0].control));
+  const bell111 = await page.evaluate(async () => {
+    const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
+    const read = () => [...document.querySelectorAll('#sealedList [data-stock]')].filter(b => b.offsetParent).slice(0, 6).map(b => {
+      const row = b.parentElement.querySelector(':scope > .row').getBoundingClientRect(), r = b.getBoundingClientRect();
+      return Math.round(Math.abs((r.top + r.bottom) / 2 - (row.top + row.bottom) / 2)); });
+    V.MODE.set('hunt', true); await wait(200); V.go('sealed'); await wait(250); while (V.closeAnyOverlay()) {}
+    const clean = read(); const st = document.createElement('style'); st.textContent = '#sealedList .row:has(> [data-stock]){align-items:baseline!important}'; document.head.appendChild(st); await wait(60);
+    const control = read(); st.remove(); V.MODE.set('collect', true); await wait(200); V.go('home'); return { clean, control }; });
+  await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
+  ok('take 111: a Sealed row\'s bell sits on the middle of its row, within 2 px (it hung from the picture\'s foot once the picture was centred)', bell111.clean.length > 0 && bell111.clean.every(d => d <= 2), JSON.stringify(bell111.clean));
+  ok('take 111: ...control: the outer row on its baseline puts it well off', bell111.control.some(d => d > 6), JSON.stringify(bell111.control));
 
   await browser.close();
 } else {
