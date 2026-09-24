@@ -525,6 +525,9 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .dtl{margin-top:6px;font-size:12.5px;line-height:1.45;color:var(--dim2)}
 .dtl > span{display:block}
 .dtl > span + span{margin-top:2px}
+.dtl-h{display:flex;align-items:center;gap:6px;width:100%;min-height:44px;margin:0;padding:0;background:none;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.dtl-h > span{flex:1;min-width:0}
+.dtl-h svg{flex:0 0 auto}
 .panel[hidden]{display:none}   /* landmine 136 */
 .chip small{opacity:.6;font-weight:600;margin-left:4px}
 /* take 106: the filter's price row was a second .range rule; the hero's range pills
@@ -3869,9 +3872,10 @@ function gtsWord(it, over, day) { const s = it.status; if (s !== 'coming' && s !
 const SH_WORDS = { orders_open: 'stores order by', orders_closed: 'stores\u2019 orders closed', released: 'released', unknown: 'no dates' };
 /* take 112, the owner's word: "I don't want them flooding the screen." A distributor on a row is its name and its
    state, one line; everything else is under a closed "Distributor info" -- on Sealed, on Releases and on a product's
-   page. DISTF holds the drop-downs opened this session: 'sealed', 'releases', 'detail'. */
+   page. DISTF holds the drop-downs opened this session: 'sealed', 'releases', 'detail'; and (take 114, the owner:
+   "it should be tucked away") the distributors whose history is open on the page shown, closed whenever one opens. */
 const SH_SHORT = { orders_open: 'orders close', orders_closed: 'orders closed', released: 'released', unknown: 'no dates' };
-const DISTF = { open: new Set() };
+const DISTF = { open: new Set(), hist: new Set() };
 function distShort(it) {
   const day = d => ' ' + dayText(d).replace(/ /g, '\u00a0');   /* a day never breaks across a line (the take-112 look: "May" / "17" on Releases) */
   const at = { orders_open: it.due, orders_closed: it.due, released: it.release }[it.state];
@@ -3896,7 +3900,12 @@ function distFoldTap(key) {
   if (DISTF.open.has(key)) DISTF.open.delete(key); else DISTF.open.add(key);
   if (key === 'sealed') paintSealed(); else if (key === 'releases') paintReleases(); else if (key === 'detail' && dCur) paintDetailDist(dCur);
 }
-document.addEventListener('click', e => { const f = e.target.closest('[data-distfold]'); if (f) distFoldTap(f.dataset.distfold); });
+function distHistTap(d) {
+  if (DISTF.hist.has(d)) DISTF.hist.delete(d); else DISTF.hist.add(d);
+  if (dCur) paintDetailDist(dCur);
+}
+document.addEventListener('click', e => { const f = e.target.closest('[data-distfold]'); if (f) return distFoldTap(f.dataset.distfold);
+  const h = e.target.closest('[data-disthist]'); if (h) distHistTap(h.dataset.disthist); });
 function distWords(it) {
   /* take 94: the distributor, in the words it uses. A distributor sells to
      stores, not to collectors: sold out here months before release means the
@@ -3928,7 +3937,9 @@ function distLine(it) {
   const D = HUNT.dist(it._d || 'gts');
   return `<span style="display:block;color:var(--brass)">${esc(HUNT.distName(it._d || 'gts'))} \u00b7 ${distWords(it).join(' \u00b7 ')} \u00b7 ${esc(HUNT.ageLabel(D && D.fetched_at))}</span>`;
 }
-/* take 114 (A32): the history on file, in words -- under each distributor inside the open Distributor info only.
+/* take 114 (A32): the history on file, in words -- under each distributor inside the open Distributor info, behind
+   its own one-line header (the owner: "distribution stuff is generally only for stores but this info can still help
+   the consumer - so it should be tucked away").
    What was seen and at how many checks, never since when: a state at the first check on file was already so. A
    change sits between two checks, in this phone's time; one worked out from dates names the distributor's own day
    only when its dates put that day between the two checks (tlDay), else it keeps the two checks and a note says why.
@@ -3964,7 +3975,10 @@ function distHistory(it, tl = distTl(it)) {
   const d = it._d, W = st => tlWord(d, st), M = t => nbsp(momentText(t)), day = t => nbsp(dayText(localDay(t))), fAt = HUNT.feed && HUNT.feed.fetched_at;
   const odd = tl.odd ? `${tl.odd} check${tl.odd === 1 ? '' : 's'} this version cannot read` : '';
   const behind = fAt && Date.parse(tl.end) < Date.parse(fAt) ? `this phone\u2019s copy ends ${M(tl.end)}` : '';
-  const box = (head, lines) => `<div class="dtl" data-tl="${esc(d)}"><span class="dtl-h">${esc(head)}</span>${lines.map(l => `<span>${esc(l)}</span>`).join('')}</div>`;
+  const open = DISTF.hist.has(d);
+  const box = (head, lines) => `<div class="dtl" data-tl="${esc(d)}">${lines.length
+    ? `<button class="dtl-h" data-disthist="${esc(d)}" aria-expanded="${open}"><span>${esc(head)}</span>${chev(open, 14)}</button>${open ? lines.map(l => `<span>${esc(l)}</span>`).join('') : ''}`
+    : `<span class="dtl-h">${esc(head)}</span>`}</div>`;
   if (!tl.checks) return box(dotJoin('History \u00b7 no check of it on file yet', odd, behind), []);
   const span = tl.checks === 1 ? M(tl.first) : localDay(tl.first) === localDay(tl.last) ? day(tl.first) : `${day(tl.first)} \u2192 ${day(tl.last)}`;
   const head = dotJoin(`History \u00b7 ${tl.checks} check${tl.checks === 1 ? '' : 's'} on file, ${span}`, tl.missed ? `${tl.missed} more could not reach it` : '', odd, behind);
@@ -3979,8 +3993,9 @@ function distHistory(it, tl = distTl(it)) {
         : dotJoin(`${W(c.from)} \u2192 ${W(c.to)}`, `between ${M(c.after)} and ${localDay(c.after) === localDay(c.by) ? nbsp(tlClock(c.by)) : M(c.by)}`, TL_HOW[c.kind])); } }
   return box(head, lines);
 }
-/* the fold's note: only when a change on screen was worked out from dates that do not put its day between its checks */
-const tlNeedsNote = (it, tl) => !!tl && tl.changes.slice(-TL_SHOW).some(c => c.kind === 'dates' && !tlDay(it._d, c, it));
+/* the fold's note: only when a change on screen -- its history open -- was worked out from dates that do not put its
+   day between its checks */
+const tlNeedsNote = (it, tl) => !!tl && DISTF.hist.has(it._d) && tl.changes.slice(-TL_SHOW).some(c => c.kind === 'dates' && !tlDay(it._d, c, it));
 /* ---- where to buy (A38 item 4, take 96) --------------------------------
    Every seller the app knows for a sealed product, as a link to the seller’s
    OWN page opened by the OS browser: nothing is bought here, nothing is
@@ -4163,9 +4178,10 @@ const STOCK = {
       if (sv.how !== 'none') { const zz = T.zips[sv.zip]; const st = zz && zz.ok && zz.stock[it.tcin]; if (st) { const on = Object.entries(st).filter(([, v]) => (v.qty || 0) > 0).map(([sid]) => { const x = zz.stores.find(y => y.id === sid); return x ? x.name : sid; });
         out.push({ key: 'target:shelf:' + sv.zip + ':' + it.tcin, label: on.length ? 'Target ' + on.join(', ') : 'a Target shelf near ' + sv.zip, available: on.length > 0, at: zz.checked_at && zz.checked_at[it.tcin] }); } } }
     for (const sh of ((LOCAL.shops && LOCAL.shops.shops) || [])) for (const it of (sh.sealed || [])) if (it.catalog_id === id) out.push({ key: 'shop:' + sh.url + ':' + it.url, label: sh.name + ' online', available: !!it.available, at: LOCAL.shops.fetched_at, url: it.url });
-    /* take 94: the distributor -- available to STORES when it shows stock or an open preorder; the flip is the reprint wave arriving */
+    /* take 94: the distributor -- available to STORES when it shows stock; the flip is the reprint wave arriving. Take 114,
+       the owner's answer: stock only -- 'preorder' is GTS's state after stores' orders were due, not an open preorder */
     const G = HUNT.feed && HUNT.feed.sources && HUNT.feed.sources.gts;
-    if (G && G.ok) for (const it of (G.items || [])) if (it.catalog_id === id) out.push({ key: 'gts:' + it.sku, label: 'GTS Distribution (to stores)', available: it.status === 'in_stock' || it.status === 'preorder', at: G.fetched_at, url: it.url });
+    if (G && G.ok) for (const it of (G.items || [])) if (it.catalog_id === id) out.push({ key: 'gts:' + it.sku, label: 'GTS Distribution (to stores)', available: it.status === 'in_stock', at: G.fetched_at, url: it.url });
     return out; },
   /* after any sync: fire on flips, remember what was seen */
   async check() { const fired = []; let changed = false;
@@ -5222,6 +5238,7 @@ function scrollToPanel(el) {
 function openDetail(id, { dist = false } = {}) {
   const p = CAT.byId.get(id); if (!p) return;
   if (dist) DISTF.open.add('detail'); else DISTF.open.delete('detail');
+  DISTF.hist.clear();   /* take 114: every history starts tucked away */
   dCur = p; const own = OWN.items.find(i => i.id === id && (i.pf || 'main') === dTargetPf() && !i.graded);
   $('#dTarget').textContent = PF.active === 'all' ? PF.name('main') : PF.name(PF.active);
   dQty = own ? own.qty : 1; dCond = own ? own.condition : 'NM';
@@ -6133,7 +6150,7 @@ async function runSelfTest() {
      day and a hardcoded placeholder is landmine 62 in a text box. */
   $('#allq').placeholder = `Search all ${(CAT.man.cards || 0).toLocaleString()} cards`;
   paintNet(); paintHome();
-  window.VAULT = { dotJoin, curLabel, paintBinder, SEALED_ONE, sealedWord, backArrow, closeSheet, setHomeTab, bulkLines, bulkSum, shownLines, signedMoney, pctNum, signedPct, dayText, momentText, fromShown, toShown, setTop, newestTop, paintSealedHero, ownBack, artBack, artUrl, artColours, largeOk, heroLeader, paintDeckHero, paintBack, stockPic, CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, setCond, toast, cameraVerdict, effectsLine, HUNT, targetLine, distLine, distShort, distRowLines, distFold, distFoldTap, distSummary, DISTF, paintDetailDist, distHistory, tlDay, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
+  window.VAULT = { dotJoin, curLabel, paintBinder, SEALED_ONE, sealedWord, backArrow, closeSheet, setHomeTab, bulkLines, bulkSum, shownLines, signedMoney, pctNum, signedPct, dayText, momentText, fromShown, toShown, setTop, newestTop, paintSealedHero, ownBack, artBack, artUrl, artColours, largeOk, heroLeader, paintDeckHero, paintBack, stockPic, CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, setCond, toast, cameraVerdict, effectsLine, HUNT, targetLine, distLine, distShort, distRowLines, distFold, distFoldTap, distSummary, DISTF, paintDetailDist, distHistory, distHistTap, tlDay, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
                    cardPic, setPic, picBox, deckRow, paintHome, paintDecks, paintSearch, openDeck,
                    FILT, loadFilter, applyFilter, sortRows, blankFilter, activeCount,
                    DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,

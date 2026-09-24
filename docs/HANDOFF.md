@@ -120,6 +120,25 @@ honesty-first design, with the judges' fixes.
   whether the GTS stock alert should keep counting "orders were due" as
   available. The alert is not changed without an answer.
 
+### The owner's answers to the three questions
+
+The owner was sent the pictures from the look. They showed the history
+open on the OP-18 box's page, the same on the open Fold, Sealed's rows
+unchanged, before-and-after pairs for GTS's words and counts and for the
+split day, and a mock-up of the history behind one tap. The answers, word
+for word:
+1. "For 1, exactly exactly right, that's fine" -- GTS's words stay as
+   built. Southern Hobby's "stores' orders closed May 29" stays as it is:
+   the answer asked for no change, and none is made.
+2. "For 2, the latter, distribution stuff is generally only for stores but
+   this info can still help the consumer - so it should be tucked away." --
+   each distributor's history sits behind one line, "History · N checks on
+   file, …", which opens on a tap. It is closed every time a product's page
+   opens.
+3. "For 3, your suggestion" -- the GTS stock alert counts only "in stock for
+   stores" as available. It no longer counts the state after the order due
+   date.
+
 ## Take 113 — 2026-09-24 — the owner's icon (D7), folded in from the graphic design session's branch
 
 Opened before any code (PROTOCOL §6). The owner merged take 112 (PR #36)
