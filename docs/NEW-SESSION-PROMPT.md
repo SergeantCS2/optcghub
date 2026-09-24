@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 103.* Paste the block between the rules into a new session
+*Current as of take 104.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 103 takes by previous sessions. The repo is
+built across 104 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -48,6 +48,10 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
   must end `(mode: chrome)`. If a host is blocked, name it and stop — the
   owner opens it. A clean run from an empty directory after any pipeline
   change (PROTOCOL §6b).
+- **UI design and refinement are a separate UI/UX session's (the owner,
+  take 104).** Change the UI only when something is broken or off course,
+  and say so in the HANDOFF; refinement, polish and layout are that
+  session's, not yours.
 - **The look, before a take ships (A40, take 99):** `node tools/look.mjs N`
   opens the built app in the VM's own Chromium and writes a PNG per step
   under `look/`. Read every PNG yourself, send them to the owner with one
@@ -148,6 +152,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 104" and begin with PROTOCOL §0.
+Say "take 105" and begin with PROTOCOL §0.
 
 ---

@@ -45,4 +45,5 @@ in-flight state — before touching anything.
 - `.gitignore` patterns are anchored (`/look/`), or a same-named directory anywhere vanishes from the commit and `git add` fails the chain silently (landmine 138).
 - A "closed" item stays open until its own record says so (landmine 137: the watchdog healed the symptom for eleven takes).
 - The repo is public. "The owner" and "session" are the words; the scrubber refuses the rest.
+- UI design and refinement belong to a separate UI/UX session (the owner, take 104). Change the UI only when something is broken or off course, and say so in the HANDOFF; refinement is that session's.
 - Network from the VM: GitHub and the package registries only, unless the owner's environment says otherwise; if a host is refused, name it and stop — the runner or a new session fetches.

@@ -20,7 +20,16 @@ GROUPS = [
     (r'^(?:base/)?assets/', lambda m: 'assets (other: the OCR models)'),
     (r'^(?:base/)?res/|resources\.(arsc|pb)$', lambda m: 'res (icons, layouts, the resource table)'),
     (r'^(?:base/)?META-INF/', lambda m: 'META-INF (signature)'),
+    # take 104: the R8 map inside a bundle (52.7 MB on take 103) is what Play reads for a
+    # crash report and is never installed; counted as "other" it doubled the raw total
+    (r'^BUNDLE-METADATA/', lambda m: 'BUNDLE-METADATA (the R8 map Play reads; never installed)'),
 ]
+METADATA = 'BUNDLE-METADATA (the R8 map Play reads; never installed)'
+
+
+def installed_raw(groups, tr):
+    """The raw total a phone can install: every entry but the bundle's metadata."""
+    return tr - groups.get(METADATA, [0, 0, 0])[0]
 
 
 def breakdown(path):
@@ -46,7 +55,9 @@ def report(path, top=8):
     # raw total is what a phone reports installed for an APK, and for a bundle it counts
     # every ABI although a phone installs one (take 102, the review's finding)
     raw_label = "raw, both ABIs — a phone installs one" if path.lower().endswith(".aab") else "raw (what the phone reports installed)"
-    lines = [f"{os.path.basename(path)}: {os.path.getsize(path)/1e6:.1f} MB file (the download); entries {tp/1e6:.1f} MB packed, {tr/1e6:.1f} MB {raw_label}"]
+    ir = installed_raw(groups, tr)
+    meta = f"; the R8 map ({(tr - ir)/1e6:.1f} MB raw) left out of that" if tr != ir else ""
+    lines = [f"{os.path.basename(path)}: {os.path.getsize(path)/1e6:.1f} MB file (the download); entries {tp/1e6:.1f} MB packed, {ir/1e6:.1f} MB {raw_label}{meta}"]
     for g, (u, c, k) in sorted(groups.items(), key=lambda x: -x[1][0]):
         lines.append(f"   {u/1e6:6.1f} MB raw  {c/1e6:6.1f} MB packed  {k:4d} files  {g}")
     lines.append("   biggest, raw / packed:")
@@ -79,6 +90,15 @@ def selftest():
          breakdown(_with_asset_lib(p))[0].get("assets/public (the app, the catalogue, hunt, fonts)", [0])[0] == 600 + 9
          and not any(k.startswith("lib/foo") for k in breakdown(_with_asset_lib(p))[0])),
     ]
+    # take 104: the bundle's R8 map (BUNDLE-METADATA/.../proguard.map, 52.7 MB on take 103)
+    # is what Play reads for crash reports and is never installed -- its own group, and
+    # the installed total leaves it out
+    gm, bigm, trm, tpm = breakdown(_with_map(p))
+    checks += [
+        ("control: the bundle's R8 map lands in its own group, not 'other'",
+         gm.get("BUNDLE-METADATA (the R8 map Play reads; never installed)", z3)[0] == 30 and gm.get("other", z3)[0] == 7),
+        ("control: the installed total leaves the map out", installed_raw(gm, trm) == trm - 30),
+    ]
     ok = True
     for name, good in checks:
         ok &= good; print(f"  {'ok  ' if good else 'FAIL'}  {name}")
@@ -89,6 +109,12 @@ def selftest():
 def _with_asset_lib(p):
     with zipfile.ZipFile(p, "a") as z:
         z.writestr("assets/public/hunt/lib/foo/x.js", b"j" * 9)   # a directory under lib/ is what the unanchored pattern caught
+    return p
+
+
+def _with_map(p):
+    with zipfile.ZipFile(p, "a") as z:
+        z.writestr("BUNDLE-METADATA/com.android.tools.build.obfuscation/proguard.map", b"r" * 30)
     return p
 
 

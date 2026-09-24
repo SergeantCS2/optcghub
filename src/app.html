@@ -5321,7 +5321,7 @@ const DIAG = {
     line('screens on', [...document.querySelectorAll('.screen.on')].map(e => e.id).join(',') || 'NONE'); line('overlays on', ['#askSheet', '#picker', '#detail', '#tour', '#simCurtain'].filter(id => { const el = $(id); return el && el.classList && el.classList.contains('on'); }).join(',') || 'none'); line('splash', $('#splash') ? 'still in the page' : 'gone');
     line('currency', CUR.active() + (CAT.man.rates ? ` (rates ${CAT.man.rates.date}${CAT.man.rates.stale ? ', stale' : ''})` : ' (no rates)')); line('online', navigator.onLine); line('native', !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())); line('plugins', ['Camera', 'Filesystem', 'Share', 'LocalNotifications', 'Network', 'App', 'AdMob'].filter(n => PLATFORM.plugin(n)).join(', ') || 'none (browser)');
     L.push('', '## device'); line('ua', String(navigator.userAgent || '?').slice(0, 120)); line('viewport', `${typeof innerWidth === 'number' ? innerWidth + 'x' + innerHeight : '?'} @${devicePixelRatio || 1}`); line('language', navigator.language || '?'); line('tz', (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return '?'; } })());
-    L.push('', '## catalogue'); line('cards', CAT.man.cards); line('printings', CAT.rows.length); line('pictures', CAT.man.images ? `${CAT.man.images.missing_cards} cards and ${CAT.man.images.missing_sealed} sealed products have no picture at the first host; ${CAT.man.images.alt_served} served by the second, ${CAT.man.images.exported} shipped that way` + (CAT.man.images.measured ? '' : ' (sealed images not yet measured)') : 'not measured'); line('prices dated', (CAT.man.source_updated_at || '?').slice(0, 10)); line('history days', (CAT.days || []).length + (CAT.days && CAT.days.length ? ` (${CAT.days[0]}..${CAT.days[CAT.days.length - 1]})` : '')); line('catalogue copy', CAT.man.fromDisk ? 'synced on this phone' : 'the one that came with the app'); line('sealed products', CAT.rows.filter(p => SEALED.isProduct(p)).length); line('stock decks', (CAT.stock || []).length); line('effects scripted', CAT.man.effects ? `${CAT.man.effects.scripted}/${CAT.man.effects.lines}` : '?');
+    L.push('', '## catalogue'); line('cards', CAT.man.cards); line('printings', CAT.rows.length); line('pictures', CAT.man.images ? `${CAT.man.images.missing_cards} cards and ${CAT.man.images.missing_sealed} sealed products have no picture at the first host; ${CAT.man.images.alt_served} served by the second, ${CAT.man.images.exported} shipped that way` + (CAT.man.images.measured ? '' : ' (sealed images not yet measured)') : 'not measured'); line('prices dated', (CAT.man.source_updated_at || '?').slice(0, 10)); line('history days', (CAT.days || []).length + (CAT.days && CAT.days.length ? ` (${CAT.days[0]}..${CAT.days[CAT.days.length - 1]})` : '')); line('catalogue copy', CAT.man.fromDisk ? 'synced on this phone' : 'the one that came with the app'); line('sealed products', CAT.rows.filter(p => SEALED.isProduct(p)).length); line('stock decks', (CAT.stock || []).length); line('effects scripted', CAT.man.effects ? effectsLine(CAT.man.effects, Object.keys(CAT.effects || {}).length) : '?');
     L.push('', '## sync'); line('update url', CAT.man.updateUrl || 'NOT SET'); line('manifest', await this.probe(CAT.man.updateUrl ? CAT.man.updateUrl + 'manifest.json' : null));
     L.push('', '## hunt'); line('zip', HUNT.zip || '(none)'); line('served', JSON.stringify(HUNT.served())); line('radius', LOCAL.radius); line('feed url', HUNT.url() || 'NOT SET');
     for (const f of ['feed.json', 'history.json', 'stores.json', 'events.json', 'shops.json', 'zcta.json']) line('  ' + f, await this.probe(HUNT.url() ? HUNT.url().replace(/feed\.json$/, f) : null));
@@ -5333,12 +5333,24 @@ const DIAG = {
     return L.join('\n');
   }
 };
+/* take 104 (the owner's PC run): a computer with no camera is not a failure of the app,
+   so the browser skips with the reason; on the phone no camera stays a FAIL. Named so the
+   stub can call it (landmine 135). */
+function cameraVerdict(devices, native) {
+  const n = (devices || []).length;
+  if (!n && !native) return { skip: true, note: 'no camera listed on this device \u2014 the scanner needs one' };
+  return { ok: n > 0, note: `${n} camera(s) listed` };
+}
+/* take 104: the Diagnostics line counts effect LINES (the manifest's scripted/lines); the
+   self-test counts cards. Both are right; the line now says which, with the cards beside. */
+function effectsLine(effects, cards) { return `${effects.scripted} of ${effects.lines} effect lines (${cards} cards)`; }
+
 const SELFTEST = {
   last: null,
   async run() {
     const out = [];
     const check = async (name, fn) => {
-      try { const r = await fn(); out.push({ name, s: r === null ? 'SKIP' : (r === true || (r && r.ok) ? 'PASS' : 'FAIL'), note: (r && r.note) || (r === null ? 'not available here' : '') }); }
+      try { const r = await fn(); out.push({ name, s: r === null || (r && r.skip) ? 'SKIP' : (r === true || (r && r.ok) ? 'PASS' : 'FAIL'), note: (r && r.note) || (r === null ? 'not available here' : '') }); }   // take 104: { skip: true, note } skips WITH its reason
       catch (e) { out.push({ name, s: 'FAIL', note: String(e && e.message || e).slice(0, 120) }); }
     };
     await check('Catalogue loaded', () => ({ ok: CAT.ready && CAT.rows.length === (CAT.man.printings || CAT.rows.length) && CAT.rows.length > 5000, note: `${CAT.rows.length} printings, ${CAT.sets.size} sets, prices ${(CAT.man.source_updated_at || '?').slice(0, 10)}` }));
@@ -5352,7 +5364,7 @@ const SELFTEST = {
     await check('Storage writes and reads back', () => { const k = 'vault.selftest', v = String(Date.now()); localStorage.setItem(k, v); const ok = localStorage.getItem(k) === v; localStorage.removeItem(k); return { ok, note: ok ? 'localStorage round-trip' : 'mismatch' }; });
     await check('Backup file round-trip (Filesystem)', async () => { const FS = PLATFORM.plugin('Filesystem'); if (!FS) return null; const path = 'selftest/probe.json', data = JSON.stringify({ t: Date.now() }); await FS.writeFile({ path, data, directory: 'CACHE', recursive: true, encoding: 'utf8' }); const r = await FS.readFile({ path, directory: 'CACHE', encoding: 'utf8' }); try { await FS.deleteFile({ path, directory: 'CACHE' }); } catch (e) {} return { ok: r.data === data, note: 'wrote, read, deleted in the app cache' }; });
     await check('Share sheet available', async () => { const SH = PLATFORM.plugin('Share'); if (!SH) return null; const r = await SH.canShare(); return { ok: !!r.value, note: r.value ? 'Share.canShare true' : 'canShare false' }; });
-    await check('Camera reachable', async () => { if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return null; const d = (await navigator.mediaDevices.enumerateDevices()).filter(x => x.kind === 'videoinput'); return { ok: d.length > 0, note: `${d.length} camera(s) listed` }; });
+    await check('Camera reachable', async () => { if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return null; const d = (await navigator.mediaDevices.enumerateDevices()).filter(x => x.kind === 'videoinput'); return cameraVerdict(d, !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())); });
     await check('OCR reads a code the app drew (ML Kit)', async () => {
       if (!PLATFORM.hasOcr()) return null;
       const c = document.createElement('canvas'); c.width = 600; c.height = 160;
@@ -5434,7 +5446,7 @@ async function runSelfTest() {
      day and a hardcoded placeholder is landmine 62 in a text box. */
   $('#allq').placeholder = `Search all ${(CAT.man.cards || 0).toLocaleString()} cards`;
   paintNet(); paintHome();
-  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, setCond, toast, HUNT, targetLine, distLine, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
+  window.VAULT = { CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, setCond, toast, cameraVerdict, effectsLine, HUNT, targetLine, distLine, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
                    cardPic, setPic, picBox, deckRow, paintHome, paintDecks, paintSearch, openDeck,
                    FILT, loadFilter, applyFilter, sortRows, blankFilter, activeCount,
                    DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,

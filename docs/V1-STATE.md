@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 103
+# V1-STATE — what exists, as of take 104
 
-*Current as of take 103.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 104.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -36,9 +36,10 @@ refresh from Pages (take 27).
   reports as installed); AAB 23.6 MB packed. Dex 23.0 MB raw, the OCR
   engine 11.1 MB (arm64) + 6.8 MB (armeabi-v7a), the app and catalogue
   8.6 MB raw / 1.8 packed, the OCR language models 5.5 MB raw. **Take
-  103** shrinks the code (R8) and drops the four non-Latin models (3.8
-  MB raw); the *after* is the take-103 build's size table, recorded here
-  once it runs. The apk
+  103 (MEASURED, run 52 and the released files):** APK 26.4 MB file /
+  36.9 MB raw (from 34.9 / 58.0), AAB 19.6 MB (from 23.8); dex 6.4 MB raw
+  in one file (from 23.0 in three), the OCR models 1.5 MB raw (from 5.5),
+  the engine unchanged at 11.1 + 6.8. The apk
   job prints this breakdown every build since take 101 (`tools/shipped.py`).
 - **Play:** the app exists in the console as `com.optcghub.app` on a personal
   account; version code 35 accepted into internal testing; advertising-ID
@@ -103,6 +104,16 @@ second host serves 1 of the 242 missing ids and answers 404 for 241 —
 the pattern is real and the missing pictures are not there either. The
 owner's image address from TCGplayer's own page is the next measurement;
 the phone's picture is the proof.
+
+**Harness totals, take 104:** smoke.mjs 697 assertions (6 new: the three
+camera verdicts, the skip-with-reason through the self-test's own check,
+the effects line's text, the Diagnostics line calling it — all watched to
+fail on the take-103 build, where the camera line read FAIL "0 camera(s)"
+as on the owner's PC); shipped.py 8 controls (+2: the R8 map's group and
+the installed total, watched to fail); the look 2 steps × 2 viewports
+(the camera line reads SKIP with its reason in real Chromium; the effects
+line "2186 of 7694 effect lines (1925 cards)" on the VM's cached
+catalogue); render 105 of 106 in local Chrome.
 
 **Harness totals, take 103:** smoke.mjs 691 (no app change; 689 on the
 session VM against the nightly's newer sidecar — the runner's number
