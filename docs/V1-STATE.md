@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 105
+# V1-STATE — what exists, as of take 106
 
-*Current as of take 105.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 106.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -80,6 +80,7 @@ refresh from Pages (take 27).
 | Self-test | More → Self-test: 17 on-device checks (catalogue, gate, search, fonts, storage, Filesystem, share, camera, ML Kit on a drawn code, notifications, ads, sim, sync), shareable report | smoke 9; **run on the Fold at take 91: 16 pass, and the one FAIL was the check's own (`m.num`, landmine 131) — fixed take 92** |
 | Scrubber | comments stripped from the shipped app on every build; the gate refuses a first name, an AI-vendor name, the conversational word, a credential, a container path or a leftover to-do marker anywhere public | scrub.py --selftest 9 controls (take 102: the two literal file names pass as whole tokens, the vendor word beside them still fires); smoke 5 (take 35) |
 | Typography | four roles (display / comic / body / heavy), OFL/Apache faces bundled, 232 KB, licensed faces as a file drop in `assets/user/fonts/` | render.mjs: Chrome reports all four LOADED and h2 resolves to the display face, with a missing-file control; smoke 7 |
+| Design tokens (take 106, A42) | one scale for the whole app: type roles 12 to 44 px (nothing under 12), spacing, radii, thumbnail sizes, motion and a z scale; semantic colours per palette — the accent as text (`--accent-ink`, Prep & Play `#E5705C`), the label on the accent (`--on-accent`), a control edge at 3:1 (`--line-strong`), tints mixed from each palette; the charts read the palette they are drawn in | smoke take-106 section (contrast per palette on card and card2, no font size under 12 px, every glyph a call names in the sprite); the look, take 106, 7 of 7 at both viewports |
 | Sync | quiet once-per-open sync holds on cellular unless switched on; Sync now always runs; `UPDATE_URL` points at Pages | smoke 4 controls; **not yet seen on the Fold** |
 
 **The look (take 99, A40):** `tools/look.mjs` — the session's own review,

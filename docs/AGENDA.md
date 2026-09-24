@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 105.* Ranked by blocking-ness, not by interest.
+*Current as of take 106.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -37,6 +37,8 @@ each item got where it is; this block is what to do next.
 **UI design and refinement belong to a separate UI/UX session (the
 owner, 24 Sept, take 104).** This session changes the UI only when
 something is broken or off course; refinement is that session's.
+Its series is A42 (take 106 onward: foundation, one header, art, voice,
+polish), after the other session's take 105 in the take order.
 
 **Mine, in order**
 1. **Take 105 — the Fold's first run of the shrunk build** (in flight;
@@ -1099,6 +1101,47 @@ yet* list, the `gts:` alert source. The matcher learned the wholesale
 names (a normaliser on the source side), three set-code families and a
 tie-break (landmine 134). **Next:** Southern Hobby, same shape, its own
 take; the state timeline from the history rows.
+
+## A42 — The UI series: uniform headers, card art used boldly, one voice · OPENED take 106
+
+The owner, 24 Sept, to the UI/UX session: the app "needs refinement,
+some text isn't consistent, some title/headers shift/don't line up or
+have the same design, much more small critiques", and "leverage One
+Piece TCG art as much as possible". The owner's rulings, in order of asking: art
+— official and card art welcome, "Hot-Linked Card Art, Bold", nothing
+drawn from scratch; the three palettes stay; priority Prep & Play, then
+Hunt, then Collect, then uniformity; the Fold's inner layout later; D17
+Collection; A37 the same gear to More on every main screen. From the
+preview page (three headers in the app's own fonts and palettes): C on
+Decks with the title in A's slot, A's art banner on Sealed, A's compact
+bar with a back arrow one level down, no banner on Collect's Home, the
+blur always the card's own colour.
+
+The series, one take each, by layer and app-wide (a header converted
+mode by mode leaves the app less uniform in between):
+1. **Foundation** (take 106): design tokens, the Prep & Play accent
+   readable, nothing under 12 px, colours that follow the mode, the two
+   blank icons, the equal-thirds slider.
+2. **One header** on every screen: back on the screens one level down,
+   the More gear on every main screen, icons from the sprite only, 44 px
+   targets, pressed and disabled states.
+3. **The art layer:** the record's art policy corrected first (landmines
+   26 and 28 corrected, not renumbered; 30 and 31 stand), then the
+   banners, backdrops and Leader-art covers, measured on the runner.
+4. **The voice:** one word per thing, one date and money format,
+   Collection for Portfolio, the developer's voice out of the UI.
+5. **Polish:** motion, loading, empty and error states, the checklist.
+
+The audit behind it, with line numbers and a box per finding, is
+`docs/UI-AUDIT.md`; each take ticks its boxes.
+
+**Ruled out:** a design system generated from a style database (its
+two proposals were a landing page and a generic palette; the app keeps
+its own four faces and three palettes); converting one mode at a time;
+re-adding the skull glyph (removed at the owner's ask, take 63);
+bundling art in the APK (the owner's own hero pictures through
+`assets/user` remain the owner's choice and the owner's exposure); the Fold's inner
+layout for now.
 
 ## A41 — Missing images elsewhere in the app, sourced from somewhere other than TCGplayer · OPENED take 100
 

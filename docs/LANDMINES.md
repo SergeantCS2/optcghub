@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 105.*
+*Current as of take 106.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -152,6 +152,8 @@ Start here. Do not read top to bottom.
 | Every negative control "fires", including one whose check does not exist | **139** |
 | Back from the first card minimizes the app on a fresh launch | **140** |
 | A plugin's permission check returns undefined on the shrunk build | **141** |
+| An icon removed from the sprite still leaves blank boxes on screen | **142** |
+| A render check of an animation fails on a busy machine and passes on a quiet one | **143** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -2027,6 +2029,27 @@ is in the libraries, not the bridge); the build reads the release mapping
 back and refuses a renamed annotation class; a plugin answer read for a
 field is guarded (`(r || {}).field`), and an empty answer is reported as
 `unknown`, never as `denied`.
+
+**142. A glyph removed from the sprite leaves a blank wherever its id is
+built at runtime, and a check that greps for the literal id passes.** Take
+63 took the skull out of `assets/glyphs.svg` at the owner's ask and smoke
+asserted that `g-roger` appears nowhere. But `G('roger', 64)` on the empty
+collection and `KW_GLYPH`'s `Banish: 'roger'` build `#g-roger` when they
+run, so the literal never appears: both drew an empty box from take 63 to
+take 105, and the check stayed green. Rule: an icon guard resolves every
+name the code hands to `G()`, and every value of the glyph maps, against
+the sprite's own symbols; removing a glyph is a search for its bare name,
+not for its id.
+
+**143. A render check that reads an animation at a fixed delay after a
+heavy repaint reads the middle of the animation.** The Hunt knob check
+(take 70) switches mode and measures the knob 350 ms later, for a 220 ms
+slide. Switching to Hunt repaints Sealed (about 350 rows) first, and on a
+busy machine the slide has not finished at 350 ms: the UI/UX session's VM
+failed it on untouched take-104 code, while the knob at rest sits 1 px
+off centre (MEASURED at 600 ms). Rule: measure at rest -- wait for
+`transitionend`, or poll until the position stops moving within a
+timeout -- never a sleep sized to the animation.
 
 ## §2 — Inherited from APEX ORV
 

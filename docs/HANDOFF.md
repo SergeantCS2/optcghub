@@ -1,4 +1,188 @@
-# HANDOFF — through Take 105
+# HANDOFF — through Take 106
+
+## Take 106 — 2026-09-24 — the UI series begins with its foundation: one set of design tokens, Prep & Play's red readable on its cards, no text under 12px, colours that follow the mode, the two blank icons gone
+
+Opened before any code (PROTOCOL §6) by the UI/UX session, which owns
+design and refinement from take 104 on (the owner, 24 Sept; NSP). The
+take opened on take 104 (merged 02:13 UTC; Release take-104 02:19 with
+the APK, the AAB and the mapping; build run 53 green; the last nightly,
+run 50, green) while take 105 was the other session's PR #29. Take 105
+merged 03:01 UTC and is merged into this branch before the PR; the tests
+below were run again on the merged tree. This is the first of five UI takes (A42): the
+foundation (this), one header on every screen, the art layer, the voice,
+polish. The order is by layer, app-wide, because a header converted mode
+by mode would leave the app less uniform in between; inside each take
+Prep & Play comes first, then Hunt, then Collect (the owner's order).
+
+### The owner's rulings for the series (24 Sept, this session)
+
+- Art: official and card art are welcome, "Hot-Linked Card Art, Bold";
+  "We should not be making our own images from scratch". Applied at the
+  art take with the record corrected first (landmines 26, 28), not here.
+- The three palettes stay: "I like the different themes for different
+  modes." Uniformity is the complaint, not colour.
+- Priority: Prep & Play, then Hunt, then Collect, then overall
+  uniformity. The Fold's inner layout: "not really a priority" (later).
+- D17: **Collection** replaces Portfolio (applied at the voice take).
+  A37: the same gear to More on every main screen, in all three modes.
+- The pick from the preview page (three headers mocked in the app's own
+  fonts and palettes): C on Decks (the Leader's art blurred behind the
+  crisp card, the title in A's slot), A's art banner on Sealed, A's
+  compact bar with a back arrow one level down, no banner on Collect's
+  Home ("that art is going to look bad, weird, stretched"), and the blur
+  always the colour of the card being looked at.
+
+### Measured first
+
+- **This VM cannot ingest:** `tcgcsv.com` answers "Tunnel connection
+  failed: 403" (PROVEN, `pipeline.py ingest`). The release assets host
+  answers, and the take-104 APK carries the built `www/`; for this
+  session's local runs that `www/` is the catalogue (7,661 printings) and
+  `src/app.html` is assembled over it the way `build_app.py` does. Every
+  local number below is on that catalogue; **the runner's `check` (a full
+  fresh ingest) is the seal.** Baseline on untouched take-104 code: smoke
+  697/697; render 104/106 in Chrome — the CDN thumbnail (every VM), and
+  the Hunt knob measured at 350 ms while the Sealed repaint was still
+  holding its 220 ms slide (MEASURED: at 600 ms it sits 1 px off centre).
+- **An audit of the app** (four read-throughs, line numbers in
+  `docs/UI-AUDIT.md`): 28 font sizes from 9 to 46 px, 25 rules under
+  12 px, 14 radii, 299 inline styles, about 20 raw colours beside the
+  tokens; no shared header (13 screens use the tab style, 7 open with
+  something else); emoji mixed with the glyph set; no pressed or disabled
+  state anywhere; 44 px missed by the Play steppers (34), deck +/- (28)
+  and the search-bar buttons (about 15 x 22).
+- **Contrast, computed per palette (WCAG):** Prep & Play's accent
+  `#E0553D` is 4.25:1 on its card and 3.79 on card2 — it colours 16 px
+  panel titles, links and chips; its knob label `#F1EFE6` on the accent
+  is 3.29 and its nav label 3.25; `--brass2` as text (the Portfolio
+  caption, 11 px) is 2.68 to 4.40 by mode; Collect's `--dim2` on card2 is
+  4.07. Everything else clears 4.5.
+- **Two icons draw nothing:** the skull left the sprite at take 63 (the
+  owner's ask), but the empty collection (`G('roger', 64)`) and the
+  Banish keyword (`KW_GLYPH`) build that id at runtime; smoke's take-63
+  check greps for the literal and passes (landmine 142).
+- The deck chart is brass in red mode (both canvases hard-code Collect's
+  colours); `.range` is defined twice and the filter sheet's price inputs
+  inherit 14 px (landmine 119's zoom); the toast (z 50) is hidden under
+  the tour and the curtains (z 60); `.empty::before` stacks an invisible
+  64 px block over every empty state; the splash's glow and text follow
+  the mode while its ground is Collect's.
+
+### This take changes
+
+- `:root` carries the tokens every later take uses: type roles
+  (`--fs-*`, 12 to 44), spacing (`--sp-*`, 4 to 32), radii, icon and
+  thumbnail sizes, motion durations and a z scale; and semantic colours
+  per palette — `--on-accent`, `--accent-ink` (the accent as text:
+  Collect and Hunt keep their brass; Prep & Play `#E5705C`, 5.22 on its
+  card, 4.66 on card2; the red fill stays `#E0553D`), `--line-strong`,
+  `--accent-bg`, `--warn-bg`, `--ok-bg`, `--bad-bg`, `--scrim`. Collect's
+  `--dim2` moves to `#9D8E74` (4.58 on card2).
+- Accent text reads `--accent-ink`; fills and borders keep the accent.
+  The knob's label is `--on-accent` in every mode. Captions stop using
+  `--brass2`. No text is under 12 px. The raw colours become tokens and
+  follow the mode; the charts read the palette from the page.
+- The slider's buttons are equal thirds under the knob; `.range` is one
+  rule (the price inputs are 16 px again); the toast sits above the
+  curtains; the ghost block is gone; the splash is wholly Collect's.
+- The empty collection shows the scan card it tells you to use; Banish
+  borrows no missing glyph.
+- Guards, each watched to fail on the take-104 build first: every glyph
+  a call names exists in the sprite; no font size under 12 px in the
+  shipped app; the contrast check covers `--accent-ink`, `--on-accent`
+  and card2; the knob check waits for the slide to end.
+
+### Built
+
+- `src/app.html`: the tokens in `:root` and per palette as planned;
+  every accent used as text or icon reads `--accent-ink` (headings,
+  panel titles, links, chips, badges, the nav's active item, the
+  steppers' glyphs, the total), fills and focus keep `--brass`; the
+  knob's and the primary buttons' label is `--on-accent`; 25 CSS rules
+  and 8 inline sizes under 12 px are at 12 or a `--fs-*` token (the
+  picture labels are `max(12, w/4)`); 20 raw colours are tokens or
+  palette mixes (the selected tint, the warnings, legal/illegal, the
+  scrims, the neutral surfaces, the tracks); Prep & Play's `--brass2`
+  moves to `#B64731` (3.02:1 on its card; the selected chip's edge was
+  2.41); form fields take `--line-strong`; the deck curve's bars are a
+  tint of the accent; `TOK()` hands a canvas the page's palette and both
+  charts use it (Collect's literals when there is no browser); the
+  slider is a grid of three equal columns as wide as its widest label,
+  one rule, labels that never wrap; `.frange` is the filter's price row
+  at 16 px; the toast sits at z 70 over the curtains (60); the ghost
+  block is gone; the splash's glow and text are literals; one
+  reduced-motion rule for every transition, and the tour's scroll
+  honours it; the empty collection draws `g-scancard`; `KW_GLYPH` names
+  no glyph for Banish.
+- Fields: every text field's edge is `--line-strong` in the one field
+  rule (a second rule placed after the focus rule would have outranked
+  the brass focus edge, found on re-reading the diff); the filter's price
+  boxes get their own focus rule (the take-104 `.range input` rule had
+  the same order problem); the ask sheet's text box drops its inline
+  border and colours for the field rule and moves from 13.5 to 16 px
+  (landmine 119's zoom); the search pills take `--line-strong` too.
+- `tools/smoke.mjs`: three take-60-to-86 assertions follow the tokens
+  (headings, the caption, the nav) with the same intent; a take-106
+  section of 36: every glyph a call names resolves in the sprite, and
+  every computed name comes from a form the check reads; no font size
+  under 12 px in the CSS, the markup or the templates; the type scale;
+  per palette the accent as text on card and card2, the label on the
+  accent, the text tokens on card2, the selected text on its tint, a
+  control's edge at 3:1; the slider, the price row, the toast, the
+  ghost block, reduced motion, the charts, the splash, the empty
+  collection's picture. `tools/render.mjs`: the Hunt knob is measured
+  after its slide ends (`transitionend`, 2 s cap), landmine 143.
+  `tools/look/steps.mjs`: take 106's seven steps.
+
+### Tests (local, on the take-104 release catalogue; the runner's `check` is the seal)
+
+- Smoke 733/733 (36 new). **Watched to fail first:** the same smoke
+  run over the take-104 source assembled on the same catalogue fails
+  32 — 29 of the new take-106 assertions (only their synthetic
+  controls pass) and the three older ones rewritten to the tokens.
+- Render 105/106 in Chrome — the CDN thumbnail, as on every VM. The
+  knob check passes where it failed on untouched take-104 code, and
+  still fails (offset -101 px) when the Hunt knob is moved one column
+  in the built page: the control for the timing fix.
+- **The look, take 106: 7 of 7 at both viewports**, every PNG read:
+  Prep & Play's rules title in `#E5705C` and its knob label `#1A1408`,
+  the knob centred (offset 0); a copy of a ready-made deck, its curve
+  bars a visible tint of the red and its value chart drawn in red;
+  Sealed's selected chip gold on Hunt's own tint, the knob 1 px off
+  centre; the empty collection's scan card; the filter's price boxes at
+  16 px; OP01's checklist, smallest text 12 px; Home's nav and caption
+  at 12 px, the caption in `--dim`.
+
+### What I got wrong, and the look caught
+
+- Equal flex thirds squeezed "Prep & Play" (106 px of text into 99)
+  onto two lines inside the knob, in every mode. Smoke passed; only the
+  pictures showed it. The fix is the grid, sized by the widest label;
+  the assertion now pins the grid and the no-wrap.
+- The first look step for the empty collection pictured the knob in
+  mid-slide, the same trap as landmine 143; the step now waits for the
+  slide to end.
+- The plan said the missing skull glyph would be added back. The sprite
+  lost it at the owner's ask (take 63), so the calls moved instead.
+- Seen and left for the header take: Home's "Got it" wraps to two
+  lines beside the long release note; a blanket no-wrap on buttons
+  would push Play's sentence-long labels off the screen, which the
+  voice take shortens first.
+
+### Ruled out
+
+- Putting the skull back: the owner removed it at take 63.
+- Changing a palette's character, or the fonts (D16 open).
+- Headers, icons, art and copy in this take: they are the next four,
+  and the header waits on nothing now that the owner has picked.
+
+### DEFERRED this cycle
+
+- One header on every screen with back and the More gear (U2); the art
+  layer with the record's art policy corrected first (U3); the voice,
+  D17 applied (U4); polish (U5). `deckCover`'s 7 px name inside its SVG
+  goes with the covers at U3 (the Leader's art replaces the drawing).
+- The Fold's inner layout (the owner: later).
 
 ## Take 105 — 2026-09-24 — the Fold's first run of the shrunk build: A14 PROVEN; Back from a card on a fresh launch minimized the app (the boot never pushed Home); the notifications permission came back undefined (R8 stripped the plugin's permission annotation); the guide's flag came back with the restored data
 
