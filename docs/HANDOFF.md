@@ -1,4 +1,32 @@
-# HANDOFF — through Take 113
+# HANDOFF — through Take 114
+
+## Take 114 — 2026-09-24 — A32's distributor state timeline, from the history rows
+
+Opened before any code (PROTOCOL §6). Take 113 merged as PR #37 at 19:43
+UTC. Release take-113 was decoded after the merge; its note is under take
+113. The owner's Fold check of the icon is still open.
+
+The owner, word for word: "Start take 114 with A32's distributor timeline
+how many takes left until the UI overhaul is complete, what's left?"
+
+- **The UI overhaul:** none left. A42, the UI series, closed when take 111
+  merged. Its seven layers shipped at takes 106 to 110, and take 111 was
+  the last look.
+  - The UI-AUDIT boxes still open are the binder page on the open Fold and
+    three words-and-rows items in §8. They belong to the UI/UX session.
+  - The inner screen's width stays INFERRED until the owner's Diagnostics
+    `viewport` line from the open Fold arrives.
+  - Refinement from here is the owner's call, take by take.
+
+### Measured before any code
+
+- **The live history on Pages** (fetched 20:02 UTC): 48 runs from 17 Sept
+  02:02 to 24 Sept 19:08 UTC. That is 7.7 days, so not hourly.
+  - GTS states are in 8 runs, since 23 Sept 06:58.
+  - Southern Hobby's are in 1 run, the 19:08 run on 24 Sept.
+  - A row keys each distributor item by its own id: GTS's SKU, Southern
+    Hobby's item number.
+  - The rows are kept for a fortnight.
 
 ## Take 113 — 2026-09-24 — the owner's icon (D7), folded in from the graphic design session's branch
 
