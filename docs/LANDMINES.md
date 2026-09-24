@@ -2306,7 +2306,11 @@ landed after the check's first await and replaced the fixture. Second,
 replacing "feed" in the out name, so a name without "feed" wrote the history
 over the feed without a word. Rule: set the fixture in the same tick as the
 paint and read it before the next await. `hunt.py` now refuses an `--out`
-without "feed".
+without "feed". The runner showed a third reason the VM cannot: it reaches
+Pages. A sync started by an earlier check landed mid-tap, repainted Sealed
+and swapped in the served feed ("No element found" at a line just marked).
+The second part of the rule: render and the look turn the page's own Hunt
+syncs off, since every Hunt check brings its own fixture.
 
 **167. The unit is part of a product's identity.** Southern Hobby sells IB-09
 and IB-10 as CASEs. The matcher took an IB-08 case for the single

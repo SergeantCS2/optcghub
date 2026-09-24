@@ -48,6 +48,11 @@ if (puppeteer) {
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   await page.goto('file://' + W('index.html'), { waitUntil: 'networkidle0' });
   await new Promise(r => setTimeout(r, 400));
+  /* Take 112, landmine 166: the runner reaches Pages. Entering Sealed with no fresh feed syncs the SERVED feed, which
+     lands seconds later, replaces a check's fixture and repaints mid-tap -- take 112's first check on the runner died
+     on it ("No element found" at a line it had just marked); the VM never reaches Pages, so it never showed there.
+     Every Hunt check here brings its own fixture, so the page's own Hunt syncs are off, as in the look. */
+  await page.evaluate(() => { const V = window.VAULT; V.HUNT.sync = async () => false; V.HUNT.syncHistory = async () => false; });
 
   sec('real engine (Chrome)');
   ok('no page errors', errors.length === 0, errors.slice(0, 2).join(' | '));

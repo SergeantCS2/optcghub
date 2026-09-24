@@ -190,6 +190,14 @@ closed drop-down for the long text.
 - One smoke assertion was `A && B && C || D`.
 - My first real taps in render did nothing: the zip question, the splash and
   the fixed nav took them (landmine 169).
+- The runner's check on `c164a12` failed where every VM run passed. Render
+  stopped with "No element found" at a distributor line it had just marked.
+  - The cause: the runner reaches Pages. A sync that the take-111 check
+    started by entering Hunt with no feed landed mid-tap. It repainted
+    Sealed and swapped in the served feed, which has no Southern Hobby yet.
+  - Reproduced in the VM with a sync landed on demand: the same error.
+  - Fixed by turning the page's own Hunt syncs off in render, as the look
+    already did. The same probe then clicks (landmine 166).
 - Two of the day controls could not fail. At 360 px the lines wrap before the
   day, and a 3.5em column still held "May 17" (42 px of 43.75). The rule of
   landmine 164 again: the control is now a 1 px column.
