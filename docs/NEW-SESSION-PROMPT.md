@@ -129,8 +129,11 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
     (UI-AUDIT §8).
   - A32's next is the distributor state timeline from the history rows.
 
-- **Take 113 (in flight) -- the owner's icon (D7), from the graphic design
-  session:**
+- **Take 113 (merged as PR #37; Release take-113) -- the owner's icon (D7),
+  from the graphic design session:**
+  - After the merge, the APK was decoded (HANDOFF take 113, "After the
+    merge"). The glyph is in it, and there is no themed layer. The owner's
+    Fold check is still open.
   - Its branch is merged (`…/compassionate-mayer-acc24r`; the icon commit
     `93481b3`). `design/d7-icons/SHIP.md` is the hand-off: what changes, what
     was verified, what only the runner and the Fold can show.

@@ -181,10 +181,49 @@ like them. I just want the one standard icon. Continue".
 ### DEFERRED this cycle
 
 - **The APK decode and the owner's Fold check** above, after Release
-  take-113.
+  take-113. (The decode was done after the merge, below. The Fold check is
+  the owner's.)
 - **A favicon and a manifest icon for Pages from `assets/icon.svg`.** That
   is the UI session's call.
 - **A32's next:** the distributor state timeline.
+
+### After the merge
+
+The owner merged PR #37 at 19:43:10 UTC. build.yml run 62 on the merge
+commit 95b47e4 did the following:
+- gated the app (GATE PASSED, take 113);
+- deployed Pages at 19:47;
+- published Release take-113 at 19:52:42, its body headed "take 113": the
+  APK, 26,955,922 bytes; the AAB, 20,137,454; the mapping, 51,817,124.
+
+The icon step's first real run printed "launcher icon: legacy, round and
+adaptive (background, foreground; no themed layer) at 5 densities … the
+reminders' glyph drawable/ic_stat_don, kept" and "splash screens rendered
+(11)".
+
+- **The APK, decoded (landmine 78),** with aapt2 2.20 fetched to the
+  session VM. Take 112's APK is the control: it fails with 4 problems (no
+  status glyph, no background layer).
+  - `drawable/ic_stat_don` is in the resource table at all five densities.
+    Each is a white glyph on transparent (140 of 576 pixels inked at mdpi).
+  - `mipmap/ic_launcher_monochrome` is absent. Both launcher XMLs carry the
+    background and foreground layers, and no `<monochrome>`.
+  - The manifest's icon and round icon point at `mipmap/ic_launcher` and
+    `mipmap/ic_launcher_round`.
+  - 36 pictures were compared with what `ci/icon.py` writes on the session
+    VM from the same template: the launcher layers, the legacy and round
+    icons, the glyph and the 11 splashes.
+    - 26 are identical, pixel for pixel.
+    - The 10 legacy and round icons differ only in the hidden colour of 1
+      to 11 fully transparent pixels each, which AAPT2's crunch rewrites.
+      Their alpha and every visible colour are identical.
+- **The size:** the APK is 501,240 bytes bigger than take 112's. The splash
+  files grew by 282,682 and the launcher icons with the glyph by 216,368:
+  the new icon's detailed art. Everything else changed by less than 2 KB.
+- **Still the owner's, on the Fold:** the launcher on both screens, the
+  splash, and a release reminder's status-bar glyph (ドン!!, not ⓘ).
+
+This note rides take 114's pull request.
 
 ## Take 112 — 2026-09-24 — A32's second distributor: Southern Hobby, read off its real pages
 

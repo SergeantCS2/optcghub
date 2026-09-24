@@ -41,7 +41,9 @@ the "about four more" takes named overnight. Refinement after it is the
 owner's call, take by take.
 
 **Mine, in order**
-1. **Take 113 -- the owner's icon (D7)** (in flight): the graphic design
+1. **Take 113 -- the owner's icon (D7)** (merged as PR #37; Release
+   take-113, its APK decoded after the merge; the owner's Fold check is
+   open): the graphic design
    session's branch merged (`…/compassionate-mayer-acc24r`, the icon
    commit `93481b3`, its hand-off `design/d7-icons/SHIP.md`).
    - The emblem is the owner's reversal of landmines 30 and 31 and A16, for
