@@ -182,6 +182,7 @@ Start here. Do not read top to bottom.
 | A new product's page shows an empty white card | **168** |
 | A render check's real tap does nothing | **169** |
 | A reminder shows the phone's info icon, not the app's | **170** |
+| A look's picture of a phone setting reads as a design to choose | **171** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -440,7 +441,8 @@ package name and the developer identity. Landmines 26–30 are the mitigation.
 Do not monetise; a free non-commercial app is a materially different posture.
 *(Take 113: for the icon's emblem, this risk is the owner's, accepted at the
 owner's word; Play's approval is not the rights holder's consent. The own-rose swap
-in `design/d7-icons/SHIP.md` is the fallback: five SVGs and the Play icon.)*
+in `design/d7-icons/SHIP.md` is the fallback: four SVGs (one standard icon,
+no themed layer) and the Play icon.)*
 
 **32. Do not scrape TCGplayer.** Their terms discourage it, the site renders
 prices client-side so naive requests return nothing useful, Cloudflare will win
@@ -1200,11 +1202,13 @@ nothing; `cap add android` ships Capacitor's own icon and splash. The icon is
 now rendered from the committed SVG at build time in `ci/apk.sh` — mipmaps for
 five densities, a round variant, and the adaptive foreground — and PNGs are
 never committed, so replacing the icon is replacing one file (A16). *(Take
-113: `ci/icon.py` renders five layers -- the adaptive background and
-foreground, a monochrome layer for themed icons, the legacy and round icons,
-and the reminders' drawable -- so replacing the icon is replacing five files,
-and its checks refuse a layer Android would cut or tint wrong. Its first real
-run is the Release build: decode the APK, never trust a name.)*
+113: `ci/icon.py` renders from four files -- the master (the legacy and
+round icons, the splash, the Play icon), the adaptive background and
+foreground, and the reminders' drawable -- so replacing the icon is
+replacing four files. It writes no monochrome layer, at the owner's word ("I
+just want the one standard icon", landmine 171). Its checks refuse a layer
+Android would cut, and refuse a themed layer anywhere in the res tree. Its
+first real run is the Release build: decode the APK, never trust a name.)*
 
 Verifying it was in the APK took three attempts, each a lesson: resource names
 are obfuscated in release builds so `grep mipmap` finds nothing; a colour
@@ -2363,6 +2367,24 @@ on the Fold. A resource named only in the web layer is invisible both to
 the plugin's lookup and to the resource shrinker. Rule: ship it as a
 drawable and keep it (`raw/keep.xml`). Test the name the app asks for
 against the name the build writes (`ci/icon.py --selftest`, in the gate).
+
+**171. A picture of a phone setting read as a design the owner was asked to
+take.** Take 113's look drew the hand-off's monochrome layer as a phone with
+themed icons switched on tints it. It showed two tiles, labelled only
+"themed, dark" and "themed, light", in this session's stand-in colours. The
+owner read them as two themes: "I'm confused by the dark and light themes,
+nor do I really like them. I just want the one standard icon." The layer had
+come in unasked: the design hand-off offered a themed variant, and the
+session carried it into the plan without asking whether the owner wanted
+one.
+
+Rule:
+- A look shows what the collector sees, labelled in the collector's words.
+- A picture that depends on a phone setting says so, or is not sent.
+- A variant the owner did not pick is a question put to them before it
+  ships. It is not a default that rides in with a hand-off.
+
+`ci/icon.py` now refuses a themed layer.
 
 ## §2 — Inherited from APEX ORV
 

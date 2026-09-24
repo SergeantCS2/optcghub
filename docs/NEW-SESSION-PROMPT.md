@@ -27,7 +27,7 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
 4. Read `docs/HANDOFF.md`, newest entry first, back to take 80 at least. Every
    take ends with a DEFERRED list; the union of those lists is the work.
 5. Read `docs/LANDMINES.md` §0 (the index) and skim §1. When you are about to
-   do something, grep the index first. 170 of them; each is a real failure.
+   do something, grep the index first. 171 of them; each is a real failure.
 6. Read `docs/AGENDA.md`: the Priorities block at the top is the live order.
 
 **The discipline, which the gate enforces:**
@@ -136,6 +136,9 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
     was verified, what only the runner and the Fold can show.
   - The emblem is the owner's reversal of landmines 30 and 31 and A16, for
     the icon's emblem only. The own-rose swap in SHIP.md is the fallback.
+  - One standard icon, at the owner's word ("I just want the one standard
+    icon"). There is no themed (monochrome) layer, and `ci/icon.py` refuses
+    one (landmine 171).
   - `ci/icon.py --selftest` runs in the gate. After the Release, decode the
     APK's icon files (landmine 78); the owner checks the Fold. Landmine 170
     is the reminders' icon.
@@ -211,12 +214,13 @@ same take — the workflow files included, through the PR.
 hot-linked, display-only, and never drawn from scratch (landmines 26, 28;
 the owner's ruling at A42); put a character or a publisher mark in the
 app's name, icon, splash or store listing (landmines 30, 31; A16) -- the one
-exception is the icon card's printed emblem, the owner's pick at take 113; gate
-scanning (A17); multiply condition into a price (PROTOCOL §10);
+exception is the icon card's printed emblem, the owner's pick at take 113; give
+the icon a themed (monochrome) variant -- the owner wants the one standard
+icon (take 113, landmine 171); gate scanning (A17); multiply condition into a price (PROTOCOL §10);
 send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 112" and begin with PROTOCOL §0.
+Say "take 114" and begin with PROTOCOL §0.
 
 ---

@@ -133,9 +133,10 @@ echo "::endgroup::"
 echo "::group::launcher icon"
 # The icon is the committed SVGs rendered at build time; PNGs are never
 # committed (A16). ci/icon.py writes the legacy, round and adaptive launcher
-# icons (background, foreground and a monochrome layer for themed icons), the
-# reminders' status-bar glyph with its keep rule, the splash and the Play icon,
-# then checks every one; its controls run under the gate. Capacitor's default
+# icons (background and foreground: one standard icon, no themed layer, the
+# owner's word at take 113), the reminders' status-bar glyph with its keep
+# rule, the splash and the Play icon, then checks every one; its controls run
+# under the gate. Capacitor's default
 # icon shipped in the take-14 test APK until this step existed -- landmine 78.
 # The drawn 1024x500 feature graphic is retired: the listing's banner is built
 # in design/play-listing and uploaded by hand (D7).

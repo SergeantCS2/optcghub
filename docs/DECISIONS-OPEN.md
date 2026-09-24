@@ -32,7 +32,7 @@ makes a native Capacitor plugin a realistic fallback if A2 fails.
 
 *Added take 12.*
 
-**D7 — Icon and splash motif.** *Take 113: answered. The owner's pick ships: v4, bottom waves, the printed card-back emblem on the purple-bordered card, ink ドン!!. It is `assets/icon*.svg`, rendered by `ci/icon.py`, and live on Play; the emblem is the owner's reversal of landmines 30 and 31 and A16, for the icon's emblem only. The rose version is the ready swap (`design/d7-icons/SHIP.md`).* *Take 33: reverted to the take-16 compass placeholder at the owner's ask; the jolly roger is kept as `assets/icon-jollyroger.svg`. The motif question stays open.* `assets/icon-placeholder.svg` is a compass rose
+**D7 — Icon and splash motif.** *Take 113: answered. The owner's pick ships: v4, bottom waves, the printed card-back emblem on the purple-bordered card, ink ドン!!. It is `assets/icon*.svg`, rendered by `ci/icon.py`, and live on Play; the emblem is the owner's reversal of landmines 30 and 31 and A16, for the icon's emblem only. The rose version is the ready swap (`design/d7-icons/SHIP.md`). One standard icon, no themed variant, at the owner's word: "I just want the one standard icon" (landmine 171).* *Take 33: reverted to the take-16 compass placeholder at the owner's ask; the jolly roger is kept as `assets/icon-jollyroger.svg`. The motif question stays open.* `assets/icon-placeholder.svg` is a compass rose
 behind a card silhouette on the six-colour hexagon. Options that stay clear of
 landmine 30: a compass / log pose; a treasure chest with cards in it; a generic
 jolly roger (skull and crossed bones — *not* the Straw Hats' hat-wearing one); a

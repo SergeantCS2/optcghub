@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """The launcher icon, the reminders' status-bar glyph, the splash and the Play icon (D7), rendered from
-assets/icon*.svg at build time. PNGs are never committed: the five SVGs are the one source.
+assets/icon*.svg at build time. PNGs are never committed: the four SVGs are the one source.
 
     python3 ci/icon.py android/app/src/main/res [play-assets]   # every density into the res tree
     python3 ci/icon.py --selftest                               # the controls, on a template-shaped
@@ -10,11 +10,14 @@ assets/icon*.svg at build time. PNGs are never committed: the five SVGs are the 
                          masked, the legacy launcher icons (Android 7) and the splash
   assets/icon-bg.svg     the adaptive background, 108 dp
   assets/icon-fg.svg     the adaptive foreground, 108 dp, inside the 66 dp safe circle
-  assets/icon-mono.svg   the monochrome layer: Android 13's themed icons tint it
   assets/icon-stat.svg   the reminders' status-bar glyph, white on transparent
 
-Until D7 was answered, ci/apk.sh shrank one square onto a colour: no real layers, no monochrome, and a
-foreground rendered at two-thirds of its density. The reminders asked for `ic_launcher`, but
+One standard icon, and no themed variant: the owner, at take 113, on the sheet that showed the hand-off's
+monochrome layer tinted as a phone with themed icons draws it -- "I just want the one standard icon".
+So the adaptive icon has no <monochrome>, and check() refuses one anywhere in the res tree.
+
+Until D7 was answered, ci/apk.sh shrank one square onto a colour: no real layers, and a foreground
+rendered at two-thirds of its density. The reminders asked for `ic_launcher`, but
 @capacitor/local-notifications 8.3.1 resolves smallIcon among drawables only
 (LocalNotification.resolveSmallIcon), found nothing, and fell back to android.R.drawable.ic_dialog_info.
 The glyph ships as drawable/ic_stat_don, and raw/keep.xml keeps it: shrinkResources is on
@@ -27,21 +30,20 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSETS = os.path.join(ROOT, "assets")
 DENSITY = {"mdpi": 1, "hdpi": 1.5, "xhdpi": 2, "xxhdpi": 3, "xxxhdpi": 4}
 LEGACY_DP, ADAPTIVE_DP, STAT_DP = 48, 108, 24
-SAFE_DP = 33.5           # the 66 dp safe circle's radius, plus half a dp of antialiasing (measured: fg 31.6, mono 32.2)
+SAFE_DP = 33.5           # the 66 dp safe circle's radius, plus half a dp of antialiasing (measured: fg 31.6)
 RADIUS = 112 / 512       # the legacy icon's corner, as the take-12 placeholder drew it
 SPLASH_BG = (11, 22, 34)
 ADAPTIVE_XML = """<?xml version="1.0" encoding="utf-8"?>
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@mipmap/ic_launcher_background"/>
     <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
-    <monochrome android:drawable="@mipmap/ic_launcher_monochrome"/>
 </adaptive-icon>
 """
 KEEP_XML = """<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools"
     tools:keep="@drawable/ic_stat_don" />
 """
-LAYERS = ("background", "foreground", "monochrome")
+LAYERS = ("background", "foreground")
 
 
 def px(dp, d):
@@ -71,9 +73,9 @@ def masked(img, shape):
 def write(res, play=None, assets=ASSETS, splash_bg=None):
     """Render every icon into the Android res tree (and the Play icon into `play`); -> what it wrote."""
     from PIL import Image
-    svg = {k: os.path.join(assets, f"icon{k}.svg") for k in ("", "-bg", "-fg", "-mono", "-stat")}
+    svg = {k: os.path.join(assets, f"icon{k}.svg") for k in ("", "-bg", "-fg", "-stat")}
     for p in svg.values():
-        assert os.path.exists(p), f"{p} is missing: the icon has five layers"
+        assert os.path.exists(p), f"{p} is missing: the icon has four files"
     master = render(svg[""], 1024)
     square, circle = masked(master, "square"), masked(master, "circle")
     for d in DENSITY:
@@ -82,7 +84,7 @@ def write(res, play=None, assets=ASSETS, splash_bg=None):
         s = px(LEGACY_DP, d)
         square.resize((s, s), Image.LANCZOS).save(os.path.join(mm, "ic_launcher.png"))
         circle.resize((s, s), Image.LANCZOS).save(os.path.join(mm, "ic_launcher_round.png"))
-        for layer, k in zip(LAYERS, ("-bg", "-fg", "-mono")):
+        for layer, k in zip(LAYERS, ("-bg", "-fg")):
             render(svg[k], px(ADAPTIVE_DP, d)).save(os.path.join(mm, f"ic_launcher_{layer}.png"))
         render(svg["-stat"], px(STAT_DP, d)).save(os.path.join(dr, "ic_stat_don.png"))
     v26 = os.path.join(res, "mipmap-anydpi-v26"); os.makedirs(v26, exist_ok=True)
@@ -152,18 +154,12 @@ def check(res, play=None):
         bg = load(os.path.join(mm, "ic_launcher_background.png"), px(ADAPTIVE_DP, d))
         if bg is not None and bg.getchannel("A").getextrema()[0] < 255:
             bad.append(f"mipmap-{d}/ic_launcher_background.png: has holes (the wallpaper would show through)")
-        for layer in ("foreground", "monochrome"):
-            im = load(os.path.join(mm, f"ic_launcher_{layer}.png"), px(ADAPTIVE_DP, d))
-            if im is None:
-                continue
-            if im.getchannel("A").getextrema()[1] == 0:
-                bad.append(f"mipmap-{d}/ic_launcher_{layer}.png: empty")
-            elif (r := reach_dp(im)) > SAFE_DP:
-                bad.append(f"mipmap-{d}/ic_launcher_{layer}.png: reaches {r:.1f} dp from the centre, past the 66 dp safe circle (the mask cuts it)")
-            if layer == "monochrome":
-                inks = {p[:3] for p in pixels(im) if p[3] > 128}
-                if len(inks) > 1:
-                    bad.append(f"mipmap-{d}/ic_launcher_monochrome.png: {len(inks)} colours, not one (the system tints its alpha)")
+        fg = load(os.path.join(mm, "ic_launcher_foreground.png"), px(ADAPTIVE_DP, d))
+        if fg is not None:
+            if fg.getchannel("A").getextrema()[1] == 0:
+                bad.append(f"mipmap-{d}/ic_launcher_foreground.png: empty")
+            elif (r := reach_dp(fg)) > SAFE_DP:
+                bad.append(f"mipmap-{d}/ic_launcher_foreground.png: reaches {r:.1f} dp from the centre, past the 66 dp safe circle (the mask cuts it)")
         st = load(os.path.join(dr, "ic_stat_don.png"), px(STAT_DP, d))
         if st is not None:
             ink = [p for p in pixels(st) if p[3] > 32]
@@ -177,6 +173,16 @@ def check(res, play=None):
         for layer in LAYERS:
             if f'<{layer} android:drawable="@mipmap/ic_launcher_{layer}"/>' not in x:
                 bad.append(f"mipmap-anydpi-v26/{name}: no <{layer}> on @mipmap/ic_launcher_{layer}")
+    # the owner's word (take 113): one standard icon, so no themed layer for a phone to recolour --
+    # not as a picture in any density, not as a line in any launcher XML, wherever it is put
+    for dp_, dirs, fs in os.walk(res):
+        dirs.sort()
+        for f in sorted(fs):
+            p = os.path.join(dp_, f)
+            if f.startswith("ic_launcher_monochrome"):
+                bad.append(f"{os.path.relpath(p, res)}: a themed (monochrome) layer; the owner wants the one standard icon (take 113)")
+            elif f.endswith(".xml") and "<monochrome" in open(p, encoding="utf8", errors="replace").read():
+                bad.append(f"{os.path.relpath(p, res)}: carries <monochrome>, a themed variant; the owner wants the one standard icon (take 113)")
     p = os.path.join(res, "raw", "keep.xml")
     if not (os.path.exists(p) and "@drawable/ic_stat_don" in open(p).read()):
         bad.append("raw/keep.xml: does not keep @drawable/ic_stat_don (shrinkResources would drop it)")
@@ -252,7 +258,7 @@ def selftest():
             make(res)
             before = check(res, play)
             verdict(f"{label}: control: the template's own icons, before this step, are refused ({len(before)} problems)",
-                    any("no <monochrome>" in p for p in before) and any("keep.xml" in p for p in before))
+                    any("no <background>" in p for p in before) and any("keep.xml" in p for p in before))
             got = write(res, play)
             probs = check(res, play)
             verdict(f"{label}: after the step, every icon passes" + (f" -- {probs[:3]}" if probs else ""), not probs)
@@ -282,16 +288,23 @@ def selftest():
             return m
         refused("the take-16 compass placeholder as the foreground (the whole square)", res, play,
                 with_layer(old, "ic_launcher_foreground", ADAPTIVE_DP), "past the 66 dp safe circle")
-        refused("the full-colour master as the monochrome layer", res, play,
-                with_layer(os.path.join(ASSETS, "icon.svg"), "ic_launcher_monochrome", ADAPTIVE_DP), "past the 66 dp safe circle")
-        refused("a monochrome layer in more than one colour", res, play,
-                with_layer(os.path.join(ASSETS, "icon-fg.svg"), "ic_launcher_monochrome", ADAPTIVE_DP), "not one")
+        # the owner's word (take 113): one standard icon -- the hand-off's themed layer, put back three ways
+        themed = ADAPTIVE_XML.replace("</adaptive-icon>", '    <monochrome android:drawable="@mipmap/ic_launcher_monochrome"/>\n</adaptive-icon>')
+        def xml_at(sub):
+            def m(r2, p2):
+                os.makedirs(os.path.join(r2, sub), exist_ok=True)
+                open(os.path.join(r2, sub, "ic_launcher.xml"), "w").write(themed)
+            return m
+        refused("a monochrome layer back in the res tree (a themed variant)", res, play,
+                with_layer(os.path.join(ASSETS, "icon-fg.svg"), "ic_launcher_monochrome", ADAPTIVE_DP), "a themed (monochrome) layer")
+        refused("the hand-off's launcher XML, with its <monochrome> line", res, play, xml_at("mipmap-anydpi-v26"), "carries <monochrome>")
+        refused("a <monochrome> line in a launcher XML check() never names (mipmap-anydpi-v33)", res, play, xml_at("mipmap-anydpi-v33"), "carries <monochrome>")
         refused("the coloured foreground as the status-bar glyph", res, play,
                 with_layer(os.path.join(ASSETS, "icon-fg.svg"), "ic_stat_don", STAT_DP), "not white on transparent")
         refused("a filled square as the status-bar glyph", res, play,
                 lambda r2, p2: Image.new("RGBA", (24, 24), (255, 255, 255, 255)).save(os.path.join(r2, "drawable-mdpi", "ic_stat_don.png")), "a filled square")
-        refused("the template's adaptive XML (no monochrome, the background a colour)", res, play,
-                lambda r2, p2: open(os.path.join(r2, "mipmap-anydpi-v26", "ic_launcher_round.xml"), "w").write(TEMPLATE_XML), "no <monochrome>")
+        refused("the template's adaptive XML (the background a colour)", res, play,
+                lambda r2, p2: open(os.path.join(r2, "mipmap-anydpi-v26", "ic_launcher_round.xml"), "w").write(TEMPLATE_XML), "no <background>")
         refused("a build without raw/keep.xml", res, play,
                 lambda r2, p2: os.remove(os.path.join(r2, "raw", "keep.xml")), "keep.xml")
         refused("a background layer with a hole", res, play,
@@ -319,7 +332,7 @@ if __name__ == "__main__":
     for p_ in probs:
         print("  " + p_)
     assert not probs, "the icon did not land (D7)"
-    print(f"  launcher icon: legacy, round and adaptive (background, foreground, monochrome) at {len(DENSITY)} densities, "
+    print(f"  launcher icon: legacy, round and adaptive (background, foreground; no themed layer) at {len(DENSITY)} densities, "
           f"from assets/icon*.svg; the reminders' glyph drawable/ic_stat_don, kept")
     print(f"  splash screens rendered ({got['splashes']})" + (" over assets/user/splash-bg.jpg" if got["splash_over"] else " on the app background"))
     if play:

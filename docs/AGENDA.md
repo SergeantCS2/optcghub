@@ -46,11 +46,14 @@ owner's call, take by take.
    commit `93481b3`, its hand-off `design/d7-icons/SHIP.md`).
    - The emblem is the owner's reversal of landmines 30 and 31 and A16, for
      the icon's emblem only, and the own-rose swap is the fallback.
+   - One standard icon, at the owner's word: "I just want the one standard
+     icon". There is no themed (monochrome) layer, and `ci/icon.py`
+     refuses one (landmine 171).
    - Vetted with the gate, smoke, render and `python3 ci/icon.py
      --selftest`.
    - After its Release: decode the APK's icon files (landmine 78). The owner
-     checks the launcher, themed icons, the splash and a reminder's
-     status-bar icon on the Fold.
+     checks the launcher, the splash and a reminder's status-bar icon on the
+     Fold.
 2. **A32** -- take 112 merged (Southern Hobby, and distributor info that
    never floods a row). Next:
    - the distributor state timeline from the history rows (GTS's since
@@ -2256,7 +2259,14 @@ ad, 1 free deck, +1 per ad. These live in `config.py` as constants, not in code.
 design session: v4, bottom waves, the printed card-back emblem on the
 purple-bordered card, and ink ドン!!. The owner uploaded it to Play, where it
 is live and approved, and asked for it in the app. `assets/icon*.svg` holds
-five layers, and `ci/icon.py` renders them with its controls in the gate.*
+four files, and `ci/icon.py` renders them with its controls in the gate.*
+- **One standard icon, no themed variant:** on the sheet of what the build
+  writes, the owner said: "I'm confused by the dark and light themes, nor
+  do I really like them. I just want the one standard icon."
+  - The hand-off's monochrome layer is out, and `ci/icon.py` refuses one
+    (landmine 171).
+  - The reminders' status-bar glyph stays: Android draws that icon in one
+    colour.
 - **The owner's ruling, recorded:** a reversal of landmines 30 and 31 and of
   the marks line below, for the icon's emblem only. The name, the listing
   text, characters and wordmarks are unchanged.

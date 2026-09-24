@@ -1,5 +1,13 @@
 # The owner's icon, ready for take 113
 
+*Take 113, at the owner's word: shipped without the monochrome layer. On the sheet of what the build
+writes, the owner said: "I'm confused by the dark and light themes, nor do I really like them. I just
+want the one standard icon."*
+- *`assets/icon-mono.svg` is not shipped, and `ci/icon.py` refuses a themed layer.*
+- *The fallback swap below copies four files.*
+- *The rest of this hand-off stands as written.*
+- *The record is `docs/HANDOFF.md`, take 113.*
+
 The owner's D7 pick is live on Play: its icon, feature graphic and eight screenshots are uploaded and
 approved. The pick is v4 with the bottom waves, Bandai's printed card-back emblem on the purple-bordered
 card, the green accent, and the ink ドン!!. The app on phones still shows the take-16 compass
@@ -86,7 +94,7 @@ first (landmine 31).
 and the monochrome 32.2 dp of the 33 dp safe zone.
 
 ```bash
-for s in "" -bg -fg -mono -stat; do cp design/d7-icons/v4/svg/own-purple$s.svg assets/icon$s.svg; done
+for s in "" -bg -fg -stat; do cp design/d7-icons/v4/svg/own-purple$s.svg assets/icon$s.svg; done   # no -mono: one standard icon (take 113)
 python3 ci/icon.py --selftest     # the same checks hold
 ```
 
