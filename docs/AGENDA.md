@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 112.* Ranked by blocking-ness, not by interest.
+*Current as of take 113.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -41,27 +41,27 @@ the "about four more" takes named overnight. Refinement after it is the
 owner's call, take by take.
 
 **Mine, in order**
-1. **A32** -- take 112 (in flight): Southern Hobby, the second
-   distributor, and at the owner's word distributor info that never
-   floods a row. Next, the distributor state timeline from the history
-   rows (GTS's since take 94, Southern Hobby's from this merge); the
-   restock pattern sentence once a fortnight of hourly history exists on
-   Pages; GameStop, Walmart, Meijer and eBay need a residential IP, so
-   they wait for the sideload build.
-2. **Take 113 -- the owner's icon (D7), and more, from the graphic design
-   session** (the owner: "we'll be pulling in a new icon and more"). It is
-   on the design branch `…/compassionate-mayer-acc24r`, commit `93481b3`,
-   with its hand-off in `design/d7-icons/SHIP.md`.
-   - **The owner's ruling:** the icon carries Bandai's printed card-back
-     emblem, live on Play. It is recorded as the owner's reversal of
-     landmines 30 and 31 and A16, for the icon's emblem only. The own-rose
-     swap in SHIP.md is the fallback.
-   - **Merge the branch:** the fallback's SVGs came with an earlier commit.
-   - **Vet before the merge:** the gate, smoke and
-     `python3 ci/icon.py --selftest`.
-   - **After the Release:** decode the APK's icon files (landmine 78); the
-     owner checks the Fold.
-   - Its draft landmine "165" becomes 170.
+1. **Take 113 -- the owner's icon (D7)** (in flight): the graphic design
+   session's branch merged (`…/compassionate-mayer-acc24r`, the icon
+   commit `93481b3`, its hand-off `design/d7-icons/SHIP.md`).
+   - The emblem is the owner's reversal of landmines 30 and 31 and A16, for
+     the icon's emblem only, and the own-rose swap is the fallback.
+   - One standard icon, at the owner's word: "I just want the one standard
+     icon". There is no themed (monochrome) layer, and `ci/icon.py`
+     refuses one (landmine 171).
+   - Vetted with the gate, smoke, render and `python3 ci/icon.py
+     --selftest`.
+   - After its Release: decode the APK's icon files (landmine 78). The owner
+     checks the launcher, the splash and a reminder's status-bar icon on the
+     Fold.
+2. **A32** -- take 112 merged (Southern Hobby, and distributor info that
+   never floods a row). Next:
+   - the distributor state timeline from the history rows (GTS's since
+     take 94, Southern Hobby's from take 112);
+   - the restock pattern sentence, once a fortnight of hourly history
+     exists on Pages;
+   - GameStop, Walmart, Meijer and eBay need a residential IP, so they
+     wait for the sideload build.
 3. **A41** -- waits on the owner's list of the parts and the source; then
    one take per source, measured on the runner first.
 4. **A23** the sim's tail -- modal effects, ordering, protection, the
@@ -563,7 +563,7 @@ is what stands between the seed and that clock, in order, with who does it.
 | 2 | Stand up the repo: RUNBOOK §1–4 | The owner | **DONE** — read off the repo at take 34: public, run #3 green end to end (seed 6 s, bundle 42 s, apk 4 m 36 s, pages 14 s), Release **take-31**, Pages live. PROVEN |
 | 3 | First CI build produces the AAB | CI | **DONE** — the four secrets are set; every build's `apk` job prints `AAB signer: Owner: CN=OP TCG Hub upload, OU=play` and names the file `optcghub-take-N.aab` (PROVEN from run 48's log, take 101). **The registered upload key is that key — PROVEN take 102:** Play accepted the upload-key-signed take 101. **Its fingerprint is pinned since take 103** (`ci/signer.sh`, from run 51's printed line, `32:8E:60:…:28:95`): a bundle carrying the upload DN with any other fingerprint fails the build before Play can refuse it. The pin passed on a real bundle at run 52 (take 103) — PROVEN in CI |
 | 4 | Play Console: create the app, Play App Signing, the four secrets | The owner | **DONE** — personal account; app created; version code 35 accepted into internal testing (two optional warnings). **UNKNOWN: whether the upload-key bundle or the DEVKEY one was the first upload** — RUNBOOK-play §2 says how to reset if the latter |
-| 5 | Listing: title, short and full description opening with the disclaimer, screenshots, icon 512, feature graphic 1024×500 | The owner | copy pasted (take 36); screenshots from the Fold with the take-37 showcase files; the console shows the jolly roger icon — swap to `play-assets-t33/icon-512.png` or say so (D7) |
+| 5 | Listing: title, short and full description opening with the disclaimer, screenshots, icon 512, feature graphic 1024×500 | The owner | copy pasted (take 36); screenshots from the Fold with the take-37 showcase files; the console shows the jolly roger icon — swap to `play-assets-t33/icon-512.png` or say so (D7) *Take 113: the console shows the owner's pick -- the icon, the feature graphic and eight screenshots, from `design/play-listing`, uploaded by the owner; the build writes `play-assets/icon-512.png`, the full-bleed master Play masks, and no longer draws a feature graphic.* |
 | 6 | Privacy policy live on Pages, naming AdMob | take 30 | Pages deployed at `https://sergeantcs2.github.io/optcghub/` (run #3); the policy is `/privacy.html` there |
 | 7 | Data Safety form: **AD_ID collected/shared for advertising** (landmine 94); camera; no other collection | The owner | **DONE** — advertising-ID declaration Yes / advertising; Data Safety: device IDs collected and shared, advertising, required, not ephemeral, encrypted in transit, no deletion request, no accounts |
 | 8 | Internal test → closed test; 16–18 testers recruited (landmine 35) | The owner | **closed-test release APPROVED by Play review (take 52, the owner's report).** Now: the opt-in link to 16–18; the clock starts when the twelfth is opted in; `ci/RELEASE.md` is the guide they read |
@@ -2253,7 +2253,27 @@ ad, 1 free deck, +1 per ad. These live in `config.py` as constants, not in code.
   usual companion to rewarded ads and needs the Billing library. Not
   proposed for v1 unless he wants it.
 
-## A16 — Theming, icon, splash · DESIGNED take 16, ICONOGRAPHY take 17 · ICON REVERTED take 33 as asked · one request declined
+## A16 — Theming, icon, splash · DESIGNED take 16, ICONOGRAPHY take 17 · ICON REVERTED take 33 as asked · one request declined · ICON SHIPPED take 113 (the owner's pick)
+
+*Take 113: the owner's icon (D7) ships. It is the pick from the graphic
+design session: v4, bottom waves, the printed card-back emblem on the
+purple-bordered card, and ink ドン!!. The owner uploaded it to Play, where it
+is live and approved, and asked for it in the app. `assets/icon*.svg` holds
+four files, and `ci/icon.py` renders them with its controls in the gate.*
+- **One standard icon, no themed variant:** on the sheet of what the build
+  writes, the owner said: "I'm confused by the dark and light themes, nor
+  do I really like them. I just want the one standard icon."
+  - The hand-off's monochrome layer is out, and `ci/icon.py` refuses one
+    (landmine 171).
+  - The reminders' status-bar glyph stays: Android draws that icon in one
+    colour.
+- **The owner's ruling, recorded:** a reversal of landmines 30 and 31 and of
+  the marks line below, for the icon's emblem only. The name, the listing
+  text, characters and wordmarks are unchanged.
+- **The fallback:** the own-rose swap in `design/d7-icons/SHIP.md`.
+- **Ruled out:** the compass placeholder and the jolly roger as the icon,
+  both kept in `assets/`; our own rose while the owner's pick stands, since
+  it is the ready swap.
 
 The owner wants One Piece theming, pictures and decals; placeholders where unsure;
 he will send more screenshots.
@@ -2271,7 +2291,9 @@ he will send more screenshots.
   jolly roger, nautical anything — centuries older than the franchise, fine.
   The Straw Hats' specific skull, any character likeness, the Going Merry, the
   franchise wordmark, the Toei/Bandai/Shueisha marks — not in the icon, not in
-  the splash, not in the store listing.
+  the splash, not in the store listing. *(Take 113: the one exception is the
+  icon card's printed card-back emblem, the owner's pick, at the owner's
+  word; `design/d7-icons/SHIP.md`.)*
 - **Ruled out: bundling any card art or character image** for theming. Landmine
   26, unchanged. *(Take 109: showing hot-linked card art inside the app is the
   owner's call and he made it -- A42, "Hot-Linked Card Art, Bold". The icon,

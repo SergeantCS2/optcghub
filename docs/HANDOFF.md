@@ -1,4 +1,190 @@
-# HANDOFF — through Take 112
+# HANDOFF — through Take 113
+
+## Take 113 — 2026-09-24 — the owner's icon (D7), folded in from the graphic design session's branch
+
+Opened before any code (PROTOCOL §6). The owner merged take 112 (PR #36)
+at 19:05 UTC after "The pictures look good, mark it ready". Its `check`
+was green on its head a042246: smoke 988/988, render 187/187 in Chrome,
+and the gate passed. build.yml run 61 on the merge commit 1d01cf0 built
+Release take-112 at 19:13; its after-merge note is under take 112.
+
+The owner, word for word, with the branch named without its platform
+prefix (a vendor's name the scrubber refuses): "When take 112 is merged and
+you start 113, fold in the icon hand-off from branch […]/compassionate-
+mayer-acc24r (one commit on top of take 111, subject starts "d7: the
+owner's icon"). Read design/d7-icons/SHIP.md first: it lists what changes,
+what was verified and what wasn't, and draft ledger text for 113. My
+decision: I chose the icon with Bandai's printed card-back emblem and it's
+live on Play. Record it as my reversal of landmines 30 and 31 and A16 for
+the icon's emblem only. The own-rose swap in SHIP.md is the fallback.
+Before merge: vet it with the gate, smoke and python3 ci/icon.py
+--selftest. After the Release builds: check the APK by decoding the icon
+files (landmine 78). I'll check the launcher, themed icons, the splash and
+a reminder's status-bar icon on the Fold. Cherry-pick or merge, your call.
+Merging also brings the design/ sources for the Play listing and the
+business card; none of it ships."
+
+### The plan
+
+- **Merge the design branch, not a cherry-pick of its icon commit 93481b3.**
+  The own-rose fallback's SVGs came with an earlier commit, 81ea976, and
+  93481b3 edits two `design/` READMEs that only the earlier commits add.
+  Outside `design/`, the branch changes the same 12 files as 93481b3.
+  `design/` is 45 files and 0.5 MB, and none of it ships.
+- **Before the PR is ready:** the gate, smoke, render and
+  `python3 ci/icon.py --selftest`, each run here. The hand-off's claims are
+  read against the tree: every file it names, its 23 checks and 12
+  controls, and its refusal of the previous build's icon step.
+- **The record:** SHIP.md's drafts, adjusted and written one command each.
+  The owner's reversal of landmines 30 and 31 and A16 covers the icon's
+  emblem only. Its draft landmine "165" becomes 170.
+- **After the Release:** decode the APK's icon files, not their names
+  (landmine 78). The owner checks the launcher, themed icons, the splash
+  and a reminder's status-bar icon on the Fold. (Themed icons were then
+  taken out at the owner's word; see "One standard icon" below.)
+
+### Built (merged, not written here)
+
+The design branch merged cleanly onto take 112, with no conflicts. Outside
+`design/` it changes 12 files, as SHIP.md says:
+- **`assets/icon*.svg`:** the pick's five layers (the monochrome one was
+  then deleted here, at the owner's word, below). The compass survives as
+  `assets/icon-placeholder.old.svg`, and the jolly roger stays.
+- **`ci/icon.py`:** the icon step, lifted out of `ci/apk.sh`'s heredoc. It
+  writes:
+  - the adaptive background, foreground and monochrome layers at 108 dp and
+    five densities (the monochrome one then taken out here, below);
+  - the launcher XMLs;
+  - the legacy and round icons;
+  - the reminders' `ic_stat_don` drawable, kept through `shrinkResources`;
+  - the splash;
+  - `play-assets/icon-512.png`.
+
+  The hand-drawn feature graphic is retired.
+- **`src/app.html`:** both reminders ask for `ic_stat_don` (landmine 170).
+- **The gate, deps and smoke:** `tools/gate.py` runs `ci/icon.py
+  --selftest` and requires the file. `ci/deps.sh` installs cairosvg. Smoke's
+  splash assertion reads the icon step.
+
+### Vetted here, before the PR
+
+- **`python3 ci/icon.py --selftest`:** 23 ok, 12 of them controls. It runs
+  on a fixture and on Capacitor's own template. The template's icons before
+  the step are refused with 26 problems, as SHIP.md says.
+- **Watched to fail:** one reminder put back to `ic_launcher` failed the
+  selftest ("src/app.html's reminders ask for the drawable this step
+  writes"). The gate refused it at `selftest`. The source was then restored.
+- **Tests:** smoke 988/988; render 187/187 in Chrome.
+- **No look step:** nothing in `www/` changes visibly, and the app's pages
+  carry no favicon. The Fold is the look for this one.
+
+### The owner's word on the icon sheet: one standard icon
+
+The runner's `check` went green on 7f136ef, and the owner was sent a sheet
+of what `ci/icon.py` writes into the APK. It showed the Play icon, the
+launcher icon, the legacy square and round icons, the reminder's glyph and
+the splash. It also showed the hand-off's monochrome layer, tinted dark and
+light the way a phone with themed icons switched on draws it. The owner,
+word for word: "I'm confused by the dark and light themes, nor do I really
+like them. I just want the one standard icon. Continue".
+
+- **What the two tiles were:** not variants the app chooses between. They
+  showed what the phone's own themed-icons setting does with a monochrome
+  layer, and the tints were this session's stand-in for the wallpaper's.
+  The sheet did not say so (What I got wrong, below).
+- **What changes here:**
+  - the adaptive icon loses its monochrome layer, so the app offers no
+    themed variant for a phone to recolour;
+  - `ci/icon.py` writes the background and foreground only;
+  - its check refuses a monochrome layer anywhere in the res tree;
+  - `assets/icon-mono.svg` is deleted.
+  The legacy and round icons stay. They are the same art, for Android 7
+  and for launchers that ask for a round icon, not a choice anyone sees on
+  the Fold.
+- **What stays one colour:** the reminder's status-bar glyph,
+  `ic_stat_don`. Android draws every status-bar icon from its alpha
+  channel, in white. A full-colour icon there becomes a white silhouette
+  (landmine 170).
+- **Vetted here:**
+  - `python3 ci/icon.py --selftest` passes 24 checks, 13 of them controls.
+    Three controls are new: a monochrome picture put back, the hand-off's
+    launcher XML with its `<monochrome>` line, and a `<monochrome>` line in
+    `mipmap-anydpi-v33`, a place `check()` never names. Two old controls
+    tested the monochrome layer's content and went with it. The template's
+    own icons are now refused with 19 problems (26 before) and the fixture's
+    with 29 (36): those were the monochrome problems.
+  - **The previous build, refused:** 7f136ef's own `ci/icon.py` and SVGs,
+    run on Capacitor's template, pass their own check. The new check
+    refuses that output with 7 problems, all of them the themed layer: five
+    monochrome pictures and two launcher XMLs.
+  - **The guard sabotaged:** with its lines removed, the three new controls
+    FAIL and the gate refuses at `selftest`. The file was restored byte for
+    byte.
+  - **The fallback:** SHIP.md's own-rose swap, now four files, passes all 24
+    checks in a scratch copy.
+  - **After the change:** smoke 988/988, render 187/187 in Chrome, the
+    gate's own selftest, the scrubber clean, and `bash tools/seal.sh
+    --gate-only` GATE PASSED for take 113.
+  - **The second sheet** went to the owner. It shows the one icon on a home
+    screen, on Google Play and on the opening screen, and the reminder's
+    glyph in a status bar. It shows no phone-setting pictures (landmine
+    171).
+
+### Not verifiable here, for the runner and the Fold
+
+- **The build:** the VM has no Android SDK. `build.yml` on the merge proves
+  first:
+  - aapt2 linking the new XMLs (background and foreground only, since the
+    owner's word);
+  - `shrinkResources` honouring `raw/keep.xml`;
+  - the release APK's contents.
+- **The APK, after the Release:** `aapt2 dump resources` must list
+  `drawable/ic_stat_don`, and must not list `mipmap/ic_launcher_monochrome`.
+  The launcher XMLs must carry a background and a foreground, and no
+  `<monochrome>`. Then decode the pixels those resources point to: the
+  glyph must be white on transparent (landmine 78). The decoder is ready,
+  and take 112's APK is its control.
+- **The owner, on the Fold:** the launcher on both screens, the splash, and
+  a release reminder's status-bar glyph (ドン!!, not ⓘ). A launcher can hold
+  the old icon until the update installs or the phone restarts.
+
+### What I got wrong
+
+- **The sheet drew a phone setting as if it were the app's design.** Its
+  two themed tiles carried the monochrome layer in stand-in colours,
+  labelled only "themed, dark" and "themed, light". The owner read them as
+  two themes to choose between. A picture of what a phone setting does
+  should say so, or not be sent (landmine 171).
+- **The themed variant rode in without anyone asking the owner.** SHIP.md
+  offered it and I carried it into the plan and the record. The owner had
+  picked an icon, not a themed variant of one (landmine 171).
+- **The first record commit carried an attribution trailer the repo does
+  not use.** It was amended before the push.
+- **NEW-SESSION-PROMPT's last line still said "take 112".** Take 112 left
+  it as take 111 wrote it, and this take missed it at first. It names the
+  next take, and now says 114.
+
+### Ruled out
+
+- **Keeping the monochrome layer and leaving themed icons to the phone's
+  setting.** A layer that shows only when a setting is on is still a second
+  icon, and the owner wants one.
+- **Taking the status-bar glyph out with it.** Android draws a status-bar
+  icon from its alpha channel alone. The reminders would go back to the
+  system's info icon (landmine 170).
+- **Cherry-picking the icon commit alone.** The fallback's SVGs would not
+  come with it, and it edits two READMEs that only the earlier commits add.
+- **As the icon:** the compass placeholder and the jolly roger, both kept
+  in `assets/`; our own rose while the owner's pick stands, since it is
+  the ready swap.
+
+### DEFERRED this cycle
+
+- **The APK decode and the owner's Fold check** above, after Release
+  take-113.
+- **A favicon and a manifest icon for Pages from `assets/icon.svg`.** That
+  is the UI session's call.
+- **A32's next:** the distributor state timeline.
 
 ## Take 112 — 2026-09-24 — A32's second distributor: Southern Hobby, read off its real pages
 
@@ -269,6 +455,16 @@ closed drop-down for the long text.
     Piece Card Game: …");
   - one product listed by both distributors shows as two rows there;
   - a product with no market price reads "— · market" on its page.
+
+### After the merge
+
+The owner merged PR #36 at 19:05 UTC. build.yml run 61 on the merge commit
+1d01cf0 gated the app and published Release take-112 at 19:13:19 (the APK,
+26,454,682 bytes; the AAB, 19,640,155; the mapping, 51,817,038), its body
+headed "take 112". The first hourly Hunt on main after the merge (run 48,
+on 1d01cf0) read Southern Hobby live: ok, 20 of 20 pages in 21 calls, 0
+failed, 4 matched -- the VM's proof, repeated on the runner. This note
+rides take 113's pull request.
 
 ## Take 111 — 2026-09-24 — the last look: every screen at both sizes after the UI series, and what it turned up
 

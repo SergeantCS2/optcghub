@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 112.* Paste the block between the rules into a new session
+*Current as of take 113.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 112 takes by previous sessions. The repo is
+built across 113 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -27,7 +27,7 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
 4. Read `docs/HANDOFF.md`, newest entry first, back to take 80 at least. Every
    take ends with a DEFERRED list; the union of those lists is the work.
 5. Read `docs/LANDMINES.md` §0 (the index) and skim §1. When you are about to
-   do something, grep the index first. 169 of them; each is a real failure.
+   do something, grep the index first. 171 of them; each is a real failure.
 6. Read `docs/AGENDA.md`: the Priorities block at the top is the live order.
 
 **The discipline, which the gate enforces:**
@@ -112,7 +112,7 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
   checklist, with line numbers. Touch the UI only to fix what is broken, and read the
   tokens in `:root` before writing a size or a colour.
 
-- **A32, take 112 -- Southern Hobby, the second distributor:**
+- **A32, take 112 (merged 24 Sept) -- Southern Hobby, the second distributor:**
   - It is read off its real pages (not GTS's shape, landmine 165): the
     category page hourly, and each product page on first sight and
     weekly, within a 90 s budget.
@@ -129,22 +129,19 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
     (UI-AUDIT §8).
   - A32's next is the distributor state timeline from the history rows.
 
-- **Take 113 -- the owner's icon (D7), and more, from the graphic design
+- **Take 113 (in flight) -- the owner's icon (D7), from the graphic design
   session:**
-  - It is on the design branch `…/compassionate-mayer-acc24r`, commit `93481b3`
-    (`git branch -r --contains 93481b3` names it).
-  - `design/d7-icons/SHIP.md` is the hand-off. It covers what it changes,
-    what was verified, what only the runner and the Fold can show, the
-    reversal of landmines 30 and 31 and A16 at the owner's word, and draft
-    ledger text.
-  - **The owner's ruling:** the emblem is recorded as the owner's reversal
-    of landmines 30 and 31 and A16, for the icon's emblem only; the
-    own-rose swap in SHIP.md is the fallback.
-  - **How:** merge the branch rather than cherry-pick (the fallback's SVGs
-    came with an earlier commit). Vet it with the gate, smoke and
-    `python3 ci/icon.py --selftest`. After the Release, decode the APK's
-    icon files (landmine 78); the owner checks the Fold.
-  - Its draft landmine "165" becomes 170.
+  - Its branch is merged (`…/compassionate-mayer-acc24r`; the icon commit
+    `93481b3`). `design/d7-icons/SHIP.md` is the hand-off: what changes, what
+    was verified, what only the runner and the Fold can show.
+  - The emblem is the owner's reversal of landmines 30 and 31 and A16, for
+    the icon's emblem only. The own-rose swap in SHIP.md is the fallback.
+  - One standard icon, at the owner's word ("I just want the one standard
+    icon"). There is no themed (monochrome) layer, and `ci/icon.py` refuses
+    one (landmine 171).
+  - `ci/icon.py --selftest` runs in the gate. After the Release, decode the
+    APK's icon files (landmine 78); the owner checks the Fold. Landmine 170
+    is the reminders' icon.
 
 - **The Priorities block at the top of `AGENDA.md`** is the live order: the
   owner's items (the diagnostics paste, D20–D22, shop URLs, D7, D16, the
@@ -216,12 +213,14 @@ same take — the workflow files included, through the PR.
 **What you may not do:** bundle, commit or cache card art — it is shown
 hot-linked, display-only, and never drawn from scratch (landmines 26, 28;
 the owner's ruling at A42); put a character or a publisher mark in the
-app's name, icon, splash or store listing (landmines 30, 31; A16); gate
-scanning (A17); multiply condition into a price (PROTOCOL §10);
+app's name, icon, splash or store listing (landmines 30, 31; A16) -- the one
+exception is the icon card's printed emblem, the owner's pick at take 113; give
+the icon a themed (monochrome) variant -- the owner wants the one standard
+icon (take 113, landmine 171); gate scanning (A17); multiply condition into a price (PROTOCOL §10);
 send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 112" and begin with PROTOCOL §0.
+Say "take 114" and begin with PROTOCOL §0.
 
 ---

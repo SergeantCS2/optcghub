@@ -1,4 +1,4 @@
-# OP TCG Hub — take 112
+# OP TCG Hub — take 113
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,12 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 113:** The app wears the icon the Play listing shows: the
+card-back emblem on a purple-bordered card over waves, with ドン!!. It is
+one standard icon, the same everywhere: on the home screen, on the opening
+screen, and on reminder notifications, which now show ドン!! in the status
+bar instead of the phone's info icon. Nothing you have saved changes.
 
 **New at take 112:** Hunt reads a second distributor, Southern Hobby, beside
 GTS Distribution. Under a sealed product each distributor is one short line

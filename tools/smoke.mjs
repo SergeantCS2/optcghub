@@ -726,8 +726,9 @@ ok('the stale banner names the date and says what to do (and it is TRUE now — 
 ok('CI opens one deduplicated issue on failure (A9)',
    (() => { const yml = fs.readFileSync(path.join(ROOT, 'ci', 'build.yml'), 'utf8');
             return /if: failure\(\)/.test(yml) && /nightly-failure/.test(yml) && /gh issue comment/.test(yml); })());
-ok('the splash honours assets/user/splash-bg.jpg',
-   /splash-bg\.jpg/.test(fs.readFileSync(path.join(ROOT, 'ci', 'apk.sh'), 'utf8')));
+ok('the splash honours assets/user/splash-bg.jpg (apk.sh runs ci/icon.py, which draws the splash over it; D7)',
+   /\npython3 ci\/icon\.py android\/app\/src\/main\/res/.test(fs.readFileSync(path.join(ROOT, 'ci', 'apk.sh'), 'utf8'))
+   && /splash_bg=os\.path\.join\(ASSETS, "user", "splash-bg\.jpg"\)/.test(fs.readFileSync(path.join(ROOT, 'ci', 'icon.py'), 'utf8')));
 ok('portfolio move, new and rename are sheets, not prompts',
    /data-pfmove/.test(js) && /data-pfname/.test(js) && !/prompt\('Portfolio name/.test(js) && !/prompt\('Move /.test(js));
 ok('bulk condition is a sheet', /data-bulkcond/.test(js) && !/prompt\('Set condition/.test(js));
