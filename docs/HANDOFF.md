@@ -88,6 +88,19 @@ fixes."
   `2186 of 7694 effect lines (1925 cards)` (the VM's cached 22 Sept
   catalogue; the owner's 23 Sept numbers were 2187/7697 and 1926).
 
+### Merged — run 53 green, Release take-104 published (post-merge note, rides the next PR)
+
+The owner's "go" on the four pictures at 02:01 UTC; PR #28 marked ready
+on a head verified green from its log (697 smoke, 106 render in Chrome,
+GATE PASSED); merged 02:13; run 53's `apk` job 02:15–02:19; Release
+take-104 published 02:19:52 with three assets. MEASURED from the log:
+APK 26.4 MB file, AAB 19.6 MB, the mapping 52.7 MB — identical to take
+103, as a text-only app change should be. The size table's fix is in
+that log for the first time: the bundle reads "37.9 MB raw, both ABIs —
+a phone installs one; the R8 map (52.7 MB raw) left out of that", with
+`BUNDLE-METADATA (the R8 map Play reads; never installed)` as its own
+group instead of a 52.8 MB "other". A14 still waits on the Fold.
+
 ### DEFERRED this cycle
 
 - A14 PROVEN: the Fold's self-test on an installed APK (the owner's).
