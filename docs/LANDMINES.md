@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 104.*
+*Current as of take 105.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -150,6 +150,8 @@ Start here. Do not read top to bottom.
 | Back from a card's sheet lands on Home (the blank page after Back) | **137** |
 | An unanchored `.gitignore` pattern swallows a same-named directory anywhere | **138** |
 | Every negative control "fires", including one whose check does not exist | **139** |
+| Back from the first card minimizes the app on a fresh launch | **140** |
+| A plugin's permission check returns undefined on the shrunk build | **141** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -1992,6 +1994,39 @@ first probe is the unmutated copy, which must fire nothing; every other
 probe names the failure category it expects and is refused if the copy
 fails outside it; the tree copied for a probe carries everything the
 probed checks read.
+
+**140. A boot that paints the start screen without pushing it leaves the
+stack empty, and every back test that seeds the start screen first can
+never notice.** Take 81 stopped `boot()` calling `go('home')` in Collect
+(Hunt used to reopen on Collect's Home); `MODE.set(cur, false)` painted
+Home without pushing it. From then on a fresh launch in Collect held an
+empty stack: the first card pushed `detail` alone, the hardware Back found
+nothing below, `NAV.back()` returned false and the handler minimized the
+app. The owner met it on the take-104 install ("major regression") and it
+"started working" once a tab tap had pushed Home — the report's stack
+line began `detail > home > …`. Smoke and the look had ten back tests and
+all of them called `V.go('home')` before pressing Back. Rule: a back test
+starts from the app's own boot, never from a seeded stack; the boot
+pushes the mode's home for every mode; going back from the only screen
+on the stack goes home, and the app leaves only from Home.
+
+**141. R8 drops an annotation whose class nothing keeps, and a Capacitor
+plugin's permission check then resolves undefined.** Take 103 shrank the
+release build; Capacitor's own keep rule names `@CapacitorPlugin` on the
+plugin classes, so they still register, but the nested
+`@Permission(strings, alias)` values inside it have no keep rule of their
+own — the take-104 mapping renamed `com.getcapacitor.annotation.Permission`
+to `w2.c`. `Plugin.checkPermissions` builds its answer from those values
+and, finding none, resolves with no data ("if no permissions are defined
+on the plugin, resolve undefined" — Capacitor's comment). The app's
+`notifyPermission()` caught the TypeError and returned `denied`, so takes
+103 and 104 told the collector notifications were off. The Fold's
+self-test named it on the first run. Rule: the shrink keeps Capacitor's
+annotation classes and the bridge and plugin layer whole (the dex saving
+is in the libraries, not the bridge); the build reads the release mapping
+back and refuses a renamed annotation class; a plugin answer read for a
+field is guarded (`(r || {}).field`), and an empty answer is reported as
+`unknown`, never as `denied`.
 
 ## §2 — Inherited from APEX ORV
 

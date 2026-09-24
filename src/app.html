@@ -2435,7 +2435,13 @@ document.addEventListener('click', e => {
    go() keeps a stack, the hardware button pops it (App plugin, native) and
    the browser's own Back does the same on the web through history state. */
 const NAV = { stack: [], silent: false,
-  back() { if (this.stack.length < 2) return false; this.stack.pop(); let prev = this.stack[this.stack.length - 1];
+  back() {
+    if (this.stack.length < 2) {   /* take 105 (landmine 140): the only screen is not the mode's home -> home, handled; from home itself -> unhandled, and only there the app may leave */
+      const home = MODE.home[MODE.cur] || 'home'; const top = this.stack[this.stack.length - 1] || ([...document.querySelectorAll('.screen.on')].map(e => e.id)[0]);
+      if (!top || top === home) return false;
+      this.silent = true; go(home); this.silent = false; this.stack = [home]; return true;
+    }
+    this.stack.pop(); let prev = this.stack[this.stack.length - 1];
     const isScreen = i => { const el = i && document.getElementById(i); return !!el && String(el.tagName).toUpperCase() === 'SECTION'; };
     while (prev && !isScreen(prev) && this.stack.length > 1) { this.stack.pop(); prev = this.stack[this.stack.length - 1]; }
     if (!prev) return false; this.silent = true; go(prev); this.silent = false; return true; } };
@@ -3786,13 +3792,13 @@ ${foot(s, s.name)}</div>`;
 $('#releases').addEventListener('click', e => {
   const f = e.target.closest('[data-relfold]'); if (f) { e.stopPropagation(); const k = f.dataset.relfold; if (RELF.open.has(k)) RELF.open.delete(k); else RELF.open.add(k); paintReleases(); return; }
   const a = e.target.closest('[data-relalert]'); if (a) { e.stopPropagation(); const on = RELALERTS.toggle(+a.dataset.relalert, a.dataset.relname, a.dataset.relpub);
-    if (on) PLATFORM.notifyPermission().then(perm => toast(perm === 'denied' ? 'Reminder set — notifications are off, so it will show here instead' : `Reminder set for the day before ${a.dataset.relpub}`)); else toast('Reminder removed');
+    if (on) PLATFORM.notifyPermission().then(perm => toast(perm === 'unknown' ? 'Reminder set — if none arrives, check the phone\'s notification settings for this app' : perm === 'denied' ? 'Reminder set — notifications are off, so it will show here instead' : `Reminder set for the day before ${a.dataset.relpub}`)); else toast('Reminder removed');
     paintReleases(); return; }
   const c = e.target.closest('[data-relcal]'); if (c) { e.stopPropagation(); const s = CAT.sets.get(+c.dataset.relcal); if (s) addEventToCalendar(releaseEvent(s, c.dataset.relname)); }
 });
 $('#sealed').addEventListener('click', e => { const k = e.target.closest('[data-skind]'); if (k) { SEALED.kind = k.dataset.skind; paintSealed(); return; }
   const f = e.target.closest('[data-setfold]'); if (f) { const id = isNaN(+f.dataset.setfold) ? f.dataset.setfold : +f.dataset.setfold; if (SEALED.closed.has(id)) SEALED.closed.delete(id); else SEALED.closed.add(id); paintSealed(); return; }
-  const b = e.target.closest('[data-stock]'); if (b) { e.stopPropagation(); const on = STOCK.toggle(+b.dataset.stock); if (on) { PLATFORM.notifyPermission().then(perm => toast(perm === 'denied' ? 'Watching \u2014 notifications are off, so it will show here instead' : 'Watching for stock')); STOCK.check(); } paintSealed(); } });
+  const b = e.target.closest('[data-stock]'); if (b) { e.stopPropagation(); const on = STOCK.toggle(+b.dataset.stock); if (on) { PLATFORM.notifyPermission().then(perm => toast(perm === 'unknown' ? 'Watching \u2014 if no alert arrives, check the phone\'s notification settings for this app' : perm === 'denied' ? 'Watching \u2014 notifications are off, so it will show here instead' : 'Watching for stock')); STOCK.check(); } paintSealed(); } });
 $('#sealedQ').addEventListener('input', e => { SEALED.q = e.target.value; paintSealed(); });
 
 /* ---- search ------------------------------------------------------------ */
@@ -4153,7 +4159,8 @@ const PLATFORM = {
      { display }. The plugin declares POST_NOTIFICATIONS itself (API 33+). */
   async notifyPermission() {
     const N = this.plugin('LocalNotifications'); if (!N) return 'browser';
-    try { let s = await N.checkPermissions(); if (s.display !== 'granted') s = await N.requestPermissions(); return s.display; }
+    /* take 105 (landmine 141): on the shrunk build the plugin answered with NO data; read for a field, guarded, and an empty answer is 'unknown' -- never 'denied' */
+    try { let s = (await N.checkPermissions()) || {}; if (s.display !== 'granted') s = (await N.requestPermissions()) || {}; return s.display || 'unknown'; }
     catch (e) { return 'denied'; }
   },
   async notify(id, title, body) {
@@ -4686,11 +4693,11 @@ $('#dAlert').addEventListener('click', async () => {
   const at = parseFloat(v); if (!(at > 0)) return;
   const perm = await PLATFORM.notifyPermission();
   ALERTS.add(dCur.id, dir, at);
-  toast(perm === 'denied' ? 'Watching \u2014 notifications are off, so it will show here instead' : `Watching ${dCur.name} ${dir} ${money(at)}`);
+  toast(perm === 'unknown' ? 'Watching \u2014 if no alert arrives, check the phone\'s notification settings for this app' : perm === 'denied' ? 'Watching \u2014 notifications are off, so it will show here instead' : `Watching ${dCur.name} ${dir} ${money(at)}`);
 });
 $('#dStock').addEventListener('click', () => {
   if (!dCur) return; const on = STOCK.toggle(dCur.id);
-  if (on) { PLATFORM.notifyPermission().then(perm => toast(perm === 'denied' ? 'Watching — notifications are off, so it will show here instead' : 'Watching for stock')); STOCK.check(); }
+  if (on) { PLATFORM.notifyPermission().then(perm => toast(perm === 'unknown' ? 'Watching — if no alert arrives, check the phone\'s notification settings for this app' : perm === 'denied' ? 'Watching — notifications are off, so it will show here instead' : 'Watching for stock')); STOCK.check(); }
   else toast('Stopped watching');
   $('#dStock').textContent = on ? 'Watching for stock — stop' : 'Alert me when in stock';
 });
@@ -5318,7 +5325,7 @@ const DIAG = {
     const L = []; const line = (k, v) => L.push(`${k}: ${v}`);
     L.push(`OP TCG Hub diagnostics \u2014 take ${TAKE} \u2014 ${new Date().toISOString().slice(0, 16)}Z`);
     L.push('', '## app'); line('build', CAT.man.built_at || '?'); line('mode', MODE.cur); line('screen stack', NAV.stack.join(' > ') || '-');
-    line('screens on', [...document.querySelectorAll('.screen.on')].map(e => e.id).join(',') || 'NONE'); line('overlays on', ['#askSheet', '#picker', '#detail', '#tour', '#simCurtain'].filter(id => { const el = $(id); return el && el.classList && el.classList.contains('on'); }).join(',') || 'none'); line('splash', $('#splash') ? 'still in the page' : 'gone');
+    line('boot stack', (NAV.bootStack || []).join(' > ') || 'none'); line('screens on', [...document.querySelectorAll('.screen.on')].map(e => e.id).join(',') || 'NONE'); line('overlays on', ['#askSheet', '#picker', '#detail', '#tour', '#simCurtain'].filter(id => { const el = $(id); return el && el.classList && el.classList.contains('on'); }).join(',') || 'none'); line('splash', $('#splash') ? 'still in the page' : 'gone');
     line('currency', CUR.active() + (CAT.man.rates ? ` (rates ${CAT.man.rates.date}${CAT.man.rates.stale ? ', stale' : ''})` : ' (no rates)')); line('online', navigator.onLine); line('native', !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())); line('plugins', ['Camera', 'Filesystem', 'Share', 'LocalNotifications', 'Network', 'App', 'AdMob'].filter(n => PLATFORM.plugin(n)).join(', ') || 'none (browser)');
     L.push('', '## device'); line('ua', String(navigator.userAgent || '?').slice(0, 120)); line('viewport', `${typeof innerWidth === 'number' ? innerWidth + 'x' + innerHeight : '?'} @${devicePixelRatio || 1}`); line('language', navigator.language || '?'); line('tz', (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return '?'; } })());
     L.push('', '## catalogue'); line('cards', CAT.man.cards); line('printings', CAT.rows.length); line('pictures', CAT.man.images ? `${CAT.man.images.missing_cards} cards and ${CAT.man.images.missing_sealed} sealed products have no picture at the first host; ${CAT.man.images.alt_served} served by the second, ${CAT.man.images.exported} shipped that way` + (CAT.man.images.measured ? '' : ' (sealed images not yet measured)') : 'not measured'); line('prices dated', (CAT.man.source_updated_at || '?').slice(0, 10)); line('history days', (CAT.days || []).length + (CAT.days && CAT.days.length ? ` (${CAT.days[0]}..${CAT.days[CAT.days.length - 1]})` : '')); line('catalogue copy', CAT.man.fromDisk ? 'synced on this phone' : 'the one that came with the app'); line('sealed products', CAT.rows.filter(p => SEALED.isProduct(p)).length); line('stock decks', (CAT.stock || []).length); line('effects scripted', CAT.man.effects ? effectsLine(CAT.man.effects, Object.keys(CAT.effects || {}).length) : '?');
@@ -5371,7 +5378,7 @@ const SELFTEST = {
       const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 600, 160); x.fillStyle = '#000'; x.font = 'bold 72px sans-serif'; x.fillText('OP01-016', 40, 110);
       const txt = await PLATFORM.ocr(c); const m = parseRead(txt || ''); return { ok: !!m && m.number === 'OP01-016', note: txt ? `read "${String(txt).trim().slice(0, 30)}"` : 'no text returned' };
     });
-    await check('Notifications permission', async () => { const N = PLATFORM.plugin('LocalNotifications'); if (!N) return null; const r = await N.checkPermissions(); return { ok: r.display !== 'denied', note: `display: ${r.display}` }; });
+    await check('Notifications permission', async () => { const N = PLATFORM.plugin('LocalNotifications'); if (!N) return null; const r = (await N.checkPermissions()) || {}; return { ok: !!r.display && r.display !== 'denied', note: r.display ? `display: ${r.display}` : 'the plugin answered without a permission state (its permission annotation is missing from the build, landmine 141)' }; });
     await check('Ads plugin present, test units', () => { const A = PLATFORM.plugin('AdMob'); if (!A) return null; return { ok: !!(CAT.man.ads && CAT.man.ads.test), note: CAT.man.ads && CAT.man.ads.test ? 'Google test units' : 'REAL units in a test build' }; });
     await check('Sim: scripted effects loaded and one offers correctly', () => { const n = Object.keys(CAT.effects || {}).length; if (!n) return { ok: false, note: 'no effects in the bundle' };
       const k = Object.keys(CAT.effects).find(id => CAT.effects[id].some(e => e.t === 'onplay' && e.if.length === 0 && e.do.length === 1 && e.do[0].a === 'draw'));
@@ -5416,7 +5423,8 @@ async function runSelfTest() {
     return;
   }
   OWN.snapshot(); paintBatchBadge();
-  MODE.set(MODE.cur, false); if (MODE.cur !== 'collect') go(MODE.home[MODE.cur] || 'home');   // take 81: Hunt used to reopen on Collect's Home
+  MODE.set(MODE.cur, false); go(MODE.home[MODE.cur] || 'home');   // take 81: the mode's OWN home (Hunt used to reopen on Collect's); take 105: pushed for Collect too — an empty stack made the first Back minimize the app (landmine 140)
+  NAV.bootStack = NAV.stack.slice();
   splashDone();
   ALERTS.check().then(f => { if (f.length) toast(`${f.length} price alert${f.length === 1 ? '' : 's'} fired`); });
   RELALERTS.check();                                       /* take 97: a release reminder whose day has come, once */

@@ -1,4 +1,4 @@
-# OP TCG Hub — take 104
+# OP TCG Hub — take 105
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,14 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 105:** Back from a card in a freshly opened app goes back
+to Home, never out of the app. Release reminders ask for notification
+permission properly again on the smaller build — takes 103 and 104
+wrongly reported notifications as off and kept the reminder inside the
+app. The guide shows once per fresh data; if your collection came back
+with a reinstall, so did the guide's "seen" mark — More has "Show the
+guide again".
 
 **New at take 104:** two honest lines. The self-test, run in a browser on
 a computer with no camera, now says so and skips instead of failing —

@@ -1,6 +1,6 @@
 # RUNBOOK — Google Play, from the repo to a running 14-day clock
 
-*Current as of take 104.* The whole procedure, in the order it must happen,
+*Current as of take 105.* The whole procedure, in the order it must happen,
 with who does each step. Everything on the repo side is already built; what
 follows is the owner's, and none of it is hard. The gate at the end is calendar
 time: **12 testers opted in for 14 continuous days** (landmine 35; re-checked
@@ -208,7 +208,15 @@ Play; nothing resets.
 recruited testers, what you learned, what changed. Google answers in about a
 week. **Approved.** Then the production release, below.
 
-## 8b. The production release — The owner, Play Console
+## 8b. The production release — The owner, Play Console — DONE (live 24 Sept 2026, take 101's bundle)
+
+**LIVE:** `play.google.com/store/apps/details?id=com.optcghub.app`
+(the owner's report at take 105: "finally approved on Google play and
+it's listed"). The steps below are the record of how; from here "Every
+take after the first" is the section that applies, and the owner's own
+phone runs the Play build — the sideload APK no longer installs over it
+(landmine 34), so a take is proven on the Fold through the production
+track.
 
 **Production → Create new release → upload the current take's
 `optcghub-take-N.aab`** (take 101's is the first; it is already on the

@@ -306,6 +306,9 @@ echo "  OCR models in the APK: Latin entries $LATIN, non-Latin entries $NONLATIN
 [ "$LATIN" -gt 0 ] || { echo "::error::the APK carries no Latin OCR model — the scanner would read nothing (landmine 11)"; exit 1; }
 MAPPING=android/app/build/outputs/mapping/release/mapping.txt
 [ -s "$MAPPING" ] || { echo "::error::R8 left no mapping.txt — the release was not shrunk (A14)"; exit 1; }
+# take 105 (landmine 141): the mapping must show Capacitor's annotation classes kept by name, else a
+# plugin's checkPermissions resolves undefined on the phone -- read off the artifact, never assumed
+python3 ci/shrink.py --check-mapping "$MAPPING" || { echo "::error::the release mapping renamed or dropped Capacitor's annotation classes — reminders would report notifications as off (landmine 141)"; exit 1; }
 MAP="optcghub-take-$TAKE-mapping.txt"; cp "$MAPPING" "$MAP"
 echo "mapping=$MAP" >> "$GITHUB_OUTPUT"
 USAGE=android/app/build/outputs/mapping/release/usage.txt

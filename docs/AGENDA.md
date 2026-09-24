@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 104.* Ranked by blocking-ness, not by interest.
+*Current as of take 105.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -13,13 +13,16 @@ The live order, top first. Everything below this block is the record of how
 each item got where it is; this block is what to do next.
 
 **The owner's, gating everything else**
-1. **Production is approved (24 Sept).** Create the production release
-   from `optcghub-take-101.aab` (RUNBOOK-play §8b); send the two real
-   AdMob rewarded unit IDs (D11) and the next take carries them (test
-   units earn nothing; serving them live is allowed, not useful). Every
-   later take: one upload to the production track, once (landmine 33);
-   export before your own phone switches from the sideload build to Play
-   (landmine 34).
+1. **LIVE on Google Play since 24 Sept 2026** —
+   `play.google.com/store/apps/details?id=com.optcghub.app`, take 101's
+   bundle; the owner's own phone runs the Play build now. From here every
+   take is one upload of `optcghub-take-N.aab` to the production track,
+   once (landmine 33); the sideload APK no longer installs over the phone
+   (landmine 34) — a sideload proof means export → uninstall → sideload →
+   import, so the production track is the proof route. **Next upload:
+   take 105** (the Back fix and the reminders' permission on the shrunk
+   build). Send the two real AdMob rewarded unit IDs (D11) and the next
+   take carries them — test units earn nothing, and the app is live.
 2. **Answers still open:** the six take-98 steps and the two Diagnostics
    lines (`viewport` with the Fold open, `pictures`) from whichever build
    you run; the look's "tiny bit of work" (which picture, what); A41's
@@ -36,12 +39,14 @@ owner, 24 Sept, take 104).** This session changes the UI only when
 something is broken or off course; refinement is that session's.
 
 **Mine, in order**
-1. **Take 104 — three fixes from the owner's Diagnostics run** (in
-   flight; 103 merged 01:20 and released 01:28, APK 34.9 → 26.4 MB): the
-   camera line skips with its reason in a browser without one, the
-   effects line says what it counts, the size table keeps the R8 map out
-   of the bundle's raw total. A14 stays BUILT + MEASURED until the Fold's
-   self-test passes on an installed APK.
+1. **Take 105 — the Fold's first run of the shrunk build** (in flight;
+   104 merged 02:13 and released 02:19): Back from a card on a fresh
+   launch goes home, never out (landmine 140: the boot never pushed
+   Home); the notifications permission on the shrunk build (landmine
+   141: R8 dropped the plugin's permission annotation — the keep set,
+   a mapping readback, an `unknown` path in the app); the cover viewport
+   measured. **A14 is PROVEN** on the Fold (the OCR read on the R8 +
+   Latin-only build).
 2. **A41** — waits on the owner's list of the parts and the source;
    then one take per source, measured on the runner first.
 2. **A39 item 3 (take 100, measured and closed by the owner's check),
@@ -517,7 +522,13 @@ from.
 - Auto-grading condition from a photo (a separate product; A4).
 - A social feed (a backend; ROADMAP won't-build).
 
-## A21 — Google Play · CLOSED TEST APPROVED take 52 · the clock starts at the twelfth tester
+## A21 — Google Play · LIVE 24 Sept 2026 (take 101's bundle) · every take is one production upload
+
+*Take 105 addendum — LIVE:* the owner's report at 02:42 UTC: "finally
+approved on Google play and it's listed", the Play install on his Fold
+(take 101) at 17 pass, 0 fail, the guide shown on the first open.
+Everything below is the road there.
+
 
 *Take 101 addendum:* the owner asked whether take 100's bundle is fit for
 Play. Verified from the build's own log: upload-key signed, versionCode
@@ -2138,7 +2149,21 @@ he will send more screenshots.
   the app should render in the six colours or stay teal-on-black with colour
   accents; whether the splash is the icon large or something else.
 
-## A14 — Trimming the ML Kit language models · BUILT + MEASURED take 103, the Fold's proof pending
+## A14 — Trimming the ML Kit language models · PROVEN take 104 on the Fold
+
+*Take 105, later the same hour — the contrast:* the Play install of take
+101 (pre-R8) on the same phone passed `Notifications permission —
+display: prompt`; the shrink's regression (landmine 141) is MEASURED,
+not inferred.
+
+*Take 105 addendum — PROVEN:* the owner's take-104 install on the Fold,
+self-test `PASS OCR reads a code the app drew (ML Kit) — read "OP01-016"`,
+camera 1, every plugin present, 16 of 17. **The one FAIL is the size
+take's own regression** — `Notifications permission` resolved undefined
+because R8 dropped the plugin's `@Permission` annotation (landmine 141);
+take 105 keeps the Capacitor layer whole, reads the mapping back and
+treats an empty answer as `unknown`. The proof of that fix is the same
+line on take 105.
 
 *Take 103, merged — MEASURED (run 52, and the released files on the
 session VM, identical):* APK 34.9 → **26.4 MB** file, 58.0 → **36.9 MB**
