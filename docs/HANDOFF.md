@@ -111,6 +111,10 @@ AGENTS.md and adds only the session notes.
   where AGENTS.md won is below.
 - The record: A21 to production; V1-STATE's H1 and Play line; the
   take-101 title and RELEASE sentence; the AGENDA's dead line removed.
+- `.gitignore`: `www/render-sim.png`, the render's second receipt (the
+  sim view, written by `render.mjs` beside `render.png`), was never
+  ignored and sat untracked after every local Chrome render; `www/` is
+  never committed (nothing under it is tracked on main).
 - Tests: smoke 691 (no app change); gate 12 probes with the clean control;
   signer.sh 7, shipped.py 6, scrub.py 9 controls; render 105/106 in Chrome
   on the session VM (the Leader thumbnail wants the CDN this VM is refused;
