@@ -1,4 +1,50 @@
-# HANDOFF — through Take 112
+# HANDOFF — through Take 113
+
+## Take 113 — 2026-09-24 — the owner's icon (D7), folded in from the graphic design session's branch
+
+Opened before any code (PROTOCOL §6). The owner merged take 112 (PR #36)
+at 19:05 UTC after "The pictures look good, mark it ready". Its `check`
+was green on its head a042246: smoke 988/988, render 187/187 in Chrome,
+and the gate passed. build.yml run 61 on the merge commit 1d01cf0 builds
+Release take-112; its after-merge note goes under take 112 once published.
+
+The owner, word for word, with the branch named without its platform
+prefix (a vendor's name the scrubber refuses): "When take 112 is merged and
+you start 113, fold in the icon hand-off from branch […]/compassionate-
+mayer-acc24r (one commit on top of take 111, subject starts "d7: the
+owner's icon"). Read design/d7-icons/SHIP.md first: it lists what changes,
+what was verified and what wasn't, and draft ledger text for 113. My
+decision: I chose the icon with Bandai's printed card-back emblem and it's
+live on Play. Record it as my reversal of landmines 30 and 31 and A16 for
+the icon's emblem only. The own-rose swap in SHIP.md is the fallback.
+Before merge: vet it with the gate, smoke and python3 ci/icon.py
+--selftest. After the Release builds: check the APK by decoding the icon
+files (landmine 78). I'll check the launcher, themed icons, the splash and
+a reminder's status-bar icon on the Fold. Cherry-pick or merge, your call.
+Merging also brings the design/ sources for the Play listing and the
+business card; none of it ships."
+
+### The plan
+
+- **Merge the design branch, not a cherry-pick of its icon commit 93481b3.**
+  The own-rose fallback's SVGs came with an earlier commit, 81ea976, and
+  93481b3 edits two `design/` READMEs that only the earlier commits add.
+  Outside `design/`, the branch changes the same 12 files as 93481b3.
+  `design/` is 45 files and 0.5 MB, and none of it ships.
+- **Before the PR is ready:** the gate, smoke, render and
+  `python3 ci/icon.py --selftest`, each run here. The hand-off's claims are
+  read against the tree: every file it names, its 23 checks and 12
+  controls, and its refusal of the previous build's icon step.
+- **The record:** SHIP.md's drafts, adjusted and written one command each.
+  The owner's reversal of landmines 30 and 31 and A16 covers the icon's
+  emblem only. Its draft landmine "165" becomes 170.
+- **After the Release:** decode the APK's icon files, not their names
+  (landmine 78). The owner checks the launcher, themed icons, the splash
+  and a reminder's status-bar icon on the Fold.
+
+### DEFERRED this cycle
+
+- Filled at the end of the take.
 
 ## Take 112 — 2026-09-24 — A32's second distributor: Southern Hobby, read off its real pages
 
