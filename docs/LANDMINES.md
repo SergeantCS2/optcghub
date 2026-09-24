@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 112.*
+*Current as of take 113.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -181,6 +181,7 @@ Start here. Do not read top to bottom.
 | A distributor's case is matched to the single box | **167** |
 | A new product's page shows an empty white card | **168** |
 | A render check's real tap does nothing | **169** |
+| A reminder shows the phone's info icon, not the app's | **170** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -424,7 +425,11 @@ tracker for trading card games and does not foreground a franchise. A nominative
 disclaimer — not affiliated with, endorsed by, or sponsored by Bandai, Shueisha,
 Toei, Viz or TCGplayer — goes in the app and *opens* the listing, because APEX
 ORV learned at take 167 that "easy-to-see" was the actual requirement and a
-footnote did not satisfy it.
+footnote did not satisfy it. *(Take 113, the owner's reversal, for the icon's
+emblem only: the icon carries Bandai's printed card-back emblem at the
+owner's word (D7), picked by the owner, uploaded and live on Play. The name
+and the listing text are unchanged. The own-rose swap in
+`design/d7-icons/SHIP.md` is the fallback.)*
 
 **31. Play IP complaints suspend first and appeal after.** *(Take 13: the
 "do not monetise" guidance below is overtaken by A17. The posture with rewarded
@@ -433,6 +438,9 @@ known-survivable. Mitigations 26–30 carry the weight.)* Repeated strikes
 terminate the developer account, burning the $25, the listing, the registered
 package name and the developer identity. Landmines 26–30 are the mitigation.
 Do not monetise; a free non-commercial app is a materially different posture.
+*(Take 113: for the icon's emblem, this risk is the owner's, accepted at the
+owner's word; Play's approval is not the rights holder's consent. The own-rose swap
+in `design/d7-icons/SHIP.md` is the fallback: five SVGs and the Play icon.)*
 
 **32. Do not scrape TCGplayer.** Their terms discourage it, the site renders
 prices client-side so naive requests return nothing useful, Cloudflare will win
@@ -1191,7 +1199,12 @@ first tester saw.** The placeholder SVG existed since take 12 and was wired to
 nothing; `cap add android` ships Capacitor's own icon and splash. The icon is
 now rendered from the committed SVG at build time in `ci/apk.sh` — mipmaps for
 five densities, a round variant, and the adaptive foreground — and PNGs are
-never committed, so replacing the icon is replacing one file (A16).
+never committed, so replacing the icon is replacing one file (A16). *(Take
+113: `ci/icon.py` renders five layers -- the adaptive background and
+foreground, a monochrome layer for themed icons, the legacy and round icons,
+and the reminders' drawable -- so replacing the icon is replacing five files,
+and its checks refuse a layer Android would cut or tint wrong. Its first real
+run is the Release build: decode the APK, never trust a name.)*
 
 Verifying it was in the APK took three attempts, each a lesson: resource names
 are obfuscated in release builds so `grep mipmap` finds nothing; a colour
@@ -2340,6 +2353,16 @@ into view sat under the fixed bottom nav. Checks that call the app's
 functions meet none of this. Rule: before a real click, close the overlays
 (`NAV.zipAsked`, `closeAnyOverlay()`) and centre the target. A missing
 target fails its check; it never stops the run.
+
+**170. The reminders asked for an icon the plugin could not see.**
+`smallIcon: 'ic_launcher'` named a mipmap, and
+`@capacitor/local-notifications` resolves drawables only. So every price
+alert and release reminder wore the system's info icon. The graphic design
+session found it by reading the plugin's source; it has not yet been seen
+on the Fold. A resource named only in the web layer is invisible both to
+the plugin's lookup and to the resource shrinker. Rule: ship it as a
+drawable and keep it (`raw/keep.xml`). Test the name the app asks for
+against the name the build writes (`ci/icon.py --selftest`, in the gate).
 
 ## §2 — Inherited from APEX ORV
 

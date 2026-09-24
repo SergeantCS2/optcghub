@@ -1,6 +1,6 @@
 # Play listing — copy, in the shape the console wants
 
-*Current as of take 112.* Plain text: the console shows asterisks and hashes
+*Current as of take 113.* Plain text: the console shows asterisks and hashes
 literally, so there is no markdown in the paste blocks. The disclaimer is the
 first line of the full description, not the last (landmine 30, A8). Every URL
 below was requested before it was written down (RUNBOOK-play §C, take 36).
@@ -70,7 +70,11 @@ Pages build as the app. Returned 200 at take 36.
 
 ## Graphics
 - Icon 512×512 and feature graphic 1024×500 — `play-assets-t33/` in the
-  take-33 outputs, rendered from `assets/icon.svg`.
+  take-33 outputs, rendered from `assets/icon.svg`. *(Take 113: the app icon
+  is `play-assets/icon-512.png` from the build, the full-bleed master that
+  Play masks. The feature graphic and the eight screenshots on the listing
+  come from `design/play-listing` and were uploaded by the owner by hand.
+  `feature-1024x500.png` is no longer built.)*
 - Screenshots — at least two, from the phone. Suggested: Collection with a few
   scanned cards; the Scan screen with a card in the guide; a legal deck in the
   builder; the Trade screen.

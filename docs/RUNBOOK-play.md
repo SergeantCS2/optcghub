@@ -1,6 +1,6 @@
 # RUNBOOK — Google Play, from the repo to a running 14-day clock
 
-*Current as of take 112.* The whole procedure, in the order it must happen,
+*Current as of take 113.* The whole procedure, in the order it must happen,
 with who does each step. Everything on the repo side is already built; what
 follows is the owner's, and none of it is hard. The gate at the end is calendar
 time: **12 testers opted in for 14 continuous days** (landmine 35; re-checked
@@ -176,8 +176,8 @@ collects nothing, but AdMob does. Declare exactly this:
 
 | asset | where from |
 |---|---|
-| App icon 512×512 | `play-assets-t33/icon-512.png` in this take's outputs (the take-16 compass placeholder, as asked) |
-| Feature graphic 1024×500 | `play-assets-t33/feature-1024x500.png` |
+| App icon 512×512 | `play-assets-t33/icon-512.png` in this take's outputs (the take-16 compass placeholder, as asked). *Take 113: `play-assets/icon-512.png` from the build -- the owner's pick, the full-bleed master Play masks* |
+| Feature graphic 1024×500 | `play-assets-t33/feature-1024x500.png`. *Take 113: no longer built; the listing's feature graphic and screenshots come from `design/play-listing`, uploaded by hand* |
 | Phone screenshots, at least 2 | the Fold, cover screen: Home, Collection, a card detail, Scan, a deck. The first one leads with the collection, not a character: the listing does not foreground a franchise (landmine 30). The app itself shows card art from take 109 (A42) |
 | Category | **App → Tools** (or Entertainment) — never **Game**; it is a collection tracker |
 | Contact email | yours |

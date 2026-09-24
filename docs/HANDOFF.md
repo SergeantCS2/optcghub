@@ -5,8 +5,8 @@
 Opened before any code (PROTOCOL §6). The owner merged take 112 (PR #36)
 at 19:05 UTC after "The pictures look good, mark it ready". Its `check`
 was green on its head a042246: smoke 988/988, render 187/187 in Chrome,
-and the gate passed. build.yml run 61 on the merge commit 1d01cf0 builds
-Release take-112; its after-merge note goes under take 112 once published.
+and the gate passed. build.yml run 61 on the merge commit 1d01cf0 built
+Release take-112 at 19:13; its after-merge note is under take 112.
 
 The owner, word for word, with the branch named without its platform
 prefix (a vendor's name the scrubber refuses): "When take 112 is merged and
@@ -42,9 +42,72 @@ business card; none of it ships."
   (landmine 78). The owner checks the launcher, themed icons, the splash
   and a reminder's status-bar icon on the Fold.
 
+### Built (merged, not written here)
+
+The design branch merged cleanly onto take 112, with no conflicts. Outside
+`design/` it changes 12 files, as SHIP.md says:
+- **`assets/icon*.svg`:** the pick's five layers. The compass survives as
+  `assets/icon-placeholder.old.svg`, and the jolly roger stays.
+- **`ci/icon.py`:** the icon step, lifted out of `ci/apk.sh`'s heredoc. It
+  writes:
+  - the adaptive background, foreground and monochrome layers at 108 dp and
+    five densities;
+  - the launcher XMLs;
+  - the legacy and round icons;
+  - the reminders' `ic_stat_don` drawable, kept through `shrinkResources`;
+  - the splash;
+  - `play-assets/icon-512.png`.
+
+  The hand-drawn feature graphic is retired.
+- **`src/app.html`:** both reminders ask for `ic_stat_don` (landmine 170).
+- **The gate, deps and smoke:** `tools/gate.py` runs `ci/icon.py
+  --selftest` and requires the file. `ci/deps.sh` installs cairosvg. Smoke's
+  splash assertion reads the icon step.
+
+### Vetted here, before the PR
+
+- **`python3 ci/icon.py --selftest`:** 23 ok, 12 of them controls. It runs
+  on a fixture and on Capacitor's own template. The template's icons before
+  the step are refused with 26 problems, as SHIP.md says.
+- **Watched to fail:** one reminder put back to `ic_launcher` failed the
+  selftest ("src/app.html's reminders ask for the drawable this step
+  writes"). The gate refused it at `selftest`. The source was then restored.
+- **Tests:** smoke 988/988; render 187/187 in Chrome.
+- **No look step:** nothing in `www/` changes visibly, and the app's pages
+  carry no favicon. The Fold is the look for this one.
+
+### Not verifiable here, for the runner and the Fold
+
+- **The build:** the VM has no Android SDK. `build.yml` on the merge proves
+  first:
+  - aapt2 linking the new XMLs (`<monochrome>` needs compileSdk 33 or
+    later; the template's is 36);
+  - `shrinkResources` honouring `raw/keep.xml`;
+  - the release APK's contents.
+- **The APK, after the Release:** `aapt2 dump resources` must list
+  `drawable/ic_stat_don` and `mipmap/ic_launcher_monochrome`. Then decode
+  the pixels those resources point to: the glyph white on transparent, the
+  monochrome layer one colour (landmine 78).
+- **The owner, on the Fold:** the launcher on both screens, themed icons,
+  the splash, and a release reminder's status-bar glyph (ドン!!, not ⓘ). A
+  launcher can hold the old icon until the update installs or the phone
+  restarts.
+
+### Ruled out
+
+- **Cherry-picking the icon commit alone.** The fallback's SVGs would not
+  come with it, and it edits two READMEs that only the earlier commits add.
+- **As the icon:** the compass placeholder and the jolly roger, both kept
+  in `assets/`; our own rose while the owner's pick stands, since it is
+  the ready swap.
+
 ### DEFERRED this cycle
 
-- Filled at the end of the take.
+- **The APK decode and the owner's Fold check** above, after Release
+  take-113.
+- **A favicon and a manifest icon for Pages from `assets/icon.svg`.** That
+  is the UI session's call.
+- **A32's next:** the distributor state timeline.
 
 ## Take 112 — 2026-09-24 — A32's second distributor: Southern Hobby, read off its real pages
 
@@ -315,6 +378,16 @@ closed drop-down for the long text.
     Piece Card Game: …");
   - one product listed by both distributors shows as two rows there;
   - a product with no market price reads "— · market" on its page.
+
+### After the merge
+
+The owner merged PR #36 at 19:05 UTC. build.yml run 61 on the merge commit
+1d01cf0 gated the app and published Release take-112 at 19:13:19 (the APK,
+26,454,682 bytes; the AAB, 19,640,155; the mapping, 51,817,038), its body
+headed "take 112". The first hourly Hunt on main after the merge (run 48,
+on 1d01cf0) read Southern Hobby live: ok, 20 of 20 pages in 21 calls, 0
+failed, 4 matched -- the VM's proof, repeated on the runner. This note
+rides take 113's pull request.
 
 ## Take 111 — 2026-09-24 — the last look: every screen at both sizes after the UI series, and what it turned up
 
