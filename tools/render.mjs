@@ -58,8 +58,12 @@ if (puppeteer) {
      report 'error', or this probe cannot see a missing font (landmine 55). */
   const fonts = await page.evaluate(async () => {
     await document.fonts.ready;
+    /* take 107: Home's first screen no longer sets anything in the comic face
+       (its tabs were the last), and a face nothing has used yet stays
+       'unloaded'. Load each one: a file that is missing still reports 'error'. */
+    await Promise.all([...document.fonts].map(f => f.load().catch(() => 0)));
     const st = {}; for (const f of document.fonts) st[f.family] = f.status;
-    const h2 = document.querySelector('h2');
+    const h2 = document.querySelector('.screen.on .ab-title') || document.querySelector('h2');   // take 107: the screen's own title
     const fam = h2 ? getComputedStyle(h2).fontFamily : '';
     const nope = new FontFace('OPH Nope', 'url(fonts/does-not-exist.woff2)');
     await nope.load().catch(() => 0);
@@ -68,7 +72,7 @@ if (puppeteer) {
   ok('the four role faces are LOADED in Chrome',
      ['OPH Display', 'OPH Comic', 'OPH Body', 'OPH Heavy'].every(f => fonts.st[f] === 'loaded'),
      JSON.stringify(fonts.st));
-  ok('h2 resolves to the display face', /OPH Display/.test(fonts.fam), fonts.fam);
+  ok('the screen title resolves to the display face', /OPH Display/.test(fonts.fam), fonts.fam);
   ok('negative control: a missing font file reports error', fonts.control === 'error', fonts.control);
   ok('catalogue reached the page',
      await page.evaluate(() => !!window.VAULT && window.VAULT.CAT.ready));
@@ -95,7 +99,7 @@ if (puppeteer) {
   await new Promise(r => setTimeout(r, 250));
   const more = await page.evaluate(() => ({
     on: (document.querySelector('.screen.on') || {}).id,
-    heading: ((document.querySelector('#settings .bar .tab') || {}).textContent || '').trim(),
+    heading: ((document.querySelector('#settings .ab-title') || {}).textContent || '').trim(),
     about: (document.querySelector('#aboutTake') || {}).textContent || '',
     rows: ['#stRun', '#syncBtn', '[data-act="export"]'].filter(sel => document.querySelector('#settings ' + sel)).length,
     take: window.VAULT.TAKE }));
@@ -429,7 +433,7 @@ if (puppeteer) {
   await new Promise(r => setTimeout(r, 150));
   const wide = await page.evaluate(() => {
     const b = document.body.getBoundingClientRect(); const n = [...document.querySelectorAll('nav')].find(x => x.offsetParent !== null || x.getBoundingClientRect().width > 0);
-    const h2 = document.querySelector('h2');
+    const h2 = document.querySelector('.screen.on .ab-title');   // take 107: the header's title
     return { bodyW: Math.round(b.width), vw: document.documentElement.clientWidth,
              navW: n ? Math.round(n.getBoundingClientRect().width) : 0,
              headColour: h2 ? getComputedStyle(h2).color : '' };
@@ -497,7 +501,7 @@ if (puppeteer) {
     const ctrls = [...document.querySelectorAll('button, [role="tab"], a[href]')].filter(vis);
     const bad = ctrls.filter(e => !((e.getAttribute('aria-label') || '').trim() || (e.textContent || '').trim()));
     return { total: ctrls.length, bad: bad.length, sample: bad.slice(0, 3).map(e => e.outerHTML.slice(0, 60)),
-             headings: document.querySelectorAll('[role="heading"]').length,
+             headings: document.querySelectorAll('h1, [role="heading"]').length,
              tabs: [...document.querySelectorAll('[role="tab"]')].map(e => e.getAttribute('aria-selected')) };
   });
   ok('every visible control has an accessible name', a11y.bad === 0 && a11y.total > 10, JSON.stringify(a11y));
@@ -630,7 +634,7 @@ if (puppeteer) {
   });
   await new Promise(r => setTimeout(r, 200));
   const ins = await page.evaluate(() => {
-    const top = document.querySelector('.tab.on').getBoundingClientRect().top;
+    const tt = document.querySelector('.screen.on .ab-title'); const top = tt ? tt.getBoundingClientRect().top : -1;   // take 107: the header's title
     const nav = document.querySelector('nav').getBoundingClientRect().bottom;
     return { firstContentTop: Math.round(top), navBottom: Math.round(nav), vh: innerHeight };
   });
@@ -678,6 +682,76 @@ if (puppeteer) {
   });
   ok('foreground and background are not the same colour',
      contrast.bg !== contrast.fg, JSON.stringify(contrast));
+
+  /* Take 107 (A42): one header on every screen. Each of the twenty screens is
+     reached the way a person reaches it and its title measured here: one
+     height, one size, one face; the page's edge on a screen in a nav, beside
+     the arrow one level down; the gear in one spot on every screen in a nav;
+     nothing in a header clipped, overlapping or off the screen. The take-106
+     build, measured the same way, had five screens with no title at all and
+     the rest at three heights. */
+  const t107 = await page.evaluate(async () => {
+    const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
+    const plan = [['collect', 'home'], ['collect', 'search'], ['collect', 'scan'], ['collect', 'collection'], ['collect', 'wants'], ['collect', 'binder'],
+      ['collect', 'trade'], ['collect', 'checklist'], ['collect', 'detail'], ['collect', 'settings'], ['collect', 'diag'],
+      ['play', 'decks'], ['play', 'deck'], ['play', 'cards'], ['play', 'play'], ['play', 'sim'],
+      ['hunt', 'sealed'], ['hunt', 'releases'], ['hunt', 'local'], ['hunt', 'events']];
+    const rows = [];
+    for (const [mode, id] of plan) {
+      if (V.MODE.cur !== mode) { V.MODE.set(mode, true); await wait(300); }
+      while (V.closeAnyOverlay()) {}
+      if (id === 'checklist') V.openChecklist([...V.CAT.sets.values()][0].id);
+      else if (id === 'detail') V.openDetail(V.CAT.rows[0].id);
+      else if (id === 'deck') { V.go('decks'); await wait(100); document.querySelector('#dkNew').click(); }
+      else V.go(id);
+      await wait(220); while (V.closeAnyOverlay()) {} window.scrollTo(0, 0);
+      const sec = document.getElementById(id), s = sec.getBoundingClientRect(), h = sec.querySelector('header.appbar'), t = h && h.querySelector('.ab-title');
+      if (!t) { rows.push({ id, missing: true }); continue; }
+      const r = t.getBoundingClientRect(), cs = getComputedStyle(t), txt = h.querySelector('.ab-text').getBoundingClientRect(), act = h.querySelector('.ab-act');
+      const a = act && act.getBoundingClientRect(), g = h.querySelector('[data-go="settings"]'), gr = g && g.getBoundingClientRect();
+      rows.push({ id, on: sec.classList.contains('on'), top: Math.round((r.top - s.top) * 10) / 10, left: Math.round(r.left - s.left), size: cs.fontSize, face: cs.fontFamily,
+        back: !!h.querySelector('[data-back]'), gear: gr ? `${Math.round(gr.left - s.left)},${Math.round(gr.top - s.top)}` : '',
+        clipped: t.scrollWidth > t.clientWidth + 1, overlap: !!a && txt.right > a.left + 0.5,
+        outside: [...h.querySelectorAll('*')].some(e => { const b = e.getBoundingClientRect(); return b.width > 0 && (b.left < -0.5 || b.right > innerWidth + 0.5); }) });
+    }
+    V.MODE.set('collect', true); V.go('home'); return rows;
+  });
+  const push107 = ['deck', 'detail', 'checklist', 'binder', 'wants', 'trade', 'diag', 'settings'];
+  const got107 = t107.filter(r => !r.missing), nav107 = got107.filter(r => !push107.includes(r.id)), down107 = got107.filter(r => push107.includes(r.id));
+  const one = (rows, k) => new Set(rows.map(r => r[k])).size === 1;
+  ok('take 107: all twenty screens draw a header title, each on its own screen', t107.length === 20 && got107.length === 20 && got107.every(r => r.on), JSON.stringify(t107.filter(r => r.missing || !r.on).map(r => r.id)));
+  ok('take 107: every title at one height, one size (26px) and one face (the display face)', got107.length === 20 && one(got107, 'top') && one(got107, 'size') && got107[0].size === '26px' && one(got107, 'face') && /OPH Display/.test(got107[0].face),
+     JSON.stringify({ tops: [...new Set(got107.map(r => r.top))], sizes: [...new Set(got107.map(r => r.size))] }));
+  ok('take 107: a title starts at the page\'s edge on the twelve screens in a nav, beside the arrow on the eight one level down',
+     nav107.length === 12 && down107.length === 8 && one(nav107, 'left') && one(down107, 'left') && down107[0].left > nav107[0].left && nav107.every(r => !r.back) && down107.every(r => r.back),
+     JSON.stringify({ nav: [...new Set(nav107.map(r => r.left))], down: [...new Set(down107.map(r => r.left))] }));
+  ok('take 107: the gear to More sits in one spot on all twelve screens in a nav, in all three modes (A37)', nav107.length === 12 && nav107.every(r => r.gear) && one(nav107, 'gear') && down107.every(r => !r.gear),
+     JSON.stringify([...new Set(nav107.map(r => r.gear))]));
+  ok('take 107: nothing in a header is clipped, overlaps the title or leaves the screen', got107.length === 20 && got107.every(r => !r.clipped && !r.overlap && !r.outside),
+     JSON.stringify(got107.filter(r => r.clipped || r.overlap || r.outside).map(r => r.id)));
+  /* the arrow, Back over the sheets, the ask sheet's cross -- real clicks and the browser's own Back */
+  const t107b = await page.evaluate(async () => {
+    const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)), on = () => (document.querySelector('.screen.on') || {}).id, open = id => document.querySelector(id).classList.contains('on');
+    V.MODE.set('play', true); await wait(300); V.go('decks'); await wait(100);
+    document.querySelector('#dkNew').click(); await wait(200);
+    const atDeck = on(); const arrow = document.querySelector('#deck .ab-back'); if (arrow) arrow.click(); await wait(300);
+    const afterArrow = on();
+    document.querySelector('#dkNew').click(); await wait(200); document.querySelector('#dkLead').click(); await wait(150);
+    const lpOpen = open('#leaderPick'); history.back(); await wait(300);
+    const lpAfter = { open: open('#leaderPick'), screen: on() }; document.querySelector('#leaderPick').classList.remove('on');
+    V.MODE.set('collect', true); await wait(300); V.go('search'); await wait(150);
+    document.querySelector('#sortBtnAll').click(); await wait(200);
+    const fOpen = open('#filters'); history.back(); await wait(300);
+    const fAfter = { open: open('#filters'), screen: on() }; document.querySelector('#filters').classList.remove('on');
+    let settled = 'pending'; V.askZip().then(v => { settled = String(v); }); await wait(150);
+    const askOpen = open('#askSheet'); const x = document.querySelector('#askSheet [data-close]'); if (x) x.click(); await wait(150);
+    const askAfter = { open: open('#askSheet'), settled }; if (askAfter.open) document.querySelector('#askCancel').click();
+    V.go('home'); return { atDeck, afterArrow, lpOpen, lpAfter, fOpen, fAfter, askOpen, askAfter };
+  });
+  ok('take 107: the arrow on a deck returns to Decks (a real click)', t107b.atDeck === 'deck' && t107b.afterArrow === 'decks', JSON.stringify(t107b));
+  ok('take 107: Back over the Leader sheet closes it and the deck stays (before this take the sheet stayed open over Decks)', t107b.lpOpen && !t107b.lpAfter.open && t107b.lpAfter.screen === 'deck', JSON.stringify(t107b.lpAfter));
+  ok('take 107: Back over the filter sheet closes it and Search stays (before this take the sheet stayed open over Home)', t107b.fOpen && !t107b.fAfter.open && t107b.fAfter.screen === 'search', JSON.stringify(t107b.fAfter));
+  ok('take 107: the ask sheet\'s cross closes it and answers no', t107b.askOpen && !t107b.askAfter.open && t107b.askAfter.settled === 'false', JSON.stringify(t107b.askAfter));
 
   await browser.close();
 } else {

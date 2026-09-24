@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 106
+# V1-STATE — what exists, as of take 107
 
-*Current as of take 106.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 107.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -81,6 +81,7 @@ refresh from Pages (take 27).
 | Scrubber | comments stripped from the shipped app on every build; the gate refuses a first name, an AI-vendor name, the conversational word, a credential, a container path or a leftover to-do marker anywhere public | scrub.py --selftest 9 controls (take 102: the two literal file names pass as whole tokens, the vendor word beside them still fires); smoke 5 (take 35) |
 | Typography | four roles (display / comic / body / heavy), OFL/Apache faces bundled, 232 KB, licensed faces as a file drop in `assets/user/fonts/` | render.mjs: Chrome reports all four LOADED and h2 resolves to the display face, with a missing-file control; smoke 7 |
 | Design tokens (take 106, A42) | one scale for the whole app: type roles 12 to 44 px (nothing under 12), spacing, radii, thumbnail sizes, motion and a z scale; semantic colours per palette — the accent as text (`--accent-ink`, Prep & Play `#E5705C`), the label on the accent (`--on-accent`), a control edge at 3:1 (`--line-strong`), tints mixed from each palette; the charts read the palette they are drawn in | smoke take-106 section (contrast per palette on card and card2, no font size under 12 px, every glyph a call names in the sprite); the look, take 106, 7 of 7 at both viewports |
+| One header on every screen (take 107, A42) | a `header.appbar` in all twenty screens: the title an `h1` in the display face at 26 px in the mode's accent, at one height; one line under it where a screen has one; the gear to More last on the twelve screens in a nav, in all three modes (A37); the back arrow on the eight one level down (the phone's own Back path); Home's two views a tab row; every sheet a titled head and a close button; Back closes the filter, Leader and printing sheets first (landmine 144) | smoke take-107 section (every screen's header, Back, the gear, the sheets, the handlers; watched to fail on take 106); render (twenty titles measured in Chrome: one height, size and face, two lefts, the gear in one spot; the arrow, Back over two sheets, the ask sheet's cross); the look, take 107, 11 of 11 at both viewports |
 | Sync | quiet once-per-open sync holds on cellular unless switched on; Sync now always runs; `UPDATE_URL` points at Pages | smoke 4 controls; **not yet seen on the Fold** |
 
 **The look (take 99, A40):** `tools/look.mjs` — the session's own review,

@@ -1,6 +1,6 @@
 # UI-AUDIT — the UI series' checklist (A42)
 
-*Current as of take 106.*
+*Current as of take 107.*
 
 The audit behind the UI series, taken on the take-104 source by four
 independent read-throughs (headings and copy; components, icons and
@@ -62,23 +62,26 @@ compact bar one level down, no banner on Collect's Home.
 - [x] Reduced motion covers only the knob (430): not the tour's smooth scroll (2008) nor the splash fade (97). *(take 106)*
 - [x] The render knob check measures mid-slide on a busy machine (landmine 143). *(take 106)*
 
-## 2. One header — the next take
+## 2. One header — take 107
 
-- [ ] No shared header: 13 screens use `.bar` + `span.tab.on role=heading` (the tab style); Collection (539), Search (607), Scan (622), Detail (654), Deck (738), Home (495, a tab pair) and More (built at 4744) open with something else.
-- [ ] Hunt titles carry the swords (two different SVGs, 573 vs 582); the other modes carry none. The swords SVG is pasted five times.
-- [ ] The right slot differs on every screen: a pill, a select, ghost buttons, a note, an unlabelled gear (727), nothing.
-- [ ] No visible back on any screen one level down (deck, checklist, binder, wants, trade, detail, More, Diagnostics, Market Movers).
-- [ ] No `h1`; sheet titles are `h3` in the body face (no `.sheetbody h3` rule); duplicate titles "Performance" (518) and "Events" (3710).
-- [ ] Hunt has no route to More (A37): the gear on every main screen.
-- [ ] Home's Overview/Performance: `role=tab` with no tablist.
+- [x] No shared header: 13 screens use `.bar` + `span.tab.on role=heading` (the tab style); Collection (539), Search (607), Scan (622), Detail (654), Deck (738), Home (495, a tab pair) and More (built at 4744) open with something else. *(take 107: a `header.appbar` in all twenty screens; the title an `h1` in one place, face and size -- one height across all twenty, measured in Chrome)*
+- [x] Hunt titles carry the swords (two different SVGs, 573 vs 582); the other modes carry none. The swords SVG is pasted five times. *(take 107: no title carries a mark; the splash keeps the swords, now the only copy)*
+- [x] The right slot differs on every screen: a pill, a select, ghost buttons, a note, an unlabelled gear (727), nothing. *(take 107: one actions slot, the gear to More always last on a screen in a nav)*
+- [x] No visible back on any screen one level down (deck, checklist, binder, wants, trade, detail, More, Diagnostics, Market Movers). *(take 107: the arrow on all eight; Market Movers stays a state of Search, a nav screen, ruled out in HANDOFF)*
+- [x] No `h1`; sheet titles are `h3` in the body face (no `.sheetbody h3` rule); duplicate titles "Performance" (518) and "Events" (3710). *(take 107: the header's `h1`; the sheets' titles in the display face with a close button; the two duplicate panel titles are copy and move to the voice, below)*
+- [x] Hunt has no route to More (A37): the gear on every main screen. *(take 107: the gear on every screen in all three navs)*
+- [x] Home's Overview/Performance: `role=tab` with no tablist. *(take 107: a tablist of two buttons, one tab stop, the arrow keys)*
+- [x] Back over an open `#filters`, `#leaderPick` or `#printPick` (landmine 137's overlay list) — unconfirmed; verify in Chrome. *(take 107: PROVEN in Chrome -- the filter sheet stayed over Home, the Leader sheet over Decks -- and fixed; landmine 144)*
+
+## 3. Controls and icons — take 108
+
 - [ ] Emoji and symbols as icons: 🔍 (550, 951), 📷 (608), ⚙ for filter (553, 610), settings (727) and nothing (624), ☆★ (552), ☐☑ (757), ↶ (645), ⇄ (2119), ↻ (2373), ⋯ (5180), ▾▸, ↗ on some external links and not others, − × ✕ for remove.
 - [ ] One glyph, several meanings: `g-life` Play/Events/Want list; `g-stage` Sealed/Collection/Binder/scan-from-photo; `g-counter` Releases/Backup; `g-blocker` Scan/Bulk; `g-trigger` Movers/Torch; `g-compass` Home/Local; `g-spyglass` Search/Cards/Export.
 - [ ] Touch under 44 px: steppers 34 (301), deck +/- 28 (405), the search-bar icon buttons about 15 x 22, chips 35, `.linkish` 36, the slider 36, the currency pill 29, Releases buttons 33, "+20 for a short ad" 27, `#dkName` 34.
 - [ ] No pressed state (`-webkit-tap-highlight-color:transparent`, 59) and no disabled style (25 `disabled` buttons look live).
 - [ ] Icon buttons with no name: the gear (727), the "−" steppers (1886, 2102, 2107, 2112), "⋯" (5180), "✕" (5213); toggles with no `aria-pressed` (552, 757).
-- [ ] Back over an open `#filters`, `#leaderPick` or `#printPick` (landmine 137's overlay list) — unconfirmed; verify in Chrome.
 
-## 3. The art layer
+## 4. The art layer
 
 - [ ] The record first: landmines 26 and 28 corrected (display-only, hot-linked, used boldly; nothing bundled; offline falls back to the colour tile); 30 and 31 stand; NSP's "may not ship" line; A6, A16, A29, A41; V1-STATE; PROVISION's runtime rows; PLAY-LISTING; `assets/user/README.md` (whose first line also names the owner and is outside the scrubber's list); the comments in the Hunt palette, `deckCover`, `refArt` and More's data sources.
 - [ ] `artUrl()` from the stored URL only (never a card number, AGENTS §3); the large size measured on the runner (`_in_1000x1000` served 600 x 838 at take 6; `{id}.jpg` unmeasured; the SAMPLE watermark unmeasured).
@@ -88,16 +91,17 @@ compact bar one level down, no banner on Collect's Home.
 - [ ] The runner's look: `check` runs the look and keeps the PNGs, since this session's VM reaches no image host.
 - [ ] Thumbnails: seven widths (30 34 36 44 48 52 56), five radii, three ratios → the three `--thumb-*`.
 
-## 4. The voice
+## 5. The voice
 
 - [ ] Casing: sentence case for every heading, button and chip (outliers: "Most Valuable" 512, "View All" 514, "Market Movers" 540, "Trade Analyzer" 541, "Bulk Actions" 542, "+ Add a Graded Card" 702, "Starter Decks" 3767/3774); literal caps ("YOUR SCAN" 3024, "GRADED" 2902, "FAILED" 4752, "REPLACES" 3206, "MEASURED" 3894); lowercase states ("offline ok" 498, "☐ own" 757, "for this deck: off" 809, "given" 2110, "+cal" 3724).
+- [ ] Duplicate panel titles: "Performance" under Home's own Performance tab, and an "Events" panel on Events (moved here from the header section at take 107).
 - [ ] One word per thing: collection (D17: Collection for Portfolio — 504, 2506, 2508, 2519); card vs printing ("Search all N cards" 5435 vs "N printings" 2915); Refresh (#huntSync says Refresh at 3482 and Fetch at 3484; Sync now 4777); Remove (Delete, Clear, − × ✕); Sim (simulator, hot-seat, pass the phone); Export (Export CSV); Back up; Want list (wants, wanted); keywords one way (blockers, Blocker, [Blocker]).
 - [ ] Formats: one date formatter (eight styles today, ISO with a literal T at 3206, 3474); one percentage rule (0, 1 and 2 decimals); × not x (3155, 4811, 5347); curly quotes and apostrophes.
 - [ ] Money: `money(Math.abs(d)).slice(1)` (1621, 1904, 2574, 2665, 2670, 4684) drops the "$" in dollars and the "≈" in a converted currency; "in the last all time" (2574); the min/max placeholders say "$" in every currency (898, 900).
 - [ ] The developer's voice out of the UI: `<title>` "take __TAKE__" (6); "(R6)" (963); "(PROTOCOL §10)" (2993); "MEASURED:" (3894); "(landmine 25)" (4721); "Credits (A17 — ads not wired; gate OFF)" and "+20 (dev)" (4789-4795); the tour's "Two faces" and "A simulator is on the roadmap" (1981-1983); "Store stock and local shops come to this mode next" (578); "store events come with the local view" (3782); "Sealed product is manual." (4812); "the field is offline by design" (4800).
 - [ ] Button labels of three words at most (the Play Start/Next/End buttons 2120, the Sim buttons 5163-5214); labels for the inputs that have only a placeholder (551, 609, 741, 756, 811, 848, 855, 898, 900, 952, 2521; the Sim selects 5161-5164).
 
-## 5. Polish
+## 6. Polish
 
 - [ ] Motion tokens applied (sheet slide, crossfade on mode switch, press feedback), reduced motion honoured everywhere.
 - [ ] Loading, empty and error states per list; tabular figures on every number.

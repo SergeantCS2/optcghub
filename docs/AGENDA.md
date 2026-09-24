@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 106.* Ranked by blocking-ness, not by interest.
+*Current as of take 107.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -37,8 +37,9 @@ each item got where it is; this block is what to do next.
 **UI design and refinement belong to a separate UI/UX session (the
 owner, 24 Sept, take 104).** This session changes the UI only when
 something is broken or off course; refinement is that session's.
-Its series is A42 (take 106 onward: foundation, one header, art, voice,
-polish), after the other session's take 105 in the take order.
+Its series is A42 (take 106 onward: foundation, one header, controls
+and icons, art, voice, polish), after the other session's take 105 in
+the take order.
 
 **Mine, in order**
 1. **Take 105 — the Fold's first run of the shrunk build** (in flight;
@@ -1122,15 +1123,19 @@ mode by mode leaves the app less uniform in between):
 1. **Foundation** (take 106): design tokens, the Prep & Play accent
    readable, nothing under 12 px, colours that follow the mode, the two
    blank icons, the equal-thirds slider.
-2. **One header** on every screen: back on the screens one level down,
-   the More gear on every main screen, icons from the sprite only, 44 px
-   targets, pressed and disabled states.
-3. **The art layer:** the record's art policy corrected first (landmines
+2. **One header** on every screen (take 107): one title in one place,
+   back on the screens one level down, the More gear on every main
+   screen, Home's two views as one switch, the sheets' titles and a
+   close button.
+3. **Controls and icons** (take 108, split from the header take so each
+   take is one thing to look at): icons from the sprite only, one
+   meaning per glyph, 44 px targets, pressed and disabled states.
+4. **The art layer:** the record's art policy corrected first (landmines
    26 and 28 corrected, not renumbered; 30 and 31 stand), then the
    banners, backdrops and Leader-art covers, measured on the runner.
-4. **The voice:** one word per thing, one date and money format,
+5. **The voice:** one word per thing, one date and money format,
    Collection for Portfolio, the developer's voice out of the UI.
-5. **Polish:** motion, loading, empty and error states, the checklist.
+6. **Polish:** motion, loading, empty and error states, the checklist.
 
 The audit behind it, with line numbers and a box per finding, is
 `docs/UI-AUDIT.md`; each take ticks its boxes.

@@ -15,6 +15,9 @@
     franchise. The Straw Hats' hat-wearing skull, any crew's specific flag,
     the Going Merry — NOT here, on purpose.
 
+    INTERFACE (take 107) — back, close and the gear to More: plain
+    geometry for the header and the sheets, drawn here like the rest.
+
     Every symbol is 24x24, stroke-based, currentColor, so it takes the brass
     or any of the six game colours from CSS.
   -->
@@ -156,5 +159,21 @@
   </symbol>
   <symbol id="g-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
     <path d="M6 3h4l2 5-2.5 1.5a11 11 0 0 0 5 5L16 12l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 4 5a2 2 0 0 1 2-2z"/>
+  </symbol>
+
+  <!-- ===== interface (take 107): the header and the sheets ===== -->
+
+  <!-- Back: a chevron pointing the way the screen came from -->
+  <symbol id="g-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M15 5l-7 7 7 7"/>
+  </symbol>
+  <!-- Close: a cross, for a sheet -->
+  <symbol id="g-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <path d="M6 6l12 12M18 6L6 18"/>
+  </symbol>
+  <!-- Gear: eight teeth round a hub, the way to More on every main screen (A37) -->
+  <symbol id="g-gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round">
+    <path d="M10.65 4.72L10.78 2.07L13.22 2.07L13.35 4.72A7.4 7.4 0 0 1 16.19 5.9L18.16 4.12L19.88 5.84L18.1 7.81A7.4 7.4 0 0 1 19.28 10.65L21.93 10.78L21.93 13.22L19.28 13.35A7.4 7.4 0 0 1 18.1 16.19L19.88 18.16L18.16 19.88L16.19 18.1A7.4 7.4 0 0 1 13.35 19.28L13.22 21.93L10.78 21.93L10.65 19.28A7.4 7.4 0 0 1 7.81 18.1L5.84 19.88L4.12 18.16L5.9 16.19A7.4 7.4 0 0 1 4.72 13.35L2.07 13.22L2.07 10.78L4.72 10.65A7.4 7.4 0 0 1 5.9 7.81L4.12 5.84L5.84 4.12L7.81 5.9A7.4 7.4 0 0 1 10.65 4.72Z"/>
+    <circle cx="12" cy="12" r="3.2"/>
   </symbol>
 </svg>

@@ -1,4 +1,158 @@
-# HANDOFF — through Take 106
+# HANDOFF — through Take 107
+
+## Take 107 — 2026-09-24 — one header on every screen: the same title in the same place, a back arrow one level down, the More gear on every main screen
+
+Opened before any code (PROTOCOL §6) by the UI/UX session: the second
+take of A42. Take 106 merged at 03:32 UTC (PR #30, `check` run 39 green
+on its head: a fresh ingest, smoke 742/742, render 106/106 in Chrome,
+the gate passed); the merge's build, run 55, went green and published
+Release take-106 at 03:39 UTC (the APK, 26,437,538 bytes; the AAB,
+19,623,403; the mapping). The branch starts from that merge. The owner's go, after
+take 106's look: "go, start take 107 on top of 106".
+
+### The plan
+
+- **One header, written into every screen's markup** (smoke's DOM sees
+  only static ids — landmines 128, 135): a `header.appbar` holding the
+  title (`h1`, the display face, one size, one baseline, the mode's
+  accent as text), an optional line under it, and the actions at the
+  right. Three kinds: a mode's main screen and the other screens in the
+  nav (no back), and the screens one level down (a back arrow at the
+  left). The header decides where a title sits; nothing else does.
+- **The More gear** — a real button that opens More — at the right of
+  every main screen in all three modes (A37, the owner's answer).
+- **Home's Overview and Performance** become one segmented control (a
+  tablist with exactly one selected tab) under Home's title.
+- **The sheets** (which printing, filter, ask, Leader, printing pick)
+  get the header's title face and a close button.
+- **Hunt's titles lose the swords.** The mode is its palette and its
+  nav; a mark in only one mode's titles is what made them differ.
+- **Split:** icons from the sprite only, 44 px targets and pressed and
+  disabled states become take 108, so each take is one thing to look
+  at. The art banners (C on Decks, A on Sealed) go into this header at
+  the art take; the header is built to take them.
+
+### Measured first (Chrome, 412 px, on the take-106 build)
+
+- **Back over a sheet, PROVEN broken:** the filter sheet opened by its own
+  button on Search stayed open after Back while the screen under it went
+  to Home; the Leader sheet opened over a new deck stayed open while the
+  screen went to Decks. The probe's control: the printing picker, which
+  is on `closeAnyOverlay()`'s list, closed and the screen stayed. The
+  filter, Leader and printing sheets were never on the list (landmine
+  144); the audit had it as unconfirmed.
+- **Where the titles sat,** all twenty screens, reached the way a person
+  reaches them: fifteen titles in the comic face at 21 px, at three
+  heights (14, 16.4 and 17.9 px from the screen's top, moved by whatever
+  sat beside them); five screens with no title at all -- Search opened
+  with its search box, Scan with a set chip, Collection with its action
+  row, a card with "Adding to...", a deck with a 17 px name field at
+  x = 84.
+
+### Built
+
+- `src/app.html`: a `header.appbar` in the markup of all twenty screens
+  (More's too: `paintSettings()` paints `#setBody` under it). The title is
+  an `h1.ab-title` -- the display face at `--fs-head` (26 px) in the mode's
+  `--accent-ink`; one line may sit under it (`.ab-sub`: Sealed's prices
+  date, Sim's rules line, the binder's page, the collection a card is
+  added to); the actions sit at the right (`.ab-act`). The title's first
+  line is centred on the 44 px row of Back and the actions, so a line
+  under it moves nothing. The gear to More (`g-gear`, a real
+  `data-go="settings"` button) is the last action on the twelve screens in
+  a nav; the back arrow (`g-back`) opens the eight one level down (a deck,
+  a card, a set's checklist, the binder, the want list, Trade,
+  Diagnostics, More). `backArrow()` is the phone's Back: the back
+  button's own path in the app, never out of it; `history.back()` in a
+  browser. A deck's name field is its title; a card's name is its title.
+  Hunt's titles lose the swords (the splash keeps them). Scan's own head
+  and its inert gear pill, and Decks' unlabelled gear, give way to the
+  header. Home's Overview and Performance are a tab row under the title
+  (a tablist of two buttons, one tab stop, the arrow keys move between
+  them). The five sheets have a head: the title in the display face at
+  `--fs-title` and a close button (`closeSheet()`: the ask sheet answers
+  no, the others close). `closeAnyOverlay()` and the watchdog name the
+  filter, Leader and printing sheets. Home: the release note draws no
+  second rule under the tab row, and "Got it" keeps to one line (both
+  seen at take 106 and left for this take).
+- `assets/glyphs.svg`: `g-back`, `g-close`, `g-gear` -- a chevron, a
+  cross and an eight-tooth gear, drawn in the sprite's own style (24 x 24,
+  stroke, currentColor) under a third family in its header, INTERFACE.
+  The plan said Lucide's (ISC, credited in About); three plain shapes
+  drawn here keep the sprite one provenance with no licence to carry.
+- `tools/smoke.mjs`: six older assertions follow the header with the same
+  intent (take 83's one height, take 66's real headings, take 64's
+  Overview, take 70's Hunt palette with the swords on the splash only,
+  take 91's More rows under the header, take 98's overlay list with the
+  three sheets); a take-107 section of 27. `tools/render.mjs`: the face
+  check loads each face before reading it (landmine 145); the checks
+  that read the first `h2`, `.tab.on` or `#settings .bar .tab` read the
+  screen's `.ab-title`; the heading count includes `h1`; a take-107
+  block of nine. `tools/look/steps.mjs`: take 107's eleven steps.
+
+### Tests (local, on the take-104 release catalogue; the runner's `check` is the seal)
+
+- Smoke 769/769 (27 new). **Watched to fail first:** the same smoke over
+  the take-106 source and sprite on the same catalogue fails 23 -- 17 of
+  the take-107 section (only its four controls pass; its six checks of
+  the handlers are not reached, and the check that the handlers exist
+  fails) and the six older assertions rewritten to the header.
+- Render 114/115 in Chrome -- the CDN thumbnail, as on every VM. The
+  take-106 build fails 13: all nine take-107 checks, the three older
+  checks rewritten to the header, the thumbnail. The face check fails
+  with `OPH Comic: error` when the comic file is moved aside (the control
+  for its change).
+- The title probe, twenty screens, after: one height (19.7 px), one size
+  (26 px), one face; two lefts (16 px in a nav, 58 px beside the arrow);
+  the gear in one spot on all twelve screens in a nav, in all three
+  modes; nothing clipped, overlapping or off the screen.
+- **The look, take 107: 11 of 11 at both viewports**, every PNG read:
+  Decks (the title in `#E5705C`, "+ New deck", the gear); a new deck
+  named "Red Shanks" as its title, the arrow back to Decks; Cards and Sim
+  with their titles and gear in the same place (Sim's line under it moves
+  nothing); Sealed with its prices line, the currency and the gear, no
+  swords; Local's distance and gear; Home's title, badge, currency and
+  gear with the tab row (Performance taken and given back, one rule under
+  it, "Got it" on one line); Search and Scan opening with their titles; a
+  card (Nami) with the arrow, its name and "Adding to One Piece", the
+  arrow back to Home; the gear to More and More's arrow back; the filter
+  sheet's title and cross, closed by Back with Collection staying, and by
+  its cross; OP01's checklist with "Want the 121 missing".
+
+### What I got wrong, and caught
+
+- The first header centred its row, so a line under a title (Sealed,
+  Sim, a card) lifted that title about 8 px above the others -- the
+  owner's complaint again, in a new place. The probe measured it before
+  any picture was taken; the title's first line is now pinned to the
+  44 px row, and render compares all twenty heights.
+- Render's face check failed with nothing broken once Home's tabs left
+  the comic face: it had only ever proved the faces the first screen
+  used (landmine 145).
+- A length limit on the deck's name crept into the patch; taken out
+  before any test ran -- this take changes no behaviour of a field.
+- The look's filter step first ran without its context and failed on
+  both viewports; a harness slip, fixed and rerun.
+
+### Ruled out
+
+- An arrow on Market Movers: it is a state of Search, a screen in the
+  nav; the phone's Back returns to Collection as before.
+- A header that stays on screen as the page scrolls: the mode slider
+  already does, and a second fixed band would cost every screen about
+  64 px on the cover display.
+- Save in the deck's header: it stays in the row where a deck is
+  finished; this take moves titles, not actions.
+- The duplicate panel titles ("Performance" under its own tab, the
+  Events panel on Events): copy, the voice take's.
+- Lucide's icons (see Built).
+
+### DEFERRED this cycle
+
+- Take 108: every emoji and symbol icon to the sprite, one meaning per
+  glyph, 44 px targets, pressed and disabled states. The art layer, the
+  voice and polish after it (A42).
+- The Fold's inner layout (the owner: later).
 
 ## Take 106 — 2026-09-24 — the UI series begins with its foundation: one set of design tokens, Prep & Play's red readable on its cards, no text under 12px, colours that follow the mode, the two blank icons gone
 

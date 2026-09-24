@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 106.* Paste the block between the rules into a new session
+*Current as of take 107.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 106 takes by previous sessions. The repo is
+built across 107 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -27,7 +27,7 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
 4. Read `docs/HANDOFF.md`, newest entry first, back to take 80 at least. Every
    take ends with a DEFERRED list; the union of those lists is the work.
 5. Read `docs/LANDMINES.md` §0 (the index) and skim §1. When you are about to
-   do something, grep the index first. 143 of them; each is a real failure.
+   do something, grep the index first. 145 of them; each is a real failure.
 6. Read `docs/AGENDA.md`: the Priorities block at the top is the live order.
 
 **The discipline, which the gate enforces:**
@@ -85,8 +85,10 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
 
 - **The UI series (A42), the UI/UX session's:** take 106 laid the design
   tokens every later UI take uses (type roles, spacing, radii, semantic
-  colours per palette, a z scale); then one header on every screen, the
-  art layer, the voice, polish. `docs/UI-AUDIT.md` is its checklist, with
+  colours per palette, a z scale); take 107 put one header on every
+  screen (`header.appbar`: the title, back one level down, the More
+  gear on every main screen); then controls and icons, the art layer,
+  the voice, polish. `docs/UI-AUDIT.md` is its checklist, with
   line numbers. Touch the UI only to fix what is broken, and read the
   tokens in `:root` before writing a size or a colour.
 
@@ -159,6 +161,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 107" and begin with PROTOCOL §0.
+Say "take 108" and begin with PROTOCOL §0.
 
 ---

@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 106.*
+*Current as of take 107.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -154,6 +154,8 @@ Start here. Do not read top to bottom.
 | A plugin's permission check returns undefined on the shrunk build | **141** |
 | An icon removed from the sprite still leaves blank boxes on screen | **142** |
 | A render check of an animation fails on a busy machine and passes on a quiet one | **143** |
+| A sheet stays open after Back while the screen under it changes | **144** |
+| A font check passes only because the first screen happens to use every face | **145** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -2050,6 +2052,29 @@ failed it on untouched take-104 code, while the knob at rest sits 1 px
 off centre (MEASURED at 600 ms). Rule: measure at rest -- wait for
 `transitionend`, or poll until the position stops moving within a
 timeout -- never a sleep sized to the animation.
+
+**144. A sheet missing from `closeAnyOverlay()`'s list stays open when
+Back changes the screen under it.** Back (the phone's button and the
+browser's) closes the overlays that list names before it touches the
+screen stack. Take 98 cut the list to overlays only (landmine 137: the
+card sheet is a screen), and the filter, Leader and printing sheets were
+never on it: the UI/UX session's probe opened each by its own button and
+pressed Back in Chrome -- the filter sheet stayed open over Home, the
+Leader sheet over Decks (PROVEN, take 107). Rule: every `.sheet` is on
+the list; smoke opens each one and calls the list, render presses the
+browser's Back over two of them, and a new sheet is added to both.
+
+**145. A font face nothing has drawn yet reports `unloaded`, so a font
+check that reads the first screen proves only the faces that screen
+used.** Render's take-33 check read `document.fonts` after load and
+wanted all four faces `loaded`; it passed because Home's Overview and
+Performance tabs happened to be set in the comic face. Take 107 moved
+those titles to the display face and the check failed with nothing
+broken -- the comic face still sets every group label. Rule: a font check
+loads each face itself (`FontFace.load()`) and then reads the status, so a
+missing file reports `error` whatever the first screen shows; its control
+is a face pointed at a file that is not there (the check failed with
+`OPH Comic: error` when the comic file was moved aside).
 
 ## §2 — Inherited from APEX ORV
 

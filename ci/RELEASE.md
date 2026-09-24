@@ -1,4 +1,4 @@
-# OP TCG Hub — take 106
+# OP TCG Hub — take 107
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,12 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 107:** every screen has the same header: its title in
+the same place and the same lettering, a back arrow on the screens one
+level down, and the settings gear on every main screen in all three
+modes. Home's Overview and Performance are one switch. The pop-up
+sheets have a close button. Nothing you have saved changes.
 
 **New at take 106:** easier to read, the first of a series of design
 updates. Prep & Play's red text is brighter on its cards; nothing in the
