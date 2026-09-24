@@ -2012,7 +2012,11 @@ await V.STOCK.check();
 by.BJP2850164.status = 'in_stock'; const f1 = await V.STOCK.check(); const f2 = await V.STOCK.check();
 by.BJP2850164.status = 'preorder'; const f3 = await V.STOCK.check();
 by.BJP2850164.status = 'sold_out'; await V.STOCK.check(); by.BJP2850164.status = 'preorder'; const f4 = await V.STOCK.check();
-ok('the alert fires once when the distributor flips to in stock for stores, not again while it stays, or when its order due date passes (the preorder state, still counted available until the owner answers take 114\'s question 3), and again after it went out and came back', f1 === 1 && f2 === 0 && f3 === 0 && f4 === 1, `${f1} ${f2} ${f3} ${f4}`);
+by.BJP2850164.status = 'in_stock'; const f5 = await V.STOCK.check();
+ok('the alert fires once when the distributor flips to in stock for stores, not again while it stays, and again after it went out and came back -- stock only (the owner\'s answer, take 114): its order due date passing (the preorder state) never fires it', f1 === 1 && f2 === 0 && f3 === 0 && f4 === 0 && f5 === 1, `${f1} ${f2} ${f3} ${f4} ${f5}`);
+{ const own = V.STOCK.sourcesFor; V.STOCK.sourcesFor = function (id) { return own.call(this, id).map(x => /^gts:/.test(x.key) ? { ...x, available: x.available || by.BJP2850164.status === 'preorder' } : x); };   // take 113's rule, put back for one sequence
+  by.BJP2850164.status = 'sold_out'; await V.STOCK.check(); by.BJP2850164.status = 'preorder'; const g4 = await V.STOCK.check(); V.STOCK.sourcesFor = own;
+  ok('...negative control: under take 113\'s rule (stock or the preorder state) the same due date passing fires it', g4 === 1, String(g4)); }
 by.BJP2850164.status = 'sold_out'; V.STOCK.toggle(watched94.id); V.STOCK.list = [];
 V.HUNT.feed = null; V.MODE.set('collect', false);
 }
@@ -3021,6 +3025,9 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
   const facts = (rows, d) => { const read = rows.filter(r => isRead(r, d)), i0 = rows.indexOf(read[0]);
     return { checks: read.length, first: read.length ? read[0].t : null, last: read.length ? read[read.length - 1].t : null, missed: i0 < 0 ? 0 : rows.slice(i0).filter(r => !isRead(r, d)).length }; };
   const dist = () => ctx.document.querySelector('#dDist').innerHTML;
+  /* the owner's answer: each history is tucked behind its header -- open both, as a tap does, to read them */
+  const openH = () => { if (typeof V.distHistTap === 'function') { V.distHistTap('gts'); V.distHistTap('southern'); } };
+  const openP = o => { V.openDetail(PID, o); openH(); };
   const blk = (h, d) => (h.match(new RegExp(`<div class="dtl" data-tl="${d}">[\\s\\S]*?</div>`)) || [''])[0];
   const lines = b => b ? b.replace(/<\/span>/g, '\n').replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, '\'').replace(/&amp;/g, '&').replace(/\n$/, '').split('\n') : [];
   /* a synthetic history ending on the fixture feed's own run: 4-hourly, GTS from run 6, Southern Hobby in the last two. The box
@@ -3065,7 +3072,7 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
   ok('which changes are the calendar, over every pair of states: every Southern Hobby change, and GTS\'s among coming, preorder and out; a change of GTS\'s site words, or onto or off a list, is read off its page',
      hasKind && !wrongKind.length && pairs.some(([d, a, b]) => kindOf(d, a, b) === 'dates') && pairs.some(([d, a, b]) => kindOf(d, a, b) === 'page'), JSON.stringify(wrongKind.slice(0, 6)));
   const odd = JSON.parse(JSON.stringify(H)); odd.runs[N - 3].gts.BJP2873812 = { status: 'sold_out' }; V.HUNT.hist = odd;
-  const tod = TL('gts', 'BJP2873812') || { changes: [] }; V.openDetail(PID, { dist: true }); const godd = lines(blk(dist(), 'gts')); V.HUNT.hist = H;
+  const tod = TL('gts', 'BJP2873812') || { changes: [] }; openP({ dist: true }); const godd = lines(blk(dist(), 'gts')); V.HUNT.hist = H;
   ok('a value that is not a state word (a shape this version does not know) is counted apart and said -- not a check, not a hole, never a state or a change',
      tod.odd === 1 && tod.checks === fg.checks - 1 && tod.missed === fg.missed && JSON.stringify(tod.changes) === JSON.stringify(tg.changes)
      && godd[0] === `History · ${fg.checks - 1} checks on file, ${spanOf(fg)} · ${fg.missed} more could not reach it · 1 check this version cannot read`, JSON.stringify({ odd: tod.odd, checks: tod.checks, missed: tod.missed, head: godd[0] }));
@@ -3089,11 +3096,11 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
   ok('...controls: the fixture\'s own date (May 27, months before the window), a date whose turn is not after the earlier check, and a change read off the page name no day', hasDay && dyF === null && dy0 === null && dyP === null, JSON.stringify([dyF, dy0, dyP]));
   /* on screen */
   const head = f => `History · ${f.checks} checks on file, ${spanOf(f)} · ${f.missed} more could not reach it`;
-  V.HUNT.feed = F2; V.HUNT.hist = H; V.openDetail(PID, { dist: true }); const d2h = dist(), gl2 = lines(blk(d2h, 'gts'));
+  V.HUNT.feed = F2; V.HUNT.hist = H; openP({ dist: true }); const d2h = dist(), gl2 = lines(blk(d2h, 'gts'));
   const exp2 = [head(fg), `${TLW.gts.coming} at the first check`, `${TLW.gts.coming} → orders were due ${nb(V.dayText(G2.preorder))} · worked out from its dates`, `${TLW.gts.preorder} → ${TLW.gts.sold_out} · ${btw(K2)} · read off its page`];
   ok('its page at Distributor info, with dates that explain the calendar change: under GTS\'s words the checks on file, the days they span and the run that could not reach it; the state at the first check; the change on GTS\'s own day, worked out from its dates; the change read off its page, between two checks in this phone\'s time -- oldest first, and no note',
      JSON.stringify(gl2) === JSON.stringify(exp2) && !/between/.test(gl2[2] || 'between') && !d2h.includes(TL_NOTE), JSON.stringify(gl2));
-  V.HUNT.feed = F; V.openDetail(PID, { dist: true }); const d1h = dist(), gl1 = lines(blk(d1h, 'gts'));
+  V.HUNT.feed = F; openP({ dist: true }); const d1h = dist(), gl1 = lines(blk(d1h, 'gts'));
   const exp1 = [exp2[0], exp2[1], `${TLW.gts.coming} → ${TLW.gts.preorder} · ${btw(K1)} · worked out from its dates`, exp2[3]];
   ok('...with the fixture\'s own date, which does not put the change between its checks: the calendar change keeps its two checks and says it was worked out from its dates, and one note after the distributor note says why',
      JSON.stringify(gl1) === JSON.stringify(exp1) && d1h.split(TL_NOTE).length === 2 && d1h.indexOf(TL_NOTE) > d1h.indexOf('A distributor sells to stores, not to you'), JSON.stringify(gl1));
@@ -3112,6 +3119,20 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
   ok('opened from its row, Distributor info is closed and carries no history; tapped open, both histories are there; tapped again, gone',
      /data-distfold="detail" aria-expanded="false"/.test(dc) && !/class="dtl"|History ·/.test(dc) && !!blk(dco, 'gts') && !!blk(dco, 'southern') && !/class="dtl"|History ·/.test(dcc), dc.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 160));
   ok('...control: a closed fold with a history line in it is caught', /class="dtl"|History ·/.test('<button class="dfold" data-distfold="detail" aria-expanded="false"></button><div class="dtl"><span>History · 8 checks on file</span></div>'));
+  /* the owner's answer (take 114): "it should be tucked away" -- each history is one header line, a button, until tapped */
+  const tucked = b => /<button class="dtl-h" data-disthist="[a-z]+" aria-expanded="false">/.test(b) && lines(b).length === 1;
+  V.HUNT.feed = F; V.HUNT.hist = H; V.openDetail(PID, { dist: true }); const tk0 = dist();
+  const hasTap = typeof V.distHistTap === 'function'; if (hasTap) V.distHistTap('gts'); const tk1 = dist();
+  V.openDetail(PID, { dist: true }); const tk2 = dist();
+  ok('each history starts tucked away: its header alone, a button closed, and no note (the box\'s change here would need one)',
+     tucked(blk(tk0, 'gts')) && tucked(blk(tk0, 'southern')) && !tk0.includes(TL_NOTE), lines(blk(tk0, 'gts')).join(' | '));
+  ok('...a tap opens that distributor\'s history and only that one -- its lines and the note its change needs; the other stays tucked',
+     hasTap && /data-disthist="gts" aria-expanded="true"/.test(blk(tk1, 'gts')) && lines(blk(tk1, 'gts')).length > 1 && tucked(blk(tk1, 'southern')) && tk1.includes(TL_NOTE), lines(blk(tk1, 'gts')).join(' | ').slice(0, 200));
+  ok('...and a page opened again starts tucked', tucked(blk(tk2, 'gts')) && tucked(blk(tk2, 'southern')) && !tk2.includes(TL_NOTE));
+  ok('...negative control: the history as first built -- open under its header, no button -- is not tucked',
+     !tucked('<div class="dtl" data-tl="gts"><span class="dtl-h">History · 8 checks on file</span><span>sold out at all 8 checks · no change seen</span></div>'));
+  const noS = JSON.parse(JSON.stringify(H)); noS.runs.forEach(r => { delete r.southern; }); V.HUNT.hist = noS; V.openDetail(PID, { dist: true }); const tk3 = blk(dist(), 'southern'); V.HUNT.hist = H;
+  ok('...a history with nothing to open is its header alone, not a button', /<span class="dtl-h">History · no check of it on file yet/.test(tk3) && !/<button/.test(tk3), tk3.slice(0, 160));
   while (V.closeAnyOverlay()) {}
   V.SEALED.kind = 'all'; V.SEALED.q = ''; const p18 = V.CAT.byId.get(PID) || {}; V.SEALED.closed.delete(p18.set); V.SEALED.open.add(p18.set); V.paintSealed(); const hs = ctx.document.querySelector('#sealedList').innerHTML;
   V.distFoldTap('sealed'); const hso = ctx.document.querySelector('#sealedList').innerHTML; V.distFoldTap('sealed');
@@ -3120,24 +3141,24 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
      dl.join('|') === (V.HUNT.distByCatalogId()[PID] || []).map(it => V.distShort(it)).join('|') && dl.join('|') === 'GTS Distribution · sold out|Southern Hobby · orders closed May\u00a029' && !/History ·|class="dtl"/.test(hs + hso), JSON.stringify(dl));
   ok('...control: a row carrying a history line is caught', /History ·|class="dtl"/.test('<button class="dline" data-open="1"><span>GTS Distribution · sold out</span></button><div class="dtl"><span>History · 8 checks on file</span></div>'));
   /* the thin and the missing */
-  const one = JSON.parse(JSON.stringify(H)); one.runs.forEach((r, i) => { if (i < N - 1) delete r.southern; }); V.HUNT.hist = one; V.openDetail(PID, { dist: true });
+  const one = JSON.parse(JSON.stringify(H)); one.runs.forEach((r, i) => { if (i < N - 1) delete r.southern; }); V.HUNT.hist = one; openP({ dist: true });
   const s1 = lines(blk(dist(), 'southern'));
   ok('one check: its moment, and that a change needs two -- never a trend on one reading', JSON.stringify(s1) === JSON.stringify([`History · 1 check on file, ${M(runs[N - 1].t)}`, `${TLW.southern[S.state]} at the one check so far — a change needs two`]), JSON.stringify(s1));
   const rb = runs.slice(0, N - 10), fb = facts(rb, 'gts'), ends = `this phone’s copy ends ${M(rb[rb.length - 1].t)}`;
-  V.HUNT.hist = { ...H, runs: rb }; V.openDetail(PID, { dist: true }); const db = dist();
+  V.HUNT.hist = { ...H, runs: rb }; openP({ dist: true }); const db = dist();
   ok('a copy on the phone that ends before the feed says where it ends, and Southern Hobby, not in it, has no check on file yet',
      lines(blk(db, 'gts'))[0] === `${head(fb)} · ${ends}` && JSON.stringify(lines(blk(db, 'southern'))) === JSON.stringify([`History · no check of it on file yet · ${ends}`]), JSON.stringify([lines(blk(db, 'gts'))[0], lines(blk(db, 'southern'))]));
-  V.HUNT.feed = FL; V.HUNT.hist = LIVE; V.openDetail(PID, { dist: true }); const dT = dist(), glT = lines(blk(dT, 'gts')), slT = lines(blk(dT, 'southern'));
+  V.HUNT.feed = FL; V.HUNT.hist = LIVE; openP({ dist: true }); const dT = dist(), glT = lines(blk(dT, 'gts')), slT = lines(blk(dT, 'southern'));
   ok('the real history today reads: its GTS state at all its checks, no change seen, with the runs that could not reach it; its one Southern Hobby check, a change needs two -- no note, and the copy ends where the feed does',
      JSON.stringify(glT) === JSON.stringify([head(flg), `${TLW.gts[liveG[0].gts.BJP2873812]} at all ${flg.checks} checks · no change seen`])
      && JSON.stringify(slT) === JSON.stringify([`History · 1 check on file, ${M(liveS[0].t)}`, `${TLW.southern[liveS[0].southern['79311']]} at the one check so far — a change needs two`])
      && !dT.includes(TL_NOTE) && !/copy ends/.test(dT), JSON.stringify([glT, slT]));
-  const many = JSON.parse(JSON.stringify(H)); many.runs.forEach((r, i) => { if (r.gts && i >= I2) r.gts.BJP2873812 = i % 2 ? 'call' : 'sold_out'; }); V.HUNT.feed = F; V.HUNT.hist = many; V.openDetail(PID, { dist: true });
+  const many = JSON.parse(JSON.stringify(H)); many.runs.forEach((r, i) => { if (r.gts && i >= I2) r.gts.BJP2873812 = i % 2 ? 'call' : 'sold_out'; }); V.HUNT.feed = F; V.HUNT.hist = many; openP({ dist: true });
   const tm = TL('gts', 'BJP2873812') || { changes: [] }, gm = lines(blk(dist(), 'gts')), SHOW = 3;   // the last three changes, oldest first (the spec's cap)
   const mg = many.runs.filter(r => isRead(r, 'gts')), mflips = mg.map((r, i) => i && r.gts.BJP2873812 !== mg[i - 1].gts.BJP2873812 ? { from: mg[i - 1].gts.BJP2873812, to: r.gts.BJP2873812, after: mg[i - 1].t, by: r.t } : null).filter(Boolean);
   ok('more than three changes: the state at the first check, how many earlier changes are not shown, then the last three, oldest first',
      mflips.length > SHOW && tm.changes.length === mflips.length && JSON.stringify(gm) === JSON.stringify([head(fg), `${TLW.gts.coming} at the first check`, `${mflips.length - SHOW} earlier changes not shown`, ...mflips.slice(-SHOW).map(c => `${TLW.gts[c.from]} → ${TLW.gts[c.to]} · ${btw(c)} · read off its page`)]), JSON.stringify(gm.slice(0, 4)));
-  V.HUNT.hist = null; V.openDetail(PID, { dist: true }); const d0 = dist();
+  V.HUNT.hist = null; openP({ dist: true }); const d0 = dist();
   ok('no history on the phone: no history at all (take 73: with none it says nothing), and the take-112 words as they were', !/class="dtl"|History ·/.test(d0) && !d0.includes(TL_NOTE) && /GTS Distribution<\/b><span>sold out · allocated · /.test(d0));
   /* Diagnostics, by what it reports (landmine 100), not by its source */
   V.HUNT.hist = LIVE; const rep = await V.DIAG.report(); V.HUNT.hist = null;

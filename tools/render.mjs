@@ -1417,7 +1417,9 @@ if (puppeteer) {
     /* the fixture and the history set in the same tick as the paint (landmine 166) */
     const at114 = await page.evaluate(async ({ F, H, PID, AFTER }) => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
       V.NAV.zipAsked = true; while (V.closeAnyOverlay()) {} V.HUNT.setZip(''); V.MODE.set('hunt', true); await wait(200); while (V.closeAnyOverlay()) {}
-      V.HUNT.feed = F; V.HUNT.hist = H; V.DISTF.open.clear(); V.openDetail(PID, { dist: true }); await wait(150);
+      V.HUNT.feed = F; V.HUNT.hist = H; V.DISTF.open.clear(); V.openDetail(PID, { dist: true });
+      if (V.distHistTap) { V.distHistTap('gts'); V.distHistTap('southern'); }   /* each history is tucked away until tapped (the owner's answer): opened to measure */
+      await wait(150);
       const g = document.querySelector('#dDist .dtl[data-tl="gts"]'), sp = s => String(s).replace(/[\u00a0\u202f]/g, ' '), txt = sp(g ? g.textContent : ''), at = new Date(AFTER);
       const o = { month: 'short', day: 'numeric', ...(at.getFullYear() !== new Date().getFullYear() ? { year: 'numeric' } : {}), hour: 'numeric', minute: '2-digit' };
       const local = V.momentText(AFTER), utc = at.toLocaleString('en-US', { ...o, timeZone: 'UTC' });
@@ -1450,6 +1452,22 @@ if (puppeteer) {
     await tap('#dDist [data-distfold="detail"]'); await new Promise(r => setTimeout(r, 250)); const again114 = await fold114();
     ok('take 114: a real tap closes Distributor info and the history goes with it (no block, no height); a second tap brings both back',
        was114.open === 'true' && was114.n === 2 && shut114.open === 'false' && shut114.n === 0 && shut114.h === 0 && !shut114.body && again114.open === 'true' && again114.n === 2 && again114.h > 0, JSON.stringify({ was114, shut114, again114, taps: tapNotes }));
+    /* the owner's answer: "it should be tucked away" -- each history a closed header, a 44 px target, until a real tap */
+    await page.evaluate(({ F, H, PID }) => { const V = window.VAULT; V.HUNT.feed = F; V.HUNT.hist = H; V.openDetail(PID, { dist: true }); }, { F, H, PID });
+    const hist114 = () => page.evaluate(() => { const b = [...document.querySelectorAll('#dDist .dtl')].map(t => { const h = t.querySelector('.dtl-h');
+      return { d: t.dataset.tl, btn: !!h && h.tagName === 'BUTTON', exp: h ? h.getAttribute('aria-expanded') : null, h: h ? Math.round(h.getBoundingClientRect().height) : 0, lines: t.querySelectorAll(':scope > span:not(.dtl-h)').length }; });
+      return { b, note: [...document.querySelectorAll('#dDist .note')].some(e => /^Where a change worked out from its dates/.test(e.textContent.trim())) }; });
+    const tk0 = await hist114();
+    await tap('#dDist .dtl[data-tl="gts"] .dtl-h'); await new Promise(r => setTimeout(r, 250)); const tk1 = await hist114();
+    await tap('#dDist .dtl[data-tl="gts"] .dtl-h'); await new Promise(r => setTimeout(r, 250)); const tk2 = await hist114();
+    const by114 = (x, d) => x.b.find(y => y.d === d) || {};
+    ok('take 114: each history starts tucked away -- a closed header button at least 44 px tall, no lines, no note; a real tap opens GTS\'s alone, with the note its change needs; a second tap tucks it again',
+       tk0.b.length === 2 && tk0.b.every(y => y.btn && y.exp === 'false' && y.h >= 44 && y.lines === 0) && !tk0.note
+       && by114(tk1, 'gts').exp === 'true' && by114(tk1, 'gts').lines > 1 && by114(tk1, 'southern').lines === 0 && tk1.note
+       && by114(tk2, 'gts').exp === 'false' && by114(tk2, 'gts').lines === 0 && !tk2.note, JSON.stringify({ tk0, tk1, tk2, taps: tapNotes }));
+    const small114 = await page.evaluate(() => { const st = document.createElement('style'); st.textContent = '#dDist .dtl-h{min-height:0!important;height:18px!important}'; document.head.appendChild(st);
+      const hs = [...document.querySelectorAll('#dDist .dtl-h')].map(h => Math.round(h.getBoundingClientRect().height)); st.remove(); return hs; });
+    ok('take 114: ...control: a header squeezed to 18 px (which landed) is caught as under 44', small114.length === 2 && small114.every(h => h < 44), JSON.stringify(small114));
     const none114 = await page.evaluate(({ F, PID }) => { const V = window.VAULT; V.HUNT.feed = F; V.HUNT.hist = null; V.DISTF.open.add('detail'); V.paintDetailDist(V.CAT.byId.get(PID)); return window.__tl114(); }, { F, PID });
     ok('take 114: ...control: with no history on the phone the open fold is take 112\'s -- no history block and no note, the names and links as they were',
        none114.open && none114.n === 0 && !none114.note && none114.names === 'GTS Distribution,Southern Hobby' && none114.links === 2, JSON.stringify(none114));

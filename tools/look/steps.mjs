@@ -998,13 +998,14 @@ const HUNT114 = `V.HUNT.sync = async () => false; V.HUNT.syncHistory = async () 
 /* TL_* stays out of window.VAULT: the words are stated here */
 const TL_NOTE114 = 'Where a change worked out from its dates gives two checks, not a day, the dates it lists now do not explain it: the history keeps the state, not the date, so a moved date and a passing one look the same.';
 const DTL114 = `(() => { const d = document.getElementById('dDist'), f = d && d.querySelector('[data-distfold="detail"]'), tl = k => d ? [...d.querySelectorAll('.dtl[data-tl="' + k + '"] > span')].map(s => s.textContent) : [];
-  return { on: ${screens}, open: f ? f.getAttribute('aria-expanded') : null, n: d ? d.querySelectorAll('.dtl').length : 0, gts: tl('gts'), southern: tl('southern'),
+  const heads = d ? [...d.querySelectorAll('.dtl-h')].map(h => ({ t: h.textContent, btn: h.tagName === 'BUTTON', exp: h.getAttribute('aria-expanded'), h: Math.round(h.getBoundingClientRect().height) })) : [];
+  return { on: ${screens}, open: f ? f.getAttribute('aria-expanded') : null, n: d ? d.querySelectorAll('.dtl').length : 0, heads, gts: tl('gts'), southern: tl('southern'),
     note: !!d && [...d.querySelectorAll('.note')].some(e => e.textContent.trim() === ${JSON.stringify(TL_NOTE114)}) }; })()`;
 const lines114 = m => [...m.gts, ...m.southern];
 /* the OP-18 box's page at Distributor info, open, over a feed and a history (expressions over X = window.__X114) */
-const sheet114 = (feed, hist) => `(async () => { const V = window.VAULT, X = window.__X114; while (V.closeAnyOverlay()) {} const mock = document.getElementById('look114-mock'); if (mock) mock.remove();
+const sheet114 = (feed, hist) => `(async () => { const V = window.VAULT, X = window.__X114; while (V.closeAnyOverlay()) {}
   V.HUNT.feed = ${feed}; V.HUNT.hist = ${hist}; V.openDetail(X.PID, { dist: true }); await ${pause};
-  V.HUNT.feed = ${feed}; V.HUNT.hist = ${hist}; V.DISTF.open.add('detail'); V.paintDetailDist(V.CAT.byId.get(X.PID));
+  V.HUNT.feed = ${feed}; V.HUNT.hist = ${hist}; V.DISTF.open.add('detail'); V.paintDetailDist(V.CAT.byId.get(X.PID)); V.distHistTap('gts'); V.distHistTap('southern');
   const d = document.getElementById('dDist'); d.scrollIntoView({ block: 'start' }); window.scrollBy(0, -80); return ${DTL114}; })()`;
 /* every day in a span on one line: a Range over each, its client rects' distinct tops (render's take-112 probe) */
 const DAYS114 = `(sel) => { const RE = /[A-Z][a-z]{2}[ \\u00a0\\u202f]\\d{1,2}(,[ \\u00a0\\u202f]\\d{4})?/g; let n = 0, worst = 0; const split = [];
@@ -1025,10 +1026,19 @@ const take114 = [
       await wait(300);
       return { ok: m.on === 'detail' && m.open === 'false' && m.n === 0 && m.zone === 'America/Detroit', ...m };
     } },
-  /* C: a real tap opens it over F2 -- the calendar change on its own day, the site change between its two checks */
-  { name: 'hunt-sheet-history-two-changes', run: async (page) => {
+  /* the owner's answer: "it should be tucked away" -- a real tap opens Distributor info, and each history is one header
+     line, a closed button, until it is tapped */
+  { name: 'hunt-sheet-history-tucked', run: async (page) => {
       await page.evaluate(() => document.querySelector('#dDist [data-distfold="detail"]').scrollIntoView({ block: 'center' }));
       await page.click('#dDist [data-distfold="detail"]'); await wait(400);
+      const m = await page.evaluate(`(() => { const d = document.getElementById('dDist'); d.scrollIntoView({ block: 'start' }); window.scrollBy(0, -80); return ${DTL114}; })()`);
+      await wait(300);
+      return { ok: m.open === 'true' && m.n === 2 && m.heads.length === 2 && m.heads.every(h => h.btn && h.exp === 'false' && h.h >= 44 && /^History · /.test(h.t)) && !lines114(m).length && !m.note, ...m };
+    } },
+  /* C: real taps on both headers, over F2 -- the calendar change on its own day, the site change between its two checks */
+  { name: 'hunt-sheet-history-two-changes', run: async (page) => {
+      for (const k of ['gts', 'southern']) { const sel = '#dDist .dtl[data-tl="' + k + '"] .dtl-h';
+        await page.evaluate(q => document.querySelector(q).scrollIntoView({ block: 'center' }), sel); await page.click(sel); await wait(300); }
       const m = await page.evaluate(`(() => { const d = document.getElementById('dDist'); d.scrollIntoView({ block: 'start' }); window.scrollBy(0, -80); return ${DTL114}; })()`);
       await wait(300); const l = lines114(m);
       return { ok: m.open === 'true' && m.n === 2 && l.some(x => /→ orders were due [A-Z][a-z]{2}\u00a0\d+ · worked out from its dates$/.test(x))
@@ -1046,21 +1056,10 @@ const take114 = [
       await wait(300); const l = lines114(m);
       return { ok: m.open === 'true' && m.n === 2 && l.some(x => / · no change seen$/.test(x)) && l.some(x => / — a change needs two$/.test(x)) && !m.note && !l.some(x => /copy ends/.test(x)), ...m };
     } },
-  /* E, a mock-up for the owner's question 2: the history behind its one header line, tapped open -- CSS only, removed
-     at the start of the next step */
-  { name: 'question-history-behind-a-tap-mockup', run: async (page) => {
-      await page.evaluate(sheet114('X.FL', 'X.LIVE'));
-      const m = await page.evaluate(() => { const st = document.createElement('style'); st.id = 'look114-mock';
-        st.textContent = '#dDist .dtl > span:not(.dtl-h){display:none!important} #dDist .dtl-h::after{content:"";display:inline-block;width:6px;height:6px;margin:0 2px 3px 8px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg)}';
-        document.head.appendChild(st); const body = [...document.querySelectorAll('#dDist .dtl > span:not(.dtl-h)')], h = [...document.querySelectorAll('#dDist .dtl-h')];
-        return { mockup: true, heads: h.map(s => s.textContent), hidden: body.length, landed: body.length > 0 && body.every(s => s.getBoundingClientRect().height === 0) && h.length > 0 && h.every(s => getComputedStyle(s, '::after').borderRightStyle === 'solid') }; });
-      await wait(300);
-      return { ok: m.landed, ...m };
-    } },
   { name: 'hunt-sheet-no-history', run: async (page) => {
-      const m = await page.evaluate(sheet114('X.F', 'null')), mock = await page.evaluate(() => !!document.getElementById('look114-mock'));
+      const m = await page.evaluate(sheet114('X.F', 'null'));
       await wait(300);
-      return { ok: m.open === 'true' && m.n === 0 && !m.note && !mock, mock, ...m };
+      return { ok: m.open === 'true' && m.n === 0 && !m.note, ...m };
     } },
   /* D: a row is its name and one short line per distributor, as at take 112 -- no history on Sealed */
   { name: 'hunt-sealed-row-unchanged', run: async (page) => {
