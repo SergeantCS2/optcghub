@@ -19,13 +19,15 @@ Updates arrive through Play like any app. Your data stays across updates.
 
 ---
 
-**New at take 114:** A sealed product's Distributor info now shows, under
-each distributor, what the app's checks have seen: how many checks, over
-which days, and each change, with whether the distributor's own page said it
-or it was worked out from its dates. Nothing is added to a row. GTS's date
-is the day stores must order by, as GTS's own page labels it. The app used
-to call it the day preorders open, which was wrong. Nothing you have saved
-changes.
+**New at take 114:** A sealed product's Distributor info now has, under
+each distributor, a "History" line you can tap. It opens what the app's
+checks have seen: how many checks, over which days, and each change, with
+whether the distributor's own page said it or it was worked out from its
+dates. Nothing is added to a row. GTS's date is the day stores must order
+by, as GTS's own page labels it. The app used to call it the day preorders
+open, which was wrong. A stock alert watching GTS Distribution now fires
+only when GTS shows stock for stores, and no longer when a product's order
+due date passes. Your saved alerts stay.
 
 **New at take 113:** The app wears the icon the Play listing shows: the
 card-back emblem on a purple-bordered card over waves, with ドン!!. It is

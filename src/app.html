@@ -3802,7 +3802,7 @@ const HUNT = {
     const tl = { checks: 0, first: null, last: null, missed: 0, odd: 0, state0: null, now: null, changes: [], end: runs[runs.length - 1].t };
     let prev = null, prevT = null;
     for (const r of runs) { const m = r[d];
-      if (!m || typeof m !== 'object' || Array.isArray(m)) { if (tl.checks) tl.missed++; continue; }   /* not read that run */
+      if (!m || typeof m !== 'object' || Array.isArray(m) || !Object.keys(m).length) { if (tl.checks) tl.missed++; continue; }   /* not read that run -- an empty listing too (the runner refuses one from take 114, but rows before may hold it) */
       const v = Object.prototype.hasOwnProperty.call(m, id) ? m[id] : undefined;
       if (v !== undefined && typeof v !== 'string') { tl.odd++; continue; }   /* read, in a shape this version does not know */
       const st = v === undefined ? null : v; tl.checks++;
@@ -3952,13 +3952,21 @@ const TL_SHOW = 3;
    states it turns from] -- a due day is kept open at both (gts.status_of from take 114, southern.state_of) */
 const TL_TURN = { gts: { preorder: ['preorder', 1, ['coming']], out: ['release', 0, ['coming', 'preorder']] },
   southern: { orders_closed: ['due', 1, ['orders_open']], released: ['release', 0, ['orders_open', 'orders_closed']] } };
-const TL_DAYW = { gts: { preorder: D => `orders were due ${D}`, out: D => `release ${D} passed, out of stock` },
+const TL_DAYW = { gts: { preorder: D => `orders were due ${D}`, out: D => `released ${D}, out of stock` },
   southern: { orders_closed: D => `stores\u2019 orders closed ${D}`, released: D => `released ${D}` } };
 const TL_NOTE = 'Where a change worked out from its dates gives two checks, not a day, the dates it lists now do not explain it: the history keeps the state, not the date, so a moved date and a passing one look the same.';
 const utcDay = (iso, add = 0) => new Date(Date.parse(iso) + add * 864e5).toISOString().slice(0, 10);
 const localDay = iso => { const d = new Date(iso || ''); return isNaN(d) ? '' : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };   /* a run's UTC time as this phone's calendar day, for dayText */
 const tlWord = (d, st) => { if (st == null) return 'not on its list'; const w = TL_WORDS[d]; return w && Object.prototype.hasOwnProperty.call(w, st) ? w[st] : String(st); };
 const tlClock = iso => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+/* a change's two checks: the second end drops its day on the same local day -- unless the clocks changed between them
+   (the November fall-back hour could read "1:50 AM and 1:10 AM"), when both ends carry their zone */
+const tlZoned = iso => nbsp(new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }));
+function tlWindow(c) {
+  const a = new Date(c.after), b = new Date(c.by);
+  if (a.getTimezoneOffset() !== b.getTimezoneOffset()) return `between ${tlZoned(c.after)} and ${tlZoned(c.by)}`;
+  return `between ${nbsp(momentText(c.after))} and ${localDay(c.after) === localDay(c.by) ? nbsp(tlClock(c.by)) : nbsp(momentText(c.by))}`;
+}
 /* the distributor's own day for a change worked out from its dates, off the CURRENT item's date: named only when that
    date turns the state after the earlier check's UTC day and by the day after the later one's (a run that began
    before midnight UTC and read the distributor after it; take 113's due-day boundary) -- a date moved since falls
@@ -3990,12 +3998,16 @@ function distHistory(it, tl = distTl(it)) {
     const more = tl.changes.length - TL_SHOW; if (more > 0) lines.push(`${more} earlier change${more === 1 ? '' : 's'} not shown`);
     for (const c of tl.changes.slice(-TL_SHOW)) { const at = tlDay(d, c, it);   /* the last three, oldest first */
       lines.push(at ? dotJoin(`${W(c.from)} \u2192 ${TL_DAYW[d][c.to](nbsp(dayText(at)))}`, TL_HOW.dates)
-        : dotJoin(`${W(c.from)} \u2192 ${W(c.to)}`, `between ${M(c.after)} and ${localDay(c.after) === localDay(c.by) ? nbsp(tlClock(c.by)) : M(c.by)}`, TL_HOW[c.kind])); } }
+        : dotJoin(`${W(c.from)} \u2192 ${W(c.to)}`, tlWindow(c), TL_HOW[c.kind])); } }
   return box(head, lines);
 }
 /* the fold's note: only when a change on screen -- its history open -- was worked out from dates that do not put its
    day between its checks */
 const tlNeedsNote = (it, tl) => !!tl && DISTF.hist.has(it._d) && tl.changes.slice(-TL_SHOW).some(c => c.kind === 'dates' && !tlDay(it._d, c, it));
+/* take 114: of GTS's unreleased products (release after the day it was read, UTC as gts.status_of), how many still have an
+   order due date ahead -- the due day kept open -- and how many do not: sold out or not, the count says what its words say */
+function gtsDue(gi, at) { const day = String(at || '').slice(0, 10), un = gi.filter(i => i.release && i.release > day), ahead = un.filter(i => i.preorder && i.preorder >= day).length;
+  return { ahead, without: un.length - ahead }; }
 /* ---- where to buy (A38 item 4, take 96) --------------------------------
    Every seller the app knows for a sealed product, as a link to the seller’s
    OWN page opened by the OS browser: nothing is bought here, nothing is
@@ -4119,13 +4131,13 @@ function paintSealed() {
   } else {
     out.push(`<div class="panel"><h3>Store stock</h3><div class="note">Not fetched yet on this phone. Refresh when you are online.</div><div class="row" style="margin-top:8px"><button class="ghost" id="huntSync">Refresh</button></div></div>`);
   }
-  /* take 94: the distributor panels -- what the runner read at GTS and, from take 112, Southern Hobby. Take 112,
+/* take 94: the distributor panels -- what the runner read at GTS and, from take 112, Southern Hobby. Take 112,
      the owner's word: one closed "Distributor info" holds them, with a line saying what is inside */
   const S = HUNT.dist('southern'); const dsecs = [];
   if (G) {
     const gi = G.items || []; const n = s => gi.filter(i => i.status === s).length; const alloc = gi.filter(i => i.allocated).length;
     dsecs.push(`<div class="dsec"><b>GTS Distribution</b>
-      <div class="note">${G.ok ? `Checked ${esc(HUNT.ageLabel(G.fetched_at))}${HUNT.stale(G.fetched_at) ? ' — <b>out of date</b>' : ''} · ${gi.length} One Piece products at the distributor: <b>${n('sold_out')}</b> sold out, <b>${alloc}</b> allocated, ${n('coming')} with an order due date ahead, ${n('preorder')} unreleased without one, ${n('in_stock')} in stock for stores.` : `Could not reach GTS Distribution since ${esc(momentText(G.stale_since || G.fetched_at))}.`}</div>
+      <div class="note">${G.ok ? `Checked ${esc(HUNT.ageLabel(G.fetched_at))}${HUNT.stale(G.fetched_at) ? ' — <b>out of date</b>' : ''} · ${gi.length} One Piece products at the distributor: <b>${n('sold_out')}</b> sold out, <b>${alloc}</b> allocated, ${gtsDue(gi, G.fetched_at).ahead} with an order due date ahead, ${gtsDue(gi, G.fetched_at).without} unreleased without one, ${n('in_stock')} in stock for stores.` : `Could not reach GTS Distribution since ${esc(momentText(G.stale_since || G.fetched_at))}.`}</div>
       <div class="note" style="margin-top:6px">A distributor sells to stores, not to you. Sold out early means the print run is spoken for; allocated means stores get a share of what they ordered. MSRP is the suggested retail, not a price you can pay here.</div></div>`);
   }
   if (S) {
@@ -6150,7 +6162,7 @@ async function runSelfTest() {
      day and a hardcoded placeholder is landmine 62 in a text box. */
   $('#allq').placeholder = `Search all ${(CAT.man.cards || 0).toLocaleString()} cards`;
   paintNet(); paintHome();
-  window.VAULT = { dotJoin, curLabel, paintBinder, SEALED_ONE, sealedWord, backArrow, closeSheet, setHomeTab, bulkLines, bulkSum, shownLines, signedMoney, pctNum, signedPct, dayText, momentText, fromShown, toShown, setTop, newestTop, paintSealedHero, ownBack, artBack, artUrl, artColours, largeOk, heroLeader, paintDeckHero, paintBack, stockPic, CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, setCond, toast, cameraVerdict, effectsLine, HUNT, targetLine, distLine, distShort, distRowLines, distFold, distFoldTap, distSummary, DISTF, paintDetailDist, distHistory, distHistTap, tlDay, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
+  window.VAULT = { dotJoin, curLabel, paintBinder, SEALED_ONE, sealedWord, backArrow, closeSheet, setHomeTab, bulkLines, bulkSum, shownLines, signedMoney, pctNum, signedPct, dayText, momentText, fromShown, toShown, setTop, newestTop, paintSealedHero, ownBack, artBack, artUrl, artColours, largeOk, heroLeader, paintDeckHero, paintBack, stockPic, CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, setCond, toast, cameraVerdict, effectsLine, HUNT, targetLine, distLine, distShort, distRowLines, distFold, distFoldTap, distSummary, DISTF, paintDetailDist, distHistory, distHistTap, tlDay, tlWindow, gtsDue, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
                    cardPic, setPic, picBox, deckRow, paintHome, paintDecks, paintSearch, openDeck,
                    FILT, loadFilter, applyFilter, sortRows, blankFilter, activeCount,
                    DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,
