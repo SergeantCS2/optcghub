@@ -46,11 +46,14 @@ refresh from Pages (take 27).
   declaration and Data Safety done to landmine 94; listing copy in; closed
   track created; app-ads.txt served from the root user site (take 40); the
   closed-testing release approved by Play review (take 52); **take 101
-  uploaded to the closed track and the app APPROVED FOR PRODUCTION (the
-  owner, 24 Sept, take 102)** — the production release from take 101's
-  bundle is his next step; the real AdMob rewarded unit IDs (D11) ride the
-  take after he sends them. The accepted upload proves the registered
-  upload key is the one the secrets hold.
+  uploaded to the closed track, the app APPROVED FOR PRODUCTION (24
+  Sept, take 102) and LIVE on Google Play the same day (take 105:
+  `play.google.com/store/apps/details?id=com.optcghub.app`, take 101's
+  bundle; the owner's own Fold runs the Play build at 17 of 17)** — from
+  here every take is one upload to the production track; the real AdMob
+  rewarded unit IDs (D11) ride the take after he sends them. The accepted
+  upload proved the registered upload key is the one the secrets hold,
+  and its fingerprint is pinned (take 103).
 - **16 KB page size:** every arm64 native library in the APK loads at 0x4000
   alignment and is stored 16 KB-aligned in the zip (MEASURED take 34 on the
   take-32 APK). Play accepts it.

@@ -13,13 +13,16 @@ The live order, top first. Everything below this block is the record of how
 each item got where it is; this block is what to do next.
 
 **The owner's, gating everything else**
-1. **Production is approved (24 Sept).** Create the production release
-   from `optcghub-take-101.aab` (RUNBOOK-play §8b); send the two real
-   AdMob rewarded unit IDs (D11) and the next take carries them (test
-   units earn nothing; serving them live is allowed, not useful). Every
-   later take: one upload to the production track, once (landmine 33);
-   export before your own phone switches from the sideload build to Play
-   (landmine 34).
+1. **LIVE on Google Play since 24 Sept 2026** —
+   `play.google.com/store/apps/details?id=com.optcghub.app`, take 101's
+   bundle; the owner's own phone runs the Play build now. From here every
+   take is one upload of `optcghub-take-N.aab` to the production track,
+   once (landmine 33); the sideload APK no longer installs over the phone
+   (landmine 34) — a sideload proof means export → uninstall → sideload →
+   import, so the production track is the proof route. **Next upload:
+   take 105** (the Back fix and the reminders' permission on the shrunk
+   build). Send the two real AdMob rewarded unit IDs (D11) and the next
+   take carries them — test units earn nothing, and the app is live.
 2. **Answers still open:** the six take-98 steps and the two Diagnostics
    lines (`viewport` with the Fold open, `pictures`) from whichever build
    you run; the look's "tiny bit of work" (which picture, what); A41's
@@ -519,7 +522,13 @@ from.
 - Auto-grading condition from a photo (a separate product; A4).
 - A social feed (a backend; ROADMAP won't-build).
 
-## A21 — Google Play · CLOSED TEST APPROVED take 52 · the clock starts at the twelfth tester
+## A21 — Google Play · LIVE 24 Sept 2026 (take 101's bundle) · every take is one production upload
+
+*Take 105 addendum — LIVE:* the owner's report at 02:42 UTC: "finally
+approved on Google play and it's listed", the Play install on his Fold
+(take 101) at 17 pass, 0 fail, the guide shown on the first open.
+Everything below is the road there.
+
 
 *Take 101 addendum:* the owner asked whether take 100's bundle is fit for
 Play. Verified from the build's own log: upload-key signed, versionCode
@@ -2141,6 +2150,11 @@ he will send more screenshots.
   accents; whether the splash is the icon large or something else.
 
 ## A14 — Trimming the ML Kit language models · PROVEN take 104 on the Fold
+
+*Take 105, later the same hour — the contrast:* the Play install of take
+101 (pre-R8) on the same phone passed `Notifications permission —
+display: prompt`; the shrink's regression (landmine 141) is MEASURED,
+not inferred.
 
 *Take 105 addendum — PROVEN:* the owner's take-104 install on the Fold,
 self-test `PASS OCR reads a code the app drew (ML Kit) — read "OP01-016"`,

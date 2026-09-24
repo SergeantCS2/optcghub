@@ -54,6 +54,27 @@ and "the tutorial didn't popup for me".
   backup off (rule 5); showing the guide on every install regardless
   (APEX A129: an extra tap beats a first-timer with no explanation, but
   a returning collector with his data is not a first-timer).
+- **LIVE ON GOOGLE PLAY (24 Sept, 02:42 UTC report):** the owner: "I'm
+  finally approved on Google play and it's listed!" —
+  `play.google.com/store/apps/details?id=com.optcghub.app`. He installed
+  from Play (take 101's bundle, the production release) and saw the guide
+  on the first open — a Play install is a fresh data state. Its
+  Diagnostics: 17 pass, 0 fail, 0 skipped; `catalogue copy: synced on
+  this phone` (the take-101 app pulled the take-104 bundle from Pages,
+  build stamp 02:14:32Z, so the pictures line and the 12 history days
+  are current while the effects line still reads `2187/7697` — the
+  take-104 wording lives in the app, not the bundle).
+- **Landmine 141 MEASURED by contrast, same phone, same hour:** the Play
+  install of take 101 (built before R8) reads `PASS Notifications
+  permission — display: prompt`; the sideloaded take 104 (R8) read the
+  undefined answer twelve minutes earlier. The attribution to the shrink
+  is no longer inferred.
+- **The proof path changes with the launch:** the phone now carries the
+  Play build, which the sideload key cannot install over (landmine 34).
+  Take 105 is proven on the Fold either through the production track
+  (upload `optcghub-take-105.aab`, the owner's step under RUNBOOK-play's
+  per-take section) or by export → uninstall → sideload → import. The
+  Play route is the one that matters now.
 - **The cover viewport, MEASURED:** 411×960 @2.625 (the take-98 ask,
   answered by the report's device block); the inner screen stays
   INFERRED until a report from the open phone.
