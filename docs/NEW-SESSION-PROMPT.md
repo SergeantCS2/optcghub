@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 111.* Paste the block between the rules into a new session
+*Current as of take 112.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 111 takes by previous sessions. The repo is
+built across 112 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -27,7 +27,7 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
 4. Read `docs/HANDOFF.md`, newest entry first, back to take 80 at least. Every
    take ends with a DEFERRED list; the union of those lists is the work.
 5. Read `docs/LANDMINES.md` §0 (the index) and skim §1. When you are about to
-   do something, grep the index first. 164 of them; each is a real failure.
+   do something, grep the index first. 168 of them; each is a real failure.
 6. Read `docs/AGENDA.md`: the Priorities block at the top is the live order.
 
 **The discipline, which the gate enforces:**
@@ -102,14 +102,28 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
   899 px), and a review of the whole take after its first push fixed what
   it found (bulk actions on the lines on screen, a currency label that
   matches its figure, words over art measured readable, landmines
-  157-160); the owner merged it without a note, and take 111 is the last
+  157-160); the owner merged it without a note, and take 111 was the last
   look the series planned -- every screen at both sizes, and what it
   turned up (a card page that saved to another collection's line, a slab
   that took over another's grade, the 253 DON!! cards filed as sealed and
   treated as products, rows askew on their picture; landmines 161-164).
-  After it, refinement is the owner's call, take by take. `docs/UI-AUDIT.md` is its
+  It merged on 24 Sept and A42 closed with it. Refinement is now the
+  owner's call, take by take. `docs/UI-AUDIT.md` is its
   checklist, with line numbers. Touch the UI only to fix what is broken, and read the
   tokens in `:root` before writing a size or a colour.
+
+- **A32, take 112 -- Southern Hobby, the second distributor:**
+  - It is read off its real pages (not GTS's shape, landmine 165): the
+    category page hourly, and each product page on first sight and
+    weekly, within a 90 s budget.
+  - Its words are dates -- when stores must order, the release, a
+    prerelease -- and "in-store only", beside GTS's on Sealed, Where to
+    buy and Releases.
+  - Its matches go through the unit it is sold as: a case only to a case
+    (landmine 167).
+  - It is not a stock-alert source (it has no stock words).
+  - One live fetch from the VM read 20 of 20 and matched 4.
+  - A32's next is the distributor state timeline from the history rows.
 
 - **The Priorities block at the top of `AGENDA.md`** is the live order: the
   owner's items (the diagnostics paste, D20–D22, shop URLs, D7, D16, the

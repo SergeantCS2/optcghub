@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 111.*
+*Current as of take 112.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -176,6 +176,10 @@ Start here. Do not read top to bottom.
 | A save on one collection's page changes another's count | **163** |
 | A second slab of a card took over the first one's grade | **163** |
 | A check at the width where the look saw a fault passes anyway | **164** |
+| A distributor's site is said to have "the same shape" as another's | **165** |
+| A render check reads an empty feed it has just set | **166** |
+| A distributor's case is matched to the single box | **167** |
+| A new product's page shows an empty white card | **168** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -2285,6 +2289,41 @@ Art" badge cut at 411 px; the runner's Chrome fits the same row with 6 px
 to spare, so a check at 411 passed with the fault in place and its control
 could not fail. Rule: a control is read where the fault cannot help but
 happen (360 px), and the rule is held at every width it names.
+
+**165. A record's inference is not a measurement.** Takes 69 and 94 wrote
+that Southern Hobby had GTS's shape because both sites answered. Measured at
+take 112, it is an osCommerce-style storefront with no embedded product
+object, and nothing of GTS's parser carried over. Rule: a source's shape is
+read off its own page before a plan leans on it, and the record says
+"inferred" wherever it inferred.
+
+**166. A harness's input is replaced by the thing under test, or by the
+harness's own sidecars.** Take 112's render check read no distributor lines,
+for two reasons in turn. First, entering Hunt syncs the served feed, which
+landed after the check's first await and replaced the fixture. Second,
+`hunt.py --out` names its stores, shops, events and history files by
+replacing "feed" in the out name, so a name without "feed" wrote the history
+over the feed without a word. Rule: set the fixture in the same tick as the
+paint and read it before the next await. `hunt.py` now refuses an `--out`
+without "feed".
+
+**167. The unit is part of a product's identity.** Southern Hobby sells IB-09
+and IB-10 as CASEs. The matcher took an IB-08 case for the single
+Illustration Box Vol. 8, an OP-12 case for the booster box, and an ST-19
+case for the single deck. KINDS finds "box" before "case", and landmine
+134's tie-break prefers the shorter name. The three saved product pages held
+no case; reading all twenty live pages found it. Rule: a case matches only a
+catalogue case, and nothing else matches one. A fixture set chosen by hand is
+compared once against the full live set before the matcher is trusted.
+
+**168. A style that assumes the picture arrives shows nothing when it does
+not.** Since take 109 the product sheet's frame was white for every product,
+because a product photo sits on white. The image host refuses a photo for a
+product too new to have one, which is exactly what Hunt shows, and the frame
+stood as an empty white card: its placeholder carried the card number a
+product does not have. Rule: style the failed picture first. White goes only
+under a photo that arrived (`:has(img.ref.ok)`), and a product's placeholder
+carries its set's code, as its row tile does.
 
 ## §2 — Inherited from APEX ORV
 

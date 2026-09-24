@@ -8,6 +8,14 @@
    Everything inside page.evaluate runs in the real app: window.VAULT is the
    same surface smoke.mjs drives, and clicks are real clicks. */
 
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { execSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+
 /* The Fold 7: the cover screen is the harness's phone -- MEASURED at take 105 from the
    owner's Diagnostics (`viewport: 411x960 @2.625`, the take-104 install); the inner screen is
    INFERRED until he pastes the same line from the open phone (More → About ×5 → ## device). */
@@ -845,4 +853,95 @@ const take111 = [
   view('hunt-events', `V.MODE.set('hunt', true); await ${pause}; V.go('events')`)
 ];
 
-export const STEPS = { 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111 };
+/* ---- take 112 — A32's second distributor: Southern Hobby beside GTS, read off its real pages ----
+   The feed is the fixture smoke and render build (hunt.py --from-fixtures: the saved listing and three
+   product pages); the served feed carries no Southern Hobby until this take is merged, so the page's own
+   sync is stubbed on this throwaway page, or it would replace the fixture mid-step. */
+let F112 = null;
+const feed112 = () => {
+  if (!F112) { const d = fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-look-112-')), f = path.join(d, 'feed-fixture.json');
+    execSync(`python3 tools/hunt.py --from-fixtures --out ${f}`, { cwd: ROOT, stdio: 'pipe' }); F112 = JSON.parse(fs.readFileSync(f, 'utf8')); fs.rmSync(d, { recursive: true, force: true }); }
+  return F112;
+};
+const HUNT112 = `V.HUNT.sync = async () => false; V.HUNT.syncHistory = async () => false; V.HUNT.feed = window.__F112; V.NAV.zipAsked = true;
+  for (const id of Object.keys(V.HUNT.distByCatalogId())) { const p = V.CAT.byId.get(+id); if (p) { V.SEALED.closed.delete(p.set); V.SEALED.open.add(p.set); } }
+  V.MODE.set('hunt', true); await ${pause}; V.HUNT.feed = window.__F112`;
+const DLINES = `(box) => [...box.querySelectorAll('.nm > span')].filter(s => /^(GTS Distribution|Southern Hobby) · /.test(s.textContent))`;
+const take112 = [
+  { name: 'hunt-sealed-southern-line', run: async (page, ctx) => {
+      await ctx.open(); await page.evaluate(F => { window.__F112 = F; }, feed112());
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} ${HUNT112}; V.go('sealed'); V.paintSealed(); await ${pause};
+        const lines = (${DLINES})(document.querySelector('#sealedList')); const sh = lines.filter(s => /^Southern/.test(s.textContent));
+        const rows = [...new Set(sh.map(s => s.closest('.row')))]; const both = rows.find(r => (${DLINES})(r).some(s => /^GTS/.test(s.textContent))) || rows[0];
+        if (both) both.scrollIntoView({ block: 'center' });
+        return { gts: lines.length - sh.length, sh: sh.length, row: both ? both.querySelector('.nm b').textContent : null, lines: both ? (${DLINES})(both).map(s => s.textContent) : [] }; })()`);
+      await waitArt(page, '#sealedList img'); await wait(300);
+      return { ok: m.gts > 0 && m.sh > 0 && m.lines.length > 0, ...m };
+    } },
+  { name: 'hunt-sealed-distributor-panels', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.HUNT.feed = window.__F112; V.go('sealed'); V.paintSealed(); await ${pause};
+        const hs = [...document.querySelectorAll('#sealedList .panel h3')].filter(h => /^(GTS Distribution|Southern Hobby)$/.test(h.textContent));
+        if (hs[0]) { hs[0].scrollIntoView({ block: 'start' }); window.scrollBy(0, -70); }
+        const sp = hs.find(h => h.textContent === 'Southern Hobby'); return { panels: hs.map(h => h.textContent), note: sp ? sp.parentElement.querySelector('.note').textContent.slice(0, 160) : null }; })()`);
+      await wait(300);
+      return { ok: m.panels.length === 2 && /listed to stores/.test(m.note || ''), ...m };
+    } },
+  { name: 'hunt-releases-both-lines', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.HUNT.feed = window.__F112; V.go('releases'); V.paintReleases(); await ${pause};
+        const row = [...document.querySelectorAll('#relList [data-browse-set]')].find(r => { const l = (${DLINES})(r); return l.some(s => /^GTS/.test(s.textContent)) && l.some(s => /^Southern/.test(s.textContent)); });
+        if (row) row.scrollIntoView({ block: 'center' });
+        return { set: row ? row.querySelector('.nm b').textContent : null, lines: row ? (${DLINES})(row).map(s => s.textContent) : [] }; })()`);
+      await waitArt(page, '#relList img'); await wait(300);
+      return { ok: m.lines.length === 2, ...m };
+    } },
+  { name: 'hunt-releases-not-in-catalogue', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.HUNT.feed = window.__F112; V.go('releases'); V.paintReleases(); await ${pause};
+        const h = [...document.querySelectorAll('#relList .panel h3')].find(x => x.textContent === 'At the distributors, not in the catalogue yet');
+        if (h) { h.scrollIntoView({ block: 'start' }); window.scrollBy(0, -70); }
+        const box = h ? h.parentElement : null; return { panel: !!h, rows: box ? box.querySelectorAll('.row').length : 0, sh: box ? (${DLINES})(box).filter(s => /^Southern/.test(s.textContent)).length : 0 }; })()`);
+      await wait(300);
+      return { ok: m.panel && m.rows > 3 && m.sh > 0, ...m };
+    } },
+  { name: 'hunt-releases-not-in-catalogue-lower', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.HUNT.feed = window.__F112; V.go('releases'); V.paintReleases(); await ${pause};
+        const h = [...document.querySelectorAll('#relList .panel h3')].find(x => x.textContent === 'At the distributors, not in the catalogue yet');
+        const notes = h ? [...h.parentElement.querySelectorAll('.note')] : []; const last = notes[notes.length - 1]; if (last) last.scrollIntoView({ block: 'end' }); window.scrollBy(0, 90);
+        return { checked: last ? last.textContent.slice(0, 200) : null }; })()`);
+      await wait(300);
+      return { ok: /Checked GTS Distribution .* Southern Hobby/.test(m.checked || ''), ...m };
+    } },
+  { name: 'hunt-sealed-sheet-no-photo-yet', run: async (page) => {
+      /* the DP-13 display: the host refuses its photo (403), as it does every product too new to have one */
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.HUNT.feed = window.__F112;
+        const it = V.HUNT.distItems().find(i => i._d === 'southern' && i.catalog_id && /Display/.test((V.CAT.byId.get(i.catalog_id) || {}).name || ''));
+        const p = it && V.CAT.byId.get(it.catalog_id); if (p) V.openDetail(p.id); await ${pause}; window.scrollTo(0, 0); return { product: p ? p.name : null }; })()`);
+      await page.waitForFunction(() => { const a = document.querySelector('#dArt'), i = a && a.querySelector('img.ref'); return !i || i.classList.contains('ok'); }, null, { timeout: 12000 }).catch(() => {});
+      await wait(300);
+      const a = await page.evaluate(() => { const e = document.querySelector('#dArt'); return { photo: !!e.querySelector('img.ref.ok'), label: (e.querySelector('.phl') || {}).textContent || '', bg: getComputedStyle(e).backgroundColor, ground: getComputedStyle(e).backgroundImage.slice(0, 16) }; });
+      return { ok: !!m.product && (a.photo ? a.bg === 'rgb(255, 255, 255)' : !!a.label && /gradient/.test(a.ground)), ...m, ...a };
+    } },
+  { name: 'hunt-sealed-sheet-where-to-buy', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.HUNT.feed = window.__F112;
+        const it = V.HUNT.distItems().find(i => i._d === 'southern' && i.catalog_id); const p = it && V.CAT.byId.get(it.catalog_id);
+        if (p) V.openDetail(p.id); await ${pause}; const b = document.getElementById('dBuy'); if (b && !b.hidden) { b.scrollIntoView({ block: 'start' }); window.scrollBy(0, -70); }
+        return { product: p ? p.name : null, chips: [...document.querySelectorAll('#dBuyList .nm b')].map(x => x.textContent.trim()) }; })()`);
+      await waitArt(page, '#dArt img'); await wait(300);
+      return { ok: m.chips.some(c => /Southern Hobby/.test(c)), ...m };
+    } },
+  { name: 'diagnostics-feed-line', run: async (page) => {
+      /* the report is written when Run is tapped; its network probes are stubbed here (the look's Chromium
+         has no route to Pages) so the step waits on the report, not on a timeout */
+      await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.HUNT.feed = window.__F112; V.DIAG.probe = async () => 'not probed in the look';
+        V.go('diag'); await ${pause}; document.getElementById('diagRun').click(); })()`);
+      await page.waitForFunction(() => /feed on phone/.test(document.getElementById('diagOut').textContent), null, { timeout: 30000 }).catch(() => {});
+      const m = await page.evaluate(() => { const pre = document.getElementById('diagOut'), w = document.createTreeWalker(pre, NodeFilter.SHOW_TEXT);
+        for (let n = w.nextNode(); n; n = w.nextNode()) { const i = n.data.indexOf('feed on phone'); if (i < 0) continue;
+          const r = document.createRange(); r.setStart(n, i); r.setEnd(n, i + 13); window.scrollBy(0, r.getBoundingClientRect().top - innerHeight / 2);
+          const e = n.data.indexOf('\n', i); return { line: n.data.slice(i, e < 0 ? undefined : e) }; }
+        return { line: null }; });
+      await wait(300);
+      return { ok: /southern 20 products/.test(m.line || ''), ...m };
+    } }
+];
+
+export const STEPS = { 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112 };

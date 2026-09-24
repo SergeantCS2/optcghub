@@ -1,13 +1,13 @@
 # AGENDA
 
-*Current as of take 111.* Ranked by blocking-ness, not by interest.
+*Current as of take 112.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
 
 ---
 
-## Priorities — as of take 111
+## Priorities — as of take 112
 
 The live order, top first. Everything below this block is the record of how
 each item got where it is; this block is what to do next. (Rewritten at take
@@ -18,7 +18,7 @@ each item got where it is; this block is what to do next. (Rewritten at take
    `play.google.com/store/apps/details?id=com.optcghub.app`, take 101's
    bundle first. Every merged take's AAB is one upload to the production
    track, once (landmine 33); the newest Release is the one to upload
-   (take-110, 14:16 UTC on 24 Sept). The sideload APK does not install
+   (take-111, 16:40 UTC on 24 Sept). The sideload APK does not install
    over the Play build (landmine 34): a sideload proof means export →
    uninstall → sideload → import. Send the two real AdMob rewarded unit
    IDs (D11) and the next take carries them -- test units earn nothing,
@@ -41,24 +41,23 @@ the "about four more" takes named overnight. Refinement after it is the
 owner's call, take by take.
 
 **Mine, in order**
-1. **Take 111 -- the last look** (in flight): every screen at both sizes,
-   and what it turns up.
+1. **A32** -- take 112 (in flight): Southern Hobby, the second
+   distributor. Next, the distributor state timeline from the history
+   rows (GTS's since take 94, Southern Hobby's from this merge); the
+   restock pattern sentence once a fortnight of hourly history exists on
+   Pages; GameStop, Walmart, Meijer and eBay need a residential IP, so
+   they wait for the sideload build.
 2. **A41** -- waits on the owner's list of the parts and the source; then
    one take per source, measured on the runner first.
-3. **A32**: retailer sources one session each with the real page in hand
-   (GTS built at take 94; Southern Hobby next, its host is open; GameStop,
-   Walmart, Meijer, eBay need a residential IP → the sideload build); the
-   restock pattern sentence once a fortnight of hourly history exists on
-   Pages; the distributor state timeline from the history rows.
-4. **A23** the sim's tail -- modal effects, ordering, protection, the
+3. **A23** the sim's tail -- modal effects, ordering, protection, the
    opponent's hidden choices -- one mechanism per take, when wanted.
-5. **A31** Collectr import, the day a real exported file exists.
-6. The standing offer: the release-notes trim.
+4. **A31** Collectr import, the day a real exported file exists.
+5. The standing offer: the release-notes trim.
 
 **Closed since the take-88 audit:** A36 the set chips (take 90), A37 More
 unreachable (take 91), A38 (takes 95-97), A39 (takes 98 and 100), A40 the
-look (take 99), A14 PROVEN on the Fold (take 105), A42's seven layers
-(takes 106-110; the item closes with take 111's merge). Before it (takes
+look (take 99), A14 PROVEN on the Fold (take 105), A42 (its seven layers
+at takes 106-110 and the last look at take 111, closed at that merge). Before it (takes
 57-94): A26 colour/contrast/desktop, A29 stock decks, A30 the tester
 report in full, A33 all six, A34 currency and splash, A35 all thirteen,
 the first paste's three items (take 92); A32 steps 1-3 and Local, Events,
@@ -1095,6 +1094,44 @@ yet* list, the `gts:` alert source. The matcher learned the wholesale
 names (a normaliser on the source side), three set-code families and a
 tie-break (landmine 134). **Next:** Southern Hobby, same shape, its own
 take; the state timeline from the history rows.
+
+### Take 112 — Southern Hobby, the second distributor source
+
+**Not GTS's shape (MEASURED; the record's "same shape" was inferred,
+landmine 165).** Southern Hobby is an osCommerce-style storefront with no
+embedded product object. Its One Piece category is one page: 20 rows, the
+footer says 20, and the columns are name, item number, release and
+order-due dates. Prices sit behind a login. Each product page adds a
+prerelease date, the unit it is sold as, the configuration, and "brick and
+mortar restricted" on 2 products. Every one of the 20 is "subject to
+allocation", so the flag says nothing about one product. robots.txt allows
+both kinds of page and disallows search, quick view and `sort=`.
+
+**Built:** `tools/hunt/southern.py`, with a strict parser, fixtures from
+the saved pages, and controls:
+- the category page every run;
+- a product page on first sight and weekly, at most 25 a run, none
+  started 90 s in;
+- the feed's keep-the-last-good path;
+- each item's state in the history rows;
+- a match through its own normaliser, where the unit decides: no match
+  while a starter deck's or a double pack's unit is unread, and a case
+  only to a case (landmine 167).
+
+The app's distributor lines, Sealed's panel, Where to buy and Releases
+carry both distributors, each in its own words. Southern Hobby's words
+are dates and "in-store only".
+
+**PROVEN from the VM:** one live fetch returned 20 of 20 and read 20
+pages with 0 failed, in 21 calls and 45 s. It matched 4 products, the
+same 4 as the fixtures.
+
+**Ruled out:** Southern Hobby as a stock-alert source (no stock words);
+its allocation flag (on every presell); its prices (behind a login); one
+row per product across the two distributors in "not in the catalogue
+yet" (only a set code joins them).
+
+**Next:** the state timeline from the history rows.
 
 ## A42 — The UI series: uniform headers, card art used boldly, one voice · OPENED take 106
 

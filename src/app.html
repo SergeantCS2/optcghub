@@ -263,7 +263,8 @@ img.above{object-view-box:inset(0 0 58% 0)}
 #detail > :not(.dback){position:relative}
 .dhero{display:flex;justify-content:center;margin:2px 0 14px}
 .dhero .art{width:min(48vw,196px);margin:0;box-shadow:0 12px 30px rgba(0,0,0,.5)}
-.dhero .art.product{background:#fff}
+.dhero .art.product{background:linear-gradient(160deg,var(--brass2),var(--card2))}   /* take 112: the row tile's ground and the set's code until a photo arrives -- a new product has none yet, and the white frame stood empty */
+.dhero .art.product:has(img.ref.ok){background:#fff}
 .dhero .art.product img{object-fit:contain}   /* a product photo is square on white: whole, not cut at both sides (the take-109 look) */
 /* A deck's Leader, one level down: the card large, its name in the display face. */
 .dklead{flex:1;min-width:0}
@@ -816,7 +817,7 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
   </header>
   <div class="note" style="margin:6px 0 10px">Everything needed to read this phone from a report: endpoints and their live status, what is stored, the last errors, the self-test. No collection contents. Copy it and send it.</div>
   <div class="row" style="gap:8px;margin-bottom:10px;flex-wrap:wrap"><button class="ghost go" id="diagRun">Run</button><button class="ghost" id="diagCopy" disabled>Copy report</button><button class="ghost" id="diagShare" disabled>Share</button><button class="ghost" id="devEarn">+20 test credits</button></div>
-  <pre id="diagOut" style="white-space:pre-wrap;font-size:12px;line-height:1.45;color:var(--dim);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;min-height:80px"></pre>
+  <pre id="diagOut" style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;line-height:1.45;color:var(--dim);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;min-height:80px"></pre>
 </section>
 <!-- take 91: More is markup like every screen; built on demand it was refused by go() (landmine 128) -->
 <section id="settings" class="screen">
@@ -3772,9 +3773,14 @@ const HUNT = {
   /* per catalogue product: the retailer lines that matched it */
   byCatalogId() { const out = {}; const t = this.feed && this.feed.sources && this.feed.sources.target; if (!t || !t.items) return out;
     for (const it of t.items) if (it.catalog_id) (out[it.catalog_id] ||= []).push(it); return out; },
-  /* take 94: per catalogue product, the distributor’s listings that matched it */
-  distByCatalogId() { const out = {}; const g = this.feed && this.feed.sources && this.feed.sources.gts; if (!g || !g.ok || !g.items) return out;
-    for (const it of g.items) if (it.catalog_id) (out[it.catalog_id] ||= []).push(it); return out; },
+  /* take 94: per catalogue product, the distributor’s listings that matched it. Take 112: two
+     distributors -- GTS and Southern Hobby -- each item carrying which one it is from (_d) and a
+     key that is unique across both (_k) */
+  DISTS: [['gts', 'GTS Distribution'], ['southern', 'Southern Hobby']],
+  dist(k) { return this.feed && this.feed.sources && this.feed.sources[k]; },
+  distName(k) { return (this.DISTS.find(d => d[0] === k) || [k, k])[1]; },
+  distItems() { const out = []; for (const [k] of this.DISTS) { const D = this.dist(k); if (D && D.ok) for (const it of (D.items || [])) out.push(Object.assign(Object.create(it), { _d: k, _k: k + ':' + (it.sku || it.id) })); } return out; },
+  distByCatalogId() { const out = {}; for (const it of this.distItems()) if (it.catalog_id) (out[it.catalog_id] ||= []).push(it); return out; },
   /* Take 72. The collector’s zip, asked once. The runner serves LOCAL stock
      for a list of zips; the closest honest match is exact, then the same
      3-digit prefix (a sectional centre, roughly one metro), else none --
@@ -3810,17 +3816,35 @@ function targetLine(it, T) {
   return `<span style="display:block;color:var(--brass)">Target ${money(it.price)} \u00b7 ${esc(online)}${shelfTxt ? ' \u00b7 ' + esc(shelfTxt) : ''}</span>${histTxt ? `<span style="display:block;color:var(--dim2);font-size:12.5px">${esc(histTxt)}</span>` : ''}`;
 }
 const DIST_WORDS = { sold_out: 'sold out', call: 'call to order', in_stock: 'in stock for stores', preorder: 'preorders open', coming: 'preorders open on', out: 'out of stock', unknown: 'no status' };
-function distLine(it, G) {
+/* take 112: Southern Hobby publishes no stock words; what it says is when stores had to order, and the release */
+const SH_WORDS = { orders_open: 'stores order by', orders_closed: 'stores\u2019 orders closed', released: 'released', unknown: 'no dates' };
+function distWords(it) {
   /* take 94: the distributor, in the words it uses. A distributor sells to
      stores, not to collectors: sold out here months before release means the
      print run is spoken for; allocated means a store gets a share, not what it
      ordered. The MSRP is the suggested retail for the case pack and is named
-     as such -- it is never shown as a price the collector can pay. */
-  const parts = [(DIST_WORDS[it.status] || it.status) + (it.status === 'coming' && it.preorder ? ' ' + it.preorder : '')];
+     as such -- it is never shown as a price the collector can pay. Take 112:
+     the days in words, as everywhere else (take 110), and Southern Hobby's own
+     words -- its dates, a prerelease, and "in-store only" where it restricts a
+     product to shops (allocation is on every presell there, so it says nothing
+     about one product and goes unsaid). */
+  if (it._d === 'southern') {
+    const pg = it.page || {}; const at = { orders_open: it.due, orders_closed: it.due, released: it.release }[it.state];
+    const parts = [(SH_WORDS[it.state] || it.state) + (at ? ' ' + esc(dayText(at)) : '')];
+    if (it.state !== 'released' && it.release) parts.push(`release ${esc(dayText(it.release))}`);
+    if (pg.prerelease) parts.push(`prerelease ${esc(dayText(pg.prerelease))}`);
+    if (pg.restricted) parts.push('in-store only');
+    return parts;
+  }
+  const parts = [(DIST_WORDS[it.status] || it.status) + (it.status === 'coming' && it.preorder ? ' ' + esc(dayText(it.preorder)) : '')];
   if (it.allocated) parts.push('allocated');
   if (it.msrp) parts.push(`MSRP ${money(it.msrp)}${it.config ? ' (' + esc(it.config) + ')' : ''}`);
-  if (it.release) parts.push(`release ${esc(it.release)}`);
-  return `<span style="display:block;color:var(--brass)">GTS Distribution \u00b7 ${parts.join(' \u00b7 ')} \u00b7 ${esc(HUNT.ageLabel(G && G.fetched_at))}</span>`;
+  if (it.release) parts.push(`release ${esc(dayText(it.release))}`);
+  return parts;
+}
+function distLine(it) {
+  const D = HUNT.dist(it._d || 'gts');
+  return `<span style="display:block;color:var(--brass)">${esc(HUNT.distName(it._d || 'gts'))} \u00b7 ${distWords(it).join(' \u00b7 ')} \u00b7 ${esc(HUNT.ageLabel(D && D.fetched_at))}</span>`;
 }
 /* ---- where to buy (A38 item 4, take 96) --------------------------------
    Every seller the app knows for a sealed product, as a link to the seller’s
@@ -3838,9 +3862,10 @@ function buySources(p) {
     note: `${money(it.price)} \u00b7 ${it.online ? (it.online.status === 'IN_STOCK' ? 'ships' : String(it.online.status || '?').toLowerCase().replace(/_/g, ' ') + ' online') : 'online stock not checked yet'} \u00b7 ${HUNT.ageLabel(it.online_at || (T && T.fetched_at))}` });
   for (const l of LOCAL.shopLines(p.id)) if (l.url) out.push({ kind: 'local', label: l.shop, url: l.url, addr: l.addr, phone: l.phone, mi: l.mi,
     note: `${money(l.price)} \u00b7 ${l.available ? 'in stock online' : 'sold out online'} \u00b7 ${HUNT.ageLabel(LOCAL.shops && LOCAL.shops.fetched_at)}` });
-  const Gs = HUNT.feed && HUNT.feed.sources && HUNT.feed.sources.gts;
-  for (const it of (HUNT.distByCatalogId()[p.id] || [])) if (it.url) out.push({ kind: 'dist', label: 'GTS Distribution', url: it.url,
-    note: `${DIST_WORDS[it.status] || it.status}${it.allocated ? ' \u00b7 allocated' : ''} \u00b7 to stores \u00b7 ${HUNT.ageLabel(Gs && Gs.fetched_at)}` });
+  for (const it of (HUNT.distByCatalogId()[p.id] || [])) if (it.url) { const D = HUNT.dist(it._d);   /* take 112: both distributors */
+    out.push({ kind: 'dist', label: HUNT.distName(it._d), url: it.url,
+      note: `${it._d === 'southern' ? (SH_WORDS[it.state] || it.state) + (it.state === 'released' ? ' ' + dayText(it.release) : it.due ? ' ' + dayText(it.due) : '')
+        : (DIST_WORDS[it.status] || it.status) + (it.allocated ? ' \u00b7 allocated' : '')} \u00b7 to stores \u00b7 ${HUNT.ageLabel(D && D.fetched_at)}` }); }
   return out;
 }
 function buyChips(p) {
@@ -3923,7 +3948,7 @@ function paintSealed() {
     /* take 110: a strip like every set’s heading, under the newest starter deck’s own top card */
     const dtop = decks.map(p => setTop(p.set)).find(Boolean);
     if (decks.length) out.push(`<button class="fgrp setstrip" data-setfold="decks" aria-expanded="${!SEALED.closed.has('decks')}">${dtop ? artBack(dtop, { crisp: true }) : ''}<span>Starter decks <span class="note">\u00b7 ${decks.length}</span></span><span class="note" aria-hidden="true">${chev(!SEALED.closed.has('decks'))}</span></button>`);
-    if (decks.length && !SEALED.closed.has('decks')) for (const p of decks.slice(0, 80)) out.push(`<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><button class="row" style="flex:1;min-width:0;text-align:left;padding:0;gap:10px" data-open="${p.id}">${productPic(p)}<div class="nm" style="min-width:0"><b>${esc(p.name)}</b><span>${esc(CAT.sets.get(p.set)?.name || '')} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}</span>${(byCat[p.id] || []).map(i => targetLine(i, T)).join('')}${(byDist[p.id] || []).map(i => distLine(i, G)).join('')}</div><div class="v"><b>${money(p.market)}</b>${deltaHtml(p, { pctOnly: true })}</div></button><button class="ghost" data-stock="${p.id}" aria-label="${STOCK.has(p.id) ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${STOCK.has(p.id)}" style="flex:0 0 auto;padding:8px 10px;${STOCK.has(p.id) ? 'color:var(--brass);border-color:var(--brass)' : ''}">${bell(STOCK.has(p.id))}<span style="display:block;font-size:12px;line-height:1.1;margin-top:2px">${STOCK.has(p.id) ? 'watching' : 'alert'}</span></button>${buyChips(p)}</div>`); }
+    if (decks.length && !SEALED.closed.has('decks')) for (const p of decks.slice(0, 80)) out.push(`<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><button class="row" style="flex:1;min-width:0;text-align:left;padding:0;gap:10px" data-open="${p.id}">${productPic(p)}<div class="nm" style="min-width:0"><b>${esc(p.name)}</b><span>${esc(CAT.sets.get(p.set)?.name || '')} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}</span>${(byCat[p.id] || []).map(i => targetLine(i, T)).join('')}${(byDist[p.id] || []).map(i => distLine(i)).join('')}</div><div class="v"><b>${money(p.market)}</b>${deltaHtml(p, { pctOnly: true })}</div></button><button class="ghost" data-stock="${p.id}" aria-label="${STOCK.has(p.id) ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${STOCK.has(p.id)}" style="flex:0 0 auto;padding:8px 10px;${STOCK.has(p.id) ? 'color:var(--brass);border-color:var(--brass)' : ''}">${bell(STOCK.has(p.id))}<span style="display:block;font-size:12px;line-height:1.1;margin-top:2px">${STOCK.has(p.id) ? 'watching' : 'alert'}</span></button>${buyChips(p)}</div>`); }
   /* stock alerts: what is watched, and where it was last seen */
   if (STOCK.list.length) out.push(`<div class="panel"><h3>Stock alerts</h3>${STOCK.list.map(a => { const srcs = STOCK.sourcesFor(a.id); const on = srcs.filter(x => x.available);
     return `<div class="row"><div class="nm"><b>${esc(a.name)}</b><span>${on.length ? 'in stock: ' + esc(on.map(x => x.label).join(', ')) : srcs.length ? 'not in stock at ' + srcs.length + ' watched source' + (srcs.length === 1 ? '' : 's') : 'no source carries it yet'}${a.fired && a.fired.length ? ' \u00b7 last alert ' + esc(HUNT.ageLabel(a.fired[0].t)) : ''}</span></div><div class="v"><button class="ghost" data-stock="${a.id}" aria-label="Stop watching ${esc(a.name)}">\u00d7</button></div></div>`; }).join('')}
@@ -3953,6 +3978,14 @@ function paintSealed() {
       <div class="note">${G.ok ? `Checked ${esc(HUNT.ageLabel(G.fetched_at))}${HUNT.stale(G.fetched_at) ? ' — <b>out of date</b>' : ''} · ${gi.length} One Piece products at the distributor: <b>${n('sold_out')}</b> sold out, <b>${alloc}</b> allocated, ${n('preorder')} with preorders open, ${n('coming')} coming, ${n('in_stock')} in stock for stores.` : `Could not reach GTS Distribution since ${esc(momentText(G.stale_since || G.fetched_at))}.`}</div>
       <div class="note" style="margin-top:6px">A distributor sells to stores, not to you. Sold out early means the print run is spoken for; allocated means stores get a share of what they ordered. MSRP is the suggested retail, not a price you can pay here.</div></div>`);
   }
+  /* take 112: the second distributor -- its dates, since it publishes no stock words */
+  const S = HUNT.dist('southern');
+  if (S) {
+    const si = S.items || []; const n = s => si.filter(i => i.state === s).length; const read = si.filter(i => i.page); const ins = read.filter(i => i.page.restricted).length;
+    out.push(`<div class="panel" style="border-color:var(--brass)"><h3>Southern Hobby</h3>
+      <div class="note">${S.ok ? `Checked ${esc(HUNT.ageLabel(S.fetched_at))}${HUNT.stale(S.fetched_at) ? ' — <b>out of date</b>' : ''} · ${si.length} One Piece products listed to stores: <b>${n('orders_open')}</b> still taking their orders, ${n('orders_closed')} with orders closed, ${n('released')} released; ${ins} in-store only${read.length < si.length ? ` (${read.length} of ${si.length} product pages read so far)` : ''}.` : `Could not reach Southern Hobby since ${esc(momentText(S.stale_since || S.fetched_at))}.`}</div>
+      <div class="note" style="margin-top:6px">What it publishes is dates: when a store must order, and the release. It marks every One Piece presell subject to allocation, so that says nothing about one product.</div></div>`);
+  }
   /* folded by set (take 81): a header with a count per set; the two newest
      open, the rest open on tap, a search opens everything it matches */
   const bySet = new Map(); for (const p of rows.slice(0, 600)) { if (!bySet.has(p.set)) bySet.set(p.set, []); bySet.get(p.set).push(p); }
@@ -3962,7 +3995,7 @@ function paintSealed() {
     out.push(`<button class="fgrp setstrip" data-setfold="${esc(setId)}" aria-expanded="${open}">${top ? artBack(top, { crisp: true }) : ''}<span>${esc(st.name || 'Other')}${st.pub ? ` <span class="note">\u00b7 ${esc(dayText(st.pub))}</span>` : ''}</span><span class="note" aria-hidden="true">${chev(open)}</span></button>`);
     if (!open) continue;
     for (const p of ps) {
-    const tl = (byCat[p.id] || []).map(i => targetLine(i, T)).join('') + (byDist[p.id] || []).map(i => distLine(i, G)).join('') + LOCAL.shopLines(p.id).map(l => `<span style="display:block;color:var(--brass)">${esc(l.shop)}${l.mi != null ? ' ~' + l.mi + ' mi' : ''} ${money(l.price)} \u00b7 ${l.available ? 'in stock online' : 'sold out online'} \u00b7 ${esc(HUNT.ageLabel(LOCAL.shops.fetched_at))}</span>`).join('');
+    const tl = (byCat[p.id] || []).map(i => targetLine(i, T)).join('') + (byDist[p.id] || []).map(i => distLine(i)).join('') + LOCAL.shopLines(p.id).map(l => `<span style="display:block;color:var(--brass)">${esc(l.shop)}${l.mi != null ? ' ~' + l.mi + ' mi' : ''} ${money(l.price)} \u00b7 ${l.available ? 'in stock online' : 'sold out online'} \u00b7 ${esc(HUNT.ageLabel(LOCAL.shops.fetched_at))}</span>`).join('');
     out.push(`<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><button class="row" style="flex:1;min-width:0;text-align:left;padding:0;gap:10px" data-open="${p.id}">
       ${productPic(p)}<div class="nm" style="min-width:0"><b>${esc(p.name)}</b><span>${esc(SEALED_KINDS.find(k => k[0] === SEALED.kindOf(p))?.[1] || '')} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}</span>${tl}</div>
       <div class="v"><b>${money(p.market)}</b>${deltaHtml(p, { pctOnly: true })}</div></button>
@@ -4209,12 +4242,19 @@ function paintReleases() {
   /* take 94: what the distributor says about a set -- its products matched to
      the set, or a set code in the name -- and the products it lists that no
      set in the catalogue matches: announced to stores, not on TCGplayer yet */
-  const G = HUNT.feed && HUNT.feed.sources && HUNT.feed.sources.gts; const gi = (G && G.ok && G.items) || [];
+  /* take 112: both distributors. A set's row carries one line from each -- for the set's own product (its
+     code, a booster first); every product keeps its own line under its row on Sealed */
+  const dSrc = HUNT.DISTS.map(([k]) => [k, HUNT.dist(k)]).filter(([, D]) => D); const gi = HUNT.distItems();
   const norm = s => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   const setCodes = s => new Set([norm(s.abbr), ...String(s.abbr || '').split(/[-\/]/).map(norm)].filter(Boolean));
   const forSet = s => { const cs = setCodes(s); return gi.filter(it => (it.catalog_id && (CAT.byId.get(it.catalog_id) || {}).set === s.id) || (it.codes || []).some(c => cs.has(c))); };
-  const known = new Set(); for (const s of CAT.sets.values()) for (const it of forSet(s)) known.add(it.sku);
-  const unlisted = gi.filter(it => (it.codes || []).length && !known.has(it.sku)).sort((a, b) => (a.release || '9').localeCompare(b.release || '9') || a.name.localeCompare(b.name));
+  const onePer = (s, list) => { const cs = s ? setCodes(s) : new Set(); const out = [];
+    for (const [k] of HUNT.DISTS) { const mine = list.filter(it => it._d === k); if (!mine.length) continue;
+      const own = mine.filter(it => (it.codes || []).some(c => cs.has(c))); const pool = own.length ? own : mine;
+      out.push(pool.find(it => /\bBOOSTER\b/i.test(it.name || '')) || pool[0]); }
+    return out; };
+  const known = new Set(); for (const s of CAT.sets.values()) for (const it of forSet(s)) known.add(it._k);
+  const unlisted = gi.filter(it => (it.codes || []).length && !known.has(it._k)).sort((a, b) => (a.release || '9').localeCompare(b.release || '9') || a._d.localeCompare(b._d) || a.name.localeCompare(b.name));
   /* take 86: the row is two lines -- picture, a wrapping title with its meta, the date
      and countdown at the right; then a Details link that never leaves the box.
      Take 97: the countdown carries its band; an upcoming row carries Remind me
@@ -4222,7 +4262,7 @@ function paintReleases() {
   const cdown = pub => `<span class="note ${relBand(days(pub))}">${pub >= today ? (days(pub) === 0 ? 'today' : `in ${days(pub)} day${days(pub) === 1 ? '' : 's'}`) : `${-days(pub)} days ago`}</span>`;
   const btn = (attrs, text, aria) => `<button class="ghost" ${attrs} style="display:inline-block;padding:6px 12px;font-size:13px" aria-label="${esc(aria)}">${text}</button>`;
   const foot = (s, label, extra = '') => `<div style="display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;padding:0 0 8px">${extra}${s.pub >= today ? btn(`data-relalert="${esc(s.id)}" data-relname="${esc(label)}" data-relpub="${esc(s.pub)}" aria-pressed="${RELALERTS.has(s.id)}"`, RELALERTS.has(s.id) ? 'Reminder set ' + tick() : 'Remind me', (RELALERTS.has(s.id) ? 'Remove the reminder for ' : 'Remind me the day before ') + label) + btn(`data-relcal="${esc(s.id)}" data-relname="${esc(label)}"`, 'Calendar', 'Add the release of ' + label + ' to your calendar') : ''}<a class="ghost" href="${esc(detailsUrl({ name: label }))}" target="_blank" rel="noopener" style="padding:6px 12px;font-size:13px" aria-label="Full details for ${esc(label)} on TCGplayer">Details ${ext()}</a></div>`;
-  const line = s => `<div class="rel"><button class="row" style="width:100%;text-align:left;padding:0;gap:10px;min-width:0" data-browse-set="${esc(s.id)}">${picFor(s)}<div class="nm" style="min-width:0"><b style="white-space:normal">${esc(s.name)}</b><span>${esc(s.abbr || '')}${s.n ? ` \u00b7 ${s.n} cards` : ' \u00b7 card list not published yet'}</span>${forSet(s).map(it => distLine(it, G)).join('')}</div><div class="v" style="flex:0 0 auto"><b>${esc(dayText(s.pub))}</b>${cdown(s.pub)}</div></button>
+  const line = s => `<div class="rel"><button class="row" style="width:100%;text-align:left;padding:0;gap:10px;min-width:0" data-browse-set="${esc(s.id)}">${picFor(s)}<div class="nm" style="min-width:0"><b style="white-space:normal">${esc(s.name)}</b><span>${esc(s.abbr || '')}${s.n ? ` \u00b7 ${s.n} cards` : ' \u00b7 card list not published yet'}</span>${onePer(s, forSet(s)).map(it => distLine(it)).join('')}</div><div class="v" style="flex:0 0 auto"><b>${esc(dayText(s.pub))}</b>${cdown(s.pub)}</div></button>
 ${foot(s, s.name)}</div>`;
   /* take 97 (A38 item 1): a run of two or more starter decks on one day is ONE
      row -- the range, the count, the date -- with a fold to the decks; a single
@@ -4231,19 +4271,20 @@ ${foot(s, s.name)}</div>`;
   const grouped = list => { const out = []; for (let i = 0; i < list.length; i++) { const s = list[i]; if (!isDeck(s)) { out.push(s); continue; }
       const run = [s]; while (i + 1 < list.length && isDeck(list[i + 1]) && list[i + 1].pub === s.pub) run.push(list[++i]);
       out.push(run.length > 1 ? { group: true, pub: s.pub, sets: run, id: s.id, name: `Starter decks ${run[0].abbr || ''}\u2013${run[run.length - 1].abbr || ''}` } : s); } return out; };
-  const gline = g => `<div class="rel"><button class="row" style="width:100%;text-align:left;padding:0;gap:10px;min-width:0" data-browse-set="${esc(g.id)}" data-browse-q="Starter Deck">${picFor(g.sets[0])}<div class="nm" style="min-width:0"><b style="white-space:normal">${esc(g.name)}</b><span>${g.sets.length} starter decks, one release day</span>${g.sets.flatMap(s => forSet(s)).slice(0, 1).map(it => distLine(it, G)).join('')}</div><div class="v" style="flex:0 0 auto"><b>${esc(dayText(g.pub))}</b>${cdown(g.pub)}</div></button>${foot(g, g.name, `<button class="ghost" data-relfold="${esc(g.pub)}" aria-expanded="${RELF.open.has(g.pub)}" style="display:inline-block;padding:6px 12px;font-size:13px">${RELF.open.has(g.pub) ? 'Hide the decks ' + chev(true, 14) : `Show the ${g.sets.length} decks ${chev(false, 14)}`}</button>`)}${RELF.open.has(g.pub) ? `<div style="padding-left:12px;border-left:2px solid var(--line)">${g.sets.map(line).join('')}</div>` : ''}</div>`;
+  const gline = g => `<div class="rel"><button class="row" style="width:100%;text-align:left;padding:0;gap:10px;min-width:0" data-browse-set="${esc(g.id)}" data-browse-q="Starter Deck">${picFor(g.sets[0])}<div class="nm" style="min-width:0"><b style="white-space:normal">${esc(g.name)}</b><span>${g.sets.length} starter decks, one release day</span>${onePer(null, g.sets.flatMap(s => forSet(s))).map(it => distLine(it)).join('')}</div><div class="v" style="flex:0 0 auto"><b>${esc(dayText(g.pub))}</b>${cdown(g.pub)}</div></button>${foot(g, g.name, `<button class="ghost" data-relfold="${esc(g.pub)}" aria-expanded="${RELF.open.has(g.pub)}" style="display:inline-block;padding:6px 12px;font-size:13px">${RELF.open.has(g.pub) ? 'Hide the decks ' + chev(true, 14) : `Show the ${g.sets.length} decks ${chev(false, 14)}`}</button>`)}${RELF.open.has(g.pub) ? `<div style="padding-left:12px;border-left:2px solid var(--line)">${g.sets.map(line).join('')}</div>` : ''}</div>`;
   const render = list => grouped(list).map(x => x.group ? gline(x) : line(x)).join('');
   /* the distributor’s unlisted starter-deck displays fold the same way, by release day */
   const isDeckItem = it => (it.codes || []).some(c => /^ST\d+$/.test(c)) && /STARTER DECK/i.test(it.name || '');
-  const ditem = it => `<div class="row"><div class="nm" style="min-width:0"><b style="white-space:normal">${esc(it.name)}</b><span>${esc((it.codes || []).join(', '))}</span>${distLine(it, G)}</div></div>`;
-  const dgroup = (rel, items) => { const key = 'd:' + rel; const codes = items.map(it => (it.codes || [])[0]).filter(Boolean); const same = items.every(it => it.status === items[0].status && it.allocated === items[0].allocated);
-    return `<div class="row" style="flex-wrap:wrap"><div class="nm" style="min-width:0;flex:1"><b style="white-space:normal">Starter decks ${esc(codes[0] || '')}\u2013${esc(codes[codes.length - 1] || '')}</b><span>${items.length} starter deck displays, one release day \u00b7 ${esc(codes.join(', '))}</span>${same ? distLine(items[0], G) : `<span style="display:block;color:var(--brass)">GTS Distribution \u00b7 mixed \u00b7 release ${esc(rel)}</span>`}</div>
+  const ditem = it => `<div class="row"><div class="nm" style="min-width:0"><b style="white-space:normal">${esc(it.name)}</b><span>${esc((it.codes || []).join(', '))}</span>${distLine(it)}</div></div>`;
+  const dgroup = (rel, items) => { const key = 'd:' + items[0]._d + ':' + rel; const codes = items.map(it => (it.codes || [])[0]).filter(Boolean); const same = items.every(it => distWords(it).join() === distWords(items[0]).join());
+    return `<div class="row" style="flex-wrap:wrap"><div class="nm" style="min-width:0;flex:1"><b style="white-space:normal">Starter decks ${esc(codes[0] || '')}\u2013${esc(codes[codes.length - 1] || '')}</b><span>${items.length} starter deck displays, one release day \u00b7 ${esc(codes.join(', '))}</span>${same ? distLine(items[0]) : `<span style="display:block;color:var(--brass)">${esc(HUNT.distName(items[0]._d))} \u00b7 mixed \u00b7 release ${esc(dayText(rel))}</span>`}</div>
       <button class="ghost" data-relfold="${esc(key)}" aria-expanded="${RELF.open.has(key)}" style="flex:0 0 auto;padding:6px 12px;font-size:13px">${RELF.open.has(key) ? 'Hide ' + chev(true, 14) : `Show ${items.length} ${chev(false, 14)}`}</button>${RELF.open.has(key) ? `<div style="flex-basis:100%;padding-left:12px;border-left:2px solid var(--line)">${items.map(ditem).join('')}</div>` : ''}</div>`; };
   const drender = list => { const out = []; for (let i = 0; i < list.length; i++) { const it = list[i]; if (!isDeckItem(it)) { out.push(ditem(it)); continue; }
-      const run = [it]; while (i + 1 < list.length && isDeckItem(list[i + 1]) && list[i + 1].release === it.release) run.push(list[++i]);
+      const run = [it]; while (i + 1 < list.length && isDeckItem(list[i + 1]) && list[i + 1].release === it.release && list[i + 1]._d === it._d) run.push(list[++i]);
       out.push(run.length > 1 ? dgroup(it.release || '?', run) : ditem(it)); } return out.join(''); };
-  const distPanel2 = G ? `<div class="panel"><h3>At the distributor, not in the catalogue yet</h3>${unlisted.length ? drender(unlisted) : `<div class="note">${G.ok ? 'Everything GTS Distribution lists is in the catalogue.' : 'Could not reach GTS Distribution since ' + esc(momentText(G.stale_since || G.fetched_at)) + '.'}</div>`}
-    <div class="note" style="margin-top:8px">Announced to stores, with the distributor’s date, before TCGplayer lists it. Checked ${esc(HUNT.ageLabel(G.fetched_at))}.</div></div>` : '';
+  const dDead = dSrc.filter(([, D]) => !D.ok).map(([k, D]) => `Could not reach ${esc(HUNT.distName(k))} since ${esc(momentText(D.stale_since || D.fetched_at))}.`);
+  const distPanel2 = dSrc.length ? `<div class="panel"><h3>At the distributors, not in the catalogue yet</h3>${unlisted.length ? drender(unlisted) : ''}${dDead.length ? `<div class="note">${dDead.join(' ')}</div>` : unlisted.length ? '' : '<div class="note">Everything the distributors list is in the catalogue.</div>'}
+    <div class="note" style="margin-top:8px">Announced to stores, with each distributor’s date, before TCGplayer lists it. Checked ${dSrc.filter(([, D]) => D.ok).map(([k, D]) => `${esc(HUNT.distName(k))} ${esc(HUNT.ageLabel(D.fetched_at))}`).join(', ') || 'never'}.</div></div>` : '';
   $('#relList').innerHTML = `<div class="panel"><h3>Upcoming</h3>${render(up) || '<div class="note">Nothing announced in the catalogue yet.</div>'}
     <div class="note" style="margin-top:8px">Dates from TCGplayer via TCGCSV, updated nightly. <i>Remind me</i> is a notification the day before.</div></div>
     ${distPanel2}
@@ -5041,7 +5082,8 @@ function openDetail(id) {
   $('#dFinish').textContent = sealedP ? sealedWord(p) : (p.sub || 'Normal');
   $('#dQtyH').textContent = sealedP ? 'Sealed' : 'Ungraded';
   $('#dWant').textContent = WANT.has(p.num) ? 'On your want list \u2014 remove' : 'Want this card';
-  $('#dArt').innerHTML = `<div class="ph" style="font-size:12px">${esc(p.num)}</div>${refArt(p, { size: 'large' })}`;
+  const setCode = (s.abbr || '').replace(/-/g, '').slice(0, 5);   /* take 112: a product has no number; its set's code, as on its row tile */
+  $('#dArt').innerHTML = (sealedP ? `<div class="ph" style="font-family:var(--display);font-size:28px">${setCode ? `<span class="phl">${esc(setCode)}</span>` : ''}</div>` : `<div class="ph" style="font-size:12px">${esc(p.num)}</div>`) + refArt(p, { size: 'large' });
   paintBack($('#dBack'), p);   /* take 109 (A42, C): the card’s own art and colours behind the top */
   $('#dArt').classList.toggle('product', sealedP);
   const stats = [];
@@ -5810,7 +5852,7 @@ const DIAG = {
     L.push('', '## sync'); line('update url', CAT.man.updateUrl || 'NOT SET'); line('manifest', await this.probe(CAT.man.updateUrl ? CAT.man.updateUrl + 'manifest.json' : null));
     L.push('', '## hunt'); line('zip', HUNT.zip || '(none)'); line('served', JSON.stringify(HUNT.served())); line('radius', LOCAL.radius); line('feed url', HUNT.url() || 'NOT SET');
     for (const f of ['feed.json', 'history.json', 'stores.json', 'events.json', 'shops.json', 'zcta.json']) line('  ' + f, await this.probe(HUNT.url() ? HUNT.url().replace(/feed\.json$/, f) : null));
-    line('feed on phone', HUNT.feed ? `${HUNT.ageLabel(HUNT.feed.fetched_at)}, target ${HUNT.feed.sources && HUNT.feed.sources.target && HUNT.feed.sources.target.ok ? 'ok' : 'not ok'}, gts ${HUNT.feed.sources && HUNT.feed.sources.gts ? (HUNT.feed.sources.gts.ok ? (HUNT.feed.sources.gts.items || []).length + ' products' : 'not ok') : 'absent'}` : 'none'); line('history on phone', HUNT.hist ? `${HUNT.hist.runs.length} runs` : 'none'); line('stores on phone', LOCAL.stores ? `${LOCAL.stores.stores.length}, ${HUNT.ageLabel(LOCAL.stores.fetched_at)}${HUNT.zip ? ', ' + LOCAL.stores.stores.filter(s => s.zip && s.zip.slice(0, 3) === HUNT.zip.slice(0, 3)).length + ' in your zip area' : ''}` : 'none'); line('events on phone', EVENTS.tab ? `${EVENTS.tab.rows.length} rows` : 'none'); line('shops on phone', LOCAL.shops ? `${LOCAL.shops.shops.length}` : 'none'); line('exact distances', LOCAL.exact()); line('stock alerts', STOCK.list.length); line('local notes', LOCAL.notes.length);
+    line('feed on phone', HUNT.feed ? `${HUNT.ageLabel(HUNT.feed.fetched_at)}, target ${HUNT.feed.sources && HUNT.feed.sources.target && HUNT.feed.sources.target.ok ? 'ok' : 'not ok'}, gts ${HUNT.feed.sources && HUNT.feed.sources.gts ? (HUNT.feed.sources.gts.ok ? (HUNT.feed.sources.gts.items || []).length + ' products' : 'not ok') : 'absent'}, southern ${HUNT.feed.sources && HUNT.feed.sources.southern ? (HUNT.feed.sources.southern.ok ? (HUNT.feed.sources.southern.items || []).length + ' products' : 'not ok') : 'absent'}` : 'none'); line('history on phone', HUNT.hist ? `${HUNT.hist.runs.length} runs` : 'none'); line('stores on phone', LOCAL.stores ? `${LOCAL.stores.stores.length}, ${HUNT.ageLabel(LOCAL.stores.fetched_at)}${HUNT.zip ? ', ' + LOCAL.stores.stores.filter(s => s.zip && s.zip.slice(0, 3) === HUNT.zip.slice(0, 3)).length + ' in your zip area' : ''}` : 'none'); line('events on phone', EVENTS.tab ? `${EVENTS.tab.rows.length} rows` : 'none'); line('shops on phone', LOCAL.shops ? `${LOCAL.shops.shops.length}` : 'none'); line('exact distances', LOCAL.exact()); line('stock alerts', STOCK.list.length); line('local notes', LOCAL.notes.length);
     L.push('', '## storage'); for (const k of ['vault.collection', 'vault.decks', 'vault.hunt', 'vault.hunt.hist', 'vault.hunt.stores', 'vault.hunt.events', 'vault.hunt.shops', 'vault.hunt.zcta', 'vault.alerts', 'vault.stockAlerts']) line(k, this.kb(k));
     L.push('', '## counts (never contents)'); line('collection items', OWN.items.length); line('decks', DECKS.list.length); line('price alerts', ALERTS.list.length);
     L.push('', '## last errors'); if (!ERRS.list.length) L.push('none'); else for (const e of ERRS.list) L.push(`${e.t.slice(0, 19).replace('T', ' ')} ${e.kind}: ${e.msg}${e.where ? ' @ ' + e.where : ''}`);   /* take 91: records outlive the day now */

@@ -329,12 +329,12 @@ if (puppeteer) {
   }, F94);
   ok('Hunt: the distributor panel draws, and a matched row\'s distributor line draws inside its row with no sideways scroll', g94.panel && g94.line && g94.inRow && g94.scroll <= g94.vw + 1, JSON.stringify(g94));
   const r94 = await page.evaluate(() => { const V = window.VAULT; V.go('releases'); V.paintReleases();
-    const h = [...document.querySelectorAll('#relList .panel h3')].find(x => x.textContent === 'At the distributor, not in the catalogue yet');
+    const h = [...document.querySelectorAll('#relList .panel h3')].find(x => x.textContent === 'At the distributors, not in the catalogue yet');   /* take 112: two distributors */
     const rows = h ? [...h.parentElement.querySelectorAll('.row')] : []; const rr = rows.map(x => x.getBoundingClientRect());
     return { panel: !!h && h.getBoundingClientRect().height > 0, rows: rows.length, drawn: rr.every(b => b.height > 0), scroll: document.body.scrollWidth, vw: document.documentElement.clientWidth }; });
-  ok('Releases: the not-in-the-catalogue-yet panel draws its rows without sideways scroll', r94.panel && r94.rows === 3 && r94.drawn && r94.scroll <= r94.vw + 1, JSON.stringify(r94));
-  const c94 = await page.evaluate(F => { const V = window.VAULT; const f = JSON.parse(JSON.stringify(F)); delete f.sources.gts; V.HUNT.feed = f; V.paintSealed(); V.paintReleases();
-    const a = [...document.querySelectorAll('#sealedList .panel h3')].some(h => h.textContent === 'GTS Distribution'); const b = /At the distributor/.test(document.querySelector('#relList').innerHTML);
+  ok('Releases: the not-in-the-catalogue-yet panel draws its rows without sideways scroll (GTS\'s three and, from take 112, Southern Hobby\'s)', r94.panel && r94.rows > 3 && r94.drawn && r94.scroll <= r94.vw + 1, JSON.stringify(r94));
+  const c94 = await page.evaluate(F => { const V = window.VAULT; const f = JSON.parse(JSON.stringify(F)); delete f.sources.gts; delete f.sources.southern; V.HUNT.feed = f; V.paintSealed(); V.paintReleases();   /* take 112: both sources out */
+    const a = [...document.querySelectorAll('#sealedList .panel h3')].some(h => h.textContent === 'GTS Distribution' || h.textContent === 'Southern Hobby'); const b = /At the distributor/.test(document.querySelector('#relList').innerHTML);
     V.HUNT.feed = null; V.MODE.set('collect', true); return { a, b }; }, F94);
   ok('negative control: without the source in the feed, neither distributor panel draws', !c94.a && !c94.b, JSON.stringify(c94));
   await new Promise(r => setTimeout(r, 200));
@@ -1258,6 +1258,58 @@ if (puppeteer) {
   await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
   ok('take 111: a Sealed row\'s bell sits on the middle of its row, within 2 px (it hung from the picture\'s foot once the picture was centred)', bell111.clean.length > 0 && bell111.clean.every(d => d <= 2), JSON.stringify(bell111.clean));
   ok('take 111: ...control: the outer row on its baseline puts it well off', bell111.control.some(d => d > 6), JSON.stringify(bell111.control));
+
+  /* ---- take 112 (A32): the second distributor on screen -- both distributors' lines wrap inside their rows at 360 px ---- */
+  const fx112 = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-112-')), 'feed-fixture.json');   // hunt.py names its sidecars from "feed" (it refuses any other name since take 112)
+  execSync(`python3 tools/hunt.py --from-fixtures --out ${fx112}`, { cwd: ROOT, stdio: 'pipe' });
+  const feed112 = JSON.parse(fs.readFileSync(fx112, 'utf8'));
+  await page.setViewport({ width: 360, height: 915, deviceScaleFactor: 2 });
+  const sh112 = await page.evaluate(async F => {
+    const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
+    const read = (box) => { const lines = [...document.querySelectorAll(box + ' .nm > span')].filter(s => /^(GTS Distribution|Southern Hobby) · /.test(s.textContent));
+      return { n: lines.length, sh: lines.filter(s => /^Southern Hobby/.test(s.textContent)).length, side: document.documentElement.scrollWidth <= innerWidth + 0.5,
+        inside: lines.every(s => { const r = s.getBoundingClientRect(), row = s.closest('.row').getBoundingClientRect(); return r.left >= row.left - 0.5 && r.right <= row.right + 0.5 && s.scrollWidth <= s.clientWidth + 1; }) }; };
+    /* the fixture feed is set again in the same tick as each paint: entering
+       Hunt syncs the served feed, which lands after the first await and would
+       otherwise replace it (it did, here: n was 0 until this) */
+    V.HUNT.setZip(''); V.MODE.set('hunt', true); await wait(200); V.HUNT.feed = F;
+    for (const id of Object.keys(V.HUNT.distByCatalogId())) { const p = V.CAT.byId.get(+id); if (p) { V.SEALED.closed.delete(p.set); V.SEALED.open.add(p.set); } }
+    while (V.closeAnyOverlay()) {}
+    V.go('sealed'); V.HUNT.feed = F; V.paintSealed(); const sealed = read('#sealedList');
+    V.go('releases'); V.HUNT.feed = F; V.paintReleases(); const rel = read('#relList');
+    const st = document.createElement('style'); st.textContent = '.nm > span[style*="display:block"]{white-space:nowrap!important}'; document.head.appendChild(st);
+    V.HUNT.feed = F; V.paintReleases(); const control = read('#relList'); st.remove();
+    V.HUNT.feed = null; V.MODE.set('collect', true); await wait(200); V.go('home'); return { sealed, rel, control }; }, feed112);
+  fs.rmSync(path.dirname(fx112), { recursive: true, force: true });
+  await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
+  ok('take 112: at 360 px every distributor line -- GTS\'s and Southern Hobby\'s -- wraps inside its row, and neither Sealed nor Releases scrolls sideways',
+     sh112.sealed.sh > 0 && sh112.rel.sh > 0 && sh112.sealed.inside && sh112.rel.inside && sh112.sealed.side && sh112.rel.side, JSON.stringify(sh112));
+  ok('take 112: ...control: held to one line, some run past their row', sh112.control.n > 0 && !sh112.control.inside, JSON.stringify(sh112.control));
+  /* take 112: a product with no photo yet -- every new one; the look found DP-13's display, refused by the host -- shows
+     its set's code on the row tile's ground in its sheet, where an empty white frame stood; white stays under a photo */
+  const noPic = await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {}
+    const p = V.CAT.rows.find(x => V.SEALED.isProduct(x) && x.img && (V.CAT.sets.get(x.set) || {}).abbr);
+    V.openDetail(p.id); const art = document.querySelector('#dArt');
+    art.querySelectorAll('img.ref').forEach(i => i.remove());   /* what a refusal leaves: both sizes failed and the img removed itself */
+    const cs = getComputedStyle(art), ph = art.querySelector('.ph'), lbl = art.querySelector('.phl'), lr = lbl && lbl.getBoundingClientRect(), ar = art.getBoundingClientRect();
+    const empty = { bg: cs.backgroundColor, img: cs.backgroundImage.slice(0, 16), label: lbl ? lbl.textContent : '', shown: !!ph && getComputedStyle(ph).display !== 'none' && !!lr && lr.width > 0 && lr.left >= ar.left && lr.right <= ar.right };
+    const im = document.createElement('img'); im.className = 'ref ok'; art.appendChild(im);
+    const photo = { bg: getComputedStyle(art).backgroundColor, img: getComputedStyle(art).backgroundImage };
+    im.remove(); while (V.closeAnyOverlay()) {}
+    return { empty, photo, code: (V.CAT.sets.get(p.set).abbr || '').replace(/-/g, '').slice(0, 5) }; });
+  ok('take 112: a product with no photo yet shows its set\'s code on the row tile\'s ground in its sheet, not an empty white frame',
+     /gradient/.test(noPic.empty.img) && noPic.empty.bg !== 'rgb(255, 255, 255)' && noPic.empty.shown && noPic.empty.label === noPic.code && noPic.code.length > 0, JSON.stringify(noPic));
+  ok('take 112: ...and a photo that arrived still sits on white (the take-109 look) -- the probe sees white when it is there', noPic.photo.bg === 'rgb(255, 255, 255)' && noPic.photo.img === 'none', JSON.stringify(noPic.photo));
+  /* take 112: the Diagnostics report at the cover width -- the feed's address ran past the panel's edge (the look, 411 px) */
+  await page.setViewport({ width: 411, height: 960, deviceScaleFactor: 2 });
+  const diag112 = await page.evaluate(async () => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)); while (V.closeAnyOverlay()) {}
+    const probe = V.DIAG.probe; V.DIAG.probe = async () => 'not probed here'; V.go('diag'); await wait(150); await V.DIAG.report().then(t => { document.getElementById('diagOut').textContent = t; });
+    const pre = document.getElementById('diagOut'), clean = { sw: pre.scrollWidth, cw: pre.clientWidth, url: /feed url: https:\/\//.test(pre.textContent) };
+    pre.style.overflowWrap = 'normal'; const control = { sw: pre.scrollWidth, cw: pre.clientWidth }; pre.style.overflowWrap = '';
+    V.DIAG.probe = probe; V.go('home'); return { clean, control }; });
+  await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
+  ok('take 112: at 411 px every line of the Diagnostics report wraps inside its panel, the feed\'s address too', diag112.clean.url && diag112.clean.sw <= diag112.clean.cw + 1, JSON.stringify(diag112.clean));
+  ok('take 112: ...control: without the break, the address runs past the panel', diag112.control.sw > diag112.control.cw + 1, JSON.stringify(diag112.control));
 
   await browser.close();
 } else {
