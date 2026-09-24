@@ -120,6 +120,18 @@ variables → Actions → Variables). It shares the `pages` concurrency group
 with the nightly so the two never deploy over each other. A run costs about
 two minutes of a public repo's free runner time.
 
+**A red hunt run that logs `::error::history: unread …` (take 114).**
+- It means Pages could not be read three times, ten seconds apart. The run
+  stopped before any fetch and deployed nothing, so the history on Pages is
+  whole. The next run reads it again, and GitHub mails the failure.
+- `none on Pages (404)` is a new history starting, and says so.
+- The nightly's carry-over line `history.json NOT carried (not a history …)`
+  means the deployed file was not a history. The next hourly then starts a
+  new one.
+- `::error::history: this run's history would lose its past` is
+  `keeps_past` refusing a history that is not the one read plus one row.
+  Nothing is deployed; read the numbers it prints.
+
 **The first run is yours to start:** Actions → hunt → *Run workflow*. A new
 schedule's first cron run can lag by an hour or more; a manual run proves the
 workflow and deploys the feed at once. The `hunt.yml` from take 84 or later is

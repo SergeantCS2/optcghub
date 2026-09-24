@@ -139,6 +139,136 @@ for word:
    stores" as available. It no longer counts the state after the order due
    date.
 
+### Built
+
+- **The timeline** (`src/app.html`):
+  - `HUNT.distTimeline(d, id)` reads each row's map for that distributor,
+    keyed by its own id (`HUNT.DIST_KEY`).
+    - A row without the map is not a check. After the first check it
+      counts as "could not reach it".
+    - A value that is not a word is counted apart, "this version cannot
+      read".
+    - The rows are sorted on a copy.
+  - `distKind` marks a change as read off the page or worked out from the
+    dates.
+  - `tlDay` names the distributor's own day for a calendar change, only
+    when the current date puts that day between the change's two checks.
+  - `distHistory` writes the words. `paintDetailDist` puts each
+    distributor's history under its own words, inside the closed
+    "Distributor info".
+  - Each history is behind a one-line header, a 44 px button, until tapped
+    (the owner's answer 2). The header is `distHistTap`, and every page opens
+    with the histories tucked away.
+- **GTS's words**, fixed because they were wrong (landmine 172):
+  - "stores order by Oct 14" in the long words;
+  - "orders close Oct 14" on a row;
+  - "orders were due Oct 14" once passed;
+  - "no order due date listed" when there is none.
+  - Sealed's counts read "N with an order due date ahead, N unreleased
+    without one". The hourly's log line says the same.
+- **The GTS stock alert** counts only "in stock for stores" as available
+  (the owner's answer 3).
+- **A day in the long words never splits** ("release Nov" / "20"), fixed
+  because it was broken. It was found by this take's look on Sealed's
+  product page and on Releases.
+- **Diagnostics:** "history on phone: N runs, gts in G, southern in S, ends
+  <moment>".
+- **The runner** (`tools/hunt.py`, `tools/hunt/gts.py`):
+  - The hourly reads the history first, three tries ten seconds apart,
+    past Pages' cache (`?v=`). It stops with exit 3, deploying nothing,
+    when it cannot read it.
+  - A 404 starts a new history, and the log says so.
+  - `keeps_past` refuses to write a history that is not the one read plus
+    one row.
+  - The nightly's carry-over takes history.json only when it is a history.
+  - GTS keeps the due day open (`pre >= today`), as Southern Hobby does.
+- **The fixture:** `tools/fixtures/hunt_history_2026-09-24.json`, the
+  history on Pages at 20:02 UTC. Every count the tests take from it is
+  read off its rows.
+
+### Tests and the look
+
+Every new check was watched to fail on the build before it.
+- **smoke 1026/1026.**
+  - On take 113's build: 31 failed, the new checks and the 6 changed pins.
+  - On the build before the owner's answers: 4 failed, the tucked checks
+    and the alert.
+  - Negative controls:
+    - a hole read as "not on its list" makes one change two;
+    - the history as first built (open, no button) is not tucked;
+    - take 113's alert rule, put back for one sequence, fires on the due
+      date passing.
+- **render 196/196 in Chrome**, at 360 px in America/Detroit.
+  - On take 113: 5 failed. Before the answers: 1 failed.
+  - Controls:
+    - `nowrap` makes the page scroll;
+    - a 1 px column with the no-break spaces undone splits a day;
+    - that instant in UTC reads otherwise;
+    - a header squeezed to 18 px is caught.
+- **`hunt.py --selftest` 110 ok**, up from 90. Five sabotages, each asserted
+  as landed, failed as they should:
+  - take 113's read;
+  - take 113's main block;
+  - `keeps_past` returning nothing;
+  - `carry_over` without `is_history`;
+  - take 113's `gts.py`.
+- **Clean run:** `hunt.py --from-fixtures` into an empty directory writes a
+  one-row history with "gts in 1, southern in 1".
+- **The look, 22/22 at both sizes.** On take 113 it was 7 of 22. The
+  pictures went to the owner twice: before the answers, and with the
+  history tucked away.
+
+### What I got wrong
+
+- **Take 94's reading of GTS's date, and this take's first two lines.**
+  The HANDOFF said "item number" and "a fortnight"; both are corrected
+  above (landmines 172 and 173).
+- **A design prototype rewrote the repo's `catalog/rates.json`** through a
+  symlinked `catalog/`. It was restored (landmine 174).
+- **The implementers' tools wrote literal no-break spaces** into render's
+  and the look's new lines. They were turned into `\u00a0` escapes, and
+  only added lines carried them.
+- **My first control for the alert was a constant expression**, so it
+  passed whatever the app did. It was replaced before any commit by the
+  real one above.
+
+### Ruled out
+
+- **A second record of changes beside the rows:** a change log in git would
+  be a third runner-owned file, and two records can disagree.
+- **"Since" on any line;** a pattern or a forecast at any count (take 73).
+- **Naming a calendar change's day from dates that do not put it between
+  its two checks.**
+- **The history on a row, a short line, Sealed's panels or Releases** (the
+  owner's take-112 word). Also the history open by default (the owner's
+  answer 2).
+- **Southern Hobby's words changed to "orders were due":** the owner
+  answered "that's fine" to the words as built.
+- **Refusing on a 404,** which would stop the feed until someone acted.
+- **Syncing the history when a product page opens,** a fetch racing the
+  paint (landmine 166). "This phone's copy ends" says the edge instead.
+- **Changing `KEEP_RUNS`.**
+
+### DEFERRED
+
+- **Date moves:** only a runner record of each change's dates can show
+  "release moved Nov 20 → Dec 4", and a view longer than about 55 days.
+  The next A32 item.
+- **Delisted items:** a distributor's section disappears when the current
+  feed drops its id. The rows carry no id → product map.
+- **The history on Releases' not-in-the-catalogue list.** PEB-01's first
+  real changes (GTS and Southern Hobby, 15 Oct UTC) have no product page.
+- **The nightly race:** an hourly deploy between the nightly's carry-over
+  and its Pages job loses a row (`build` and `pages` concurrency).
+- **Target's line** still says "N hourly checks so far -- a pattern needs a
+  fortnight". The runs are four-hourly, and it counts runs.
+- **For the UI session:** the history's look (`.dtl`), and a day in
+  Releases' "mixed · release" group line without its no-break spaces.
+- **After the merge** (rides take 115): the first hourly's history line
+  with its "gts in / southern in" counts, and the first change seen in the
+  rows.
+- **Still the owner's:** the Fold check of take 113's icon.
+
 ## Take 113 — 2026-09-24 — the owner's icon (D7), folded in from the graphic design session's branch
 
 Opened before any code (PROTOCOL §6). The owner merged take 112 (PR #36)
@@ -3345,7 +3475,7 @@ now (the apex `gtsdistribution.com` and the three package hosts still
   — and the project never logs in), `inventoryStatus` in/out, a stock
   message in HTML ("Sold Out", "Call to Order", "in stock" or empty), the
   stock label ("50+", "24+", "99+", "Sold Out", "call"), `release_date`,
-  `preorder_date` (when preorders opened; a 1924 placeholder on sleeves),
+  `preorder_date` (when preorders opened; a 1924 placeholder on sleeves) [take 114: GTS's own page labels this date its Order Due Date, the last day stores order -- "preorders open" was inferred from the field's name; landmine 172],
   `approximate_restock` (1/1/1900 = none), an "Early Release Date" field,
   the case configuration, and `flags[1]`.
 - **`flags[1]` is the allocation flag, PROVEN two ways:** the product
@@ -3364,7 +3494,7 @@ now (the apex `gtsdistribution.com` and the three package hosts still
   in stock (`in` with a quantity label), preorder (`out`, releases in the
   future, preorders open), coming (`out`, releases in the future,
   preorders open on a later date — PEB-01 opens 2026-10-14 for
-  2027-04-23), out (`out`, already released), else unknown.
+  2027-04-23), out (`out`, already released), else unknown. [take 114: GTS's own page labels this date its Order Due Date, the last day stores order -- "preorders open" was inferred from the field's name; landmine 172]
 - **Terms:** robots.txt answers a 500 (none published); the terms page
   names no automation or scraping clause. One call a run, a second's
   pause between pages if there are pages, a User-Agent naming the
@@ -3469,6 +3599,8 @@ before it ships, against the opened host.
   wait for the sideload build.
 - **The state timeline** — recorded per SKU in the history rows from this
   take; the app reads it (sold out since, preorder opened on) later.
+  [take 114: built, without "since" -- the first check on file is only
+  its left edge -- and GTS's date is when orders were due, not opened]
 - **The blank-after-Back** — no record yet since take 91's install. More
   in the nav (design, the owner's). The three package hosts.
 
