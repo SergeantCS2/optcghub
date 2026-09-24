@@ -3,17 +3,21 @@
 // - the smallest type, in points (refused under 6.5)
 // - anything that matters (text, the QR, the icon, the word) inside 0.125 in of a cut edge
 // - type running into other type, or the word or the QR covering type
-// Writes $CARD_OUT/png/<face>.png and report.json.
-//   node design/business-card/render.mjs
+// Writes $CARD_OUT/png/<face>.png and report.json; with a directory (leader) it renders $CARD_OUT/leader/*.html
+// that carry a face size (the sheets go to PDF instead) into $CARD_OUT/leader/png.
+//   node design/business-card/render.mjs [dir]
 import fs from 'node:fs'; import path from 'node:path';
 import { browser, REPO } from '../play-listing/lib.mjs';
 const BUILD = process.env.CARD_OUT || path.join(path.dirname(REPO), 'business-card-build');
-const DIR = path.join(BUILD, 'html'), OUT = path.join(BUILD, 'png'); fs.mkdirSync(OUT, { recursive: true });
+const SUB = process.argv[2];
+const DIR = path.join(BUILD, SUB || 'html'), OUT = SUB ? path.join(DIR, 'png') : path.join(BUILD, 'png'); fs.mkdirSync(OUT, { recursive: true });
 const b = await browser();
 const report = [];
 for (const f of fs.readdirSync(DIR).filter(x => x.endsWith('.html')).sort()) {
-  const portrait = f.startsWith('A-');
-  const vp = portrait ? { width: 192, height: 336 } : { width: 336, height: 192 };
+  /* the face's size is on its body (data-w, data-h, in inches); a page without one is a sheet */
+  const size = fs.readFileSync(path.join(DIR, f), 'utf8').match(/data-w="([\d.]+)in" data-h="([\d.]+)in"/);
+  if (!size) continue;
+  const vp = { width: Math.round(+size[1] * 96), height: Math.round(+size[2] * 96) };
   const page = await b.newPage({ viewport: vp, deviceScaleFactor: 300 / 96 });
   await page.goto('file://' + path.join(DIR, f)); await page.evaluate(() => document.fonts.ready); await page.waitForTimeout(250);
   const m = await page.evaluate(() => {
