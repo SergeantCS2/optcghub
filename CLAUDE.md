@@ -19,7 +19,7 @@ in-flight state — before touching anything.
 | `python3 tools/gate.py` | the contract; `--selftest` runs its own probes |
 | `python3 tools/scrub.py --check --docs` | refuses the owner's first name, an AI vendor's name, the conversational word, credentials, container paths |
 | `bash tools/seal.sh --gate-only` | stamps every doc with the take, then the gate — bare, never piped |
-| `python3 tools/hunt.py --selftest` · `python3 tools/hashes.py --selftest` · `python3 tools/shipped.py --selftest` · `bash ci/signer.sh --selftest` | the guards' negative controls, all run by the gate |
+| `python3 tools/hunt.py --selftest` · `python3 tools/hashes.py --selftest` · `python3 tools/shipped.py --selftest` · `bash ci/signer.sh --selftest` · `python3 ci/shrink.py --selftest` | the guards' negative controls, all run by the gate |
 
 ## The take, end to end
 
@@ -40,6 +40,7 @@ in-flight state — before touching anything.
 ## What bites here
 
 - The runner is the seal: the session VM usually has no Chrome receipt and no CDN access, so `render.png` and the image hashes come from the runner's `check`; a red gate on the receipt alone is expected here, anything else is not.
+- After `git checkout -B … origin/main`, the sidecar `catalog/prices_daily.json` carries the nightly's newest day while the VM's catalogue is whatever ingest is cached (TCGCSV is refused here): `smoke.mjs` then fails its two history assertions (the days end on the source date; the last point equals today's deck value). That is the mismatch, not a defect; the runner ingests fresh. Everything else in smoke must pass locally.
 - The DOM stub in `smoke.mjs` answers class selectors with a dummy element and cannot see `[hidden]` or a document-level click handler: assert through `window.VAULT` (screens by `V.NAV.stack`), and lift a handler into a named function to test it (landmines 135, 136).
 - `.gitignore` patterns are anchored (`/look/`), or a same-named directory anywhere vanishes from the commit and `git add` fails the chain silently (landmine 138).
 - A "closed" item stays open until its own record says so (landmine 137: the watchdog healed the symptom for eleven takes).

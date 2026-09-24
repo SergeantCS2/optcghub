@@ -1,4 +1,118 @@
-# HANDOFF — through Take 102
+# HANDOFF — through Take 103
+
+## Take 103 — 2026-09-24 — optimize: R8 shrinks the code, only the Latin OCR model ships, the mapping rides the Release, the upload key's fingerprint pinned
+
+Opened before any code (PROTOCOL §6). Take 102 merged 01:05 UTC by the
+owner (PR #26; its check verified from the log, not the badge: 691 smoke,
+106 render in Chrome, GATE PASSED, the pipeline 70 s on a warm cache).
+The owner: "mark it ready when green — then start take 103." The build on
+`main` for take 102 runs as this is written; its `apk` job prints the
+upload key's SHA-256 for the first time, and its size table is this
+take's *before*. The take-102 PR body came back with a vendor footer the
+posting tool appends on its own; it was edited off after the merge. The
+owner's rule stands: no vendor trailer on a commit or a PR.
+
+### Measured first
+
+- **From Release take-100's files** (the Android side is unchanged through
+  102): the non-Latin OCR models are 3.81 MB raw / 2.39 MB packed (Hani
+  1.00, Jpan 0.96, Kore 0.87, Deva 0.49, Beng 0.49 with their label maps);
+  Latin 0.35 MB; the shared detector, layout and script-id models about
+  1.2 MB; dex 23.0 MB raw / 8.7 packed in three files; the OCR engine
+  11.1 + 6.8 MB is one library for every script, so no saving there.
+- **The plugin** (`@capacitor-mlkit/text-recognition` 8.2) declares the
+  five `com.google.mlkit:text-recognition*` artifacts as `implementation`
+  and its Java imports the four non-Latin option classes inside a switch
+  on the script; the app asks for `LATIN` only (landmine 11). Capacitor's
+  Android template ships `minifyEnabled false` with an empty rules file;
+  Capacitor core carries consumer keep rules for every plugin class and
+  AGP's defaults keep `@JavascriptInterface`; none of the eight plugins
+  carries consumer rules of its own.
+- **Run 51 (the take-102 build on `main`, 01:05–01:12 UTC)** published
+  Release take-102 with both assets and printed, for the first time, `AAB
+  signer SHA256: 32:8E:60:A5:CE:9C:A9:93:97:25:EE:61:D7:11:F9:2A:1C:D6:A0:
+  C4:00:0C:71:09:E4:32:F9:DD:C6:F3:28:95` under the upload DN — the pin.
+  Its size table is this take's *before*, identical to take 100's: APK
+  34.9 MB file / 58.0 raw; AAB 23.8 / 59.1; dex 23.0 raw / 8.7 packed;
+  the OCR models 5.5 raw / 3.7 packed (APK) and 3.5 (AAB); res 2.8 raw
+  (APK), 3.6 (AAB). A stray `18` printed after the table (a count the
+  group echoes on its own line) — read, harmless, cleaned here.
+- **This VM** has Gradle and Java but no Android SDK and no route to
+  Maven: the shrunk build is proven on the runner only, on the merge. A
+  red `apk` job on `main` is this take's known risk; the `-dontwarn` rules
+  pre-empt the one failure R8 is known to raise here (the four option
+  classes the plugin references and the build no longer carries).
+- **Ruled out:** `aaptOptions` / `packagingOptions` for the model assets
+  (they scope Java resources and the app's own assets, not a library's —
+  the dependency exclude drops the AARs and their assets together);
+  patching the plugin's sources under `node_modules`; a `-printusage`
+  rule (AGP already writes `usage.txt`, `mapping.txt` and `seeds.txt`
+  beside the release outputs when R8 runs); pinning the fingerprint from
+  anything but run N's printed line; the 32-bit ABI and the gzipped
+  catalogue (listed in A14, unpicked by the owner).
+
+### Built
+
+- `ci/shrink.py` (new) — the patch and its controls in the tree, not a
+  heredoc run by hand (the take-102 lesson): an `OPTCGHUB-SHRINK v1`
+  block (versioned and replaced, not skipped — landmine A-211) sets the
+  release build type to `minifyEnabled true`, `shrinkResources true` and
+  the optimize defaults; a top-level `configurations.all` excludes the
+  four non-Latin ML Kit modules; `proguard-rules.pro` gets `-dontwarn` for
+  the four option packages the plugin still names; every step asserts it
+  landed. `--selftest`, which the gate runs: against a fixture of the
+  template's release block and against Capacitor's own template tarball
+  when `node_modules` has it — flips the build type, places the block
+  before `android {`, a second run changes nothing, four rules once; and
+  a control: a `build.gradle` with no release block is refused. Watched
+  against a patch that does nothing: every positive and the refusal
+  control FAIL. Found on the way: a re-run grew a blank line each time
+  until the removal consumed it (the "second run changes nothing" check
+  caught it).
+- `ci/apk.sh`: runs `ci/shrink.py android/app`; after the build the APK is
+  refused if any non-Latin model entry remains or the Latin one is
+  missing; refused if R8 left no mapping; `mapping.txt` is copied to
+  `optcghub-take-N-mapping.txt` and output for the Release; the usage
+  file's line count is printed; the what-shipped group's bare count is
+  labelled.
+- `ci/build.yml` and its twin: the mapping is a Release asset — Play's
+  crash reports de-obfuscate with it and nothing else.
+- `ci/signer.sh`: `UPLOAD_SHA256` pinned from the take-102 build's printed
+  line; `fingerprint_ok` refuses a bundle whose signer carries the upload
+  DN but another fingerprint (a regenerated key would be refused by Play
+  and burn the versionCode — landmine 33); two controls watched to fail
+  first.
+- The record: A14 to take 103; A21's fingerprint row; V1-STATE's sizes
+  line points at the take-103 build log for the *after*.
+- Tests: signer.sh 10 controls (the pinned fingerprint passes; the upload
+  DN with another fingerprint and an empty line are refused — the
+  positive arm watched to fail with the pin pending); the shrink patch
+  run twice against a copy of Capacitor's own template (one block, one
+  rules block, `minifyEnabled true`); gate 12 probes; render 105 of 106
+  in local Chrome (the CDN thumbnail, as at 102). **Local smoke 689 of
+  691:** after the branch reset onto `main`, the sidecar carries the
+  nightly's 23 Sept day while this VM's catalogue is the cached 22 Sept
+  ingest (TCGCSV is refused here), so the two history assertions — the
+  days end on the source date, the last point equals today's deck value
+  — compare two different days. Not a defect: the runner ingests fresh
+  and its check is the seal (691 at take 102's check). Noted in the root
+  session file so the next session does not chase it. No app change, so
+  no look; the proof is the Fold's.
+
+### The proof, on the Fold (the owner's)
+
+Install take 103's APK (export first if the phone is on a Play build —
+landmine 34). More → About, five taps → Diagnostics → self-test: every
+line PASS, "OCR reads a code the app drew (ML Kit)" included; one real
+scan; the rewarded ad (Google's test unit) shows; a reminder notification
+fires; Share; Export, then Import. Send the self-test text. The `apk`
+job's size table beside take 102's is the measurement; the Fold is the
+proof.
+
+### DEFERRED this cycle
+
+- D11 the day the owner sends the two unit IDs; A41 his list; the 32-bit
+  ABI and the gzipped catalogue stay listed in A14; A32 a new session.
 
 ## Take 102 — 2026-09-24 — harden, clean up, tie up: the take-101 review's thirteen findings, the record moved to production, a CLAUDE.md
 

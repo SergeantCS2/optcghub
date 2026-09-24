@@ -1,6 +1,6 @@
 # RUNBOOK — Google Play, from the repo to a running 14-day clock
 
-*Current as of take 102.* The whole procedure, in the order it must happen,
+*Current as of take 103.* The whole procedure, in the order it must happen,
 with who does each step. Everything on the repo side is already built; what
 follows is the owner's, and none of it is hard. The gate at the end is calendar
 time: **12 testers opted in for 14 continuous days** (landmine 35; re-checked
@@ -83,6 +83,14 @@ at Play's *Request upload key reset*, and they need different first steps:
   certificate and request the reset (below). The next build after the
   reset is confirmed signs with the new key; the `AAB signer:` line must
   still read `CN=OP TCG Hub upload`.
+  **Then the pin (take 103).** `ci/signer.sh` carries the upload key's
+  certificate fingerprint (`UPLOAD_SHA256`, from the take-102 build's
+  printed line) and the build refuses a bundle whose signer has the
+  upload DN with any other fingerprint — a regenerated key is exactly
+  that. So the first build after a new key fails on purpose, *after*
+  printing the new key's `AAB signer SHA256:` line; paste that line's
+  value into `UPLOAD_SHA256`, bump the take, and the next build passes.
+  Never type a fingerprint from anywhere but a printed line.
 - **(b) Play registered a different key than the secrets hold** — the
   symptom is "wrong key" on an upload whose build log says `CN=OP TCG Hub
   upload`. The keystore is fine; only Play's record is wrong. Export the

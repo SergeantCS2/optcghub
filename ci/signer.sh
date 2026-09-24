@@ -15,6 +15,11 @@ set -euo pipefail
 
 UPLOAD_DN='CN=OP TCG Hub upload, OU=play'          # what tools/play-key.sh writes
 SIDELOAD_DN='CN=OP TCG Hub, OU=sideload'           # the committed signing/optcghub.keystore
+# The upload key's certificate fingerprint, read off the take-102 build's own log
+# (run 51's "AAB signer SHA256:" line) -- take 103. A bundle carrying the upload DN
+# with another fingerprint is a REGENERATED key: Play refuses it and the versionCode
+# is burned (landmine 33). Rotate the pin only from a printed line, never from memory.
+UPLOAD_SHA256='32:8E:60:A5:CE:9C:A9:93:97:25:EE:61:D7:11:F9:2A:1C:D6:A0:C4:00:0C:71:09:E4:32:F9:DD:C6:F3:28:95'
 
 _cert() {   # the signature block, whatever the key type; keytool reads the certificate out of it
   unzip -p "$1" 'META-INF/*.RSA' 'META-INF/*.DSA' 'META-INF/*.EC' 2>/dev/null | keytool -printcert 2>/dev/null || true
@@ -28,6 +33,11 @@ classify_signer() {
     unreadable|"")    echo unreadable;;
     *)                echo other;;
   esac
+}
+
+fingerprint_ok() {   # "SHA256: AA:BB:..." as signer_sha256 prints it -> "ok", else "no" with exit 1
+  local got="${1#SHA256: }"
+  if [ -n "$got" ] && [ "$got" = "$UPLOAD_SHA256" ] && [ "$UPLOAD_SHA256" != "PIN-PENDING" ]; then echo ok; else echo no; return 1; fi
 }
 
 selftest() {
@@ -47,6 +57,11 @@ selftest() {
   else
     echo "  FAIL  jarsigner could not sign the control bundle"; ok=0
   fi
+  # 4. the pinned fingerprint (take 103): the upload DN with another fingerprint is a
+  #    regenerated key -- Play would refuse it and burn the versionCode (landmine 33)
+  check "the pinned fingerprint passes" "$(fingerprint_ok "SHA256: $UPLOAD_SHA256" 2>/dev/null)" "ok"
+  check "control: the upload DN with another fingerprint is refused" "$(fingerprint_ok "SHA256: 00:11:22" 2>/dev/null)" "no"
+  check "control: an empty fingerprint line is refused" "$(fingerprint_ok "" 2>/dev/null)" "no"
   # 3. the classification on the strings a readback yields
   check "the upload key's DN classifies as upload" "$(classify_signer "Owner: $UPLOAD_DN, O=OP TCG Hub")" "upload"
   check "control: a third key (a debug or rotated keystore) classifies as other, never upload" "$(classify_signer "Owner: CN=Android Debug, O=Android, C=US")" "other"

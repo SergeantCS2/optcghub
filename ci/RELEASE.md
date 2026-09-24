@@ -1,4 +1,4 @@
-# OP TCG Hub — take 102
+# OP TCG Hub — take 103
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,13 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 103:** smaller. The app's code is shrunk (R8) and only the
+Latin text model ships — One Piece codes are Latin, and the four other
+scripts were never used. Nothing the app does changes: the scanner, ads,
+reminders, share and backup work as before. On your phone, More → About
+(five taps) → Diagnostics → self-test proves the read; the build's log
+carries the sizes before and after.
 
 **New at take 102:** nothing visible; the build's own checks are
 hardened after a review, and the record moves to production.

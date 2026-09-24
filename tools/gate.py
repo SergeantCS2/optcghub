@@ -493,6 +493,10 @@ def check_selftests():
                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=ROOT)
     if r.returncode:
         fail("selftest", "signer.sh controls did not all pass (take 102):\n" + r.stdout)
+    r = subprocess.run([sys.executable, os.path.join(ROOT, "ci", "shrink.py"), "--selftest"],
+                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=ROOT)
+    if r.returncode:
+        fail("selftest", "shrink.py controls did not all pass (take 103):\n" + r.stdout)
     r = subprocess.run(["bash", os.path.join(ROOT, "ci", "check.sh"), "--selftest"],
                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=ROOT)
     if r.returncode:
