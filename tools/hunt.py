@@ -18,7 +18,7 @@ from hunt import target, roster, shops, gts, southern  # noqa: E402   (landmine 
 OUT = os.path.join(ROOT, "www", "hunt", "feed.json")
 HIST = os.path.join(ROOT, "www", "hunt", "history.json")
 DB = os.path.join(ROOT, "catalog", "catalog.sqlite")
-KEEP_RUNS = 24 * 14          # two weeks of hourly snapshots
+KEEP_RUNS = 24 * 14          # rows, not days: a fortnight at one run an hour, about 55 days at the measured ~4 h cadence (take 114)
 
 
 def pages_base():
@@ -41,6 +41,69 @@ def fetch_json(url, timeout=20):
             return json.loads(r.read().decode("utf8"))
     except Exception:                                        # noqa: BLE001
         return None
+
+
+def fetch_json_why(url, timeout=20):
+    """Take 114: (json, None); (None, 404) when the host says there is no such file; (None, "<Type>: <msg>")
+    otherwise -- fetch_json's None cannot tell a history that is not there from one that could not be read."""
+    import urllib.request, urllib.error
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "optcghub-hunt/1"}), timeout=timeout) as r:
+            return json.loads(r.read().decode("utf8")), None
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return None, 404
+        return None, f"{type(e).__name__}: {str(e)[:80]}"
+    except Exception as e:                                   # noqa: BLE001
+        return None, f"{type(e).__name__}: {str(e)[:80]}"
+
+
+def is_history(h):
+    return isinstance(h, dict) and isinstance(h.get("runs"), list)
+
+
+def read_history(local_path, base=None, fetch=None, tries=3, pause=10, sleep=time.sleep, now=time.time):
+    """Take 114: the history this run appends to, and how it was had -- (history, "local" | "pages"); (None,
+    "none") when Pages answers 404 (there is none: a new one starts); (None, "unread: <why>") when it could not be
+    read in `tries` attempts, `pause` seconds apart, or is not a history. ?v=<time> reads past the CDN's
+    ten-minute copy (INFERRED). Until this take a failed read started a one-row history and the deploy replaced
+    the whole record with it (the reset: INFERRED, never seen -- 48 workflow runs, 48 rows)."""
+    if os.path.exists(local_path):
+        try:
+            h = json.load(open(local_path))
+        except Exception as e:                               # noqa: BLE001
+            return None, f"unread: the local {os.path.basename(local_path)} is not JSON ({type(e).__name__})"
+        return (h, "local") if is_history(h) else (None, f"unread: the local {os.path.basename(local_path)} is not a history (no runs list)")
+    base = pages_base() if base is None else base
+    if not base:
+        return None, "none: no site address (UPDATE_URL) to read it from"
+    fetch = fetch or fetch_json_why; why = None
+    for k in range(tries):
+        h, why = fetch(base + "hunt/history.json?v=" + str(int(now())))
+        if h is not None:
+            return (h, "pages") if is_history(h) else (None, "unread: the deployed history is not a history (no runs list)")
+        if why == 404:
+            return None, "none"
+        if k < tries - 1:
+            sleep(pause)
+    return None, f"unread: {why} ({tries} tries)"
+
+
+def history_first(hist_path, from_fixtures=False, read=None, out=print):
+    """Take 114: read the history BEFORE any source is fetched. Unreadable, the run stops here and writes
+    nothing, so the workflow deploys nothing and the history on Pages stays whole -- one run's feed is lost (the
+    app says how old a feed is), never the record. Landmine 130: a failure keeps what the success path replaces."""
+    if from_fixtures:
+        return None
+    h, how = (read or read_history)(hist_path)
+    if how.startswith("unread"):
+        out(f"::error::history: {how} -- this run stops before any fetch and writes nothing, so nothing deploys and the history on Pages stays whole; the next run reads it again")
+        raise SystemExit(3)
+    if how == "none":
+        out("   history: none on Pages (404) -- a new history starts with this run")
+    elif how.startswith("none"):
+        out(f"   history: {how} -- a new history starts with this run")
+    return h
 
 
 def load_previous(local_path, name):
@@ -80,6 +143,20 @@ def append_history(prev_hist, feed):
     h["since"] = h["runs"][0]["t"]; h["stores"] = {z: zz.get("stores", []) for z, zz in feed["sources"]["target"].get("zips", {}).items()} if feed["sources"]["target"].get("ok") else h.get("stores", {})
     h["titles"] = {it["tcin"]: it["title"] for it in feed["sources"]["target"].get("items", [])} if feed["sources"]["target"].get("ok") else h.get("titles", {})
     return h
+
+
+def keeps_past(before_runs, hist):
+    """Take 114, the output guard: the rows written are the rows loaded plus this run's, cut at KEEP_RUNS. Returns
+    the problems -- any, and the run writes no history, so a reset path the read-first guard misses is refused too."""
+    new = hist.get("runs") if isinstance(hist, dict) else None
+    if not isinstance(new, list):
+        return ["the history to write has no runs list"]
+    want = min(len(before_runs) + 1, KEEP_RUNS)
+    if len(new) != want:
+        return [f"{len(before_runs)} rows loaded, {len(new)} to write, not {want}"]
+    if new[:-1] != before_runs[len(before_runs) - (len(new) - 1):]:
+        return [f"the {len(new) - 1} rows kept are not the last {len(new) - 1} loaded"]
+    return []
 
 STOP = {"one", "piece", "card", "game", "bandai", "tcg", "the", "of", "-", "english", "ver", "version", "sealed", "new",
         "trading", "cards", "packs", "with", "and", "edition", "official"}
@@ -313,6 +390,87 @@ def selftest():
         r = roster_step(sp, fetch=lambda: good, load=lambda p, n: None, out=lambda *_: None)
         check("a rebuild writes both files", r["how"] == "rebuilt" and r["stores"] and os.path.exists(sp.replace("stores", "events")), str(r))
     ok &= shops.selftest(json.load(open(os.path.join(fx, "shopify_products.json"))))
+    # take 114: the history rows the app's distributor timeline reads -- a source's key only on a run that read it
+    import copy, subprocess
+    fd = {"fetched_at": "2026-09-24T19:08:56Z", "sources": {"target": {"ok": False}, "gts": gts.from_fixture(os.path.join(fx, "gts_listing.html")),
+                                                          "southern": southern.from_fixture(os.path.join(fx, "southern_listing.html"), fx)}}   # no catalogue needed: the rows key by the distributor's own id
+    row = snapshot(fd)
+    check("a run that read both distributors writes both keys, each item by its own id (GTS the SKU, Southern Hobby the page number)",
+          set(row.get("gts", {})) == {i["sku"] for i in fd["sources"]["gts"]["items"]} and set(row.get("southern", {})) == {i["id"] for i in fd["sources"]["southern"]["items"]}, f"{len(row.get('gts', {}))} + {len(row.get('southern', {}))}")
+    for k in ("gts", "southern"):
+        kept = copy.deepcopy(fd); kept["sources"][k]["kept"] = True; dead = copy.deepcopy(fd); dead["sources"][k] = {"ok": False, "error": "HTTP 503", "items": []}
+        check(f"a kept or failed {k} writes no {k} key -- 'not read', never 'nothing listed' (the timeline's hole)", k not in snapshot(kept) and k not in snapshot(dead) and k in snapshot(fd))
+    # the hourly reads the history before any source is fetched, and stops rather than start it over
+    hist = {"runs": [row]}; calls, naps, said = [], [], []
+    def answers(*a):
+        it = iter(a)
+        def f(url): calls.append(url); return next(it)
+        return f
+    with tempfile.TemporaryDirectory() as td:
+        nowhere = os.path.join(td, "history.json")
+        rh = lambda p, *a: read_history(p, "https://x/", answers(*a), sleep=naps.append, now=lambda: 1)   # noqa: E731
+        r = rh(nowhere, (hist, None))
+        check("the deployed history is read from Pages, past the CDN's copy (?v=)", r == (hist, "pages") and calls == ["https://x/hunt/history.json?v=1"], f"{r[1]} {calls}")
+        calls.clear(); r = rh(nowhere, (None, 404))
+        check("Pages answering 404 is no history -- a new one starts, after one try", r == (None, "none") and len(calls) == 1, str(r))
+        calls.clear(); naps.clear(); r = rh(nowhere, *[(None, "TimeoutError: timed out")] * 3)
+        check("a history that cannot be read is tried three times, ten seconds apart, and said unread -- not started over", r[0] is None and r[1].startswith("unread: TimeoutError") and len(calls) == 3 and naps == [10, 10], str(r))
+        calls.clear(); r = rh(nowhere, (None, "HTTPError: HTTP Error 503: Service Unavailable"), (hist, None))
+        check("...a second try that reads it keeps it", r == (hist, "pages") and len(calls) == 2, str(r[1]))
+        r = rh(nowhere, ({"feed": 1}, None))
+        check("...a file that is not a history is unread, loudly -- a new shape is refused, not replaced", r[0] is None and r[1].startswith("unread: the deployed history is not a history"), str(r))
+        try:
+            history_first(nowhere, read=lambda p: rh(p, *[(None, "TimeoutError: timed out")] * 3), out=said.append); stopped = False
+        except SystemExit as e:
+            stopped = e.code == 3
+        check("an unread history stops the run with exit 3, loudly, before any source is fetched", stopped and said[:1] and said[0].startswith("::error::history: unread"), (said or ["nothing said"])[0][:90])
+        said.clear(); h = history_first(nowhere, read=lambda p: rh(p, (None, 404)), out=said.append)
+        check("...a 404 is no history: a new one starts, and the run says so", h is None and any("none on Pages (404)" in x for x in said), str(said))
+        # by behaviour, not by reading this file's source (landmine 100): the hourly itself, handed a history it cannot read
+        open(os.path.join(td, "history.json"), "w").write("not json")
+        dead_net = "http://127.0.0.1:9"                      # a regression that fetches fails fast and offline
+        env = dict(os.environ, HTTPS_PROXY=dead_net, https_proxy=dead_net, HTTP_PROXY=dead_net, http_proxy=dead_net, NO_PROXY="", no_proxy="")
+        try:
+            pr = subprocess.run([sys.executable, os.path.abspath(__file__), "--out", os.path.join(td, "feed.json")], env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=60)
+            rc, told = pr.returncode, pr.stdout.strip()
+        except subprocess.TimeoutExpired:
+            rc, told = None, "still running after 60 s"
+        wrote = [f for f in ("feed.json", "stores.json") if os.path.exists(os.path.join(td, f))]
+        check("the hourly, handed a history it cannot read, exits 3 and writes no feed and no roster -- nothing to deploy over the record",
+              rc == 3 and not wrote, f"exit {rc}, wrote {', '.join(wrote) or 'nothing'}; {(told.splitlines() or [''])[-1][:100]}")
+    # the output guard: the rows written are the rows loaded plus one, cut at KEEP_RUNS
+    live = json.load(open(os.path.join(fx, "hunt_history_2026-09-24.json")))["runs"]   # the real history on Pages, 24 Sept
+    cap = [{"t": str(i), "online": {}, "shelf": {}} for i in range(KEEP_RUNS)]
+    check("the output guard passes a good append, and a full history cut at KEEP_RUNS",
+          keeps_past(live, append_history({"runs": list(live)}, fd)) == [] and keeps_past(cap, append_history({"runs": list(cap)}, fd)) == [],
+          str(keeps_past(live, append_history({"runs": list(live)}, fd)) + keeps_past(cap, append_history({"runs": list(cap)}, fd))))
+    reset = keeps_past(live, append_history(None, fd))
+    check(f"...and refuses take 113's reset ({len(live)} rows loaded, 1 written)", reset != [], str(reset))
+    gap = keeps_past(live, append_history({"runs": live[:3] + live[4:]}, fd)); gap_cap = keeps_past(cap, append_history({"runs": cap[:100] + cap[101:]}, fd))
+    check("...and a dropped middle row -- below the cap, and at the cap, where the count alone would pass", gap != [] and gap_cap != [], str(gap + gap_cap))
+    # the nightly's carry-over: three tries a file; a history.json only if it is a history
+    with tempfile.TemporaryDirectory() as td:
+        served = {"feed.json": [(fd, None)], "history.json": [({"feed": 1}, None)], "stores.json": [(None, "TimeoutError: timed out")] * 3,
+                  "events.json": [(None, 404)], "shops.json": [({"shops": []}, None)]}
+        asked, naps, said = [], [], []
+        def site(url):
+            asked.append(url); return served[url.split("/hunt/")[1].split("?")[0]].pop(0)
+        carry_over(td, base="https://x/", fetch=site, sleep=naps.append, now=lambda: 1, out=said.append)
+        named = lambda f: [u for u in asked if "/hunt/" + f + "?" in u]   # noqa: E731
+        check("the nightly's carry-over drops a history.json that parses but is not a history, and says why -- carried, every hourly would refuse it",
+              not os.path.exists(os.path.join(td, "history.json")) and any(x.startswith("   hunt carry-over: history.json NOT carried (not a history: no runs list) -- this deploy leaves Pages without it") for x in said),
+              next((x.strip() for x in said if "history.json" in x), "said nothing of history.json"))
+        check("...a feed.json is carried, read past the CDN's copy (?v=)", os.path.exists(os.path.join(td, "feed.json")) and named("feed.json") == ["https://x/hunt/feed.json?v=1"], str(named("feed.json")))
+        check("...a file that times out is tried three times, ten seconds apart, and not carried", len(named("stores.json")) == 3 and naps == [10, 10] and not os.path.exists(os.path.join(td, "stores.json")), f"{len(named('stores.json'))} tries, naps {naps}")
+        check("...a 404 is tried once, and said", len(named("events.json")) == 1 and any("events.json NOT carried (404)" in x for x in said), str(len(named("events.json"))))
+    # the due day: GTS keeps it open as Southern Hobby does (take 113's GTS closed it a day early)
+    gh = open(os.path.join(fx, "gts_listing.html"), encoding="utf8").read()
+    peb = lambda day: next(i["status"] for i in gts.parse_listing(gh, day)["items"] if i["sku"] == "BJP2897699")   # noqa: E731
+    sh = {"due": "2026-10-14", "release": "2027-04-23"}                                                             # PEB-01 at Southern Hobby
+    days = [peb("2026-10-14"), southern.state_of(sh, "2026-10-14"), peb("2026-10-15"), southern.state_of(sh, "2026-10-15")]
+    check("the two distributors agree on the due day: on PEB-01's order due date both still take orders, the day after neither does",
+          days == ["coming", "orders_open", "preorder", "orders_closed"], str(days))
+    check("control: take 113's path on a failed read -- append_history(None, ...) -- is one row: the whole record replaced by the next deploy", len(append_history(None, fd)["runs"]) == 1)
     # controls: a changed shape is a failure, not a quiet empty
     for name, fn, bad in (("stores", target.parse_stores, {"data": {}}), ("search", target.parse_search, {"data": {"search": {}}}), ("fulfillment", target.parse_fulfillment, {"data": {"product": {}}})):
         try:
@@ -370,21 +528,36 @@ def roster_step(stores_path, from_fixtures=False, fetch=None, load=None, out=pri
     return result
 
 
-def carry_over(out_dir):
+def carry_over(out_dir, base=None, fetch=None, sleep=time.sleep, now=time.time, out=print):
     """Take 82. Two workflows deploy the same Pages site: the hourly feed and
     the nightly build. The nightly rebuilds www/ from the tree, which has no
     feed, so its deploy WIPED the hourly's files until the next :17 -- the
     owner's 404. Before the nightly uploads, it copies whatever is live on
-    Pages into www/hunt/. No retailer is touched; this reads our own site."""
-    base = pages_base()
+    Pages into www/hunt/. No retailer is touched; this reads our own site.
+    Take 114: three tries a file, 10 s apart, past the CDN's copy (?v=); a
+    history.json is carried only if it is a history -- one the hourly refuses,
+    carried every night, would stop every hourly; dropped, Pages answers 404
+    and the next hourly starts a new history and says so. What is not carried
+    says why."""
+    base = pages_base() if base is None else base
     if not base:
-        print("   hunt carry-over: no UPDATE_URL, nothing to carry"); return 0
+        out("   hunt carry-over: no UPDATE_URL, nothing to carry"); return 0
+    fetch = fetch or fetch_json_why
     os.makedirs(out_dir, exist_ok=True); n = 0
     for name in HUNT_FILES:
-        j = fetch_json(base + "hunt/" + name)
+        for k in range(3):                                   # take 114: a missed history.json here is the next hourly's reset
+            j, why = fetch(base + "hunt/" + name + "?v=" + str(int(now())))
+            if j is not None or why == 404:
+                break
+            if k < 2:
+                sleep(10)
+        if name == "history.json" and j is not None and not is_history(j):
+            j, why = None, "not a history: no runs list"
         if j is not None:
             json.dump(j, open(os.path.join(out_dir, name), "w"), separators=(",", ":")); n += 1
-    print(f"   hunt carry-over: {n} of {len(HUNT_FILES)} files carried from Pages" + ("" if n else " -- none live yet (has the hourly workflow run?)"))
+        else:
+            out(f"   hunt carry-over: {name} NOT carried ({why})" + (" -- this deploy leaves Pages without it; the next hourly starts a new history" if name == "history.json" and why != 404 else ""))
+    out(f"   hunt carry-over: {n} of {len(HUNT_FILES)} files carried from Pages" + ("" if n else " -- none live yet (has the hourly workflow run?)"))
     return n
 
 
@@ -399,6 +572,8 @@ if __name__ == "__main__":
         print("hunt.py parsers against saved real responses:"); raise SystemExit(0 if selftest() else 1)
     if "feed" not in os.path.basename(a.out):   # take 112: the sidecars below are named by replacing "feed", so any other name wrote the history over the feed
         ap.error(f"--out must name a feed file such as feed.json or feed-fixture.json, not {os.path.basename(a.out)}: its stores, shops, events and history are named from it")
+    hist_path = os.path.join(os.path.dirname(a.out), os.path.basename(a.out).replace("feed", "history"))   # feed.json -> history.json; a fixture feed keeps its fixture suffix
+    prev_hist = history_first(hist_path, a.from_fixtures)   # take 114: before any source is fetched -- unreadable, the run stops here
     prev = None if a.from_fixtures else load_previous(a.out, "feed.json")
     if prev:
         print(f"   previous feed: {prev.get('fetched_at')} (cursor {prev.get('sources', {}).get('target', {}).get('cursor')})")
@@ -426,10 +601,15 @@ if __name__ == "__main__":
     json.dump(shop_out, open(shops_path, "w"), separators=(",", ":"))
     for sh in shop_out["shops"]:
         print(f"   shop {sh['name']}: " + (f"{len(sh['sealed'])} sealed ({sum(1 for i in sh['sealed'] if i['available'])} in stock, {sum(1 for i in sh['sealed'] if i.get('catalog_id'))} matched), {sh['singles']} singles, {sh['pages']} pages" if sh["ok"] else f"FAILED {sh['error']}"))
-    hist_path = os.path.join(os.path.dirname(a.out), os.path.basename(a.out).replace("feed", "history"))   # feed.json -> history.json; a fixture feed keeps its fixture suffix
-    hist = append_history(None if a.from_fixtures else load_previous(hist_path, "history.json"), feed)
+    before = list(prev_hist["runs"]) if is_history(prev_hist) else []
+    hist = append_history(prev_hist, feed)
+    lost = keeps_past(before, hist)
+    if lost:                                                 # take 114: the output guard, before the history is written
+        print(f"::error::history: this run's history would lose its past ({'; '.join(lost)}); nothing is deployed (landmine 66)")
+        raise SystemExit(3)
     json.dump(hist, open(hist_path, "w"), separators=(",", ":"))
-    print(f"   history: {len(hist['runs'])} run(s) on file since {hist.get('since')}, {os.path.getsize(hist_path) // 1024} KB")
+    print(f"   history: {len(hist['runs'])} run(s) on file since {hist.get('since')}, "
+          + ", ".join(f"{k} in {sum(1 for r in hist['runs'] if k in r)}" for k in ("gts", "southern")) + f", {os.path.getsize(hist_path) // 1024} KB")
     t = feed["sources"]["target"]
     if t.get("kept"):
         print(f"   target: this fetch FAILED ({t.get('error')}); kept the last good fetch from {t.get('fetched_at')} (stale since {t.get('stale_since')})")
@@ -449,7 +629,7 @@ if __name__ == "__main__":
     elif g.get("ok"):
         n = g["items"]; st = lambda s: sum(1 for i in n if i["status"] == s)   # noqa: E731
         print(f"   gts: {len(n)} of {g.get('count')} products ({sum(1 for i in n if i.get('catalog_id'))} matched), {st('sold_out')} sold out, {sum(1 for i in n if i['allocated'])} allocated, "
-              f"{st('preorder')} preorders open, {st('coming')} coming, {st('in_stock')} in stock, {st('call')} call; {g.get('calls')} call(s)")
+              f"{st('coming')} with an order due date ahead, {st('preorder')} unreleased without one, {st('in_stock')} in stock, {st('call')} call; {g.get('calls')} call(s)")
     else:
         print(f"   gts: FAILED {g.get('error')}")
     so = feed["sources"]["southern"]
