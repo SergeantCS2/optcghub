@@ -50,9 +50,18 @@ owner's call, take by take.
    they wait for the sideload build.
 2. **Take 113 -- the owner's icon (D7), and more, from the graphic design
    session** (the owner: "we'll be pulling in a new icon and more"). It is
-   on the design branch `…/compassionate-mayer-acc24r`, commit `93481b3`, with
-   its hand-off in `design/d7-icons/SHIP.md`: vet it, fold it in, and write
-   its drafts (their landmine "165" becomes 170).
+   on the design branch `…/compassionate-mayer-acc24r`, commit `93481b3`,
+   with its hand-off in `design/d7-icons/SHIP.md`.
+   - **The owner's ruling:** the icon carries Bandai's printed card-back
+     emblem, live on Play. It is recorded as the owner's reversal of
+     landmines 30 and 31 and A16, for the icon's emblem only. The own-rose
+     swap in SHIP.md is the fallback.
+   - **Merge the branch:** the fallback's SVGs came with an earlier commit.
+   - **Vet before the merge:** the gate, smoke and
+     `python3 ci/icon.py --selftest`.
+   - **After the Release:** decode the APK's icon files (landmine 78); the
+     owner checks the Fold.
+   - Its draft landmine "165" becomes 170.
 3. **A41** -- waits on the owner's list of the parts and the source; then
    one take per source, measured on the runner first.
 4. **A23** the sim's tail -- modal effects, ordering, protection, the

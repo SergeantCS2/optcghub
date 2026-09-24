@@ -137,7 +137,14 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
     what was verified, what only the runner and the Fold can show, the
     reversal of landmines 30 and 31 and A16 at the owner's word, and draft
     ledger text.
-  - Vet it and fold it in. Its draft landmine "165" becomes 170.
+  - **The owner's ruling:** the emblem is recorded as the owner's reversal
+    of landmines 30 and 31 and A16, for the icon's emblem only; the
+    own-rose swap in SHIP.md is the fallback.
+  - **How:** merge the branch rather than cherry-pick (the fallback's SVGs
+    came with an earlier commit). Vet it with the gate, smoke and
+    `python3 ci/icon.py --selftest`. After the Release, decode the APK's
+    icon files (landmine 78); the owner checks the Fold.
+  - Its draft landmine "165" becomes 170.
 
 - **The Priorities block at the top of `AGENDA.md`** is the live order: the
   owner's items (the diagnostics paste, D20–D22, shop URLs, D7, D16, the

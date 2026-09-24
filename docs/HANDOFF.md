@@ -216,17 +216,32 @@ closed drop-down for the long text.
   pages is unknown until it does.
 - **Take 113 -- the owner's icon, and more, from the graphic design session.**
   The owner: "we'll be pulling in a new icon and more".
-  - **Where:** the design branch `…/compassionate-mayer-acc24r` (its platform prefix
-    is a vendor's name, so the record leaves it off), commit `93481b3`
-    ("d7: the owner's icon ships from assets/, ready for take 113 to vet and
-    fold in"). Its hand-off is `design/d7-icons/SHIP.md`.
-  - **What it holds:** the pick that is live on Play, as five SVG layers.
-    `ci/icon.py` renders them, and its selftest joins the gate. The reminders
-    ask for a drawable the plugin can find.
-  - **The reversal:** it reverses landmines 30 and 31 and A16 for the icon's
-    printed emblem, at the owner's word; the rose version is the ready swap.
-  - **The hand-off also carries:** what was verified, what only the runner
-    and the Fold can show, and draft ledger text.
+  - **The owner's ruling, verbatim:** "I chose the icon with Bandai's printed
+    card-back emblem and it's live on Play. Record it as my reversal of
+    landmines 30 and 31 and A16 for the icon's emblem only. The own-rose swap
+    in SHIP.md is the fallback."
+  - **Where:** the design branch `…/compassionate-mayer-acc24r`. Its platform
+    prefix is a vendor's name, so the record leaves it off. The icon is one
+    commit on top of take 111, `93481b3` ("d7: the owner's icon ships from
+    assets/, ready for take 113 to vet and fold in"). Read
+    `design/d7-icons/SHIP.md` first: what changes, what was verified and
+    what was not, and draft ledger text.
+  - **Merge the branch, not a cherry-pick of `93481b3`:**
+    - the fallback's `design/d7-icons/v4/svg/own-purple*.svg` came with
+      `81ea976`, an earlier commit;
+    - `93481b3` edits two `design/` READMEs that only the earlier commits
+      add;
+    - outside `design/`, the branch changes the same 12 files as `93481b3`;
+    - `design/` is 45 files and 0.5 MB, and none of it ships (the Play
+      listing's and the business card's sources come with it).
+  - **What it holds:** the pick as five SVG layers. `ci/icon.py` renders
+    them, and its selftest joins the gate. The reminders ask for a drawable
+    the plugin can find.
+  - **Vetting before the merge:** the gate, smoke and
+    `python3 ci/icon.py --selftest`.
+  - **After the Release builds:** decode the APK's icon files (landmine 78),
+    not their names. The owner checks the launcher, themed icons, the
+    splash and a reminder's status-bar icon on the Fold.
   - **Its draft landmine is "165":** take 112 used 165 to 169, so it becomes
     170.
   - **Expected conflicts:** `ci/apk.sh`'s icon step, two `smallIcon` lines
