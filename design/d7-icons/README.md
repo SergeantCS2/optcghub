@@ -72,6 +72,23 @@ What the risk judges took out, and why:
 **Only our own card back lives here.** The owner also saw a private redraw of the printed emblem for
 comparison. It is not in this repository and is not for shipping (take 63; landmines 26, 30).
 
+## v4: the Great Wave (`v4/`)
+
+The owner picked the ink outline and asked for three changes:
+- the card's border purple
+- the accent green, not red; purple and green are two of the game's six colours
+- a sea that is "more anime-esque or Tokugawa wave-esque", because the old one looked cheap
+
+A second panel produced the wave (three designs, two judges each). The ukiyo-e design won with a
+style score of 6.5/10. `v4/wave.py` carries the judges' fixes, listed in its docstring.
+
+`v4/compose.py` writes `v4/svg/own-purple`: our own rose on the purple-bordered card, riding the
+wave. Measured: the mark reaches 31.3 dp and the monochrome 32.2 dp of the 33 dp safe zone.
+
+**The owner's pick for the emblem is the printed back's emblem.** That version stays out of this
+public repository until the owner says to ship it, which reverses take 63. `own-purple` is the same
+design with our rose.
+
 ## If this is chosen, the take that ships it
 
 - **Render real adaptive layers.** `ci/apk.sh` (the launcher-icon step) should render `-bg` and `-fg`

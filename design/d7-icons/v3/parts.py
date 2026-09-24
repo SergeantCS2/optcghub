@@ -199,7 +199,10 @@ PAPER_WHITE, CHART_GREY = "#FFFFFF", "#D8D2C6"
 COLOURWAYS = {
     "ink": dict(edge=INK, emblem=INK, keyline=None, offset=(9, 11), offset_colour=SFX_RED),
     "red": dict(edge=SFX_RED, emblem=SFX_RED, keyline=INK, offset=None, offset_colour=None),
+    # the owner, v4: the ink way's card, its border purple and its accent green (two of the game's six colours)
+    "purple": dict(edge="#8552b8", emblem="#8552b8", keyline=None, offset=(9, 11), offset_colour="#2e9e5b"),
 }
+GAME_PURPLE, GAME_GREEN = "#8552b8", "#2e9e5b"
 
 def back_white(cx, cy, w, h, rot=0, way="ink", rx=None, border=None, emblem_y=0.40, emblem_r=0.36,
                field=PAPER_WHITE, lines=None, inner_ring=False, uid="w"):
