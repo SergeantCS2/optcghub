@@ -223,7 +223,7 @@ if "abiFilters" not in s:
                s, count=1)
     open(A, "w").write(s)
 assert "abiFilters" in open(A).read(), "abiFilters did not land (APEX landmine 99)"
-print("  sideload APK limited to arm64-v8a + armeabi-v7a")
+print("  APK and AAB limited to arm64-v8a + armeabi-v7a (the filter sits in defaultConfig)")
 PYABI
 echo "::endgroup::"
 
@@ -297,15 +297,19 @@ if [ -n "${PLAY_UPLOAD_KEYSTORE_B64:-}" ]; then
   # APEX landmine 211's companion: read the signer back off the artifact Play
   # actually receives. A file named for the upload key that is dev-signed is a
   # burned versionCode (landmine 33).
-  SIGNER=$(unzip -p "$AAB" META-INF/*.RSA 2>/dev/null | keytool -printcert 2>/dev/null | grep -m1 'Owner:' || echo "unreadable")
+  # ci/signer.sh (take 102): the readback and its classification live there with
+  # the controls the gate runs. Only the upload key passes -- the old guard refused
+  # the sideload key and (take 101) an unreadable signer, and let a third key
+  # through. The certificate's SHA-256 is printed so a later take can pin it.
+  . ci/signer.sh
+  SIGNER=$(read_signer "$AAB")
   echo "  AAB signer: $SIGNER"
-  case "$SIGNER" in
-    *"OP TCG Hub, OU=sideload"*)
-      echo "::error::AAB is signed with the SIDELOAD key, not the upload key"; exit 1;;
-    unreadable)
-      # take 101: a signer that cannot be read is not a pass -- a bundle with no
-      # signature block, or a keytool that failed, would have shipped as "fine"
-      echo "::error::AAB signer could not be read off the bundle (no META-INF/*.RSA, or keytool failed)"; exit 1;;
+  echo "  AAB signer $(signer_sha256 "$AAB")"
+  case "$(classify_signer "$SIGNER")" in
+    upload) ;;
+    sideload)   echo "::error::AAB is signed with the SIDELOAD key, not the upload key"; exit 1;;
+    unreadable) echo "::error::AAB signer could not be read off the bundle (no signature block, or keytool failed)"; exit 1;;
+    *)          echo "::error::AAB is signed with a key that is NOT the Play upload key ($SIGNER) — the secrets hold the wrong keystore; Play would refuse it and burn versionCode $TAKE (landmine 33)"; exit 1;;
   esac
 else
   # No secrets set: still build, but NAME it unfit so nobody uploads a
@@ -323,7 +327,7 @@ ls -lh "$APK" "$AAB"
 # Take 101: the breakdown by component, raw (installed) and packed (downloaded),
 # for both artifacts -- the owner read 56 MB on the phone for a 34.9 MB file and
 # the answer is this table. A size take is measured against it, never guessed.
-python3 tools/shipped.py "$APK" "$AAB"
+python3 tools/shipped.py "$APK" "$AAB" || echo "::warning::the size table failed — a report, never a reason to hold a release"
 unzip -l "$APK" | grep -c 'assets/public' || true
 # The catalogue must actually be inside the APK. An app that ships without it
 # shows an empty binder and the only thing that catches that is a count.

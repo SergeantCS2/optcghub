@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 101.*
+*Current as of take 102.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -149,6 +149,7 @@ Start here. Do not read top to bottom.
 | An element set `hidden` still draws | **136** |
 | Back from a card's sheet lands on Home (the blank page after Back) | **137** |
 | An unanchored `.gitignore` pattern swallows a same-named directory anywhere | **138** |
+| Every negative control "fires", including one whose check does not exist | **139** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -1975,6 +1976,22 @@ it showed. Rule: a pattern for a root directory starts with `/`; after
 `git add`, `git status --short` shows nothing untracked among the named
 paths, and the push's output names a new commit or the take is not
 pushed. Smoke asserts `git check-ignore` refuses the step list.
+
+**139. A probe that fires on any failure in a copied tree fires on the
+copy's own defects, and every "guard fires" it prints is then a lie.** The
+gate's self-test (take 35) copied `docs/`, `tools/`, `www/` and `ci/` into
+a temp directory, mutated one file and called the copy proven when
+`FAILS` was non-empty — but `check_secrets` ran in that copy too and
+found neither the keystore nor the star template, so every copy failed
+before the mutation was read. Eleven probes printed "guard fires" for
+sixty-seven takes on that alone. Two were dead underneath: the stale-stamp
+probe replaced the literal `take 2.*`, which no stamp has carried since
+take 2, and the take-102 heading probe "fired" before its check was
+written. Landmine 54's rule applied to the controls themselves. Rule: the
+first probe is the unmutated copy, which must fire nothing; every other
+probe names the failure category it expects and is refused if the copy
+fails outside it; the tree copied for a probe carries everything the
+probed checks read.
 
 ## §2 — Inherited from APEX ORV
 

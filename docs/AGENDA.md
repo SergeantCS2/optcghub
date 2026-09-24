@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 101.* Ranked by blocking-ness, not by interest.
+*Current as of take 102.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -13,25 +13,30 @@ The live order, top first. Everything below this block is the record of how
 each item got where it is; this block is what to do next.
 
 **The owner's, gating everything else**
-1. **Takes 90–98 are merged; Release take-98 is up** (09:13 UTC). Still
-   yours: install 98 and answer its report's four questions (the steps;
-   the `viewport` line from the open Fold; the two picture URLs; the
-   guide's row); merge each take's PR once its check is green **and you
-   have seen the look's screenshots** (A40); domain access stays open
-   through the source takes — and a *new* session is what receives it
-   (this one is refused every host but GitHub, MEASURED take 99).
-2. **D22** background stock checks; **D21** local stock for unserved zips;
+1. **Production is approved (24 Sept).** Create the production release
+   from `optcghub-take-101.aab` (RUNBOOK-play §8b); send the two real
+   AdMob rewarded unit IDs (D11) and the next take carries them (test
+   units earn nothing; serving them live is allowed, not useful). Every
+   later take: one upload to the production track, once (landmine 33);
+   export before your own phone switches from the sideload build to Play
+   (landmine 34).
+2. **Answers still open:** the six take-98 steps and the two Diagnostics
+   lines (`viewport` with the Fold open, `pictures`) from whichever build
+   you run; the look's "tiny bit of work" (which picture, what); A41's
+   parts and the source.
+3. **D22** background stock checks; **D21** local stock for unserved zips;
    **D20** a crowd-report inbox. Each caps a Hunt feature until answered.
 4. Shop URLs for stores he knows (A32's storefront list, one entry today).
-5. D7 the icon; D16 the faces. *(The `.aab` filename before production:
-   closed take 101 — the Release's bundle is `optcghub-take-N.aab`, upload-key
-   signed, PROVEN from the build log.)* **Take 100 to Play:** read the
-   upload key certificate's SHA-1 in Play Console → App signing (RUNBOOK-play
-   §2, "The reset" — optional, his word) and upload `optcghub-take-100.aab`;
-   export before ever installing from Play (landmine 34).
+5. D7 the icon; D16 the faces. Domain access: a *new* session is what
+   receives it (this one is refused every host but GitHub and the package
+   registries, MEASURED again after the restart at take 102).
 
 **Mine, in order**
-1. **A41** — waits on the owner's list of the parts and the source;
+1. **Take 102 — harden, clean up, tie up** (the take-101 review's
+   thirteen findings; the record to production; a CLAUDE.md). Then
+   **take 103 — optimize:** R8 and the non-Latin OCR models, proven on
+   the Fold; the upload key's fingerprint pinned from the printed line.
+2. **A41** — waits on the owner's list of the parts and the source;
    then one take per source, measured on the runner first.
 2. **A39 item 3 (take 100, measured and closed by the owner's check),
    A40 (take 99), A39 (take 98), A38 (takes 95–97)** — done; the look
@@ -515,10 +520,11 @@ size (the file is 34.9 MB; Play serves splits from the 23 MB bundle). The
 sizes were then measured from the release files (the table in the take-101
 HANDOFF entry): dex 23 MB raw, the OCR engine 11.1 + 6.8 MB, the OCR
 language models 5.5 MB raw, the app and catalogue 8.6 MB raw. **He picked
-R8 and the non-Latin OCR models for take 102** (A14). The upload-key
-question he set aside — "not an issue" — so the fingerprint check in
-RUNBOOK-play §2 is optional reference. Landmine 34 applies to his own
-phone: export before installing from Play.
+R8 and the non-Latin OCR models — take 103** (A14). The upload-key
+question closed itself: **he uploaded take 101 and Play accepted it, and
+the app is approved for production (take 102).** The reset steps in
+RUNBOOK-play §2 stay as reference. Landmine 34 applies to his own phone:
+export before installing from Play.
 
 The owner wants the closed-testing clock started in a few days. The gate is
 **12 testers opted in for 14 continuous days** (landmine 35). Everything below
@@ -528,7 +534,7 @@ is what stands between the seed and that clock, in order, with who does it.
 |---|---|---|---|
 | 1 | **D14 — one game or many, and therefore the package name** | The owner | DONE take 24; `com.optcghub.app` registered with Play at the take-35 upload, permanent |
 | 2 | Stand up the repo: RUNBOOK §1–4 | The owner | **DONE** — read off the repo at take 34: public, run #3 green end to end (seed 6 s, bundle 42 s, apk 4 m 36 s, pages 14 s), Release **take-31**, Pages live. PROVEN |
-| 3 | First CI build produces the AAB | CI | **DONE** — the four secrets are set; every build's `apk` job prints `AAB signer: Owner: CN=OP TCG Hub upload, OU=play` and names the file `optcghub-take-N.aab` (PROVEN from run 48's log, take 101). Still UNKNOWN: which bundle registered the upload key at the take-35 upload — the owner's fingerprint check settles it (RUNBOOK-play §2) |
+| 3 | First CI build produces the AAB | CI | **DONE** — the four secrets are set; every build's `apk` job prints `AAB signer: Owner: CN=OP TCG Hub upload, OU=play` and names the file `optcghub-take-N.aab` (PROVEN from run 48's log, take 101). **The registered upload key is that key — PROVEN take 102:** Play accepted the upload-key-signed take 101 |
 | 4 | Play Console: create the app, Play App Signing, the four secrets | The owner | **DONE** — personal account; app created; version code 35 accepted into internal testing (two optional warnings). **UNKNOWN: whether the upload-key bundle or the DEVKEY one was the first upload** — RUNBOOK-play §2 says how to reset if the latter |
 | 5 | Listing: title, short and full description opening with the disclaimer, screenshots, icon 512, feature graphic 1024×500 | The owner | copy pasted (take 36); screenshots from the Fold with the take-37 showcase files; the console shows the jolly roger icon — swap to `play-assets-t33/icon-512.png` or say so (D7) |
 | 6 | Privacy policy live on Pages, naming AdMob | take 30 | Pages deployed at `https://sergeantcs2.github.io/optcghub/` (run #3); the policy is `/privacy.html` there |

@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 100
+# V1-STATE — what exists, as of take 102
 
-*Current as of take 101.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 102.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -40,9 +40,13 @@ refresh from Pages (take 27).
 - **Play:** the app exists in the console as `com.optcghub.app` on a personal
   account; version code 35 accepted into internal testing; advertising-ID
   declaration and Data Safety done to landmine 94; listing copy in; closed
-  track created; app-ads.txt served from the root user site (take 40); **the
-  closed-testing release APPROVED by Play review (take 52, the owner's
-  report).** The 14-day clock starts when the twelfth tester is opted in.
+  track created; app-ads.txt served from the root user site (take 40); the
+  closed-testing release approved by Play review (take 52); **take 101
+  uploaded to the closed track and the app APPROVED FOR PRODUCTION (the
+  owner, 24 Sept, take 102)** — the production release from take 101's
+  bundle is his next step; the real AdMob rewarded unit IDs (D11) ride the
+  take after he sends them. The accepted upload proves the registered
+  upload key is the one the secrets hold.
 - **16 KB page size:** every arm64 native library in the APK loads at 0x4000
   alignment and is stored 16 KB-aligned in the zip (MEASURED take 34 on the
   take-32 APK). Play accepts it.
@@ -67,7 +71,7 @@ refresh from Pages (take 27).
 | Packaging | signed APK (committed sideload key), AAB branch for Play (needs 4 secrets), icon + splash from SVG, play-assets, CAMERA + POST_NOTIFICATIONS + AD_ID in the manifest | built every take since 9; signer verified by aapt2/apksigner |
 | CI | build.yml on `main` only (seed → bundle → pages + apk), nightly 21:30 UTC with sidecar commit-back and one labelled failure thread; **check.yml runs the whole pipeline on every PR with a read-only token (take 89)**; hunt.yml hourly; bootstrap.yml as recovery. Since take 89 the workflows live in git, byte-identical to their `ci/` copies, and a take is a PR the owner squash-merges | **ran green on a runner at take 32; APK installed by the owner.** Four red nights 09-18..21 read at take 89: the Events fixture's clock and the hashes guard's treatment of unpublished images (landmines 123, 124); both fixed with controls |
 | Self-test | More → Self-test: 17 on-device checks (catalogue, gate, search, fonts, storage, Filesystem, share, camera, ML Kit on a drawn code, notifications, ads, sim, sync), shareable report | smoke 9; **run on the Fold at take 91: 16 pass, and the one FAIL was the check's own (`m.num`, landmine 131) — fixed take 92** |
-| Scrubber | comments stripped from the shipped app on every build; the gate refuses a first name, an AI-vendor name, the conversational word, a credential, a container path or a leftover to-do marker anywhere public | scrub.py --selftest 6 controls; smoke 5 (take 35) |
+| Scrubber | comments stripped from the shipped app on every build; the gate refuses a first name, an AI-vendor name, the conversational word, a credential, a container path or a leftover to-do marker anywhere public | scrub.py --selftest 9 controls (take 102: the two literal file names pass as whole tokens, the vendor word beside them still fires); smoke 5 (take 35) |
 | Typography | four roles (display / comic / body / heavy), OFL/Apache faces bundled, 232 KB, licensed faces as a file drop in `assets/user/fonts/` | render.mjs: Chrome reports all four LOADED and h2 resolves to the display face, with a missing-file control; smoke 7 |
 | Sync | quiet once-per-open sync holds on cellular unless switched on; Sync now always runs; `UPDATE_URL` points at Pages | smoke 4 controls; **not yet seen on the Fold** |
 
@@ -96,6 +100,18 @@ second host serves 1 of the 242 missing ids and answers 404 for 241 —
 the pattern is real and the missing pictures are not there either. The
 owner's image address from TCGplayer's own page is the next measurement;
 the phone's picture is the proof.
+
+**Harness totals, take 102:** smoke.mjs 691 assertions (unchanged: no app
+change); gate 12 probes, each with a named failure category and the first
+an unmutated copy that must fire nothing (landmine 139: the eleven before
+it had fired on the copy's own missing keystore since take 35, and two
+were dead underneath), +1 check (V1-STATE's heading against BUILD);
+signer.sh 7 controls (a bundle signed with the committed sideload keystore
+classifies `sideload`, a third key `other`); shipped.py +1 control (a
+`lib/` segment inside the app's assets is the app's); scrub.py +3 (the two
+literal file names pass, the vendor word beside them still fires);
+render.mjs 105 of 106 on the session VM (the Leader thumbnail needs the
+CDN this VM is refused), 106 expected on the runner.
 
 **Harness totals, take 100:** smoke.mjs 691 assertions (6 new: both hosts
 in their shape with a third refused, the sidecar's `alt` ids ship the

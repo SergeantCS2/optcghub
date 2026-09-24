@@ -1,6 +1,132 @@
-# HANDOFF — through Take 101
+# HANDOFF — through Take 102
 
-## Take 101 — 2026-09-23 — the Play upload of take 100: the bundle's signing verified from the build's own log, the record corrected, one guard
+## Take 102 — 2026-09-24 — harden, clean up, tie up: the take-101 review's thirteen findings, the record moved to production, a CLAUDE.md
+
+Opened before any code (PROTOCOL §6). Take 101 merged 17:39 UTC on the
+23rd; Release take-101 landed 17:46. **The owner uploaded take 101 to the
+closed track and Play approved the app for production** ("any day now
+we'll be live"); he asked to harden, clean up and optimize what exists
+and tie up the open items, ran `/code-review` on take 101 (two passes,
+thirteen distinct findings, every one real and small), and asked for a
+CLAUDE.md built through the `claude-md-improver` skill from AGENTS.md
+and the project's history. His two answers to the plan: the production
+release is created now from take 101's bundle, the real AdMob rewarded
+unit IDs (D11) ride the take after he sends them; the CLAUDE.md imports
+AGENTS.md and adds only the session notes.
+
+### Measured first
+
+- **The accepted upload of take 101 closes the oldest Play unknown:** Play
+  took an upload-key-signed bundle (the build log's `AAB signer: CN=OP
+  TCG Hub upload`), so the sideload key was never the registered upload
+  key. A21 rows 3–4, the take-101 entry's "risk on paper" and the
+  optional fingerprint check are closed PROVEN.
+- **After the container restart (read-only probes):** `registry.npmjs.org`
+  and `pypi.org` answer 200 (they are on the proxy's direct list), so
+  `ci/deps.sh` can install puppeteer, acorn and pillow here — the Chrome
+  render and the gate's receipt reachable in the session for the first
+  time since take 89. Every other host is still refused (TCGplayer and
+  its two image hosts, TCGCSV, Southern Hobby, GTS): the hash step's
+  canary would refuse a full local pipeline, so the local run is
+  `app smoke render` and the gate; A32 still needs a new session.
+- Issue #12 (the 22 Sept scheduled nightly, red on the image guard: 20 of
+  77 new images failed) was closed by the owner 00:46 on the 23rd; every
+  main build since is green.
+- **The review's findings, consolidated:** (1) the AAB signer guard was
+  negative-only — any third key passed; (2) RUNBOOK-play §2's reset
+  conflated a lost key folder with a wrongly registered key, and its
+  keytool line was a placeholder; (3) the "unreadable" arm's control was
+  run by hand, not kept in the tree; (4) three docs commits landed after
+  the merge with no rule saying where such notes go; (5) the AGENDA still
+  told the owner to upload take 100 and carried the UNKNOWN the upload
+  answered; (6) `shipped.py`'s native pattern was unanchored; (7) its
+  "download" was the entry sum, not the file, and "installed" was printed
+  for a bundle; (8) the size table could fail a release; (9) the readback
+  read `*.RSA` only; (10) V1-STATE's H1 said take 100 under a take-101
+  stamp, the take-101 title said one guard, RELEASE overstated, and
+  apk.sh printed "sideload APK limited" under a corrected comment; (11)
+  an open ZipFile and a leaked temp dir; (12) the gate dropped a
+  selftest's stderr; (13) zero arguments to shipped.py passed silently.
+- **A fourteenth, found while doing the twelfth — mine, and the largest
+  (landmine 139):** the gate's own negative controls had proved nothing
+  since take 35. The probe copied `docs/`, `tools/`, `www/` and `ci/`
+  into a temp tree and called a guard proven when any failure appeared;
+  `check_secrets` ran in that copy too, found neither the keystore nor the
+  star template, and every copy failed before the mutation was read.
+  Found because the new heading probe "fired" before its check existed;
+  my first explanation (the copied docs were stamped a take behind) was
+  wrong and only partial — after the stamp, the probe still fired, and
+  listing every failure in the copy showed why. Two probes were dead
+  underneath it: the stale-stamp probe replaced the literal `take 2.*`,
+  which no stamp has carried since take 2. Landmine 54 applied to the
+  controls themselves; the fix is the control of the controls.
+- **Ruled out:** pinning the upload key's fingerprint blind (printed
+  first this take, pinned next); a CLAUDE.md that copies AGENTS.md
+  (landmine 88's stale copy); a size change here (103's, on the Fold);
+  A32 from this session.
+
+### Built
+
+- `ci/signer.sh` (new): the bundle readback and its classification as
+  functions — `read_signer` over `*.RSA`, `*.DSA` and `*.EC` with the
+  certificate's SHA-256, `classify_signer` → `upload` only for the DN
+  `tools/play-key.sh` writes, else `sideload`, `unreadable` or `other` —
+  and `--selftest` with the controls the gate now runs: no signature
+  block → unreadable; a zip signed with the committed sideload keystore
+  → sideload; the upload DN → upload; a debug DN → other.
+- `ci/apk.sh`: sources it; anything but `upload` fails the build and the
+  fingerprint is printed for the record; the size table is a report
+  (`::warning` on failure, never a red release); the print line says
+  "APK and AAB".
+- `tools/shipped.py`: the native pattern anchored (with a control), the
+  file size as the download, "entries packed" for the sum, the raw label
+  by extension, closed handles and a cleaned temp dir, `.get` in the
+  checks, usage on zero arguments.
+- `tools/gate.py`: selftest stderr travels with a failure (ten subprocess
+  sites); V1-STATE's H1 checked against BUILD with a probe; `ci/signer.sh
+  --selftest` in the block. **The self-test rebuilt** (landmine 139): the
+  first probe is the unmutated copy, which must fire nothing; every probe
+  names the failure category it expects and is refused, with the stray
+  failures printed, if the copy fails outside it; the copy carries the
+  keystore and the star template; the stale-stamp mutation is a pattern.
+  Watched in order: the clean control failed on the old copy ("guard
+  fires"), passed on the fixed one; the stamp probe then read GUARD DID
+  NOT FIRE until its literal became a pattern; the heading probe read
+  GUARD DID NOT FIRE until the check was written; the stray guard itself
+  fired once for real when the gate cited landmine 139 before the ledger
+  carried it.
+- `tools/scrub.py`: the two literal file names — the root file the owner
+  asked for by name and the skill that made it — pass as whole tokens
+  only; the vendor word beside them, alone, or as a longer token still
+  fires (three controls, the positive one watched to fail first). The
+  root file is scanned as public text like AGENTS.md; its branch line
+  lost the prefix the scrubber refuses.
+- `docs/RUNBOOK-play.md`: §2's two reset cases, the keytool command in
+  full; §8 approved; a production-release paragraph; the per-take
+  section points at the production track.
+- `docs/PROTOCOL.md` §6 and the NSP: notes written after a merge ride the
+  next take's PR from the same branch.
+- `CLAUDE.md` (root): `@AGENTS.md` plus the session notes, made through
+  the skill the owner named; the record of what the skill advised and
+  where AGENTS.md won is below.
+- The record: A21 to production; V1-STATE's H1 and Play line; the
+  take-101 title and RELEASE sentence; the AGENDA's dead line removed.
+- Tests: smoke 691 (no app change); gate 12 probes with the clean control;
+  signer.sh 7, shipped.py 6, scrub.py 9 controls; render 105/106 in Chrome
+  on the session VM (the Leader thumbnail wants the CDN this VM is refused;
+  106 on the runner is the number that counts); the gate PASSED locally on
+  the local receipt. No app change, so no look. The runner's numbers: the
+  PR's check.
+
+### DEFERRED this cycle
+
+- **Take 103 — optimize:** R8 and the non-Latin OCR models, proven on the
+  Fold; the upload key's fingerprint pinned from the printed line.
+- D11 the day the owner sends the two unit IDs; A41 his list; the look's
+  "tiny bit of work"; the take-98 steps and Diagnostics lines; D7, D16.
+- A32 Southern Hobby and the distributor timeline: a new session.
+
+## Take 101 — 2026-09-23 — the Play upload of take 100: the bundle's signing verified from the build's own log, the record corrected, two guards
 
 Opened before any code (PROTOCOL §6). Take 100 merged at 10:00:48 UTC
 (PR #24, merge commit 1af6cb1, every commit included); **Release
@@ -65,7 +191,8 @@ if the aab is good. The apk is over 30 MB, it's 56."*
   refuses take 100 as "wrong key". The owner settles it in Play
   Console → App signing → the upload key certificate's SHA-1: that
   fingerprint means a reset; any other means the upload key, and
-  take 100 uploads cleanly. Optional, by his word.
+  take 100 uploads cleanly. Optional, by his word — and **closed PROVEN
+  at take 102: Play accepted the upload-key-signed take 101.**
 - Landmine 34 applies to his own phone: the Play build cannot install
   over the sideload (same id, different signer) — export first.
 - Two gaps the review found in `ci/apk.sh`: the signer readback passes
