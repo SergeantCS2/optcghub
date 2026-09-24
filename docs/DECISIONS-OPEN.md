@@ -1,6 +1,6 @@
 # OPEN DECISIONS — needed from the owner
 
-*Current as of take 104.* Everything else is decided and recorded in AGENDA.
+*Current as of take 106.* Everything else is decided and recorded in AGENDA.
 
 **D1 — App id and name. ANSWERED: registered with Play at the take-35 upload as `com.optcghub.app` / "OP TCG Hub", permanent.** *(original)* Proposed `com.optcghub.app` / "OP TCG Hub". Permanent
 once registered under developer verification and fixed from first Play upload
@@ -38,7 +38,7 @@ landmine 30: a compass / log pose; a treasure chest with cards in it; a generic
 jolly roger (skull and crossed bones — *not* the Straw Hats' hat-wearing one); a
 ship's wheel; rope and parchment. Which direction, or send a sketch.
 
-**D8 — How much colour?** Today: teal on black, the reference app's palette,
+**D8 — How much colour?** *Take 106: stale since take 16 — the app is navy and brass (Collect), charcoal and red (Prep & Play) and green and gold (Hunt), with the six game colours as accents; settled with D15.* *(original)* Today: teal on black, the reference app's palette,
 with the game's six colours as accents (tile bar, colour dots). Alternative: a
 warmer nautical palette — parchment, brass, deep navy — with the six as accents.
 The first matches Collectr; the second is more One Piece and less Collectr.
@@ -129,7 +129,7 @@ affiliate URL — but say so before I build on it.)
 
 *Added take 44.*
 
-**D17 — "Portfolio" in the app's own vocabulary.** The Home hero and the
+**D17 — "Portfolio" in the app's own vocabulary. ANSWERED take 106: *Collection* (the owner, 24 Sept, to the UI/UX session); applied at the voice take of the UI series (A42). Names a collector gave stay as given.** *(original)* The Home hero and the
 portfolio sheet say *Portfolio*; that word is what led the Play declaration
 to *Stock trading and portfolio management*, the organisation-only trigger
 (take 43). A reviewer reads the same word. *Binder* or *Collection* say the
@@ -148,7 +148,7 @@ the record so the sim's transport is a decision and not a surprise.
 
 *Added take 28.*
 
-**D15 — Colour direction (A24).** Parchment-light, straw-and-sky, ink-and-
+**D15 — Colour direction (A24). ANSWERED take 106: the three mode palettes stay — the owner, 24 Sept: "I like the different themes for different modes." The photo slot behind the hero (`assets/user/home-bg.jpg`) stays available.** *(original)* Parchment-light, straw-and-sky, ink-and-
 paper, or a photo of your own behind the hero (drop `home-bg.jpg` into
 `assets/user/` and it is done). One word, or a picture of a thing whose colours
 you like, and I do the pass. Not urgent.

@@ -26,10 +26,32 @@
      parchment for text, not white; rope-brown for secondary, not grey. The six
      game colours stay exactly as they are -- they are data. */
   --bg:#0B1622; --card:#12202E; --card2:#182A3A; --line:#26394B;
-  --fg:#EADFC8; --dim:#A08E70; --dim2:#94856C;
+  --fg:#EADFC8; --dim:#A08E70; --dim2:#9D8E74;   /* take 106: 4.58 on card2 (was 4.07) */
   --teal:#C9A24A; --up:#7BC47F; --down:#E06D5C; --gold:#E9C46A;
   --brass:#C9A24A; --brass2:#8C6F2E;
   --r:14px; --pad:16px;
+  /* Take 106 (A42, the UI series' foundation). Sizes are ROLES, one scale for
+     the whole app: nothing is set under --fs-cap (12px). Colours below are
+     SEMANTIC and each palette redefines the ones that differ. --brass stays
+     the accent as a FILL (knob, primary button, focus ring); --accent-ink is
+     the accent as TEXT or icon on a surface, which must clear 4.5:1 on card
+     and card2 (the smoke contrast check reads both). --on-accent is text ON
+     the accent fill. --line is a divider; --line-strong a control's edge
+     (3:1, WCAG 1.4.11). The derived tints mix from each palette's own. */
+  --fs-cap:12px; --fs-sm:13px; --fs-label:14px; --fs-body:15px; --fs-row:16px;
+  --fs-title:18px; --fs-head:26px; --fs-hero:34px; --fs-total:44px;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px;
+  --r-sm:6px; --r-md:10px; --r-lg:14px; --r-pill:999px;
+  --ic-sm:16px; --ic-md:20px; --ic-lg:24px;
+  --thumb-sm:36px; --thumb-md:52px; --thumb-lg:112px;
+  --dur-press:120ms; --dur-ui:220ms; --dur-sheet:320ms;
+  --z-screen:1; --z-modebar:20; --z-nav:30; --z-sheet:40; --z-overlay:60; --z-toast:70; --z-splash:100;
+  --on-accent:#1A1408; --accent-ink:#C9A24A; --line-strong:#6B7377;
+  --accent-bg:color-mix(in srgb,var(--brass) 12%,var(--card));
+  --warn-bg:color-mix(in srgb,var(--gold) 12%,var(--bg));
+  --ok-bg:color-mix(in srgb,var(--up) 14%,var(--card));
+  --bad-bg:color-mix(in srgb,var(--down) 14%,var(--card));
+  --scrim:rgba(0,0,0,.82);
   /* Typography (take 33). Four ROLES, resolved by build_app.py from
      assets/fonts (OFL/Apache defaults) or assets/user/fonts (a licensed face
      the owner drops in). The names are roles on purpose: the file behind
@@ -53,14 +75,15 @@
 :root[data-mode="play"]{
   --bg:#15171C; --card:#1E2128; --card2:#262A33; --line:#3A3F4B;
   --fg:#F1EFE6; --dim:#B8BCC6; --dim2:#969CAA;
-  --brass:#E0553D; --brass2:#9C3E29; --teal:#E0553D; --gold:#F0B27A;
+  --brass:#E0553D; --brass2:#B64731; --teal:#E0553D; --gold:#F0B27A;
   --up:#8FD19E; --down:#F28B7B;
+  --accent-ink:#E5705C; --line-strong:#71747A;   /* take 106: the red as text, 5.22 on card and 4.66 on card2 (#E0553D was 4.25 and 3.79); the fill stays #E0553D */
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 /* Take 82. Native controls wore the platform's white: every select and text
    field takes the card, the line and the accent on focus, everywhere. */
 select,input[type="text"],input[type="search"],input[type="number"],input:not([type]),textarea{
-  background:var(--card2);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font:inherit;font-size:16px;
+  background:var(--card2);color:var(--fg);border:1px solid var(--line-strong);border-radius:10px;padding:8px 12px;font:inherit;font-size:16px;
   -webkit-appearance:none;appearance:none}
 select{max-width:100%;padding-right:30px;background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);
   background-position:calc(100% - 16px) 55%,calc(100% - 11px) 55%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
@@ -71,7 +94,7 @@ input::placeholder,textarea::placeholder{color:var(--dim2)}
    fires only for keyboard focus, so a tap never shows it. */
 :focus-visible{outline:2px solid var(--brass);outline-offset:2px;border-radius:8px}
 button:focus:not(:focus-visible){outline:none}
-svg.g{display:inline-block;vertical-align:-3px;color:var(--brass);flex:0 0 auto}
+svg.g{display:inline-block;vertical-align:-3px;color:var(--accent-ink);flex:0 0 auto}
 html,body{margin:0;height:100%}
 body{overflow-x:hidden}   /* belt and braces for landmine 54 */
 body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
@@ -86,19 +109,20 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
   --fg:#EEF3E6; --dim:#A9C2AC; --dim2:#8FAA93;
   --brass:#D6B04C; --brass2:#9A7A2B; --teal:#D6B04C; --gold:#E8C972;
   --up:#8FD19E; --down:#F0806E;
+  --accent-ink:#D6B04C; --line-strong:#64856C;
 }
 :root[data-mode="hunt"] body::before{background:radial-gradient(60% 40% at 50% 0%,#1E4A2C 0%,transparent 70%)}
-.swords{display:inline-block;width:18px;height:18px;vertical-align:-3px;margin-right:6px;color:var(--brass)}
+.swords{display:inline-block;width:18px;height:18px;vertical-align:-3px;margin-right:6px;color:var(--accent-ink)}
 .rel{border-bottom:1px solid var(--line)}
-.rel .cd1{color:var(--up);font-weight:700} .rel .cd2{color:var(--brass)} .rel .cd3{color:var(--fg)} .rel .cd4{color:var(--dim2)}   /* take 97: the countdown by nearness */
+.rel .cd1{color:var(--up);font-weight:700} .rel .cd2{color:var(--accent-ink)} .rel .cd3{color:var(--fg)} .rel .cd4{color:var(--dim2)}   /* take 97: the countdown by nearness */
 .rel:last-child{border-bottom:0}
-#splash{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:#0B1622;
-  background-image:radial-gradient(60% 45% at 50% 35%,color-mix(in srgb,var(--brass) 18%,transparent) 0%,transparent 70%);
-  transition:opacity .35s ease;color:var(--brass)}
+#splash{position:fixed;inset:0;z-index:var(--z-splash);display:flex;align-items:center;justify-content:center;background:#0B1622;
+  background-image:radial-gradient(60% 45% at 50% 35%,rgba(201,162,74,.18) 0%,transparent 70%);
+  transition:opacity .35s ease;color:#C9A24A}   /* take 106: every colour literal and Collect's, as take 98 meant */
 #splash.off{opacity:0;pointer-events:none}
 #splash .mark{text-align:center}
-#splash .wm{font-family:var(--display);font-size:34px;letter-spacing:.02em;color:var(--fg)}
-#splash .tag{margin-top:6px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
+#splash .wm{font-family:var(--display);font-size:var(--fs-hero);letter-spacing:.02em;color:#EADFC8}
+#splash .tag{margin-top:6px;font-size:var(--fs-cap);letter-spacing:.18em;text-transform:uppercase;color:#A08E70}
 :root[data-mode="play"] body::before{background:
   radial-gradient(ellipse at 50% 0%,rgba(240,178,122,.10),transparent 50%),
   repeating-linear-gradient(0deg,transparent 0 23px,rgba(255,255,255,.012) 23px 24px)}
@@ -117,8 +141,8 @@ h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.015em}
    out of their old containers, took their colour with it: they inherited
    --fg and went pale everywhere at once. The colour belongs to the ROLE,
    here, once, so it follows the palette into Prep & Play. */
-h1,h2{font-family:var(--display);font-weight:400;letter-spacing:.01em;color:var(--brass)}
-.tab,.fgrp,.mode button{font-family:var(--comic);font-weight:400;letter-spacing:.04em}
+h1,h2{font-family:var(--display);font-weight:400;letter-spacing:.01em;color:var(--accent-ink)}
+.tab,.fgrp{font-family:var(--comic);font-weight:400;letter-spacing:.04em}
 .total,.dkcount,.big{font-family:var(--heavy);font-weight:900;letter-spacing:-.01em;font-variant-numeric:lining-nums tabular-nums}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
 .screen{display:none;padding:0 var(--pad) calc(66px + 34px + var(--sab))}   /* take 86: the bar is 66px + 10px off the bottom; the last control must clear it */
@@ -139,26 +163,26 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 /* A9: the app runs on its last catalogue when a nightly build fails, and
    until take 20 nothing said so. Three days of staleness is a banner; it
    names the date so the collector knows what the numbers are numbers OF. */
-.stale{background:#2E2410;border:1px solid var(--brass2);border-radius:12px;padding:10px 14px;
-  font-size:13px;color:#E9C46A;margin:8px 0 6px}
+.stale{background:var(--warn-bg);border:1px solid var(--brass2);border-radius:12px;padding:10px 14px;
+  font-size:var(--fs-sm);color:var(--gold);margin:8px 0 6px}
 .stale[hidden]{display:none}
 .hero .who{font-size:15px;color:var(--dim)}
 /* take 83: the label is a caption above the name, so one face carries the name at the hero's scale and the other stays small and quiet */
-.hero .who .cap{display:block;font-family:var(--heavy);font-weight:800;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--brass2);margin-bottom:-1px}
+.hero .who .cap{display:block;font-family:var(--heavy);font-weight:800;font-size:var(--fs-cap);letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:-1px}
 .hero .who em{color:var(--fg);font-style:normal;font-family:var(--display);font-weight:400;font-size:24px;letter-spacing:.01em}
-.total{font-size:46px;margin:2px 0 0;color:var(--brass);font-variant-numeric:lining-nums tabular-nums}
+.total{font-size:46px;margin:2px 0 0;color:var(--accent-ink);font-variant-numeric:lining-nums tabular-nums}
 .delta{font-size:15px;font-weight:600;margin-top:2px}
 .up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--dim)}
 #spark{width:100%;height:150px;display:block;margin:8px 0 2px}
 .ranges{display:flex;justify-content:center;gap:6px;margin:6px 0 18px}
 .range{padding:8px 15px;border-radius:999px;font-size:14px;font-weight:650;color:var(--dim)}
-.range.on{background:var(--brass);color:#1A1408}
-.free{font-size:9px;font-weight:800;color:var(--teal);vertical-align:super;letter-spacing:.04em}
+.range.on{background:var(--brass);color:var(--on-accent)}
+.free{font-size:var(--fs-cap);font-weight:800;color:var(--accent-ink);vertical-align:super;letter-spacing:.02em}
 
 /* ---- panels ------------------------------------------------------------- */
 .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
   padding:16px;margin-bottom:16px}
-.panel h3{font-size:16px;margin-bottom:12px;font-family:var(--display);font-weight:400;letter-spacing:.01em;color:var(--brass)}
+.panel h3{font-size:16px;margin-bottom:12px;font-family:var(--display);font-weight:400;letter-spacing:.01em;color:var(--accent-ink)}
 #home .panel{background:none;border:0;border-top:1px solid var(--line);border-radius:0;
   padding:18px 0 4px;margin-bottom:6px}
 .row{display:flex;align-items:baseline;gap:10px;padding:9px 0}
@@ -169,18 +193,18 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .row .v{text-align:right;font-weight:650}
 .row .v > span{display:block;font-size:12.5px;font-weight:600}
 .linkish[hidden],.seg[hidden]{display:none}   /* take 95, landmine 136: a display rule beats the hidden attribute */
-.linkish{display:block;text-align:center;color:var(--brass);font-weight:650;
+.linkish{display:block;text-align:center;color:var(--accent-ink);font-weight:650;
   padding:12px 0 2px;width:100%}
 
 /* ---- collection --------------------------------------------------------- */
 .actions{display:flex;gap:20px;overflow-x:auto;padding:10px 0 12px;
-  font-size:12.5px;color:var(--brass);font-weight:600;scrollbar-width:none}
+  font-size:12.5px;color:var(--accent-ink);font-weight:600;scrollbar-width:none}
 .actions::-webkit-scrollbar{display:none}
 .actions button{display:flex;flex-direction:column;align-items:center;gap:5px;
-  white-space:nowrap;color:var(--brass)}
+  white-space:nowrap;color:var(--accent-ink)}
 .actions .ic{font-size:17px}
 .search{display:flex;align-items:center;gap:10px;background:var(--card2);
-  border:1px solid var(--line);border-radius:999px;padding:11px 16px;margin-bottom:14px}
+  border:1px solid var(--line-strong);border-radius:999px;padding:11px 16px;margin-bottom:14px}   /* take 106: a field's edge at 3:1 */
 .search input{flex:1;background:none;border:0;outline:0;color:var(--fg);font-size:16px}   /* 16px: under it Android zooms the page on focus (take 81) */
 .search input::placeholder{color:var(--dim2)}
 .search:focus-within{border-color:var(--brass)}
@@ -209,22 +233,22 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .tile .cbar{height:4px;border-radius:2px;margin:-6px 0 8px;display:flex;overflow:hidden}
 .tile .cbar i{flex:1}
 .art img{width:100%;height:100%;object-fit:cover}
-.art .ph{color:var(--dim2);font-size:11px;text-align:center;padding:8px;line-height:1.3}
-.art .own{position:absolute;top:6px;left:6px;background:rgba(11,22,34,.82);
-  color:var(--brass);font-size:9px;font-weight:800;padding:2px 6px;border-radius:5px;
-  letter-spacing:.05em}
+.art .ph{color:var(--dim2);font-size:var(--fs-cap);text-align:center;padding:8px;line-height:1.3}
+.art .own{position:absolute;top:6px;left:6px;background:color-mix(in srgb,var(--bg) 88%,transparent);
+  color:var(--accent-ink);font-size:var(--fs-cap);font-weight:800;padding:2px 6px;border-radius:5px;
+  letter-spacing:.03em}
 .tile .t{font-weight:650;font-size:14.5px;line-height:1.25;margin-bottom:3px}
 .tile .s{font-size:12px;color:var(--dim);line-height:1.35;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tile .c{font-size:12px;color:var(--brass);margin:3px 0 8px}
+.tile .c{font-size:var(--fs-cap);color:var(--accent-ink);margin:3px 0 8px}
 .tile .foot{margin-top:auto;display:flex;align-items:flex-end;justify-content:space-between}
 .tile .qty{font-size:12.5px;color:var(--dim);white-space:nowrap}
 .tile .px{text-align:right;font-weight:700;white-space:nowrap}
 /* Only the DELTA line is a block. Take 8 rendered the ▲/▼ triangle as its own
    line because this rule caught every span, including the inline one. */
-.tile .px .dl{display:block;font-size:10.5px;font-weight:600;letter-spacing:-.01em}
-.badge{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.05em;
-  padding:2px 6px;border-radius:5px;background:#2A2414;color:var(--brass);margin-left:5px}
+.tile .px .dl{display:block;font-size:var(--fs-cap);font-weight:600;letter-spacing:-.01em}
+.badge{display:inline-block;font-size:var(--fs-cap);font-weight:800;letter-spacing:.03em;
+  padding:2px 6px;border-radius:5px;background:var(--accent-bg);color:var(--accent-ink);margin-left:5px}
 
 /* ---- scanner ------------------------------------------------------------ */
 #scan{padding:0}
@@ -233,8 +257,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .scanhead{display:flex;align-items:center;gap:10px;width:100%;padding:14px var(--pad) 8px}
 .setchip{display:flex;align-items:center;gap:7px;background:var(--card2);
   border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:13.5px;font-weight:600}
-.setchip b{color:var(--brass)}
-.guide{flex:1;width:min(74vw,300px);margin:6px 0;border:2px solid #39424766;
+.setchip b{color:var(--accent-ink)}
+.guide{flex:1;width:min(74vw,300px);margin:6px 0;border:2px solid var(--line-strong);
   border-radius:14px;position:relative;transition:border-color .12s}
 .guide.seen{border-color:var(--gold)}
 .guide.hit{border-color:var(--up)}
@@ -243,12 +267,12 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
    "when the camera isn't loaded". A card outline with corner marks, brass,
    over the app's own sea. Hidden the moment the video has a frame. */
 .guide .idle{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:14px;color:var(--brass);opacity:.8;pointer-events:none;
-  background:radial-gradient(circle at 50% 40%,rgba(201,162,74,.10),transparent 55%)}
+  justify-content:center;gap:14px;color:var(--accent-ink);opacity:.8;pointer-events:none;
+  background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--brass) 10%,transparent),transparent 55%)}
 .guide .idle span{font-size:13px;color:var(--dim)}
 .guide.live .idle{display:none}
-.unlim{background:#1F1B12;border:1px solid var(--brass2);border-radius:12px;
-  padding:11px 16px;font-size:13.5px;color:var(--brass);font-weight:650;margin:26px 0 6px}
+.unlim{background:var(--accent-bg);border:1px solid var(--brass2);border-radius:12px;
+  padding:11px 16px;font-size:13.5px;color:var(--accent-ink);font-weight:650;margin:26px 0 6px}
 .lastscan{min-height:44px;text-align:center;padding:8px 0}
 .lastscan b{font-weight:650}
 .lastscan span{display:block;font-size:12.5px;color:var(--dim)}
@@ -260,25 +284,25 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   border:5px solid #000;box-shadow:0 0 0 3px #fff}
 .ghost{border:1px solid var(--line);border-radius:999px;padding:11px 18px;
   font-size:14px;font-weight:650;color:var(--dim)}
-.ghost.go{color:#1A1408;background:var(--brass);border-color:var(--brass)}
+.ghost.go{color:var(--on-accent);background:var(--brass);border-color:var(--brass)}
 
 /* ---- picker: the primary surface, not a fallback ------------------------ */
-.sheet{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:40;
+.sheet{position:fixed;inset:0;background:var(--scrim);z-index:var(--z-sheet);
   display:none;align-items:flex-end}
 .sheet.on{display:flex}
 .sheetbody{background:var(--card);width:100%;max-height:88vh;overflow:auto;
   border-radius:22px 22px 0 0;border-top:1px solid var(--line);
   padding:20px var(--pad) calc(28px + var(--sab))}
-.grab{width:38px;height:4px;border-radius:2px;background:#333c40;margin:0 auto 16px}
-.why{background:#231c10;border:1px solid var(--brass2);color:#E9C46A;border-radius:12px;
+.grab{width:38px;height:4px;border-radius:2px;background:var(--line-strong);margin:0 auto 16px}
+.why{background:var(--warn-bg);border:1px solid var(--brass2);color:var(--gold);border-radius:12px;
   padding:11px 14px;font-size:13px;line-height:1.45;margin-bottom:14px}
 .why b{color:var(--gold)}
 .opt{display:flex;gap:12px;align-items:center;width:100%;text-align:left;
   border:1px solid var(--line);border-radius:14px;padding:11px;margin-bottom:10px;
   background:var(--card2)}
-.opt.best{border-color:var(--brass2);background:#1C1E1A}
+.opt.best{border-color:var(--brass2);background:var(--accent-bg)}
 .opt .oa{width:52px;flex:0 0 52px;aspect-ratio:.716;border-radius:7px;
-  background:#1a1e20;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;text-align:center}
+  background:var(--card2);overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;text-align:center}
 /* 203 of the catalogue's images answer 403 (landmine 51) -- release-event and
    demo-deck promos among them, which is exactly what the picker shows for a
    common card. An empty grey box read as "broken". The placeholder names the
@@ -290,37 +314,37 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .opt .oi span{display:block;font-size:12px;color:var(--dim);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .opt .op{text-align:right;font-weight:700;font-size:15.5px}
-.opt .op span{display:block;font-size:11px;color:var(--dim2);font-weight:600}
+.opt .op span{display:block;font-size:var(--fs-cap);color:var(--dim2);font-weight:600}
 
 /* ---- detail ------------------------------------------------------------- */
 .detail .hd{font-size:13px;color:var(--dim);padding:14px 0 2px}
-.detail .hd b{color:var(--teal)}
+.detail .hd b{color:var(--accent-ink)}
 .detail h2{font-size:23px;margin:2px 0 2px;letter-spacing:-.02em}
 .detail .sub{color:var(--dim);font-size:13.5px;margin-bottom:14px}
 .stepper{display:flex;align-items:center;gap:16px}
 .stepper button{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--brass2);
-  color:var(--brass);font-size:19px;line-height:1;display:grid;place-items:center}
-.prov{font-size:11.5px;color:var(--dim2);margin-top:9px;line-height:1.5}
+  color:var(--accent-ink);font-size:19px;line-height:1;display:grid;place-items:center}
+.prov{font-size:var(--fs-cap);color:var(--dim2);margin-top:9px;line-height:1.5}
 .spread{display:flex;gap:6px;align-items:center;margin-top:10px;font-size:12px;color:var(--dim)}
-.spreadbar{flex:1;height:5px;border-radius:3px;background:#1c2225;position:relative}
+.spreadbar{flex:1;height:5px;border-radius:3px;background:var(--line);position:relative}
 .spreadbar i{position:absolute;top:-3px;width:3px;height:11px;border-radius:2px;background:var(--brass)}
 .seg{display:flex;gap:8px;margin:10px 0 4px}
 .seg button{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 0;
   font-size:13px;font-weight:650;color:var(--dim)}
-.seg button.on{background:#2A2414;border-color:var(--brass2);color:var(--brass)}
+.seg button.on{background:var(--accent-bg);border-color:var(--brass2);color:var(--accent-ink)}
 .note{font-size:12px;color:var(--dim2);line-height:1.5;margin-top:10px}
 
 /* ---- first-run guide ------------------------------------------------------ */
-#tour{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column}
+#tour{position:fixed;inset:0;z-index:var(--z-overlay);background:var(--bg);display:flex;flex-direction:column}
 #tour[hidden]{display:none}
 #tour .gbg{position:absolute;inset:0;background:
-  radial-gradient(circle at 50% 22%,rgba(201,162,74,.16),transparent 48%),var(--bg);
+  radial-gradient(circle at 50% 22%,color-mix(in srgb,var(--brass) 16%,transparent),transparent 48%),var(--bg);
   background-size:cover;background-position:center}
-#tour .gbg.img{background-image:linear-gradient(rgba(11,22,34,.55),rgba(11,22,34,.92)),var(--guide-bg)}
+#tour .gbg.img{background-image:linear-gradient(color-mix(in srgb,var(--bg) 55%,transparent),color-mix(in srgb,var(--bg) 92%,transparent)),var(--guide-bg)}
 #tour .gwrap{position:relative;z-index:1;display:flex;flex-direction:column;height:100%;
   padding:calc(24px + var(--sat)) 0 calc(20px + var(--sab))}
 #tour .ghead{padding:0 22px 14px}
-#tour .ghead h2{font-size:32px;color:var(--brass)}
+#tour .ghead h2{font-size:32px;color:var(--accent-ink)}
 #tour .ghead p{margin:6px 0 0;color:var(--dim);font-size:15px}
 #tour .gcards{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;
   padding:6px 16px;scrollbar-width:none}
@@ -329,8 +353,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   border:1px solid var(--line);border-radius:18px;padding:22px 20px;display:flex;flex-direction:column;gap:10px;
   position:relative;overflow:hidden}
 #tour .gcard .gpic{height:150px;border-radius:12px;background:var(--card2);display:flex;align-items:center;
-  justify-content:center;color:var(--brass);margin-bottom:6px;background-size:cover;background-position:center}
-#tour .gcard h3{font-family:var(--display);font-weight:400;font-size:22px;color:var(--brass)}
+  justify-content:center;color:var(--accent-ink);margin-bottom:6px;background-size:cover;background-position:center}
+#tour .gcard h3{font-family:var(--display);font-weight:400;font-size:22px;color:var(--accent-ink)}
 #tour .gcard p{margin:0;color:var(--dim);font-size:14.5px;line-height:1.5}
 #tour .gcard ul{margin:4px 0 0;padding-left:18px;color:var(--dim);font-size:13.5px;line-height:1.55}
 #tour .gcard li b{color:var(--fg);font-weight:600}
@@ -343,15 +367,18 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .chips{display:flex;flex-wrap:wrap;gap:7px}
 .chip{border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13px;
   font-weight:600;color:var(--dim);background:var(--card2)}
-.chip.on{background:#2A2414;border-color:var(--brass2);color:var(--brass)}
-.chip.buy{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:var(--brass);padding:5px 10px}   /* take 96: an anchor as a chip */
+.chip.on{background:var(--accent-bg);border-color:var(--brass2);color:var(--accent-ink)}
+.chip.buy{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:var(--accent-ink);padding:5px 10px}   /* take 96: an anchor as a chip */
 .panel[hidden]{display:none}   /* landmine 136 */
 .chip small{opacity:.6;font-weight:600;margin-left:4px}
-.range{display:flex;gap:8px;align-items:center}
-.range input{width:100px;background:#151a1c;color:var(--fg);border:1px solid var(--line);
-  border-radius:8px;padding:8px 10px;font:inherit}
-.fcount{display:inline-block;min-width:16px;height:16px;line-height:16px;border-radius:8px;
-  background:var(--brass);color:#1A1408;font-size:10px;font-weight:800;text-align:center;
+/* take 106: the filter's price row was a second .range rule; the hero's range pills
+   leaked into it and its inputs fell to 14px (landmine 119) */
+.frange{display:flex;gap:8px;align-items:center}
+.frange input{width:100px;background:var(--card2);color:var(--fg);border:1px solid var(--line-strong);
+  border-radius:8px;padding:8px 10px;font:inherit;font-size:16px}
+.frange input:focus{border-color:var(--brass);outline:none}   /* the rule above outranks the global focus rule (same specificity, later) */
+.fcount{display:inline-block;min-width:18px;height:18px;line-height:18px;border-radius:9px;
+  background:var(--brass);color:var(--on-accent);font-size:var(--fs-cap);font-weight:800;text-align:center;
   vertical-align:top;margin-left:2px}
 
 /* ---- binder: nine pockets, the way the object is laid out ---------------- */
@@ -362,21 +389,21 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   overflow:hidden;display:flex;align-items:center;justify-content:center}
 .pocket.empty{background:transparent;border-style:dashed;opacity:.5}
 .pocket img{width:100%;height:100%;object-fit:cover}
-.pocket .tag{position:absolute;left:0;right:0;bottom:0;padding:3px 5px;font-size:9.5px;color:var(--fg);
+.pocket .tag{position:absolute;left:0;right:0;bottom:0;padding:3px 5px;font-size:var(--fs-cap);color:var(--fg);
   background:linear-gradient(transparent,rgba(0,0,0,.72));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pocket .n{position:absolute;top:3px;right:5px;font-size:9px;font-weight:800;color:var(--brass);
+.pocket .n{position:absolute;top:3px;right:5px;font-size:var(--fs-cap);font-weight:800;color:var(--accent-ink);
   background:rgba(0,0,0,.5);padding:1px 4px;border-radius:4px}
 
 /* ---- set checklist ------------------------------------------------------ */
 .ckgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
 .ck{aspect-ratio:.716;border-radius:6px;border:1px solid var(--line);background:var(--card2);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;position:relative;
-  font-size:10px;color:var(--dim);overflow:hidden}
+  font-size:var(--fs-cap);color:var(--dim);overflow:hidden}
 .ck b{font-size:12px;color:var(--fg);font-variant-numeric:tabular-nums}
-.ck.have{border-color:var(--brass2);background:color-mix(in srgb,var(--card2) 70%,var(--brass) 14%)}
-.ck.have b{color:var(--brass)}
+.ck.have{border-color:var(--brass2);background:var(--accent-bg);color:var(--fg)}   /* take 106: --dim on the tint was 4.24:1 in Collect */
+.ck.have b{color:var(--accent-ink)}
 .ck.want::after{content:"";position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--down)}
-.ck .qty{position:absolute;bottom:3px;right:5px;font-size:9px;color:var(--brass);font-weight:800}
+.ck .qty{position:absolute;bottom:3px;right:5px;font-size:var(--fs-cap);color:var(--accent-ink);font-weight:800}
 .ck img.ref{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0}
 .ck img.ref.ok{opacity:.35}
 .ck.have img.ref.ok{opacity:.9}
@@ -388,72 +415,72 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .dkcount{font-size:26px;font-weight:750;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .dkcount.ok{color:var(--up)} .dkcount.over{color:var(--down)}
 .legal{font-size:12.5px;padding:8px 12px;border-radius:10px;margin:8px 0}
-.legal.ok{background:#1E2A1C;color:var(--up)} .legal.bad{background:#2E1C18;color:var(--down)}
+.legal.ok{background:var(--ok-bg);color:var(--up)} .legal.bad{background:var(--bad-bg);color:var(--down)}
 .curve{display:flex;align-items:flex-end;gap:4px;height:64px;margin:6px 0 2px}
-.curve div{flex:1;background:#1d2a2e;border-radius:3px 3px 0 0;position:relative;min-height:3px}
+.curve div{flex:1;background:color-mix(in srgb,var(--brass) 35%,var(--card2));border-radius:3px 3px 0 0;position:relative;min-height:3px}   /* take 106: #1d2a2e was 1.1:1 on the card */
 .curve div.hi{background:var(--brass)}
-.curve div span{position:absolute;bottom:-16px;left:0;right:0;text-align:center;font-size:10px;color:var(--dim2)}
-.curve div b{position:absolute;top:-15px;left:0;right:0;text-align:center;font-size:10px;color:var(--dim)}
+.curve div span{position:absolute;bottom:-17px;left:0;right:0;text-align:center;font-size:var(--fs-cap);color:var(--dim2)}
+.curve div b{position:absolute;top:-17px;left:0;right:0;text-align:center;font-size:var(--fs-cap);color:var(--dim)}
 .dkrow{display:flex;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
 .dkrow:first-child{border-top:0}
 .dkrow .n{flex:1;min-width:0}
 .dkrow .n b{display:block;font-size:14px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* Direct child only. `.dkrow .n span` caught the .badge inside <b> and drew
    it as a full-width bar — landmine 86's third instance. */
-.dkrow .n > span{font-size:11.5px;color:var(--dim);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dkrow .n > span{font-size:var(--fs-cap);color:var(--dim);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dkrow .cnt{display:flex;align-items:center;gap:8px}
 .dkrow .cnt button{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line);font-size:16px;color:var(--dim)}
 .dkrow .cnt b{min-width:14px;text-align:center}
 .dkrow.illegal{opacity:.5}
 .dkrow .cost{width:24px;height:24px;border-radius:50%;background:var(--card2);border:1px solid var(--line);
-  font-size:11px;font-weight:700;display:grid;place-items:center;flex:0 0 24px}
-.kwtag{display:inline-block;font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;
-  background:#1d2426;color:var(--dim);margin-left:3px;letter-spacing:.02em}
+  font-size:var(--fs-cap);font-weight:700;display:grid;place-items:center;flex:0 0 24px}
+.kwtag{display:inline-block;font-size:var(--fs-cap);font-weight:700;padding:1px 5px;border-radius:4px;
+  background:var(--card2);color:var(--dim);margin-left:3px;letter-spacing:.01em}
 
 /* ---- mode slider ------------------------------------------------------------ */
-.modebar{position:sticky;top:var(--sat);z-index:20;display:flex;justify-content:center;padding:6px 0 2px;
+.modebar{position:sticky;top:var(--sat);z-index:var(--z-modebar);display:flex;justify-content:center;padding:6px 0 2px;
   background:linear-gradient(var(--bg) 70%,transparent)}
-.curtain{display:none;position:fixed;inset:0;z-index:60;background:var(--bg);align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px}
+.curtain{display:none;position:fixed;inset:0;z-index:var(--z-overlay);background:var(--bg);align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px}
 .curtain.on{display:flex}
-.mode{display:inline-flex;position:relative;background:var(--card2);border:1px solid var(--line);
+.mode{display:inline-grid;grid-template-columns:repeat(3,1fr);position:relative;background:var(--card2);border:1px solid var(--line);
   border-radius:999px;padding:3px;gap:2px}
-.mode button{position:relative;z-index:1;padding:8px 14px;border-radius:999px;font-size:14px;font-weight:700;font-family:var(--heavy);
-  color:var(--dim);letter-spacing:.01em;min-width:118px;transition:color .2s}
-.mode button.on{color:#1A1408}
-:root[data-mode="play"] .mode button.on{color:#F1EFE6}
+/* take 106: one rule (there were two, and a third in the font rule). The
+   slider is a grid of three equal columns, each as wide as the widest label,
+   so the knob -- a third -- sits under each one (at 96/106/96 px it sat
+   off-centre under Prep & Play) and no label wraps. The label on the knob
+   is --on-accent in every mode (#F1EFE6 on the red was 3.29:1). */
+.mode button{position:relative;z-index:1;min-width:96px;white-space:nowrap;padding:8px 14px;border-radius:999px;font-size:14px;font-weight:700;font-family:var(--heavy);
+  color:var(--dim);letter-spacing:.01em;transition:color .2s}
+.mode button.on{color:var(--on-accent)}
 .mode .knob{position:absolute;top:3px;bottom:3px;left:3px;width:calc(33.333% - 3px);border-radius:999px;
   background:var(--brass);transition:transform .22s cubic-bezier(.4,0,.2,1)}
 .mode.play .knob{transform:translateX(calc(100% + 2px))}
 .mode.hunt .knob{transform:translateX(calc(200% + 4px))}
-.mode button{min-width:96px}
-:root[data-mode="hunt"] .mode button.on{color:#1A1408}
-@media (prefers-reduced-motion:reduce){.mode .knob{transition:none}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:0s!important;animation-duration:0s!important;scroll-behavior:auto!important}}   /* take 106: every transition, not the knob alone */
 
 /* ---- nav ---------------------------------------------------------------- */
 /* Take 83: one bar in every mode -- the same height, a near-black that sits
    apart from all three palettes, a brighter border, the mode's accent only
    on the active item. Items stretch equally, so four or five look the same. */
-nav{position:fixed;left:calc(12px + var(--sal));right:calc(12px + var(--sar));bottom:calc(10px + var(--sab));height:66px;
+nav{position:fixed;left:calc(12px + var(--sal));right:calc(12px + var(--sar));bottom:calc(10px + var(--sab));height:66px;z-index:var(--z-nav);
   background:color-mix(in srgb,#0B0D10 92%,transparent);backdrop-filter:blur(16px);border:1px solid color-mix(in srgb,var(--brass) 45%,#2A2E36);
-  box-shadow:0 6px 24px rgba(0,0,0,.45);border-radius:999px;display:flex;justify-content:space-around;align-items:center;padding:0 6px;z-index:30}
+  box-shadow:0 6px 24px rgba(0,0,0,.45);border-radius:999px;display:flex;justify-content:space-around;align-items:center;padding:0 6px}
 nav button{flex:1 1 0;color:#B9BEC7}
-nav button.on{color:var(--brass)}
+nav button.on{color:var(--accent-ink)}
 nav button .ic{color:inherit}
 /* `hidden` loses to any author `display` -- both navs drew and the wrong one
    sat on top (take 24). Landmine 98. */
 nav[hidden]{display:none}
 nav button{display:flex;flex-direction:column;align-items:center;gap:3px;
-  font-size:10.5px;color:var(--dim2);font-weight:600;padding:4px 12px;border-radius:999px}
+  font-size:var(--fs-cap);color:var(--dim2);font-weight:600;padding:4px 10px;border-radius:999px}
 nav button svg.g{color:var(--dim2)}
-nav button.on svg.g{color:var(--brass)}
+nav button.on svg.g{color:var(--accent-ink)}
 nav button .ic{font-size:19px;line-height:1}
-nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,var(--brass) 12%)}
+nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 70%,var(--brass) 12%)}
 .empty{text-align:center;color:var(--dim);padding:56px 20px 48px;line-height:1.6;font-size:14.5px;position:relative}
-.empty::before{content:"";display:block;width:64px;height:64px;margin:0 auto 14px;opacity:.55;
-  background:none}
 .empty svg.g{display:block;width:64px;height:64px;margin:0 auto 14px;opacity:.6}
-.toast{position:fixed;left:50%;bottom:calc(96px + var(--sab));transform:translateX(-50%);z-index:50;
-  background:#1d2426;border:1px solid var(--line);border-radius:999px;
+.toast{position:fixed;left:50%;bottom:calc(96px + var(--sab));transform:translateX(-50%);z-index:var(--z-toast);
+  background:var(--card2);border:1px solid var(--line);border-radius:999px;
   padding:10px 18px;font-size:13.5px;font-weight:600;opacity:0;transition:opacity .2s;
   pointer-events:none;white-space:normal;max-width:min(92vw,520px);text-align:center;box-sizing:border-box;width:max-content}   /* take 99, the look: left:50% halves the available width, so without width:max-content a long toast wrapped into a tall half-width pill */
 .toast.on{opacity:1}
@@ -894,7 +921,7 @@ nav button.on{color:var(--brass);background:color-mix(in srgb,var(--card2) 70%,v
     <div class="fgrp" data-own>Condition</div>
     <div class="chips" id="fCond" data-own></div>
     <div class="fgrp">Price</div>
-    <div class="range">
+    <div class="frange">
       <input id="fMin" inputmode="decimal" placeholder="min $">
       <span class="note">to</span>
       <input id="fMax" inputmode="decimal" placeholder="max $">
@@ -1088,7 +1115,13 @@ const G = (id, size = 16, style = '') =>
   `<svg class="g" width="${size}" height="${size}" style="${style}" aria-hidden="true"><use href="#g-${id}"/></svg>`;
 const TYPE_GLYPH = { Leader: 'leader', Character: 'character', Event: 'event', Stage: 'stage' };
 const KW_GLYPH = { Blocker: 'blocker', Rush: 'rush', Trigger: 'trigger', Counter: 'counter',
-                   'Double Attack': 'rush', Banish: 'roger' };
+                   'Double Attack': 'rush' };   // take 106: Banish named 'roger', removed from the sprite at take 63 (landmine 142)
+/* Take 106: a canvas cannot read var(--x), so a chart asks the page for the
+   palette it is drawn in. Outside a browser (the harness's stub) the lookup
+   fails and Collect's literals stand in. */
+const TOK = (name, fallback) => { try { const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim(); return v || fallback; } catch (e) { return fallback; } };
+const rgbaOf = (hex, a) => { const m = /^#([0-9a-f]{6})$/i.exec(hex || ''); if (!m) return `rgba(201,162,74,${a})`; const n = parseInt(m[1], 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
+const reducedMotion = () => { try { return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g,
   c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -1587,7 +1620,7 @@ function paintDeck() {
   if (!dkCur) return go('decks');
   const A = analysis(dkCur), L = A.leader;
   $('#dkName').value = dkCur.name || '';
-  $('#dkLead').innerHTML = L ? refArt(L) : '<div class="ph" style="font-size:10px">Leader</div>';
+  $('#dkLead').innerHTML = L ? refArt(L) : '<div class="ph" style="font-size:12px">Leader</div>';
   $('#dkLeadLine').innerHTML = L
     ? `<b>${esc(L.name)}</b> · ${colourDots(L)} · ${G('life', 13)} ${L.life || '?'} · ${esc(L.num)}`
     : 'Tap the card to choose a Leader';
@@ -1880,7 +1913,7 @@ function tradeRow(side, r) {
   const p = CAT.byId.get(r.id); if (!p) return '';
   const own = OWN.items.filter(i => i.id === p.id).reduce((a, i) => a + i.qty, 0);
   return `<div class="dkrow" data-tr="${side}:${p.id}">
-    <div class="oa pic" style="width:34px;flex:0 0 34px;aspect-ratio:.716;border-radius:5px;background:#182A3A;overflow:hidden;position:relative">${refArt(p)}</div>
+    <div class="oa pic" style="width:34px;flex:0 0 34px;aspect-ratio:.716;border-radius:5px;background:var(--card2);overflow:hidden;position:relative">${refArt(p)}</div>
     <div class="n"><b>${esc(p.name)}${p.treat !== 'base' ? ` <span class="badge">${esc(TREAT[p.treat] || p.treat)}</span>` : ''}</b>
       <span>${esc(p.num)} \u00b7 ${money(p.market)} each${side === 'give' && own < r.n ? ` \u00b7 <span class="down">you own ${own}</span>` : ''}</span></div>
     <div class="cnt"><button data-trdec="${side}:${p.id}">\u2212</button><b>${r.n}</b><button data-trinc="${side}:${p.id}" aria-label="One more ${esc(p.name)}">+</button></div>
@@ -2005,7 +2038,7 @@ function guidePaint() {
   $('#tourDots').innerHTML = GUIDE.map((_, i) => `<i class="${i === guidePage ? 'on' : ''}"></i>`).join('');
   $('#tourNext').textContent = guidePage === GUIDE.length - 1 ? 'Start' : 'Next';
   const cards = $('#tourCards'); const el = cards.children[guidePage];
-  if (el) cards.scrollTo({ left: el.offsetLeft - 16, behavior: 'smooth' });
+  if (el) cards.scrollTo({ left: el.offsetLeft - 16, behavior: reducedMotion() ? 'auto' : 'smooth' });
 }
 function guideClose(mark) {
   $('#tour').hidden = true;
@@ -2029,7 +2062,7 @@ function ask({ title, why = '', kind = 'text', value = '', placeholder = '', ok 
     $('#askTitle').textContent = title; $('#askWhy').innerHTML = why; $('#askOk').textContent = ok;
     $('#askField').innerHTML = kind === 'multiline'
       ? `<textarea id="askIn" rows="${rows}" placeholder="${esc(placeholder)}"
-           style="width:100%;background:#182A3A;color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:10px;font:13.5px/1.45 ui-monospace,monospace;resize:vertical">${esc(value)}</textarea>`
+           style="width:100%;padding:10px;font:16px/1.45 ui-monospace,monospace;resize:vertical">${esc(value)}</textarea>`
       : `<div class="search" style="margin:0"><input id="askIn" type="text"
            inputmode="${kind === 'number' ? 'decimal' : 'text'}" placeholder="${esc(placeholder)}" value="${esc(value)}"></div>`;
     const done = v => { $('#askSheet').classList.remove('on'); cleanup(); resolve(v); };
@@ -2210,7 +2243,7 @@ function paintCards() {
       <div class="n" data-open="${p.id}"><b>${esc(p.name)}</b>
         <span>${esc(p.num)} \u00b7 ${colsOf(p).join('/')}${p.power ? ' \u00b7 ' + Number(p.power).toLocaleString() : ''}${
           p.counter ? ' \u00b7 +' + Number(p.counter).toLocaleString() : ''}${kws.map(k => `<i class="kwtag">${KW_GLYPH[k] ? G(KW_GLYPH[k], 11) + ' ' : ''}${k}</i>`).join('')}</span>
-        <span style="white-space:normal;color:var(--dim2);font-size:11px;-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden">${esc((p.text || '').replace(/\n+/g, ' ').slice(0, 160))}</span></div>
+        <span style="white-space:normal;color:var(--dim2);font-size:12px;-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden">${esc((p.text || '').replace(/\n+/g, ' ').slice(0, 160))}</span></div>
       <div class="cnt">${deck ? `<button data-cdadd="${p.id}" aria-label="One more">+</button>${inDeck ? `<b>${inDeck}</b>` : ''}` : ''}</div>
     </div>`;
   }).join('') || '<div class="note">Nothing matches. Loosen a chip.</div>';
@@ -2561,7 +2594,7 @@ function paintHome() {
   } else wn.hidden = true;
   if ((CAT.man.user || []).includes('home-bg.jpg') && !$('#hero').dataset.bg) {
     $('#hero').dataset.bg = '1';
-    $('#hero').style.cssText += ';background:linear-gradient(rgba(11,22,34,.88),var(--bg)),url(bundle/user/home-bg.jpg) center/cover;border-radius:14px;padding:12px;margin:0 -8px';
+    $('#hero').style.cssText += ';background:linear-gradient(color-mix(in srgb,var(--bg) 88%,transparent),var(--bg)),url(bundle/user/home-bg.jpg) center/cover;border-radius:14px;padding:12px;margin:0 -8px';
   }
   $('#pfName').textContent = PF.active === 'all' ? 'All portfolios' : PF.name(PF.active);
   $('#pfTotal').textContent = money(tot);
@@ -2721,12 +2754,12 @@ function spark(series, kind = 'record') {
      to be one reading -- rather than pretending to a trend or drawing air. */
   if (series.length < 2) {
     const v = series.length ? series[0][1] : 0;
-    x.strokeStyle = '#26394B'; x.lineWidth = 2; x.setLineDash([5, 5]);
+    x.strokeStyle = TOK('--line', '#26394B'); x.lineWidth = 2; x.setLineDash([5, 5]);
     x.beginPath(); x.moveTo(0, h / 2); x.lineTo(w, h / 2); x.stroke();
     x.setLineDash([]);
-    x.fillStyle = '#C9A24A'; x.beginPath();
+    x.fillStyle = TOK('--brass', '#C9A24A'); x.beginPath();
     x.arc(w - 10, h / 2, 4.5, 0, 7); x.fill();
-    x.fillStyle = '#A08E70'; x.font = '12.5px system-ui'; x.textAlign = 'center';
+    x.fillStyle = TOK('--dim', '#A08E70'); x.font = '12.5px system-ui'; x.textAlign = 'center';
     x.fillText('One reading so far \u2014 ' + money(v) + '. A snapshot is taken each day.',
                w / 2, h / 2 - 16);
     return;
@@ -2736,13 +2769,13 @@ function spark(series, kind = 'record') {
   const px = i => i / (series.length - 1) * w;
   const py = v => h - 8 - (v - lo + pad) / (hi - lo + pad * 2) * (h - 16);
   const g = x.createLinearGradient(0, 0, 0, h);
-  g.addColorStop(0, 'rgba(201,162,74,.28)'); g.addColorStop(1, 'rgba(201,162,74,0)');
+  const acc = TOK('--brass', '#C9A24A'); g.addColorStop(0, rgbaOf(acc, .28)); g.addColorStop(1, rgbaOf(acc, 0));
   x.beginPath(); x.moveTo(0, py(vs[0]));
   vs.forEach((v, i) => x.lineTo(px(i), py(v)));
   x.lineTo(w, h); x.lineTo(0, h); x.closePath(); x.fillStyle = g; x.fill();
   x.beginPath(); x.moveTo(0, py(vs[0]));
   vs.forEach((v, i) => x.lineTo(px(i), py(v)));
-  x.strokeStyle = '#C9A24A'; x.lineWidth = 2.2; x.lineJoin = 'round';
+  x.strokeStyle = acc; x.lineWidth = 2.2; x.lineJoin = 'round';
   if (kind === 'estimate') x.setLineDash([6, 5]);       // an estimate is drawn dashed
   x.stroke(); x.setLineDash([]);
 
@@ -3013,13 +3046,13 @@ function paintCollection() {
       `<button class="linkish" id="colClearF">Clear ${activeCount(FILT.own)} filter${
         activeCount(FILT.own) === 1 ? '' : 's'}</button>`;
   } else if (!items.length) {
-    empty.innerHTML = G('roger', 64) + 'Nothing here yet.<br>Tap <b>Scan</b> and point the camera at a card.';
+    empty.innerHTML = G('scancard', 64) + 'Nothing here yet.<br>Tap <b>Scan</b> and point the camera at a card.';
   }
   $('#colGrid').innerHTML = items.map(({ i, p }) => {
     const s = CAT.sets.get(p.set) || {};
     const sel = bulk && bulk.has(p.id);
     return `<button class="tile" data-open="${p.id}"
-        style="${sel ? 'border-color:var(--teal);background:#101a1a' : ''}">
+        style="${sel ? 'border-color:var(--brass);background:var(--accent-bg)' : ''}">
       <div class="art">${
         i.photo ? `<img src="${esc(i.photo)}"><span class="own">YOUR SCAN</span>`
                 : `<div class="ph">${esc(p.name)}<br><span style="opacity:.6">${esc(p.num)}</span></div>` +
@@ -3432,7 +3465,7 @@ function picBox(p, w, h, label, radius = 8) {
   const cs = String(p.color || '').split(/[;/,]/).map(x => x.trim()).filter(x => CCLASS[x]);
   const a = cs[0] ? `var(--c-${CCLASS[cs[0]]})` : 'var(--brass2)';
   return `<div class="pic" style="width:${w}px;height:${h}px;flex:0 0 auto;position:relative;border-radius:${radius}px;overflow:hidden;background:linear-gradient(160deg,${a},var(--card2));">
-    <div class="ph" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:${Math.round(w / 4)}px;color:rgba(0,0,0,.65)">${label}</div>${refArt(p)}</div>`;
+    <div class="ph" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:${Math.max(12, Math.round(w / 4))}px;color:rgba(0,0,0,.65)">${label}</div>${refArt(p)}</div>`;
 }
 function productPic(p, size = 52) {
   const st = CAT.sets.get(p.set) || {};
@@ -3447,7 +3480,7 @@ function cardPic(p, w = 36) {
 function setPic(s, w = 44) {
   const ps = CAT.rows.filter(p => p.set === s.id && SEALED.isProduct(p));
   const box = ps.find(p => /booster box/i.test(p.name)) || ps[0];
-  return box ? productPic(box, w) : `<div class="pic" style="width:${w}px;height:${Math.round(w * 1.25)}px;flex:0 0 auto;border-radius:8px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:11px;color:var(--dim2)">${esc((s.abbr || '').replace(/-/g, '').slice(0, 5))}</div>`;
+  return box ? productPic(box, w) : `<div class="pic" style="width:${w}px;height:${Math.round(w * 1.25)}px;flex:0 0 auto;border-radius:8px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:12px;color:var(--dim2)">${esc((s.abbr || '').replace(/-/g, '').slice(0, 5))}</div>`;
 }
 function paintSealed() {
   const asOf = $('#sealedAsOf'); if (asOf) asOf.textContent = 'prices ' + ((CAT.man.source_updated_at || '').slice(0, 10) || '?');
@@ -3460,7 +3493,7 @@ function paintSealed() {
   /* starter decks, their own section (take 87): every deck product, newest set first */
   if (SEALED.kind === 'all' && !SEALED.q) { const decks = CAT.rows.filter(p => SEALED.isProduct(p) && SEALED.kindOf(p) === 'deck').sort((a, b) => (CAT.sets.get(b.set)?.pub || '').localeCompare(CAT.sets.get(a.set)?.pub || '') || a.name.localeCompare(b.name));
     if (decks.length) out.push(`<button class="fgrp" data-setfold="decks" aria-expanded="${!SEALED.closed.has('decks')}" style="display:flex;width:100%;justify-content:space-between;align-items:center;text-align:left;padding:8px 0"><span>Starter decks <span class="note">\u00b7 ${decks.length}</span></span><span class="note" aria-hidden="true">${SEALED.closed.has('decks') ? '\u25b8' : '\u25be'}</span></button>`);
-    if (decks.length && !SEALED.closed.has('decks')) for (const p of decks.slice(0, 80)) out.push(`<div class="row" style="gap:8px;flex-wrap:wrap"><button class="row" style="flex:1;min-width:0;text-align:left;padding:0;gap:10px" data-open="${p.id}">${productPic(p)}<div class="nm" style="min-width:0"><b>${esc(p.name)}</b><span>${esc(CAT.sets.get(p.set)?.name || '')} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}</span>${(byCat[p.id] || []).map(i => targetLine(i, T)).join('')}${(byDist[p.id] || []).map(i => distLine(i, G)).join('')}</div><div class="v"><b>${money(p.market)}</b>${deltaHtml(p, { pctOnly: true })}</div></button><button class="ghost" data-stock="${p.id}" aria-label="${STOCK.has(p.id) ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${STOCK.has(p.id)}" style="flex:0 0 auto;padding:8px 10px;${STOCK.has(p.id) ? 'color:var(--brass);border-color:var(--brass)' : ''}">${STOCK.has(p.id) ? '\u25cf' : '\u25cb'}<span style="display:block;font-size:10px;line-height:1.1;margin-top:2px">${STOCK.has(p.id) ? 'watching' : 'alert'}</span></button>${buyChips(p)}</div>`); }
+    if (decks.length && !SEALED.closed.has('decks')) for (const p of decks.slice(0, 80)) out.push(`<div class="row" style="gap:8px;flex-wrap:wrap"><button class="row" style="flex:1;min-width:0;text-align:left;padding:0;gap:10px" data-open="${p.id}">${productPic(p)}<div class="nm" style="min-width:0"><b>${esc(p.name)}</b><span>${esc(CAT.sets.get(p.set)?.name || '')} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}</span>${(byCat[p.id] || []).map(i => targetLine(i, T)).join('')}${(byDist[p.id] || []).map(i => distLine(i, G)).join('')}</div><div class="v"><b>${money(p.market)}</b>${deltaHtml(p, { pctOnly: true })}</div></button><button class="ghost" data-stock="${p.id}" aria-label="${STOCK.has(p.id) ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${STOCK.has(p.id)}" style="flex:0 0 auto;padding:8px 10px;${STOCK.has(p.id) ? 'color:var(--brass);border-color:var(--brass)' : ''}">${STOCK.has(p.id) ? '\u25cf' : '\u25cb'}<span style="display:block;font-size:12px;line-height:1.1;margin-top:2px">${STOCK.has(p.id) ? 'watching' : 'alert'}</span></button>${buyChips(p)}</div>`); }
   /* stock alerts: what is watched, and where it was last seen */
   if (STOCK.list.length) out.push(`<div class="panel"><h3>Stock alerts</h3>${STOCK.list.map(a => { const srcs = STOCK.sourcesFor(a.id); const on = srcs.filter(x => x.available);
     return `<div class="row"><div class="nm"><b>${esc(a.name)}</b><span>${on.length ? 'in stock: ' + esc(on.map(x => x.label).join(', ')) : srcs.length ? 'not in stock at ' + srcs.length + ' watched source' + (srcs.length === 1 ? '' : 's') : 'no source carries it yet'}${a.fired && a.fired.length ? ' \u00b7 last alert ' + esc(HUNT.ageLabel(a.fired[0].t)) : ''}</span></div><div class="v"><button class="ghost" data-stock="${a.id}" aria-label="Stop watching ${esc(a.name)}">\u00d7</button></div></div>`; }).join('')}
@@ -3502,7 +3535,7 @@ function paintSealed() {
     out.push(`<div class="row" style="gap:8px;flex-wrap:wrap"><button class="row" style="flex:1;min-width:0;text-align:left;padding:0;gap:10px" data-open="${p.id}">
       ${productPic(p)}<div class="nm" style="min-width:0"><b>${esc(p.name)}</b><span>${esc(SEALED_KINDS.find(k => k[0] === SEALED.kindOf(p))?.[1] || '')} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}</span>${tl}</div>
       <div class="v"><b>${money(p.market)}</b>${deltaHtml(p, { pctOnly: true })}</div></button>
-      <button class="ghost" data-stock="${p.id}" aria-label="${STOCK.has(p.id) ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${STOCK.has(p.id)}" style="flex:0 0 auto;padding:8px 10px;${STOCK.has(p.id) ? 'color:var(--brass);border-color:var(--brass)' : ''}">${STOCK.has(p.id) ? '\u25cf' : '\u25cb'}<span style="display:block;font-size:10px;line-height:1.1;margin-top:2px">${STOCK.has(p.id) ? 'watching' : 'alert'}</span></button>${buyChips(p)}</div>`);
+      <button class="ghost" data-stock="${p.id}" aria-label="${STOCK.has(p.id) ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${STOCK.has(p.id)}" style="flex:0 0 auto;padding:8px 10px;${STOCK.has(p.id) ? 'color:var(--brass);border-color:var(--brass)' : ''}">${STOCK.has(p.id) ? '\u25cf' : '\u25cb'}<span style="display:block;font-size:12px;line-height:1.1;margin-top:2px">${STOCK.has(p.id) ? 'watching' : 'alert'}</span></button>${buyChips(p)}</div>`);
     }
   }
   $('#sealedList').innerHTML = out.join('') || `<div class="empty">Nothing matches.</div>`;
@@ -4362,11 +4395,12 @@ function sparkOn(cv, series, kind = 'record') {
   const vals = series.map(s => s[1]); const lo = Math.min(...vals), hi = Math.max(...vals), span = hi - lo || 1;
   const pt = (i, v) => [8 + (w - 16) * (i / Math.max(1, series.length - 1)), h - 8 - (h - 16) * ((v - lo) / span)];
   x.beginPath(); series.forEach((s, i) => { const [px, py] = pt(i, s[1]); i ? x.lineTo(px, py) : x.moveTo(px, py); });
-  x.strokeStyle = '#C9A24A'; x.lineWidth = 2; x.lineJoin = 'round';
+  const acc = TOK('--brass', '#C9A24A');
+  x.strokeStyle = acc; x.lineWidth = 2; x.lineJoin = 'round';
   if (kind === 'estimate') x.setLineDash([6, 5]);
   x.stroke(); x.setLineDash([]);
   const [lx, ly] = pt(series.length - 1, vals[vals.length - 1]);
-  x.fillStyle = '#C9A24A'; x.beginPath(); x.arc(lx, ly, 3.5, 0, 7); x.fill();
+  x.fillStyle = acc; x.beginPath(); x.arc(lx, ly, 3.5, 0, 7); x.fill();
 }
 
 /* ---- the live loop ------------------------------------------------------ */
@@ -4529,7 +4563,7 @@ function openPicker(number, r, photo) {
     if (p.prov) bits.push(p.prov);
     if (p.award) bits.push(p.award);
     return `<button class="opt${i === 0 ? ' best' : ''}" data-pick="${p.id}">
-      <div class="oa"><div class="ph" style="font-size:9px;color:var(--dim2)">${esc(TREAT[p.treat] === 'Base' ? '' : (TREAT[p.treat] || ''))}<br>${esc((s.abbr || '').slice(0, 8))}</div>${refArt(p)}</div>
+      <div class="oa"><div class="ph" style="font-size:12px;color:var(--dim2)">${esc(TREAT[p.treat] === 'Base' ? '' : (TREAT[p.treat] || ''))}<br>${esc((s.abbr || '').slice(0, 8))}</div>${refArt(p)}</div>
       <div class="oi"><b>${esc(bits.join(' \u00b7 '))}</b>
         <span>${esc(s.abbr || s.name || '')}${faceHint ? ' \u00b7 ' + faceHint : ''}${p.sameart
           ? ' \u00b7 <span style="color:var(--gold)">looks identical to another option</span>'
@@ -4564,7 +4598,7 @@ function openDetail(id) {
   $('#dSub').textContent = [s.name, p.rarity, p.num, p.prov].filter(Boolean).join(' \u00b7 ');
   $('#dFinish').textContent = p.sub || 'Normal';
   $('#dWant').textContent = WANT.has(p.num) ? 'On your want list \u2014 remove' : 'Want this card';
-  $('#dArt').innerHTML = `<div class="ph" style="font-size:10px">${esc(p.num)}</div>${refArt(p)}`;
+  $('#dArt').innerHTML = `<div class="ph" style="font-size:12px">${esc(p.num)}</div>${refArt(p)}`;
   const stats = [];
   if (p.type) stats.push([(TYPE_GLYPH[p.type] ? G(TYPE_GLYPH[p.type], 14) + ' ' : '') + esc(p.type), '']);
   if (p.cost != null && p.cost !== '') stats.push([G('don', 14) + ' ' + esc(p.cost), 'cost']);

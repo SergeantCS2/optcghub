@@ -454,16 +454,21 @@ if (puppeteer) {
   /* Take 70: the third mode draws -- the knob lands on Hunt, the Sealed
      screen has rows, the palette applies. */
   const hunt = await page.evaluate(() => {
-    const V = window.VAULT; V.MODE.set('hunt', true);
-    return new Promise(res => setTimeout(() => res((() => {
-    const knob = document.querySelector('#modeSlider .knob').getBoundingClientRect();
-    const btn = document.querySelector('#modeSlider [data-mode="hunt"]').getBoundingClientRect();
-    return { knobUnderHunt: Math.abs((knob.left + knob.width / 2) - (btn.left + btn.width / 2)) < 12,
-             rows: document.querySelectorAll('#sealedList [data-open]').length, headers: document.querySelectorAll('#sealedList [data-setfold]').length,
-             bg: getComputedStyle(document.body).backgroundColor,
-             navShown: !document.querySelector('#navHunt').hidden,
-             screenOn: document.querySelector('#sealed').classList.contains('on') };
-    })()), 350));   // the knob animates for 220 ms; measure it at rest
+    /* landmine 143: measure the knob AT REST -- after its slide ends, not a
+       fixed 350 ms after the switch, which a busy machine spends repainting
+       Sealed before the 220 ms slide has even begun */
+    const V = window.VAULT; const k = document.querySelector('#modeSlider .knob');
+    const measure = () => {
+      const knob = k.getBoundingClientRect();
+      const btn = document.querySelector('#modeSlider [data-mode="hunt"]').getBoundingClientRect();
+      return { knobUnderHunt: Math.abs((knob.left + knob.width / 2) - (btn.left + btn.width / 2)) < 12,
+               offset: Math.round((knob.left + knob.width / 2) - (btn.left + btn.width / 2)),
+               rows: document.querySelectorAll('#sealedList [data-open]').length, headers: document.querySelectorAll('#sealedList [data-setfold]').length,
+               bg: getComputedStyle(document.body).backgroundColor,
+               navShown: !document.querySelector('#navHunt').hidden,
+               screenOn: document.querySelector('#sealed').classList.contains('on') }; };
+    return new Promise(res => { let done = false; const fin = () => { if (!done) { done = true; setTimeout(() => res(measure()), 30); } };
+      k.addEventListener('transitionend', fin, { once: true }); setTimeout(fin, 2000); V.MODE.set('hunt', true); });
   });
   ok('Hunt: the slider knob sits under Hunt and the mode\'s nav and screen are on', hunt.knobUnderHunt && hunt.navShown && hunt.screenOn, JSON.stringify(hunt));
   ok('Hunt: the Sealed screen draws set headers and the newest sets\' rows (folded since take 81)', hunt.rows >= 3 && hunt.headers >= 10, `${hunt.rows} rows, ${hunt.headers} set headers`);

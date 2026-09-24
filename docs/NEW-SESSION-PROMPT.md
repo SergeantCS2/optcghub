@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 104.* Paste the block between the rules into a new session
+*Current as of take 106.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -82,6 +82,13 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
   them in order with his results (his rule, take 94).
 
 **What is in flight when you arrive:**
+
+- **The UI series (A42), the UI/UX session's:** take 106 laid the design
+  tokens every later UI take uses (type roles, spacing, radii, semantic
+  colours per palette, a z scale); then one header on every screen, the
+  art layer, the voice, polish. `docs/UI-AUDIT.md` is its checklist, with
+  line numbers. Touch the UI only to fix what is broken, and read the
+  tokens in `:root` before writing a size or a colour.
 
 - **The Priorities block at the top of `AGENDA.md`** is the live order: the
   owner's items (the diagnostics paste, D20–D22, shop URLs, D7, D16, the

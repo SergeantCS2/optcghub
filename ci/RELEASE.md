@@ -1,4 +1,4 @@
-# OP TCG Hub — take 104
+# OP TCG Hub — take 106
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,14 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 106:** easier to read, the first of a series of design
+updates. Prep & Play's red text is brighter on its cards; nothing in the
+app is smaller than 12 points; highlights, warnings and the deck's cost
+chart take each mode's own colours; the mode slider's knob sits evenly
+under every mode; the filter's price boxes no longer zoom the screen;
+the empty collection shows its picture again, and the Banish keyword no
+longer carries a blank space. Nothing you have saved changes.
 
 **New at take 104:** two honest lines. The self-test, run in a browser on
 a computer with no camera, now says so and skips instead of failing —
