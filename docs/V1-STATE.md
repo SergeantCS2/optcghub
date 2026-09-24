@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 104
+# V1-STATE — what exists, as of take 105
 
-*Current as of take 104.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 105.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -105,6 +105,15 @@ the pattern is real and the missing pictures are not there either. The
 owner's image address from TCGplayer's own page is the next measurement;
 the phone's picture is the proof.
 
+**Harness totals, take 105:** smoke.mjs 706 assertions (9 new: the
+fresh-boot stack holds Home, a lone card's Back goes home and reports
+handled, a lone Home's Back is the one unhandled case and Hunt's Sealed
+likewise, `notifyPermission` on an empty answer is `unknown` and still
+asks with granted/denied controls, the `unknown` toast — four watched to
+fail on the take-104 build); shrink.py 15 controls (+4, the real take-104
+mapping among them); the look 2 steps × 2 viewports, the cover measured
+411×960 @2.625; render 105 of 106 in local Chrome.
+
 **Harness totals, take 104:** smoke.mjs 697 assertions (6 new: the three
 camera verdicts, the skip-with-reason through the self-test's own check,
 the effects line's text, the Diagnostics line calling it — all watched to
@@ -187,7 +196,7 @@ reproductions, outside the harness).
 | Importing from other apps (Collectr) | needs one real exported file; guessing the format would mis-key printings | A31 |
 | Colour direction | D15; parked, not a priority | A24 |
 | Icon motif | D7; the take-16 placeholder is back by request | A16 |
-| A14 ML Kit language trim (3.8 MB raw of models, plus R8 on 23 MB of dex) | BUILT take 103; the Fold's self-test (the ML Kit line) is the proof, the take-103 build log the measurement | A14 |
+| A14 ML Kit language trim (3.8 MB raw of models, plus R8 on 23 MB of dex) | **PROVEN take 104 on the Fold** (the self-test's OCR read "OP01-016" on the shrunk build); the same run found R8 had dropped the notifications plugin's permission annotation (landmine 141), fixed at take 105 | A14 |
 | Backlog 8.9–8.11, 8.13–8.16 | not scheduled; 8.12 done take 42 | ROADMAP Phase 8 |
 | Other games | measured, one-app-per-game or packs; not before Play | A19 |
 | Simulator step (2), the rest | more whole templates with tests; Event timings; chained sentences — coverage is 6.1% and grows only by whole templates | A23 |

@@ -1,4 +1,117 @@
-# HANDOFF — through Take 104
+# HANDOFF — through Take 105
+
+## Take 105 — 2026-09-24 — the Fold's first run of the shrunk build: A14 PROVEN; Back from a card on a fresh launch minimized the app (the boot never pushed Home); the notifications permission came back undefined (R8 stripped the plugin's permission annotation); the guide's flag came back with the restored data
+
+Opened before any code (PROTOCOL §6). The owner installed take 104 on
+the Fold (Android 16, SM-F966U1, "a fresh install") and pasted
+Diagnostics at 02:30 UTC with two notes: "major regression in back
+button" — open the app, tap a card under Collect from the top-value or
+set-completion rows, press Back, "the app minimizes then reopens"; it
+"did start to work properly" after closing and reopening a few times —
+and "the tutorial didn't popup for me".
+
+### Measured first (his report, read line by line)
+
+- **A14 PROVEN on the Fold:** `PASS OCR reads a code the app drew (ML
+  Kit) — read "OP01-016"` on the R8 + Latin-only build; camera 1; Backup
+  round-trip, Share, Ads (Google test units), Sync — 16 of 17 PASS, 0
+  skipped. `native: true`, six plugins.
+- **The one FAIL:** `Notifications permission — Cannot read properties of
+  undefined (reading 'display')`. Capacitor's `Plugin.checkPermissions`
+  resolves with *no data* when `getPermissionStates()` is empty (its own
+  comment: "if no permissions are defined on the plugin, resolve
+  undefined"), and that map is built from the plugin class's
+  `@CapacitorPlugin(permissions = [@Permission(strings = [POST_NOTIFICATIONS],
+  alias = "display")])`. The take-104 mapping (a Release asset, read on
+  this VM): `com.getcapacitor.annotation.Permission -> w2.c`,
+  `CapacitorPlugin -> w2.b` — R8 renamed the annotation classes, so
+  nothing kept them; R8 drops annotation instances whose annotation
+  class is not kept, and the plugin classes still register because
+  Capacitor's own keep rule names `@CapacitorPlugin` on them, while the
+  nested `@Permission` values go. INFERRED from the mapping and the
+  source; the Fold's next self-test is the proof. **Consequence on takes
+  103 and 104:** `notifyPermission()` catches the TypeError and returns
+  `denied`, so every reminder toasts "notifications are off" and falls
+  back to an in-app note. A real regression the size take introduced and
+  the phone's self-test caught — exactly what it is for.
+- **Back, the cause:** the report's stack line begins `detail > home > …`.
+  On a fresh launch in Collect, `boot()` calls `MODE.set(cur, false)` and
+  skips `go('home')` for Collect (take 81's guard against Hunt reopening
+  on Collect's Home), so Home is never on the stack; opening a card
+  pushes `detail` alone; the hardware Back finds nothing below,
+  `NAV.back()` returns false and the handler calls `APP.minimizeApp()`.
+  "It started working" once a tab or mode tap had pushed Home. Every
+  back test in smoke and the look seeded `V.go('home')` first (ten
+  places), so the harness never met an empty stack — landmine 140. The
+  "reopens" after the minimize is not in the code (Android 16's
+  predictive-back peek is the likely picture); the minimize is, and the
+  fix removes it.
+- **The guide:** the "fresh install" came back with the zip (48329), 71
+  collection items and 44 Hunt runs — Android restored the app's data
+  with the reinstall (`allowBackup`, and by rule 5 the collection is
+  meant to survive), and the guide's seen-flag came back with it. Not a
+  defect; "Show the guide again" is on More. **Ruled out:** turning
+  backup off (rule 5); showing the guide on every install regardless
+  (APEX A129: an extra tap beats a first-timer with no explanation, but
+  a returning collector with his data is not a first-timer).
+- **The cover viewport, MEASURED:** 411×960 @2.625 (the take-98 ask,
+  answered by the report's device block); the inner screen stays
+  INFERRED until a report from the open phone.
+- **Ruled out:** a Capacitor or Android-16 back-handling fault — the App
+  plugin's `OnBackPressedCallback` survived R8 (its `handleOnBackPressed`
+  is in the mapping) and fires the JS listener; the minimize is the
+  app's own `minimizeApp()` on an empty stack.
+
+### Built
+
+- `src/app.html`: `boot()` pushes the mode's home for every mode
+  (`go(MODE.home[cur])`, which is what take 81's guard was reaching for);
+  `NAV.back()` with one entry that is not the mode's home goes home and
+  returns true — the app minimizes only from Home; `notifyPermission()`
+  returns `unknown` when the plugin answers without a state and still
+  asks; the reminder toasts on `unknown` say the reminder is set and to
+  check the phone's notification settings if none arrives; the self-test's
+  Notifications line names an empty answer instead of throwing.
+- `ci/shrink.py` v2: keeps Capacitor's annotation classes and the whole
+  Capacitor and plugin layer unshrunk and unrenamed (the bulk of the dex
+  was play-services, ML Kit and AndroidX, which keep their own rules);
+  `check_mapping()` refuses a release mapping that renamed
+  `com.getcapacitor.annotation.Permission` — watched to fail against the
+  real take-104 mapping; `ci/apk.sh` runs it on the build's mapping.
+- `tools/look/steps.mjs`: `VIEWPORTS.cover` measured; take-105 steps: a
+  fresh open, a card from Home's top-value row, the back handler's
+  sequence → Home and no minimize, pictured.
+- `tools/smoke.mjs`: the fresh-boot stack holds Home; back from a lone
+  `detail` goes home; back from a lone Home returns false (that is the
+  minimize); `notifyPermission` on an undefined answer; the mapping check
+  on a renamed and on a kept line.
+- Tests: smoke 706 (9 new, four of them watched to fail on the take-104
+  build — the fresh-boot stack empty, the lone card's Back unhandled
+  `back=false top=detail`, `notifyPermission` answering `denied` with no
+  ask, no `unknown` toast); shrink.py 15 controls (+4: a renamed
+  annotation refused, a kept one passes, a stripped one refused, and the
+  REAL take-104 mapping refused — watched to fail with a NameError before
+  `check_mapping` existed); render 105 of 106 in local Chrome; local
+  smoke's two history assertions fail on the sidecar mismatch, the
+  runner's check counts. Two harness things found on the way: the stub
+  defined `scrollTo` only in later sections, so a boot that navigates
+  crashed it (defined from the start now — a browser always has it);
+  the take-81 assertion pinned the old boot line as a source regex and
+  was rewritten to pin the new push and refuse the old guard.
+- **The look, take 105 (4 of 4 at both viewports, the cover now 411×960
+  @2.625 as measured, the PNGs to the owner):** a fresh open has Home on
+  the stack (`boot: home`); a card from Home's top-value row, then
+  history Back — the same handler as the phone's button — lands on Home
+  with no error record. The take-98 step seeded `V.go('home')` first;
+  this one does not, on purpose.
+
+### DEFERRED this cycle
+
+- The "reopens" after the minimize: named, not reproduced here; the fix
+  removes the minimize, and the owner's next Back is the proof.
+- The Fold's self-test on take 105: Notifications permission PASS is the
+  proof of the keep rules (the pin, the OCR line and the rest stay).
+- D11 the day the unit IDs arrive; A41 his list; A32 a new session.
 
 ## Take 104 — 2026-09-24 — three fixes from the owner's own Diagnostics run: a browser without a camera skips with its reason, the effects line says what it counts, the size table keeps the R8 map out of the bundle's raw total
 

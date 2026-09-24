@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 104.* Ranked by blocking-ness, not by interest.
+*Current as of take 105.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -36,12 +36,14 @@ owner, 24 Sept, take 104).** This session changes the UI only when
 something is broken or off course; refinement is that session's.
 
 **Mine, in order**
-1. **Take 104 — three fixes from the owner's Diagnostics run** (in
-   flight; 103 merged 01:20 and released 01:28, APK 34.9 → 26.4 MB): the
-   camera line skips with its reason in a browser without one, the
-   effects line says what it counts, the size table keeps the R8 map out
-   of the bundle's raw total. A14 stays BUILT + MEASURED until the Fold's
-   self-test passes on an installed APK.
+1. **Take 105 — the Fold's first run of the shrunk build** (in flight;
+   104 merged 02:13 and released 02:19): Back from a card on a fresh
+   launch goes home, never out (landmine 140: the boot never pushed
+   Home); the notifications permission on the shrunk build (landmine
+   141: R8 dropped the plugin's permission annotation — the keep set,
+   a mapping readback, an `unknown` path in the app); the cover viewport
+   measured. **A14 is PROVEN** on the Fold (the OCR read on the R8 +
+   Latin-only build).
 2. **A41** — waits on the owner's list of the parts and the source;
    then one take per source, measured on the runner first.
 2. **A39 item 3 (take 100, measured and closed by the owner's check),
@@ -2138,7 +2140,16 @@ he will send more screenshots.
   the app should render in the six colours or stay teal-on-black with colour
   accents; whether the splash is the icon large or something else.
 
-## A14 — Trimming the ML Kit language models · BUILT + MEASURED take 103, the Fold's proof pending
+## A14 — Trimming the ML Kit language models · PROVEN take 104 on the Fold
+
+*Take 105 addendum — PROVEN:* the owner's take-104 install on the Fold,
+self-test `PASS OCR reads a code the app drew (ML Kit) — read "OP01-016"`,
+camera 1, every plugin present, 16 of 17. **The one FAIL is the size
+take's own regression** — `Notifications permission` resolved undefined
+because R8 dropped the plugin's `@Permission` annotation (landmine 141);
+take 105 keeps the Capacitor layer whole, reads the mapping back and
+treats an empty answer as `unknown`. The proof of that fix is the same
+line on take 105.
 
 *Take 103, merged — MEASURED (run 52, and the released files on the
 session VM, identical):* APK 34.9 → **26.4 MB** file, 58.0 → **36.9 MB**
