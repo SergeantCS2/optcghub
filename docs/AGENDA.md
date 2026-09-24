@@ -42,17 +42,23 @@ owner's call, take by take.
 
 **Mine, in order**
 1. **A32** -- take 112 (in flight): Southern Hobby, the second
-   distributor. Next, the distributor state timeline from the history
+   distributor, and at the owner's word distributor info that never
+   floods a row. Next, the distributor state timeline from the history
    rows (GTS's since take 94, Southern Hobby's from this merge); the
    restock pattern sentence once a fortnight of hourly history exists on
    Pages; GameStop, Walmart, Meijer and eBay need a residential IP, so
    they wait for the sideload build.
-2. **A41** -- waits on the owner's list of the parts and the source; then
+2. **Take 113 -- the owner's icon (D7), and more, from the graphic design
+   session** (the owner: "we'll be pulling in a new icon and more"). It is
+   on the design branch `…/compassionate-mayer-acc24r`, commit `93481b3`, with
+   its hand-off in `design/d7-icons/SHIP.md`: vet it, fold it in, and write
+   its drafts (their landmine "165" becomes 170).
+3. **A41** -- waits on the owner's list of the parts and the source; then
    one take per source, measured on the runner first.
-3. **A23** the sim's tail -- modal effects, ordering, protection, the
+4. **A23** the sim's tail -- modal effects, ordering, protection, the
    opponent's hidden choices -- one mechanism per take, when wanted.
-4. **A31** Collectr import, the day a real exported file exists.
-5. The standing offer: the release-notes trim.
+5. **A31** Collectr import, the day a real exported file exists.
+6. The standing offer: the release-notes trim.
 
 **Closed since the take-88 audit:** A36 the set chips (take 90), A37 More
 unreachable (take 91), A38 (takes 95-97), A39 (takes 98 and 100), A40 the
@@ -1130,6 +1136,12 @@ same 4 as the fixtures.
 its allocation flag (on every presell); its prices (behind a login); one
 row per product across the two distributors in "not in the catalogue
 yet" (only a set code joins them).
+
+**The owner's word on the pictures:** "I don't want them flooding the
+screen." A distributor on a row is now one short line (its name and its
+state) that opens the product's page at its Distributor info. The panels
+and the not-in-the-catalogue list sit under closed "Distributor info"
+drop-downs, and Where to buy lists sellers to collectors only (UI-AUDIT §8).
 
 **Next:** the state timeline from the history rows.
 

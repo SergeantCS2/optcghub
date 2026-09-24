@@ -27,7 +27,7 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
 4. Read `docs/HANDOFF.md`, newest entry first, back to take 80 at least. Every
    take ends with a DEFERRED list; the union of those lists is the work.
 5. Read `docs/LANDMINES.md` §0 (the index) and skim §1. When you are about to
-   do something, grep the index first. 168 of them; each is a real failure.
+   do something, grep the index first. 169 of them; each is a real failure.
 6. Read `docs/AGENDA.md`: the Priorities block at the top is the live order.
 
 **The discipline, which the gate enforces:**
@@ -123,7 +123,21 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
     (landmine 167).
   - It is not a stock-alert source (it has no stock words).
   - One live fetch from the VM read 20 of 20 and matched 4.
+  - At the owner's word, distributor info never floods a row. Each
+    distributor is one short line that opens the product's page at its
+    Distributor info, and the long text sits under closed drop-downs
+    (UI-AUDIT §8).
   - A32's next is the distributor state timeline from the history rows.
+
+- **Take 113 -- the owner's icon (D7), and more, from the graphic design
+  session:**
+  - It is on the design branch `…/compassionate-mayer-acc24r`, commit `93481b3`
+    (`git branch -r --contains 93481b3` names it).
+  - `design/d7-icons/SHIP.md` is the hand-off. It covers what it changes,
+    what was verified, what only the runner and the Fold can show, the
+    reversal of landmines 30 and 31 and A16 at the owner's word, and draft
+    ledger text.
+  - Vet it and fold it in. Its draft landmine "165" becomes 170.
 
 - **The Priorities block at the top of `AGENDA.md`** is the live order: the
   owner's items (the diagnostics paste, D20–D22, shop URLs, D7, D16, the

@@ -19,11 +19,15 @@ Updates arrive through Play like any app. Your data stays across updates.
 
 ---
 
-**New at take 112:** Hunt reads a second distributor, Southern Hobby.
-Under a sealed product and on Releases you can see when shops' orders
-close with it, its release and prerelease days, and whether it is sold in
-shops only. A product too new to have a photo shows its set's code instead
-of an empty white card. Nothing you have saved changes.
+**New at take 112:** Hunt reads a second distributor, Southern Hobby, beside
+GTS Distribution. Under a sealed product each distributor is one short line
+-- "Southern Hobby · orders closed May 29" -- and tapping it opens the
+product's page at its Distributor info: when shops' orders close, the
+release and prerelease days, whether it is sold in shops only, and a link
+to the distributor's own page. The longer notes sit under a closed
+"Distributor info" on Sealed and on Releases. A product too new to have a
+photo shows its set's code instead of an empty white card. Nothing you have
+saved changes.
 
 **New at take 111:** the redesign's last pass. Every screen was looked
 at on both of the Fold's screens, and what it found is put right: a

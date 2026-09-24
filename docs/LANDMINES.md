@@ -180,6 +180,7 @@ Start here. Do not read top to bottom.
 | A render check reads an empty feed it has just set | **166** |
 | A distributor's case is matched to the single box | **167** |
 | A new product's page shows an empty white card | **168** |
+| A render check's real tap does nothing | **169** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -2324,6 +2325,15 @@ stood as an empty white card: its placeholder carried the card number a
 product does not have. Rule: style the failed picture first. White goes only
 under a photo that arrived (`:has(img.ref.ok)`), and a product's placeholder
 carries its set's code, as its row tile does.
+
+**169. A real click lands on whatever covers its target.** Take 112's render
+checks were the first to tap Hunt for real, and their taps did nothing. On
+entering Hunt the app asks for a zip once, and that question sheet sat on
+top. In a fresh page the splash sat on top. And a target scrolled only just
+into view sat under the fixed bottom nav. Checks that call the app's
+functions meet none of this. Rule: before a real click, close the overlays
+(`NAV.zipAsked`, `closeAnyOverlay()`) and centre the target. A missing
+target fails its check; it never stops the run.
 
 ## §2 — Inherited from APEX ORV
 

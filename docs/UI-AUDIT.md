@@ -121,6 +121,18 @@ Every screen and sheet at both of the Fold's sizes (`node tools/look.mjs 111`, 3
 - [x] Figures: Set completion counting products and every collection's value; a deck's value without its Leader; the binder opening on empty pockets; a cost basis added without the day's reading.
 - [ ] A binder page on the open Fold: three pockets of about 400 px across, so a page of nine needs a scroll there -- pockets near 110 px wide would fit it. A design choice, left to the UI/UX session.
 
+## 8. Distributor info — take 112, the owner's word
+
+After the first pictures of Southern Hobby beside GTS: "I don't want them flooding the screen." Two choices were put to the owner and answered: a short line per distributor, and one closed drop-down for the long text.
+
+- [x] A sealed row carries each distributor as one short line under its buy chips ("GTS Distribution · sold out", "Southern Hobby · orders closed May 29"), a 44 px target that opens the product's page with its Distributor info open. The row's name block carries no distributor text.
+- [x] The distributor panels on Sealed, and Releases' not-in-the-catalogue list, sit under one closed "Distributor info" each, with a line saying what is inside ("2 distributors · checked just now", "17 products not in the catalogue yet · …").
+- [x] A product's page: Where to buy lists sellers to collectors only; the distributors, each with its full words and its own page, are under the page's Distributor info.
+- [x] A day on a short line never breaks ("May" / "17" on Releases, the second look).
+- [ ] The distributors' names verbatim in the not-in-the-catalogue list ("Bandai - One Piece Card Game: …").
+- [ ] One product listed by both distributors shows as two rows in that list.
+- [ ] A product with no market price reads "— · market" on its page.
+
 ## Found in passing, routed elsewhere
 
 - Bulk delete removes a card's lines in every portfolio and condition, and its confirm values the selection without quantity (2966-2972). A data-loss risk (AGENTS rule 5), outside the UI series: offered to the owner as its own task. *(Fixed at take 110, landmine 155: Delete, Move and Condition take the lines on screen -- the collection, the star, the filter, the search -- and the bar and the confirm count them with their quantities.)*

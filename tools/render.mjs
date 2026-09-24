@@ -317,26 +317,38 @@ if (puppeteer) {
   execSync(`python3 tools/hunt.py --from-fixtures --out ${gtsFx}`, { cwd: ROOT, stdio: 'pipe' });
   const F94 = JSON.parse(fs.readFileSync(gtsFx, 'utf8'));
   await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
+  /* take 112, the owner's word ("I don't want them flooding the screen"): the panels sit under a closed Distributor
+     info, and a row carries each distributor as one short line -- both drawn and tapped here in Chrome */
   const g94 = await page.evaluate(F => {
-    const V = window.VAULT; V.HUNT.feed = F; V.HUNT.setZip(''); V.MODE.set('hunt', true);
+    const V = window.VAULT; V.HUNT.feed = F; V.HUNT.setZip(''); V.NAV.zipAsked = true; V.MODE.set('hunt', true); V.DISTF.open.clear();
+    while (V.closeAnyOverlay()) {}   /* the zip question, asked once on entering Hunt, would take the taps below */
     for (const id of Object.keys(V.HUNT.distByCatalogId())) { const p = V.CAT.byId.get(+id); if (p) { V.SEALED.closed.delete(p.set); V.SEALED.open.add(p.set); } }
     V.paintSealed();
-    const panel = [...document.querySelectorAll('#sealedList .panel h3')].find(h => h.textContent === 'GTS Distribution');
-    const line = [...document.querySelectorAll('#sealedList [data-open] span')].find(s => /^GTS Distribution/.test(s.textContent));
-    const row = line && line.closest('[data-open]'); const r = row && row.getBoundingClientRect(); const l = line && line.getBoundingClientRect();
-    return { panel: !!panel && panel.getBoundingClientRect().height > 0, line: !!line, text: line && line.textContent.slice(0, 60), inRow: !!r && l.left >= r.left - 1 && l.right <= r.right + 1 && l.height > 0,
+    const fold = document.querySelector('#sealedList [data-distfold="sealed"]'); const fb = fold && fold.getBoundingClientRect();
+    const line = [...document.querySelectorAll('#sealedList .dline')].find(s => /^GTS Distribution · /.test(s.textContent));
+    const row = line && line.closest('.row'); const r = row && row.getBoundingClientRect(); const l = line && line.getBoundingClientRect();
+    return { fold: !!fold && fb.height >= 44 && fold.getAttribute('aria-expanded') === 'false', line: !!line, text: line && line.textContent.trim().slice(0, 60), inRow: !!r && l.left >= r.left - 1 && l.right <= r.right + 1 && l.height >= 44,
              scroll: document.body.scrollWidth, vw: document.documentElement.clientWidth };
   }, F94);
-  ok('Hunt: the distributor panel draws, and a matched row\'s distributor line draws inside its row with no sideways scroll', g94.panel && g94.line && g94.inRow && g94.scroll <= g94.vw + 1, JSON.stringify(g94));
-  const r94 = await page.evaluate(() => { const V = window.VAULT; V.go('releases'); V.paintReleases();
-    const h = [...document.querySelectorAll('#relList .panel h3')].find(x => x.textContent === 'At the distributors, not in the catalogue yet');   /* take 112: two distributors */
-    const rows = h ? [...h.parentElement.querySelectorAll('.row')] : []; const rr = rows.map(x => x.getBoundingClientRect());
-    return { panel: !!h && h.getBoundingClientRect().height > 0, rows: rows.length, drawn: rr.every(b => b.height > 0), scroll: document.body.scrollWidth, vw: document.documentElement.clientWidth }; });
-  ok('Releases: the not-in-the-catalogue-yet panel draws its rows without sideways scroll (GTS\'s three and, from take 112, Southern Hobby\'s)', r94.panel && r94.rows > 3 && r94.drawn && r94.scroll <= r94.vw + 1, JSON.stringify(r94));
+  ok('Hunt: the Distributor info draws closed, and a matched row\'s distributor line draws inside its row as a 44 px target with no sideways scroll', g94.fold && g94.line && g94.inRow && g94.scroll <= g94.vw + 1, JSON.stringify(g94));
+  /* a click target that is missing fails its check below; it never stops the run */
+  const tap = async sel => { if (!(await page.evaluate(q => { const e = document.querySelector(q); if (e) e.scrollIntoView({ block: 'center' }); return !!e; }, sel))) return false; await page.click(sel); await new Promise(r => setTimeout(r, 150)); return true; };   // centred, clear of the fixed nav: the click lands on what it names
+  await tap('#sealedList [data-distfold="sealed"]');
+  const o94 = await page.evaluate(() => { const f = document.querySelector('#sealedList [data-distfold="sealed"]'); const box = f && f.closest('.panel'); const secs = box ? [...box.querySelectorAll('.dsec')] : []; const b = box && box.getBoundingClientRect();
+    return { open: !!f && f.getAttribute('aria-expanded') === 'true', secs: secs.map(x => (x.querySelector('b') || {}).textContent).join(), inside: secs.length > 0 && secs.every(x => { const r = x.getBoundingClientRect(); return r.height > 0 && r.left >= b.left - 0.5 && r.right <= b.right + 0.5; }),
+             scroll: document.body.scrollWidth, vw: document.documentElement.clientWidth }; });
+  ok('...a tap opens it: GTS Distribution\'s and Southern Hobby\'s sections draw inside the panel', o94.open && o94.secs === 'GTS Distribution,Southern Hobby' && o94.inside && o94.scroll <= o94.vw + 1, JSON.stringify(o94));
+  await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.DISTF.open.clear(); V.go('releases'); V.paintReleases(); });
+  const r94 = await page.evaluate(() => { const f = document.querySelector('#relList [data-distfold="releases"]'); return { fold: !!f && f.getAttribute('aria-expanded') === 'false' && !document.querySelector('#relList .dbody') }; });
+  await tap('#relList [data-distfold="releases"]');
+  const r94b = await page.evaluate(() => { const f = document.querySelector('#relList [data-distfold="releases"]'); const box = f && f.closest('.panel');
+    const rows = box ? [...box.querySelectorAll('.dbody .row')] : []; const rr = rows.map(x => x.getBoundingClientRect());
+    return { open: !!f && f.getAttribute('aria-expanded') === 'true', rows: rows.length, drawn: rr.every(b => b.height > 0), scroll: document.body.scrollWidth, vw: document.documentElement.clientWidth }; });
+  ok('Releases: the not-in-the-catalogue list sits under a closed Distributor info; a tap opens it and its rows draw without sideways scroll (GTS\'s and Southern Hobby\'s)', r94.fold && r94b.open && r94b.rows > 3 && r94b.drawn && r94b.scroll <= r94b.vw + 1, JSON.stringify({ r94, r94b }));
   const c94 = await page.evaluate(F => { const V = window.VAULT; const f = JSON.parse(JSON.stringify(F)); delete f.sources.gts; delete f.sources.southern; V.HUNT.feed = f; V.paintSealed(); V.paintReleases();   /* take 112: both sources out */
-    const a = [...document.querySelectorAll('#sealedList .panel h3')].some(h => h.textContent === 'GTS Distribution' || h.textContent === 'Southern Hobby'); const b = /At the distributor/.test(document.querySelector('#relList').innerHTML);
-    V.HUNT.feed = null; V.MODE.set('collect', true); return { a, b }; }, F94);
-  ok('negative control: without the source in the feed, neither distributor panel draws', !c94.a && !c94.b, JSON.stringify(c94));
+    const a = !!document.querySelector('#sealedList [data-distfold]') || !!document.querySelector('#sealedList .dline'); const b = !!document.querySelector('#relList [data-distfold]') || /At the distributor/.test(document.querySelector('#relList').innerHTML);
+    V.HUNT.feed = null; V.DISTF.open.clear(); V.MODE.set('collect', true); return { a, b }; }, F94);
+  ok('negative control: without the sources in the feed, no Distributor info and no distributor line draws', !c94.a && !c94.b, JSON.stringify(c94));
   await new Promise(r => setTimeout(r, 200));
   /* take 95 -- landmine 135: a tapped release SHOWS Sealed with that set's
      products drawn; the sealed sheet draws no condition segment and draws the
@@ -369,10 +381,11 @@ if (puppeteer) {
   }
   await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
   const s96 = await page.evaluate(() => { const V = window.VAULT; const g = Object.keys(V.HUNT.distByCatalogId())[0]; const p = V.CAT.byId.get(+g); V.openDetail(p.id); V.go('detail');
-    const panel = document.querySelector('#dBuy').getBoundingClientRect(); const rows = document.querySelectorAll('#dBuyList .row').length;
-    const card = V.CAT.rows.find(x => !x.sealed && x.market > 0); V.openDetail(card.id); const panel2 = document.querySelector('#dBuy').getBoundingClientRect();
-    V.HUNT.feed = null; V.MODE.set('collect', true); return { h: Math.round(panel.height), rows, h2: Math.round(panel2.height) }; });
-  ok('the sealed sheet draws the Where to buy panel with its rows; the card sheet draws none', s96.h > 0 && s96.rows >= 2 && s96.h2 === 0, JSON.stringify(s96));
+    const panel = document.querySelector('#dBuy').getBoundingClientRect(); const rows = document.querySelectorAll('#dBuyList .row').length; const box = () => { const d = document.querySelector('#dDist'); return d ? d.getBoundingClientRect() : { height: 0 }; }; const dist = box();
+    const card = V.CAT.rows.find(x => !x.sealed && x.market > 0); V.openDetail(card.id); const panel2 = document.querySelector('#dBuy').getBoundingClientRect(); const dist2 = box();
+    V.HUNT.feed = null; V.MODE.set('collect', true); return { h: Math.round(panel.height), rows, d: Math.round(dist.height), h2: Math.round(panel2.height), d2: Math.round(dist2.height) }; });
+  /* take 112: the distributors left Where to buy for the page's own Distributor info (the owner's word) */
+  ok('the sealed sheet draws the Where to buy panel with its rows and, for a product a distributor lists, Distributor info; the card sheet draws neither', s96.h > 0 && s96.rows >= 1 && s96.d >= 44 && s96.h2 === 0 && s96.d2 === 0, JSON.stringify(s96));
   await new Promise(r => setTimeout(r, 200));
   /* take 97 -- Releases: the folded starter-deck row draws and opens on a real
      click; an upcoming countdown draws in a colour that is not the past one;
@@ -1259,32 +1272,64 @@ if (puppeteer) {
   ok('take 111: a Sealed row\'s bell sits on the middle of its row, within 2 px (it hung from the picture\'s foot once the picture was centred)', bell111.clean.length > 0 && bell111.clean.every(d => d <= 2), JSON.stringify(bell111.clean));
   ok('take 111: ...control: the outer row on its baseline puts it well off', bell111.control.some(d => d > 6), JSON.stringify(bell111.control));
 
-  /* ---- take 112 (A32): the second distributor on screen -- both distributors' lines wrap inside their rows at 360 px ---- */
+  /* ---- take 112 (A32): the second distributor on screen, at the owner's word -- one short line per distributor,
+     inside its row and a 44 px target at 360 px; a tap on it lands on the product's Distributor info, open ---- */
   const fx112 = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-112-')), 'feed-fixture.json');   // hunt.py names its sidecars from "feed" (it refuses any other name since take 112)
   execSync(`python3 tools/hunt.py --from-fixtures --out ${fx112}`, { cwd: ROOT, stdio: 'pipe' });
   const feed112 = JSON.parse(fs.readFileSync(fx112, 'utf8'));
   await page.setViewport({ width: 360, height: 915, deviceScaleFactor: 2 });
   const sh112 = await page.evaluate(async F => {
     const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
-    const read = (box) => { const lines = [...document.querySelectorAll(box + ' .nm > span')].filter(s => /^(GTS Distribution|Southern Hobby) · /.test(s.textContent));
-      return { n: lines.length, sh: lines.filter(s => /^Southern Hobby/.test(s.textContent)).length, side: document.documentElement.scrollWidth <= innerWidth + 0.5,
-        inside: lines.every(s => { const r = s.getBoundingClientRect(), row = s.closest('.row').getBoundingClientRect(); return r.left >= row.left - 0.5 && r.right <= row.right + 0.5 && s.scrollWidth <= s.clientWidth + 1; }) }; };
-    /* the fixture feed is set again in the same tick as each paint: entering
-       Hunt syncs the served feed, which lands after the first await and would
-       otherwise replace it (it did, here: n was 0 until this) */
-    V.HUNT.setZip(''); V.MODE.set('hunt', true); await wait(200); V.HUNT.feed = F;
+    const read = (sel) => { const lines = [...document.querySelectorAll(sel)];
+      return { n: lines.length, sh: lines.filter(s => /^Southern Hobby · /.test(s.textContent.trim())).length, side: document.documentElement.scrollWidth <= innerWidth + 0.5,
+        inside: lines.every(s => { const r = s.getBoundingClientRect(), row = s.closest('.row').getBoundingClientRect(); return r.left >= row.left - 0.5 && r.right <= row.right + 0.5 && s.scrollWidth <= s.clientWidth + 1; }),
+        tall: lines.every(s => !s.classList.contains('dline') || s.getBoundingClientRect().height >= 44) }; };
+    /* the fixture feed is set again in the same tick as each paint: entering Hunt syncs the served feed, which lands
+       after the first await and would otherwise replace it (landmine 166) */
+    V.HUNT.setZip(''); V.MODE.set('hunt', true); await wait(200); V.HUNT.feed = F; V.DISTF.open.clear();
     for (const id of Object.keys(V.HUNT.distByCatalogId())) { const p = V.CAT.byId.get(+id); if (p) { V.SEALED.closed.delete(p.set); V.SEALED.open.add(p.set); } }
     while (V.closeAnyOverlay()) {}
-    V.go('sealed'); V.HUNT.feed = F; V.paintSealed(); const sealed = read('#sealedList');
-    V.go('releases'); V.HUNT.feed = F; V.paintReleases(); const rel = read('#relList');
-    const st = document.createElement('style'); st.textContent = '.nm > span[style*="display:block"]{white-space:nowrap!important}'; document.head.appendChild(st);
-    V.HUNT.feed = F; V.paintReleases(); const control = read('#relList'); st.remove();
-    V.HUNT.feed = null; V.MODE.set('collect', true); await wait(200); V.go('home'); return { sealed, rel, control }; }, feed112);
+    V.go('sealed'); V.HUNT.feed = F; V.paintSealed(); const sealed = read('#sealedList .dline');
+    V.go('releases'); V.HUNT.feed = F; V.paintReleases(); const rel = read('#relList [data-browse-set] .nm > span[style*="display:block"]');
+    V.go('sealed'); V.HUNT.feed = F; V.paintSealed();
+    const st = document.createElement('style'); st.textContent = '.dline{min-height:0!important}'; document.head.appendChild(st);
+    const control = read('#sealedList .dline'); st.remove();
+    return { sealed, rel, control }; }, feed112);
+  ok('take 112: at 360 px each distributor is one short line inside its row -- a 44 px target on Sealed -- and neither Sealed nor Releases scrolls sideways',
+     sh112.sealed.sh > 0 && sh112.rel.sh > 0 && sh112.sealed.inside && sh112.rel.inside && sh112.sealed.tall && sh112.sealed.side && sh112.rel.side, JSON.stringify(sh112));
+  ok('take 112: ...control: a line let shrink below 44 px is caught', sh112.control.n > 0 && !sh112.control.tall, JSON.stringify(sh112.control));
+  /* the tap: a real click on a Sealed row's distributor line, then on the same row */
+  await page.evaluate(() => { const l = [...document.querySelectorAll('#sealedList .dline')].find(s => /^Southern Hobby · /.test(s.textContent.trim())); if (l) l.setAttribute('data-probe', '1'); });
+  await tap('#sealedList .dline[data-probe="1"]'); await new Promise(r => setTimeout(r, 300));
+  const land = await page.evaluate(() => { const d = document.getElementById('dDist'), f = d && d.querySelector('[data-distfold="detail"]'), bar = document.querySelector('.modebar').getBoundingClientRect();
+    if (!d) return { on: 'no #dDist' }; const t = d.getBoundingClientRect().top; return { on: [...document.querySelectorAll('.screen.on')].map(e => e.id).join(), open: !!f && f.getAttribute('aria-expanded') === 'true', names: [...d.querySelectorAll('.dsec .nm b')].map(b => b.textContent).join(), top: Math.round(t), bar: Math.round(Math.max(0, bar.bottom)), vh: innerHeight, links: d.querySelectorAll('.dsec a.ghost[target="_blank"]').length }; });
+  ok('take 112: a tap on a row\'s distributor line opens its page at Distributor info -- open, clear of the mode bar and on screen, each distributor with its own page to open',
+     land.on === 'detail' && land.open && /Southern Hobby/.test(land.names) && land.top >= land.bar - 1 && land.top < land.vh * 0.6 && land.links === land.names.split(',').length, JSON.stringify(land));
+  await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.NAV.back(); });
+  await new Promise(r => setTimeout(r, 300));
+  await page.evaluate(() => { const V = window.VAULT; V.go('sealed'); V.paintSealed(); const l = document.querySelector('#sealedList .dline[data-open]'); const row = l && document.querySelector(`#sealedList button.row[data-open="${l.dataset.open}"]`); if (row) row.setAttribute('data-probe', '2'); });
+  await tap('#sealedList button.row[data-probe="2"]'); await new Promise(r => setTimeout(r, 300));
+  const plain = await page.evaluate(() => { const d = document.getElementById('dDist'), f = d && d.querySelector('[data-distfold="detail"]'); if (!f) return { on: 'no Distributor info' }; return { on: [...document.querySelectorAll('.screen.on')].map(e => e.id).join(), open: !!f && f.getAttribute('aria-expanded') === 'true', y: Math.round(scrollY) }; });
+  ok('take 112: ...control: a tap on the row itself opens the same page at its top, Distributor info closed', plain.on === 'detail' && !plain.open && plain.y === 0, JSON.stringify(plain));
+  /* a day on a short line never breaks -- the look at 411 px had EB05's "orders closed May" / "17" beside its date column */
+  const dayw = await page.evaluate(async F => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
+    while (V.closeAnyOverlay()) {} V.go('releases'); V.HUNT.feed = F; V.DISTF.open.clear(); V.paintReleases(); await wait(100);
+    const spans = [...document.querySelectorAll('#relList [data-browse-set] .nm > span[style*="display:block"]')];
+    const lines = sp => { const n = sp.firstChild; if (!n || n.nodeType !== 3) return 0; const m = n.data.match(/[A-Z][a-z]{2}[\u00a0 ]\d{1,2}(,[\u00a0 ]\d{4})?$/); if (!m) return 0;
+      const r = document.createRange(); r.setStart(n, m.index); r.setEnd(n, n.data.length); return new Set([...r.getClientRects()].map(x => Math.round(x.top))).size; };
+    const natural = spans.map(lines).filter(Boolean);
+    /* whether a day CAN break is read in a column too narrow for it: joined, it stays one line; spaced, it splits */
+    const st = document.createElement('style'); st.textContent = '#relList [data-browse-set] .nm > span[style*="display:block"]{width:1px!important}';   /* 3.5em held "May 17" whole either way (42 px of 43.75) */ document.head.appendChild(st);
+    const narrow = spans.map(lines).filter(Boolean);
+    for (const sp of spans) if (sp.firstChild && sp.firstChild.nodeType === 3) sp.firstChild.data = sp.firstChild.data.replace(/\u00a0/g, ' ');
+    const control = spans.map(lines).filter(Boolean); st.remove(); V.paintReleases();
+    return { days: natural.length, natural: Math.max(0, ...natural), narrow: Math.max(0, ...narrow), control: Math.max(0, ...control) }; }, feed112);
+  ok('take 112: every day on a Releases short line stays on one line -- at 360 px, and even in a column narrower than the day', dayw.days > 0 && dayw.natural === 1 && dayw.narrow === 1, JSON.stringify(dayw));
+  ok('take 112: ...control: spaced like any words, a day in that column splits across lines', dayw.control >= 2, JSON.stringify(dayw));
+  await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.HUNT.feed = null; V.DISTF.open.clear(); V.MODE.set('collect', true); V.go('home'); });
+  await new Promise(r => setTimeout(r, 200));
   fs.rmSync(path.dirname(fx112), { recursive: true, force: true });
   await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
-  ok('take 112: at 360 px every distributor line -- GTS\'s and Southern Hobby\'s -- wraps inside its row, and neither Sealed nor Releases scrolls sideways',
-     sh112.sealed.sh > 0 && sh112.rel.sh > 0 && sh112.sealed.inside && sh112.rel.inside && sh112.sealed.side && sh112.rel.side, JSON.stringify(sh112));
-  ok('take 112: ...control: held to one line, some run past their row', sh112.control.n > 0 && !sh112.control.inside, JSON.stringify(sh112.control));
   /* take 112: a product with no photo yet -- every new one; the look found DP-13's display, refused by the host -- shows
      its set's code on the row tile's ground in its sheet, where an empty white frame stood; white stays under a photo */
   const noPic = await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {}

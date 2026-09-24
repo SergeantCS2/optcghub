@@ -116,8 +116,9 @@ history rows." This take is Southern Hobby; the timeline stays next.
   are the DP-13 Display, the OP-18 box, the EB-05 pack and the SD-01 Set
   Sail Deck Set. The other 16 are not in the catalogue yet; the Heroines
   Gift Collection scores 0.67 against Gift Collection 2023, under the bar.
-- **Tests:** hunt.py selftest 90 ok; smoke 973/973; render 182/182 in
-  Chrome; the look 16 steps, 16 ok, at 411 and 840 px.
+- **Tests at the first push:** hunt.py selftest 90 ok; smoke 973/973; render
+  182/182 in Chrome; the look 16 steps, 16 ok, at 411 and 840 px. The final
+  numbers, after the owner's layout, are in the next section.
 - **Watched to fail on take 111's build:**
   - smoke's take-112 section (15 of its checks);
   - render's 360 px lines, the not-in-the-catalogue panel, the product
@@ -127,6 +128,49 @@ history rows." This take is Southern Hobby; the timeline stays next.
     went to the single box, and an IB-04 case too);
   - the budget check, on a fetch with no budget (21 calls, 800 s of
     clock).
+
+### The owner's word after the first pictures: distributor info never floods
+
+The owner, on the pictures: "For distribution info under hunt, there's going
+to be a lot of info for these, and I don't want them flooding the screen.
+Make distribution under the TCG Player listing, one for each distributor if
+necessary, with a link you can click to get more info. If there's a lot of
+text within the app directly like there currently is for distribution it
+should be under an expand screen. Such as "Distributor Info _____" and the
+drop-down shows the info we currently do." Two choices went back to the owner
+as questions with pictures, and the answers were: a short line per
+distributor that opens the product's page at its Distributor info, and one
+closed drop-down for the long text.
+
+- **A sealed row:** each distributor is one short line under the buy chips,
+  its name and its state ("GTS Distribution · sold out", "Southern Hobby ·
+  orders closed May 29"). It is a 44 px target that opens the product's page
+  with Distributor info open, scrolled to it. The row's name block carries
+  none of it now.
+- **A product's page:** Where to buy lists the sellers to collectors. The
+  distributors moved to the page's own Distributor info, closed unless a
+  distributor line opened the page. There each has its full words and its
+  own page to open.
+- **Sealed:** GTS's and Southern Hobby's panels sit under one closed
+  "Distributor info", with a line saying what is inside ("2 distributors ·
+  checked just now"; "1 not reached" or "out of date" when so).
+- **Releases:** a set's row carries the short lines. The not-in-the-catalogue
+  list is under its own closed "Distributor info" ("17 products not in the
+  catalogue yet · …").
+- **Days:** the day on a short line never breaks. The second look had "May" /
+  "17" on Releases.
+- **Tests:**
+  - smoke 988/988; render 187/187 in Chrome, with real clicks on the
+    drop-downs, on a row's distributor line and on the row itself;
+  - the look, 22 steps, 22 ok, at 411 and 840 px.
+- **Watched to fail on this PR's first head (f0ca3d0):**
+  - smoke: 22 checks;
+  - render: the 6 new checks and their 2 controls. On that app the render
+    run needed stand-ins for the new functions, or it stopped at the first
+    call; missing panels and targets now fail their checks instead of
+    stopping the run.
+  - The day checks failed on the build just before the no-break spaces
+    (smoke 3, render 1).
 
 ### What I got wrong
 
@@ -144,6 +188,13 @@ history rows." This take is Southern Hobby; the timeline stays next.
   the whole hourly feed its run.
 - My render check read nothing, twice over (landmine 166).
 - One smoke assertion was `A && B && C || D`.
+- My first real taps in render did nothing: the zip question, the splash and
+  the fixed nav took them (landmine 169).
+- Two of the day controls could not fail. At 360 px the lines wrap before the
+  day, and a 3.5em column still held "May 17" (42 px of 43.75). The rule of
+  landmine 164 again: the control is now a 1 px column.
+- I expected 11 products in the not-in-the-catalogue line. The look's 11 was
+  rows; the products are 17 (3 GTS, 14 Southern Hobby).
 
 ### Ruled out
 
@@ -163,6 +214,23 @@ history rows." This take is Southern Hobby; the timeline stays next.
 - **Paging.** If the category grows past one page, the fetch fails on its
   count, by design. The page-2 probe returned the same 20, so how the site
   pages is unknown until it does.
+- **Take 113 -- the owner's icon, and more, from the graphic design session.**
+  The owner: "we'll be pulling in a new icon and more".
+  - **Where:** the design branch `…/compassionate-mayer-acc24r` (its platform prefix
+    is a vendor's name, so the record leaves it off), commit `93481b3`
+    ("d7: the owner's icon ships from assets/, ready for take 113 to vet and
+    fold in"). Its hand-off is `design/d7-icons/SHIP.md`.
+  - **What it holds:** the pick that is live on Play, as five SVG layers.
+    `ci/icon.py` renders them, and its selftest joins the gate. The reminders
+    ask for a drawable the plugin can find.
+  - **The reversal:** it reverses landmines 30 and 31 and A16 for the icon's
+    printed emblem, at the owner's word; the rose version is the ready swap.
+  - **The hand-off also carries:** what was verified, what only the runner
+    and the Fold can show, and draft ledger text.
+  - **Its draft landmine is "165":** take 112 used 165 to 169, so it becomes
+    170.
+  - **Expected conflicts:** `ci/apk.sh`'s icon step, two `smallIcon` lines
+    in `src/app.html`, one smoke assertion and one gate call.
 - **For the UI session's refinement:**
   - the distributors' names verbatim in the unlisted panel ("Bandai - One
     Piece Card Game: …");
