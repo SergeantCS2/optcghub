@@ -40,7 +40,7 @@ Google's listing rules:
 - a caption at most 20 % of the image
 - no "Free", no call to action, no rankings
 - no device frame
-- no third-party characters
+- no third-party characters (see card art, below)
 - at least four screenshots at 1080 px or more
 
 **Captions.** `render.mjs` measures each caption block and refuses one over 20 % or a headline that
@@ -56,9 +56,12 @@ in any headline or subline.
 - **The negative control.** `--selftest` runs the guard against that first-draft framing (the
   `x-settings-first-draft` step) and must see it refuse before it passes the frames as they stand.
 
-**Character art.** Every request goes through Node, and the card CDN is refused, so no character art
-appears. The app draws each card's placeholder instead. The run's report counts the refusals and the
-fetches.
+**Card art.** It is on, and that is the owner's call (24 Sept). Without it the pictures were plain,
+since the art is the collection's own cards. Every request goes through Node, and each shot waits until
+the art on screen has loaded. The run's report counts the art fetched and whether each screen finished.
+`NO_ART=1` refuses the image CDN, for a set with no character art: Google restricts third-party
+characters in listing images, so a review could ask for that set. Many of TCGplayer's scans carry a
+"SAMPLE" mark. That is what the app shows too.
 
 **Prices.** Home's chart is the collection's value on each night of the app's own price history
 (`CAT.hist`). A fresh import has only today, so this reconstructs the month from real prices; it is not

@@ -71,12 +71,12 @@ def waves_svg(view=SEA_VIEW, align="xMidYMax"):
             f'style="position:absolute;left:0;bottom:0;width:100%;height:100%">{W.foreground()}</svg>')
 
 FRAMES = [   # key, headline, subline, capture step, crop (shot px scrolled off the top)
-    ("01-scan", "One number.<br>Every printing.", "The scanner shows every printing a number shares, and asks when it can't be sure.", "01-scan-printing-picker", 716),
-    ("02-value", "Know what<br>it's worth.", "Your collection at market price, night by night.", "02-home-value", 0),
-    ("03-price", "Every price,<br>dated and sourced.", "Market, low and high, with the day and the marketplace.", "03-card-price", 0),
-    ("04-sort", "Sort it like<br>a collector.", "Set, rarity, colour, printing, price. Counted as you tap.", "04-filter-sort", 300),
+    ("01-binder", "Your binder,<br>priced.", "Each card at the market price of the printing you own.", "01-collection-grid", 480),
+    ("02-scan", "One number.<br>Every printing.", "The scanner shows every printing a number shares, and asks when it can't be sure.", "02-scan-printing-picker", 716),
+    ("03-value", "Know what<br>it's worth.", "Your collection at market price, night by night.", "03-home-value", 330),
+    ("04-card", "Every card,<br>up close.", "Its market price with the day and the marketplace, and every printing of its number.", "04-card-detail", 0),
     ("05-deck", "Built to<br>the rules.", "Fifty cards, one Leader, colours checked against the Comprehensive Rules.", "05-deck-builder", 0),
-    ("06-hunt", "Hunt sealed<br>product.", "Boxes, packs and cases with market prices and stock alerts.", "06-hunt-sealed", 230),
+    ("06-hunt", "Hunt sealed<br>product.", "Boxes, packs and cases with market prices and stock alerts.", "06-hunt-sealed", 120),
     ("07-play", "Game day on<br>one phone.", "Life and DON!! for both players, and the refresh done for you.", "07-game-day", 0),
     ("08-offline", "No account.<br>Works offline.", "Your collection stays on your phone. Only the nightly prices need a signal.", "08-offline", 0),
 ]

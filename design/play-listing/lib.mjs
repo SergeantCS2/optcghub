@@ -3,7 +3,9 @@
 // - the live Pages build at the Fold's cover viewport
 // - every request fetched by Node: Chromium does not trust the session VM's egress proxy CA, and
 //   verification is never disabled
-// - the card CDN refused, so no character art appears
+// - the card art, which is on: the owner's call (24 Sept), who wants the collection's own cards in the
+//   pictures. NO_ART=1 refuses the image CDN for a set with no character art, since Google restricts
+//   third-party characters in listing images.
 // - look.mjs's open()
 import fs from 'node:fs';
 import path from 'node:path';
@@ -35,10 +37,13 @@ export async function launch(vp = COVER) {
   const b = await browser();
   const ctx = await b.newContext({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: vp.dpr });
   const page = await ctx.newPage();
-  const net = { cdnBlocked: 0, fetched: 0, failed: 0, failures: [] };
+  const net = { art: 0, cdnBlocked: 0, fetched: 0, failed: 0, failures: [] };
   await page.route('**/*', async r => {
     const u = r.request().url();
-    if (/tcgplayer-cdn\.tcgplayer\.com|tcgplayer\.com\/.*\.(jpg|png|webp)/.test(u)) { net.cdnBlocked++; return r.abort(); }
+    if (/tcgplayer-cdn\.tcgplayer\.com|tcgplayer\.com\/.*\.(jpg|png|webp)/.test(u)) {
+      if (process.env.NO_ART) { net.cdnBlocked++; return r.abort(); }
+      net.art++;
+    }
     if (!/^https?:/.test(u)) return r.continue();
     try { const resp = await r.fetch(); net.fetched++; return r.fulfill({ response: resp }); }
     catch (e) { net.failed++; net.failures.push(u.slice(0, 100)); return r.abort(); }

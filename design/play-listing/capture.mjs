@@ -1,7 +1,7 @@
 // The Play listing's in-app screens, from the live release (Pages), at the Fold's cover viewport.
 // A fake collection and deck (showcase/, generated for exactly this at take 37) go in through the
-// app's own importers, the deck first so its printings are the ordinary ones. The card CDN is refused
-// (lib.mjs), so no character art appears; the app draws its placeholder instead.
+// app's own importers, the deck first so its printings are the ordinary ones. The card art is on
+// (lib.mjs; NO_ART=1 for a set without it), and each shot waits for the art on screen to finish loading.
 //   node design/play-listing/capture.mjs      -> $LISTING_OUT/shots/NN-name.png + report.json
 import { launch, wait, REPO, BUILD } from './lib.mjs';
 import fs from 'node:fs';
@@ -23,6 +23,9 @@ const banned = () => page.evaluate((src) => { const R = new RegExp(src, 'gi'), o
       text: n.textContent.trim().slice(0, 70) }); } }
   return out; }, BANNED);
 const shot = async (name) => { const f = path.join(OUT, name + '.png'); await page.screenshot({ path: f }); return f; };
+/* every image on screen loaded (or failed) before the shot; a slow CDN gives up after 15 s */
+const artLoaded = () => page.waitForFunction(() => [...document.images].filter(i => { const r = i.getBoundingClientRect();
+  return r.width && r.bottom > 0 && r.top < innerHeight; }).every(i => i.complete), null, { timeout: 15000, polling: 250 }).then(() => true, () => false);
 const settle = async (ms = 700) => { await wait(ms); await page.evaluate(() => document.fonts && document.fonts.ready); };
 
 await open();
@@ -69,7 +72,13 @@ await open();   /* reload so every screen reads the renamed, re-scoped collectio
 report.collection.main = await page.evaluate(() => +window.VAULT.OWN.total().toFixed(2));
 
 const steps = [
-  ['01-scan-printing-picker', async () => {
+  ['01-collection-grid', async () => {
+    /* the binder itself, most valuable first: the collection's own cards, with their art */
+    await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('collect', true); V.go('collection'); window.scrollTo(0, 0); });
+    await settle(900);
+    return page.evaluate(() => ({ imgs: [...document.querySelectorAll('#collection img')].filter(i => i.getBoundingClientRect().top < innerHeight).length }));
+  }],
+  ['02-scan-printing-picker', async () => {
     /* the browser build's shutter runs simulateScan(): a real card through the REAL gate. Its one random
        draw is pinned to an EB03-024 printing, so the gate itself decides to ask which printing it is. */
     const seed = await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('collect', true); V.go('scan');
@@ -82,7 +91,7 @@ const steps = [
     await settle(700);
     return { seed, title: await page.textContent('#pkTitle'), options: await page.$$eval('#pkOpts .opt', o => o.length) };
   }],
-  ['02-home-value', async () => {
+  ['03-home-value', async () => {
     await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('collect', true); V.go('home'); V.setHomeTab(false); V.paintHome(); window.scrollTo(0, 0); });
     await settle(600);
     /* the "New in this update" card is for testers, not a store visitor: dismissed with its own button */
@@ -90,27 +99,12 @@ const steps = [
     await settle(900);
     return page.evaluate(() => ({ cap: (document.querySelector('#pfSwitch') || {}).textContent, total: (document.querySelector('#pfTotal') || {}).textContent, delta: ((document.querySelector('#pfDelta') || {}).textContent || '').trim().slice(0, 60) }));
   }],
-  ['03-card-price', async () => {
+  ['04-card-detail', async () => {
+    /* the priciest EB03-024 printing, from the top: its name, its art, its set line and its price */
     const card = await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} const sp = V.candidates('EB03-024', null).slice().sort((a, b) => (b.market || 0) - (a.market || 0))[0];
       V.openDetail(sp.id); window.scrollTo(0, 0); return sp.num + ' ' + sp.name + ' ' + sp.treat + ' $' + sp.market; });
     await settle(900);
-    /* down past the art (a blank box: the CDN is refused) to the set line, so the price's own line -- the
-       marketplace, the day, low and high -- sits above the frame's sea; the Graded panel below stays out */
-    /* the mode bar is sticky: step back until the set line is the element actually drawn there */
-    await page.evaluate(() => { const d = document.querySelector('#dSub'); if (!d) return;
-      window.scrollTo(0, d.getBoundingClientRect().top + window.scrollY - 16);
-      const seen = () => { const r = d.getBoundingClientRect(), h = document.elementFromPoint(r.left + 8, r.top + r.height / 2); return h && (h === d || d.contains(h)); };
-      for (let i = 0; i < 40 && !seen(); i++) window.scrollBy(0, -6);
-      window.scrollBy(0, -14); });
-    await settle(500);
     return { card, sub: await page.evaluate(() => ((document.querySelector('#dSub') || {}).textContent || '').trim().slice(0, 90)) };
-  }],
-  ['04-filter-sort', async () => {
-    const how = await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('collect', true); V.go('collection'); window.scrollTo(0, 0);
-      const b = [...document.querySelectorAll('#collection button')].find(x => /sort|filter/i.test((x.textContent || '') + (x.getAttribute('aria-label') || '')) && x.offsetParent !== null);
-      if (b) { b.click(); return b.id || b.getAttribute('aria-label') || b.textContent.trim(); } return 'none'; });
-    await settle(900);
-    return { opened: how, sheet: await page.evaluate(() => [...document.querySelectorAll('.sheet.on')].map(s => s.id).join(',')) };
   }],
   ['05-deck-builder', async () => {
     await page.evaluate((id) => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('play', true); V.openDeck(id); window.scrollTo(0, 0); }, deckId);
@@ -120,12 +114,22 @@ const steps = [
   ['06-hunt-sealed', async () => {
     await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.NAV.zipAsked = true; V.MODE.set('hunt', true); V.go('sealed'); while (V.closeAnyOverlay()) {} window.scrollTo(0, 0); });
     await settle(1200);
-    /* past the banner and the retailer panel, to the products and their prices */
-    /* the first booster set's heading and its products; the starter decks' strip and the retailers' status panels sit above it */
-    await page.evaluate(() => { const st = [...document.querySelectorAll('#sealedList .setstrip')]; const s = st.find(x => !/starter/i.test(x.textContent)) || st[1];
-      if (s) { s.scrollIntoView({ block: 'start', behavior: 'instant' }); window.scrollBy(0, -96); } });
-    await settle(900);
-    return page.evaluate(() => ({ rows: document.querySelectorAll('#sealedList [data-open]').length }));
+    /* The first release set whose products all carry a picture (at least three). Sets not out yet have
+       none in the catalogue, and starter decks sit apart. Art above the strip loads as the page moves and
+       pushes it down, so the scroll is repeated until the strip stays put. */
+    const set = await page.evaluate(() => { const st = [...document.querySelectorAll('#sealedList .setstrip')];
+      for (const x of st) { if (/starter/i.test(x.textContent)) continue; const rows = [];
+        for (let n = x.nextElementSibling; n && !n.classList.contains('setstrip'); n = n.nextElementSibling) if (n.classList.contains('row')) rows.push(n);
+        if (rows.length >= 3 && rows.every(r => r.querySelector('img'))) { x.id = 'listingSet'; return x.textContent.trim().slice(0, 60); } }
+      return null; });
+    let top = null;
+    for (let k = 0; k < 6; k++) {
+      await page.evaluate(() => { const x = document.querySelector('#listingSet'); if (x) window.scrollTo(0, x.getBoundingClientRect().top + window.scrollY - 60); });
+      await artLoaded(); await settle(500);
+      const t = await page.evaluate(() => Math.round((document.querySelector('#listingSet') || { getBoundingClientRect: () => ({ top: -1 }) }).getBoundingClientRect().top));
+      if (t === top) break; top = t;
+    }
+    return { set, stripTop: top };
   }],
   ['07-game-day', async () => {
     const who = await page.evaluate((id) => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('play', true);
@@ -163,7 +167,8 @@ const steps = [
 /* node capture.mjs 03 08 -> only those steps (the seeding always runs); PROBE=1 adds a full-page shot of each */
 const only = process.argv.slice(2);
 for (const [name, run] of steps.filter(([n]) => only.length ? only.some(o => n.startsWith(o)) : !n.startsWith('x-'))) {
-  try { const m = await run(); report.steps.push({ name, ok: true, file: await shot(name), ...m, banned: await banned() });
+  try { const m = await run(); const loaded = await artLoaded(); await wait(400);
+    report.steps.push({ name, ok: true, artLoaded: loaded, file: await shot(name), ...m, banned: await banned() });
     if (process.env.PROBE) await page.screenshot({ path: path.join(OUT, name + '-full.png'), fullPage: true }); }
   catch (e) { report.steps.push({ name, ok: false, error: String(e).slice(0, 200), file: await shot(name + '-FAILED') }); }
 }
