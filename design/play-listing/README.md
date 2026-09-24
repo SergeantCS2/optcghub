@@ -19,6 +19,7 @@ importers, the way a collector would bring them in.
 |---|---|
 | `capture.mjs` | Opens the live build at the Fold's cover viewport (411 × 960 at 2.625), imports the showcase deck and collection, and shoots eight screens. |
 | `frames.py` | Writes eight 1080 × 1920 frames and the 1024 × 500 feature graphic as HTML, and holds the guards. |
+| `beach.py` | Draws the feature graphic's beach scene, using v4's helpers and palette. |
 | `render.mjs` | Shoots the frames and measures each caption. |
 | `lib.mjs` | Holds what the scripts share: Playwright, the request route and the output directory. |
 
@@ -62,6 +63,11 @@ the art on screen has loaded. The run's report counts the art fetched and whethe
 `NO_ART=1` refuses the image CDN, for a set with no character art: Google restricts third-party
 characters in listing images, so a review could ask for that set. Many of TCGplayer's scans carry a
 "SAMPLE" mark. That is what the app shows too.
+
+**The feature graphic.** It shows the icon and the name over a beach (`beach.py`, drawn in the icon's
+palette). The owner found the icon's swells, scaled up across the bottom, weird. `render.mjs` refuses the
+graphic if the icon or the name reaches below the horizon, which is what the first draft's sea did. The
+scene carries nothing from the franchise: no ship, no hat, no flag.
 
 **Prices.** Home's chart is the collection's value on each night of the app's own price history
 (`CAT.hist`). A fresh import has only today, so this reconstructs the month from real prices; it is not

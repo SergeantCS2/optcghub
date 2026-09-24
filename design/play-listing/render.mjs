@@ -1,5 +1,6 @@
 // Shoots every frame frames.py wrote. These are local files, so no network is used. It measures each
-// caption block against Google's 20 % rule, and checks that each headline holds two lines. It writes
+// caption block against Google's 20 % rule, checks that each headline holds two lines, and checks that
+// the feature graphic's icon and name end above its horizon. It writes
 // $LISTING_OUT/frames/out/<name>.png and report.json.
 //   node design/play-listing/render.mjs
 import fs from 'node:fs'; import path from 'node:path';
@@ -16,13 +17,15 @@ for (const f of fs.readdirSync(DIR).filter(x => x.endsWith('.html')).sort()) {
     const out = { lines: Math.round(h.getBoundingClientRect().height / lh), fonts: document.fonts.check('40px D') && document.fonts.check('20px B') };
     if (!feature) out.captionBottom = Math.round(Math.max(...[...document.querySelector('#cap').children].map(e => e.getBoundingClientRect().bottom)));
     else { const r = [...document.querySelectorAll('#icon, #name h1, #name p')].map(e => e.getBoundingClientRect());
-      out.focal = { left: Math.round(Math.min(...r.map(x => x.left))), right: Math.round(Math.max(...r.map(x => x.right))), bottom: Math.round(Math.max(...r.map(x => x.bottom))) }; }
+      out.focal = { left: Math.round(Math.min(...r.map(x => x.left))), right: Math.round(Math.max(...r.map(x => x.right))), bottom: Math.round(Math.max(...r.map(x => x.bottom))) };
+      /* the first draft's sea covered the icon and the subline: the focal content ends above the horizon */
+      out.horizon = +document.body.dataset.horizon || 0; out.aboveHorizon = out.horizon > 0 && out.focal.bottom <= out.horizon; }
     return out; }, feature);
   const out = path.join(OUT, f.replace('.html', '.png'));
   await page.screenshot({ path: out }); await page.close();
   const row = { frame: f, ...m };
   if (m.captionBottom) row.captionShare = +(m.captionBottom / 1920 * 100).toFixed(1);
-  row.ok = m.fonts && m.lines === 2 && (feature || row.captionShare <= 20);
+  row.ok = m.fonts && m.lines === 2 && (feature ? m.aboveHorizon : row.captionShare <= 20);
   report.push(row);
 }
 await b.close();
@@ -30,4 +33,4 @@ fs.writeFileSync(path.join(OUT, 'report.json'), JSON.stringify(report, null, 1))
 for (const r of report) console.log(JSON.stringify(r));
 const bad = report.filter(r => !r.ok);
 if (bad.length) { console.log('render: refused', bad.map(r => r.frame).join(', ')); process.exit(1); }
-console.log(`render: ${report.length} images, every caption at most 20 %, every headline two lines`);
+console.log(`render: ${report.length} images, every caption at most 20 %, every headline two lines, the feature above its horizon`);

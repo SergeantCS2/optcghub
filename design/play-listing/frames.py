@@ -22,6 +22,7 @@ BUILD = os.environ.get("LISTING_OUT") or os.path.join(os.path.dirname(REPO), "pl
 SHOTS, OUT = os.path.join(BUILD, "shots"), os.path.join(BUILD, "frames")
 sys.path.insert(0, os.path.join(REPO, "design", "d7-icons", "v4"))
 import wave as W                                    # the icon's sea
+import beach                                        # the feature graphic's scene
 
 PRUSSIAN, BUFF, CREAM, INK, GREEN = "#1f3d72", "#efd9a8", "#F6EEDA", "#1E1A14", "#2e9e5b"
 
@@ -65,9 +66,9 @@ def guard(steps, frames):
 def b64(path, mime):
     return f"data:{mime};base64," + base64.b64encode(open(path, "rb").read()).decode()
 
-def waves_svg(view=SEA_VIEW, align="xMidYMax"):
+def waves_svg(view=SEA_VIEW):
     """The icon's two foreground swells with their claw crests, as a band."""
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{" ".join(map(str, view))}" preserveAspectRatio="{align} slice" '
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{" ".join(map(str, view))}" preserveAspectRatio="xMidYMax slice" '
             f'style="position:absolute;left:0;bottom:0;width:100%;height:100%">{W.foreground()}</svg>')
 
 FRAMES = [   # key, headline, subline, capture step, crop (shot px scrolled off the top)
@@ -125,29 +126,26 @@ def frame(key, head, sub, shot, crop, tilt, fonts):
 <div id="sea">{waves_svg()}</div>
 </body></html>"""
 
-# ---- the feature graphic, 1024 x 500: the icon and the name at the focal centre, above the icon's sea ----
+# ---- the feature graphic, 1024 x 500: the icon and the name at the focal centre, over a beach (beach.py) ----
 FG_CSS = f"""
 @font-face{{font-family:D;src:url(%DISPLAY%)}} @font-face{{font-family:B;src:url(%BODY%)}}
 *{{box-sizing:border-box;margin:0}} html,body{{width:1024px;height:500px;overflow:hidden}}
-body{{background:linear-gradient(180deg,{PRUSSIAN} 0,{PRUSSIAN} 322px,#6f86a6 350px,{BUFF} 376px,{BUFF} 100%);position:relative;font-family:B,sans-serif}}
+body{{background:{PRUSSIAN};position:relative;font-family:B,sans-serif}}
 #icon{{position:absolute;left:206px;top:40px;width:276px;height:276px}}
 #icon .print{{position:absolute;inset:0;transform:translate(12px,14px);background:{GREEN};border-radius:64px}}
 #icon .tile{{position:absolute;inset:0;border:9px solid {INK};border-radius:64px;overflow:hidden;background:{BUFF}}}
 #icon img{{width:100%;height:100%;display:block}}
-#name{{position:absolute;left:528px;top:58px}}
+#name{{position:absolute;left:528px;top:34px}}
 #name h1{{font:82px/0.98 D;color:{CREAM};text-transform:uppercase;white-space:nowrap;
   text-shadow:6px 8px 0 {GREEN};-webkit-text-stroke:5px {INK};paint-order:stroke fill}}
-#name p{{margin-top:18px;font-size:27px;line-height:1.32;color:#DCE4F0;font-weight:600}}
-#sea{{position:absolute;left:0;right:0;bottom:0;height:140px}}
+#name p{{margin-top:16px;font-size:30px;line-height:1.32;color:#DCE4F0;font-weight:600}}
 """
-FG_SEA = (-150, 338, 850, 116)      # the swells' whole drawn width, so the crests keep the icon's scale
-
 def feature(icon_png, fonts):
     css = FG_CSS.replace("%DISPLAY%", fonts[0]).replace("%BODY%", fonts[1])
-    return f"""<!doctype html><html><head><meta charset=utf-8><title>feature</title><style>{css}</style></head><body>
+    return f"""<!doctype html><html><head><meta charset=utf-8><title>feature</title><style>{css}</style></head><body data-horizon="{beach.HORIZON}">
+{beach.scene()}
 <div id="icon"><div class="print"></div><div class="tile"><img src="{icon_png}"></div></div>
-<div id="name"><h1>OP TCG<br>Hub</h1><p>Scan it. Value it.<br>Build it. Offline.</p></div>
-<div id="sea">{waves_svg(FG_SEA, "xMidYMin")}</div></body></html>"""
+<div id="name"><h1>OP TCG<br>Hub</h1><p>Scan it. Value it.<br>Build it. Offline.</p></div></body></html>"""
 
 if __name__ == "__main__":
     check_captions()
