@@ -1376,6 +1376,89 @@ if (puppeteer) {
   ok('take 112: at 411 px every line of the Diagnostics report wraps inside its panel, the feed\'s address too', diag112.clean.url && diag112.clean.sw <= diag112.clean.cw + 1, JSON.stringify(diag112.clean));
   ok('take 112: ...control: without the break, the address runs past the panel', diag112.control.sw > diag112.control.cw + 1, JSON.stringify(diag112.control));
 
+  /* ---- take 114 (A32): each distributor's history on file, under its row inside the open Distributor info -- at
+     360 px, in the owner's zone (America/Detroit), in Chrome. The longest case: the fixture feed's own dates, which do
+     not explain the calendar change, so both changes show their two checks and the fold carries its note ---- */
+  { const dir114 = fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-114-')), fx114 = path.join(dir114, 'feed-fixture.json');
+    execSync(`python3 tools/hunt.py --from-fixtures --out ${fx114}`, { cwd: ROOT, stdio: 'pipe' });
+    const F = JSON.parse(fs.readFileSync(fx114, 'utf8')), R0 = JSON.parse(fs.readFileSync(path.join(dir114, 'history-fixture.json'), 'utf8')).runs[0];
+    /* the smoke's synthetic history, the same shape: 60 runs 4 h apart ending on the feed's own run, GTS from run 6,
+       the box coming until the first UTC day turn at or after run 20, preorder until run 40, then sold out; the run
+       before that could not reach GTS (a hole); Southern Hobby in the last two */
+    const END = Date.parse(F.fetched_at), N = 60, G0 = 6, I2 = 40, runs = [];
+    for (let k = N - 1; k >= 0; k--) runs.push({ t: new Date(END - k * 4 * 3600e3).toISOString().replace(/\.\d{3}Z$/, 'Z'), online: {}, shelf: {} });
+    let I1 = 20; while (runs[I1].t.slice(0, 10) === runs[I1 - 1].t.slice(0, 10)) I1++;
+    runs.forEach((r, i) => { if (i >= G0) r.gts = { ...R0.gts, BJP2873812: i < I1 ? 'coming' : i < I2 ? 'preorder' : 'sold_out' }; if (i >= N - 2) r.southern = { ...R0.southern }; });
+    delete runs[I2 - 1].gts;
+    const H = { runs, since: runs[0].t, stores: {}, titles: {} }, PID = F.sources.gts.items.find(i => i.sku === 'BJP2873812').catalog_id;
+    const AFTER = runs[I2 - 2].t;   /* the site change's earlier check: the last run that read GTS before the hole */
+    await page.setViewport({ width: 360, height: 915, deviceScaleFactor: 2 });
+    await page.emulateTimezone('America/Detroit');
+    /* what a check reads: the history blocks, the take-112 words above them, and every day and moment in either on
+       one line -- a Range over each, its client rects' distinct tops (the take-112 probe, taken to the long words) */
+    await page.evaluate(() => { window.__tl114 = () => {
+      const d = document.getElementById('dDist'); if (!d) return { on: 'no #dDist', open: false, n: 0, ds: '', inside: false, between: 0, note: false, box: false, page: false, days: [0, 0], breaks: [0, 0], names: '', links: 0 };
+      const db = d.getBoundingClientRect(), tls = [...d.querySelectorAll('.dtl')], nms = [...d.querySelectorAll('.dsec .nm > span')], f = d.querySelector('[data-distfold="detail"]');
+      const RE = /[A-Z][a-z]{2}[\u00a0 ]\d{1,2}(,[\u00a0 ]\d{4})?(,[\u00a0 ]\d{1,2}:\d\d[\u00a0\u202f ][AP]M)?|\d{1,2}:\d\d[\u00a0\u202f ][AP]M/g;
+      const lines = els => { let n = 0, worst = 0; for (const el of els) { const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+        for (let t = w.nextNode(); t; t = w.nextNode()) for (const m of t.data.matchAll(RE)) { const r = document.createRange(); r.setStart(t, m.index); r.setEnd(t, m.index + m[0].length);
+          n++; worst = Math.max(worst, new Set([...r.getClientRects()].map(x => Math.round(x.top))).size); } } return { n, worst }; };
+      const name = { gts: 'GTS Distribution', southern: 'Southern Hobby' }, L = lines(tls), S = lines(nms);
+      const note = [...d.querySelectorAll('.note')].find(e => /^Where a change worked out from its dates gives two checks, not a day/.test(e.textContent.trim())), nb = note && note.getBoundingClientRect();
+      return { on: [...document.querySelectorAll('.screen.on')].map(e => e.id).join(), open: !!f && f.getAttribute('aria-expanded') === 'true', n: tls.length, ds: tls.map(t => t.dataset.tl).join(),
+        inside: tls.length > 0 && tls.every(t => { const b = t.getBoundingClientRect(), sec = t.parentElement, row = t.previousElementSibling;
+          return !!sec && sec.classList.contains('dsec') && !!row && row.classList.contains('row') && b.height > 0 && b.left >= db.left - 0.5 && b.right <= db.right + 0.5
+            && b.top >= row.getBoundingClientRect().bottom - 0.5 && (sec.querySelector('.nm b') || {}).textContent === name[t.dataset.tl]; }),
+        between: tls.reduce((a, t) => a + [...t.children].filter(s => / · between /.test(s.textContent)).length, 0),
+        note: !!note && nb.height > 0 && nb.left >= db.left - 0.5 && nb.right <= db.right + 0.5,
+        box: tls.some(t => t.scrollWidth > t.clientWidth + 1), page: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+        days: [L.n, S.n], breaks: [L.worst, S.worst],
+        names: [...d.querySelectorAll('.dsec .nm b')].map(b => b.textContent).join(), links: d.querySelectorAll('.dsec a.ghost[target="_blank"]').length }; }; });
+    /* the fixture and the history set in the same tick as the paint (landmine 166) */
+    const at114 = await page.evaluate(async ({ F, H, PID, AFTER }) => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
+      V.NAV.zipAsked = true; while (V.closeAnyOverlay()) {} V.HUNT.setZip(''); V.MODE.set('hunt', true); await wait(200); while (V.closeAnyOverlay()) {}
+      V.HUNT.feed = F; V.HUNT.hist = H; V.DISTF.open.clear(); V.openDetail(PID, { dist: true }); await wait(150);
+      const g = document.querySelector('#dDist .dtl[data-tl="gts"]'), sp = s => String(s).replace(/[\u00a0\u202f]/g, ' '), txt = sp(g ? g.textContent : ''), at = new Date(AFTER);
+      const o = { month: 'short', day: 'numeric', ...(at.getFullYear() !== new Date().getFullYear() ? { year: 'numeric' } : {}), hour: 'numeric', minute: '2-digit' };
+      const local = V.momentText(AFTER), utc = at.toLocaleString('en-US', { ...o, timeZone: 'UTC' });
+      return { ...window.__tl114(), tz: { zone: Intl.DateTimeFormat().resolvedOptions().timeZone, local, utc, has: !!g && txt.includes(sp(local)), hasUtc: txt.includes(sp(utc)) } }; }, { F, H, PID, AFTER });
+    const { tz: tz114, ...land114 } = at114;
+    ok('take 114: a product\'s page at Distributor info draws each distributor\'s history under its own row at 360 px -- inside the panel, no sideways scroll, every day and moment on one line there and in the words above it; both changes as their two checks, the fold\'s note; the take-112 names and links unchanged',
+       land114.on === 'detail' && land114.open && land114.n === 2 && land114.ds === 'gts,southern' && land114.inside && !land114.box && !land114.page && land114.days[0] > 0 && land114.days[1] > 0
+       && land114.breaks[0] === 1 && land114.breaks[1] === 1 && land114.between === 2 && land114.note && land114.names === 'GTS Distribution,Southern Hobby' && land114.links === 2, JSON.stringify(land114));
+    const ctl114 = await page.evaluate(() => { const d = document.getElementById('dDist') || document.createElement('div'), tls = [...d.querySelectorAll('.dtl')], add = css => { const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st); return st; };
+      const st = add('#dDist .dtl{white-space:nowrap}'), nowrap = tls.length > 0 && tls.every(t => getComputedStyle(t).whiteSpace === 'nowrap'), held = window.__tl114(); st.remove();
+      /* a column narrower than any day: an inline span takes no width, so the words above are made blocks for it */
+      const st2 = add('#dDist .dtl > span, #dDist .dsec .nm > span{display:block!important;width:1px!important}'), col = [...d.querySelectorAll('.dtl > span, .dsec .nm > span')];
+      const landed = col.length > 0 && col.every(s => s.getBoundingClientRect().width <= 1.5), narrow = window.__tl114();
+      for (const el of d.querySelectorAll('.dtl, .dsec .nm > span')) { const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); for (let n = w.nextNode(); n; n = w.nextNode()) n.data = n.data.replace(/[\u00a0\u202f]/g, ' '); }
+      const spaced = window.__tl114(); st2.remove();
+      return { nowrap, box: held.box, page: held.page, landed, narrow: { days: narrow.days, breaks: narrow.breaks }, spaced: { days: spaced.days, breaks: spaced.breaks } }; });
+    ok('take 114: ...in a column narrower than any day (1 px, which landed), each day and moment still holds on one line, in the history and in the words above it',
+       ctl114.landed && ctl114.narrow.days[0] > 0 && ctl114.narrow.days[1] > 0 && ctl114.narrow.breaks[0] === 1 && ctl114.narrow.breaks[1] === 1, JSON.stringify(ctl114));
+    ok('take 114: ...control: held on one line (nowrap, which landed), the history runs past its block and the page scrolls sideways; spaced like any words, a day in that column splits, in both',
+       ctl114.nowrap && ctl114.box && ctl114.page && ctl114.landed && ctl114.spaced.breaks[0] >= 2 && ctl114.spaced.breaks[1] >= 2, JSON.stringify(ctl114));
+    ok('take 114: the history reads in this phone\'s time (the zone America/Detroit, which landed): the site change\'s earlier check in local time, not in the runner\'s UTC',
+       tz114.zone === 'America/Detroit' && tz114.has && !tz114.hasUtc, JSON.stringify(tz114));
+    ok('take 114: ...control: that instant in UTC reads otherwise, so the check can tell them apart', !!tz114.local && tz114.local.replace(/[\u00a0\u202f]/g, ' ') !== tz114.utc.replace(/[\u00a0\u202f]/g, ' '), JSON.stringify(tz114));
+    /* the fold, tapped as a person does: a fresh paint first (the controls rewrote its text), set in the same tick */
+    await page.evaluate(({ F, H, PID }) => { const V = window.VAULT; V.HUNT.feed = F; V.HUNT.hist = H; V.openDetail(PID, { dist: true }); }, { F, H, PID });
+    const fold114 = () => page.evaluate(() => { const f = document.querySelector('#dDist [data-distfold="detail"]'), tls = [...document.querySelectorAll('#dDist .dtl')];
+      return { open: f ? f.getAttribute('aria-expanded') : 'missing', n: tls.length, h: Math.round(tls.reduce((a, t) => a + t.getBoundingClientRect().height, 0)), body: !!document.querySelector('#dDist .dbody') }; });
+    const was114 = await fold114();
+    await tap('#dDist [data-distfold="detail"]'); await new Promise(r => setTimeout(r, 250)); const shut114 = await fold114();
+    await tap('#dDist [data-distfold="detail"]'); await new Promise(r => setTimeout(r, 250)); const again114 = await fold114();
+    ok('take 114: a real tap closes Distributor info and the history goes with it (no block, no height); a second tap brings both back',
+       was114.open === 'true' && was114.n === 2 && shut114.open === 'false' && shut114.n === 0 && shut114.h === 0 && !shut114.body && again114.open === 'true' && again114.n === 2 && again114.h > 0, JSON.stringify({ was114, shut114, again114, taps: tapNotes }));
+    const none114 = await page.evaluate(({ F, PID }) => { const V = window.VAULT; V.HUNT.feed = F; V.HUNT.hist = null; V.DISTF.open.add('detail'); V.paintDetailDist(V.CAT.byId.get(PID)); return window.__tl114(); }, { F, PID });
+    ok('take 114: ...control: with no history on the phone the open fold is take 112\'s -- no history block and no note, the names and links as they were',
+       none114.open && none114.n === 0 && !none114.note && none114.names === 'GTS Distribution,Southern Hobby' && none114.links === 2, JSON.stringify(none114));
+    await page.emulateTimezone();
+    await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.HUNT.feed = null; V.HUNT.hist = null; V.DISTF.open.clear(); V.MODE.set('collect', true); V.go('home'); delete window.__tl114; });
+    await new Promise(r => setTimeout(r, 200));
+    fs.rmSync(dir114, { recursive: true, force: true });
+    await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 }); }
+
   await browser.close();
 } else {
   /* ---------------- honest fallback ------------------------------------- */
