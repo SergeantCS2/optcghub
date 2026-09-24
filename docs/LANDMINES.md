@@ -183,6 +183,9 @@ Start here. Do not read top to bottom.
 | A render check's real tap does nothing | **169** |
 | A reminder shows the phone's info icon, not the app's | **170** |
 | A look's picture of a phone setting reads as a design to choose | **171** |
+| A field's meaning is taken from its key's name | **172** |
+| A cap on rows is recorded as a span of time | **173** |
+| A scratch copy writes the repo's own files | **174** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -2385,6 +2388,35 @@ Rule:
   ships. It is not a default that rides in with a hand-off.
 
 `ci/icon.py` now refuses a themed layer.
+
+**172. A field read by its key's name: GTS's `preorder_date` is its Order Due
+Date.** Take 94 recorded the date as "when preorders opened", inferred from
+the key's name. The app's words ("preorders open on Oct 14"), Sealed's
+counts, the runner's log line and the stock alert's idea of "available" all
+followed it for twenty takes. GTS's own product page labels the same value
+"Order Due Date:", with a countdown headed "Order Due:" (take 114, one
+request, MEASURED). The date is the day stores' orders close.
+
+Rule: a field's meaning is read off the words the source prints beside it.
+Until then the record says INFERRED. This is landmine 165's family: a
+shape read off the source's own page, not assumed.
+
+**173. A cap on rows was recorded as a span of time.** `KEEP_RUNS = 24 * 14`
+carries the comment "two weeks of hourly snapshots", and the record said the
+history keeps "a fortnight". GitHub fires the "hourly" about six times a
+day, so 336 rows is about 55 days (take 114, MEASURED from the rows' own
+times).
+
+Rule: name a horizon in days, from the timestamps. Never derive it from a
+row count and an assumed cadence.
+
+**174. A scratch copy that links `catalog/` writes the repo.** During take
+114's design, a prototype ran `pipeline.py app` in a scratch tree whose
+`catalog/` was a symlink to the repo's. It rewrote the repo's
+`catalog/rates.json`, which was restored with git.
+
+Rule: a scratch tree copies what a step writes, and links only what it
+reads. Run `git status` after.
 
 ## §2 — Inherited from APEX ORV
 

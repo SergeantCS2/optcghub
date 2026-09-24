@@ -1,4 +1,4 @@
-# OP TCG Hub — take 113
+# OP TCG Hub — take 114
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,14 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 114:** A sealed product's Distributor info now shows, under
+each distributor, what the app's checks have seen: how many checks, over
+which days, and each change, with whether the distributor's own page said it
+or it was worked out from its dates. Nothing is added to a row. GTS's date
+is the day stores must order by, as GTS's own page labels it. The app used
+to call it the day preorders open, which was wrong. Nothing you have saved
+changes.
 
 **New at take 113:** The app wears the icon the Play listing shows: the
 card-back emblem on a purple-bordered card over waves, with ドン!!. It is

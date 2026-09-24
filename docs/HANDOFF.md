@@ -54,6 +54,72 @@ how many takes left until the UI overhaul is complete, what's left?"
     carry-over has the same shape.
   - No run has lost its history so far: the 48 runs match the 48 rows.
 
+### GTS's date, read off its own page
+
+Take 94 recorded GTS's `preorder_date` as "when preorders opened". That was
+inferred from the field's name. It is GTS's **Order Due Date**: the last
+day stores can order (MEASURED).
+- **The probe:** one request from the session VM for PEB-01's product page
+  (SKU BJP2897699), at 20:20:20 UTC. The User-Agent named the project, and
+  the answer was HTTP 200, 659,800 bytes.
+- **What the page says:**
+  - The value is labelled `<div class="title">Order Due Date:</div>`,
+    bound to `preorder_date_display`.
+  - Its countdown is headed `Order Due:`.
+  - The site's menu groups products under "Orders Due Week of September
+    20".
+- **The data agrees:**
+  - Every unreleased item whose date has passed shows "Sold Out".
+  - PEB-01, whose date is still ahead, shows "24+" with add-to-cart on.
+  - For the 17 products both distributors list, GTS's date is 0 to 4 days
+    before Southern Hobby's "Order Due", and the release days match.
+- **The listing is read correctly:** its `preorder_date` equals the
+  displayed value on all 11 fixture items, and `gts.py` reads the listing.
+  (A product page's raw `preorder_date` is the release day instead.)
+- **Unknown:** whether stores can still order on the due day itself.
+
+So the app's words were backwards: "preorders open on Oct 14" is the day
+orders close. Landmine 172.
+
+### The plan
+
+Three designs were written and judged, for honesty, engineering, and the
+collector with the owner's take-112 ruling. The build follows the
+honesty-first design, with the judges' fixes.
+- **The timeline, app-only, from the rows:**
+  - It goes on a sealed product's page, inside each distributor's section
+    of the closed "Distributor info". Nothing is added to a row, a short
+    line, Sealed's panels or Releases.
+  - It says how many checks read that distributor and over which days, and
+    the state at the first check (never "since").
+  - Each change is dated between the two checks it fell between, and says
+    whether it was read off the distributor's page or worked out from its
+    dates. A calendar change names the distributor's own day only when
+    that day falls between those checks.
+  - A run that could not reach the distributor is counted, never read as a
+    state. There is no pattern and no forecast.
+- **GTS's words, fixed because they were wrong:**
+  - "stores order by Oct 14" in Distributor info and Releases;
+  - "orders close Oct 14" on a row;
+  - "orders were due Oct 14" once the day has passed.
+  These are Southern Hobby's words for the same fact. The state keys stay,
+  since the rows hold them. `gts.status_of` keeps the due day open
+  (`>=`), as Southern Hobby's does. These words go to the owner as a
+  question, with pictures, before the PR is ready.
+- **The record the timeline rests on:**
+  - the hourly reads the history before any source and stops (exit 3,
+    nothing deployed) if Pages cannot be read three times;
+  - a 404 starts a new history, and says so;
+  - the history written must be the history read plus one row;
+  - the nightly carries history.json only if it is a history;
+  - both reads skip Pages' ten-minute cache.
+- **Fixed because it was broken:** a day in a distributor's long words
+  split across lines ("release Nov" / "20").
+- **Questions for the owner:** the GTS words; whether the history shows as
+  soon as Distributor info opens, or sits behind one line to tap; and
+  whether the GTS stock alert should keep counting "orders were due" as
+  available. The alert is not changed without an answer.
+
 ## Take 113 — 2026-09-24 — the owner's icon (D7), folded in from the graphic design session's branch
 
 Opened before any code (PROTOCOL §6). The owner merged take 112 (PR #36)

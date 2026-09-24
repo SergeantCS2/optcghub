@@ -1156,6 +1156,39 @@ drop-downs, and Where to buy lists sellers to collectors only (UI-AUDIT §8).
 
 **Next:** the state timeline from the history rows.
 
+### Take 114 — the distributor state timeline, and GTS's date read off its own page
+
+**Measured first:**
+- The rows are kept by count, 336, which is about 55 days at the measured
+  four-hourly cadence, not a fortnight (landmine 173).
+- No distributor state has changed yet in 8 GTS reads and 1 Southern Hobby
+  read.
+- Every Southern Hobby state, and GTS's `coming`, `preorder` and `out`, is
+  computed from dates. The rows keep the state word, not the dates.
+- GTS's `preorder_date` is its Order Due Date, read off its own product
+  page. The app called it the day preorders open (landmine 172).
+
+**Building:**
+- The timeline, app-only from the rows, inside each distributor's section
+  of the closed "Distributor info" on a product's page. It gives the checks
+  and their days, the state at the first check, and each change between
+  its two checks, saying whether it was read off the page or worked out
+  from its dates.
+- GTS's words in the Order Due Date's own sense.
+- An hourly that stops rather than deploy a history that lost its past.
+
+**Ruled out:**
+- A second record of changes beside the rows: a change log in git would be
+  a third runner-owned file, and two records can disagree.
+- "Since" on any line, since the first check is only the left edge.
+- A pattern or a forecast at any count (take 73).
+- Naming a calendar change's day from dates that do not put it between its
+  two checks.
+- A new GTS state for "no due date".
+- The timeline on a row, a short line, Sealed's panels or Releases (the
+  owner's take-112 word).
+- Changing the GTS stock alert without the owner.
+
 ## A42 — The UI series: uniform headers, card art used boldly, one voice · OPENED take 106
 
 The owner, 24 Sept, to the UI/UX session: the app "needs refinement,
