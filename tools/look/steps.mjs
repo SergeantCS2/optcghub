@@ -402,4 +402,101 @@ const take107 = [
     } }
 ];
 
-export const STEPS = { 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107 };
+/* ---- take 108 — controls and icons (A42) ----------------------------------- */
+/* Every control's 44 px square, read with elementFromPoint in the page (render.mjs does
+   the same on every screen); here, on the screen each step shows. */
+const SQUARES = `(sel) => { const out = []; const nav = [...document.querySelectorAll('nav')].find(n => !n.hidden), navTop = nav ? nav.getBoundingClientRect().top : innerHeight, barBottom = document.querySelector('.modebar').getBoundingClientRect().bottom;
+  for (const e of document.querySelectorAll(sel)) { const r = e.getBoundingClientRect(); if (r.width < 1 || r.top - 5 < barBottom || r.bottom + 5 > navTop || r.left < 0 || r.right > innerWidth) continue;   /* what is on screen, clear of the fixed bars */
+  const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  const own = [[cx - 21, cy], [cx + 21, cy], [cx, cy - 21], [cx, cy + 21]].every(([x, y]) => { const t = document.elementFromPoint(x, y); return !!t && (t === e || e.contains(t)); });
+  out.push({ own, w: Math.round(r.width), h: Math.round(r.height) }); } return { n: out.length, bad: out.filter(o => !o.own).length, sizes: [...new Set(out.map(o => o.w + 'x' + o.h))].slice(0, 4) }; }`;
+const squares = (page, sel) => page.evaluate(`(${SQUARES})(${JSON.stringify(sel)})`);
+const navIcons = `(id) => [...document.querySelectorAll('#' + id + ' button')].map(b => (b.querySelector('use') || {}).getAttribute ? b.querySelector('use').getAttribute('href') : '')`;
+const take108 = [
+  { name: 'play-steppers-44-and-drawn', run: async (page, ctx) => {
+      /* Prep & Play first. Play's Life and DON!! steppers: 44 px, the minus and plus from the sprite, a name each way */
+      await ctx.open();
+      await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('play', true); V.go('play'); await ${pause}; window.scrollTo(0, 0); })()`);
+      const sq = await squares(page, '#plBoard .stepper button');
+      const named = await page.evaluate(() => [...document.querySelectorAll('#plBoard .stepper button')].every(b => b.getAttribute('aria-label') && b.querySelector('use')));
+      return { ok: sq.n >= 6 && sq.bad === 0 && sq.sizes.every(z => z === '44x44') && named, ...sq, named };
+    } },
+  { name: 'play-cards-chips-own-their-square', run: async (page) => {
+      /* the keyword, colour and cost chips: drawn at 34 px, rows 44 px apart, each 44 px square its own; the deck toggle says if it is on */
+      await page.evaluate(`(async () => { window.VAULT.go('cards'); await ${pause}; window.scrollTo(0, 0); })()`);
+      const sq = await squares(page, '#cdKw .chip, #cdCol .chip, #cdCost .chip');
+      const toggle = await page.evaluate(() => document.querySelector('#cdForDeck').getAttribute('aria-pressed'));
+      return { ok: sq.n >= 15 && sq.bad === 0 && (toggle === 'false' || toggle === 'true'), ...sq, forThisDeck: toggle };
+    } },
+  { name: 'hunt-new-nav-icons-bells-and-links', run: async (page) => {
+      /* Hunt's nav draws its own four (box, calendar, pin, trophy); a row's stock alert is a bell; every where-to-buy chip ends in the external glyph */
+      await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('hunt', true); V.go('sealed'); await ${pause}; while (V.closeAnyOverlay()) {} window.scrollTo(0, 0); })()`);
+      const nav = await page.evaluate(`(${navIcons})('navHunt')`);
+      const rows = await page.evaluate(() => ({ bells: document.querySelectorAll('#sealedList [data-stock] use[href="#g-bell"]').length, stock: document.querySelectorAll('#sealedList [data-stock]').length,
+        ext: document.querySelectorAll('#sealedList a.chip.buy[target] use[href="#g-external"]').length, links: document.querySelectorAll('#sealedList a.chip.buy[target]').length,
+        chev: document.querySelectorAll('#sealedList [data-setfold] use[href="#g-chevron"]').length }));
+      await page.evaluate(() => { const f = document.querySelector('#sealedList [data-stock]'); if (f) f.scrollIntoView({ block: 'center' }); });   // a row on screen at any size
+      const sq = await squares(page, '#sealedList a.chip.buy, #sealedList [data-stock]');
+      return { ok: nav.join() === '#g-box,#g-calendar,#g-pin,#g-trophy' && rows.bells === rows.stock && rows.stock > 0 && rows.ext === rows.links && rows.chev > 0 && sq.n > 0 && sq.bad === 0, nav, ...rows, squares: sq };
+    } },
+  { name: 'hunt-releases-reminder-tick', run: async (page, ctx) => {
+      /* a reminder set says so with the sprite's tick; Show and Hide fold with its chevron */
+      await page.evaluate(`(async () => { const V = window.VAULT; V.go('releases'); V.paintReleases(); await ${pause}; window.scrollTo(0, 0); })()`);
+      const r = await page.evaluate(async () => { const b = document.querySelector('#relList [data-relalert]'); if (!b) return { none: true };
+        b.scrollIntoView({ block: 'center' }); b.click(); await new Promise(res => setTimeout(res, 300));
+        const on = document.querySelector('#relList [data-relalert][aria-pressed="true"]'); if (on) on.scrollIntoView({ block: 'center' });
+        return { pressed: !!on, tick: !!(on && on.querySelector('use[href="#g-check"]')), text: on ? on.textContent.trim() : '' }; });
+      const shot = await ctx.shot('04a-reminder-set');
+      await page.evaluate(() => { const on = document.querySelector('#relList [data-relalert][aria-pressed="true"]'); if (on) on.click(); });   // leave it as it was
+      return { ok: r.pressed && r.tick, ...r, shot };
+    } },
+  { name: 'collect-nav-actions-and-search-bar', run: async (page) => {
+      /* Collect's nav draws Scan and Collection their own; the collection's actions each their own; the search bar's star and filter are 44 px buttons */
+      await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('collect', true); V.go('collection'); await ${pause}; window.scrollTo(0, 0); })()`);
+      const nav = await page.evaluate(`(${navIcons})('navCollect')`);
+      const acts = await page.evaluate(() => [...document.querySelectorAll('#collection .actions button')].map(b => b.querySelector('use').getAttribute('href').slice(3)));
+      const sq = await squares(page, '#collection .search .icb');
+      return { ok: nav.join() === '#g-compass,#g-spyglass,#g-scan,#g-collection,#g-cardback' && new Set(acts).size === acts.length && acts.length === 8 && sq.n === 2 && sq.bad === 0, nav, acts, squares: sq };
+    } },
+  { name: 'collect-favourites-star-fills', run: async (page, ctx) => {
+      /* the star is a toggle: tapped, it fills and says it is pressed */
+      await page.click('#favOnly'); await page.waitForTimeout(250);
+      /* the fill reaches the drawing only if the symbol leaves its own fill open: the first run of this step read the outer svg's fill, passed, and the picture showed a hollow star */
+      const st = await page.evaluate(() => { const b = document.querySelector('#favOnly'), u = b.querySelector('svg'), sym = document.querySelector('symbol#g-star'); return { pressed: b.getAttribute('aria-pressed'), fill: getComputedStyle(u).fill, symbolFill: sym ? sym.getAttribute('fill') : 'no symbol' }; });
+      const shot = await ctx.shot('06a-favourites-on');
+      await page.click('#favOnly'); await page.waitForTimeout(200);
+      return { ok: st.pressed === 'true' && st.fill !== 'none' && st.symbolFill === null, ...st, shot };
+    } },
+  { name: 'collect-scanner-row-above-the-nav', run: async (page) => {
+      /* the scanner's shutter row sat 52 px under the nav since the mode slider arrived; now it ends above it */
+      await page.evaluate(`(async () => { window.VAULT.go('scan'); await ${pause}; })()`);
+      const m = await page.evaluate(() => { const sb = document.querySelector('.shutterbar').getBoundingClientRect(), nav = document.querySelector('#navCollect').getBoundingClientRect();
+        return { shutterRowBottom: Math.round(sb.bottom), navTop: Math.round(nav.top), glyphs: ['#btnUndo', '#btnGallery', '#btnTorch'].map(id => { const u = document.querySelector(id + ' use'); return u ? u.getAttribute('href') : ''; }) }; });
+      return { ok: m.shutterRowBottom <= m.navTop && m.glyphs.join() === '#g-undo,#g-photo,#g-torch', ...m };
+    } },
+  { name: 'collect-card-steppers-and-conditions', run: async (page) => {
+      /* a card's page: the steppers at 44 px with the sprite's minus and plus, the condition buttons at 44 */
+      await page.evaluate(`(async () => { const V = window.VAULT; V.go('home'); await ${pause}; const p = V.CAT.rows.find(r => /OP01-016/.test(r.num || '')); V.openDetail(p.id); await ${pause}; window.scrollTo(0, 0); })()`);
+      const sq = await squares(page, '#detail .stepper button, #dCondSeg button');
+      return { ok: sq.n >= 7 && sq.bad === 0, ...sq };
+    } },
+  { name: 'collect-pressed-and-disabled', run: async (page, ctx) => {
+      /* a press lightens and gives a little (held here for the picture); a disabled button is switched off */
+      await page.evaluate(`(async () => { window.VAULT.go('diag'); await ${pause}; window.scrollTo(0, 0); })()`);
+      const b = await page.evaluate(() => { const r = document.querySelector('#diagRun').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+      await page.mouse.move(b.x, b.y); await page.mouse.down(); await page.waitForTimeout(220);
+      const pressed = await page.evaluate(() => { const cs = getComputedStyle(document.querySelector('#diagRun')); return { filter: cs.filter, transform: cs.transform }; });
+      const shot = await ctx.shot('09a-run-held-down');
+      await page.mouse.move(2, 2); await page.mouse.up();   // released off the button: nothing runs
+      const off = await page.evaluate(() => { const c = document.querySelector('#diagCopy'); return { disabled: c.disabled, opacity: getComputedStyle(c).opacity }; });
+      return { ok: /brightness\(1\.25\)/.test(pressed.filter) && /matrix\(0\.96/.test(pressed.transform) && off.disabled && off.opacity === '0.45', pressed, copy: off, shot };
+    } },
+  { name: 'collect-more-credits-the-icons', run: async (page) => {
+      /* More's About names where the interface icons come from */
+      await page.evaluate(`(async () => { window.VAULT.go('settings'); await ${pause}; const a = document.querySelector('#aboutIcons'); if (a) a.scrollIntoView({ block: 'center' }); })()`);
+      const t = await page.evaluate(() => (document.querySelector('#aboutIcons') || {}).textContent || '');
+      return { ok: /Lucide/.test(t) && /ISC/.test(t) && /MIT/.test(t), credit: t };
+    } }
+];
+
+export const STEPS = { 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108 };

@@ -1,4 +1,4 @@
-# OP TCG Hub — take 107
+# OP TCG Hub — take 108
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,12 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 108:** every icon is drawn the same way, and each one
+means one thing: Scan, Collection, Sealed, Releases, Local and Events
+have icons of their own. Every button is big enough for a thumb, shows
+when it is pressed, and looks switched off when it cannot be used.
+Nothing you have saved changes.
 
 **New at take 107:** every screen has the same header: its title in
 the same place and the same lettering, a back arrow on the screens one

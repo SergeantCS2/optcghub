@@ -1,4 +1,183 @@
-# HANDOFF — through Take 107
+# HANDOFF — through Take 108
+
+## Take 108 — 2026-09-24 — controls and icons: every icon from the sprite with one meaning each, a 44 px target for every control, a pressed and a disabled look
+
+Opened before any code (PROTOCOL §6) by the UI/UX session: the third
+take of A42, split from the header take. The owner, on take 107's look:
+"go, mark it ready and start take 108". Take 107 (PR #31: `check` green
+on its head -- a fresh ingest, smoke 769/769, render 115/115 in Chrome,
+the gate passed) merged at 04:15 UTC; its build, run 56, went green and
+published Release take-107 at 04:23 (the APK, 26,438,210 bytes; the AAB,
+19,623,696; the mapping). This take was built on take 107's head while
+the PR was open and moved onto the merge. The last nightly (run 50) is
+green.
+
+### Measured first (the take-107 build)
+
+- **Icons that are characters:** 🔍 twice (the collection's and the
+  Leader sheet's search), 📷 (Search's scan button), ⚙ twice (filter and
+  sort), ☆/★ (favourites), ☐/☑ ("own"), ↶ (Undo), ⇄ (Play's first
+  player), ↻ and − (a fired alert's watch-again and remove), ⋯ (the Sim's
+  card menu), ▾/▸ (the collection switcher, the set chip, every fold),
+  ↗ on three external links of many, ✓ (a reminder, the chosen
+  currency), ○/● (the stock alert). Typography stays text: the minus of
+  money, ×2, arrows inside a label, ▲▼ beside a price's colour, middle
+  dots and dashes.
+- **One glyph, several meanings** (the sprite's use map): `g-stage` is
+  Sealed, Collection, Binder, scan-from-a-photo and the Stage card type;
+  `g-life` Play, Events, Want list and Life; `g-counter` Releases, Backup
+  and Counter; `g-blocker` Scan, Bulk and Blocker; `g-trigger` Movers,
+  the torch and Trigger; `g-compass` Home and Local; `g-spyglass` Search
+  and Cards (one meaning, find a card) and Export.
+- **Targets, in Chrome at 412 px, every control on the twenty screens
+  and three sheets:** 1,673 controls, 520 under 44 px in a dimension --
+  349 of them Sealed's where-to-buy chips (31 px tall), then the chips
+  (35), the plain buttons (the search bar's icons at 13-19 x 22, the
+  steppers at 34, a deck's +/- ), the links (36), the fields and
+  selects (39-41), the ghost buttons (33-42), Home's ranges (36), the
+  currency pill (29), the set chip (38).
+- **No pressed look anywhere** (the tap highlight is off and nothing
+  replaces it) and **no disabled look** (a disabled button draws like a
+  live one).
+
+### The plan
+
+- **Icons:** every character icon becomes a sprite symbol; new symbols
+  where a glyph carries two meanings -- Scan, Collection, Sealed,
+  Releases, Local (the existing pin), Events, Want list, Export, Import,
+  Backup, Bulk, Movers, the torch, scan-from-a-photo, Binder -- so the
+  game's own glyphs keep the game's meanings. The new interface symbols
+  are Lucide's (ISC; the Feather-derived ones MIT), as the plan said:
+  their notices ride inside the sprite, so they ship with every copy,
+  and About credits them. Take 107's back, close and gear stay.
+- **Targets:** 44 px for every control -- a real 44 where growing costs
+  nothing (ghost buttons, links, fields, steppers, the search bar's
+  buttons), a 44 px hit area around the drawn control where a dense row
+  would grow (chips, the where-to-buy chips, pills, the ranges, the
+  slider).
+- **States:** a pressed look on every control, a disabled look on every
+  disabled one; names for the icon buttons that have none, and
+  `aria-pressed` on every toggle.
+- **Guards:** the gate refuses an icon character in the app (a control
+  plants 🔍); render measures every control's 44 px square on every
+  screen (a control shrinks a stepper to 34 px).
+
+### Built
+
+- `assets/glyphs.svg`: 26 of Lucide's icons (lucide-static 1.47.0, fetched
+  from the npm registry) as `g-scan`, `g-collection`, `g-box`,
+  `g-calendar`, `g-trophy`, `g-bookmark`, `g-export`, `g-import`,
+  `g-backup`, `g-select`, `g-trend`, `g-torch`, `g-photo`, `g-binder`,
+  `g-filter`, `g-star`, `g-undo`, `g-swap`, `g-refresh`, `g-more`,
+  `g-chevron`, `g-external`, `g-minus`, `g-plus`, `g-check`, `g-bell` -- at
+  the sprite's 1.7 stroke, each commented with what it means here. Their
+  licence (ISC, and MIT for the Feather-derived ones) is a `<metadata>`
+  element in the sprite: an element, so it survives the build's comment
+  strip and ships in every copy; More's About credits them in a line.
+- `src/app.html`, icons: Scan, Collection, Sealed, Releases, Local (the
+  pin it already had for a shop), Events, and the collection's actions
+  (movers, bulk, export, import, backup, want list, binder) draw their own
+  symbols; the game's glyphs keep the game's meanings. The torch, scan
+  from a photo and Undo on the scanner; the search bars' spyglass, scan,
+  star and filter; every caret and fold (one chevron, turned while
+  closed); every link that leaves the app; the reminder's and the chosen
+  currency's tick; the stock alert's bell (filled while it watches); the
+  Sim's card menu and trash; Play's who-goes-first swap; every stepper's
+  minus and plus. "☐ own" is a chip, "Owned only". A few painters name a
+  local `G` for the distributor feed, so `chev`, `ext`, `tick` and `bell`
+  are top-level helpers that close over the real one.
+- `src/app.html`, controls: `button svg, a svg {pointer-events:none}`
+  (handlers read `e.target`); a pressed look (every control lightens, the
+  compact ones scale to 0.96) and a disabled look (0.45, not-allowed);
+  names on every icon button (the Play, Trade and want-list minus, watch
+  again, remove, the Sim's menu and trash) and `aria-pressed` on the
+  favourites star, "Owned only" and "for this deck"; 44 px targets -- a
+  real 44 for fields and selects, ghost buttons, links, the steppers, the
+  condition buttons, the actions (`flex:0 0 auto` beside the minimum), the
+  search bars' buttons in a 60 px bar; a 44 px hit area (`::after`) round
+  the chips, the currency pill, the set chip, Home's ranges, the row
+  steppers and the slider, with chip rows 44 px apart (a 10 px gap) and the
+  Cards groups 10 px apart; checkboxes at 20 px inside their 44 px label
+  rows. The deck's name field is 44 px to tap and keeps its title's place
+  (`display:flow-root` on the title, so its margin cannot collapse
+  through). **The scanner's height takes the sticky mode slider off**
+  (`--modebar-h`, 53 px): its shutter row had sat 52 px under the nav at
+  every size (PROVEN on the take-106 and take-107 builds, landmine 146).
+  Every link drawn as a ghost button centres its words (an inline
+  `display:inline-block` on five of them had pinned the words to the top).
+- `tools/gate.py`: `check_icon_characters()` refuses an icon drawn as a
+  character in `src/app.html` -- emoji, the symbol blocks, the arrows and
+  shapes the app once used -- literally, as `&#NNNN;` or as `\uXXXX`, and
+  leaves comments and typography alone; two selftest probes plant 🔍 and
+  a `\u2699` escape.
+- `tools/smoke.mjs`: six older assertions follow the glyphs instead of ↗
+  and ✓ with the same intent; a take-108 section of 17. `tools/render.mjs`:
+  every control's 44 px square on the twenty screens and three sheets
+  (elementFromPoint at 21 px from the centre, the control brought on
+  screen clear of the fixed bars first), a 34 px stepper as its control;
+  the scanner's row above the nav; the pressed look during a held press;
+  a disabled button's look. `tools/look/steps.mjs`: take 108's ten steps.
+
+### Tests (local, on the take-104 release catalogue; the runner's `check` is the seal)
+
+- Smoke 786/786 (17 new). **Watched to fail first:** over the take-107
+  source and sprite, 21 fail -- 15 of the take-108 section (only its two
+  controls pass) and the six rewritten from the characters to the glyphs.
+- Render 119/120 in Chrome -- the CDN thumbnail, as on every VM. On the
+  take-107 build the four take-108 checks fail: 497 of 1,537 controls
+  without their own 44 px square, the scanner's row at 867 against the
+  nav at 815, no pressed look, no disabled look.
+- The gate's icon check passes the take-108 source and fires on take
+  107's (16 icons); both planted probes fire; an icon inside a comment
+  does not.
+- The targets probe, 1,673 controls on the twenty screens and three
+  sheets: 520 under 44 px at the start, none without its own 44 px square
+  at the end.
+- **The look, take 108: 10 of 10 at both viewports**, every PNG read:
+  Play's steppers at 44 px with the sprite's minus and plus and the swap
+  beside the first player; Cards' chips each with its own square; Hunt's
+  nav (box, calendar, pin, trophy), the bells, the external glyph on every
+  where-to-buy chip, the fold chevrons; a reminder set with its tick;
+  Collect's nav and the eight actions each their own symbol, the search
+  bar's star and filter at 44 px; the star filled while on; the scanner's
+  row wholly above the nav; a card's steppers and conditions at 44 px;
+  Run held down (lighter, smaller) beside Copy and Share switched off;
+  About's credit.
+
+### What I got wrong, and caught
+
+- `min-width:44px` on the collection's actions replaced each item's own
+  minimum: the row squeezed every label to 44 px and two sat on top of
+  each other. The targets probe found it; `flex:0 0 auto` beside the
+  minimum, pinned in smoke (landmine 147).
+- The first 44 px stepper rule sat above the original 34 px one in the
+  stylesheet and lost to it; the original rule is the one that changed.
+- The deck's 44 px name field pulled its title 6 px up through a
+  collapsing margin; take 107's own title-height check caught it.
+- The look's favourites step read the outer svg's fill, passed, and the
+  picture showed a hollow star: a symbol's own `fill="none"` beats
+  whatever the outside sets (landmine 148). The star and the bell leave
+  their fill open now; the step reads the symbol.
+- The first targets and look passes measured controls that were off
+  screen or under the fixed nav: a probe gap, not the app's; both bring a
+  control on screen, clear of the bars, before reading its square.
+
+### Ruled out
+
+- Growing every chip to 44 px tall: the dense rows (Cards' filters,
+  Sealed's where-to-buy) would lengthen by a fifth; a hit area round the
+  drawn chip gives the same target.
+- Bundling an icon font: the sprite already inlines; 26 symbols add
+  about 14 KB to the page and draw in the palette.
+- Changing Home's compass, Search's spyglass, the Decks card back, Play's
+  heart and the Sim's DON!!: each already means one thing.
+
+### DEFERRED this cycle
+
+- The art layer (the record's art policy corrected first), the voice
+  (copy, one date and money format, Collection for Portfolio), polish
+  (A42's last three takes).
+- The Fold's inner layout (the owner: later).
 
 ## Take 107 — 2026-09-24 — one header on every screen: the same title in the same place, a back arrow one level down, the More gear on every main screen
 

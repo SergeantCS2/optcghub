@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 107.*
+*Current as of take 108.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -156,6 +156,9 @@ Start here. Do not read top to bottom.
 | A render check of an animation fails on a busy machine and passes on a quiet one | **143** |
 | A sheet stays open after Back while the screen under it changes | **144** |
 | A font check passes only because the first screen happens to use every face | **145** |
+| The scanner's buttons sit under the bottom nav | **146** |
+| A row of flex items squeezes its labels onto each other | **147** |
+| An icon toggle reports "filled" and draws hollow | **148** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -2075,6 +2078,33 @@ loads each face itself (`FontFace.load()`) and then reads the status, so a
 missing file reports `error` whatever the first screen shows; its control
 is a face pointed at a file that is not there (the check failed with
 `OPH Comic: error` when the comic file was moved aside).
+
+**146. A height computed from `100vh` forgets the chrome that was added
+above it later.** The scanner's surface is `calc(100vh - 76px - insets)`:
+the nav's 76 px came off, the sticky mode slider's 52 px never did, so the
+shutter row -- Undo, the shutter, Review -- sat 52 px under the nav at
+every size (PROVEN in Chrome on the take-106 and take-107 builds; the
+take-107 picture shows the shutter cut). The 44 px target sweep found it
+at take 108, because the nav owned the bottom of those buttons. Rule: a
+height that fills the screen subtracts every fixed or sticky bar by name
+(`--modebar-h`), and render checks the last control ends above the nav.
+
+**147. `min-width` on a flex item replaces its automatic minimum.** A flex
+item's default `min-width:auto` keeps it at least as wide as its content;
+`min-width:44px` (take 108, for a 44 px target) swapped that for 44 px, and
+the collection's action row, which scrolls sideways, shrank every labelled
+button to 44 px -- "Export" and "Backup" drew on top of each other. Rule:
+a flex item given a minimum also gets `flex:0 0 auto` (or `flex-shrink:0`)
+when its content must keep its width.
+
+**148. A `<use>`d symbol's own `fill` beats whatever its outer `<svg>`
+sets, and a check that reads the outer svg's computed fill cannot see
+it.** The favourites star was meant to fill while on: the control set
+`fill:currentColor` on the svg, `getComputedStyle(svg).fill` read the
+colour, the look passed -- and the picture showed a hollow star, because
+the symbol said `fill="none"` itself. Rule: an icon a control fills leaves
+its fill open on the symbol (`svg.g` is `fill:none` by default), and a
+check reads the symbol's own attribute, or the picture.
 
 ## §2 — Inherited from APEX ORV
 

@@ -1558,7 +1558,7 @@ ok('the Portfolio label is a small caption above the name, which keeps the displ
 ok('Prep & Play is charcoal and red, no longer Hunt\'s green (and clears AA above)', /:root\[data-mode="play"\]\{[^}]*--bg:#15171C/.test(html) && !/:root\[data-mode="play"\]\{[^}]*#0F2A1E/.test(html));
 ok('every native select and text field is themed: card background, line border, accent on focus, 16px', /select,input\[type="text"\][^{]*\{[^}]*background:var\(--card2\)[^}]*font-size:16px/.test(html) && /select:focus,input:focus,textarea:focus\{border-color:var\(--brass\)/.test(html));
 ok('the zip placeholder is nobody\'s zip', /placeholder: '37203'/.test(js) && !/placeholder: '48329'/.test(js));
-ok('every Releases row has a visible Details link to the set\'s full listing', /Details \\u2197|Details ↗/.test(js) && /tcgplayer\.com\/search\/one-piece-card-game\/product\?q=/.test(js));
+ok('every Releases row has a visible Details link to the set\'s full listing', /Details \$\{ext\(\)\}/.test(js) && /tcgplayer\.com\/search\/one-piece-card-game\/product\?q=/.test(js));
 ok('the nightly carries the hourly\'s hunt files forward before it deploys (the 404)', /--carry-over/.test(fs.readFileSync(path.join(ROOT, 'ci', 'bundle.sh'), 'utf8')) && /def carry_over/.test(fs.readFileSync(path.join(ROOT, 'tools', 'hunt.py'), 'utf8')) && fs.readFileSync(path.join(ROOT, 'ci', 'bundle.sh'), 'utf8').indexOf('--carry-over') < fs.readFileSync(path.join(ROOT, 'ci', 'bundle.sh'), 'utf8').indexOf('::group::commit sidecars'));
 { /* diagnostics: the gesture, the buffer, the report */
   ctx.window.scrollTo = () => {}; ctx.scrollTo = () => {};
@@ -2032,11 +2032,11 @@ const h96 = ctx.document.getElementById('sealedList').innerHTML;
 ok('every sealed row carries a chip strip, and every strip sits after the row\'s buttons, never inside one', count96(h96, /data-open="/g) > 0 && count96(h96, /<div class="chips buy"/g) === count96(h96, /data-open="/g) && count96(h96, /<\/button><div class="chips buy"/g) === count96(h96, /<div class="chips buy"/g), `${count96(h96, /<div class="chips buy"/g)} strips for ${count96(h96, /data-open="/g)} rows`);
 const strip96 = (h, id) => { const r = h.slice(h.indexOf('data-open="' + id + '"')); const a = r.indexOf('<div class="chips buy"'); return r.slice(a, r.indexOf('</div>', a) + 6); };
 const sG = strip96(h96, pG.id), sS = strip96(h96, pS.id);
-ok('the distributor-listed product\'s strip: a cart and TCGplayer ↗, a truck and GTS Distribution ↗, each to the seller\'s own page in the browser, no image', /g-cart/.test(sG) && /TCGplayer ↗/.test(sG) && /g-truck/.test(sG) && /GTS Distribution ↗/.test(sG) && !/<img/.test(sG) && count96(sG, /target="_blank" rel="noopener"/g) === count96(sG, /<a class="chip buy" href="http/g), sG.slice(0, 200));
-ok('the shop-listed product\'s strip: a pin and the shop\'s name ↗, and a handset Call chip with a tel: link', /g-pin/.test(sS) && new RegExp(shop96.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' ↗').test(sS) && /href="tel:2485550100"/.test(sS) && /g-phone/.test(sS), sS.slice(0, 240));
+ok('the distributor-listed product\'s strip: a cart and TCGplayer ↗, a truck and GTS Distribution ↗, each to the seller\'s own page in the browser, no image', /g-cart/.test(sG) && /TCGplayer <svg[^>]*><use href="#g-external"/.test(sG) && /g-truck/.test(sG) && /GTS Distribution <svg[^>]*><use href="#g-external"/.test(sG) && !/<img/.test(sG) && count96(sG, /target="_blank" rel="noopener"/g) === count96(sG, /<a class="chip buy" href="http/g), sG.slice(0, 200));
+ok('the shop-listed product\'s strip: a pin and the shop\'s name ↗, and a handset Call chip with a tel: link', /g-pin/.test(sS) && new RegExp(shop96.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' <svg[^>]*><use href="#g-external"').test(sS) && /href="tel:2485550100"/.test(sS) && /g-phone/.test(sS), sS.slice(0, 240));
 /* the sheet */
 V.openDetail(pS.id); const l96 = ctx.document.getElementById('dBuyList').innerHTML;
-ok('the sealed sheet has a Where to buy panel: TCGplayer and the shop with its address, distance, Open ↗ and Call; the note says the browser opens the seller\'s page and no link carries a referral', ctx.document.getElementById('dBuy').hidden === false && /TCGplayer/.test(l96) && new RegExp(shop96.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(l96) && /1 Main St, Waterford/.test(l96) && /~\d+ mi/.test(l96) && /href="tel:2485550100"/.test(l96) && count96(l96, /Open ↗/g) >= 2 && /no link carries a referral/.test(html));
+ok('the sealed sheet has a Where to buy panel: TCGplayer and the shop with its address, distance, Open ↗ and Call; the note says the browser opens the seller\'s page and no link carries a referral', ctx.document.getElementById('dBuy').hidden === false && /TCGplayer/.test(l96) && new RegExp(shop96.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(l96) && /1 Main St, Waterford/.test(l96) && /~\d+ mi/.test(l96) && /href="tel:2485550100"/.test(l96) && count96(l96, /Open <svg[^>]*><use href="#g-external"/g) >= 2 && /no link carries a referral/.test(html));
 const card96 = V.CAT.rows.find(p => !p.sealed && p.market > 0); V.openDetail(card96.id);
 ok('control: a card\'s sheet has no Where to buy panel', ctx.document.getElementById('dBuy').hidden === true && ctx.document.getElementById('dBuyList').innerHTML === '');
 ok('the four seller glyphs ship in the sprite; the chip and the panel carry their rules (landmine 136)', /id="g-cart"/.test(html) && /id="g-pin"/.test(html) && /id="g-truck"/.test(html) && /id="g-phone"/.test(html) && /\.chip\.buy\{/.test(html) && /\.panel\[hidden\]\{display:none\}/.test(html));
@@ -2062,12 +2062,12 @@ ok('the group\'s tap searches Sealed for every starter deck, not one set', /data
 V.RELF.open = new Set(); V.paintReleases(); const r97c = ctx.document.getElementById('relList').innerHTML;
 const upcoming97 = [...V.CAT.sets.values()].filter(s => s.pub && s.pub >= today97);
 ok('every upcoming row\'s countdown carries the band of its distance, and a recent row carries the past band', upcoming97.every(s => new RegExp('data-browse-set="' + s.id + '"[\\s\\S]*?<span class="note ' + V.relBand(days97(s.pub)) + '">').test(r97c)) && /<span class="note cd4">\d+ days ago<\/span>/.test(r97c), `${upcoming97.length} upcoming`);
-ok('every upcoming row and group has Remind me and Calendar beside Details; a recent one has Details only', count97(r97c, /data-relalert="/g) >= upcoming97.length && count97(r97c, /data-relcal="/g) === count97(r97c, /data-relalert="/g) && (() => { const rec = r97c.slice(r97c.indexOf('<h3>Recent</h3>')); return !/data-relalert=/.test(rec) && /Details ↗/.test(rec); })());
+ok('every upcoming row and group has Remind me and Calendar beside Details; a recent one has Details only', count97(r97c, /data-relalert="/g) >= upcoming97.length && count97(r97c, /data-relcal="/g) === count97(r97c, /data-relalert="/g) && (() => { const rec = r97c.slice(r97c.indexOf('<h3>Recent</h3>')); return !/data-relalert=/.test(rec) && /Details <svg[^>]*><use href="#g-external"/.test(rec); })());
 /* the reminder: on, the day before, once; off */
 const s97 = upcoming97.sort((a, b) => a.pub.localeCompare(b.pub))[0];
 if (s97) {
   const on = V.RELALERTS.toggle(s97.id, s97.name, s97.pub); V.paintReleases();
-  ok('Remind me stores the set and its date and the row says Reminder set', on && V.RELALERTS.has(s97.id) && V.RELALERTS.list[0].pub === s97.pub && /Reminder set ✓/.test(ctx.document.getElementById('relList').innerHTML) && new RegExp('data-relalert="' + s97.id + '" [^>]*aria-pressed="true"').test(ctx.document.getElementById('relList').innerHTML));
+  ok('Remind me stores the set and its date and the row says Reminder set', on && V.RELALERTS.has(s97.id) && V.RELALERTS.list[0].pub === s97.pub && /Reminder set <svg[^>]*><use href="#g-check"/.test(ctx.document.getElementById('relList').innerHTML) && new RegExp('data-relalert="' + s97.id + '" [^>]*aria-pressed="true"').test(ctx.document.getElementById('relList').innerHTML));
   const early = await V.RELALERTS.check(V.RELALERTS.dayBefore(V.RELALERTS.dayBefore(s97.pub)));
   const eve = await V.RELALERTS.check(V.RELALERTS.dayBefore(s97.pub));
   const again = await V.RELALERTS.check(s97.pub);
@@ -2302,6 +2302,55 @@ section('take 107 — one header on every screen (A42): the title in one place, 
     ok('...control: from the mode\'s home the arrow does nothing, and never leaves the app', minimised === 0 && V.NAV.stack.join() === 'home');
     V.PLATFORM.plugin = plug0; V.go('home');
   } }
+
+section('take 108 — controls and icons (A42): every icon a sprite symbol with one meaning, a 44 px target for every control, a pressed and a disabled look');
+{ /* one meaning per glyph: the three navs and the collection's actions, as a table */
+  const NAV108 = { home: 'compass', search: 'spyglass', scan: 'scan', collection: 'collection', decks: 'cardback', cards: 'spyglass', play: 'life', sim: 'don',
+                   sealed: 'box', releases: 'calendar', local: 'pin', events: 'trophy' };
+  const ACT108 = { movers: 'trend', trade: 'rope', bulk: 'select', export: 'export', backup: 'backup', import: 'import', wants: 'bookmark', binder: 'binder' };
+  const SAME = [['search', 'cards']];   // one meaning, two modes: find a card
+  const GAME = ['stage', 'counter', 'blocker', 'trigger', 'rush', 'leader', 'character', 'event'];   // the game's own glyphs keep the game's meanings
+  const glyphMap = src => { const m = {};
+    for (const x of src.matchAll(/<nav id="nav\w+"[^>]*>([\s\S]*?)<\/nav>/g)) for (const b of x[1].matchAll(/<button data-go="(\w+)"[^>]*>[\s\S]*?#g-([\w-]+)"/g)) m['nav:' + b[1]] = b[2];
+    const a = src.match(/<div class="actions">([\s\S]*?)<\/div>/); if (a) for (const b of a[1].matchAll(/data-act="(\w+)">[\s\S]*?#g-([\w-]+)"/g)) m['act:' + b[1]] = b[2];
+    return m; };
+  const misfits = src => { const m = glyphMap(src), bad = [];
+    for (const [k, g] of Object.entries(NAV108)) if (m['nav:' + k] !== g) bad.push(`nav ${k}: ${m['nav:' + k]}`);
+    for (const [k, g] of Object.entries(ACT108)) if (m['act:' + k] !== g) bad.push(`act ${k}: ${m['act:' + k]}`);
+    const owners = {}; for (const [k, g] of Object.entries(m)) (owners[g] ||= new Set()).add(k.split(':')[1]);
+    for (const [g, ks] of Object.entries(owners)) { const list = [...ks]; if (list.length > 1 && !SAME.some(p => list.every(x => p.includes(x)))) bad.push(`g-${g} means ${list.join(' and ')}`); }
+    for (const [k, g] of Object.entries(m)) if (GAME.includes(g)) bad.push(`${k} borrows the game's g-${g}`);
+    return bad; };
+  ok('one meaning per glyph: each nav and action draws its own symbol, Search and Cards share the one for finding a card, the game\'s glyphs are the game\'s', misfits(html).length === 0, misfits(html).join('; '));
+  ok('...control: take 107\'s map is caught (Scan on Blocker, Collection and Sealed on Stage, Releases on Counter, Events on Life)',
+     misfits(html.replace('#g-scan"', '#g-blocker"').replace('#g-collection"', '#g-stage"').replace('#g-box"', '#g-stage"')).length >= 3);
+  ok('every new symbol is in the sprite', ['scan', 'collection', 'box', 'calendar', 'trophy', 'bookmark', 'export', 'import', 'backup', 'select', 'trend', 'torch', 'photo', 'binder',
+     'filter', 'star', 'undo', 'swap', 'refresh', 'more', 'chevron', 'external', 'minus', 'plus', 'check', 'bell'].every(g => new RegExp(`<symbol id="g-${g}" viewBox="0 0 24 24"`).test(html)));
+  ok('Lucide\'s notices ship inside the app (an element, not a comment) and About credits them',
+     /<metadata id="lucide-licence">ISC License/.test(html) && /Permission to use, copy, modify, and\/or distribute this software/.test(html) && /Permission is hereby granted, free of charge/.test(html) && /id="aboutIcons">Some of the icons are Lucide's/.test(js));
+  ok('the search bars\' buttons are 44 px icon buttons with names: scan, favourites (a toggle), filter and sort',
+     /<button class="icb" data-go="scan" aria-label="Scan a card">/.test(html) && /<button class="icb" id="favOnly" aria-label="Show favourites only" aria-pressed="false">/.test(html) && (html.match(/<button class="icb" id="sortBtn(All)?" aria-label="Filter and sort">/g) || []).length === 2);
+  ok('every stepper draws its minus and plus from the sprite, with a name each way', (js.match(/aria-label="(Life|DON!!|Given DON!!) down">\$\{G\('minus', 20\)\}/g) || []).length === 3 && /id="dMinus" aria-label="One fewer"><svg class="g"[^>]*><use href="#g-minus"/.test(html) && /data-trdec="\$\{side\}:\$\{p\.id\}" aria-label="One fewer/.test(js));
+  ok('every toggle says whether it is on: favourites, owned only, this deck, the stock alert, the reminder', /\$\('#favOnly'\)[^\n]*setAttribute\('aria-pressed'/.test(js) && /id="dkOwn" aria-pressed="false">Owned only</.test(html) && /\$\('#cdForDeck'\)\.setAttribute\('aria-pressed'/.test(js) && /data-stock="\$\{p\.id\}"[^>]*aria-pressed=/.test(js) && /data-relalert=[^`]*aria-pressed=/.test(js));
+  ok('the star and the bell leave their fill to the control (a symbol\'s own fill="none" beats the outside; the first picture of a pressed star was hollow)', /<symbol id="g-star" viewBox="0 0 24 24" stroke=/.test(html) && /<symbol id="g-bell" viewBox="0 0 24 24" stroke=/.test(html) && /svg\.g\{[^}]*fill:none\}/.test(html) && /const bell = \(on, size = 18\) => G\('bell', size, on \? 'fill:currentColor' : ''\)/.test(js));
+  ok('the links drawn as ghost buttons centre their words like the buttons beside them (an inline display:inline-block had pinned them to the top)', !/<a class="ghost"[^>]*display:inline-block/.test(js) && /a\.ghost\{display:inline-flex;align-items:center/.test(html));
+  { const fb = ctx.document.querySelector('#favOnly'); fb._ev.click({ target: fb, preventDefault() {} });
+    ok('tapping favourites presses the star and says so', fb.getAttribute('aria-pressed') === 'true' && fb.classList.contains('on'));
+    fb._ev.click({ target: fb, preventDefault() {} }); }
+  /* a painter that names its own G (the distributor feed) must not call it for a glyph: the helpers close over the real one */
+  const shadowed = [...js.matchAll(/const G = HUNT\.feed/g)].map(m => { const rest = js.slice(m.index); const end = rest.search(/\n\}\n/); return rest.slice(0, end < 0 ? 4000 : end); });
+  ok('no painter that names its own G calls it for a glyph (a TypeError at the first paint); chev, ext, tick and bell close over the real one',
+     shadowed.length >= 3 && shadowed.every(b => !/\bG\('/.test(b)) && /const chev = \(open, size = 16\) => G\('chevron'/.test(js) && /const bell = \(on, size = 18\) => G\('bell'/.test(js));
+  ok('...control: a glyph call inside such a painter is caught', !/\bG\('/.test(shadowed[0]) && /\bG\('/.test(shadowed[0] + " G('chevron')"));
+  /* the targets and the states, in the CSS (render measures them in Chrome) */
+  ok('pressed: every control lightens, the compact ones give a little; disabled: switched off, and the pointer says so',
+     /button:not\(:disabled\):active,a\.chip:active,a\.ghost:active\{filter:brightness\(1\.25\)\}/.test(html) && /:not\(:disabled\):active\{transform:scale\(\.96\)\}/.test(html) && /button:disabled\{opacity:\.45;cursor:not-allowed\}/.test(html) && /button svg,a svg\{pointer-events:none\}/.test(html));
+  ok('44 px: fields, ghost buttons, links, steppers and the actions for real; chips, pills, the set chip, the ranges, the row steppers and the slider by a 44 px hit area',
+     /input:not\(\[type\]\),textarea\{\s*min-height:44px/.test(html) && /\.ghost,\.linkish\{min-height:44px\}/.test(html) && /\.stepper button\{width:44px;height:44px/.test(html)
+     && /:is\(\.chip,button\.pill,\.setchip,\.range,\.cnt button,\.mode button\)::after\{content:"";position:absolute;left:50%;top:50%;\s*width:max\(100%,44px\);height:max\(100%,44px\)/.test(html) && /\.chips\{display:flex;flex-wrap:wrap;gap:10px 7px\}/.test(html));
+  ok('the actions keep their width: flex:0 0 auto beside the 44 px minimum (a min-width alone squeezed the row -- seen in this take)', /\.actions button\{flex:0 0 auto;min-width:44px;min-height:44px\}/.test(html));
+  ok('the scanner\'s height takes the sticky mode slider off too (its shutter row sat 52 px under the nav)', /\.scanwrap\{position:relative;height:calc\(100vh - 76px - var\(--sat\) - var\(--sab\) - var\(--modebar-h\)\)/.test(html) && /--modebar-h:53px/.test(html));
+  ok('the deck\'s name is a 44 px target that keeps its title\'s place', /h1\.ab-title input\{display:block;width:100%;min-height:0;margin:-6px 0 -8px;padding:6px 0 8px/.test(html)); }
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
