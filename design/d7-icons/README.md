@@ -44,6 +44,34 @@ chromium --headless=new --window-size=1080,4200 --screenshot="$PWD/../d7-build/s
 `render_ctx.py` also renders today's `assets/icon.svg` the way `ci/apk.sh` builds it, for the comparison.
 Rendered PNGs and HTML are generated; keep them out of the tree.
 
+## v3 — ドン!! on a white card back (`v3/`)
+
+The owner's next round asked for five changes:
+- crop in tighter
+- a more eye-catching philosophy, closer to One Piece
+- the Japanese ドン!! (not the display face's Latin DON!!)
+- the white card back, its outline taken from the word's outline
+- no speed lines
+
+A design panel settled the composition: three designers, each design scored by two judges (the eye
+and the risk), all at 6/10. The composition takes:
+- the sea design's sky and its card rising from the water
+- the full-icon design's tighter, bigger ドン!!
+- the judges' fixes
+
+`v3/compose.py` writes `v3/svg/own-ink` and `v3/svg/own-red`. Measured: the mark reaches 31.3 dp and
+the monochrome 32.2 dp of the 33 dp safe zone.
+- **ink:** the card wears the word's own ink border and red offset print.
+- **red:** a red border and rose with a thin ink keyline.
+
+What the risk judges took out, and why:
+- **The grey chart lines.** They play the role of the printed back's arc pattern, and each fan had 16
+  rays at 22.5°, the Rising Sun flag's count.
+- **The rose's inner ring.** It echoes the printed emblem's ring pair.
+
+**Only our own card back lives here.** The owner also saw a private redraw of the printed emblem for
+comparison. It is not in this repository and is not for shipping (take 63; landmines 26, 30).
+
 ## If this is chosen, the take that ships it
 
 - **Render real adaptive layers.** `ci/apk.sh` (the launcher-icon step) should render `-bg` and `-fg`
