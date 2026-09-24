@@ -24,9 +24,35 @@ how many takes left until the UI overhaul is complete, what's left?"
   02:02 to 24 Sept 19:08 UTC. That is 7.7 days, so not hourly.
   - GTS states are in 8 runs, since 23 Sept 06:58.
   - Southern Hobby's are in 1 run, the 19:08 run on 24 Sept.
-  - A row keys each distributor item by its own id: GTS's SKU, Southern
-    Hobby's item number.
-  - The rows are kept for a fortnight.
+  - A row keys each distributor item by its own id. For GTS that is the
+    SKU. For Southern Hobby it is the product-page number from `/p82337/`,
+    not the item number. (The first version of this line said "item
+    number", and that was wrong.)
+  - The rows are kept by count: `KEEP_RUNS = 24 * 14`, 336 rows, a number
+    written for hourly runs. At the measured cadence that is about 55
+    days. (The first version said "a fortnight", which holds only at one
+    run an hour.)
+- **Why about 4 h, not hourly:** the Actions API lists exactly 48 hunt
+  runs, all green: 45 scheduled and 3 started by hand. Each run matches one
+  row within about a minute, so no row was lost. GitHub fired about 45 of
+  the about 185 hourly slots (`17 * * * *`). The gaps are 1.0 h at least,
+  4.03 h median and 6.34 h at most (MEASURED).
+- **No state change has been seen yet.** All 8 GTS rows are identical,
+  with 49 SKUs each: 37 sold out, 6 call to order, 4 out of stock, 1
+  coming and 1 in stock. Southern Hobby has been read once. One run on 24
+  Sept at 15:05 UTC has no GTS key: the fetch timed out and the last good
+  copy was kept, and a kept copy writes no row (MEASURED).
+- **Many states come from the calendar, not the site:**
+  - Every Southern Hobby state is computed from its dates against the
+    runner's UTC day (`southern.state_of`).
+  - So are GTS's `coming`, `preorder` and `out` (`gts.status_of`). Only
+    `sold_out`, `call` and `in_stock` are GTS's own words.
+  - The rows keep the state word, not the dates (MEASURED from the code).
+- **A hazard, INFERRED and not seen:**
+  - If the hourly's fetch of the previous history fails, it starts a new
+    history of one row, and the deploy replaces the old one. The nightly's
+    carry-over has the same shape.
+  - No run has lost its history so far: the 48 runs match the 48 rows.
 
 ## Take 113 — 2026-09-24 — the owner's icon (D7), folded in from the graphic design session's branch
 
