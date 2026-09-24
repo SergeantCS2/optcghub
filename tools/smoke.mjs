@@ -661,12 +661,12 @@ ok('photos are NOT in the backup — derived, rescannable',
 ok('the catalogue is NOT in the backup — disposable', !('catalogue_rows' in bj) && JSON.stringify(bj).length < 200000);
 ok('a batch commit schedules a backup', /scheduleBackup\('batch'\)/.test(js));
 ok('a deck save schedules a backup', /scheduleBackup\('deck'\)/.test(js));
-ok('backup failure is SHOWN, never swallowed', /Backup FAILED/.test(js));
+ok('backup failure is SHOWN, never swallowed', /Backup failed/.test(js));
 ok('the backup goes to public Documents, which survives uninstall',
    /directory: 'DOCUMENTS'/.test(js) && /backup-latest\.json/.test(js));
 ok('scan photos go to disk, not localStorage (landmine 79)',
    /savePhoto\(/.test(js) && /directory: 'DATA'/.test(js) && /convertFileSrc/.test(js));
-ok('restore is a REPLACE and says so', /This REPLACES what is on the phone now/.test(js));
+ok('restore is a REPLACE and says so', /This replaces what is on the phone now/.test(js));
 }
 
 {
@@ -782,7 +782,7 @@ ok('the text is cleaned: no HTML tags, no carriage returns',
 ok('a phrase from a real card\'s text finds that card',
    (() => { const p = withText.find(x => /\[Blocker\]/.test(x.text)); if (!p) return false;
             const q = 'blocker'; return (p.full + ' ' + p.text).toLowerCase().includes(q); })());
-ok('the tour is v2 with a modes card', /optcghub\.guide\.v2/.test(js) && /Two faces/.test(js));
+ok('the tour is v2 with a modes card', /optcghub\.guide\.v2/.test(js) && /Three modes/.test(js));   // take 110: three modes, the Sim built
 /* who goes first: §6-4-1 */
 const P = V.PLAY; P.turn = 1; P.first = 1; P.p.forEach(x => { x.don = 0; x.given = 0; });
 ok('first player is switchable', P.first === 1);
@@ -978,7 +978,7 @@ P44.turn = 1;
 ok('a Leader names the player; no Leader, the seat name', P44.label(0) === 'Player 1');
 P44.hotseat = true; V.paintPlay();
 const board = ctx.document.querySelector('#plBoard').innerHTML;
-ok('in the hand, only the active player\'s panel is drawn, upright', (board.match(/class="panel"/g) || []).length === 1 && !/rotate\(180deg\)/.test(board));
+ok('in the hand, only the active player\'s panel is drawn, upright', (board.match(/class="panel plpanel"/g) || []).length === 1 && !/rotate\(180deg\)/.test(board));
 ok('...with the opponent\'s life and DON!! on one line', /Opponent/.test(board) && /Life <b>5<\/b>/.test(board));
 ok('the button says what happens next', /End turn|Start/.test(board));
 V.plCurtain(1);
@@ -986,7 +986,7 @@ const cur = ctx.document.querySelector('#plCurtain');
 ok('ending a turn drops a curtain that names who takes the phone', cur.classList.contains('on') && /Hand the phone to/.test(cur.innerHTML) && /Player 2/.test(cur.innerHTML));
 ok('the curtain is dismissed by a tap, and the mode is remembered', /closest\('#plCurtain'\)/.test(js) && /vault\.hotseat/.test(js));
 P44.hotseat = false; cur.classList.remove('on'); V.paintPlay();
-ok('negative control: on the table both panels draw, one rotated to face across', (ctx.document.querySelector('#plBoard').innerHTML.match(/class="panel"/g) || []).length === 2 && /rotate\(180deg\)/.test(ctx.document.querySelector('#plBoard').innerHTML));
+ok('negative control: on the table both panels draw, one rotated to face across', (ctx.document.querySelector('#plBoard').innerHTML.match(/class="panel plpanel"/g) || []).length === 2 && /rotate\(180deg\)/.test(ctx.document.querySelector('#plBoard').innerHTML));
 }
 
 {
@@ -1346,7 +1346,10 @@ const sub = (p, t) => (p.subtypes || '').split(/[;/]/).map(x => x.trim()).includ
   const need = daT[1].if.find(c => c.c === 'donx'); P0.chars[0].don = need ? need.n : 1;
   S.mod(0, 'u' + P0.chars[0].uid, 99999, 'turn');
   S.attack(0, 0, 'leader'); S.noBlock(); const res = S.resolve();
-  ok('a continuous [Double Attack] under DON!!: a hit on the Leader takes two Life cards', S.kwOf(0, 0).includes('Double Attack') === false /* it left play? no: still there */ || true, '');
+  /* take 110: this line ended "|| true" and could not fail; it now asks what its name says, with a control */
+  const daOn = S.kwOf(0, 0).includes('Double Attack'), daGiven = P0.chars[0].don; P0.chars[0].don = daGiven - 1; const daShort = S.kwOf(0, 0).includes('Double Attack'); P0.chars[0].don = daGiven;
+  ok('a continuous [Double Attack] under DON!!: the keyword is live while the DON!! is given', daOn, JSON.stringify(S.kwOf(0, 0)));
+  ok('...control: one DON!! short, it is not', daShort === false);
   ok('...two Life cards were taken', res.win && res.life.length === 2 && P1.life.length === lb - 2, JSON.stringify(res.life.length)); }
 /* continuous Rush under DON!!: live, and gone without the DON!! */
 { P0.chars = [S.inst(+rushS[0], g.turn)];
@@ -1468,8 +1471,18 @@ ok('MAX wears an AD badge and is unlocked for a day by a rewarded ad; with no ad
 ok('...and the reward listener routes a max ad to the unlock, not to scan credits', /if \(this\._pendingKind === 'max'\) \{ this\._pendingKind = null; MAXLOCK\.grant\(\)/.test(js));
 ok('no select is ever wider than its container (the Sim boxes ran off the screen)', /select\{max-width:100%/.test(html));
 { V.MODE.set('hunt', false); V.SEALED.q = ''; V.SEALED.kind = 'all'; V.SEALED.closed.clear(); V.paintSealed(); const hs = ctx.document.querySelector('#sealedList').innerHTML;
-  ok('Starter decks have their own section at the top of Sealed, with pictures and the bell', /Starter decks <span class="note">· \d+<\/span>/.test(hs) && hs.indexOf('Starter decks') < hs.indexOf('data-setfold="') + 400);
-  V.SEALED.closed.add('decks'); V.paintSealed(); ok('...and it collapses on a tap like a set', !/Starter Deck 1: Straw Hat Crew/.test(ctx.document.querySelector('#sealedList').innerHTML.split('<h3>')[0]) || true); V.SEALED.closed.clear(); V.MODE.set('collect', false); }
+  ok('Starter decks have their own section at the top of Sealed, with pictures and the bell', /Starter decks <span class="note">· \d+<\/span>/.test(hs)
+     /* take 110: the first fold is the starter decks' and the name is inside its heading (a 400-character window stood for this until the heading carried its art) */
+     && hs.indexOf('data-setfold="') === hs.indexOf('data-setfold="decks"') && hs.indexOf('Starter decks') < hs.indexOf('</button>', hs.indexOf('data-setfold="decks"')));
+  /* take 110: this line ended "|| true" from the take-88 seed on, so it could not fail; the section is now
+     read from its own heading to the next one, folded and (the control) open */
+  const deckIds = V.CAT.rows.filter(p => V.SEALED.isProduct(p) && V.SEALED.kindOf(p) === 'deck').map(p => p.id);
+  const decksSec = h => { const a = h.indexOf('data-setfold="decks"'); if (a < 0) return null; const b = h.indexOf('data-setfold="', a + 1); return h.slice(a, b < 0 ? h.length : b); };
+  const deckRows = t => deckIds.filter(id => t.includes(`data-open="${id}"`)).length;
+  V.SEALED.closed.add('decks'); V.paintSealed(); const shut = decksSec(ctx.document.querySelector('#sealedList').innerHTML), open = decksSec(hs);
+  ok('...and it folds on a tap like a set: its heading stays, marked folded, and its decks go', !!shut && /^data-setfold="decks" aria-expanded="false"/.test(shut) && deckRows(shut) === 0, (shut || '').slice(0, 120));
+  ok('...control: open, the same section lists its decks', !!open && /^data-setfold="decks" aria-expanded="true"/.test(open) && deckRows(open) > 0, String(open && deckRows(open)));
+  V.SEALED.closed.clear(); V.MODE.set('collect', false); }
 ok('the roster carries a phone and an exact point for every store the file has them for', (() => { const d = fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-r87-')); execSync(`python3 tools/hunt.py --from-fixtures --out ${d}/feed-fixture.json`, { cwd: ROOT, stdio: 'pipe' }); const r = JSON.parse(fs.readFileSync(path.join(d, 'stores-fixture.json'), 'utf8')); return r.stores.every(s => s.phone && s.exact && Array.isArray(s.ll)); })());
 /* take 86: the fourth look */
 ok('every screen ends with room for the bottom bar (nothing hides behind it)', /\.screen\{display:none;padding:0 var\(--pad\) calc\(66px \+ 34px \+ var\(--sab\)\)\}/.test(html));
@@ -1543,7 +1556,7 @@ section('take 91 — More is a screen (A37, landmine 128)');
 ok('NAV.back() pops past anything that is not a screen', (() => { V.NAV.stack = ['sealed', 'ghost', 'local']; const r = V.NAV.back(); return r && V.NAV.stack[V.NAV.stack.length - 1] === 'sealed'; })());
 ok('the bottom bar is one bar in every mode: fixed height, near-black, items stretch equally, the accent only on the active item', /nav\{[^}]*height:66px[^}]*#0B0D10/.test(html) && /nav button\{flex:1 1 0/.test(html) && /nav button\.on\{color:var\(--accent-ink\)\}/.test(html));
 ok('every screen title bar has the same minimum height', /\.appbar\{[^}]*min-height:56px/.test(html));   // take 107: the header, one per screen
-ok('the Portfolio label is a small caption above the name, which keeps the display face at the hero\'s size', /\.hero \.who \.cap\{[^}]*text-transform:uppercase/.test(html) && /<span class="cap">Portfolio<\/span><em id="pfName">/.test(html) && /\.hero \.who em\{[^}]*font-size:24px/.test(html));
+ok('the Portfolio label is a small caption above the name, which keeps the display face at the hero\'s size', /\.hero \.who \.cap\{[^}]*text-transform:uppercase/.test(html) && /<span class="cap">Collection<\/span><em id="pfName">/.test(html) && /\.hero \.who em\{[^}]*font-size:24px/.test(html));
 { const boxes = V.CAT.rows.filter(p => V.SEALED.isProduct(p));
   ok('every sealed product carries a product photo url (343 of 343 today)', boxes.length > 300 && boxes.every(p => p.img));
   const pic = V.productPic(boxes[0]);
@@ -1601,7 +1614,7 @@ ok('the sim offers them, so a player with no collection can start', /DECKS\.all\
 /* take 109 (landmine 149): where they are is read from the screen that holds them -- the old
    line asked only whether the id existed, and they sat in the deck editor from take 66 at the latest */
 const secOf = (src, id) => { const i = src.indexOf(`id="${id}"`); if (i < 0) return null; const s0 = src.lastIndexOf('<section id="', i); return s0 < 0 ? null : src.slice(s0 + 13, src.indexOf('"', s0 + 13)); };
-ok('Decks shows them under their own heading, marked ready-made -- on the Decks screen itself', secOf(html, 'dkStock') === 'decks' && /ready-made/.test(js) && /not in your collection/.test(js), String(secOf(html, 'dkStock')));
+ok('Decks shows them under their own heading, marked ready-made -- on the Decks screen itself', secOf(html, 'dkStock') === 'decks' && /<div class="fgrp">Ready-made decks<\/div>/.test(js) && /<span class="badge">ready-made<\/span>/.test(js), String(secOf(html, 'dkStock')));
 ok('...control: the take-108 place (the bottom of a deck\'s editor) is caught', secOf(html.replace('  <div id="dkStock"></div>\n', '').replace('<div class="panel" id="dkSim"></div>', '<div class="panel" id="dkSim"></div><div id="dkStock"></div>'), 'dkStock') === 'deck');
 /* take 62: covers are drawn, never downloaded (landmines 26, 30) */
 const cover = V.deckCover(stock[0]);
@@ -1692,7 +1705,7 @@ V.SEALED.kind = 'all'; V.SEALED.q = 'starter deck 1';
 ok('the search narrows by product or set name', V.SEALED.rows().length >= 1 && V.SEALED.rows().every(p => /starter deck 1/i.test(p.name) || /starter deck 1/i.test(V.CAT.sets.get(p.set)?.name || '')));
 V.SEALED.q = '';
 V.paintSealed();
-ok('the Sealed screen draws rows with market, low, high and a delta, grouped by set', /data-open="/.test(ctx.document.querySelector('#sealedList').innerHTML) && /low \$/.test(ctx.document.querySelector('#sealedList').innerHTML) && (ctx.document.querySelector('#sealedList').innerHTML.match(/class="fgrp"/g) || []).length >= 10);
+ok('the Sealed screen draws rows with market, low, high and a delta, grouped by set', /data-open="/.test(ctx.document.querySelector('#sealedList').innerHTML) && /low \$/.test(ctx.document.querySelector('#sealedList').innerHTML) && (ctx.document.querySelector('#sealedList').innerHTML.match(/class="fgrp setstrip"/g) || []).length >= 10);
 ok('...and says plainly it is the marketplace price, not the shelf', /not the shelf price/.test(html));
 V.paintReleases();
 const rel = ctx.document.querySelector('#relList').innerHTML;
@@ -1823,7 +1836,7 @@ V.EVENTS.tab = JSON.parse(fs.readFileSync(evFile, 'utf8')); V.LOCAL.stores = JSO
 const evRows = V.EVENTS.rows();
 ok('events join back to their stores, carry a distance and a registration link, and are sorted by date', evRows.length >= 5 && evRows.every(e => e.store.name && e.url && /bandai-tcg-plus\.com\/event\/\d+/.test(e.url)) && evRows.every((e, i) => i === 0 || e.d >= evRows[i - 1].d));
 V.paintEvents(); const he = ctx.document.querySelector('#eventsList').innerHTML;
-ok('the Events screen groups by STORE (take 87): each store once with address, miles, a Call, then its next events with fee or free, seats, Register and +cal', /stores, \d+ events in the next 14 days/.test(he) && /~?\d+ mi/.test(he) && /href="tel:\d+"/.test(he) && /(free|\$\d)/.test(he) && /Register/.test(he) && /id="eventsDays"/.test(he) && /Registration is on Bandai TCG\+/.test(he));
+ok('the Events screen groups by STORE (take 87): each store once with address, miles, a Call, then its next events with fee or free, seats, Register and Calendar', /stores, \d+ events in the next 14 days/.test(he) && />Calendar<\/button>/.test(he) && /~?\d+ mi/.test(he) && /href="tel:\d+"/.test(he) && /(free|\$\d)/.test(he) && /Register/.test(he) && /id="eventsDays"/.test(he) && /Registration is on Bandai TCG\+/.test(he));
 V.LOCAL.radius = 10; V.paintEvents();
 ok('the distance dropdown narrows the events too', (ctx.document.querySelector('#eventsList').innerHTML.match(/Register/g) || []).length <= (he.match(/Register/g) || []).length);
 /* take 78: an event onto the calendar as a plain .ics */
@@ -1897,7 +1910,7 @@ section('take 93 — a picture beside every row that had none (A33 item 6)');
   if (typeof V.cardPic === 'function') {
     const h = V.cardPic(p);
     ok('cardPic: a pic box at the card ratio with the number as its label and the lazy reference image',
-       /class="pic"/.test(h) && /class="ph"/.test(h) && h.includes(p.num.split('-').pop()) && /height:50px/.test(h) &&
+       /class="pic"/.test(h) && /class="ph"/.test(h) && h.includes(p.num.split('-').pop()) && /width:44px;height:61px/.test(h) &&   /* take 110: the list-row size, THUMB.m */
        /<img class="ref" loading="lazy"/.test(h) && /this\.remove\(\)/.test(h), h.slice(0, 140));
     const none = V.cardPic({ ...p, img: null });
     ok('negative control: with no image the box is the label alone', /class="ph"/.test(none) && !/<img/.test(none));
@@ -2004,15 +2017,15 @@ Object.assign(V.FILT.all, V.blankFilter('all')); V.go('home');
 /* the sheet: sealed vs card */
 const box95 = V.CAT.rows.find(p => V.SEALED.isProduct(p)); const card95 = V.CAT.rows.find(p => !p.sealed && p.market > 0);
 V.STOCK.list = []; V.openDetail(box95.id);
-ok('a sealed product\'s sheet hides the card conditions, says "Sealed — no condition", explains why, and offers the stock alert',
-   ctx.document.getElementById('dCondSeg').hidden === true && ctx.document.getElementById('dCondSeg').innerHTML === '' && /Sealed — no condition/.test(ctx.document.getElementById('dCond').textContent) && /no condition to record/.test(ctx.document.getElementById('dCondNote').innerHTML) && ctx.document.getElementById('dStock').hidden === false);
+ok('a sealed product\'s sheet hides the card conditions, says "Sealed — no condition", and offers the stock alert',
+   ctx.document.getElementById('dCondSeg').hidden === true && ctx.document.getElementById('dCondSeg').innerHTML === '' && /Sealed — no condition/.test(ctx.document.getElementById('dCond').innerHTML.replace(/<[^>]+>/g, '')) && ctx.document.getElementById('dStock').hidden === false);
 fire95(ctx.document.getElementById('dStock'));
 const on95 = V.STOCK.has(box95.id) && /Watching for stock/.test(ctx.document.getElementById('dStock').textContent);
 fire95(ctx.document.getElementById('dStock'));
 ok('tapping it watches the product through the take-77 watch and the button says so; tapping again stops', on95 && !V.STOCK.has(box95.id) && /Alert me when in stock/.test(ctx.document.getElementById('dStock').textContent));
 V.openDetail(card95.id);
-ok('a card\'s sheet shows the segment under a line that names the condition, the card note, and no stock alert',
-   ctx.document.getElementById('dCondSeg').hidden === false && /data-cond="NM"/.test(ctx.document.getElementById('dCondSeg').innerHTML) && /Condition · Near Mint/.test(ctx.document.getElementById('dCond').textContent) && /what you tell us/.test(ctx.document.getElementById('dCondNote').innerHTML) && ctx.document.getElementById('dStock').hidden === true);
+ok('a card\'s sheet shows the segment under a line that names the condition, and no stock alert',
+   ctx.document.getElementById('dCondSeg').hidden === false && /data-cond="NM"/.test(ctx.document.getElementById('dCondSeg').innerHTML) && /Condition · Near Mint/.test(ctx.document.getElementById('dCond').innerHTML.replace(/<[^>]+>/g, '')) && ctx.document.getElementById('dStock').hidden === true);
 V.MODE.set('hunt', false); V.paintSealed();
 ok('the row\'s circle carries its word: alert, or watching', />alert<\/span><\/button>/.test(ctx.document.getElementById('sealedList').innerHTML) && (V.STOCK.toggle(box95.id), V.paintSealed(), />watching<\/span><\/button>/.test(ctx.document.getElementById('sealedList').innerHTML)));
 V.STOCK.toggle(box95.id); V.STOCK.list = []; V.MODE.set('collect', false); V.go('home');
@@ -2030,7 +2043,7 @@ V.LOCAL.shops = JSON.parse(fs.readFileSync(path.join(fxDir96, 'shops-fixture.jso
 const shop96 = V.LOCAL.shops.shops[0]; V.LOCAL.stores.stores.push({ name: shop96.name, zip: shop96.zip, addr: '1 Main St', city: 'Waterford', state: 'MI', phone: '2485550100', ll: [42.69, -83.39], exact: true, events: [] });   // the roster knows the shop: a synthetic entry, so the address path is deterministic
 const gtsIt96 = V.HUNT.feed.sources.gts.items.find(i => i.catalog_id); const pG = V.CAT.byId.get(gtsIt96.catalog_id);
 const srcG = V.buySources(pG);
-ok('a sealed product always has TCGplayer first, at its own product page from the catalogue id, with no parameter, the market price and its date as the note', srcG[0].label === 'TCGplayer' && srcG[0].url === 'https://www.tcgplayer.com/product/' + pG.id && !/[?#]/.test(srcG[0].url) && /market · \d{4}-\d\d-\d\d/.test(srcG[0].note), JSON.stringify(srcG[0]));
+ok('a sealed product always has TCGplayer first, at its own product page from the catalogue id, with no parameter, the market price and its date as the note', srcG[0].label === 'TCGplayer' && srcG[0].url === 'https://www.tcgplayer.com/product/' + pG.id && !/[?#]/.test(srcG[0].url) && /market · [A-Z][a-z]{2} \d{1,2}(, \d{4})?$/.test(srcG[0].note), JSON.stringify(srcG[0]));   /* take 110: the day in words */
 ok('a product the distributor lists has the distributor as a source, in its words, saying to stores, at its own page', srcG.some(s => s.kind === 'dist' && s.label === 'GTS Distribution' && /sold out · allocated · to stores/.test(s.note) && /^https:\/\/www\.gtsdistribution\.com\//.test(s.url)), JSON.stringify(srcG.map(s => s.label)));
 const shopIt96 = shop96.sealed.find(i => i.catalog_id); const pS = V.CAT.byId.get(shopIt96.catalog_id);
 const srcS = V.buySources(pS); const local96 = srcS.find(s => s.kind === 'local');
@@ -2062,7 +2075,7 @@ V.MODE.set('hunt', false); V.HUNT.feed = null; V.RELF.open = new Set(); V.RELALE
 const r97 = ctx.document.getElementById('relList').innerHTML;
 const decks97 = [...V.CAT.sets.values()].filter(s => s.pub && /^Starter Deck/i.test(s.name)); const byDay = {}; for (const s of decks97) (byDay[s.pub] ||= []).push(s);
 const runDay = Object.keys(byDay).find(d => byDay[d].length >= 2); const run = byDay[runDay] || [];
-ok('a run of starter decks on one release day is ONE row naming the range and the count, its decks folded away (the six ST31–ST36 rows the owner saw)', !!runDay && new RegExp('Starter Decks [^<]*' + run[0].abbr + '[^<]*' + run[run.length - 1].abbr).test(r97) && new RegExp(run.length + ' starter decks, one release day').test(r97) && !new RegExp('data-browse-set="' + run[1].id + '"').test(r97) && new RegExp('data-relfold="' + runDay + '"').test(r97), `${runDay}: ${run.length} decks`);
+ok('a run of starter decks on one release day is ONE row naming the range and the count, its decks folded away (the six ST31–ST36 rows the owner saw)', !!runDay && new RegExp('Starter decks [^<]*' + run[0].abbr + '[^<]*' + run[run.length - 1].abbr).test(r97) && new RegExp(run.length + ' starter decks, one release day').test(r97) && !new RegExp('data-browse-set="' + run[1].id + '"').test(r97) && new RegExp('data-relfold="' + runDay + '"').test(r97), `${runDay}: ${run.length} decks`);
 const single = Object.keys(byDay).find(d => byDay[d].length === 1); const one = single && byDay[single][0];
 ok('control: a single starter deck on its day stays its own row', !one || new RegExp('data-browse-set="' + one.id + '"').test(r97), String(one && one.abbr));
 V.RELF.open.add(runDay); V.paintReleases(); const r97b = ctx.document.getElementById('relList').innerHTML;
@@ -2092,7 +2105,7 @@ execSync(`python3 tools/hunt.py --from-fixtures --out ${feed97}`, { cwd: ROOT, s
 const F97 = JSON.parse(fs.readFileSync(feed97, 'utf8')); const st44 = F97.sources.gts.items.find(i => i.sku === 'BJP2904577');
 F97.sources.gts.items.push({ ...st44, sku: 'BJP2904574', name: 'ONE PIECE TCG: TITLE TBA STARTER DECK [ST43] (6CT)', codes: ['ST43'] });   // a second display on the same day, from the saved page's shape
 V.HUNT.feed = F97; V.RELF.open = new Set(); V.paintReleases(); const r97d = ctx.document.getElementById('relList').innerHTML;
-ok('two unlisted starter-deck displays on one release day fold into one distributor row naming the range', /Starter Decks ST43–ST44/.test(r97d) && /2 starter deck displays, one release day/.test(r97d) && !/STARTER DECK \[ST44\]/.test(r97d) && /data-relfold="d:2027-04-23"/.test(r97d));
+ok('two unlisted starter-deck displays on one release day fold into one distributor row naming the range', /Starter decks ST43–ST44/.test(r97d) && /2 starter deck displays, one release day/.test(r97d) && !/STARTER DECK \[ST44\]/.test(r97d) && /data-relfold="d:2027-04-23"/.test(r97d));
 V.RELF.open.add('d:2027-04-23'); V.paintReleases();
 ok('...and open, both displays are listed', /STARTER DECK \[ST44\]/.test(ctx.document.getElementById('relList').innerHTML) && /STARTER DECK \[ST43\]/.test(ctx.document.getElementById('relList').innerHTML));
 V.RELF.open = new Set(); V.HUNT.feed = null; V.RELALERTS.list = []; V.MODE.set('collect', false); V.go('home');
@@ -2124,12 +2137,13 @@ ok('Sealed\'s Starter decks section starts folded (the owner\'s word; a tap open
 ok('a condition tap no longer repaints the sheet through openDetail() (which reset the condition, so the tap did nothing)', !/dCond = c\.dataset\.cond; openDetail\(dCur\.id\)/.test(js) && /setCond\(c\.dataset\.cond\)/.test(js));
 { const keep98 = V.OWN.items; const card98 = V.CAT.rows.find(p => !p.sealed && p.market > 0); V.OWN.items = []; V.openDetail(card98.id);
   const r1 = V.setCond('LP'); const seg1 = ctx.document.getElementById('dCondSeg').innerHTML;
-  ok('tapping LP on an unowned card moves the segment to LP, names it on the line, quantity 1, no cost basis', r1 === true && /class="on" data-cond="LP"/.test(seg1) && !/class="on" data-cond="NM"/.test(seg1) && /Condition · Lightly Played/.test(ctx.document.getElementById('dCond').textContent) && ctx.document.getElementById('dQty').textContent === '1' && ctx.document.getElementById('dPaid').textContent === 'Set');
+  ok('tapping LP on an unowned card moves the segment to LP, names it on the line, quantity 1, no cost basis', r1 === true && /class="on" data-cond="LP"/.test(seg1) && !/class="on" data-cond="NM"/.test(seg1) && /Condition · Lightly Played/.test(ctx.document.getElementById('dCond').innerHTML.replace(/<[^>]+>/g, '')) && ctx.document.getElementById('dQty').textContent === '1' && ctx.document.getElementById('dPaid').textContent === 'Set');
   V.OWN.add(card98.id, { qty: 3, condition: 'MP' }).paid = 12.5; const r2 = V.setCond('MP');   // the cost basis is set on the sheet, not through add()
   ok('tapping a condition you own copies in shows that copy\'s quantity and cost basis', r2 === true && ctx.document.getElementById('dQty').textContent === '3' && /12\.50/.test(ctx.document.getElementById('dPaid').textContent) && /class="on" data-cond="MP"/.test(ctx.document.getElementById('dCondSeg').innerHTML));
   const r3 = V.setCond('XX');
   ok('...control: a condition that is not one of the five is refused and nothing moves', r3 === false && /class="on" data-cond="MP"/.test(ctx.document.getElementById('dCondSeg').innerHTML) && ctx.document.getElementById('dQty').textContent === '3');
-  ok('the card note says what a tap does: the copy is recorded under that condition on Save', /Tap a condition to choose the one this copy is recorded under/.test(ctx.document.getElementById('dCondNote').innerHTML));
+  /* take 110: the note that said what a tap does went at the owner's word; the line says which condition is chosen */
+  ok('the line over the segment names the condition a tap chose (the note under it is gone, take 110)', ctx.document.getElementById('dCondNote') === null && /Condition · Moderately Played/.test(ctx.document.getElementById('dCond').innerHTML.replace(/<[^>]+>/g, '')));
   V.OWN.items = keep98; V.go('home'); }
 
 section('take 99 — the look (A40): the harness exists and stays out of the tree; what its first run on take 98 found');
@@ -2339,7 +2353,7 @@ section('take 108 — controls and icons (A42): every icon a sprite symbol with 
   ok('every new symbol is in the sprite', ['scan', 'collection', 'box', 'calendar', 'trophy', 'bookmark', 'export', 'import', 'backup', 'select', 'trend', 'torch', 'photo', 'binder',
      'filter', 'star', 'undo', 'swap', 'refresh', 'more', 'chevron', 'external', 'minus', 'plus', 'check', 'bell'].every(g => new RegExp(`<symbol id="g-${g}" viewBox="0 0 24 24"`).test(html)));
   ok('Lucide\'s notices ship inside the app (an element, not a comment) and About credits them',
-     /<metadata id="lucide-licence">ISC License/.test(html) && /Permission to use, copy, modify, and\/or distribute this software/.test(html) && /Permission is hereby granted, free of charge/.test(html) && /id="aboutIcons">Some of the icons are Lucide's/.test(js));
+     /<metadata id="lucide-licence">ISC License/.test(html) && /Permission to use, copy, modify, and\/or distribute this software/.test(html) && /Permission is hereby granted, free of charge/.test(html) && /id="aboutIcons">Some of the icons are Lucide’s/.test(js));
   ok('the search bars\' buttons are 44 px icon buttons with names: scan, favourites (a toggle), filter and sort',
      /<button class="icb" data-go="scan" aria-label="Scan a card">/.test(html) && /<button class="icb" id="favOnly" aria-label="Show favourites only" aria-pressed="false">/.test(html) && (html.match(/<button class="icb" id="sortBtn(All)?" aria-label="Filter and sort">/g) || []).length === 2);
   ok('every stepper draws its minus and plus from the sprite, with a name each way', (js.match(/aria-label="(Life|DON!!|Given DON!!) down">\$\{G\('minus', 20\)\}/g) || []).length === 3 && /id="dMinus" aria-label="One fewer"><svg class="g"[^>]*><use href="#g-minus"/.test(html) && /data-trdec="\$\{side\}:\$\{p\.id\}" aria-label="One fewer/.test(js));
@@ -2385,8 +2399,11 @@ section('take 109 — the art layer, part 1 (A42): the picture measured, Decks u
   const byNum = f => /\.num\b|\bnumber\b/.test(String(f));
   ok('the picture\'s address is never made from a card number', typeof V.artUrl === 'function' && !byNum(V.artUrl) && !byNum(V.largeOk));
   ok('...control: an address made from the number is caught', byNum(p => `https://x/${p.num}.png`));
-  ok('this build\'s own manifest says what the runner measured (served, of, the median size)',
-     keepImg && keepImg.large && typeof keepImg.large.served === 'number' && keepImg.large.suffix === '_in_1000x1000', JSON.stringify(keepImg && keepImg.large));
+  /* take 110: read against the sidecar the hash step wrote -- the runner measures on every build; a
+     session that restored the nightly's copy (landmine 116) builds with what the nightly measured */
+  const side109 = (() => { try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'catalog/hashes.json'), 'utf8')).large || {}; } catch { return null; } })();
+  ok('this build\'s own manifest carries what the hash step measured, as it measured it -- on the runner, which always measures, served of 40 at the large size',
+     side109 !== null && keepImg && JSON.stringify(keepImg.large) === JSON.stringify(side109) && (!process.env.GITHUB_ACTIONS || (typeof side109.served === 'number' && side109.suffix === '_in_1000x1000')), JSON.stringify(keepImg && keepImg.large) + ' vs ' + JSON.stringify(side109));
   man.images = { ...(keepImg || {}), large: { suffix: '_in_1000x1000', probed: 40, served: 40, w: 600, h: 838, min_w: 408 } };
   /* the ground under the art: the card's own colours, never a generic tint */
   const cv = c => `var(--c-${c.toLowerCase()})`, [c1, c2] = two.color.split(';');
@@ -2403,12 +2420,12 @@ section('take 109 — the art layer, part 1 (A42): the picture measured, Decks u
   ok('the page itself: the backdrop first, the card centred in its own row, the old 112 px column gone',
      /<section id="detail" class="screen detail">\s*<div class="artbg dback" id="dBack" aria-hidden="true"><\/div>\s*<header class="appbar">/.test(html) && /<div class="dhero"><div class="art" id="dArt"><\/div><\/div>/.test(html) && !/id="dArt" style="width:112px/.test(html));
   /* the stamp: anything shown as art rather than as the card is cut to the card's top 42 % */
-  ok('the stamp band is never shown as art: img.above cuts every picture to the card\'s top 42 % (landmine 151)',
-     /img\.above\{object-view-box:inset\(0 0 58% 0\)\}/.test(html) && /class="peek"[^`]*refArt\(L, \{ size: 'large', cls: 'above' \}\)/.test(js) && /<img class="above" alt=""/.test(js));
+  ok('the stamp band is never shown as art: img.above cuts every art picture to the card\'s top 42 % (landmine 151)',
+     /img\.above\{object-view-box:inset\(0 0 58% 0\)\}/.test(html) && (js.match(/<img class="above\$\{artOk\(/g) || []).length === 2);   /* take 110's review: artBack and paintBack, each with its loaded mark */
   ok('...control: an art picture without the cut is caught', !/<img class="above"/.test('<img class="blur" alt="">'));
   /* Decks: the hero, its Leader, the counts; Home has none (the owner's ruling) */
   const heroes = [...html.matchAll(/<section id="([\w-]+)"[^>]*>\s*<div class="arthero"/g)].map(m => m[1]);
-  ok('the art hero sits above the header on Decks and nowhere else -- none on Home (the owner: "I don\'t really like A in collect")', heroes.join() === 'decks', heroes.join());
+  ok('the art hero sits above the header on Decks (and, from take 110, Sealed) and nowhere else -- none on Home (the owner: "I don\'t really like A in collect")', heroes.slice().sort().join() === 'decks,sealed', heroes.join());
   ok('...control: a hero put on Home is caught', [...html.replace('<section id="home" class="screen on">', '<section id="home" class="screen on">\n  <div class="arthero" id="hmHero" hidden></div>').matchAll(/<section id="([\w-]+)"[^>]*>\s*<div class="arthero"/g)].map(m => m[1]).includes('home'));
   const keepDecks = V.DECKS.list.slice(); const st0 = V.CAT.stock[0], L1 = V.CAT.byId.get(st0.leader), L2 = V.CAT.byId.get(V.CAT.stock[1].leader);
   V.DECKS.list.length = 0; V.DECKS.list.push({ id: 'd1', name: 'old', leader: L1.id, cards: [], created: 1 }, { id: 'd2', name: 'new', leader: L2.id, cards: [], created: 2 });
@@ -2419,9 +2436,9 @@ section('take 109 — the art layer, part 1 (A42): the picture measured, Decks u
   ok('...with no deck of the collector\'s own, a ready-made deck\'s Leader', heroLeader().L === L1 && /ready-made/.test(heroLeader().why));
   V.DECKS.list.push({ id: 'd3', name: 'mine', leader: L2.id, cards: [], created: 3 });
   V.paintDecks(); const hero = ctx.document.querySelector('#dkHero');
-  ok('...painted: the blurred art on its colours, the card rising from behind the title at the large size, a credit that names it',
-     hero.hidden === false && /<div class="artbg" aria-hidden="true" style="--a1:/.test(hero.innerHTML) && /class="peek"/.test(hero.innerHTML) && hero.innerHTML.includes(L2.img.replace(/_200w\.jpg$/, '_in_1000x1000.jpg'))
-     && hero.innerHTML.includes(`${hesc(L2.num)} ${hesc(L2.name)}`), hero.innerHTML.slice(0, 160));
+  ok('...painted: the Leader\'s art blurred on its colours, and nothing over it -- no card rising from behind the title, no line of text (take 110, the owner\'s word)',
+     hero.hidden === false && /^<div class="artbg" aria-hidden="true" style="--a1:/.test(hero.innerHTML) && hero.innerHTML.includes(`src="${L2.img}"`) && !/class="peek"/.test(hero.innerHTML) && !hero.innerHTML.includes('_in_1000x1000')
+     && !/<p\b/.test(hero.innerHTML) && !hero.innerHTML.includes(hesc(L2.name)), hero.innerHTML.slice(0, 160));
   ok('...the line under the title counts the decks and the legal ones', /^1 deck \u00b7 [01] legal$/.test(ctx.document.querySelector('#dkSub').textContent), ctx.document.querySelector('#dkSub').textContent);
   V.DECKS.list.length = 0; const keepStock = V.CAT.stock; V.CAT.stock = []; V.paintDecks();
   ok('...control: with no Leader anywhere the hero hides and the plain header stands', hero.hidden === true && hero.innerHTML === '');
@@ -2444,6 +2461,264 @@ section('take 109 — the art layer, part 1 (A42): the picture measured, Decks u
        && /\.dklead b\{display:block;font-family:var\(--display\)/.test(html) && /\.dklead \.meta\{display:block/.test(html) && !/\.dklead span\{/.test(html), ln.slice(0, 120));
     V.DECKS.list.splice(V.DECKS.list.indexOf(d), 1); V.go('decks'); }
   man.images = keepImg; }
+
+section('take 110 — the art layer, part 2 (A42): Sealed under the newest set\'s top card, each set\'s own art on its heading, each Leader behind its side of the Play counter, the owner\'s own pictures, and the three texts the owner asked gone');
+{ const man = V.CAT.man, keepImg = man.images, keepUser = man.user, keepRows = V.CAT.rows, nof = () => null;
+  /* an older build lacks these: each check then fails on its own instead of the run stopping */
+  const setTop = V.setTop || nof, newestTop = V.newestTop || nof, paintSealedHero = V.paintSealedHero || (() => {}), artUrl = V.artUrl || (p => p.img);
+  man.images = { ...(keepImg || {}), large: { suffix: '_in_1000x1000', probed: 40, served: 40, w: 600, h: 838, min_w: 408 } };
+  /* the owner: "remove this text when you get the chance - all of it" */
+  const quiet = t => !/class="credit"/.test(t) && !/id="dCondNote"/.test(t) && !/COND_NOTE_(CARD|SEALED)/.test(t) && !/legal decks built from the starter-deck sets/.test(t);
+  ok('the three texts the owner asked gone are gone: the line under the art, the paragraph under the ready-made decks\' heading, the note under a card\'s conditions', quiet(html + js));
+  ok('...control: each of the take-109 lines is caught', !quiet('<p class="credit">OP10-001 Smoker</p>') && !quiet('<div class="note" id="dCondNote">') && !quiet("const COND_NOTE_CARD = '';") && !quiet('17 legal decks built from the starter-deck sets'));
+  ok('...the per-condition gap is still said: in More\'s "What this app does not know", on the trade screen and in the bulk picker (the honesty the note carried)',
+     /What this app does not know/.test(js) && /Condition does not change the price shown/.test(js) && /Condition is not priced in/.test(js) && /never multiplied into it/.test(js));
+  { const c = V.CAT.rows.find(p => !p.sealed && p.market > 0), b = V.CAT.rows.find(p => V.SEALED.isProduct(p));
+    V.openDetail(c.id); const lc = ctx.document.getElementById('dCond').innerHTML.replace(/<[^>]+>/g, ''); V.openDetail(b.id); const lb = ctx.document.getElementById('dCond').innerHTML.replace(/<[^>]+>/g, ''); V.go('home');
+    ok('...a card\'s page still names its condition on its line, and a sealed product\'s still says it has none', /^Condition · /.test(lc) && lb === 'Sealed — no condition', `${lc} | ${lb}`); }
+  /* a set's top card: its most valuable printing whose picture the runner fetched (a hash), by printing id */
+  const hashed = V.CAT.rows.filter(p => !p.sealed && p.hash && p.market > 0 && p.img);
+  const sid = hashed[0].set, want = hashed.filter(p => p.set === sid).reduce((a, p) => p.market > a.market ? p : a);
+  ok('a set\'s top card is its most valuable printing with a fetched picture', setTop(sid) === want, `${setTop(sid)?.id} vs ${want.id}`);
+  V.CAT.rows = [...keepRows, { ...want, id: -110, hash: '', market: want.market * 10 }];
+  ok('...control: a dearer printing whose picture never served (no hash) is passed over', setTop(sid) === want);
+  V.CAT.rows = [...keepRows, { ...want, id: -110, market: want.market * 10 }];
+  ok('...control: the same printing with its picture takes the place -- the kept answer follows a new catalogue', setTop(sid)?.id === -110);
+  V.CAT.rows = keepRows;
+  ok('...and the catalogue restored gives the set\'s own top card again', setTop(sid) === want);
+  /* Sealed's banner card: the newest booster set already out that has one */
+  const today = new Date().toISOString().slice(0, 10);
+  const mains = [...V.CAT.sets.values()].filter(t => t.kind === 'main' && t.pub && t.pub <= today && setTop(t.id)).sort((a, b) => b.pub.localeCompare(a.pub));
+  const nt = newestTop() || {};
+  ok('Sealed\'s banner card is the top card of the newest booster set already out', !!mains.length && nt.set === mains[0] && nt.p === setTop(mains[0].id), `${nt.set?.abbr} ${nt.set?.pub} vs ${mains[0]?.abbr} ${mains[0]?.pub}`);
+  const fut = { id: -1101, name: 'Not out yet', abbr: 'OP99', kind: 'main', pub: '2099-01-01', n: 1 };
+  V.CAT.sets.set(fut.id, fut); V.CAT.rows = [...keepRows, { ...want, id: -1102, set: fut.id }];
+  ok('...control: a set not out yet is passed over though it has a top card -- and taken on the day it is out', (newestTop() || {}).set === mains[0] && (newestTop('2099-12-31') || {}).set === fut);
+  fut.pub = today; V.CAT.rows = keepRows;
+  ok('...control: a set out today with no card picture yet is passed over', !!mains.length && (newestTop() || {}).set === mains[0]);
+  V.CAT.sets.delete(fut.id);
+  V.MODE.set('hunt', false); paintSealedHero(); const sh = ctx.document.querySelector('#sealedHero');
+  ok('Sealed opens under it: crisp, at the large size with the thumbnail to fall back to, cut above the stamp (landmine 151), no line of text',
+     sh.hidden === false && sh.innerHTML.startsWith('<div class="artbg crisp"') && !!nt.p && sh.innerHTML.includes(`src="${artUrl(nt.p, 'large')}"`) && (artUrl(nt.p, 'large') === nt.p.img || sh.innerHTML.includes(`data-thumb="${nt.p.img}"`))
+     && /<img class="above"/.test(sh.innerHTML) && !/<p\b/.test(sh.innerHTML), sh.innerHTML.slice(0, 200));
+  ok('...where Decks\' stands: above the header, the title in A\'s slot', /<section id="sealed" class="screen">\s*<div class="arthero" id="sealedHero" hidden><\/div>\s*<header class="appbar">/.test(html));
+  ok('...the crisp layer: the picture sharp and filling the band, its character in view', /\.artbg\.crisp img\{left:0;top:0;width:100%;height:100%;object-fit:cover;filter:none;object-position:50% 30%\}/.test(html));
+  V.CAT.rows = keepRows.filter(p => !p.hash); paintSealedHero();
+  ok('...control: with no card picture in any set the banner hides and the plain header stands', sh.hidden === true && sh.innerHTML === '');
+  V.CAT.rows = keepRows;
+  /* the owner's own pictures (assets/user; the folder's README) */
+  man.user = ['hero-hunt.jpg']; paintSealedHero();
+  ok('the owner\'s hero-hunt.jpg stands in for Sealed\'s card when supplied, uncut (it is not a card)', /src="bundle\/user\/hero-hunt\.jpg"/.test(sh.innerHTML) && /<img class="own"/.test(sh.innerHTML) && !/class="above"/.test(sh.innerHTML), sh.innerHTML.slice(0, 160));
+  man.user = ['hero-play.jpg']; V.paintDecks(); paintSealedHero(); const dh = ctx.document.querySelector('#dkHero');
+  ok('...and hero-play.jpg for Decks; each only on its own screen', /src="bundle\/user\/hero-play\.jpg"/.test(dh.innerHTML) && !/bundle\/user\//.test(sh.innerHTML) && !!nt.p && sh.innerHTML.includes(artUrl(nt.p, 'large')));
+  /* the owner: "the blurred background should also be zoomed out a bit where it's used so it's more
+     focused on the center of the art" -- the band above the stamp whole, not cut to cover the box */
+  const zoomed = t => /\.artbg img\{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:contain;object-position:50% 50%;/.test(t) && /\.artbg\.dback img\{object-position:50% 0\}/.test(t) && /\.artbg\.crisp img\{[^}]*object-fit:cover/.test(t);
+  ok('the blurred art zooms out: the band above the stamp whole at the box\'s width, at the top of a card\'s page; the sharp art still fills its band', zoomed(html));
+  ok('...control: take 109\'s blur, cut to cover the box past its edges, is caught', !zoomed(html.replace(/\.artbg img\{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:contain;/, '.artbg img{position:absolute;left:-24px;top:-24px;width:calc(100% + 48px);height:calc(100% + 48px);object-fit:cover;')));
+  ok('...and no card rises from behind the Decks title: the peek is gone, style and all (the owner: "I don\'t like the little peak")', !/class="peek"/.test(js) && !/\.peek\b/.test(html));
+  { const keepD = V.DECKS.list.slice(), keepS = V.CAT.stock; V.DECKS.list.length = 0; V.CAT.stock = []; V.paintDecks();
+    ok('...and with no Leader anywhere hero-play.jpg still stands on Decks, as hero-hunt.jpg does on Sealed (the review: Decks\' hid it)', dh.hidden === false && /src="bundle\/user\/hero-play\.jpg"/.test(dh.innerHTML), dh.innerHTML.slice(0, 120));
+    man.user = keepUser; V.paintDecks();
+    ok('...control: without it and with no Leader, the hero hides', dh.hidden === true && dh.innerHTML === '');
+    V.CAT.stock = keepS; V.DECKS.list.push(...keepD); }
+  { const AOK = ctx.ART_OK || new Set();   /* an older build has none: the check then fails on its own */
+    const pa = V.CAT.rows.find(q => !q.sealed && q.img), before = V.artBack(pa); AOK.add(pa.img); const after = V.artBack(pa), own = V.ownBack('hero-hunt.jpg'); AOK.add('bundle/user/hero-hunt.jpg'); const own2 = V.ownBack('hero-hunt.jpg');
+    AOK.delete(pa.img); AOK.delete('bundle/user/hero-hunt.jpg');
+    ok('a picture that loaded once is drawn at once when its screen repaints (the review: a keystroke in Sealed\'s search faded every strip in again)',
+       /<img class="above ok" /.test(after) && /<img class="own ok" /.test(own2) && /onload="this\.classList\.add\('ok'\);window\.ART_OK\.add\(this\.getAttribute\('src'\)\)"/.test(after), after.slice(0, 160));
+    ok('...control: a picture never loaded starts from nothing and fades in', /<img class="above" /.test(before) && /<img class="own" /.test(own)); }
+  man.user = keepUser; V.paintDecks(); paintSealedHero();
+  ok('...control: without them, the card art on both', !/bundle\/user\//.test(dh.innerHTML + sh.innerHTML) && /<div class="artbg"/.test(dh.innerHTML) && /<div class="artbg crisp"/.test(sh.innerHTML));
+  /* each set's heading in Sealed: a strip under that set's own top card */
+  const key = v => isNaN(+v) ? v : +v;
+  const stripsOf = src => [...src.matchAll(/<button class="fgrp setstrip" data-setfold="([^"]+)" aria-expanded="[^"]*">(<div class="artbg crisp"[^>]*>(?:<img [^>]*>)?<\/div>)?/g)];
+  V.SEALED.q = ''; V.SEALED.kind = 'all'; V.paintSealed(); const strips = stripsOf(ctx.document.querySelector('#sealedList').innerHTML);
+  const topOf = m => m[1] === 'decks' ? V.CAT.rows.filter(p => V.SEALED.isProduct(p) && V.SEALED.kindOf(p) === 'deck').sort((a, b) => (V.CAT.sets.get(b.set)?.pub || '').localeCompare(V.CAT.sets.get(a.set)?.pub || '') || a.name.localeCompare(b.name)).map(p => setTop(p.set)).find(Boolean) : setTop(key(m[1]));
+  ok('every heading in Sealed is a strip -- the starter decks\' too -- carrying its own set\'s top card, crisp; a set with no card picture keeps the plain ground',
+     strips.length >= 10 && strips[0][1] === 'decks' && strips.every(m => !!m[2] === !!topOf(m)) && strips.filter(m => m[2]).length >= 5 && strips.filter(m => m[2]).every(m => m[2].includes(`src="${artUrl(topOf(m), 'large')}"`) && /<img class="above"/.test(m[2])),
+     `${strips.length} strips, ${strips.filter(m => m[2]).length} with art`);
+  V.CAT.rows = keepRows.filter(p => !p.hash); V.paintSealed();
+  const plain = stripsOf(ctx.document.querySelector('#sealedList').innerHTML);
+  ok('...control: with no card pictures every strip keeps the plain ground', plain.length >= 10 && plain.every(m => !m[2]));
+  V.CAT.rows = keepRows; V.paintSealed();
+  ok('...a strip\'s date never breaks at its own hyphens (the take-110 look found "2026-10-" over "30")', /\.setstrip \.note\{[^}]*white-space:nowrap/.test(html));
+  ok('...the art fills the strip behind the name, under a scrim from the left so the name reads', /\.setstrip > \.artbg\{position:absolute;inset:0;/.test(html) && /\.setstrip > \.artbg::after\{background:linear-gradient\(90deg,rgba\(0,0,0,\.8\)/.test(html) && /\.setstrip > span\{position:relative;color:#fff/.test(html));
+  /* the Play counter: each player's Leader behind their side */
+  const keepP = V.PLAY.p.map(pl => ({ ...pl })), keepHot = V.PLAY.hotseat, Lp = V.CAT.byId.get(V.CAT.stock[0].leader);
+  V.PLAY.hotseat = false; V.PLAY.p[0].leader = Lp.id; V.PLAY.p[1].leader = null; V.paintPlay();
+  const panels = ctx.document.querySelector('#plBoard').innerHTML.split('<div class="panel plpanel"').slice(1);
+  ok('the Play counter: a player\'s Leader faint behind their side, blurred from its thumbnail, cut above the stamp', panels.length === 2 && panels[0].includes('<div class="artbg" aria-hidden="true"') && panels[0].includes(`src="${Lp.img}"`) && /<img class="above"/.test(panels[0]), (panels[0] || '').slice(0, 200));
+  ok('...control: a side with no Leader chosen keeps the plain panel', panels.length === 2 && !/class="artbg/.test(panels[1]));
+  ok('...faint, the numbers and buttons drawn over it', /\.plpanel > \.artbg\{position:absolute;inset:0;opacity:\.6\}/.test(html) && /\.plpanel > :not\(\.artbg\)\{position:relative\}/.test(html));
+  /* the Play counter's three steppers on a 360 px phone: take 108's 44 px buttons needed 332 px, the panel has 296 */
+  const fits = t => /\.plcols\{display:flex;gap:clamp\(6px,calc\(\(100vw - 330px\) \/ 8\),10px\);/.test(t) && /\.plcols \.stepper\{gap:clamp\(6px,calc\(\(100vw - 330px\) \/ 5\),16px\)\}/.test(t);
+  ok('...its three steppers fit a 360 px phone: the gaps give way, the 44 px buttons keep their size', fits(html) && /<div class="plcols">/.test(js) && !/<div style="display:flex;gap:10px;margin-top:12px">/.test(js));
+  ok('...control: the fixed gaps are caught', !fits('.plcols{display:flex;gap:10px;margin-top:12px}'));
+  V.PLAY.p.forEach((pl, i) => Object.assign(pl, keepP[i])); V.PLAY.hotseat = keepHot; V.paintPlay();
+  man.images = keepImg; V.CAT.rows = keepRows; V.MODE.set('collect', false); V.go('home'); }
+
+section('take 110 — the voice (A42, UI-AUDIT §5): the developer\'s wording out, sentence case, one word per thing, one money, percentage, day and moment, a name for every field');
+{ const both = html + js, nof = () => '';
+  const secOf = (src, id) => { const i = src.indexOf(`id="${id}"`); if (i < 0) return null; const s0 = src.lastIndexOf('<section id="', i); return s0 < 0 ? null : src.slice(s0 + 13, src.indexOf('"', s0 + 13)); };
+  const signedMoney = V.signedMoney || nof, pctNum = V.pctNum || nof, dayText = V.dayText || nof, momentText = V.momentText || nof;
+  /* the developer's voice: the shipped app carries no source comments, so these can only be words on a screen */
+  const DEV = ['(R6)', 'PROTOCOL §', '(landmine ', 'MEASURED:', '(dev)', 'A17 —', 'on the roadmap', 'come to this mode next', 'come with the local view', 'offline by design', 'Sealed product is manual', 'take __TAKE__'];
+  const devIn = t => DEV.filter(w => t.includes(w));
+  ok('the developer\'s wording is out of the app: no ticket, protocol or landmine numbers, no "MEASURED:", no dev button, no roadmap promises', devIn(both).length === 0 && /<title>OP TCG Hub<\/title>/.test(html), devIn(both).join(' | '));
+  ok('...control: each of the take-109 lines is caught', DEV.every(w => devIn('x ' + w + ' x').length === 1) && !/<title>OP TCG Hub<\/title>/.test('<title>OP TCG Hub — take 109</title>'));
+  ok('...the test credits live in Diagnostics, the hidden screen, and More says what credits are in the collector\'s words', /<button class="ghost" id="devEarn">\+20 test credits<\/button>/.test(html) && secOf(html, 'devEarn') === 'diag' && /<h3>Save credits<\/h3>/.test(js) && !/id="devEarn"/.test(js));
+  /* sentence case for every heading, button and chip */
+  const CASE = ['Most Valuable', 'View All', 'Market Movers', 'Trade Analyzer', 'Bulk Actions', 'Add a Graded Card', 'Starter Decks', 'YOUR SCAN', 'Backup FAILED', '>FAILED<', 'REPLACES', 'offline ok', 'for this deck: off', '>given<', '>+cal<', 'Two faces'];
+  const caseIn = t => CASE.filter(w => t.includes(w));
+  ok('sentence case: the audit\'s capitalised and lower-case outliers are gone', caseIn(both).length === 0, caseIn(both).join(' | '));
+  ok('...control: each take-109 outlier is caught', CASE.every(w => caseIn('x' + w + 'x').length === 1));
+  /* one word per thing */
+  const OLD = ['All portfolios', 'New portfolio', 'Rename portfolio', "'Portfolio'", 'A portfolio is', 'Only the portfolio', 'Portfolios keep', '<span class="cap">Portfolio', '<h3>Performance</h3>', '<h3>Events</h3>', '>Fetch<', 'hot-seat ·', 'Wanted: ', 'No active [Blocker]', '</svg></span>Export</button>', '</svg></span>Backup</button>'];
+  const oldIn = t => OLD.filter(w => t.includes(w));
+  ok('one word per thing: Collection for Portfolio (D17), Refresh for the feeds, Export CSV and Back up as in More, pass the phone for the Sim, the want list by name, Blocker as the game writes it; no panel repeats its screen\'s title', oldIn(both).length === 0 && /<span class="cap">Collection<\/span>/.test(html) && /All collections/.test(js) && /\+ New collection/.test(js), oldIn(both).join(' | '));
+  ok('...control: each take-109 word is caught', OLD.every(w => oldIn('x' + w + 'x').length === 1));
+  ok('...and the data keeps its names: the CSV column and the backup still say portfolio (an export from any take imports)', /'portfolio', 'product_id'/.test(js) && /portfolios: PF\.list/.test(js));
+  /* money, percentages, days and moments */
+  const cur0 = V.CUR.active();
+  ok('a signed amount keeps its currency: +$12.50, −$3.00 (money(x).slice(1) dropped the "$")', signedMoney(12.5) === '+$12.50' && signedMoney(-3) === '−$3.00', `${signedMoney(12.5)} ${signedMoney(-3)}`);
+  ok('...control: the take-109 expression is caught', '+' + (() => '$12.50')().slice(1) !== '+$12.50');
+  const R = V.CUR.rates(), conv = R && R.rates && Object.keys(R.rates).find(c => c !== 'USD' && R.rates[c] > 0);
+  if (conv) { V.CUR.set(conv); ok(`...in a converted currency (${conv}) the sign sits after the ≈, which is kept`, /^≈\+/.test(signedMoney(10)) && /^≈−/.test(signedMoney(-10)), signedMoney(10)); V.CUR.set(cur0); }
+  ok('one rule for a percentage: one decimal, none from 100 % up', pctNum(0.344) === '0.3%' && pctNum(-12.46) === '12.5%' && pctNum(123.4) === '123%', `${pctNum(0.344)} ${pctNum(-12.46)} ${pctNum(123.4)}`);
+  /* take 110's review: the rule on the rounded figure, and a sign only on a figure that is not zero */
+  const signedPct = V.signedPct || nof;
+  ok('...read on the figure as rounded: 99.96 is "100%", never "100.0%"', pctNum(99.96) === '100%' && pctNum(99.94) === '99.9%', `${pctNum(99.96)} ${pctNum(99.94)}`);
+  ok('...a signed percentage carries no sign on a zero ("\u22120.0%" and "+0.0%" said a move the figure does not show)',
+     signedPct(-0.04) === '0.0%' && signedPct(0.02, true) === '0.0%' && signedPct(-1.26) === '\u22121.3%' && signedPct(3, true) === '+3.0%' && signedPct(3) === '3.0%' && !js.includes("'\\u2212'}${pctNum("), `${signedPct(-0.04)} ${signedPct(-1.26)} ${signedPct(3, true)}`);
+  ok('...control: the first push\'s forms are caught', ((p) => (p >= 0 ? '' : '\u2212') + Math.abs(p).toFixed(Math.abs(p) >= 100 ? 0 : 1) + '%')(-0.04) === '\u22120.0%' && (a => a.toFixed(a >= 100 ? 0 : 1) + '%')(99.96) === '100.0%');
+  { const keepCode = V.CUR.code, keepRates = V.CAT.man.rates;
+    V.CUR.code = 'EUR'; V.CAT.man.rates = null;   /* a euro chosen on an earlier build; this build carries no rates (the fetch failed and no sidecar) */
+    const shown = V.money(10), sym = V.CUR.sym(), wrong = (V.CUR.list.find(c => c[0] === V.CUR.code) || [])[1];
+    V.CUR.code = keepCode; V.CAT.man.rates = keepRates;
+    ok('a saved currency this build has no rate for shows dollars, marked as dollars (the review: "\u20ac10.00" for $10, with no \u2248)', shown === '$10.00' && sym === '$', `${shown} ${sym}`);
+    ok('...control: the symbol read from the saved code is caught', wrong === '\u20ac'); }
+  ok('...no ".toFixed" percentage outside that rule, no "in the last all time"', !/toFixed\((?:0|2|tile \? 1 : 2)\)\}%/.test(js) && !/in the last all time|'all time' : range/.test(js) && /since the first day on file/.test(js));
+  const yr = new Date().getFullYear();
+  ok('one way to write a day: "Sep 23", the year only when it is not this one', dayText(`${yr}-09-23`) === 'Sep 23' && dayText(`${yr - 1}-11-20`) === `Nov 20, ${yr - 1}` && dayText('') === '?', `${dayText(yr + '-09-23')} | ${dayText((yr - 1) + '-11-20')}`);
+  ok('...and a moment: no literal T, a 12-hour clock', /^[A-Z][a-z]{2} \d{1,2}(, \d{4})?, \d{1,2}:\d{2}\s?[AP]M$/.test(momentText(`${yr}-09-24T06:23:00Z`)) && !/T\d/.test(momentText(`${yr}-09-24T06:23:00Z`)), momentText(`${yr}-09-24T06:23:00Z`));
+  ok('...control: the take-109 ISO forms are caught', !/^[A-Z][a-z]{2} \d/.test('2026-09-23') && /T\d/.test('2026-09-24T06:23'));
+  /* take 110's review, from the look's pictures: Market movers' heading still read "2026-09-22 \u2192 2026-09-23" */
+  const isoShown = t => ['${esc(prev)} \\u2192 ${esc(day)}', '(${g.from} \\u2192 ${g.to})', "' of ' + esc(R.date)", "market \\u00b7 ${(CAT.man.source_updated_at || '').slice(0, 10)}", '\\u00b7 ${esc(n.when)}', 'via TCGCSV, ${esc(asOf)}', 'Trade \\u2014 ${new Date().toISOString().slice(0, 10)}'].filter(w => t.includes(w));
+  const appSrc = fs.readFileSync(path.join(ROOT, 'src', 'app.html'), 'utf8');
+  ok('...no day on a screen in ISO: the movers\' heading, the range label, the rate\'s date, where to buy, your own notes; a shared page and a trade\'s text carry the year', isoShown(appSrc).length === 0 && dayText(`${yr}-09-23`, { year: true }) === `Sep 23, ${yr}`, isoShown(appSrc).join(' | '));
+  ok('...control: each take-109 form is caught', isoShown(`\${esc(prev)} \\u2192 \${esc(day)} (\${g.from} \\u2192 \${g.to}) ' of ' + esc(R.date) market \\u00b7 \${(CAT.man.source_updated_at || '').slice(0, 10)} \\u00b7 \${esc(n.when)} via TCGCSV, \${esc(asOf)} Trade \\u2014 \${new Date().toISOString().slice(0, 10)}`).length === 7);
+  ok('...ISO stays only where a machine reads it: the diagnostics and self-test reports', (js.match(/slice\(0, 16\)/g) || []).length === 2 && /diagnostics \\u2014 take \$\{TAKE\} \\u2014 \$\{new Date\(\)\.toISOString\(\)\.slice\(0, 16\)\}Z/.test(fs.readFileSync(path.join(ROOT, 'src', 'app.html'), 'utf8')));
+  V.MODE.set('hunt', false); V.paintSealed();
+  ok('...Sealed\'s line under its title says the prices\' day in words', /^prices [A-Z][a-z]{2} \d{1,2}(, \d{4})?$/.test(ctx.document.getElementById('sealedAsOf').textContent), ctx.document.getElementById('sealedAsOf').textContent);
+  V.MODE.set('collect', false); V.go('home');
+  ok('the price filter speaks the currency on screen: its bounds typed and shown converted, kept in US dollars', /\$\('#fMin'\)\.placeholder = 'min ' \+ CUR\.sym\(\)\.trim\(\)/.test(js) && typeof V.fromShown === 'function' && V.fromShown('') === null && V.fromShown('10') === 10 / (V.CUR.rate(V.CUR.active()) || 1) && V.toShown(null) === '');
+  /* a name for every field */
+  const unnamed = t => [...t.matchAll(/<(input|select|textarea)\b([^>]*)>/g)].filter(m => !/type="(checkbox|file|hidden)"/.test(m[2]) && !/aria-label/.test(m[2]) && !(/id="([^"]+)"/.test(m[2]) && new RegExp('<label[^>]*for="' + /id="([^"]+)"/.exec(m[2])[1] + '"').test(t))).map(m => (/id="([^"]+)"/.exec(m[2]) || [, m[1]])[1]);
+  ok('every field has a name a screen reader says: a label, not only a placeholder that vanishes when typing starts', unnamed(both).length === 0, unnamed(both).join(', '));
+  ok('...control: a field with only a placeholder is caught', unnamed('<input id="x" placeholder="Name">').length === 1);
+  const P110 = V.PLAY; const t0 = P110.turn; P110.turn = 1; V.paintPlay(); const pb = ctx.document.querySelector('#plBoard').innerHTML; P110.turn = t0; V.paintPlay();
+  ok('the update note on Home starts with a capital -- the release paragraph is written to follow "New at take N:"', /note\.text\.charAt\(0\)\.toUpperCase\(\) \+ note\.text\.slice\(1\)/.test(js));
+  ok('the Play counter\'s button is a word or two; what happens is said beside it', />Start<\/button>/.test(pb) && /The first player draws no card and gets 1 DON!!/.test(pb) && !/Start — first player/.test(js));
+}
+
+section('take 110 — polish (A42, UI-AUDIT §6): motion from the tokens, a sheet that rises, a mode switch that crossfades, one empty state, tabular figures, three thumbnail sizes');
+{ /* motion: every duration a token, reduced motion honoured by one rule */
+  const css = (html.match(/<style>([\s\S]*?)<\/style>/) || [, ''])[1];
+  const literal = t => [...t.matchAll(/transition:[^;}]*?\b\d*\.?\d+m?s\b/g)].map(m => m[0]);
+  ok('every transition takes its duration from the motion tokens (--dur-press, --dur-ui, --dur-sheet)', literal(css).length === 0 && /--dur-press:120ms; --dur-ui:220ms; --dur-sheet:320ms;/.test(css), literal(css).join(' | '));
+  ok('...control: a take-109 literal (opacity .25s) is caught', literal('.art img.ref{opacity:0;transition:opacity .25s}').length === 1);
+  ok('a sheet rises from the bottom edge as its scrim fades in, on --dur-sheet', /\.sheet\.on\{display:flex;animation:scrimIn var\(--dur-sheet\) ease-out\}/.test(css) && /\.sheet\.on \.sheetbody\{animation:sheetUp var\(--dur-sheet\)/.test(css) && /@keyframes sheetUp\{from\{transform:translateY\(100%\)\}\}/.test(css));
+  ok('a mode switch crossfades, on a tap only, and the class comes off so a later screen change does not fade', /:root\.mode-swap \.screen\.on\{animation:modeIn var\(--dur-ui\) ease-out\}/.test(css) && /root\.classList\.add\('mode-swap'\)/.test(js) && /setTimeout\(\(\) => root\.classList\.remove\('mode-swap'\), 400\)/.test(js) && /body\{[^}]*transition:background-color var\(--dur-ui\)/.test(css));
+  ok('reduced motion stops every transition and animation (one rule, take 106)', /@media \(prefers-reduced-motion:reduce\)\{\*,\*::before,\*::after\{transition-duration:0s!important;animation-duration:0s!important/.test(css));
+  /* one empty state */
+  const bare = t => (t.match(/<div class="note">(Nothing matches\. Loosen a chip\.|Nothing wanted yet|No alerts yet|Nothing matched\.)/g) || []);
+  ok('a list that fills a screen says it is empty one way: its glyph, what is missing, what to do', bare(js).length === 0 && (js.match(/emptyHtml\('/g) || []).length >= 6 && /\.empty \.empty-line\{/.test(css), bare(js).join(' | '));
+  ok('...control: the take-109 bare lines are caught', bare('<div class="note">No alerts yet. Open a card</div><div class="note">Nothing matched.</div>').length === 2);
+  { V.SEALED.q = 'zzzz no such product'; V.MODE.set('hunt', false); V.paintSealed(); const sl = ctx.document.querySelector('#sealedList').innerHTML; V.SEALED.q = ''; V.paintSealed(); V.MODE.set('collect', false); V.go('home');
+    ok('...painted: Sealed with nothing matching shows the empty state with its glyph, under the stock panels (before take 110 it showed nothing: the panels filled the list and the fallback never ran)', /<div class="empty"><svg class="g" width="64" height="64"[^>]*><use href="#g-box"\/><\/svg><b class="empty-line">Nothing matches<\/b>/.test(sl), sl.slice(-220)); }
+  /* numbers */
+  ok('every number lines up: tabular figures are the body\'s default, not only .mono\'s', /body\{[^}]*font-variant-numeric:tabular-nums/.test(css));
+  ok('a card\'s copy row is two lines: finish, condition and price, then the quantity by the condition buttons', /<div class="row dqrow">/.test(html) && /\.dqrow\{display:grid;grid-template-columns:minmax\(0,1fr\) auto;grid-template-areas:"nm v" "st st"/.test(css));
+  ok('a condition\'s name never breaks in two on a card\'s page (the look had "Near" over "Mint")', /\.nw\{white-space:nowrap\}/.test(css) && (js.match(/'Condition · <span class="nw">'/g) || []).length === 2);
+  /* three thumbnail sizes */
+  const sized = t => [...t.matchAll(/\b(cardPic|productPic|setPic)\(([^)]*)\)/g)].filter(m => /\d/.test(m[2]) && !/THUMB\.[sml]/.test(m[2])).map(m => m[0]);
+  ok('three thumbnail sizes, one per kind of list: 32 dense, 44 a row, 56 a sealed product -- no call names its own size', sized(js).length === 0 && /const THUMB = \{ s: 32, m: 44, l: 56 \};/.test(js) && /--thumb-s:32px; --thumb-m:44px; --thumb-l:56px;/.test(css)
+     && /function cardPic\(p, w = THUMB\.m\)/.test(js) && /function productPic\(p, size = THUMB\.l\)/.test(js) && /function setPic\(s, w = THUMB\.m\)/.test(js), sized(js).join(' | '));
+  ok('...control: a take-109 call with its own size is caught', sized('cardPic(p, 30) setPic(s, 36) productPic(p)').length === 2);
+}
+
+section('take 110 — the Fold\'s inner screen (A42): two panes where two fit, between a phone and the desktop column');
+{ const css = (html.match(/<style>([\s\S]*?)<\/style>/) || [, ''])[1];
+  const fold = (css.match(/@media \(min-width:700px\) and \(max-width:899px\)\{([\s\S]*?)\n\}/) || [, ''])[1];
+  const want = [/#detail \.dhero\{float:left/, /#detail \.dhero \.art\{width:300px\}/, /#detail > \.panel:not\(\[hidden\]\)\{display:flow-root\}/, /#home\.screen\.on\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/,
+    /#home\.screen\.on > \.panel:has\(#topList\),#home\.screen\.on > \.panel:has\(#setDone\)\{grid-column:auto\}/, /#allRes > \.panel,#relList > \.panel\{display:grid/, /#sealedList,#dkList,#dkStock,#cdRes,#eventsList\{display:grid/,
+    /#colGrid\{grid-template-columns:repeat\(4,minmax\(0,1fr\)\)\}/, /\.sheetbody\{max-width:640px\}/];
+  const miss = t => want.filter(r => !r.test(t)).map(String);
+  ok('the open Fold (700-899 px) gets two panes: a card beside its page, Home\'s two lists side by side, rows two to a line, four tiles across, a sheet at a readable width', !!fold && miss(fold).length === 0, miss(fold).join(' | '));
+  ok('...control: a stylesheet without them is caught', miss('').length === want.length);
+  /* take 110's review: what the first push got wrong in that range */
+  ok('...a hidden panel stays hidden there, the art sits behind the card\'s column only, Local stays one column, and a lone Events panel spans',
+     /#detail > \.panel:not\(\[hidden\]\)\{display:flow-root\}/.test(fold) && !/#detail > \.panel\{display:flow-root\}/.test(fold) && /#detail \.artbg\.dback\{right:auto;width:calc\(var\(--pad\) \+ 320px\)/.test(fold)
+     && !/#localList\{display:grid|,#localList\{display:grid/.test(fold) && /#eventsList:not\(:has\(> \.panel ~ \.panel\)\) > \.panel\{grid-column:1\/-1\}/.test(fold) && /#home\.perf\.screen\.on > \.panel:has\(#topList\)\{grid-column:1\/-1\}/.test(fold));
+  ok('...control: the first push\'s rules are caught', !/#detail > \.panel:not\(\[hidden\]\)\{display:flow-root\}/.test('#detail > .panel{display:flow-root}') && /#localList\{display:grid|,#localList\{display:grid/.test('#sealedList,#eventsList,#localList{display:grid}'));
+  { const sp = ctx.document.getElementById('setPanel'), comp = ctx.document.getElementById('setComp') || { style: {} };   /* an older build has no id: the check fails on its own */
+    sp.style.display = 'block'; V.setHomeTab(true);
+    const onPerf = { comp: comp.style.display, search: sp.style.display, perf: ctx.document.getElementById('home').classList.contains('perf') };
+    V.setHomeTab(false); const back = { comp: comp.style.display, perf: ctx.document.getElementById('home').classList.contains('perf') };
+    ok('Home\'s Performance tab hides Home\'s own Set completion, not Search\'s set list (the list named Search\'s panel from take 64 on)', onPerf.comp === 'none' && onPerf.search === 'block' && onPerf.perf && back.comp === '' && !back.perf, JSON.stringify([onPerf, back]));
+    ok('...the list names Home\'s own panel, and the take-64 one is caught', !/HOME_OVERVIEW = \['hero', 'setPanel'/.test(js) && /HOME_OVERVIEW = \['hero', 'setComp', 'srcPanel'\]/.test(js) && /HOME_OVERVIEW = \['hero', 'setPanel'/.test("const HOME_OVERVIEW = ['hero', 'setPanel', 'srcPanel'];")); }
+  ok('...and the phone and the desktop column are as they were: the rules live only inside that range, take 60\'s column from 900 px', /@media \(min-width:900px\)\{\s*body\{max-width:520px/.test(css) && !/^#detail \.dhero\{float:left/m.test(css.replace(fold, '')));
+}
+
+section('take 110 — bulk delete keeps to the collection on screen (AGENTS rule 5; the UI audit\'s finding in passing)');
+{ const bl = V.bulkLines || (() => []), bs = V.bulkSum || (() => ({ n: -1, v: -1 })), PF = V.PF, keepItems = V.OWN.items, keepActive = PF.active, keepList = PF.list.slice();
+  const keepF = JSON.parse(JSON.stringify(V.FILT.own)), cq = ctx.document.querySelector('#colq'), search = q => cq._ev.input({ target: { value: q } });
+  Object.assign(V.FILT.own, V.blankFilter('own')); search('');
+  const x = V.CAT.rows.find(p => !p.sealed && p.market > 1);
+  if (!PF.list.some(p => p.id === 'tr110')) PF.list.push({ id: 'tr110', name: 'Trade pile' });
+  /* the trade pile's line first: the bar valued a printing at the first line it found, in any collection */
+  V.OWN.items = [{ id: x.id, qty: 4, condition: 'NM', pf: 'tr110' }, { id: x.id, qty: 2, condition: 'NM', pf: 'main' }, { id: x.id, qty: 1, condition: 'LP', pf: 'main' }];
+  const sel = new Set([x.id]);
+  PF.active = 'tr110'; const inTrade = bl(sel);
+  PF.active = 'main'; const inMain = bl(sel);
+  PF.active = 'all'; const inAll = bl(sel);
+  ok('selected in one collection, bulk delete takes that collection\'s lines only -- it had taken the printing from every collection and condition', inTrade.length === 1 && inTrade[0].pf === 'tr110' && inMain.length === 2 && inMain.every(i => i.pf === 'main') && inAll.length === 3, `${inTrade.length} / ${inMain.length} / ${inAll.length}`);
+  ok('...control: the take-109 filter, every line of the printing, is caught', V.OWN.items.filter(i => sel.has(i.id)).length === 3 && inTrade.length !== 3);
+  ok('...and its confirm values the lines with their quantities (it counted one of each printing)', /a \+ \(price\(i\.id\) \|\| 0\) \* \(i\.qty \|\| 1\)/.test(js) && !/\[\.\.\.bulk\]\.reduce\(\(a, id\) => a \+ \(price\(id\) \|\| 0\), 0\)/.test(js));
+  /* take 110's review: on screen is the filter and the search too -- the selection is by printing, and a line
+     the filter hid went with the tile that was tapped */
+  PF.active = 'main'; V.FILT.own.cond = ['NM']; const nmOnly = bl(sel), barNm = bs(sel); V.FILT.own.cond = [];
+  ok('...and a line the filter hides is not taken: Near Mint filtered in, the Lightly Played copy of the same printing stays', nmOnly.length === 1 && nmOnly[0].condition === 'NM' && nmOnly[0].pf === 'main', nmOnly.map(i => i.condition).join());
+  ok('...control: the first push\'s rule, the collection alone, took it', V.OWN.items.filter(i => sel.has(i.id) && (i.pf || 'main') === 'main').length === 2);
+  search('zzzz no such card'); const bySearch = bl(sel); search('');
+  ok('...nor a line the search hides', bySearch.length === 0 && bl(sel).length === 2);
+  const px = V.CAT.byId.get(x.id).market, bar = bs(sel);
+  const firstPush = [...sel].reduce((a, id) => { const it = V.OWN.items.find(y => y.id === id); return a + (V.CAT.byId.get(id).market || 0) * (it ? it.qty : 0); }, 0);
+  ok('the bulk bar counts and values the lines an action would take, as the confirm does', bar.n === 2 && Math.abs(bar.v - 3 * px) < 1e-9 && barNm.n === 1 && Math.abs(barNm.v - 2 * px) < 1e-9, `${bar.n} ${bar.v} vs ${3 * px}`);
+  ok('...control: the first push\'s bar, the first line\'s quantity from any collection, is caught', Math.abs(firstPush - 4 * px) < 1e-9 && firstPush !== bar.v);
+  ok('...and Move and Condition take the same lines (they had taken hidden ones too)', (js.match(/const lines = new Set\(bulkLines\(bulk\)\); OWN\.items\.forEach\(i => \{ if \(lines\.has\(i\)\)/g) || []).length === 2 && !/PF\.scope\(\[i\]\)\.length/.test(js));
+  V.OWN.items = keepItems; PF.active = keepActive; PF.list.length = 0; PF.list.push(...keepList); Object.assign(V.FILT.own, keepF); }
+
+section('take 110 — a picture that failed says what it is, readably (UI-AUDIT §1\'s last box)');
+{ const css = (html.match(/<style>([\s\S]*?)<\/style>/) || [, ''])[1];
+  const hexes = [...new Set([...css.matchAll(/--c-[a-z]+:(#[0-9A-Fa-f]{6})/g)].map(m => m[1].toLowerCase()))];
+  const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const lum = c => { const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; const [r, g, b] = c.map(f); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+  const over = (c, a, ink) => c.map((v, i) => Math.round(v * (1 - a) + ink[i] * a));   // ink at alpha a over the ground
+  const pill = hexes.map(h => ratio([255, 255, 255], over(rgb(h), 0.55, [0, 0, 0])));
+  ok('the label on a failed picture is white on a dark pill, above 4.5:1 over every game colour', /\.ph \.phl\{color:#fff;background:rgba\(0,0,0,\.55\)/.test(css) && /<span class="phl">\$\{label\}<\/span>/.test(js) && hexes.length >= 6 && Math.min(...pill) >= 4.5, pill.map(r => r.toFixed(2)).join(' '));
+  const old = hexes.map(h => ratio(over(rgb(h), 0.65, [0, 0, 0]), rgb(h)));
+  ok('...control: take 109\'s black at 65 % on the colour is caught below 4.5:1', Math.min(...old) < 4.5, old.map(r => r.toFixed(2)).join(' '));
+}
+
+section('take 110 — no check here passes whatever happens (AGENTS rule 2)');
+{ const self = fs.readFileSync(new URL(import.meta.url), 'utf8');
+  const blind = t => (t.match(/\|\| true[\s,)'"]*\);/g) || []).length;
+  ok('no check in this file ends its condition "|| true" (two did, from the take-88 seed, until take 110)', blind(self) === 0, String(blind(self)));
+  const T = '|' + '| true';   // spelled apart, or this line would be what it looks for
+  ok('...control: the take-109 lines are caught', blind(`ok('x', a ${T}); ok('y', b === false ${T}, '');`) === 2); }
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

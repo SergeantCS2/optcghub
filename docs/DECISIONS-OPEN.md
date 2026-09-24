@@ -1,6 +1,6 @@
 # OPEN DECISIONS — needed from the owner
 
-*Current as of take 109.* Everything else is decided and recorded in AGENDA.
+*Current as of take 110.* Everything else is decided and recorded in AGENDA.
 
 **D1 — App id and name. ANSWERED: registered with Play at the take-35 upload as `com.optcghub.app` / "OP TCG Hub", permanent.** *(original)* Proposed `com.optcghub.app` / "OP TCG Hub". Permanent
 once registered under developer verification and fixed from first Play upload
@@ -129,7 +129,7 @@ affiliate URL — but say so before I build on it.)
 
 *Added take 44.*
 
-**D17 — "Portfolio" in the app's own vocabulary. ANSWERED take 106: *Collection* (the owner, 24 Sept, to the UI/UX session); applied at the voice take of the UI series (A42). Names a collector gave stay as given.** *(original)* The Home hero and the
+**D17 — "Portfolio" in the app's own vocabulary. ANSWERED take 106: *Collection* (the owner, 24 Sept, to the UI/UX session); applied at the voice take of the UI series (A42) -- take 110: every word on screen; the CSV column and the backup keep `portfolio`, so any take's export imports. Names a collector gave stay as given.** *(original)* The Home hero and the
 portfolio sheet say *Portfolio*; that word is what led the Play declaration
 to *Stock trading and portfolio management*, the organisation-only trigger
 (take 43). A reviewer reads the same word. *Binder* or *Collection* say the

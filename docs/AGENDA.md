@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 109.* Ranked by blocking-ness, not by interest.
+*Current as of take 110.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -1148,11 +1148,25 @@ mode by mode leaves the app less uniform in between):
    own colours. The owner, asked about the stamp: "We should be pulling
    the highest quality images for the main cards. This is the only way
    using cards as a banner will work." *Take 110, the second half:*
-   Sealed's banner (A) and the set strips, the Play board, empty
-   states, the owner's own hero pictures.
+   Sealed's banner (A), every Sealed heading a strip, each Leader behind
+   its side of the Play counter, the owner's own hero pictures; at the
+   owner's word the card no longer rises from behind Decks' title, the
+   blur shows the band above the stamp whole (the whole card in a blur
+   still shows the stamp, MEASURED), whole cards stay whole ("It should
+   show the whole card"), and three texts are gone.
 5. **The voice:** one word per thing, one date and money format,
-   Collection for Portfolio, the developer's voice out of the UI.
+   Collection for Portfolio, the developer's voice out of the UI. *Take
+   110.*
 6. **Polish:** motion, loading, empty and error states, the checklist.
+   *Take 110*, with the thumbnail tokens and a readable fallback label.
+7. **The Fold's inner screen:** two panes where two fit, between a phone
+   and the desktop column. *Take 110*, brought forward at the owner's word
+   ("Ensure 110 has as many planned changes in it as possible"); its width
+   is INFERRED until Diagnostics' viewport line comes from the open phone.
+
+Take 110 carried layers 4 (second half) to 7 in one take, overnight, at
+the owner's word: "You will check your work along the way then we will
+push to github as one massive take." What is left is the owner's review.
 
 The audit behind it, with line numbers and a box per finding, is
 `docs/UI-AUDIT.md`; each take ticks its boxes.
@@ -1162,12 +1176,15 @@ two proposals were a landing page and a generic palette; the app keeps
 its own four faces and three palettes); converting one mode at a time;
 re-adding the skull glyph (removed at the owner's ask, take 63);
 bundling art in the APK (the owner's own hero pictures through
-`assets/user` remain the owner's choice and the owner's exposure); the Fold's inner
-layout for now; Bandai's card site as the cleaner picture (take 109: its
+`assets/user` remain the owner's choice and the owner's exposure); Bandai's card site as the cleaner picture (take 109: its
 pictures carry the stamp, 20 of 20, and it keys by card number); a
 per-card stamp detector (take 109: the stamp's place is fixed, so a crop
 above it is clean for every card and needs no threshold); covering or
-retouching the stamp (drawing on the publisher's card).
+retouching the stamp (drawing on the publisher's card); the whole card
+in a blurred backdrop (take 110: the stamp comes through a blur as a light
+band, up to 80 levels of 255, MEASURED on ST02-001's clean and stamped
+pictures); strips on Releases and art in empty states (take 110: the
+reasons are in its HANDOFF).
 
 ## A41 — Missing images elsewhere in the app, sourced from somewhere other than TCGplayer · OPENED take 100
 
@@ -1670,6 +1687,12 @@ the portfolio or anything."*
   one every card row shows.)*
 - **Ruled out: seeding them into the collection as "owned".** The owner said
   no, and it would be a lie about what a person owns (PROTOCOL §9).
+- *Take 110:* the paragraph under the Ready-made decks heading ("17 legal
+  decks built from the starter-deck sets ... never count toward its value")
+  went at the owner's word, with two other texts: "remove this text when
+  you get the chance - all of it". The heading and every row's badge still
+  say ready-made, and a stock deck is still never in the collection
+  (smoke's take-61 checks, unchanged).
 
 ## A28 — The on-device self-test · BUILT take 45
 

@@ -280,8 +280,8 @@ if (puppeteer) {
      picture sits beside the text, never under it (the first run measured 117
      px -- baseline alignment -- and the second 83 px, which was three lines
      of subtitle, not the picture: a fixed bound was landmine 62's shape). */
-  ok('search hits: the box is card-shaped (36x50) and the picture does not stretch the row',
-     srch.boxW === 36 && srch.boxH === 50 && srch.rowH <= Math.max(srch.boxH, srch.nmH) + srch.pad + 1, JSON.stringify(srch));
+  ok('search hits: the box is card-shaped at the list-row size (44x61 since take 110) and the picture does not stretch the row',
+     srch.boxW === 44 && srch.boxH === 61 && srch.rowH <= Math.max(srch.boxH, srch.nmH) + srch.pad + 1, JSON.stringify(srch));
   for (const [w, name] of [[360, 'small phone'], [412, 'Fold outer'], [673, 'Fold inner'], [820, 'tablet']]) {
     await page.setViewport({ width: w, height: 900, deviceScaleFactor: 2 }); await new Promise(r => setTimeout(r, 120));
     const m = await page.evaluate(() => ({ scroll: document.body.scrollWidth, vw: document.documentElement.clientWidth }));
@@ -489,7 +489,8 @@ if (puppeteer) {
   const t82 = await page.evaluate(async () => {
     const V = window.VAULT; V.MODE.set('hunt', true); V.go && V.go('local');
     const sel = document.querySelector('#localRadius'); const cs = sel ? getComputedStyle(sel) : null;
-    V.MODE.set('play', true); const playBg = getComputedStyle(document.body).backgroundColor;
+    V.MODE.set('play', true); await new Promise(r => setTimeout(r, 320));   /* take 110: the palette turns over --dur-ui (220 ms); read it once it has */
+    const playBg = getComputedStyle(document.body).backgroundColor;
     V.MODE.set('collect', true); window.scrollTo(0, 0);
     return { selectBg: cs && cs.backgroundColor, selectBorder: cs && cs.borderTopColor, playBg }; });
   ok('the distance dropdown is themed, not the platform white', t82.selectBg && t82.selectBg !== 'rgb(255, 255, 255)' && t82.selectBg !== 'rgba(0, 0, 0, 0)', JSON.stringify(t82));
@@ -730,7 +731,7 @@ if (puppeteer) {
      JSON.stringify({ nav: [...new Set(nav107.map(r => r.left))], down: [...new Set(down107.map(r => r.left))] }));
   ok('take 107: the gear to More sits in one spot on all twelve screens in a nav, in all three modes (A37)', nav107.length === 12 && nav107.every(r => r.gear) && one(nav107, 'gear') && down107.every(r => !r.gear),
      JSON.stringify([...new Set(nav107.map(r => r.gear))]));
-  ok('take 109: the art hero is on Decks alone, with its header directly under it (A\'s slot); Home has none', got107.filter(r => r.hero).map(r => r.id).join() === 'decks' && got107.every(r => r.headerUnderHero),
+  ok('take 109: the art hero is on Decks (and, from take 110, Sealed) alone, with its header directly under it (A\'s slot); Home has none', got107.filter(r => r.hero).map(r => r.id).sort().join() === 'decks,sealed' && got107.every(r => r.headerUnderHero),
      JSON.stringify(got107.filter(r => r.hero || !r.headerUnderHero).map(r => r.id)));
   ok('take 107: nothing in a header is clipped, overlaps the title or leaves the screen', got107.length === 20 && got107.every(r => !r.clipped && !r.overlap && !r.outside),
      JSON.stringify(got107.filter(r => r.clipped || r.overlap || r.outside).map(r => r.id)));
@@ -856,19 +857,19 @@ if (puppeteer) {
     for (const [k, v] of [['heroLeader', () => null], ['artColours', () => []], ['paintDeckHero', () => {}], ['paintBack', () => {}]]) if (typeof V[k] !== 'function') V[k] = v;
     const rgb = v => { const e = document.createElement('i'); e.style.color = v; document.body.appendChild(e); const c = getComputedStyle(e).color; e.remove(); return c; };
     const read = () => {
-      const sec = document.getElementById('decks'), hero = sec.querySelector('.arthero'), bg = hero && hero.querySelector('.artbg'), peek = hero && hero.querySelector('.peek');
-      return { shown: !!hero && !hero.hidden, bg: bg ? getComputedStyle(bg).backgroundImage : '', peekBg: peek ? getComputedStyle(peek).backgroundImage : '',
-        peekBottom: peek ? Math.round(peek.getBoundingClientRect().bottom * 10) / 10 : -1, barTop: Math.round(sec.querySelector('header.appbar').getBoundingClientRect().top * 10) / 10,
+      const sec = document.getElementById('decks'), hero = sec.querySelector('.arthero'), bg = hero && hero.querySelector('.artbg');
+      return { shown: !!hero && !hero.hidden, bg: bg ? getComputedStyle(bg).backgroundImage : '', rises: !!hero && !!hero.querySelector('.peek, img.ref'),   // take 110: no card rises from behind the title
+        barTop: Math.round(sec.querySelector('header.appbar').getBoundingClientRect().top * 10) / 10,
         bgTop: bg ? Math.round(bg.getBoundingClientRect().top) : 999, pillTop: Math.round(document.querySelector('.modebar .mode').getBoundingClientRect().top),
         slider: getComputedStyle(document.querySelector('.modebar')).backgroundImage, atTop: document.documentElement.classList.contains('at-top'),
-        views: [hero && hero.querySelector('.artbg'), hero && hero.querySelector('.peek')].filter(Boolean).map(box => { const i = document.createElement('img'); i.className = 'above'; box.appendChild(i); const v = getComputedStyle(i).objectViewBox; i.remove(); return v; }),
-        marked: hero ? (V.paintDeckHero(), (hero.innerHTML.match(/<img class="(ref )?above"/g) || []).length) : 0 };   // read at once: a refused picture removes itself later
+        views: [hero && hero.querySelector('.artbg')].filter(Boolean).map(box => { const i = document.createElement('img'); i.className = 'above'; box.appendChild(i); const v = getComputedStyle(i).objectViewBox; i.remove(); return v; }),
+        marked: hero ? (V.paintDeckHero(), (hero.innerHTML.match(/<img class="(ref )?above( ok)?"/g) || []).length) : 0 };   /* ( ok): a picture that loaded before is drawn at once (take 110's review) */   // read at once: a refused picture removes itself later
     };
     V.MODE.set('play', true); await wait(300); V.go('decks'); await wait(250); window.scrollTo(0, 0); await wait(120);
     const f = V.heroLeader(), want = f ? V.artColours(f.L).map(rgb) : [];
     const clean = read();
     /* the controls: no ground under the art, no cut on the pictures, and the page scrolled */
-    const st = document.createElement('style'); st.textContent = '.artbg,.peek{background:none!important}img.above{object-view-box:none!important}'; document.head.appendChild(st); await wait(60);
+    const st = document.createElement('style'); st.textContent = '.artbg{background:none!important}img.above{object-view-box:none!important}'; document.head.appendChild(st); await wait(60);
     const control = read(); st.remove();
     window.scrollTo(0, 240); await wait(160); const scrolled = read(); window.scrollTo(0, 0); await wait(120);
     /* a card's own page: a two-colour card's ground, and the card centred */
@@ -876,17 +877,17 @@ if (puppeteer) {
     V.MODE.set('collect', true); await wait(250); V.openDetail(two.id); await wait(250); window.scrollTo(0, 0); await wait(80);
     const db = document.getElementById('dBack') || document.body.appendChild(document.createElement('div')), art = document.getElementById('dArt').getBoundingClientRect();   // an older build has no backdrop: its checks fail, the run goes on
     const probe = document.createElement('img'); probe.className = 'above'; db.appendChild(probe); const view = getComputedStyle(probe).objectViewBox; probe.remove();
-    V.paintBack(db, two); const marked = /<img class="above"/.test(db.innerHTML);   // read at once, as above
+    V.paintBack(db, two); const marked = /<img class="above( ok)?"/.test(db.innerHTML);   // read at once, as above
     const detail = { bg: getComputedStyle(db).backgroundImage, want: V.artColours(two).map(rgb), view, marked,
       artW: Math.round(art.width), artMid: Math.round(art.left + art.width / 2), mid: Math.round(innerWidth / 2), backTop: Math.round(db.getBoundingClientRect().top), sideways: document.documentElement.scrollWidth > innerWidth + 0.5 };
     V.go('home'); return { want, clean, control, scrolled, detail };
   });
   const has = (bg, cols) => cols.length > 0 && cols.every(c => bg.includes(c));
-  ok('take 109: Decks opens under its Leader: the hero is shown, the art\'s ground is that card\'s own colours', t109.clean.shown && has(t109.clean.bg, t109.want.slice(0, 1)) && has(t109.clean.peekBg, t109.want.slice(0, 1)), JSON.stringify({ want: t109.want, bg: t109.clean.bg.slice(0, 90) }));
-  ok('take 109: ...control: with the ground taken away the check sees no colour', !has(t109.control.bg, t109.want.slice(0, 1)) && !has(t109.control.peekBg, t109.want.slice(0, 1)));
-  ok('take 109: every picture shown as art is cut above the stamp (object-view-box, landmine 151) -- the backdrop and the rising card are both marked', t109.clean.views.length === 2 && t109.clean.views.every(v => /58%/.test(v)) && t109.clean.marked === 2, JSON.stringify({ views: t109.clean.views, marked: t109.clean.marked }));
-  ok('take 109: ...control: without the cut the check sees it', t109.control.views.length >= 2 && t109.control.views.every(v => !/58%/.test(v)), JSON.stringify(t109.control.views));
-  ok('take 109: the card rising from behind the title stops at the header, never over it', t109.clean.peekBottom > 0 && t109.clean.peekBottom <= t109.clean.barTop + 0.5, `${t109.clean.peekBottom} vs ${t109.clean.barTop}`);
+  ok('take 109: Decks opens under its Leader: the hero is shown, the art\'s ground is that card\'s own colours', t109.clean.shown && has(t109.clean.bg, t109.want.slice(0, 1)), JSON.stringify({ want: t109.want, bg: t109.clean.bg.slice(0, 90) }));
+  ok('take 109: ...control: with the ground taken away the check sees no colour', !has(t109.control.bg, t109.want.slice(0, 1)));
+  ok('take 109: every picture shown as art is cut above the stamp (object-view-box, landmine 151) -- the backdrop is marked', t109.clean.views.length === 1 && t109.clean.views.every(v => /58%/.test(v)) && t109.clean.marked === 1, JSON.stringify({ views: t109.clean.views, marked: t109.clean.marked }));
+  ok('take 109: ...control: without the cut the check sees it', t109.control.views.length >= 1 && t109.control.views.every(v => !/58%/.test(v)), JSON.stringify(t109.control.views));
+  ok('take 110: no card rises from behind the Decks title (the owner: "I don\'t like the little peak we have")', t109.clean.shown && t109.clean.rises === false);
   ok('take 109: at the top the art reaches behind the slider and the slider\'s fade steps aside', t109.clean.atTop && t109.clean.bgTop <= t109.clean.pillTop && t109.clean.slider === 'none', JSON.stringify({ bgTop: t109.clean.bgTop, pillTop: t109.clean.pillTop, slider: t109.clean.slider.slice(0, 40) }));
   ok('take 109: ...control: scrolled, the fade is back over whatever passes under the slider', !t109.scrolled.atTop && /gradient/.test(t109.scrolled.slider), t109.scrolled.slider.slice(0, 60));
   ok('take 109: a card\'s own page: its two colours under its blurred art, cut above the stamp, the card centred at 196 px', has(t109.detail.bg, t109.detail.want) && /58%/.test(t109.detail.view) && t109.detail.marked && t109.detail.artW === 196 && Math.abs(t109.detail.artMid - t109.detail.mid) <= 1 && !t109.detail.sideways,
@@ -902,6 +903,256 @@ if (puppeteer) {
   }
   await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
   ok('take 109: Decks and a card\'s own page never scroll sideways at 360, 412 or 820 px', wide109.every(r => r.decks && r.detail), JSON.stringify(wide109));
+
+  /* ---- take 110 (A42): the art layer, part 2 -- Sealed's banner, the strips, the Play counter ----
+     Sealed opens under the newest set's top card, crisp (A, the owner's pick for Hunt); each set's
+     heading carries that set's own art; each player's Leader sits faint behind their side. Every
+     picture shown as art is cut above the stamp (landmine 151), crisp or blurred. */
+  const t110 = await page.evaluate(async () => {
+    const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
+    /* an older build lacks these: its checks then fail on their own instead of the run stopping */
+    for (const [k, v] of [['newestTop', () => null], ['artColours', () => []], ['paintSealedHero', () => {}]]) if (typeof V[k] !== 'function') V[k] = v;
+    const rgb = v => { const e = document.createElement('i'); e.style.color = v; document.body.appendChild(e); const c = getComputedStyle(e).color; e.remove(); return c; };
+    const probe = box => { if (!box) return {}; const i = document.createElement('img'); i.className = 'above'; box.appendChild(i); const cs = getComputedStyle(i), o = { view: cs.objectViewBox, filter: cs.filter }; i.remove(); return o; };
+    const R = e => { const b = e.getBoundingClientRect(); return { l: Math.round(b.left), t: Math.round(b.top), r: Math.round(b.right), b: Math.round(b.bottom), h: Math.round(b.height) }; };
+    const read = () => {
+      const sec = document.getElementById('sealed'), hero = sec.querySelector(':scope > .arthero'), bg = hero && hero.querySelector('.artbg');
+      const strips = [...sec.querySelectorAll('.setstrip')], withArt = strips.filter(x => x.querySelector(':scope > .artbg'));
+      return { shown: !!hero && !hero.hidden, crisp: !!bg && bg.classList.contains('crisp'), bg: bg ? getComputedStyle(bg).backgroundImage : '', pic: probe(bg),
+        marked: hero ? (V.paintSealedHero(), (hero.innerHTML.match(/<img class="above( ok)?"/g) || []).length) : 0,   // read at once: a refused picture removes itself later
+        bgTop: bg ? Math.round(bg.getBoundingClientRect().top) : 999, pillTop: Math.round(document.querySelector('.modebar .mode').getBoundingClientRect().top),
+        slider: getComputedStyle(document.querySelector('.modebar')).backgroundImage, atTop: document.documentElement.classList.contains('at-top'),
+        strips: strips.length, withArt: withArt.length, minH: strips.length ? Math.min(...strips.map(x => R(x).h)) : 0,
+        fill: withArt.slice(0, 6).map(x => { const a = R(x), b = R(x.querySelector(':scope > .artbg')); return a.l === b.l && a.t === b.t && a.r === b.r && a.b === b.b; }),
+        name: strips[0] ? getComputedStyle(strips[0].querySelector(':scope > span')).color : '', stripPic: withArt[0] ? probe(withArt[0].querySelector(':scope > .artbg')) : {} };
+    };
+    V.MODE.set('hunt', true); await wait(300); V.go('sealed'); await wait(250); window.scrollTo(0, 0); await wait(120);
+    const f = V.newestTop(), want = f ? V.artColours(f.p).map(rgb) : [];
+    const clean = read();
+    /* the controls: no ground, no cut, a blurred banner, a strip's art knocked into the flow */
+    const st = document.createElement('style'); st.textContent = '.artbg{background:none!important}img.above{object-view-box:none!important}.artbg.crisp img{filter:blur(18px)!important}.setstrip > .artbg{position:static!important}'; document.head.appendChild(st); await wait(60);
+    const control = read(); st.remove(); await wait(60);
+    /* the Play counter at the table, both Leaders chosen */
+    V.MODE.set('play', true); await wait(250);
+    const keep = V.PLAY.p.map(p => p.leader), hot = V.PLAY.hotseat, L = V.CAT.stock[0].leader;
+    V.PLAY.hotseat = false; V.PLAY.p[0].leader = L; V.PLAY.p[1].leader = L; V.go('play'); V.paintPlay(); await wait(250); window.scrollTo(0, 0);
+    const panels = [...document.querySelectorAll('#plBoard .plpanel')].map(pn => { const a = pn.querySelector(':scope > .artbg'); if (!a) return null;
+      const P = R(pn), A = R(a), kids = [...pn.children].filter(c => c !== a);
+      return { inside: A.l >= P.l && A.r <= P.r && A.t >= P.t && A.b <= P.b, opacity: getComputedStyle(a).opacity, over: kids.length > 0 && kids.every(c => getComputedStyle(c).position === 'relative'), pic: probe(a) }; });
+    V.PLAY.p.forEach((p, i) => { p.leader = keep[i]; }); V.PLAY.hotseat = hot; V.paintPlay();
+    V.MODE.set('collect', true); await wait(250); V.go('home');
+    return { want, clean, control, panels };
+  });
+  ok('take 110: Sealed opens under the newest set\'s top card, sharp, on that card\'s own colours', t110.clean.shown && t110.clean.crisp && has(t110.clean.bg, t110.want.slice(0, 1)) && t110.clean.pic.filter === 'none',
+     JSON.stringify({ want: t110.want, bg: t110.clean.bg.slice(0, 90), filter: t110.clean.pic.filter }));
+  ok('take 110: ...cut above the stamp (landmine 151), the picture marked so', /58%/.test(t110.clean.pic.view || '') && t110.clean.marked === 1, JSON.stringify({ pic: t110.clean.pic, marked: t110.clean.marked }));
+  ok('take 110: ...control: without the ground, the cut or the sharpness the check sees it', !has(t110.control.bg, t110.want.slice(0, 1)) && !/58%/.test(t110.control.pic.view || '') && t110.control.pic.filter !== 'none', JSON.stringify(t110.control.pic));
+  ok('take 110: at the top the banner reaches behind the slider and the slider\'s fade steps aside, as on Decks', t110.clean.atTop && t110.clean.bgTop <= t110.clean.pillTop && t110.clean.slider === 'none',
+     JSON.stringify({ bgTop: t110.clean.bgTop, pillTop: t110.clean.pillTop, slider: t110.clean.slider.slice(0, 40) }));
+  ok('take 110: every heading in Sealed is a strip at least 64 px tall; the art fills each one, sharp and cut above the stamp, the name white over the scrim',
+     t110.clean.strips >= 10 && t110.clean.withArt >= 5 && t110.clean.minH >= 64 && t110.clean.fill.length > 0 && t110.clean.fill.every(Boolean) && /58%/.test(t110.clean.stripPic.view || '') && t110.clean.stripPic.filter === 'none' && t110.clean.name === 'rgb(255, 255, 255)',
+     JSON.stringify({ strips: t110.clean.strips, withArt: t110.clean.withArt, minH: t110.clean.minH, fill: t110.clean.fill, pic: t110.clean.stripPic, name: t110.clean.name }));
+  ok('take 110: ...control: a strip\'s art knocked out of place is caught', t110.control.fill.length > 0 && t110.control.fill.some(x => !x), JSON.stringify(t110.control.fill));
+  ok('take 110: the Play counter: each side\'s Leader inside its own panel, faint (0.6), cut above the stamp, everything else drawn over it',
+     t110.panels.length === 2 && t110.panels.every(p => p && p.inside && p.opacity === '0.6' && p.over && /58%/.test(p.pic.view || '')), JSON.stringify(t110.panels));
+  /* the owner's word on the blur: "zoomed out a bit so it's more focused on the center of the art" --
+     the band above the stamp whole, at the width of its box, where take 109 cut it to cover the box */
+  const frame110 = await page.evaluate(async () => {
+    const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
+    const fit = box => { if (!box) return null; const i = document.createElement('img'); i.className = 'above'; box.appendChild(i); const cs = getComputedStyle(i),
+      o = { fit: cs.objectFit, pos: cs.objectPosition, view: cs.objectViewBox, w: Math.round(i.getBoundingClientRect().width), bw: Math.round(box.getBoundingClientRect().width) }; i.remove(); return o; };
+    V.MODE.set('play', true); await wait(250); V.go('decks'); await wait(200);
+    const decks = fit(document.querySelector('#dkHero .artbg'));
+    V.MODE.set('collect', true); await wait(250); V.openDetail(V.CAT.rows.find(p => !p.sealed && p.img).id); await wait(200);
+    const page = fit(document.getElementById('dBack'));
+    const st = document.createElement('style'); st.textContent = '.artbg img{left:-24px!important;width:calc(100% + 48px)!important;object-fit:cover!important}'; document.head.appendChild(st); await wait(40);
+    const control = fit(document.getElementById('dBack')); st.remove();
+    V.go('home'); return { decks, page, control };
+  });
+  ok('take 110: the blurred art is zoomed out: the band above the stamp whole, at the width of its box -- centred on Decks, at the top of a card\'s page',
+     !!frame110.decks && frame110.decks.fit === 'contain' && frame110.decks.pos === '50% 50%' && frame110.decks.w === frame110.decks.bw && /58%/.test(frame110.decks.view || '')
+     && !!frame110.page && frame110.page.fit === 'contain' && /^50% 0(px|%)?$/.test(frame110.page.pos) && frame110.page.w === frame110.page.bw && /58%/.test(frame110.page.view || ''), JSON.stringify(frame110));
+  ok('take 110: ...control: take 109\'s blur, cut to cover the box past its edges, is caught', !!frame110.control && (frame110.control.fit !== 'contain' || frame110.control.w !== frame110.control.bw), JSON.stringify(frame110.control));
+  /* no sideways scroll on the two screens that changed, at a narrow phone, this phone and the unfolded Fold */
+  const wide110 = [];
+  for (const w of [360, 390, 412, 820]) {
+    await page.setViewport({ width: w, height: 915, deviceScaleFactor: 2 });
+    wide110.push(await page.evaluate(async w => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)), out = { w };
+      V.MODE.set('hunt', true); await wait(250); V.go('sealed'); await wait(200); out.sealed = document.documentElement.scrollWidth <= innerWidth + 0.5;
+      const keep = V.PLAY.p.map(p => p.leader), L = V.CAT.stock[0].leader;
+      V.MODE.set('play', true); await wait(250); V.PLAY.p.forEach(p => { p.leader = L; }); V.go('play'); V.paintPlay(); await wait(200); out.play = document.documentElement.scrollWidth <= innerWidth + 0.5;
+      /* a panel that clips (overflow:hidden, for the art) would hide a control instead of scrolling: nothing may cross its box */
+      out.clip = [...document.querySelectorAll('#plBoard .plpanel')].flatMap(pn => { const P = pn.getBoundingClientRect(); return [...pn.querySelectorAll('button')].filter(e => { const b = e.getBoundingClientRect(); return b.width && (b.left < P.left - 0.5 || b.right > P.right + 0.5); }).map(e => e.getAttribute('aria-label')); });
+      V.PLAY.p.forEach((p, i) => { p.leader = keep[i]; }); V.paintPlay();
+      V.MODE.set('collect', true); await wait(250); V.go('home'); return out; }, w));
+  }
+  await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
+  ok('take 110: Sealed and the Play counter never scroll sideways at 360, 390, 412 or 820 px, and no button of the counter is cut by its panel (take 108\'s 44 px steppers did not fit below 400 px)', wide110.length === 4 && wide110.every(r => r.sealed && r.play && r.clip.length === 0), JSON.stringify(wide110));
+  /* ---- take 110, polish (A42 layer 6): motion from the tokens, measured in Chrome ----
+     a sheet rises on --dur-sheet and not at all under reduced motion; a real tap on the slider
+     crossfades and the class comes off; the thumbnails are the three sizes; figures are tabular */
+  const pol = await page.evaluate(async () => {
+    const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
+    V.MODE.set('collect', true); await wait(250); V.go('search'); await wait(200);
+    document.querySelector('#sortBtnAll').click(); await wait(30);
+    const sb = document.querySelector('#filters .sheetbody'), a = getComputedStyle(sb), sheet = { name: a.animationName, dur: a.animationDuration };
+    while (V.closeAnyOverlay()) {} await wait(100);
+    document.querySelector('#modeSlider [data-mode="hunt"]').click(); await wait(40);
+    const swapOn = document.documentElement.classList.contains('mode-swap'), fade = getComputedStyle(document.querySelector('.screen.on')).animationName;
+    await wait(500); const swapOff = !document.documentElement.classList.contains('mode-swap');
+    V.go('sealed'); await wait(250); while (V.closeAnyOverlay()) {}
+    const sp = document.querySelector('#sealedList [data-open] .pic'), spb = sp && sp.getBoundingClientRect();
+    const num = getComputedStyle(document.body).fontVariantNumeric;
+    V.MODE.set('collect', true); await wait(250); V.go('home');
+    return { sheet, swapOn, fade, swapOff, sealedPic: spb ? `${Math.round(spb.width)}x${Math.round(spb.height)}` : 'none', num };
+  });
+  ok('take 110: a sheet rises from the bottom on --dur-sheet (320 ms)', pol.sheet.name === 'sheetUp' && pol.sheet.dur === '0.32s', JSON.stringify(pol.sheet));
+  ok('take 110: a tap on the mode slider crossfades the new screen, and the class comes off after', pol.swapOn && pol.fade === 'modeIn' && pol.swapOff, JSON.stringify(pol));
+  ok('take 110: a sealed product\'s picture is the large thumbnail (56x70) and every figure is tabular', pol.sealedPic === '56x70' && /tabular-nums/.test(pol.num), JSON.stringify(pol));
+  await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+  const still = await page.evaluate(async () => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)); V.go('search'); await wait(200); document.querySelector('#sortBtnAll').click(); await wait(30);
+    const a = getComputedStyle(document.querySelector('#filters .sheetbody')); const o = { name: a.animationName, dur: a.animationDuration }; while (V.closeAnyOverlay()) {} V.go('home'); return o; });
+  await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
+  ok('take 110: ...with reduced motion the sheet is simply there (the animation takes no time)', still.dur === '0s', JSON.stringify(still));
+  /* take 110's review: a picture that has loaded is drawn at once when its screen repaints -- a keystroke in
+     Sealed's search had rebuilt every strip at opacity 0 and faded it in again, and a tap on the Play counter
+     its Leaders. A 1x1 picture in the page: no network, no refusal to remove it mid-measure. */
+  const blink = await page.evaluate(async () => {
+    const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
+    const px = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+    const p = { ...V.CAT.rows.find(q => !q.sealed && q.img), img: px };
+    const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:0;top:0;width:120px;height:120px;z-index:9999'; document.body.appendChild(box);
+    const op = () => { const i = box.querySelector('img'); return i ? getComputedStyle(i).opacity : 'none'; };
+    /* its load event fired by hand: headless Chrome does not fetch a lazy picture drawn at opacity 0 (measured),
+       and the handler under test is the page's own -- this is the event Chrome fires when the picture arrives */
+    box.innerHTML = V.artBack(p); const cold = op(); box.querySelector('img').dispatchEvent(new Event('load')); await wait(500); const loaded = op();
+    box.innerHTML = V.artBack(p); const again = op();   /* the repaint */
+    (window.ART_OK || new Set()).delete(px); box.innerHTML = V.artBack(p); const forgot = op();   /* an older build has no memory: the check fails on its own */   /* the first push: drawn from nothing every time */
+    box.remove(); return { cold, loaded, again, forgot };
+  });
+  ok('take 110 (the review): a picture that has loaded is drawn at once when its screen repaints, not faded in from nothing again', blink.loaded === '1' && blink.again === '1', JSON.stringify(blink));
+  ok('take 110 (the review): ...control: a picture not loaded before starts from nothing', blink.cold === '0' && blink.forgot === '0', JSON.stringify(blink));
+  /* ---- take 110 (A42): the Fold's inner screen, measured at 840 px -- two panes where two fit ---- */
+  await page.setViewport({ width: 840, height: 757, deviceScaleFactor: 2 });
+  const inner = await page.evaluate(async () => {
+    const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)), R = e => e ? e.getBoundingClientRect() : null, out = {};
+    V.MODE.set('collect', true); await wait(250);
+    V.openDetail(V.CAT.rows.find(p => !p.sealed && p.img && p.market > 5).id); await wait(300); window.scrollTo(0, 0); await wait(60);
+    const art = R(document.querySelector('#dArt')), pan = R(document.querySelector('#detail > .panel'));
+    out.card = { w: Math.round(art.width), left: Math.round(art.left), besideLeft: Math.round(pan.left), besideTop: Math.round(pan.top), artBottom: Math.round(art.bottom) };
+    V.go('home'); await wait(250); if (!V.OWN.items.length) { V.CAT.rows.filter(p => !p.sealed && p.market > 20).slice(0, 3).forEach(p => V.OWN.add(p.id, { qty: 1 })); V.go('home'); await wait(250); }
+    const mv = R(document.getElementById('topList').closest('.panel')), sc = R(document.getElementById('setDone').closest('.panel'));
+    out.home = { mvTop: Math.round(mv.top), scTop: Math.round(sc.top), mvLeft: Math.round(mv.left), scLeft: Math.round(sc.left) };
+    V.go('search'); await wait(150); document.querySelector('#allq').value = 'nami'; V.paintSearch(); await wait(200);
+    const rows = [...document.querySelectorAll('#allRes .row')].slice(0, 2).map(R);
+    out.search = rows.length === 2 ? { sameLine: Math.abs(rows[0].top - rows[1].top) < 2, apart: Math.round(rows[1].left - rows[0].left) } : null;
+    V.MODE.set('hunt', true); await wait(250); V.go('releases'); await wait(250); while (V.closeAnyOverlay()) {}
+    const rels = [...document.querySelectorAll('#relList .rel')].slice(0, 2).map(R);
+    out.releases = rels.length === 2 ? { sameLine: Math.abs(rels[0].top - rels[1].top) < 2 } : null;
+    V.MODE.set('collect', true); await wait(250); V.go('home'); return out; });
+  ok('take 110: the open Fold, a card\'s page -- the card 300 px on the left, its page beside it', inner.card.w === 300 && inner.card.left < 40 && inner.card.besideLeft > inner.card.left + inner.card.w && inner.card.besideTop < inner.card.artBottom, JSON.stringify(inner.card));
+  ok('take 110: ...Home\'s Most valuable and Set completion side by side', inner.home.mvTop === inner.home.scTop && inner.home.scLeft > inner.home.mvLeft + 100, JSON.stringify(inner.home));
+  ok('take 110: ...Search\'s and Releases\' rows two to a line', !!inner.search && inner.search.sameLine && inner.search.apart > 300 && !!inner.releases && inner.releases.sameLine, JSON.stringify([inner.search, inner.releases]));
+  /* take 110's review: a heading, a note or an empty state spans both columns -- Market movers' heading had
+     taken half its line beside the first mover, and Decks' empty state the left column alone */
+  const spans = await page.evaluate(async () => {
+    const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)), W = e => e ? Math.round(e.getBoundingClientRect().width) : 0;
+    const read = async () => {
+      V.MODE.set('collect', true); await wait(200); document.querySelector('#allq').value = ''; document.querySelector('[data-act="movers"]').click(); await wait(250);
+      const mp = document.querySelector('#allRes > .panel'), mh = mp && mp.querySelector(':scope > h3'), o = { h3: W(mh), panel: mp ? mp.clientWidth : 0 };
+      V.MODE.set('play', true); await wait(200); const keep = V.DECKS.list.slice(); V.DECKS.list.length = 0; V.go('decks'); V.paintDecks(); await wait(150);
+      o.empty = W(document.querySelector('#dkList > .empty')); o.list = W(document.querySelector('#dkList'));
+      V.DECKS.list.push(...keep); V.paintDecks(); return o; };
+    const clean = await read();
+    const st = document.createElement('style'); st.textContent = '#allRes > .panel > :not(.row),#dkList > :not(.panel){grid-column:auto!important}'; document.head.appendChild(st);
+    const control = await read(); st.remove();
+    V.MODE.set('collect', true); await wait(200); V.go('home'); return { clean, control };
+  });
+  ok('take 110 (the review): ...Market movers\' heading and Decks\' empty state span both columns', spans.clean.h3 > 0.8 * spans.clean.panel && spans.clean.empty > 0 && spans.clean.empty >= spans.clean.list - 1, JSON.stringify(spans.clean));
+  ok('take 110 (the review): ...control: without the span each takes one column', spans.control.h3 > 0 && spans.control.h3 < 0.6 * spans.control.panel && spans.control.empty < 0.6 * spans.control.list, JSON.stringify(spans.control));
+  /* take 110's review: what the first push got wrong on the open Fold, measured at 840 px */
+  const fold2 = await page.evaluate(async () => {
+    const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)), W = e => e ? Math.round(e.getBoundingClientRect().width) : 0, o = {};
+    const run = async () => { const r = {};
+      V.MODE.set('collect', true); await wait(200); V.openDetail(V.CAT.rows.find(p => !p.sealed && p.img && p.market > 1).id); await wait(250);
+      r.buy = getComputedStyle(document.getElementById('dBuy')).display;
+      /* the line's words, not its box: a block beside a float starts under it and only its lines move aside */
+      const bk = document.getElementById('dBack').getBoundingClientRect(), rg = document.createRange(); rg.selectNodeContents(document.getElementById('dSub'));
+      const tx = rg.getClientRects()[0]; r.artRight = Math.round(bk.right); r.subLeft = tx ? Math.round(tx.left) : -1;
+      V.go('home'); await wait(200); V.setHomeTab(true); await wait(150); r.mv = W(document.getElementById('topList').closest('.panel')); r.home = W(document.getElementById('home')); V.setHomeTab(false);
+      V.MODE.set('hunt', true); await wait(200); const zip = V.HUNT.zip; V.HUNT.zip = ''; V.go('local'); V.paintLocal(); await wait(150); r.local = W(document.querySelector('#localList > .panel')); r.localW = W(document.getElementById('localList'));
+      V.go('events'); V.paintEvents(); await wait(150); r.events = W(document.querySelector('#eventsList > .panel')); r.eventsW = W(document.getElementById('eventsList')); V.HUNT.zip = zip;
+      V.MODE.set('collect', true); await wait(200); V.go('home'); return r; };
+    o.clean = await run();
+    const st = document.createElement('style'); st.textContent = '#detail > .panel{display:flow-root}#detail .artbg.dback{right:0!important;width:auto!important}#home.perf.screen.on > .panel:has(#topList){grid-column:auto!important}'
+      + '#localList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}#eventsList > .panel{grid-column:auto!important}'; document.head.appendChild(st);
+    o.control = await run(); st.remove(); return o; });
+  const f2ok = r => r.buy === 'none' && r.artRight <= r.subLeft && r.mv > 0.8 * r.home && r.local > 0.9 * r.localW && r.events > 0.9 * r.eventsW;
+  ok('take 110 (the review): the open Fold keeps a hidden panel hidden, the art behind the card\'s column, Most valuable across on Performance, Local and a lone Events panel full width', f2ok(fold2.clean), JSON.stringify(fold2.clean));
+  ok('take 110 (the review): ...control: each of the first push\'s rules fails it', fold2.control.buy !== 'none' && fold2.control.artRight > fold2.control.subLeft && fold2.control.mv < 0.6 * fold2.control.home && fold2.control.local < 0.6 * fold2.control.localW && fold2.control.events < 0.6 * fold2.control.eventsW, JSON.stringify(fold2.control));
+  /* words over the art, measured from pixels (the review's method): the words made transparent, the page shot,
+     the ground under them read back -- the darkest tenth of the samples. A yellow card is the worst ground. */
+  const groundContrast = async sel => {
+    const r = await page.evaluate(sel => { const el = document.querySelector(sel); if (!el) return null;
+      const rg = document.createRange(); rg.selectNodeContents(el);
+      const rs = [...rg.getClientRects()].filter(q => q.width > 2 && q.height > 2).map(q => ({ x: q.left, y: q.top, w: q.width, h: q.height }));
+      const col = getComputedStyle(el).color; el.dataset.keepStyle = el.getAttribute('style') || '';
+      for (const c of [el, ...el.querySelectorAll('*')]) { c.style.setProperty('color', 'transparent', 'important'); c.style.setProperty('text-shadow', 'none', 'important'); }
+      return { rs, col }; }, sel);
+    if (!r || !r.rs.length) return null;
+    await new Promise(res => setTimeout(res, 60));
+    const b64 = await page.screenshot({ type: 'png', encoding: 'base64' });
+    return page.evaluate(async (b64, r, sel) => {
+      const el = document.querySelector(sel); el.setAttribute('style', el.dataset.keepStyle); el.querySelectorAll('*').forEach(c => { c.style.removeProperty('color'); c.style.removeProperty('text-shadow'); });
+      const im = new Image(); im.src = 'data:image/png;base64,' + b64; await im.decode();
+      const cv = new OffscreenCanvas(im.naturalWidth, im.naturalHeight), x = cv.getContext('2d'); x.drawImage(im, 0, 0);
+      const k = im.naturalWidth / innerWidth, d = x.getImageData(0, 0, cv.width, cv.height).data;
+      const lum = (a, b, c) => { const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(a) + 0.7152 * f(b) + 0.0722 * f(c); };
+      const m = /rgba?\((\d+), (\d+), (\d+)(?:, ([\d.]+))?\)/.exec(r.col), t = [+m[1], +m[2], +m[3]], ta = m[4] != null ? +m[4] : 1, out = [];
+      for (const q of r.rs) for (let y = Math.max(0, Math.floor(q.y * k)); y < Math.min(cv.height, (q.y + q.h) * k); y += 2) for (let X = Math.max(0, Math.floor(q.x * k)); X < Math.min(cv.width, (q.x + q.w) * k); X += 3) {
+        const i = (y * cv.width + X) * 4, g = [d[i], d[i + 1], d[i + 2]], f = t.map((v, j) => v * ta + g[j] * (1 - ta)), L1 = lum(...f), L2 = lum(...g);
+        out.push((Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05)); }
+      out.sort((a, b) => a - b); return out.length ? +out[Math.floor(0.1 * (out.length - 1))].toFixed(2) : null; }, b64, r, sel);
+  };
+  const yellowL = await page.evaluate(() => (window.VAULT.CAT.rows.find(x => x.type === 'Leader' && x.color === 'Yellow' && x.img && !x.sealed) || {}).id);
+  const ink = async (css) => {
+    const st = css ? await page.evaluate(c => { const s = document.createElement('style'); s.id = 'ink110'; s.textContent = c; document.head.appendChild(s); return true; }, css) : false;
+    const o = {};
+    await page.evaluate(async id => { const V = window.VAULT; V.MODE.set('collect', true); await new Promise(r => setTimeout(r, 200)); V.openDetail(id); window.scrollTo(0, 0); }, yellowL); await new Promise(r => setTimeout(r, 1200));
+    o.sub = await groundContrast('#dSub');
+    await page.evaluate(async id => { const V = window.VAULT; V.MODE.set('play', true); await new Promise(r => setTimeout(r, 200)); V.go('play');
+      V.PLAY.hotseat = true; V.PLAY.p.forEach(p => { p.leader = id; }); V.paintPlay(); window.scrollTo(0, 0);
+      const pn = document.querySelector('#plBoard .plpanel'); pn.querySelector('.plcols .note').id = 'ink110life'; pn.querySelector(':scope > div .note').id = 'ink110lead'; }, yellowL);
+    await new Promise(r => setTimeout(r, 1200));
+    o.life = await groundContrast('#ink110life'); o.lead = await groundContrast('#ink110lead');
+    await page.evaluate(() => { const V = window.VAULT; V.PLAY.p.forEach(p => { p.leader = null; }); V.PLAY.hotseat = false; V.paintPlay(); V.MODE.set('collect', true); V.go('home'); const s = document.getElementById('ink110'); if (s) s.remove(); });
+    return o; };
+  const inkNow = await ink(''), inkThen = await ink('.plpanel > .artbg::after{background:linear-gradient(to bottom,rgba(0,0,0,.35),transparent 34%)!important}.plpanel .note{color:var(--dim2)!important}#detail .artbg.dback{right:0!important;width:auto!important;-webkit-mask-image:linear-gradient(#000 55%,transparent)!important;mask-image:linear-gradient(#000 55%,transparent)!important}');
+  ok('take 110 (the review): words over a yellow card read at 4.5:1 or better -- a card\'s line beside it on the open Fold, the Play counter\'s labels over its Leader', !!yellowL && inkNow.sub >= 4.5 && inkNow.life >= 4.5 && inkNow.lead >= 4.5, JSON.stringify(inkNow));
+  ok('take 110 (the review): ...control: the first push\'s ground measures under it', inkThen.sub < 4.5 && inkThen.life < 4.5, JSON.stringify(inkThen));
+  /* a double tap on a sheet's button: the second tap lands on the scrim while the sheet rises */
+  await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
+  const dbl = await page.evaluate(async () => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)); V.MODE.set('collect', true); await wait(200); V.go('search'); await wait(150);
+    const f = document.getElementById('filters'); document.querySelector('#sortBtnAll').click(); await wait(60); f.dispatchEvent(new MouseEvent('click', { bubbles: true })); await wait(20);
+    const early = f.classList.contains('on'); await wait(450); f.dispatchEvent(new MouseEvent('click', { bubbles: true })); await wait(20); const late = !f.classList.contains('on');
+    while (V.closeAnyOverlay()) {} V.go('home'); return { early, late }; });
+  ok('take 110 (the review): a tap on the scrim while a sheet rises leaves it open (a double tap had closed what it opened)', dbl.early, JSON.stringify(dbl));
+  ok('take 110 (the review): ...control: the same tap once the sheet is up closes it', dbl.late, JSON.stringify(dbl));
+  await page.setViewport({ width: 840, height: 757, deviceScaleFactor: 2 });
+  const wideFold = [];
+  for (const w of [700, 840, 899]) {
+    await page.setViewport({ width: w, height: 757, deviceScaleFactor: 2 });
+    wideFold.push(await page.evaluate(async w => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)), o = { w }, side = () => document.documentElement.scrollWidth <= innerWidth + 0.5;
+      V.MODE.set('collect', true); await wait(200); V.go('home'); await wait(150); o.home = side(); V.openDetail(V.CAT.rows.find(p => !p.sealed && p.img).id); await wait(200); o.detail = side();
+      V.MODE.set('hunt', true); await wait(200); V.go('sealed'); await wait(200); while (V.closeAnyOverlay()) {} o.sealed = side(); V.go('releases'); await wait(150); o.releases = side();
+      V.MODE.set('play', true); await wait(200); V.go('decks'); await wait(150); o.decks = side();
+      V.MODE.set('collect', true); await wait(200); V.go('home'); return o; }, w));
+  }
+  await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
+  ok('take 110: the open Fold never scrolls sideways at 700, 840 or 899 px (Home, a card, Sealed, Releases, Decks)', wideFold.every(r => r.home && r.detail && r.sealed && r.releases && r.decks), JSON.stringify(wideFold));
+  const phone = await page.evaluate(async () => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)); V.openDetail(V.CAT.rows.find(p => !p.sealed && p.img).id); await wait(250);
+    const a = document.querySelector('#dArt').getBoundingClientRect(); const o = { w: Math.round(a.width), mid: Math.round(a.left + a.width / 2), vw: innerWidth }; V.go('home'); return o; });
+  ok('take 110: ...and on the phone a card\'s page is as it was: the card centred at 196 px', phone.w === 196 && Math.abs(phone.mid - phone.vw / 2) <= 1, JSON.stringify(phone));
 
   await browser.close();
 } else {

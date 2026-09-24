@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 109.* Paste the block between the rules into a new session
+*Current as of take 110.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 109 takes by previous sessions. The repo is
+built across 110 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -27,7 +27,7 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
 4. Read `docs/HANDOFF.md`, newest entry first, back to take 80 at least. Every
    take ends with a DEFERRED list; the union of those lists is the work.
 5. Read `docs/LANDMINES.md` §0 (the index) and skim §1. When you are about to
-   do something, grep the index first. 152 of them; each is a real failure.
+   do something, grep the index first. 160 of them; each is a real failure.
 6. Read `docs/AGENDA.md`: the Priorities block at the top is the live order.
 
 **The discipline, which the gate enforces:**
@@ -94,9 +94,16 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
   card's own page over its own colours) and measured the picture: most
   card pictures carry a SAMPLE stamp at both hosts, always in one band
   (about 45-60 % of the card), so a banner shows only the card above
-  42 % (landmine 151); take 110 is Sealed's banner and the rest of the
-  art; then the voice, polish. `docs/UI-AUDIT.md` is its checklist, with
-  line numbers. Touch the UI only to fix what is broken, and read the
+  42 % (landmine 151); take 110, one take overnight at the owner's word,
+  carried the rest: Sealed's banner and strips, the Play counter's
+  Leaders, the voice (Collection for Portfolio, one date and money
+  format), polish (motion from the tokens, one empty state, three
+  thumbnail sizes) and the Fold's inner screen (two panes between 700 and
+  899 px), and a review of the whole take after its first push fixed what
+  it found (bulk actions on the lines on screen, a currency label that
+  matches its figure, words over art measured readable, landmines
+  157-160). What is left is the owner's review. `docs/UI-AUDIT.md` is its
+  checklist, with line numbers. Touch the UI only to fix what is broken, and read the
   tokens in `:root` before writing a size or a colour.
 
 - **The Priorities block at the top of `AGENDA.md`** is the live order: the
@@ -175,6 +182,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 110" and begin with PROTOCOL §0.
+Say "take 111" and begin with PROTOCOL §0.
 
 ---
