@@ -17,12 +17,44 @@ the version. Every step asserts it landed (APEX landmine 99).
 """
 import os, re, sys
 
-MARK = "// OPTCGHUB-SHRINK v1"
+MARK = "// OPTCGHUB-SHRINK v2"   # v2 (take 105): the Capacitor layer is kept whole -- landmine 141
 EXCLUDES = ("chinese", "devanagari", "japanese", "korean")
 BLOCK = MARK + "\n" + "configurations.all {\n" + "".join(
     f"    exclude group: 'com.google.mlkit', module: 'text-recognition-{m}'\n" for m in EXCLUDES) + "}\n// OPTCGHUB-SHRINK end\n"
-RULES = "# OPTCGHUB-SHRINK v1 -- the plugin names four recognisers this build does not carry\n" + "".join(
-    f"-dontwarn com.google.mlkit.vision.text.{m}.**\n" for m in EXCLUDES) + "# OPTCGHUB-SHRINK end\n"
+# The bridge and every plugin are kept whole and unrenamed (take 105, landmine 141): R8 dropped
+# the nested @Permission values off a plugin's @CapacitorPlugin annotation because nothing kept
+# the annotation class, and checkPermissions resolved undefined on the phone. The dex saving
+# lives in play-services, ML Kit, AndroidX and Kotlin, which carry their own rules.
+KEEP = ["-keepattributes RuntimeVisibleAnnotations,RuntimeVisibleParameterAnnotations,RuntimeVisibleTypeAnnotations,AnnotationDefault,Signature,InnerClasses,EnclosingMethod",
+        "-keep @interface com.getcapacitor.annotation.** { *; }",
+        "-keep class com.getcapacitor.** { *; }",
+        "-keep class com.capacitorjs.plugins.** { *; }",
+        "-keep class io.capawesome.capacitorjs.plugins.** { *; }",
+        "-keep class com.getcapacitor.community.** { *; }",
+        "-keep class com.optcghub.app.** { *; }"]
+RULES = "# OPTCGHUB-SHRINK v2 -- the plugin names four recognisers this build does not carry\n" + "".join(
+    f"-dontwarn com.google.mlkit.vision.text.{m}.**\n" for m in EXCLUDES) + "# ...and the Capacitor layer stays whole (landmine 141)\n" + "".join(k + "\n" for k in KEEP) + "# OPTCGHUB-SHRINK end\n"
+# What the release mapping must show: these annotation classes kept BY NAME. R8 renames what it
+# does not keep, and drops the annotation instances with it.
+ANNOTATIONS = ["com.getcapacitor.annotation.CapacitorPlugin", "com.getcapacitor.annotation.Permission"]
+
+
+def check_mapping(path):
+    """-> [] when every Capacitor annotation class maps to itself; else the problems, one per class."""
+    seen = {}
+    with open(path, encoding="utf8", errors="replace") as f:
+        for line in f:
+            if line.startswith("com.getcapacitor.annotation.") and " -> " in line:
+                src, dst = line.rstrip("\n").rstrip(":").split(" -> ", 1)
+                seen[src] = dst
+    out = []
+    for a in ANNOTATIONS:
+        if a not in seen:
+            out.append(f"{a}: not in the mapping (stripped or merged) -- checkPermissions would resolve undefined (landmine 141)")
+        elif seen[a] != a:
+            out.append(f"{a} -> {seen[a]}: renamed -- the keep rule did not take (landmine 141)")
+    return out
+
 
 
 def patch(app_dir):
@@ -53,6 +85,7 @@ def patch(app_dir):
     open(P, "w").write(rules)
     r = open(P).read()
     assert r.count("-dontwarn com.google.mlkit.vision.text.") == 4 and r.count("OPTCGHUB-SHRINK v") == 1, "rules did not land once"
+    assert all(k in r for k in KEEP), "the keep rules did not land (landmine 141)"
     return f"  {MARK}: R8 + shrinkResources on the release build; the four non-Latin ML Kit modules excluded; 4 -dontwarn rules"
 
 
@@ -78,6 +111,10 @@ dependencies {
     implementation project(':capacitor-android')
 }
 """
+
+
+def _write(path, text):
+    open(path, "w").write(text); return path
 
 
 def selftest(patch_fn=patch):
@@ -111,6 +148,18 @@ def selftest(patch_fn=patch):
             check(f"{label}: a second run changes nothing (one block, one rules block)", once == twice and twice.count("OPTCGHUB-SHRINK v") == 1)
             rp = os.path.join(app, "proguard-rules.pro"); rules = open(rp).read() if os.path.exists(rp) else ""
             check(f"{label}: four -dontwarn rules, once", rules.count("-dontwarn com.google.mlkit.vision.text.") == 4 and rules.count("OPTCGHUB-SHRINK v") == 1)
+    # take 105 (landmine 141): the release mapping must show Capacitor's annotation classes kept
+    # by name; the take-104 mapping renamed them and checkPermissions resolved undefined
+    with tempfile.TemporaryDirectory() as d:
+        renamed = os.path.join(d, "renamed.txt"); kept = os.path.join(d, "kept.txt")
+        open(renamed, "w").write("# compiler: R8\ncom.getcapacitor.annotation.CapacitorPlugin -> w2.b:\ncom.getcapacitor.annotation.Permission -> w2.c:\n")
+        open(kept, "w").write("# compiler: R8\ncom.getcapacitor.annotation.CapacitorPlugin -> com.getcapacitor.annotation.CapacitorPlugin:\ncom.getcapacitor.annotation.Permission -> com.getcapacitor.annotation.Permission:\n")
+        check("control: a mapping that renamed the Permission annotation is refused (landmine 141)", check_mapping(renamed) != [])
+        check("a mapping that kept the annotation classes by name passes", check_mapping(kept) == [])
+        check("control: a mapping with no line for them at all is refused (stripped, not kept)", check_mapping(os.path.join(d, "kept.txt")) == [] and check_mapping(renamed) != [] and check_mapping(_write(os.path.join(d, "none.txt"), "# compiler: R8\ncom.example.Other -> a.b:\n")) != [])
+    real = os.path.join(os.environ.get("OPTCGHUB_SCRATCH", "/nonexistent"), "take104-mapping.txt")
+    if os.path.exists(real):
+        check("control: the REAL take-104 release mapping is refused", check_mapping(real) != [])
     # control: a build.gradle with no release block must be REFUSED, never patched in silence
     with tempfile.TemporaryDirectory() as d:
         app = os.path.join(d, "app"); os.makedirs(app)
@@ -127,6 +176,11 @@ if __name__ == "__main__":
     if "--selftest" in sys.argv:
         print("shrink.py controls:")
         raise SystemExit(0 if selftest() else 1)
+    if "--check-mapping" in sys.argv:
+        probs = check_mapping(sys.argv[sys.argv.index("--check-mapping") + 1])
+        for p_ in probs: print("  " + p_)
+        print("  mapping: Capacitor's annotation classes kept by name" if not probs else "  mapping: REFUSED")
+        raise SystemExit(1 if probs else 0)
     if len(sys.argv) != 2:
         print("usage: python3 ci/shrink.py <android/app>   (or --selftest)"); raise SystemExit(2)
     print(patch(sys.argv[1]))

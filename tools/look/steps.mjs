@@ -8,11 +8,11 @@
    Everything inside page.evaluate runs in the real app: window.VAULT is the
    same surface smoke.mjs drives, and clicks are real clicks. */
 
-/* The Fold 7: the cover screen is the harness's phone; the inner screen is
-   INFERRED until the owner pastes Diagnostics' `viewport` line from the open
-   phone (More → About ×5 → the ## device block prints innerWidth x innerHeight @dpr). */
+/* The Fold 7: the cover screen is the harness's phone -- MEASURED at take 105 from the
+   owner's Diagnostics (`viewport: 411x960 @2.625`, the take-104 install); the inner screen is
+   INFERRED until he pastes the same line from the open phone (More → About ×5 → ## device). */
 export const VIEWPORTS = {
-  cover: { width: 412, height: 915, dpr: 2 },
+  cover: { width: 411, height: 960, dpr: 2.625 },
   inner: { width: 840, height: 757, dpr: 2, note: 'INFERRED until the owner pastes the viewport line' }
 };
 
@@ -186,6 +186,31 @@ const take104 = [
     } }
 ];
 
+/* ---- take 105 — the Fold's first run of the shrunk build, answered --------- */
+const take105 = [
+  { name: 'fresh-open-home-is-on-the-stack', run: async (page, ctx) => {
+      /* landmine 140: the app's OWN boot, nothing seeded -- Home must already be on the stack */
+      await ctx.open();
+      return page.evaluate(() => { const V = window.VAULT; return { ok: Array.isArray(V.NAV.bootStack) && V.NAV.bootStack[0] === 'home' && V.NAV.stack[0] === 'home', boot: (V.NAV.bootStack || []).join('>'), stack: V.NAV.stack.join('>') }; });
+    } },
+  { name: 'first-card-then-back-lands-on-home', run: async (page) => {
+      /* the owner's path: a card from Home's top-value row, then the phone's Back (history Back runs the same handler) -- Home, never out of the app */
+      return page.evaluate(async () => {
+        const V = window.VAULT; V.OWN.items = [];
+        const vivi = V.candidates('EB03-024', null).slice().sort((a, b) => (b.market || 0) - (a.market || 0)); V.OWN.add(vivi[0].id, { condition: 'NM' });
+        V.paintHome();   /* no V.go('home') here on purpose: the boot's own push is what is under test */
+        const b = document.querySelector('#topList button[data-open]'); if (b) b.click();
+        await new Promise(r => setTimeout(r, 200));
+        const onDetail = [...document.querySelectorAll('.screen.on')].map(e => e.id).join(',');
+        const before = V.ERRS.list.length;
+        history.back(); await new Promise(r => setTimeout(r, 400));
+        const on = [...document.querySelectorAll('.screen.on')].map(e => e.id).join(',');
+        window.scrollTo(0, 0);
+        return { ok: onDetail === 'detail' && on === 'home' && V.ERRS.list.length === before, onDetail, on, stack: V.NAV.stack.join('>') };
+      });
+    } }
+];
+
 /* ---- take 106 — the UI series' foundation (A42): Prep & Play first, then Hunt, then Collect ---- */
 const take106 = [
   { name: 'play-decks-red-readable-knob-centred', run: async (page, ctx) => {
@@ -263,4 +288,4 @@ const take106 = [
     } }
 ];
 
-export const STEPS = { 98: take98, 100: take100, 104: take104, 106: take106 };
+export const STEPS = { 98: take98, 100: take100, 104: take104, 105: take105, 106: take106 };

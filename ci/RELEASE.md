@@ -27,6 +27,14 @@ under every mode; the filter's price boxes no longer zoom the screen;
 the empty collection shows its picture again, and the Banish keyword no
 longer carries a blank space. Nothing you have saved changes.
 
+**New at take 105:** Back from a card in a freshly opened app goes back
+to Home, never out of the app. Release reminders ask for notification
+permission properly again on the smaller build — takes 103 and 104
+wrongly reported notifications as off and kept the reminder inside the
+app. The guide shows once per fresh data; if your collection came back
+with a reinstall, so did the guide's "seen" mark — More has "Show the
+guide again".
+
 **New at take 104:** two honest lines. The self-test, run in a browser on
 a computer with no camera, now says so and skips instead of failing —
 on the phone a missing camera is still a failure. The Diagnostics
