@@ -36,9 +36,10 @@ refresh from Pages (take 27).
   reports as installed); AAB 23.6 MB packed. Dex 23.0 MB raw, the OCR
   engine 11.1 MB (arm64) + 6.8 MB (armeabi-v7a), the app and catalogue
   8.6 MB raw / 1.8 packed, the OCR language models 5.5 MB raw. **Take
-  103** shrinks the code (R8) and drops the four non-Latin models (3.8
-  MB raw); the *after* is the take-103 build's size table, recorded here
-  once it runs. The apk
+  103 (MEASURED, run 52 and the released files):** APK 26.4 MB file /
+  36.9 MB raw (from 34.9 / 58.0), AAB 19.6 MB (from 23.8); dex 6.4 MB raw
+  in one file (from 23.0 in three), the OCR models 1.5 MB raw (from 5.5),
+  the engine unchanged at 11.1 + 6.8. The apk
   job prints this breakdown every build since take 101 (`tools/shipped.py`).
 - **Play:** the app exists in the console as `com.optcghub.app` on a personal
   account; version code 35 accepted into internal testing; advertising-ID

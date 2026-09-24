@@ -99,6 +99,40 @@ owner's rule stands: no vendor trailer on a commit or a PR.
   session file so the next session does not chase it. No app change, so
   no look; the proof is the Fold's.
 
+### Merged — run 52 built the shrunk release green on the first try (post-merge note, rides the next PR)
+
+PR #27 merged 01:20 UTC by the owner (the check verified from its log:
+691 smoke, 106 render in Chrome, GATE PASSED). Run 52 on `main`: the
+`apk` job 01:22–01:28, Release take-103 published 01:28:21 with three
+assets. The R8 build needed no rule beyond the four `-dontwarn` lines.
+**MEASURED, from the log's table and again from the released files on
+this VM (identical):**
+
+| | take 102 | take 103 | |
+|---|---|---|---|
+| APK file (the download) | 34.9 MB | **26.4 MB** | −24% |
+| APK raw (what the phone reports installed) | 58.0 MB | **36.9 MB** | −36% |
+| AAB file (the upload) | 23.8 MB | **19.6 MB** | −18% |
+| dex | 23.0 raw / 8.7 packed, 3 files | **6.4 / 3.0, 1 file** | −72% raw |
+| OCR models | 5.5 raw / 3.7 packed, 66 files | **1.5 / 1.3, 26 files** | the four scripts gone |
+| res | 2.8 raw, 943 files | 2.3 raw, 660 files | shrinkResources |
+| OCR engine (.so) | 11.1 + 6.8 | 11.1 + 6.8 | unchanged, as predicted |
+
+The readback held on the real artifact: non-Latin model entries 0, Latin
+entries 4 (measured here on the released APK as well); the mapping
+present. The pinned fingerprint passed on a real bundle for the first
+time (`AAB signer SHA256: 32:8E:…:28:95`, run 52) — the positive arm is
+now PROVEN in CI, not only in the control. Play's AAB carries the same
+map inside `BUNDLE-METADATA/com.android.tools.build.obfuscation/
+proguard.map` (52.7 MB raw, 4.0 packed), which is what Play reads for
+crash reports; the Release asset `optcghub-take-103-mapping.txt` is the
+same map for a sideload crash. That map is why `shipped.py` now prints
+the bundle as "90.5 MB raw" with a 52.8 MB "other" group: the metadata
+is never installed and should sit in its own group outside the raw
+total — a `shipped.py` fix for take 104, recorded in DEFERRED.
+**PROVEN on the Fold: pending** — the self-test's ML Kit line on take
+103 is the proof; until it passes, A14 stays BUILT + MEASURED.
+
 ### The proof, on the Fold (the owner's)
 
 Install take 103's APK (export first if the phone is on a Play build —
@@ -113,6 +147,9 @@ proof.
 
 - D11 the day the owner sends the two unit IDs; A41 his list; the 32-bit
   ABI and the gzipped catalogue stay listed in A14; A32 a new session.
+- `tools/shipped.py`: a group for `BUNDLE-METADATA/` (the R8 map Play
+  reads, never installed) kept out of the bundle's raw total, with a
+  control — take 104.
 
 ## Take 102 — 2026-09-24 — harden, clean up, tie up: the take-101 review's thirteen findings, the record moved to production, a CLAUDE.md
 

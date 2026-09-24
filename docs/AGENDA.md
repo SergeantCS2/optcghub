@@ -536,7 +536,7 @@ is what stands between the seed and that clock, in order, with who does it.
 |---|---|---|---|
 | 1 | **D14 — one game or many, and therefore the package name** | The owner | DONE take 24; `com.optcghub.app` registered with Play at the take-35 upload, permanent |
 | 2 | Stand up the repo: RUNBOOK §1–4 | The owner | **DONE** — read off the repo at take 34: public, run #3 green end to end (seed 6 s, bundle 42 s, apk 4 m 36 s, pages 14 s), Release **take-31**, Pages live. PROVEN |
-| 3 | First CI build produces the AAB | CI | **DONE** — the four secrets are set; every build's `apk` job prints `AAB signer: Owner: CN=OP TCG Hub upload, OU=play` and names the file `optcghub-take-N.aab` (PROVEN from run 48's log, take 101). **The registered upload key is that key — PROVEN take 102:** Play accepted the upload-key-signed take 101. **Its fingerprint is pinned since take 103** (`ci/signer.sh`, from run 51's printed line, `32:8E:60:…:28:95`): a bundle carrying the upload DN with any other fingerprint fails the build before Play can refuse it |
+| 3 | First CI build produces the AAB | CI | **DONE** — the four secrets are set; every build's `apk` job prints `AAB signer: Owner: CN=OP TCG Hub upload, OU=play` and names the file `optcghub-take-N.aab` (PROVEN from run 48's log, take 101). **The registered upload key is that key — PROVEN take 102:** Play accepted the upload-key-signed take 101. **Its fingerprint is pinned since take 103** (`ci/signer.sh`, from run 51's printed line, `32:8E:60:…:28:95`): a bundle carrying the upload DN with any other fingerprint fails the build before Play can refuse it. The pin passed on a real bundle at run 52 (take 103) — PROVEN in CI |
 | 4 | Play Console: create the app, Play App Signing, the four secrets | The owner | **DONE** — personal account; app created; version code 35 accepted into internal testing (two optional warnings). **UNKNOWN: whether the upload-key bundle or the DEVKEY one was the first upload** — RUNBOOK-play §2 says how to reset if the latter |
 | 5 | Listing: title, short and full description opening with the disclaimer, screenshots, icon 512, feature graphic 1024×500 | The owner | copy pasted (take 36); screenshots from the Fold with the take-37 showcase files; the console shows the jolly roger icon — swap to `play-assets-t33/icon-512.png` or say so (D7) |
 | 6 | Privacy policy live on Pages, naming AdMob | take 30 | Pages deployed at `https://sergeantcs2.github.io/optcghub/` (run #3); the policy is `/privacy.html` there |
@@ -2134,7 +2134,15 @@ he will send more screenshots.
   the app should render in the six colours or stay teal-on-black with colour
   accents; whether the splash is the icon large or something else.
 
-## A14 — Trimming the ML Kit language models · BUILT take 103, the Fold's proof pending
+## A14 — Trimming the ML Kit language models · BUILT + MEASURED take 103, the Fold's proof pending
+
+*Take 103, merged — MEASURED (run 52, and the released files on the
+session VM, identical):* APK 34.9 → **26.4 MB** file, 58.0 → **36.9 MB**
+installed; AAB 23.8 → **19.6 MB**; dex 23.0 → 6.4 MB raw (one file);
+the OCR models 5.5 → 1.5 MB raw; the engine unchanged. The readback on
+the real APK: non-Latin entries 0, Latin 4. R8 needed no rule beyond
+the four `-dontwarn` lines. PROVEN waits on the Fold's self-test (the
+ML Kit line) on take 103.
 
 *Take 103 addendum — BUILT:* the four non-Latin `com.google.mlkit:
 text-recognition-*` modules excluded from every configuration in
