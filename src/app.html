@@ -4699,7 +4699,10 @@ const PLATFORM = {
   /* Price alerts (8.5, take 27) -- @capacitor/local-notifications 8.3.1. API
      read from its definitions: schedule({ notifications: [{ id, title, body }] })
      fires at once when no schedule is set; requestPermissions() returns
-     { display }. The plugin declares POST_NOTIFICATIONS itself (API 33+). */
+     { display }. The plugin declares POST_NOTIFICATIONS itself (API 33+).
+     smallIcon names a DRAWABLE (the plugin looks nowhere else, and fell back to
+     the system's info icon while this said ic_launcher, a mipmap): ci/icon.py
+     writes ic_stat_don and keeps it through shrinkResources (D7). */
   async notifyPermission() {
     const N = this.plugin('LocalNotifications'); if (!N) return 'browser';
     /* take 105 (landmine 141): on the shrunk build the plugin answered with NO data; read for a field, guarded, and an empty answer is 'unknown' -- never 'denied' */
@@ -4709,7 +4712,7 @@ const PLATFORM = {
   async notify(id, title, body) {
     const N = this.plugin('LocalNotifications');
     if (!N) { toast(`${title} \u2014 ${body}`); return false; }
-    try { await N.schedule({ notifications: [{ id, title, body, smallIcon: 'ic_launcher', iconColor: '#C9A24A' }] }); return true; }
+    try { await N.schedule({ notifications: [{ id, title, body, smallIcon: 'ic_stat_don', iconColor: '#C9A24A' }] }); return true; }
     catch (e) { console.warn('notify failed', e); toast(`${title} \u2014 ${body}`); return false; }
   },
   /* take 97: a notification for a future moment (the release reminder), and
@@ -4718,7 +4721,7 @@ const PLATFORM = {
      proves, this one is the owner’s to see. No plugin: nothing scheduled. */
   async notifyAt(id, title, body, at) {
     const N = this.plugin('LocalNotifications'); if (!N) return false;
-    try { await N.schedule({ notifications: [{ id, title, body, smallIcon: 'ic_launcher', iconColor: '#C9A24A', schedule: { at, allowWhileIdle: true } }] }); return true; }
+    try { await N.schedule({ notifications: [{ id, title, body, smallIcon: 'ic_stat_don', iconColor: '#C9A24A', schedule: { at, allowWhileIdle: true } }] }); return true; }
     catch (e) { console.warn('notifyAt failed', e); return false; }
   },
   async cancelNotify(id) {
