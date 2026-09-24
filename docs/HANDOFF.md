@@ -198,6 +198,16 @@ closed drop-down for the long text.
   - Reproduced in the VM with a sync landed on demand: the same error.
   - Fixed by turning the page's own Hunt syncs off in render, as the look
     already did. The same probe then clicks (landmine 166).
+- That fix failed on the runner too (`bfbe14b`). The tap reached no line,
+  and the app stayed on Sealed.
+  - The cause: render reloads its page twice mid-run, and a stub set once
+    after the first load does not survive a reload. A probe showed it back
+    to the real sync after the reload.
+  - The stub is now set on every document the page loads, at the moment
+    the app defines `VAULT`.
+  - A tap in render now waits for the page to settle and taps only when its
+    target is what the point hits. When it cannot, the check says what
+    covered it.
 - Two of the day controls could not fail. At 360 px the lines wrap before the
   day, and a 3.5em column still held "May 17" (42 px of 43.75). The rule of
   landmine 164 again: the control is now a 1 px column.

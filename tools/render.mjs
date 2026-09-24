@@ -46,13 +46,16 @@ if (puppeteer) {
   }).catch(() => {}));
   page.on('pageerror', e => errors.push(String(e)));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-  await page.goto('file://' + W('index.html'), { waitUntil: 'networkidle0' });
-  await new Promise(r => setTimeout(r, 400));
   /* Take 112, landmine 166: the runner reaches Pages. Entering Sealed with no fresh feed syncs the SERVED feed, which
      lands seconds later, replaces a check's fixture and repaints mid-tap -- take 112's first check on the runner died
      on it ("No element found" at a line it had just marked); the VM never reaches Pages, so it never showed there.
-     Every Hunt check here brings its own fixture, so the page's own Hunt syncs are off, as in the look. */
-  await page.evaluate(() => { const V = window.VAULT; V.HUNT.sync = async () => false; V.HUNT.syncHistory = async () => false; });
+     Every Hunt check here brings its own fixture, so the page's own Hunt syncs are off -- on every document, set as
+     the app defines VAULT: this run reloads the page twice, and a stub set once after load was gone by take 112's
+     checks (the second runner failure: the served feed, without Southern Hobby, repainted Sealed under the tap). */
+  await page.evaluateOnNewDocument(() => { let v; Object.defineProperty(window, 'VAULT', { configurable: true, get: () => v,
+    set: x => { v = x; if (x && x.HUNT) { x.HUNT.sync = async () => false; x.HUNT.syncHistory = async () => false; } } }); });
+  await page.goto('file://' + W('index.html'), { waitUntil: 'networkidle0' });
+  await new Promise(r => setTimeout(r, 400));
 
   sec('real engine (Chrome)');
   ok('no page errors', errors.length === 0, errors.slice(0, 2).join(' | '));
@@ -337,19 +340,30 @@ if (puppeteer) {
   }, F94);
   ok('Hunt: the Distributor info draws closed, and a matched row\'s distributor line draws inside its row as a 44 px target with no sideways scroll', g94.fold && g94.line && g94.inRow && g94.scroll <= g94.vw + 1, JSON.stringify(g94));
   /* a click target that is missing fails its check below; it never stops the run */
-  const tap = async sel => { if (!(await page.evaluate(q => { const e = document.querySelector(q); if (e) e.scrollIntoView({ block: 'center' }); return !!e; }, sel))) return false; await page.click(sel); await new Promise(r => setTimeout(r, 150)); return true; };   // centred, clear of the fixed nav: the click lands on what it names
+  /* centred, left to settle (the runner's pictures load; the VM's are refused), and only when the target itself is
+     what the point hits -- else moved clear once, else the check fails with what covered it (landmine 169) */
+  const tapNotes = [];
+  const tap = async sel => {
+    const hit = () => page.evaluate(q => { const e = document.querySelector(q); if (!e) return 'missing'; const b = e.getBoundingClientRect(), at = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
+      return at && (at === e || e.contains(at)) ? 'ok' : 'covered by ' + (at ? at.tagName.toLowerCase() + '.' + String(at.className).split(' ')[0] + (at.closest('[id]') ? ' in #' + at.closest('[id]').id : '') : 'nothing'); }, sel);
+    if (!(await page.evaluate(q => { const e = document.querySelector(q); if (e) e.scrollIntoView({ block: 'center' }); return !!e; }, sel))) { tapNotes.push(sel + ': missing'); return false; }
+    await new Promise(r => setTimeout(r, 300));
+    let h = await hit();
+    if (h !== 'ok' && h !== 'missing') { await page.evaluate(q => { const b = document.querySelector(q).getBoundingClientRect(); window.scrollBy(0, Math.round(b.top - innerHeight * 0.35)); }, sel); await new Promise(r => setTimeout(r, 300)); h = await hit(); }
+    if (h !== 'ok') { tapNotes.push(sel + ': ' + h); return false; }
+    await page.click(sel); await new Promise(r => setTimeout(r, 150)); return true; };
   await tap('#sealedList [data-distfold="sealed"]');
   const o94 = await page.evaluate(() => { const f = document.querySelector('#sealedList [data-distfold="sealed"]'); const box = f && f.closest('.panel'); const secs = box ? [...box.querySelectorAll('.dsec')] : []; const b = box && box.getBoundingClientRect();
     return { open: !!f && f.getAttribute('aria-expanded') === 'true', secs: secs.map(x => (x.querySelector('b') || {}).textContent).join(), inside: secs.length > 0 && secs.every(x => { const r = x.getBoundingClientRect(); return r.height > 0 && r.left >= b.left - 0.5 && r.right <= b.right + 0.5; }),
              scroll: document.body.scrollWidth, vw: document.documentElement.clientWidth }; });
-  ok('...a tap opens it: GTS Distribution\'s and Southern Hobby\'s sections draw inside the panel', o94.open && o94.secs === 'GTS Distribution,Southern Hobby' && o94.inside && o94.scroll <= o94.vw + 1, JSON.stringify(o94));
+  ok('...a tap opens it: GTS Distribution\'s and Southern Hobby\'s sections draw inside the panel', o94.open && o94.secs === 'GTS Distribution,Southern Hobby' && o94.inside && o94.scroll <= o94.vw + 1, JSON.stringify({ ...o94, taps: tapNotes }));
   await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.DISTF.open.clear(); V.go('releases'); V.paintReleases(); });
   const r94 = await page.evaluate(() => { const f = document.querySelector('#relList [data-distfold="releases"]'); return { fold: !!f && f.getAttribute('aria-expanded') === 'false' && !document.querySelector('#relList .dbody') }; });
   await tap('#relList [data-distfold="releases"]');
   const r94b = await page.evaluate(() => { const f = document.querySelector('#relList [data-distfold="releases"]'); const box = f && f.closest('.panel');
     const rows = box ? [...box.querySelectorAll('.dbody .row')] : []; const rr = rows.map(x => x.getBoundingClientRect());
     return { open: !!f && f.getAttribute('aria-expanded') === 'true', rows: rows.length, drawn: rr.every(b => b.height > 0), scroll: document.body.scrollWidth, vw: document.documentElement.clientWidth }; });
-  ok('Releases: the not-in-the-catalogue list sits under a closed Distributor info; a tap opens it and its rows draw without sideways scroll (GTS\'s and Southern Hobby\'s)', r94.fold && r94b.open && r94b.rows > 3 && r94b.drawn && r94b.scroll <= r94b.vw + 1, JSON.stringify({ r94, r94b }));
+  ok('Releases: the not-in-the-catalogue list sits under a closed Distributor info; a tap opens it and its rows draw without sideways scroll (GTS\'s and Southern Hobby\'s)', r94.fold && r94b.open && r94b.rows > 3 && r94b.drawn && r94b.scroll <= r94b.vw + 1, JSON.stringify({ r94, r94b, taps: tapNotes }));
   const c94 = await page.evaluate(F => { const V = window.VAULT; const f = JSON.parse(JSON.stringify(F)); delete f.sources.gts; delete f.sources.southern; V.HUNT.feed = f; V.paintSealed(); V.paintReleases();   /* take 112: both sources out */
     const a = !!document.querySelector('#sealedList [data-distfold]') || !!document.querySelector('#sealedList .dline'); const b = !!document.querySelector('#relList [data-distfold]') || /At the distributor/.test(document.querySelector('#relList').innerHTML);
     V.HUNT.feed = null; V.DISTF.open.clear(); V.MODE.set('collect', true); return { a, b }; }, F94);
@@ -1304,18 +1318,19 @@ if (puppeteer) {
      sh112.sealed.sh > 0 && sh112.rel.sh > 0 && sh112.sealed.inside && sh112.rel.inside && sh112.sealed.tall && sh112.sealed.side && sh112.rel.side, JSON.stringify(sh112));
   ok('take 112: ...control: a line let shrink below 44 px is caught', sh112.control.n > 0 && !sh112.control.tall, JSON.stringify(sh112.control));
   /* the tap: a real click on a Sealed row's distributor line, then on the same row */
-  await page.evaluate(() => { const l = [...document.querySelectorAll('#sealedList .dline')].find(s => /^Southern Hobby · /.test(s.textContent.trim())); if (l) l.setAttribute('data-probe', '1'); });
+  await page.evaluate(() => { const ls = [...document.querySelectorAll('#sealedList .dline')].filter(s => /^Southern Hobby · /.test(s.textContent.trim()));
+    const l = ls.find(s => s.closest('.row').querySelectorAll('.dline').length > 1) || ls[0]; if (l) l.setAttribute('data-probe', '1'); });   /* the booster box's row, as the look taps it */
   await tap('#sealedList .dline[data-probe="1"]'); await new Promise(r => setTimeout(r, 300));
   const land = await page.evaluate(() => { const d = document.getElementById('dDist'), f = d && d.querySelector('[data-distfold="detail"]'), bar = document.querySelector('.modebar').getBoundingClientRect();
     if (!d) return { on: 'no #dDist' }; const t = d.getBoundingClientRect().top; return { on: [...document.querySelectorAll('.screen.on')].map(e => e.id).join(), open: !!f && f.getAttribute('aria-expanded') === 'true', names: [...d.querySelectorAll('.dsec .nm b')].map(b => b.textContent).join(), top: Math.round(t), bar: Math.round(Math.max(0, bar.bottom)), vh: innerHeight, links: d.querySelectorAll('.dsec a.ghost[target="_blank"]').length }; });
   ok('take 112: a tap on a row\'s distributor line opens its page at Distributor info -- open, clear of the mode bar and on screen, each distributor with its own page to open',
-     land.on === 'detail' && land.open && /Southern Hobby/.test(land.names) && land.top >= land.bar - 1 && land.top < land.vh * 0.6 && land.links === land.names.split(',').length, JSON.stringify(land));
+     land.on === 'detail' && land.open && /Southern Hobby/.test(land.names) && land.top >= land.bar - 1 && land.top < land.vh * 0.6 && land.links === land.names.split(',').length, JSON.stringify({ ...land, taps: tapNotes }));
   await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.NAV.back(); });
   await new Promise(r => setTimeout(r, 300));
   await page.evaluate(() => { const V = window.VAULT; V.go('sealed'); V.paintSealed(); const l = document.querySelector('#sealedList .dline[data-open]'); const row = l && document.querySelector(`#sealedList button.row[data-open="${l.dataset.open}"]`); if (row) row.setAttribute('data-probe', '2'); });
   await tap('#sealedList button.row[data-probe="2"]'); await new Promise(r => setTimeout(r, 300));
   const plain = await page.evaluate(() => { const d = document.getElementById('dDist'), f = d && d.querySelector('[data-distfold="detail"]'); if (!f) return { on: 'no Distributor info' }; return { on: [...document.querySelectorAll('.screen.on')].map(e => e.id).join(), open: !!f && f.getAttribute('aria-expanded') === 'true', y: Math.round(scrollY) }; });
-  ok('take 112: ...control: a tap on the row itself opens the same page at its top, Distributor info closed', plain.on === 'detail' && !plain.open && plain.y === 0, JSON.stringify(plain));
+  ok('take 112: ...control: a tap on the row itself opens the same page at its top, Distributor info closed', plain.on === 'detail' && !plain.open && plain.y === 0, JSON.stringify({ ...plain, taps: tapNotes }));
   /* a day on a short line never breaks -- the look at 411 px had EB05's "orders closed May" / "17" beside its date column */
   const dayw = await page.evaluate(async F => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
     while (V.closeAnyOverlay()) {} V.go('releases'); V.HUNT.feed = F; V.DISTF.open.clear(); V.paintReleases(); await wait(100);

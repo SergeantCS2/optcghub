@@ -2310,7 +2310,9 @@ without "feed". The runner showed a third reason the VM cannot: it reaches
 Pages. A sync started by an earlier check landed mid-tap, repainted Sealed
 and swapped in the served feed ("No element found" at a line just marked).
 The second part of the rule: render and the look turn the page's own Hunt
-syncs off, since every Hunt check brings its own fixture.
+syncs off, since every Hunt check brings its own fixture. The stub is set on
+every document, because render reloads its page mid-run and a stub set once
+was gone by the next check.
 
 **167. The unit is part of a product's identity.** Southern Hobby sells IB-09
 and IB-10 as CASEs. The matcher took an IB-08 case for the single
