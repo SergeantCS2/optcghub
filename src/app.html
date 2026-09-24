@@ -417,7 +417,7 @@ input[type="checkbox"]{width:20px;height:20px;accent-color:var(--brass)}   /* it
 .fgrp{margin:16px 0 6px;font-size:13px;color:var(--dim)}
 .chips{display:flex;flex-wrap:wrap;gap:10px 7px}   /* take 108: a 34 px chip and a 10 px gap -- rows 44 px apart, so each chip's 44 px square is its own */
 .chip{border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13px;
-  font-weight:600;color:var(--dim);background:var(--card2)}
+  font-weight:600;color:var(--dim);background:var(--card2);min-height:34px}   /* take 108: at least 34 px, so a 10 px row gap puts wrapped rows 44 px apart (the where-to-buy chips were 31) */
 .chip.on{background:var(--accent-bg);border-color:var(--brass2);color:var(--accent-ink)}
 .chip.buy{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:var(--accent-ink);padding:5px 10px}   /* take 96: an anchor as a chip */
 .panel[hidden]{display:none}   /* landmine 136 */

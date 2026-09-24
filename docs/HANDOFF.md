@@ -123,10 +123,18 @@ green.
 - Smoke 786/786 (17 new). **Watched to fail first:** over the take-107
   source and sprite, 21 fail -- 15 of the take-108 section (only its two
   controls pass) and the six rewritten from the characters to the glyphs.
-- Render 119/120 in Chrome -- the CDN thumbnail, as on every VM. On the
+- Render 121/122 in Chrome -- the CDN thumbnail, as on every VM. On the
   take-107 build the four take-108 checks fail: 497 of 1,537 controls
   without their own 44 px square, the scanner's row at 867 against the
   nav at 815, no pressed look, no disabled look.
+- **The runner's first `check` on this PR failed one check**, with data
+  this VM does not have: on the fresh hourly feed, two where-to-buy chips
+  (TCGplayer and GTS Distribution) wrapped onto two lines 41 px apart --
+  the chips were 31 px -- and their 44 px squares overlapped. Reproduced
+  here with the fixture feed and the strip narrowed until it wraps; fixed
+  with a 34 px floor on every chip; render now builds the fixture feed on
+  every run, forces the wrap, and reads every chip's square, with the
+  floor removed as its control.
 - The gate's icon check passes the take-108 source and fires on take
   107's (16 icons); both planted probes fire; an icon inside a comment
   does not.
@@ -161,6 +169,9 @@ green.
 - The first targets and look passes measured controls that were off
   screen or under the fixed nav: a probe gap, not the app's; both bring a
   control on screen, clear of the bars, before reading its square.
+- The chip rows' 10 px gap assumed a 34 px chip; the where-to-buy chips
+  were 31, and only a strip that wraps shows it -- no strip wrapped in
+  this VM's data. The runner's live feed did (see Tests).
 
 ### Ruled out
 

@@ -807,6 +807,30 @@ if (puppeteer) {
   ok('take 108: every control on the twenty screens and three sheets has a 44 px square of its own', t108.total > 1000 && t108.bad.length === 0, `${t108.bad.length} of ${t108.total}: ${t108.bad.slice(0, 4).join(' | ')}`);
   ok('take 108: ...control: a stepper shrunk to 34 px is caught', Array.isArray(t108.control) && t108.control.some(w => /#dPlus/.test(w)), JSON.stringify(t108.control));
   ok('take 108: the scanner\'s bottom row sits above the nav (52 px under it before this take)', t108.scanner.shutterbarBottom <= t108.scanner.navTop, JSON.stringify(t108.scanner));
+  /* ...and the dense case the runner met first (take 108's first check run): where-to-buy strips with
+     two sellers that wrap. The fixture feed -- the saved distributor page, as smoke builds it -- gives
+     every run the same strips; each is narrowed until it wraps, then every chip's square is read. The
+     control removes the chips' 34 px floor, which put wrapped rows 41 px apart. */
+  const fxFeed = path.join(os.tmpdir(), 'optcghub-render-feed.json');
+  execSync(`python3 tools/hunt.py --from-fixtures --out ${fxFeed}`, { cwd: ROOT, stdio: 'pipe' });
+  const wrap108 = await page.evaluate(async feed => {
+    const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)), prev = V.HUNT.feed;
+    const sweep = () => { const strips = [...document.querySelectorAll('#sealedList .chips.buy')].filter(s => s.querySelectorAll('a.chip').length > 1); let bad = 0, n = 0;
+      for (const s of strips) { s.style.flexBasis = '150px'; s.style.maxWidth = '150px'; }
+      for (const s of strips) for (const e of s.querySelectorAll('a.chip')) { e.scrollIntoView({ block: 'center', behavior: 'instant' });
+        const q = e.getBoundingClientRect(), cx = q.left + q.width / 2, cy = q.top + q.height / 2; n++;
+        if (![[cx - 21, cy], [cx + 21, cy], [cx, cy - 21], [cx, cy + 21]].every(([x, y]) => { const t = document.elementFromPoint(x, y); return !!t && (t === e || e.contains(t)); })) bad++; }
+      for (const s of strips) { s.style.flexBasis = ''; s.style.maxWidth = ''; }
+      return { strips: strips.length, chips: n, bad }; };
+    V.HUNT.feed = feed; V.MODE.set('hunt', true); await wait(300); V.go('sealed'); V.paintSealed(); await wait(300); while (V.closeAnyOverlay()) {}
+    const clean = sweep();
+    const st = document.createElement('style'); st.textContent = '.chip{min-height:0!important}'; document.head.appendChild(st); await wait(50);
+    const control = sweep(); st.remove();
+    V.HUNT.feed = prev; V.paintSealed(); V.MODE.set('collect', true); await wait(300); V.go('home');
+    return { clean, control };
+  }, JSON.parse(fs.readFileSync(fxFeed, 'utf8')));
+  ok('take 108: where-to-buy chips wrapped onto two lines keep a 44 px square each', wrap108.clean.strips > 0 && wrap108.clean.chips >= 2 * wrap108.clean.strips && wrap108.clean.bad === 0, JSON.stringify(wrap108));
+  ok('take 108: ...control: without the chips\' 34 px floor the wrapped rows collide', wrap108.control.bad > 0, JSON.stringify(wrap108.control));
   /* pressed and disabled, as a person sees them */
   const range = await page.evaluate(() => { const b = document.querySelector('#ranges .range.on') || document.querySelector('#ranges .range'); if (!b) return null; b.scrollIntoView({ block: 'center', behavior: 'instant' }); const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
   let pressed = null;
