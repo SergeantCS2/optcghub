@@ -1035,13 +1035,17 @@ const take114 = [
       await wait(300);
       return { ok: m.open === 'true' && m.n === 2 && m.heads.length === 2 && m.heads.every(h => h.btn && h.exp === 'false' && h.h >= 44 && /^History · /.test(h.t)) && !lines114(m).length && !m.note, ...m };
     } },
-  /* C: real taps on both headers, over F2 -- the calendar change on its own day, the site change between its two checks */
+  /* C: real taps on both headers, over F2 -- the calendar change on its own day, the site change between its two checks.
+     The day is F2's own due date in the app's words (V.dayText, no-break spaces), so it carries its year whenever that
+     is not the page's: the pattern it replaces had no year and failed each New Year's first week (the review) */
   { name: 'hunt-sheet-history-two-changes', run: async (page) => {
       for (const k of ['gts', 'southern']) { const sel = '#dDist .dtl[data-tl="' + k + '"] .dtl-h';
         await page.evaluate(q => document.querySelector(q).scrollIntoView({ block: 'center' }), sel); await page.click(sel); await wait(300); }
-      const m = await page.evaluate(`(() => { const d = document.getElementById('dDist'); d.scrollIntoView({ block: 'start' }); window.scrollBy(0, -80); return ${DTL114}; })()`);
+      const m = await page.evaluate(`(() => { const d = document.getElementById('dDist'); d.scrollIntoView({ block: 'start' }); window.scrollBy(0, -80);
+        const it = window.__X114.F2.sources.gts.items.find(i => i.sku === 'BJP2873812');
+        return { ...${DTL114}, due: window.VAULT.dayText(it.preorder).replace(/[ \\u202f]/g, '\\u00a0') }; })()`);
       await wait(300); const l = lines114(m);
-      return { ok: m.open === 'true' && m.n === 2 && l.some(x => /→ orders were due [A-Z][a-z]{2}\u00a0\d+ · worked out from its dates$/.test(x))
+      return { ok: m.open === 'true' && m.n === 2 && l.some(x => x.endsWith(`→ orders were due ${m.due} · worked out from its dates`))
         && l.some(x => / · between .+ · read off its page$/.test(x)) && !m.note, ...m };
     } },
   /* C2: the fixture's own date (May 27) does not explain the change: its two checks stand, and the fold says why */
@@ -1070,27 +1074,36 @@ const take114 = [
       await waitArt(page, '#sealedList img'); await wait(300);
       return { ok: m.its.length === 2 && !m.history, ...m };
     } },
-  /* A1: PEB-01 on Releases' not-in-the-catalogue list -- GTS's date in Southern Hobby's words for the same fact */
+  /* A1: PEB-01 on Releases' not-in-the-catalogue list -- GTS's date in Southern Hobby's words for the same fact. Each
+     line's day is its own source's date in the app's words (GTS's order due date, Southern Hobby's due), with its year
+     whenever that is not the page's: the literal day it replaces stopped matching on New Year's Day (the review) */
   { name: 'releases-peb01-words', run: async (page) => {
       const m = await page.evaluate(`(async () => { const V = window.VAULT, X = window.__X114; while (V.closeAnyOverlay()) {} V.HUNT.feed = X.F; V.HUNT.hist = X.H; V.DISTF.open.clear(); V.DISTF.open.add('releases');
         V.go('releases'); await ${pause}; V.HUNT.feed = X.F; V.HUNT.hist = X.H; V.paintReleases();
         const f = document.querySelector('#relList [data-distfold="releases"]'), rows = f ? [...f.closest('.panel').querySelectorAll('.dbody .row')].filter(r => /PEB-?01/.test(r.textContent)) : [];
         const line = k => { for (const r of rows) for (const s of r.querySelectorAll('.nm > span')) if (s.textContent.startsWith(k + ' · ')) return s.textContent; return null; };
         if (rows[0]) { rows[0].scrollIntoView({ block: 'start' }); window.scrollBy(0, -100); }
-        return { open: f ? f.getAttribute('aria-expanded') : null, rows: rows.length, gts: line('GTS Distribution'), southern: line('Southern Hobby'), wrong: /preorders? open/i.test(document.getElementById('relList').textContent) }; })()`);
+        const peb = k => X.F.sources[k].items.find(i => (i.codes || []).includes('PEB01')) || {}, by = at => at ? 'stores order by ' + V.dayText(at).replace(/[ \\u202f]/g, '\\u00a0') : null;
+        return { open: f ? f.getAttribute('aria-expanded') : null, rows: rows.length, gts: line('GTS Distribution'), southern: line('Southern Hobby'), want: { gts: by(peb('gts').preorder), southern: by(peb('southern').due) },
+          wrong: /preorders? open/i.test(document.getElementById('relList').textContent) }; })()`);
       await wait(300);
-      return { ok: m.open === 'true' && [m.gts, m.southern].every(l => (l || '').includes('stores order by Oct\u00a014')) && !m.wrong, ...m };
+      return { ok: m.open === 'true' && ['gts', 'southern'].every(k => m.want[k] && (m[k] || '').includes(m.want[k])) && !m.wrong, ...m };
     } },
-  /* A2: Sealed's GTS counts, derived from the feed's own states */
+  /* A2: Sealed's GTS counts, derived from the feed's own dates as gtsDue says, not from its states: of the products whose
+     release is after the UTC day GTS was read, those with an order due date on or after that day, and the rest -- sold
+     out or not. `byState` is this take's first reading (coming / preorder), kept in the record: on the fixture it said
+     "0 unreleased without one" over three unreleased products past their due date (the review) */
   { name: 'sealed-gts-counts', run: async (page) => {
       const m = await page.evaluate(`(async () => { const V = window.VAULT, X = window.__X114; while (V.closeAnyOverlay()) {} V.HUNT.feed = X.F; V.HUNT.hist = X.H; V.DISTF.open.clear(); V.DISTF.open.add('sealed');
         V.go('sealed'); await ${pause}; V.HUNT.feed = X.F; V.HUNT.hist = X.H; V.paintSealed();
         const sec = [...document.querySelectorAll('#sealedList .dsec')].find(s => (s.querySelector('b') || {}).textContent === 'GTS Distribution'), note = sec ? sec.querySelector('.note').textContent : '';
         if (sec) { sec.scrollIntoView({ block: 'start' }); window.scrollBy(0, -140); }
-        const gi = X.F.sources.gts.items, n = s => gi.filter(i => i.status === s).length;
-        return { note, want: n('coming') + ' with an order due date ahead, ' + n('preorder') + ' unreleased without one', wrong: /preorders? open/i.test(document.getElementById('sealedList').textContent) }; })()`);
+        const G = X.F.sources.gts, gi = G.items, n = s => gi.filter(i => i.status === s).length, iso = v => typeof v === 'string' && /^\\d{4}-\\d\\d-\\d\\d$/.test(v);
+        const day = new Date(Date.parse(G.fetched_at)).toISOString().slice(0, 10), un = gi.filter(i => iso(i.release) && i.release > day), ahead = un.filter(i => iso(i.preorder) && i.preorder >= day).length;
+        return { note, day, unreleased: un.length, want: ahead + ' with an order due date ahead, ' + (un.length - ahead) + ' unreleased without one, ' + n('in_stock') + ' in stock for stores',
+          byState: n('coming') + ' with an order due date ahead, ' + n('preorder') + ' unreleased without one', wrong: /preorders? open/i.test(document.getElementById('sealedList').textContent) }; })()`);
       await wait(300);
-      return { ok: m.note.includes(m.want) && !m.wrong, ...m };
+      return { ok: m.unreleased > 0 && m.note.includes(m.want) && !m.wrong, ...m };
     } },
   /* F, fixed because it was broken: a day in the distributor's long words split across lines ("release Nov" / "20" at
      411 px); no history here, so the two pictures differ by that alone */

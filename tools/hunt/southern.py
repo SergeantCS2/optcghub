@@ -178,7 +178,10 @@ def _age_days(iso, now):
 def fetch(previous=None, now=None, getter=None, today=None, pause=1.5, max_pages=PAGES_PER_RUN, budget=PAGE_BUDGET_S, clock=time.monotonic):
     """Never raises. The category page must carry exactly the count its footer
     states (AGENTS rule 8); short is an error, and the caller keeps the last
-    good fetch. A product page is read for an item never read and for the
+    good fetch. So is an empty one (take 114 review): a footer of 0 over no
+    rows carries its own count, and taken as read it would say every product
+    left the list -- the run's history row gets no key instead, a hole, not
+    'not on its list'. A product page is read for an item never read and for the
     oldest read more than a week ago, max_pages a run; what a page read found
     rides forward from the previous feed, and a page that fails keeps it. No
     page is started once `budget` seconds have passed since the run began; the
@@ -193,7 +196,9 @@ def fetch(previous=None, now=None, getter=None, today=None, pause=1.5, max_pages
         r = parse_listing(getter(CATEGORY)); out["calls"] += 1
         if len(r["items"]) != r["count"]:
             raise ValueError(f"the footer says {r['count']} items and the table carries {len(r['items'])}")
-        prev = {it["id"]: it for it in ((previous or {}).get("items") or [])} if (previous or {}).get("ok") else {}
+        if not r["items"]:
+            raise ValueError("the listing is empty (footer 0, no rows): a broken page, not nothing listed")
+        prev ={it["id"]: it for it in ((previous or {}).get("items") or [])} if (previous or {}).get("ok") else {}
         for it in r["items"]:
             it["state"] = state_of(it, today)
             old = prev.get(it["id"]) or {}
@@ -283,6 +288,14 @@ def selftest(listing_html, product_pages, out=print):
         check("control: a product page without its block is refused", True)
     short = fetch(getter=lambda u: re.sub(r'class="pageresults">\s*20 items', 'class="pageresults">21 items', listing_html), pause=0, max_pages=0, today=FIXTURE_TODAY)
     check("control: a table that carries fewer rows than its footer promises is a failed fetch, not a short list", short["ok"] is False and "footer says 21" in short.get("error", ""), short.get("error"))
+    # take 114 review: an empty table under a footer of 0 carries its own count, so the count check alone passes it
+    bare = re.sub(r'class="pageresults">\s*20 items', 'class="pageresults">0 items', re.sub(r'<tr class="productListing">.*?</tr>', "", listing_html, flags=re.S))
+    landed = parse_listing(bare)
+    empty = fetch(getter=lambda u: bare, pause=0, max_pages=0, today=FIXTURE_TODAY)
+    real = fetch(getter=lambda u: listing_html, pause=0, max_pages=0, today=FIXTURE_TODAY)
+    check("control: an empty listing (footer 0, no rows) is a failed fetch, not every product off the list -- the real page still reads",
+          landed == {"count": 0, "items": []} and empty["ok"] is False and "empty" in empty.get("error", "") and real["ok"] and real["count"] == len(real["items"]) == 20,
+          f"emptied page parses to {landed}; fetch: {empty.get('error')}")
     pages = {k: v for k, v in product_pages.items()}
     def getter(u):
         if u == CATEGORY:

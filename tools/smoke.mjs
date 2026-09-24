@@ -1955,6 +1955,9 @@ const ST94 = ['sold_out', 'call', 'in_stock', 'preorder', 'coming', 'out', 'unkn
 ok('every item: sku, name, a URL on the distributor, a named state, allocation as a boolean, an ISO release date or none',
    G.items.every(i => i.sku && i.name && /^https:\/\/www\.gtsdistribution\.com\//.test(i.url) && ST94.includes(i.status) && typeof i.allocated === 'boolean' && (i.release === null || /^\d{4}-\d\d-\d\d$/.test(i.release))));
 const by = Object.fromEntries(G.items.map(i => [i.sku, i]));
+/* take 114 (the review): a day on screen is pinned from the fixture's own date as the app writes it -- a literal "Jun 12"
+   stops matching on the first of January, when dayText adds the year */
+const D94 = iso => V.dayText(iso).replace(/[ \u202f]/g, '\u00a0');
 ok('the states read as measured: OP-19 sold out and allocated, PEB-01 coming (orders due 2026-10-14), a sleeve assortment in stock, a figure on call, a released sleeve display out',
    by.BJP2884797.status === 'sold_out' && by.BJP2884797.allocated === true && by.BJP2897699.status === 'coming' && by.BJP2897699.preorder === '2026-10-14' && by.BJP9056341.status === 'in_stock' && by.BJPBAS69321.status === 'call' && by.BJP2835333.status === 'out');
 ok('control: the ST44 display is sold out but NOT allocated -- the flag is read off the page, never inferred from sold out', by.BJP2904577.status === 'sold_out' && by.BJP2904577.allocated === false);
@@ -1978,18 +1981,24 @@ ok('the Sealed screen carries one closed Distributor info that says what it hold
    /data-distfold="sealed" aria-expanded="false"/.test(h94) && /<span class="ttl">Distributor info<\/span><span class="note">2 distributors · checked (just now|\d+ min ago)<\/span>/.test(h94) && !/One Piece products at the distributor/.test(h94),
    (h94.match(/Distributor info[\s\S]{0,160}/) || ['no Distributor info on Sealed'])[0]);
 V.distFoldTap('sealed'); const h94o = ctx.document.querySelector('#sealedList').innerHTML; V.distFoldTap('sealed');
-ok('...opened, it carries GTS Distribution with the counts and what a distributor is, and a second tap closes it',
-   /data-distfold="sealed" aria-expanded="true"/.test(h94o) && /<b>GTS Distribution<\/b>/.test(h94o) && /11 One Piece products at the distributor: <b>7<\/b> sold out, <b>8<\/b> allocated, 1 with an order due date ahead, 0 unreleased without one, 1 in stock for stores/.test(h94o) && /A distributor sells to stores, not to you/.test(h94o)
-   && /data-distfold="sealed" aria-expanded="false"/.test(ctx.document.querySelector('#sealedList').innerHTML));
+/* take 114 (the review): the two unreleased counts are dates, counted here over every item, sold out or not -- unreleased is a
+   release after the UTC day GTS was read (gts.status_of's day), and "ahead" an order due date on or after it (the due day kept open) */
+const read94 = G.fetched_at.slice(0, 10), un94 = G.items.filter(i => i.release && i.release > read94), ahead94 = un94.filter(i => i.preorder && i.preorder >= read94).length;
+const due94 = (a, w) => `${a} with an order due date ahead, ${w} unreleased without one`, n94 = s => G.items.filter(i => i.status === s).length;
+ok('...opened, it carries GTS Distribution with the counts and what a distributor is, and a second tap closes it -- of the unreleased products, how many have an order due date ahead and how many do not, by their dates',
+   /data-distfold="sealed" aria-expanded="true"/.test(h94o) && /<b>GTS Distribution<\/b>/.test(h94o) && h94o.includes(`11 One Piece products at the distributor: <b>7</b> sold out, <b>8</b> allocated, ${due94(ahead94, un94.length - ahead94)}, 1 in stock for stores`) && /A distributor sells to stores, not to you/.test(h94o)
+   && /data-distfold="sealed" aria-expanded="false"/.test(ctx.document.querySelector('#sealedList').innerHTML), `${due94(ahead94, un94.length - ahead94)} :: ${(h94o.match(/One Piece products at the distributor:[^.]*/) || ['no GTS counts'])[0]}`);
+ok('...control: counted by state (take 114 as first built: coming, then preorder), the same words say something else on this feed -- a sold-out product that is unreleased and past its due date was in neither count',
+   due94(n94('coming'), n94('preorder')) !== due94(ahead94, un94.length - ahead94), `${due94(n94('coming'), n94('preorder'))} | ${due94(ahead94, un94.length - ahead94)}`);
 ok('a matched row carries one short line per distributor under its chips -- its name and its state -- which opens its page at Distributor info',
    new RegExp('data-open="' + by.BJP2850164.catalog_id + '" data-distinfo="1" aria-label="GTS Distribution · sold out: open [^"]+ at Distributor info"><span>GTS Distribution · sold out</span>').test(h94),
    (h94.match(/<button class="dline"[^>]*>[^<]*<span>[^<]*/) || ['no distributor line in #sealedList'])[0]);
 const pg94 = V.CAT.byId.get(by.BJP2850164.catalog_id); V.openDetail(pg94.id, { dist: true }); const d94 = ctx.document.querySelector('#dDist').innerHTML;
 ok('...and there, open, the distributor\'s full words: sold out, allocated, MSRP named as MSRP with the case configuration, the release date, the age, and its own page',
-   /data-distfold="detail" aria-expanded="true"/.test(d94) && /GTS Distribution<\/b><span>sold out · allocated · MSRP \$119\.76 \(12 cards \/ 24 packs \/ 12 displays\) · release Jun\u00a012 · (just now|\d+ min ago)<\/span>/.test(d94) && /href="https:\/\/www\.gtsdistribution\.com\/[^"]+" target="_blank" rel="noopener"/.test(d94),
+   /data-distfold="detail" aria-expanded="true"/.test(d94) && new RegExp(`GTS Distribution</b><span>sold out · allocated · MSRP \\$119\\.76 \\(12 cards / 24 packs / 12 displays\\) · release ${D94(by.BJP2850164.release)} · (just now|\\d+ min ago)</span>`).test(d94) && /href="https:\/\/www\.gtsdistribution\.com\/[^"]+" target="_blank" rel="noopener"/.test(d94),
    d94.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 300));
 while (V.closeAnyOverlay()) {} V.go('sealed');
-ok('an order due date says when stores must order by, under Releases\' Distributor info (no catalogue product to hang it on)', (() => { V.DISTF.open.add('releases'); V.paintReleases(); const r = /PREMIUM EXTRA BOOSTER \(PEB01\)[\s\S]*?GTS Distribution · stores order by Oct\u00a014 · allocated · MSRP/.test(ctx.document.querySelector('#relList').innerHTML); V.DISTF.open.delete('releases'); return r; })());
+ok('an order due date says when stores must order by, under Releases\' Distributor info (no catalogue product to hang it on)', (() => { V.DISTF.open.add('releases'); V.paintReleases(); const r = new RegExp(`PREMIUM EXTRA BOOSTER \\(PEB01\\)[\\s\\S]*?GTS Distribution · stores order by ${D94(by.BJP2897699.preorder)} · allocated · MSRP`).test(ctx.document.querySelector('#relList').innerHTML); V.DISTF.open.delete('releases'); return r; })());
 const dead94 = JSON.parse(JSON.stringify(F94)); dead94.sources.gts = { ok: false, error: 'HTTP 403', fetched_at: F94.fetched_at, stale_since: F94.fetched_at, items: [] };
 V.HUNT.feed = dead94; V.DISTF.open.add('sealed'); V.DISTF.open.add('releases'); V.paintSealed(); V.paintReleases();
 ok('a failed distributor fetch says it could not reach GTS Distribution and since when, under Distributor info on Sealed and on Releases, never an empty list', /Could not reach GTS Distribution since/.test(ctx.document.querySelector('#sealedList').innerHTML) && /Could not reach GTS Distribution since/.test(ctx.document.querySelector('#relList').innerHTML));
@@ -2917,6 +2926,9 @@ section('take 112 — A32\'s second distributor: Southern Hobby, read off its re
   execSync(`python3 tools/hunt.py --from-fixtures --out ${feedF}`, { cwd: ROOT, stdio: 'pipe' });
   const F = JSON.parse(fs.readFileSync(feedF, 'utf8')); const S = F.sources.southern || {}; const it = Object.fromEntries((S.items || []).map(i => [i.id, i]));
   const n = st => (S.items || []).filter(i => i.state === st).length;
+  /* take 114 (the review): a day on screen is pinned from the fixture's own date, as the app writes it -- a literal "May 17"
+     stops matching on 1 January 2027, when dayText adds the year */
+  const D112 = iso => V.dayText(iso).replace(/[ \u202f]/g, '\u00a0'), I112 = id => it[id] || {};
   ok('the feed carries Southern Hobby: ok, the footer\'s count and its twenty rows, three product pages on file, the states from the dates (1 open, 18 closed, 1 released)',
      S.ok === true && S.count === 20 && (S.items || []).length === 20 && S.items.filter(i => i.page).length === 3 && n('orders_open') === 1 && n('orders_closed') === 18 && n('released') === 1,
      JSON.stringify({ ok: S.ok, count: S.count, pages: (S.items || []).filter(i => i.page).length, open: n('orders_open'), closed: n('orders_closed'), released: n('released') }));
@@ -2933,16 +2945,16 @@ section('take 112 — A32\'s second distributor: Southern Hobby, read off its re
   for (const p of [eb05, op18]) if (p) { V.SEALED.closed.delete(p.set); V.SEALED.open.add(p.set); }
   V.paintSealed(); const h = ctx.document.querySelector('#sealedList').innerHTML;
   ok('the EB-05 pack (matched) carries Southern Hobby as one short line under its chips: its name and its state, opening its page at Distributor info',
-     !!eb05 && new RegExp('<button class="dline" data-open="' + eb05.id + '" data-distinfo="1" aria-label="[^"]*"><span>Southern Hobby · orders closed May\u00a017</span>').test(h), (h.match(/<span>Southern Hobby · [^<]{0,60}/) || ['no Southern Hobby line on Sealed'])[0]);
+     !!eb05 && new RegExp('<button class="dline" data-open="' + eb05.id + '" data-distinfo="1" aria-label="[^"]*"><span>Southern Hobby · orders closed ' + D112(I112('78743').due) + '</span>').test(h), (h.match(/<span>Southern Hobby · [^<]{0,60}/) || ['no Southern Hobby line on Sealed'])[0]);
   const nm = id => { const i = h.indexOf('data-open="' + id + '">'); const j = h.indexOf('<div class="v">', i); return i < 0 ? '' : h.slice(i, j); };
   const eb05it = V.HUNT.distItems().find(x => x._d === 'southern' && x.id === '78743');
-  ok('a short line\'s day never breaks: its month and day are joined by a non-breaking space', !!eb05it && V.distShort(eb05it) === 'Southern Hobby · orders closed May\u00a017', JSON.stringify(eb05it && V.distShort(eb05it)));
-  ok('...control: the day in words by itself breaks at its space', V.dayText('2026-05-17') === 'May 17');
+  ok('a short line\'s day never breaks: its month and day are joined by a non-breaking space', !!eb05it && V.distShort(eb05it) === `Southern Hobby · orders closed ${D112(I112('78743').due)}`, JSON.stringify(eb05it && V.distShort(eb05it)));
+  ok('...control: the day in words by itself breaks at its space', / /.test(V.dayText(I112('78743').due)) && V.dayText(I112('78743').due) !== D112(I112('78743').due), JSON.stringify(V.dayText(I112('78743').due)));
   ok('...no row floods: no distributor\'s words inside any row\'s name block -- no MSRP, no release, no age', !!eb05 && !!op18 && [eb05, op18].every(p => { const t = nm(p.id); return t && !/GTS Distribution|Southern Hobby|MSRP|release [A-Z]/.test(t); }), nm(op18 && op18.id).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 200));
   ok('...control: the take-111 row carried them there (the line this take moved)', /Southern Hobby · stores’ orders closed May 17 · release Oct 30 · in-store only/.test('<div class="nm"><b>x</b><span>Southern Hobby · stores’ orders closed May 17 · release Oct 30 · in-store only · just now</span></div>'));
   V.openDetail(eb05.id, { dist: true }); const dd = ctx.document.querySelector('#dDist').innerHTML;
   ok('...its page, reached from that line, opens at Distributor info with the full words -- stores’ orders closed May 17, release Oct 30, in-store only, when it was read -- and Southern Hobby\'s own page',
-     /data-distfold="detail" aria-expanded="true"/.test(dd) && /Southern Hobby<\/b><span>stores’ orders closed May\u00a017 · release Oct\u00a030 · in-store only · (just now|\d+ min ago)<\/span>/.test(dd) && dd.includes(`href="${it['78743'].url}" target="_blank" rel="noopener"`), dd.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 300));
+     /data-distfold="detail" aria-expanded="true"/.test(dd) && new RegExp(`Southern Hobby</b><span>stores’ orders closed ${D112(I112('78743').due)} · release ${D112(I112('78743').release)} · in-store only · (just now|\\d+ min ago)</span>`).test(dd) && dd.includes(`href="${it['78743'].url}" target="_blank" rel="noopener"`), dd.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 300));
   V.openDetail(eb05.id); const dc = ctx.document.querySelector('#dDist').innerHTML;
   ok('...control: opened from its row, the page\'s Distributor info is there and closed', /data-distfold="detail" aria-expanded="false"/.test(dc) && !/in-store only/.test(dc));
   ok('the open handler passes a distributor line\'s wish to the page, and only its', /else openDetail\(id, \{ dist: !!t\.dataset\.distinfo \}\);/.test(js) && /data-distinfo="1"/.test(js));
@@ -2956,7 +2968,7 @@ section('take 112 — A32\'s second distributor: Southern Hobby, read off its re
   V.paintReleases(); const rc = ctx.document.querySelector('#relList').innerHTML;
   const op18row = (rc.match(/<span>OP18 · [^<]*<\/span>((?:<span style="display:block;color:var\(--brass\)">[^<]*<\/span>)*)/) || ['', ''])[1];
   const lines18 = (op18row.match(/<span style="display:block;color:var\(--brass\)">/g) || []).length;
-  ok('the OP18 row on Releases carries one short line from each distributor: GTS\'s, then Southern Hobby\'s for the set\'s own box', lines18 === 2 && /GTS Distribution · sold out<\/span><span style="display:block;color:var\(--brass\)">Southern Hobby · orders closed May\u00a029<\/span>/.test(op18row), op18row.replace(/<[^>]+>/g, ' | '));
+  ok('the OP18 row on Releases carries one short line from each distributor: GTS\'s, then Southern Hobby\'s for the set\'s own box', lines18 === 2 && op18row.includes(`GTS Distribution · sold out</span><span style="display:block;color:var(--brass)">Southern Hobby · orders closed ${D112(I112('79311').due)}</span>`), op18row.replace(/<[^>]+>/g, ' | '));
   const sh18 = (S.items || []).filter(i => i.catalog_id && (V.CAT.byId.get(i.catalog_id) || {}).set === (op18 || {}).set);
   ok('...control: Southern Hobby matched more than one product into that set (the box and the DP-13 display), so one line each is a choice, not the data', sh18.length >= 2, String(sh18.length));
   /* 17 = GTS's OP-19, PEB-01 and ST44 display + Southern Hobby's IB-09, IB-10, ST-37, ST-38, EB-06, DP14, OP-19, PEB-01 and
@@ -2966,11 +2978,12 @@ section('take 112 — A32\'s second distributor: Southern Hobby, read off its re
   V.distFoldTap('releases'); const r = ctx.document.querySelector('#relList').innerHTML; V.distFoldTap('releases');
   const panel = r.slice(r.indexOf('At the distributors'), r.indexOf('<h3>Recent</h3>'));
   ok('...opened, it carries Southern Hobby\'s: PEB-01 still taking stores’ orders until Oct 14, OP-19 with its prerelease, and ST39–ST44 folded on their day',
-     /PEB01<\/span><span style="display:block;color:var\(--brass\)">Southern Hobby · stores order by Oct\u00a014 · release Apr\u00a023,\u00a02027/.test(panel) && /OP-19 Booster Box<\/b><span>OP19<\/span><span style="display:block;color:var\(--brass\)">Southern Hobby · stores’ orders closed Aug\u00a026 · release Mar\u00a05,\u00a02027 · prerelease Feb\u00a026,\u00a02027/.test(panel)
+     panel.includes(`PEB01</span><span style="display:block;color:var(--brass)">Southern Hobby · stores order by ${D112(I112('82337').due)} · release ${D112(I112('82337').release)}`)
+     && panel.includes(`OP-19 Booster Box</b><span>OP19</span><span style="display:block;color:var(--brass)">Southern Hobby · stores’ orders closed ${D112(I112('81327').due)} · release ${D112(I112('81327').release)} · prerelease ${D112((I112('81327').page || {}).prerelease)}`)
      && /Starter decks ST39–ST44<\/b><span>6 starter deck displays, one release day/.test(panel) && /data-relfold="d:southern:2027-04-23"/.test(panel), panel.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 400));
   ok('...each fold names its distributor: GTS\'s and Southern Hobby\'s displays of one day never share a key', !/data-relfold="d:2027-04-23"/.test(r) && /Checked GTS Distribution [^,]+, Southern Hobby /.test(panel));
   const iso = t => /(GTS Distribution|Southern Hobby) · [^<]*\b\d{4}-\d\d-\d\d\b/.test(t) || /(GTS Distribution|Southern Hobby)<\/b><span>[^<]*\b\d{4}-\d\d-\d\d\b/.test(t);
-  ok('every day on a distributor line is in words, as everywhere else -- the rows, the open lists and a page\'s Distributor info', !iso(h) && !iso(ho) && !iso(rc) && !iso(r) && !iso(dd) && /GTS Distribution · sold out · allocated · [^<]*· release Mar\u00a05,\u00a02027 · /.test(r), (String(h + ho + rc + r + dd).match(/(GTS Distribution|Southern Hobby)(<\/b><span>| · )[^<]*\d{4}-\d\d-\d\d[^<]*/) || [''])[0]);
+  ok('every day on a distributor line is in words, as everywhere else -- the rows, the open lists and a page\'s Distributor info', !iso(h) && !iso(ho) && !iso(rc) && !iso(r) && !iso(dd) && new RegExp(`GTS Distribution · sold out · allocated · [^<]*· release ${D112((F.sources.gts.items.find(i => i.sku === 'BJP2884797') || {}).release)} · `).test(r), (String(h + ho + rc + r + dd).match(/(GTS Distribution|Southern Hobby)(<\/b><span>| · )[^<]*\d{4}-\d\d-\d\d[^<]*/) || [''])[0]);
   ok('...control: an ISO day on either shape of line is caught', iso('<span>GTS Distribution · sold out · release 2026-06-12 · just now</span>') && iso('<b>Southern Hobby</b><span>released 2026-09-18</span>'));
   /* no stock words, so no stock alert */
   if (eb05) { V.STOCK.list = []; V.STOCK.toggle(eb05.id); }
@@ -3001,6 +3014,13 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
 { const fxDir = fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-tl-')); const feedF = path.join(fxDir, 'feed-fixture.json');
   execSync(`python3 tools/hunt.py --from-fixtures --out ${feedF}`, { cwd: ROOT, stdio: 'pipe' });
   const F = JSON.parse(fs.readFileSync(feedF, 'utf8')); const R0 = JSON.parse(fs.readFileSync(path.join(fxDir, 'history-fixture.json'), 'utf8')).runs[0];
+  /* take 114 (the review): the timeline's days and clocks are this phone's, so the section runs in the owner's zone -- the runner
+     and the session VM run UTC, where the phone's day and the UTC day are one day and a timeline drawn in UTC passes. Node 22 reads
+     TZ again when it is set (measured); the fixtures above were built first, in the runner's own zone; the zone goes back at the end */
+  const TZ0 = process.env.TZ, off0 = new Date('2026-12-01T12:00:00Z').getTimezoneOffset(); process.env.TZ = 'America/Detroit';
+  ok('premise: this section runs in America/Detroit, and the app with it -- 02:00 UTC on 24 Sept is the 23rd there, four hours behind in September and five in December',
+     new Date('2026-09-24T02:00:00Z').getDate() === 23 && new Date('2026-09-24T02:00:00Z').getTimezoneOffset() === 240 && new Date('2026-12-01T12:00:00Z').getTimezoneOffset() === 300
+     && /^Sep 23\b.*10:00/.test(V.momentText('2026-09-24T02:00:00Z')), `${new Date('2026-09-24T02:00:00Z').getTimezoneOffset()} ${V.momentText('2026-09-24T02:00:00Z')}`);
   /* the history on Pages at 24 Sept 20:02 UTC, saved as it was: every count below is read off its rows, never written */
   const LIVE = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'fixtures', 'hunt_history_2026-09-24.json'), 'utf8'));
   const has = typeof (V.HUNT || {}).distTimeline === 'function', hasKind = has && typeof V.HUNT.distKind === 'function', hasDay = typeof V.tlDay === 'function';   // take 113 fails here, it does not throw
@@ -3015,13 +3035,17 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
   const nb = s => String(s).replace(/[ \u202f]/g, '\u00a0'), day = t => nb(V.dayText(ld(t))), M = t => nb(V.momentText(t));
   const utcDay = (iso, add = 0) => new Date(Date.parse(iso) + add * 864e5).toISOString().slice(0, 10);
   const spanOf = f => ld(f.first) === ld(f.last) ? day(f.first) : `${day(f.first)} → ${day(f.last)}`;   // the days a record spans, as the phone's calendar has them
-  const btw = c => `between ${M(c.after)} and ${ld(c.after) === ld(c.by) ? nb(V.momentText(c.by).split(', ').pop()) : M(c.by)}`;   // one local day: the second end is its clock
+  const btwAsBuilt = c => `between ${M(c.after)} and ${ld(c.after) === ld(c.by) ? nb(V.momentText(c.by).split(', ').pop()) : M(c.by)}`;   // one local day: the second end is its clock
+  /* take 114 (the review): unless the clocks changed between the two checks (the November fall-back hour comes twice), when both
+     ends are written in full, each with its zone */
+  const zoned = t => nb(new Date(t).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }));
+  const btw = c => new Date(c.after).getTimezoneOffset() !== new Date(c.by).getTimezoneOffset() ? `between ${zoned(c.after)} and ${zoned(c.by)}` : btwAsBuilt(c);
   /* the words, stated here: TL_* stays out of window.VAULT */
   const TLW = { gts: { sold_out: 'sold out', call: 'call to order', in_stock: 'in stock for stores', coming: 'order due date ahead', preorder: 'no order due date ahead', out: 'out of stock', unknown: 'no status' },
     southern: { orders_open: 'order due date ahead', orders_closed: 'stores’ orders closed', released: 'released', unknown: 'no dates' } };
   const TL_NOTE = 'Where a change worked out from its dates gives two checks, not a day, the dates it lists now do not explain it: the history keeps the state, not the date, so a moved date and a passing one look the same.';
   /* what the rows say, counted here: the rows that read a distributor, and after its first, the ones that did not */
-  const isRead = (r, d) => !!r[d] && typeof r[d] === 'object' && !Array.isArray(r[d]);
+  const isRead = (r, d) => !!r[d] && typeof r[d] === 'object' && !Array.isArray(r[d]) && Object.keys(r[d]).length > 0;
   const facts = (rows, d) => { const read = rows.filter(r => isRead(r, d)), i0 = rows.indexOf(read[0]);
     return { checks: read.length, first: read.length ? read[0].t : null, last: read.length ? read[read.length - 1].t : null, missed: i0 < 0 ? 0 : rows.slice(i0).filter(r => !isRead(r, d)).length }; };
   const dist = () => ctx.document.querySelector('#dDist').innerHTML;
@@ -3076,6 +3100,18 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
   ok('a value that is not a state word (a shape this version does not know) is counted apart and said -- not a check, not a hole, never a state or a change',
      tod.odd === 1 && tod.checks === fg.checks - 1 && tod.missed === fg.missed && JSON.stringify(tod.changes) === JSON.stringify(tg.changes)
      && godd[0] === `History · ${fg.checks - 1} checks on file, ${spanOf(fg)} · ${fg.missed} more could not reach it · 1 check this version cannot read`, JSON.stringify({ odd: tod.odd, checks: tod.checks, missed: tod.missed, head: godd[0] }));
+  /* take 114 (the review): a list under a distributor's key is a shape this version does not know, and an empty map a listing that
+     came back with nothing on it (the runner refuses one from take 114; rows before may hold it) -- neither is a reading: a hole */
+  const tlOf = h => { V.HUNT.hist = h; const t = TL('gts', 'BJP2873812') || { changes: [] }; V.HUNT.hist = H; return t; }, chg = t => JSON.stringify(t.changes.map(c => [c.from, c.to, c.kind]));
+  const arr = JSON.parse(JSON.stringify(H)); arr.runs[N - 3].gts = Object.entries(arr.runs[N - 3].gts); const tar = tlOf(arr);   // not empty: an empty list is also an empty map
+  ok('a list under a distributor\'s key (its reading as [SKU, state] pairs) is not a reading of it: one more run that could not reach it, one check fewer, the same changes',
+     tar.missed === fg.missed + 1 && tar.checks === fg.checks - 1 && tar.odd === 0 && JSON.stringify(tar.changes) === JSON.stringify(tg.changes), JSON.stringify({ checks: tar.checks, missed: tar.missed, ch: chg(tar) }));
+  const three = m => ({ runs: [N - 3, N - 2, N - 1].map((k, j) => ({ t: runs[k].t, online: {}, shelf: {}, gts: j === 1 ? m : { BJP2873812: 'sold_out' } })), since: runs[N - 3].t, stores: {}, titles: {} });
+  const tem = tlOf(three({})), toth = tlOf(three({ BJP2850164: 'sold_out' }));
+  ok('an empty listing is not a reading either: sold out, an empty map, sold out -- two checks, one run that could not reach it, no change (as first built it made two, read off the page)',
+     tem.checks === 2 && tem.missed === 1 && tem.odd === 0 && tem.changes.length === 0, JSON.stringify({ checks: tem.checks, missed: tem.missed, ch: chg(tem) }));
+  ok('...negative control: a listing that holds another product and not this one is a reading -- off its list, then back on it, read off its page',
+     toth.checks === 3 && toth.missed === 0 && chg(toth) === JSON.stringify([['sold_out', null, 'page'], [null, 'sold_out', 'page']]), chg(toth));
   const rev = [...runs].reverse(), rot = [...runs.slice(30), ...runs.slice(0, 30)];
   V.HUNT.hist = { ...H, runs: rev }; const trev = TL('gts', 'BJP2873812'); V.HUNT.hist = { ...H, runs: rot }; const trot = TL('gts', 'BJP2873812'); V.HUNT.hist = H;
   ok('rows out of order read the same as in order -- read off a sorted copy, the stored order left as it was', has && JSON.stringify(trev) === JSON.stringify(tg) && JSON.stringify(trot) === JSON.stringify(tg) && rev[0] === runs[N - 1] && rot[0] === runs[30]);
@@ -3094,6 +3130,14 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
   const dy2 = hasDay ? V.tlDay('gts', K1, G2) : undefined, dyF = hasDay ? V.tlDay('gts', K1, G) : undefined, dy0 = hasDay ? V.tlDay('gts', K1, Gturned) : undefined, dyP = hasDay ? V.tlDay('gts', K2, G2) : undefined;
   ok('tlDay: a calendar change takes the distributor\'s own day when its current date turns the state between the two checks (the order due date: the runner\'s UTC day turns it the day after)', hasDay && !!G2.preorder && dy2 === G2.preorder, JSON.stringify({ dy2, pre: G2.preorder }));
   ok('...controls: the fixture\'s own date (May 27, months before the window), a date whose turn is not after the earlier check, and a change read off the page name no day', hasDay && dyF === null && dy0 === null && dyP === null, JSON.stringify([dyF, dy0, dyP]));
+  /* take 114 (the review): the window's other end, and the states a date turns -- each guard watched to fail with it removed */
+  const byDay = utcDay(runs[I1].t), dyE = hasDay ? V.tlDay('gts', K1, { ...G, preorder: byDay }) : undefined;
+  const dyA = hasDay ? [1, 2].map(k => V.tlDay('gts', K1, { ...G, preorder: utcDay(runs[I1].t, k) })) : undefined;
+  ok('...a date moved later names no day: due the day after the later check, or two after, its turn is past the window -- while due that check\'s own day (a run that began before midnight UTC) still names it',
+     hasDay && JSON.stringify(dyA) === '[null,null]' && dyE === byDay, JSON.stringify({ above: dyA, edge: dyE, byDay }));
+  const dyW = hasDay ? V.tlDay('gts', { ...K1, from: 'out' }, G2) : undefined;
+  ok('...nor does a change from a state its date does not turn (out to preorder: a release moved later), with the very date that names the coming-to-preorder change\'s day',
+     hasDay && dyW === null && dy2 === G2.preorder, JSON.stringify({ fromOut: dyW, fromComing: dy2 }));
   /* on screen */
   const head = f => `History · ${f.checks} checks on file, ${spanOf(f)} · ${f.missed} more could not reach it`;
   V.HUNT.feed = F2; V.HUNT.hist = H; openP({ dist: true }); const d2h = dist(), gl2 = lines(blk(d2h, 'gts'));
@@ -3138,7 +3182,7 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
   V.distFoldTap('sealed'); const hso = ctx.document.querySelector('#sealedList').innerHTML; V.distFoldTap('sealed');
   const dl = [...hs.matchAll(new RegExp(`<button class="dline" data-open="${PID}"[^>]*><span>([^<]*)</span>`, 'g'))].map(m => m[1]);
   ok('no row floods: the box\'s row keeps one short line per distributor, word for word as before, and no history anywhere on Sealed, its Distributor info open or closed',
-     dl.join('|') === (V.HUNT.distByCatalogId()[PID] || []).map(it => V.distShort(it)).join('|') && dl.join('|') === 'GTS Distribution · sold out|Southern Hobby · orders closed May\u00a029' && !/History ·|class="dtl"/.test(hs + hso), JSON.stringify(dl));
+     dl.join('|') === (V.HUNT.distByCatalogId()[PID] || []).map(it => V.distShort(it)).join('|') && dl.join('|') === `GTS Distribution · sold out|Southern Hobby · orders closed ${nb(V.dayText(S.due))}` && !/History ·|class="dtl"/.test(hs + hso), JSON.stringify(dl));
   ok('...control: a row carrying a history line is caught', /History ·|class="dtl"/.test('<button class="dline" data-open="1"><span>GTS Distribution · sold out</span></button><div class="dtl"><span>History · 8 checks on file</span></div>'));
   /* the thin and the missing */
   const one = JSON.parse(JSON.stringify(H)); one.runs.forEach((r, i) => { if (i < N - 1) delete r.southern; }); V.HUNT.hist = one; openP({ dist: true });
@@ -3158,6 +3202,25 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
   const mg = many.runs.filter(r => isRead(r, 'gts')), mflips = mg.map((r, i) => i && r.gts.BJP2873812 !== mg[i - 1].gts.BJP2873812 ? { from: mg[i - 1].gts.BJP2873812, to: r.gts.BJP2873812, after: mg[i - 1].t, by: r.t } : null).filter(Boolean);
   ok('more than three changes: the state at the first check, how many earlier changes are not shown, then the last three, oldest first',
      mflips.length > SHOW && tm.changes.length === mflips.length && JSON.stringify(gm) === JSON.stringify([head(fg), `${TLW.gts.coming} at the first check`, `${mflips.length - SHOW} earlier changes not shown`, ...mflips.slice(-SHOW).map(c => `${TLW.gts[c.from]} → ${TLW.gts[c.to]} · ${btw(c)} · read off its page`)]), JSON.stringify(gm.slice(0, 4)));
+  /* take 114 (the review): 1 November 2026, the clocks go back in Detroit and 1:00 to 2:00 AM comes twice -- two checks an hour
+     apart, both at 1:30 AM on the clock, EDT then EST */
+  const FB = { from: 'sold_out', to: 'call', after: '2026-11-01T05:30:00Z', by: '2026-11-01T06:30:00Z', kind: 'page' }, FS = { ...FB, after: '2026-11-01T07:30:00Z', by: '2026-11-01T09:30:00Z' };
+  const fbH = { runs: [[FB.after, 'sold_out'], [FB.by, 'call']].map(([t, st]) => ({ t, online: {}, shelf: {}, gts: { ...R0.gts, BJP2873812: st } })), since: FB.after, stores: {}, titles: {} };
+  V.HUNT.feed = F; V.HUNT.hist = fbH; openP({ dist: true }); const gfb = lines(blk(dist(), 'gts')); V.HUNT.hist = H;
+  const hasWin = typeof V.tlWindow === 'function', wB = hasWin ? V.tlWindow(FB) : '', wS = hasWin ? V.tlWindow(FS) : '';
+  ok('a change across the clocks going back: both ends in full, each with its zone -- 1:30 AM EDT, then 1:30 AM EST an hour later -- on its page and from tlWindow',
+     gfb[gfb.length - 1] === `${TLW.gts.sold_out} → ${TLW.gts.call} · ${btw(FB)} · read off its page` && wB === btw(FB) && /^between Nov\u00a01,\u00a01:30\u00a0AM\u00a0EDT and Nov\u00a01,\u00a01:30\u00a0AM\u00a0EST$/.test(wB), JSON.stringify([gfb[gfb.length - 1], wB]));
+  ok('...on one side of the change, one local day still drops the second end\'s day and names no zone', hasWin && wS === btwAsBuilt(FS) && /^between Nov\u00a01,(\u00a02026,)?\u00a02:30\u00a0AM and 4:30\u00a0AM$/.test(wS), JSON.stringify(wS));
+  ok('...control: written as first built, the fall-back change reads as no time at all -- "between Nov 1, 1:30 AM and 1:30 AM" -- though an hour passed',
+     /^between Nov\u00a01,(\u00a02026,)?\u00a01:30\u00a0AM and 1:30\u00a0AM$/.test(btwAsBuilt(FB)) && Date.parse(FB.by) - Date.parse(FB.after) === 3600e3, JSON.stringify(btwAsBuilt(FB)));
+  /* take 114 (the review): GTS's out turns on the release day itself (gts.status_of: a release on or before the day read) -- the
+     line names the day it was released, never that the day has passed */
+  const outH = JSON.parse(JSON.stringify(H)); outH.runs.forEach((r, i) => { if (r.gts) r.gts.BJP2873812 = i < I1 ? 'coming' : 'out'; });
+  const F3 = JSON.parse(JSON.stringify(F)), G3 = F3.sources.gts.items.find(i => i.sku === 'BJP2873812') || {}; G3.release = byDay; G3.status = 'out';
+  const K3 = { ...K1, to: 'out' }, dy3 = hasDay ? V.tlDay('gts', K3, G3) : undefined;
+  V.HUNT.feed = F3; V.HUNT.hist = outH; openP({ dist: true }); const gout = lines(blk(dist(), 'gts')); V.HUNT.feed = F; V.HUNT.hist = H;
+  ok('GTS out of stock on its release day: the change reads "released <day>, out of stock", worked out from its dates -- never "passed"',
+     dy3 === byDay && gout[gout.length - 1] === `${TLW.gts.coming} → released ${nb(V.dayText(byDay))}, out of stock · worked out from its dates` && !gout.some(l => /passed/.test(l)), JSON.stringify(gout));
   V.HUNT.hist = null; openP({ dist: true }); const d0 = dist();
   ok('no history on the phone: no history at all (take 73: with none it says nothing), and the take-112 words as they were', !/class="dtl"|History ·/.test(d0) && !d0.includes(TL_NOTE) && /GTS Distribution<\/b><span>sold out · allocated · /.test(d0));
   /* Diagnostics, by what it reports (landmine 100), not by its source */
@@ -3174,6 +3237,8 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
      JSON.stringify([V.distShort(peb), V.distShort({ ...peb, status: 'preorder' }), V.distShort({ ...peb, status: 'preorder', preorder: null }), saysOpen.length]));
   ok('...control: the take-113 words are caught', /preorders? open/.test('GTS Distribution · preorders open on Oct 14'));
   while (V.closeAnyOverlay()) {} V.HUNT.hist = null; V.HUNT.feed = null; V.DISTF.open.clear(); V.MODE.set('collect', false); V.go('home');
+  if (TZ0 === undefined) delete process.env.TZ; else process.env.TZ = TZ0;   // assigning undefined would set the zone "undefined"
+  ok('...and the zone the run began with is back after the section', process.env.TZ === TZ0 && new Date('2026-12-01T12:00:00Z').getTimezoneOffset() === off0, `${process.env.TZ} ${new Date('2026-12-01T12:00:00Z').getTimezoneOffset()} ${off0}`);
   fs.rmSync(fxDir, { recursive: true, force: true }); }
 
 console.log(`\n${pass} passed, ${fail} failed`);

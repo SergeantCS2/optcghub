@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 113
+# V1-STATE — what exists, as of take 114
 
-*Current as of take 113.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 114.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.

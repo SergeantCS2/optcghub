@@ -1443,6 +1443,35 @@ if (puppeteer) {
     ok('take 114: the history reads in this phone\'s time (the zone America/Detroit, which landed): the site change\'s earlier check in local time, not in the runner\'s UTC',
        tz114.zone === 'America/Detroit' && tz114.has && !tz114.hasUtc, JSON.stringify(tz114));
     ok('take 114: ...control: that instant in UTC reads otherwise, so the check can tell them apart', !!tz114.local && tz114.local.replace(/[\u00a0\u202f]/g, ' ') !== tz114.utc.replace(/[\u00a0\u202f]/g, ' '), JSON.stringify(tz114));
+    /* the review's finding: momentText predates this take -- the timeline's OWN local-time code (localDay for the header's
+       days, tlClock for a window's second end on the same local day) is read here against strings the page builds for the
+       same instants in this zone, and never their UTC forms. The same history moved back to end at 2:30 AM UTC, whatever
+       the hour this runs: its last check is the evening before in Detroit, and the site change's two checks, 2:30 and
+       10:30 PM UTC, fall on one day in both zones, so its second end is a bare clock that UTC writes hours later */
+    const iso114 = ms => new Date(ms).toISOString().replace(/\.\d{3}Z$/, 'Z'), SH114 = (END - 2.5 * 3600e3) % 864e5;
+    const H2 = { ...H, runs: runs.map(r => ({ ...r, t: iso114(Date.parse(r.t) - SH114) })) }; H2.since = H2.runs[0].t;
+    const own114 = await page.evaluate(async ({ F, H, PID, FIRST, LAST, AFTER, BY }) => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)), sp = s => String(s).replace(/[\u00a0\u202f]/g, ' ');
+      V.HUNT.feed = F; V.HUNT.hist = H; V.DISTF.open.clear(); V.openDetail(PID, { dist: true });
+      if (V.distHistTap) V.distHistTap('gts');   /* tucked away until tapped: opened to read, in the same tick as the paint */
+      await wait(150);
+      const g = document.querySelector('#dDist .dtl[data-tl="gts"]'), hd = g && g.querySelector('.dtl-h'), head = sp(hd ? hd.textContent : '');
+      const site = (g ? [...g.querySelectorAll(':scope > span:not(.dtl-h)')].map(s => sp(s.textContent)) : []).find(l => / \u00b7 between .+ \u00b7 read off its page$/.test(l)) || '';
+      /* the page's own strings for those instants: en-US in this zone, and in UTC -- the year only when it is not this one */
+      const z = utc => utc ? { timeZone: 'UTC' } : {}, key = (t, utc) => { const d = new Date(t); return utc ? [d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()].join() : [d.getFullYear(), d.getMonth(), d.getDate()].join(); };
+      const yr = (t, utc) => { const d = new Date(t), n = new Date(); return (utc ? d.getUTCFullYear() !== n.getUTCFullYear() : d.getFullYear() !== n.getFullYear()) ? { year: 'numeric' } : {}; };
+      const day = (t, utc) => new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...yr(t, utc), ...z(utc) });
+      const moment = (t, utc) => new Date(t).toLocaleString('en-US', { month: 'short', day: 'numeric', ...yr(t, utc), hour: 'numeric', minute: '2-digit', ...z(utc) });
+      const span = utc => key(FIRST, utc) === key(LAST, utc) ? day(FIRST, utc) : `${day(FIRST, utc)} \u2192 ${day(LAST, utc)}`;
+      const win = utc => `between ${moment(AFTER, utc)} and ${key(AFTER, utc) === key(BY, utc) ? new Date(BY).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', ...z(utc) }) : moment(BY, utc)}`;
+      const m = /on file, (.+?)(?: \u00b7 |$)/.exec(head), w = / \u00b7 (between .+?) \u00b7 read off its page$/.exec(site);
+      return { zone: Intl.DateTimeFormat().resolvedOptions().timeZone, head, site, span: m ? m[1] : '', win: w ? w[1] : '', bare: key(AFTER, false) === key(BY, false), last: [key(LAST, false), key(LAST, true)],
+        local: { span: sp(span(false)), win: sp(win(false)) }, utc: { span: sp(span(true)), win: sp(win(true)) } }; },
+      { F: { ...F, fetched_at: iso114(END - SH114) }, H: H2, PID, FIRST: H2.runs[G0].t, LAST: H2.runs[N - 1].t, AFTER: H2.runs[I2 - 2].t, BY: H2.runs[I2].t });
+    ok('take 114: the history\'s own days and clock are this phone\'s (America/Detroit): the GTS header\'s day span and the site change\'s two checks -- its second end a bare clock on the one local day -- are the page\'s own strings for those instants in this zone, not in UTC',
+       own114.zone === 'America/Detroit' && own114.bare && !!own114.span && own114.span === own114.local.span && own114.span !== own114.utc.span
+       && !!own114.win && own114.win === own114.local.win && own114.win !== own114.utc.win, JSON.stringify(own114));
+    ok('take 114: ...control: for these instants (the last check 2:30 AM UTC, the site change 2:30 and 10:30 PM UTC) the UTC day span and window read otherwise -- the last check a day later in UTC -- so the check can tell them apart',
+       own114.last[0] !== own114.last[1] && own114.local.span !== own114.utc.span && own114.local.win !== own114.utc.win, JSON.stringify(own114));
     /* the fold, tapped as a person does: a fresh paint first (the controls rewrote its text), set in the same tick */
     await page.evaluate(({ F, H, PID }) => { const V = window.VAULT; V.HUNT.feed = F; V.HUNT.hist = H; V.openDetail(PID, { dist: true }); }, { F, H, PID });
     const fold114 = () => page.evaluate(() => { const f = document.querySelector('#dDist [data-distfold="detail"]'), tls = [...document.querySelectorAll('#dDist .dtl')];

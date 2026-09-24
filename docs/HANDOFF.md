@@ -112,7 +112,9 @@ honesty-first design, with the judges' fixes.
   - a 404 starts a new history, and says so;
   - the history written must be the history read plus one row;
   - the nightly carries history.json only if it is a history;
-  - both reads skip Pages' ten-minute cache.
+  - both reads skip Pages' ten-minute cache. (Wrong, found by the review
+    below: the CDN ignores the query. A deploy clears it, and that is what
+    keeps each read fresh. The `?v=` is gone.)
 - **Fixed because it was broken:** a day in a distributor's long words
   split across lines ("release Nov" / "20").
 - **Questions for the owner:** the GTS words; whether the history shows as
@@ -174,13 +176,21 @@ for word:
 - **Diagnostics:** "history on phone: N runs, gts in G, southern in S, ends
   <moment>".
 - **The runner** (`tools/hunt.py`, `tools/hunt/gts.py`):
-  - The hourly reads the history first, three tries ten seconds apart,
-    past Pages' cache (`?v=`). It stops with exit 3, deploying nothing,
-    when it cannot read it.
+  - The hourly reads the history first, three tries ten seconds apart, at
+    its plain address. It stops with exit 3, deploying nothing, when it
+    cannot read it.
   - A 404 starts a new history, and the log says so.
   - `keeps_past` refuses to write a history that is not the one read plus
     one row.
   - The nightly's carry-over takes history.json only when it is a history.
+    When it cannot read it for a passing reason (a timeout or a 5xx, three
+    times), `--carry-over` exits 3. `ci/bundle.sh` then sets `pages=skip`,
+    and build.yml's pages job does not deploy. The APK and the Release go
+    ahead, the hourly's last deploy stays with its history whole, and
+    Pages' catalogue waits for the next deploy.
+  - Neither source accepts an empty listing (count 0, no rows): the last
+    good fetch is kept, and the row gets no key.
+  - The hourly's GTS log line counts by dates, as the app does (`gts_due`).
   - GTS keeps the due day open (`pre >= today`), as Southern Hobby does.
 - **The fixture:** `tools/fixtures/hunt_history_2026-09-24.json`, the
   history on Pages at 20:02 UTC. Every count the tests take from it is
@@ -189,7 +199,7 @@ for word:
 ### Tests and the look
 
 Every new check was watched to fail on the build before it.
-- **smoke 1026/1026.**
+- **smoke 1038/1038.**
   - On take 113's build: 31 failed, the new checks and the 6 changed pins.
   - On the build before the owner's answers: 4 failed, the tucked checks
     and the alert.
@@ -198,14 +208,14 @@ Every new check was watched to fail on the build before it.
     - the history as first built (open, no button) is not tucked;
     - take 113's alert rule, put back for one sequence, fires on the due
       date passing.
-- **render 196/196 in Chrome**, at 360 px in America/Detroit.
+- **render 198/198 in Chrome**, at 360 px in America/Detroit.
   - On take 113: 5 failed. Before the answers: 1 failed.
   - Controls:
     - `nowrap` makes the page scroll;
     - a 1 px column with the no-break spaces undone splits a day;
     - that instant in UTC reads otherwise;
     - a header squeezed to 18 px is caught.
-- **`hunt.py --selftest` 110 ok**, up from 90. Five sabotages, each asserted
+- **`hunt.py --selftest` 119 ok**, up from 90. Five sabotages, each asserted
   as landed, failed as they should:
   - take 113's read;
   - take 113's main block;
@@ -218,6 +228,51 @@ Every new check was watched to fail on the build before it.
   pictures went to the owner twice: before the answers, and with the
   history tucked away.
 
+### The review
+
+An adversarial review of the whole diff ran four lenses: the app's logic,
+the runner, the tests, and the words. It raised 14 findings, and two
+independent skeptics checked each one. 13 were confirmed. One was rejected:
+a Diagnostics line said to throw on an odd history, which the skeptics could
+not reproduce.
+
+Each confirmed finding is fixed, and each fix was watched to fail on the
+build before it, or by a sabotage asserted as landed:
+- **An empty listing** (count 0, no rows, "ok") made two false changes for
+  every product, both "read off its page". The app now counts an empty map
+  as not read, and both sources refuse an empty listing.
+- **The nightly could still reset the history:** a carry-over that could
+  not read it deployed Pages without it. It now skips that night's deploy
+  (above).
+- **The cache-bust did nothing.** The CDN ignores `?v=`, MEASURED by the
+  reviewer and again by the fixer (the same etag, a HIT each time). It is
+  removed, and the record is corrected above.
+- **Sealed's GTS counts were false by their own words.** "0 unreleased
+  without one" left out the sold-out unreleased products. They are counted
+  by dates now, over every unreleased product: 1 and 3 on the fixture, 1
+  and 19 live.
+- **"release Nov 20 passed, out of stock"** showed on the release day
+  itself. It now reads "released Nov 20, out of stock".
+- **At the November fall-back hour,** a change's window could read
+  "between Nov 1, 1:30 AM and 1:30 AM". When the offsets differ, both ends
+  now carry their zone (`tlWindow`).
+- **Tests:**
+  - The timeline's own local-time code never ran outside UTC. Smoke's
+    section now runs in America/Detroit.
+  - Render compares the header's days and a window with strings built in
+    the emulated zone, with a UTC control.
+  - Seven pins would have gone red on 1 Jan 2027, when a day gains its
+    year. They are built from the fixture's own dates now; four take-112
+    pins had the same expiry.
+  - `tlDay`'s upper bound, its from-state guard, and the list and empty-map
+    guards each had no check. Each has one now.
+- **The Release paragraph** was written before the owner's answers. It now
+  names the tap and the alert change.
+
+Not changed: "order due date ahead" on the due day itself. The owner
+approved the words, "stores order by Oct 14" is true that day, and GTS's own
+countdown hides on it (MEASURED).
+
 ### What I got wrong
 
 - **Take 94's reading of GTS's date, and this take's first two lines.**
@@ -228,6 +283,8 @@ Every new check was watched to fail on the build before it.
 - **The implementers' tools wrote literal no-break spaces** into render's
   and the look's new lines. They were turned into `\u00a0` escapes, and
   only added lines carried them.
+- **A fix agent's `build_app.py --help` ran a real build**, which rewrote the
+  repo's `catalog/rates.json` (landmine 174's shape). It was restored.
 - **My first control for the alert was a constant expression**, so it
   passed whatever the app did. It was replaced before any commit by the
   real one above.
@@ -262,8 +319,13 @@ Every new check was watched to fail on the build before it.
   and its Pages job loses a row (`build` and `pages` concurrency).
 - **Target's line** still says "N hourly checks so far -- a pattern needs a
   fortnight". The runs are four-hourly, and it counts runs.
-- **For the UI session:** the history's look (`.dtl`), and a day in
-  Releases' "mixed · release" group line without its no-break spaces.
+- **For the UI session:**
+  - the history's look (`.dtl`);
+  - a day in Releases' "mixed · release" group line without its no-break
+    spaces;
+  - Sealed's GTS counts. They overlap ("7 sold out, 8 allocated, 1 with an
+    order due date ahead, 3 unreleased without one" adds up to more than
+    11 products), and read like separate groups.
 - **After the merge** (rides take 115): the first hourly's history line
   with its "gts in / southern in" counts, and the first change seen in the
   rows.

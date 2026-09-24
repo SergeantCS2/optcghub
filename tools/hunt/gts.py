@@ -144,7 +144,11 @@ def retail_title(name):
 
 def fetch(max_pages=4, pause=1.0, now=None, getter=None, today=None):
     """Never raises. The pages must carry exactly the count the site promised
-    (AGENTS rule 8); short is an error and the last good fetch is kept."""
+    (AGENTS rule 8); short is an error and the last good fetch is kept. So is
+    an empty listing (take 114 review): count 0 with no products carries its
+    own count, and taken as read it would say every product left the list --
+    it is a search that broke (a facet id changed, the index down), and the
+    run's history row gets no GTS key, a hole, not 'not on its list'."""
     now = now or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     getter = getter or get
     out = {"ok": False, "fetched_at": now, "calls": 0}
@@ -162,6 +166,8 @@ def fetch(max_pages=4, pause=1.0, now=None, getter=None, today=None):
             time.sleep(pause)
         if len(items) != count:
             raise ValueError(f"the listing promised {count} products and the pages carried {len(items)}")
+        if not items:
+            raise ValueError("the listing is empty (count 0, no products): a broken search, not nothing listed")
         out.update({"ok": True, "items": items, "count": count})
     except Exception as e:                                   # noqa: BLE001
         out["error"] = f"{type(e).__name__}: {str(e)[:120]}"
@@ -216,6 +222,13 @@ def selftest(html, out=print):
     check("control: pages that carry fewer products than the count promised are a failed fetch, not a short list", short["ok"] is False and "promised 49" in short.get("error", ""), short.get("error"))
     whole = fetch(getter=lambda u: html.replace('{"count":49,', '{"count":11,'), pause=0, today=FIXTURE_TODAY)
     check("a fetch whose pages carry the promised count is ok, in one call", whole["ok"] and whole["count"] == 11 and len(whole["items"]) == 11 and whole["calls"] == 1, whole.get("error"))
+    # take 114 review: an empty listing carries its own count (0 == 0), so the count check alone passes it
+    bare = BLOB.sub(lambda m: 'var productResults = {"count":0,"products":[]};\n', html)
+    landed = parse_listing(bare, FIXTURE_TODAY)
+    empty = fetch(getter=lambda u: bare, pause=0, today=FIXTURE_TODAY)
+    check("control: an empty listing (count 0, no products) is a failed fetch, not every product off the list -- the real page still reads",
+          landed == {"count": 0, "items": []} and empty["ok"] is False and "empty" in empty.get("error", "") and whole["ok"],
+          f"emptied page parses to {landed}; fetch: {empty.get('error')}")
     dead = fetch(getter=lambda u: (_ for _ in ()).throw(OSError("HTTP Error 503")), pause=0)
     check("control: a refused host is a failed fetch with the reason, never a raise", dead["ok"] is False and "503" in dead["error"])
     return ok
