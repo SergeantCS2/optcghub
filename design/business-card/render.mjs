@@ -3,6 +3,7 @@
 // - the smallest type, in points (refused under 6.5)
 // - anything that matters (text, the QR, the icon, the word) inside 0.125 in of a cut edge
 // - type running into other type, or the word or the QR covering type
+// - Google's Play badge, where a face carries one: at least 0.3 in tall, a quarter of its height clear
 // Writes $CARD_OUT/png/<face>.png and report.json; with a directory (leader) it renders $CARD_OUT/leader/*.html
 // that carry a face size (the sheets go to PDF instead) into $CARD_OUT/leader/png.
 //   node design/business-card/render.mjs [dir]
@@ -19,7 +20,8 @@ for (const f of fs.readdirSync(DIR).filter(x => x.endsWith('.html')).sort()) {
   if (!size) continue;
   const vp = { width: Math.round(+size[1] * 96), height: Math.round(+size[2] * 96) };
   const page = await b.newPage({ viewport: vp, deviceScaleFactor: 300 / 96 });
-  await page.goto('file://' + path.join(DIR, f)); await page.evaluate(() => document.fonts.ready); await page.waitForTimeout(250);
+  await page.goto('file://' + path.join(DIR, f)); await page.evaluate(() => document.fonts.ready);
+  await page.evaluate(() => Promise.all([...document.images].map(i => i.decode().catch(() => {})))); await page.waitForTimeout(250);
   const m = await page.evaluate(() => {
     const SAFE = 12, W = innerWidth, H = innerHeight, out = { minPt: 99, minText: '', unsafe: [] };
     const content = new Set([...document.querySelectorAll('.qr, .qrwrap, .art, .word, img')]);
@@ -47,15 +49,27 @@ for (const f of fs.readdirSync(DIR).filter(x => x.endsWith('.html')).sort()) {
       for (const L of lines) if (!el.contains(L.el) && hit(r, L.r)) out.overlaps.push(el.className + ' / ' + L.t); }
     for (const el of content) { const r = el.getBoundingClientRect();
       if (r.width && (r.left < SAFE || r.top < SAFE || r.right > W - SAFE || r.bottom > H - SAFE)) out.unsafe.push(el.className || el.tagName); }
+    /* Google's badge rules: at least 0.3 in tall in print, and a quarter of its height clear of any text
+       and of the panel's edge */
+    const gp = document.querySelector('.gp');
+    if (gp) {
+      const g = gp.getBoundingClientRect(), p = gp.closest('.panel').getBoundingClientRect(), bw = 1.2;
+      const apart = (a, b) => Math.max(b.left - a.right, a.left - b.right, b.top - a.bottom, a.top - b.bottom);
+      let clear = Math.min(g.left - p.left - bw, p.right - bw - g.right, g.top - p.top - bw, p.bottom - bw - g.bottom);
+      for (const L of lines) clear = Math.min(clear, apart(g, L.r));
+      out.badge = { heightIn: +(g.height / 96).toFixed(3), clearIn: +(clear / 96).toFixed(3), loaded: gp.complete && gp.naturalWidth > 0 };
+      out.badge.ok = out.badge.loaded && g.height >= 0.3 * 96 && clear >= g.height / 4;
+    }
     out.fonts = document.fonts.check('12px D') && document.fonts.check('10px B');
     return out; });
   const png = path.join(OUT, f.replace('.html', '.png'));
   await page.screenshot({ path: png }); await page.close();
-  report.push({ face: f.replace('.html', ''), ...m, ok: m.fonts && m.minPt >= 6.5 && !m.unsafe.length && !m.overlaps.length });
+  report.push({ face: f.replace('.html', ''), ...m, ok: m.fonts && m.minPt >= 6.5 && !m.unsafe.length && !m.overlaps.length && (!m.badge || m.badge.ok) });
 }
 await b.close();
 fs.writeFileSync(path.join(OUT, 'report.json'), JSON.stringify(report, null, 1));
 for (const r of report) console.log(JSON.stringify(r));
 const bad = report.filter(r => !r.ok);
 if (bad.length) { console.log('render: refused', bad.map(r => r.face).join(', ')); process.exit(1); }
-console.log(`render: ${report.length} faces at 300 dpi, no type under 6.5 pt, nothing outside the safe zone, nothing overlapping`);
+console.log(`render: ${report.length} faces at 300 dpi, no type under 6.5 pt, nothing outside the safe zone, nothing overlapping`
+  + (report.some(r => r.badge) ? ', the Play badge at size with its clear space' : ''));

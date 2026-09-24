@@ -19,21 +19,31 @@ laser or inkjet.
 app is in its own words, not a competitor's.
 
 **Front**, in reading order:
-1. **The art:** the icon's own scene from its bleed layers, with a NEW APP badge.
+1. **The art:** the icon's own scene from its bleed layers.
 2. **The name plate:** OP TCG HUB, "One Piece TCG collection tracker".
 3. **Three plain lines**, each with a line icon drawn here:
    - Scan a card: its exact printing and price.
    - Track what your collection is worth.
    - Build decks and hunt sealed product.
-4. **The one action:** "Scan the back to get the app".
+4. **Google's own "Get it on Google Play" badge**, 0.32 in tall and centred at the bottom.
+
+**Why the badge and not the logo.** The owner asked for "Available on" with the Play logo, to save space.
+Google's badge page (Partner Marketing Hub, lockups-icons-badges) rules this out:
+- "Don't use the icon in marketing materials."
+- Download promotion uses the badge.
+- The badge is at least 0.3 in tall in print, with a quarter of its height clear all round.
+- "Don't change the badge color", and "Don't remove or rearrange badge elements".
+
+He chose the official badge at the bottom. `leader.py` fetches Google's hosted artwork at build time
+(`play.google.com/.../en_badge_web_generic.png`, carrying the current 2022 logo). It crops only the
+transparent margin and never commits the file. `--badge` takes the Partner Marketing Hub's download
+instead.
 
 **Back:** our own card back, as he approved it: the white field, the purple border, and our compass rose
 (inner ring off, as the icon's risk panel ruled).
-- **The QR** is the rose's hub, 1.08 in on its tile, and leads to the live listing.
-- **Below it:**
-  - the search fallback
-  - ANDROID · NO ACCOUNT · WORKS OFFLINE
-  - the disclaimer: independent, not affiliated with Bandai
+- **The QR** is the rose's hub, 1.14 in on its tile, and leads to the live listing.
+- **Below it:** the search fallback, then ANDROID · NO ACCOUNT / WORKS OFFLINE.
+- **No disclaimer.** The owner took it off: it matters to Google Play, not to the card.
 - **Texture:** manga screentone in the corners, knocked out behind the lettering. There are no radiating
   chart lines: the v3 panel cut them for echoing the Rising Sun flag.
 
@@ -51,7 +61,7 @@ python3 design/business-card/checksheet.py                 # the PDFs, checked a
 ```
 
 The run needs `segno` (the QR), `zxing-cpp` (the decoder that checks it) and `pymupdf` (imposition and
-the PDF checks), from pip.
+the PDF checks), from pip. It also needs play.google.com, for the badge (or `--badge` with a local copy).
 
 **Calibration.** `leader.py --front-dx --front-dy --back-dx --back-dy` (inches) moves a whole side. Use
 it when the test sheet's lines miss the perforations. The sheet is assumed to have 0.75 in side margins
@@ -81,6 +91,9 @@ Two HTML impositions failed first, and `checksheet.py` refused both:
 - No type under 6.5 pt. Nothing that matters inside the 0.125 in safe zone.
 - No type running into other type, measured on each line's real font box. It refused both Leader-card
   first layouts: the name plate's rows touched, and the back's list ran into the disclaimer.
+- **Google's badge rule.** The badge renders at least 0.3 in tall, loaded, with a quarter of its height
+  clear of every line of text and of the panel's edge. It measures 0.32 in and 0.083 in clear, printing
+  at about 525 dpi. It was watched to refuse the badge shrunk to 0.25 in.
 
 **`checksheet.py`, on the PDFs rasterised at 300 dpi:**
 - **Page size and fonts.** Two pages, each exactly Letter. Every font is embedded or drawn as Type3
@@ -113,3 +126,4 @@ shows its centring.
 - **The owner's icon pick** (the printed back's emblem). It stays out of this public repository until
   he says to ship it, and the card's art defaults to our own rose (`own-purple`).
 - **Anything rendered.** PNGs and PDFs are generated, and they stay outside the tree.
+- **Google's badge.** It is fetched at build time into the output directory, and never committed.

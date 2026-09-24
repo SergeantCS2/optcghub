@@ -12,22 +12,26 @@ The frame stays, because the style is what he liked. The card says what the app 
 not a competitor's name.
 
 The front reads in this order:
-1. the art (the icon's own scene, from its bleed layers) and a NEW APP badge
+1. the art (the icon's own scene, from its bleed layers)
 2. the name plate: OP TCG HUB, a One Piece TCG collection tracker
 3. three plain lines with line icons: scan, track, build
-4. the one action: scan the back
+4. Google's own "Get it on Google Play" badge
+
+The owner asked for "Available on" with the Play logo. Google allows the logo alone only in UI, so a
+download promo carries the official badge, unaltered, and he chose it at the bottom.
 
 The back is our own card back, as he approved it: the white field, the purple border and our compass
 rose (inner ring off, as the icon's risk panel ruled). The QR is its hub. Below it sit the search
-fallback, three facts and the disclaimer. The texture is manga screentone, knocked out behind the
-lettering. There are no radiating chart lines: the v3 panel cut them for echoing the Rising Sun flag.
+fallback and three facts. The disclaimer is gone at the owner's word: it matters to Google Play, not to
+the card. The texture is manga screentone, knocked out behind the lettering. There are no radiating chart
+lines: the v3 panel cut them for echoing the Rising Sun flag.
 
 Print: 2 x 3.5 in trim, 1/16 in bleed, 1/8 in safe zone. A 10-up Letter sheet has 3.5 x 2 in cells, two
 columns by five rows, 0.75 in side and 0.5 in top margins (assumed; measure them with the test page). The
 card is turned into its cell by impose.py: fronts face the top east, backs face it west, so a long-edge flip
 lands each back upright under its front. There is a short-edge variant, and per-side offsets for calibration.
 
-  python3 design/business-card/leader.py [icon-layers] [--front-dx IN] [--front-dy IN] [--back-dx IN] [--back-dy IN]
+  python3 design/business-card/leader.py [icon-layers] [--badge PNG] [--front-dx IN] [--front-dy IN] [--back-dx IN] [--back-dy IN]
       icon-layers: the base path of an icon's -bg.svg / -fg.svg (default: the public v4 own-purple)
       -> $CARD_OUT/leader/{front,back}.html (trim previews), {front,back}-print.html (trim + bleed, for impose.py)
          and test.html (the alignment sheet)
@@ -36,7 +40,7 @@ import argparse, json, math, os, re, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
-from cards import (qr_svg, b64, LISTING, NOT_OFFICIAL, PRUSSIAN, BUFF, CREAM, INK, GREEN, PURPLE, PAPER)
+from cards import (qr_svg, b64, LISTING, PRUSSIAN, BUFF, CREAM, INK, GREEN, PURPLE, PAPER)
 sys.path.insert(0, os.path.join(REPO, "design", "d7-icons", "v3"))
 import parts as PT
 
@@ -45,9 +49,32 @@ TRIM_W, TRIM_H, BLEED, SAFE = 2.0, 3.5, 0.0625, 0.125
 SHEET_W, SHEET_H, CELL_W, CELL_H, COLS, ROWS = 8.5, 11.0, 3.5, 2.0, 2, 5
 FIELD = "#FFFCF5"                  # the card back's white (the icon's card is paper white, not pure)
 PANEL_W, PANEL_H = 1.695, 3.195    # inside the panel's border: the trim, less the 0.14 in frame and the 1.2 px keyline
+# Google's "Get it on Google Play" badge, fetched at build (never committed). Its rules, from the Partner
+# Marketing Hub: the badge is at least 0.3 in tall in print, with a quarter of its height clear all round;
+# never recolour or rearrange it; the Play icon alone is not for marketing ("Don't use the icon in
+# marketing materials").
+BADGE_URL = "https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
+GP_H, GP_TOP = 0.32, 2.79          # inches: the badge's height, and its top in the panel (features end ~2.70)
+
+def badge_png(path=None):
+    """The official badge as a data URI, its transparent margin cropped (the badge itself untouched)."""
+    import io, urllib.request
+    from PIL import Image
+    if path:
+        raw = open(path, "rb").read()
+    else:
+        cache = os.path.join(BUILD, "google-play-badge.png")
+        if not os.path.exists(cache):
+            with urllib.request.urlopen(BADGE_URL, timeout=30) as r:
+                open(cache, "wb").write(r.read())
+        raw = open(cache, "rb").read()
+    im = Image.open(io.BytesIO(raw)).convert("RGBA")
+    im = im.crop(im.getchannel("A").getbbox())
+    out = io.BytesIO(); im.save(out, "PNG")
+    return "data:image/png;base64," + __import__("base64").b64encode(out.getvalue()).decode(), im.size
 
 # ---------------------------------------------------------------- the art: the icon's scene
-def art_svg(base, uid, box=(-12, -30, 536, 497)):
+def art_svg(base, uid, box=(-30.7, -25, 573.4, 495)):
     """The icon's -bg and -fg layers (the 512 frame on the 768 bleed canvas) composed and cropped to the
     card's art window, with the whole of ドン!! above the name plate. Ids are prefixed per copy: a sheet
     carries ten."""
@@ -90,49 +117,46 @@ FACE_CSS = f"""
 .pop{{color:var(--fill,{CREAM});-webkit-text-stroke:var(--k,1.3px) {INK};paint-order:stroke fill;text-shadow:var(--o,1.4px 1.8px) 0 var(--oc,{GREEN})}}
 .fine{{font-size:6.5pt;line-height:1.25}}
 /* front */
-.front .art{{position:absolute;left:0.06in;right:0.06in;top:0.06in;height:1.46in;border:1.4px solid {INK};border-radius:0.06in;overflow:hidden;background:{PRUSSIAN}}}
-.front .badge{{position:absolute;right:0.12in;top:0.12in;padding:0 5px;border:1px solid {INK};border-radius:3px;background:{GREEN};color:#fff;
-  font-size:6.5pt;font-weight:800;letter-spacing:.14em;line-height:1.5;box-shadow:1px 1.3px 0 {INK}}}
-.front .plate{{position:absolute;left:0.06in;right:0.06in;top:1.44in;height:0.46in;background:{PRUSSIAN};border:1.2px solid {INK};
+.front .art{{position:absolute;left:0.06in;right:0.06in;top:0.06in;height:1.36in;border:1.4px solid {INK};border-radius:0.06in;overflow:hidden;background:{PRUSSIAN}}}
+.front .plate{{position:absolute;left:0.06in;right:0.06in;top:1.34in;height:0.46in;background:{PRUSSIAN};border:1.2px solid {INK};
   border-radius:0.05in;box-shadow:1.4px 1.8px 0 {GREEN};text-align:center;color:{CREAM}}}
 .front .plate .nm{{position:absolute;left:0;right:0;top:0.075in;font-size:17px;line-height:1;--k:1.3px;--o:1.3px 1.6px}}
 .front .plate .cat{{position:absolute;left:0;right:0;bottom:0.045in;font-size:6.5pt;color:#DCE4F0;letter-spacing:.02em}}
-.front .feats{{position:absolute;left:0.1in;right:0.08in;top:1.99in;display:flex;flex-direction:column;gap:0.05in}}
+.front .feats{{position:absolute;left:0.1in;right:0.08in;top:1.89in;display:flex;flex-direction:column;gap:0.05in}}
 .front .feat{{display:flex;gap:0.06in;align-items:flex-start;font-size:7pt;line-height:1.22}}
 .front .feat svg{{flex:0 0 0.15in;width:0.15in;height:0.15in;margin-top:1px}}
 .front .feat b{{color:{PRUSSIAN};font-weight:800}}
-.front .cta{{position:absolute;left:0;right:0;top:2.9in;text-align:center;font-size:7pt;font-weight:800;color:{PURPLE};letter-spacing:.01em}}
+/* Google's badge, as Google ships it: at least 0.3 in tall in print, a quarter of its height clear all round */
+.front .gp{{position:absolute;left:50%;top:{GP_TOP}in;height:{GP_H}in;transform:translateX(-50%);display:block}}
 /* back */
 .back .panel{{background:{FIELD}}}
 .back .rule{{position:absolute;inset:0.05in;border:0.8px solid {PURPLE};border-radius:0.06in;opacity:.7}}
 .back .motif{{position:absolute;inset:0;width:100%;height:100%}}
 .back .title{{position:absolute;left:0;right:0;top:0.13in;text-align:center;font-size:17px;line-height:1;--fill:{PRUSSIAN};--k:1.3px;--o:1.3px 1.6px}}
 .back .scan{{position:absolute;left:0;right:0;top:0.36in;text-align:center;font-size:7pt;font-weight:800;letter-spacing:.14em;color:{PURPLE}}}
-.back .qr{{position:absolute;left:50%;top:0.78in;width:1.08in;height:1.08in;transform:translateX(-50%);border:1.2px solid {INK};border-radius:5px;overflow:hidden;
+.back .qr{{position:absolute;left:50%;top:0.76in;width:1.14in;height:1.14in;transform:translateX(-50%);border:1.2px solid {INK};border-radius:5px;overflow:hidden;
   box-shadow:1.4px 1.8px 0 {GREEN}}}
-.back .search{{position:absolute;left:0;right:0;top:2.13in;text-align:center;font-size:7pt;color:{INK}}}
-.back .facts{{position:absolute;left:0.12in;right:0.12in;top:2.4in;text-align:center;font-size:6.5pt;font-weight:800;letter-spacing:.1em;line-height:1.45;
+.back .search{{position:absolute;left:0;right:0;top:2.34in;text-align:center;font-size:7pt;color:{INK}}}
+.back .facts{{position:absolute;left:0.12in;right:0.12in;top:2.6in;text-align:center;font-size:6.5pt;font-weight:800;letter-spacing:.1em;line-height:1.45;
   color:{PURPLE}}}
-.back .nb{{position:absolute;left:0.1in;right:0.1in;bottom:0.085in;text-align:center;color:#5b5140;text-wrap:balance}}
 /* lettering knocks the screentone out, as in a manga panel: a paper pad that follows each line of text */
 .ko{{background:{FIELD};padding:0 3px;border-radius:2px;-webkit-box-decoration-break:clone;box-decoration-break:clone}}
 """
 
-def front(art):
+def front(art, badge):
     feats = "".join(f'<div class="feat">{icon(k)}<p><b>{lead}</b> {rest}</p></div>' for k, lead, rest in FEATURES)
     return f"""<div class="face front"><div class="ground"></div><div class="print"></div><div class="panel">
 <div class="art">{art}</div>
-<div class="badge">NEW APP</div>
 <div class="plate"><div class="nm disp pop">OP TCG Hub</div><div class="cat">One Piece TCG collection tracker</div></div>
 <div class="feats">{feats}</div>
-<div class="cta">Scan the back to get the app</div>
+<img class="gp" src="{badge}" alt="Get it on Google Play">
 </div></div>"""
 
 def back_motif(uid):
     """Our card back's field, in 1/100 in across the panel: screentone at the corners (manga, not rays) and
     our compass rose round the QR, its centre on the QR's (inner ring off: the icon's ruling)."""
     W, H = PANEL_W * 100, PANEL_H * 100
-    cx, cy, R = W / 2, 132, 72
+    cx, cy, R = W / 2, 133, 76
     dots = []
     for yi in range(0, int(H) + 1, 5):
         for xi in range(0, int(W) + 1, 5):
@@ -152,7 +176,6 @@ def back(qr, uid):
 <div class="qr">{qr}</div>
 <div class="search"><span class="ko">or search “OP TCG Hub”</span></div>
 <div class="facts"><span class="ko">{FACTS}</span></div>
-<div class="nb fine"><span class="ko">{NOT_OFFICIAL}</span></div>
 </div></div>"""
 
 # ---------------------------------------------------------------- pages
@@ -218,12 +241,14 @@ if __name__ == "__main__":
     ap.add_argument("icon", nargs="?", default=os.path.join(REPO, "design", "d7-icons", "v4", "svg", "own-purple"))
     for k in ("front-dx", "front-dy", "back-dx", "back-dy"):
         ap.add_argument("--" + k, type=float, default=0.0, help="inches: the calibration the test page measures")
+    ap.add_argument("--badge", help="a Google Play badge PNG to use instead of the hosted one (e.g. the Partner Marketing Hub's download)")
     a = ap.parse_args()
     fonts = (b64(os.path.join(REPO, "assets", "fonts", "display.woff2"), "font/woff2"),
              b64(os.path.join(REPO, "assets", "fonts", "body.woff2"), "font/woff2"))
     qr, version = qr_svg()
     os.makedirs(BUILD, exist_ok=True)
-    F = lambda i: front(art_svg(a.icon, f"a{i}"))
+    badge, badge_px = badge_png(a.badge)
+    F = lambda i: front(art_svg(a.icon, f"a{i}"), badge)
     B = lambda i: back(qr, f"b{i}")
     open(os.path.join(BUILD, "front.html"), "w").write(preview(F(0), fonts, "front"))
     open(os.path.join(BUILD, "back.html"), "w").write(preview(B(0), fonts, "back"))
@@ -233,6 +258,8 @@ if __name__ == "__main__":
     open(os.path.join(BUILD, "test.html"), "w").write(sheet(test_sheet("FRONT", a.front_dx, a.front_dy, "&rarr;")
                                                             + test_sheet("BACK", a.back_dx, a.back_dy, "&larr;")))
     json.dump({"qr_version": version, "listing": LISTING, "icon": os.path.basename(a.icon),
+               "badge": {"source": a.badge and os.path.basename(a.badge) or BADGE_URL, "px": badge_px,
+                         "printed_in": [round(GP_H * badge_px[0] / badge_px[1], 3), GP_H], "dpi": round(badge_px[1] / GP_H)},
                "offsets": {k: getattr(a, k.replace("-", "_")) for k in ("front-dx", "front-dy", "back-dx", "back-dy")}},
               open(os.path.join(BUILD, "build.json"), "w"), indent=1)
     print(f"leader: front, back, their print pages and the test sheet written; QR version {version}")
