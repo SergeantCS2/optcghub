@@ -1,4 +1,4 @@
-# Business card: the Leader card
+# Business card: the trading-card frame
 
 This is a design source for a business card the owner prints at home and hands to players and store
 owners. **Nothing here ships.** The build never reads this directory.
@@ -8,30 +8,32 @@ laser or inkjet.
 
 ## The card
 
-The owner picked the first round's draft A, the portrait trading-card layout. He asked to keep its style
-but not its text, its detail or its basicness. `leader.py` builds that card: a One Piece Leader card in
-reading order, with every part made our own.
+**How it got here:**
+1. The owner picked the first round's draft A, the portrait trading-card layout.
+2. The next round made it a Leader card: a power number, keyword effects, a LEADER tab, a card number.
+3. He liked the creativity, but not the parody. It was hard to tell what the card was for. He asked for
+   it "a bit more professional and clear that this is a card for a new app that's like Collectr but for
+   One Piece".
 
-**Front:**
-- **Power**, top right: the live catalogue's printing count (6,987 on the day of the first build), fetched
-  from the Pages manifest at build time. The footer dates it, so the card never states a number without
-  saying when it was true.
-- **Art:** the icon's own scene, taken tall from its bleed layers (`-bg` and `-fg` on the 768 canvas).
-- **Effect box**, in the game's keyword idiom, with its colour coding. Every line is true of the app:
-  - [On Play] Scan 1 card: name its exact printing and its market price. Not sure? Ask.
-  - [Blocker] (Nothing you own leaves your phone.)
-- **LEADER tab** with the purple and green pips, and the rarity L.
-- **Name plate:** OP TCG HUB, Collector / Scanner / Deckbuilder.
-- **Card number:** HUB-001.
+`leader.py` builds that card. The frame stays, because the style is what he liked. The card says what the
+app is in its own words, not a competitor's.
 
-**Back:** our own card back: the white field, the purple border, and our compass rose with its inner ring
-off, as the icon's risk panel ruled.
-- **The QR** is the rose's hub, and leads to the live listing.
-- **Three more keyword lines:**
-  - [Activate: Main] a 50-card deck, rule-checked
-  - [Trigger] sealed restock alerts
-  - [DON!! x1] Life and DON!! for both players
-- **The disclaimer:** independent, not affiliated with Bandai.
+**Front**, in reading order:
+1. **The art:** the icon's own scene from its bleed layers, with a NEW APP badge.
+2. **The name plate:** OP TCG HUB, "One Piece TCG collection tracker".
+3. **Three plain lines**, each with a line icon drawn here:
+   - Scan a card: its exact printing and price.
+   - Track what your collection is worth.
+   - Build decks and hunt sealed product.
+4. **The one action:** "Scan the back to get the app".
+
+**Back:** our own card back, as he approved it: the white field, the purple border, and our compass rose
+(inner ring off, as the icon's risk panel ruled).
+- **The QR** is the rose's hub, 1.08 in on its tile, and leads to the live listing.
+- **Below it:**
+  - the search fallback
+  - ANDROID · NO ACCOUNT · WORKS OFFLINE
+  - the disclaimer: independent, not affiliated with Bandai
 - **Texture:** manga screentone in the corners, knocked out behind the lettering. There are no radiating
   chart lines: the v3 panel cut them for echoing the Rising Sun flag.
 
@@ -49,7 +51,7 @@ python3 design/business-card/checksheet.py                 # the PDFs, checked a
 ```
 
 The run needs `segno` (the QR), `zxing-cpp` (the decoder that checks it) and `pymupdf` (imposition and
-the PDF checks), from pip. It also needs network access to the Pages manifest.
+the PDF checks), from pip.
 
 **Calibration.** `leader.py --front-dx --front-dy --back-dx --back-dy` (inches) moves a whole side. Use
 it when the test sheet's lines miss the perforations. The sheet is assumed to have 0.75 in side margins
@@ -77,8 +79,8 @@ Two HTML impositions failed first, and `checksheet.py` refused both:
 
 **`render.mjs`, on each face at 300 dpi:**
 - No type under 6.5 pt. Nothing that matters inside the 0.125 in safe zone.
-- No type running into other type, measured on each line's real font box. It refused both first
-  layouts: the name plate's rows touched, and the back's list ran into the disclaimer.
+- No type running into other type, measured on each line's real font box. It refused both Leader-card
+  first layouts: the name plate's rows touched, and the back's list ran into the disclaimer.
 
 **`checksheet.py`, on the PDFs rasterised at 300 dpi:**
 - **Page size and fonts.** Two pages, each exactly Letter. Every font is embedded or drawn as Type3
@@ -86,12 +88,12 @@ Two HTML impositions failed first, and `checksheet.py` refused both:
 - **Test sheet.** The cut lines sit on the perforation positions to within a pixel, and the 1 in scale
   measures 1.000 in.
 - **Cell orientation.** Each of the 40 cells matches its face turned the right way. The worst mean
-  difference is 2.6 of 255. The control is the same cell against the wrong turn, which differs by 45 or
-  more.
+  difference was 2.6 of 255 on the first imposition. The control is the same cell against the wrong
+  turn, which differed by 45 or more.
 - **QRs.** All 20 on the back pages decode to the listing.
 - **Bleed.** It shows 0.03 in past the grid, and paper shows at 0.10 in.
-- **The back preview's QR.** It is level Q, version 6, 0.8 in without its quiet zone. It decodes at 300
-  and 90 dpi, and a copy with one finder pattern painted over is refused.
+- **The back preview's QR.** It is level Q, version 6, about 0.9 in without its quiet zone. It decodes
+  at 300 and 90 dpi, and a copy with one finder pattern painted over is refused.
 
 ## Printing it
 

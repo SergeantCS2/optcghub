@@ -1,17 +1,26 @@
 #!/usr/bin/env python3
-"""The business card: a Leader card of our own, front and back, and its print sheets.
+"""The business card: our trading-card frame, front and back, and its print sheets.
 
-The owner picked draft A (the portrait trading-card layout). He asked to keep the style but not the text,
-the detail or the basicness. So the front reads the way a One Piece Leader card reads, with every part
-made our own:
-- the power, top right: the live catalogue's printings, dated in the footer
-- the art: the icon's own scene, taken tall from its bleed layers
-- the effect box, in the game's keyword idiom, where every line is true of the app
-- the name plate, LEADER, and the types line
+The owner picked draft A (the portrait trading-card layout), then, on the Leader-card round, asked for it
+"a bit more professional and clear that this is a card for a new app that's like Collectr but for One
+Piece". Out went the parody:
+- the keyword effects
+- the power number
+- the LEADER and rarity tabs
 - the card number
-The back is our own card back: the white field, the purple border and our compass rose (inner ring off,
-as the icon's risk panel ruled). The QR is its hub. There are no radiating chart lines: the v3 panel cut
-them for echoing the Rising Sun flag, so the texture is manga screentone.
+The frame stays, because the style is what he liked. The card says what the app is in its own words,
+not a competitor's name.
+
+The front reads in this order:
+1. the art (the icon's own scene, from its bleed layers) and a NEW APP badge
+2. the name plate: OP TCG HUB, a One Piece TCG collection tracker
+3. three plain lines with line icons: scan, track, build
+4. the one action: scan the back
+
+The back is our own card back, as he approved it: the white field, the purple border and our compass
+rose (inner ring off, as the icon's risk panel ruled). The QR is its hub. Below it sit the search
+fallback, three facts and the disclaimer. The texture is manga screentone, knocked out behind the
+lettering. There are no radiating chart lines: the v3 panel cut them for echoing the Rising Sun flag.
 
 Print: 2 x 3.5 in trim, 1/16 in bleed, 1/8 in safe zone. A 10-up Letter sheet has 3.5 x 2 in cells, two
 columns by five rows, 0.75 in side and 0.5 in top margins (assumed; measure them with the test page). The
@@ -23,7 +32,7 @@ lands each back upright under its front. There is a short-edge variant, and per-
       -> $CARD_OUT/leader/{front,back}.html (trim previews), {front,back}-print.html (trim + bleed, for impose.py)
          and test.html (the alignment sheet)
 """
-import argparse, json, math, os, re, sys, urllib.request
+import argparse, json, math, os, re, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
@@ -32,30 +41,16 @@ sys.path.insert(0, os.path.join(REPO, "design", "d7-icons", "v3"))
 import parts as PT
 
 BUILD = os.path.join(os.environ.get("CARD_OUT") or os.path.join(os.path.dirname(REPO), "business-card-build"), "leader")
-MANIFEST = "https://sergeantcs2.github.io/optcghub/bundle/manifest.json"
 TRIM_W, TRIM_H, BLEED, SAFE = 2.0, 3.5, 0.0625, 0.125
 SHEET_W, SHEET_H, CELL_W, CELL_H, COLS, ROWS = 8.5, 11.0, 3.5, 2.0, 2, 5
 FIELD = "#FFFCF5"                  # the card back's white (the icon's card is paper white, not pure)
-KW = {                              # the game's keyword boxes, in its own colour coding, drawn our way
-    "On Play": ("#2f79c9", "#FFFFFF"), "Activate: Main": ("#2f79c9", "#FFFFFF"), "Blocker": ("#c8762b", "#FFFFFF"),
-    "Trigger": ("#e2b93b", INK), "DON!! x1": (INK, CREAM), "Once Per Turn": ("#d8467a", "#FFFFFF"),
-}
+PANEL_W, PANEL_H = 1.695, 3.195    # inside the panel's border: the trim, less the 0.14 in frame and the 1.2 px keyline
 
-def catalogue():
-    """The live manifest: how many printings, how many sets, and the day of the prices. Printed with its
-    date, so the card never states a number without saying when it was true."""
-    with urllib.request.urlopen(MANIFEST, timeout=30) as r:
-        m = json.load(r)
-    return {"cards": int(m["cards"]), "sets": int(m["sets"]), "day": m["source_updated_at"][:10], "take": m.get("take")}
-
-def day_text(iso):
-    y, mo, d = iso.split("-")
-    return f"{int(d)} {'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split()[int(mo) - 1]} {y}"
-
-# ---------------------------------------------------------------- the art: the icon's scene, taken tall
-def art_svg(base, uid, box=(6, -45, 500, 568)):
+# ---------------------------------------------------------------- the art: the icon's scene
+def art_svg(base, uid, box=(-12, -30, 536, 497)):
     """The icon's -bg and -fg layers (the 512 frame on the 768 bleed canvas) composed and cropped to the
-    card's art window. Ids are prefixed per copy: a sheet carries ten."""
+    card's art window, with the whole of ドン!! above the name plate. Ids are prefixed per copy: a sheet
+    carries ten."""
     bg, fg = (open(f"{base}-{k}.svg", encoding="utf8").read() for k in ("bg", "fg"))
     inner = lambda s: re.sub(r"<!--.*?-->", "", s[s.index(">", s.index("<svg")) + 1:s.rindex("</svg>")], flags=re.S)
     b, f = inner(bg), inner(fg)
@@ -68,6 +63,23 @@ def art_svg(base, uid, box=(6, -45, 500, 568)):
     return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{x} {y} {w} {h}" preserveAspectRatio="xMidYMid slice" '
             f'style="display:block;width:100%;height:100%">{s}</svg>')
 
+# line icons, drawn here on a 12-unit grid: a scan frame round a card, a value line rising, a deck of two cards
+ICONS = {
+    "scan": '<path d="M1.2 4.2V1.2h3M7.8 1.2h3v3M10.8 7.8v3h-3M4.2 10.8h-3v-3"/><rect x="4" y="3.2" width="4" height="5.6" rx=".7"/>',
+    "track": '<path d="M1.2 9.6l3.1-3.1 2.2 2.1 4.3-4.6"/><path d="M8 4h2.8v2.8"/>',
+    "build": '<rect x="1.4" y="3.4" width="5.6" height="7.4" rx=".8"/><path d="M4.4 1.2h5.4a.8.8 0 0 1 .8.8v6.8"/>',
+}
+FEATURES = [   # every line true of the app, and short enough for two lines at 7 pt
+    ("scan", "Scan", "a card: its exact printing and price."),
+    ("track", "Track", "what your collection is worth."),
+    ("build", "Build", "decks and hunt sealed product."),
+]
+FACTS = "ANDROID · NO ACCOUNT<br>WORKS OFFLINE"      # broken by hand: a balanced wrap started line 2 with the dot
+
+def icon(k):
+    return (f'<svg viewBox="0 0 12 12" fill="none" stroke="{PRUSSIAN}" stroke-width="1.25" stroke-linecap="round" '
+            f'stroke-linejoin="round">{ICONS[k]}</svg>')
+
 # ---------------------------------------------------------------- the faces
 FACE_CSS = f"""
 .face{{position:absolute;width:{TRIM_W}in;height:{TRIM_H}in;font-family:B,sans-serif;color:{INK};text-rendering:geometricPrecision}}
@@ -76,84 +88,70 @@ FACE_CSS = f"""
 .face .panel{{position:absolute;inset:0.14in;background:{CREAM};border:1.2px solid {INK};border-radius:0.09in;overflow:hidden}}
 .disp{{font-family:D;text-transform:uppercase;letter-spacing:.01em}}
 .pop{{color:var(--fill,{CREAM});-webkit-text-stroke:var(--k,1.3px) {INK};paint-order:stroke fill;text-shadow:var(--o,1.4px 1.8px) 0 var(--oc,{GREEN})}}
-.kw{{display:inline-block;border-radius:2.5px;padding:0 3px;font-size:6.5pt;font-weight:700;line-height:1.38;letter-spacing:.01em;margin-right:2px;vertical-align:.5px}}
 .fine{{font-size:6.5pt;line-height:1.25}}
 /* front */
-.front .art{{position:absolute;left:0.06in;right:0.06in;top:0.06in;height:1.79in;border:1.4px solid {INK};border-radius:0.06in;overflow:hidden;background:{PRUSSIAN}}}
-.front .power{{position:absolute;right:0.12in;top:0.1in;text-align:right}}
-.front .power .v{{font-size:23px;line-height:1;--k:1.5px;--o:1.6px 2px}}
-.front .power .u{{display:inline-block;margin-top:3px;padding:0 3px;border-radius:2.5px;background:{INK};font-size:6.5pt;font-weight:700;letter-spacing:.14em;line-height:1.35;color:{CREAM}}}
-.front .fx{{position:absolute;left:0.1in;right:0.1in;top:1.685in;height:0.77in;padding:0.045in 0.06in;background:rgba(251,247,236,.95);
-  border:1px solid {INK};border-radius:0.05in;font-size:7pt;line-height:1.27;display:flex;flex-direction:column;justify-content:center;gap:0.035in}}
-.front .fx p{{text-wrap:pretty}}
-.front .fx i{{color:#4a4236}}
-.front .plate{{position:absolute;left:0.06in;right:0.06in;bottom:0.2in;height:0.46in;background:{PRUSSIAN};border:1.2px solid {INK};
+.front .art{{position:absolute;left:0.06in;right:0.06in;top:0.06in;height:1.46in;border:1.4px solid {INK};border-radius:0.06in;overflow:hidden;background:{PRUSSIAN}}}
+.front .badge{{position:absolute;right:0.12in;top:0.12in;padding:0 5px;border:1px solid {INK};border-radius:3px;background:{GREEN};color:#fff;
+  font-size:6.5pt;font-weight:800;letter-spacing:.14em;line-height:1.5;box-shadow:1px 1.3px 0 {INK}}}
+.front .plate{{position:absolute;left:0.06in;right:0.06in;top:1.44in;height:0.46in;background:{PRUSSIAN};border:1.2px solid {INK};
   border-radius:0.05in;box-shadow:1.4px 1.8px 0 {GREEN};text-align:center;color:{CREAM}}}
-.front .tab{{position:absolute;bottom:0.595in;height:0.13in;padding:0 4px;background:{INK};color:{CREAM};border-radius:2.5px;font-size:6.5pt;font-weight:700;
-  letter-spacing:.14em;line-height:0.13in;display:flex;align-items:center;gap:3px}}
-.front .tab .pip{{width:6px;height:6px;border-radius:50%;border:0.8px solid {CREAM};display:inline-block}}
-.front .plate .nm{{position:absolute;left:0;right:0;top:0.09in;font-size:17px;line-height:1;--k:1.3px;--o:1.3px 1.6px}}
-.front .plate .ty{{position:absolute;left:0;right:0;bottom:0.035in;font-size:6.5pt;color:#C9D4E6;letter-spacing:.02em}}
-.front .foot{{position:absolute;left:0.07in;right:0.07in;bottom:0.045in;display:flex;justify-content:space-between;color:#5b5140}}
+.front .plate .nm{{position:absolute;left:0;right:0;top:0.075in;font-size:17px;line-height:1;--k:1.3px;--o:1.3px 1.6px}}
+.front .plate .cat{{position:absolute;left:0;right:0;bottom:0.045in;font-size:6.5pt;color:#DCE4F0;letter-spacing:.02em}}
+.front .feats{{position:absolute;left:0.1in;right:0.08in;top:1.99in;display:flex;flex-direction:column;gap:0.05in}}
+.front .feat{{display:flex;gap:0.06in;align-items:flex-start;font-size:7pt;line-height:1.22}}
+.front .feat svg{{flex:0 0 0.15in;width:0.15in;height:0.15in;margin-top:1px}}
+.front .feat b{{color:{PRUSSIAN};font-weight:800}}
+.front .cta{{position:absolute;left:0;right:0;top:2.9in;text-align:center;font-size:7pt;font-weight:800;color:{PURPLE};letter-spacing:.01em}}
 /* back */
 .back .panel{{background:{FIELD}}}
 .back .rule{{position:absolute;inset:0.05in;border:0.8px solid {PURPLE};border-radius:0.06in;opacity:.7}}
 .back .motif{{position:absolute;inset:0;width:100%;height:100%}}
 .back .title{{position:absolute;left:0;right:0;top:0.13in;text-align:center;font-size:17px;line-height:1;--fill:{PRUSSIAN};--k:1.3px;--o:1.3px 1.6px}}
 .back .scan{{position:absolute;left:0;right:0;top:0.36in;text-align:center;font-size:7pt;font-weight:800;letter-spacing:.14em;color:{PURPLE}}}
-.back .qr{{position:absolute;left:50%;top:0.72in;width:0.96in;height:0.96in;transform:translateX(-50%);border:1.2px solid {INK};border-radius:5px;overflow:hidden;
+.back .qr{{position:absolute;left:50%;top:0.78in;width:1.08in;height:1.08in;transform:translateX(-50%);border:1.2px solid {INK};border-radius:5px;overflow:hidden;
   box-shadow:1.4px 1.8px 0 {GREEN}}}
-.back .search{{position:absolute;left:0;right:0;top:1.88in;text-align:center;font-size:7pt;color:{INK}}}
-.back .fx{{position:absolute;left:0.1in;right:0.1in;top:2.05in;font-size:7pt;line-height:1.24;display:flex;flex-direction:column;gap:0.025in}}
+.back .search{{position:absolute;left:0;right:0;top:2.13in;text-align:center;font-size:7pt;color:{INK}}}
+.back .facts{{position:absolute;left:0.12in;right:0.12in;top:2.4in;text-align:center;font-size:6.5pt;font-weight:800;letter-spacing:.1em;line-height:1.45;
+  color:{PURPLE}}}
 .back .nb{{position:absolute;left:0.1in;right:0.1in;bottom:0.085in;text-align:center;color:#5b5140;text-wrap:balance}}
 /* lettering knocks the screentone out, as in a manga panel: a paper pad that follows each line of text */
 .ko{{background:{FIELD};padding:0 3px;border-radius:2px;-webkit-box-decoration-break:clone;box-decoration-break:clone}}
 """
 
-def chip(k):
-    bg, fg = KW[k]
-    return f'<span class="kw" style="background:{bg};color:{fg}">{k}</span>'
-
-def front(art, cat):
+def front(art):
+    feats = "".join(f'<div class="feat">{icon(k)}<p><b>{lead}</b> {rest}</p></div>' for k, lead, rest in FEATURES)
     return f"""<div class="face front"><div class="ground"></div><div class="print"></div><div class="panel">
 <div class="art">{art}</div>
-<div class="power"><div class="v disp pop">{cat["cards"]}</div><div class="u">PRINTINGS</div></div>
-<div class="fx">
-<p>{chip("On Play")} Scan 1 card: name its exact printing and its market price. Not sure? Ask.</p>
-<p>{chip("Blocker")} <i>(Nothing you own leaves your phone.)</i></p>
-</div>
-<div class="plate"><div class="nm disp pop">OP TCG Hub</div><div class="ty">Collector / Scanner / Deckbuilder</div></div>
-<div class="tab" style="left:0.14in">LEADER <span class="pip" style="background:{PURPLE}"></span><span class="pip" style="background:{GREEN}"></span></div>
-<div class="tab" style="right:0.14in">L</div>
-<div class="foot fine"><span>HUB-001</span><span>catalogue {day_text(cat["day"])}</span></div>
+<div class="badge">NEW APP</div>
+<div class="plate"><div class="nm disp pop">OP TCG Hub</div><div class="cat">One Piece TCG collection tracker</div></div>
+<div class="feats">{feats}</div>
+<div class="cta">Scan the back to get the app</div>
 </div></div>"""
 
 def back_motif(uid):
-    """Our card back's field, in panel units of 1/100 in (the panel is 1.72 x 3.22 in): screentone at the
-    corners (manga, not rays) and our compass rose, the QR's surround, inner ring off (the icon's ruling)."""
-    W, H, cx, cy, R = 172, 322, 86, 120, 64
+    """Our card back's field, in 1/100 in across the panel: screentone at the corners (manga, not rays) and
+    our compass rose round the QR, its centre on the QR's (inner ring off: the icon's ruling)."""
+    W, H = PANEL_W * 100, PANEL_H * 100
+    cx, cy, R = W / 2, 132, 72
     dots = []
-    for yi in range(0, H + 1, 5):
-        for xi in range(0, W + 1, 5):
+    for yi in range(0, int(H) + 1, 5):
+        for xi in range(0, int(W) + 1, 5):
             x, y = xi + (2.5 if (yi // 5) % 2 else 0), yi
             # the tone fades from the four corners toward the middle
             t = max(0.0, 1 - min(math.hypot(x, y), math.hypot(W - x, y), math.hypot(x, H - y), math.hypot(W - x, H - y)) / 70)
             if t > 0.05:
                 dots.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{0.35 + 1.25 * t:.2f}"/>')
-    return (f'<svg class="motif" viewBox="0 0 {W} {H}" preserveAspectRatio="none"><g fill="{PURPLE}" opacity=".22">{"".join(dots)}</g>'
+    return (f'<svg class="motif" viewBox="0 0 {W:.1f} {H:.1f}"><g fill="{PURPLE}" opacity=".22">{"".join(dots)}</g>'
             f'{PT.rose(cx, cy, R, colour=PURPLE, field=FIELD, inner_ring=False)}</svg>')
 
 def back(qr, uid):
-    fx = [("Activate: Main", "Build a 50-card deck, rule-checked."),
-          ("Trigger", "Sealed restock alerts."),
-          ("DON!! x1", "Track Life and DON!! for both players.")]
     return f"""<div class="face back"><div class="ground"></div><div class="print"></div><div class="panel">
 {back_motif(uid)}<div class="rule"></div>
 <div class="title disp pop"><span class="ko">OP TCG Hub</span></div>
 <div class="scan"><span class="ko">SCAN FOR GOOGLE PLAY</span></div>
 <div class="qr">{qr}</div>
 <div class="search"><span class="ko">or search “OP TCG Hub”</span></div>
-<div class="fx">{"".join(f"<p>{chip(k)} {v}</p>" for k, v in fx)}</div>
+<div class="facts"><span class="ko">{FACTS}</span></div>
 <div class="nb fine"><span class="ko">{NOT_OFFICIAL}</span></div>
 </div></div>"""
 
@@ -221,12 +219,11 @@ if __name__ == "__main__":
     for k in ("front-dx", "front-dy", "back-dx", "back-dy"):
         ap.add_argument("--" + k, type=float, default=0.0, help="inches: the calibration the test page measures")
     a = ap.parse_args()
-    cat = catalogue()
     fonts = (b64(os.path.join(REPO, "assets", "fonts", "display.woff2"), "font/woff2"),
              b64(os.path.join(REPO, "assets", "fonts", "body.woff2"), "font/woff2"))
     qr, version = qr_svg()
     os.makedirs(BUILD, exist_ok=True)
-    F = lambda i: front(art_svg(a.icon, f"a{i}"), cat)
+    F = lambda i: front(art_svg(a.icon, f"a{i}"))
     B = lambda i: back(qr, f"b{i}")
     open(os.path.join(BUILD, "front.html"), "w").write(preview(F(0), fonts, "front"))
     open(os.path.join(BUILD, "back.html"), "w").write(preview(B(0), fonts, "back"))
@@ -235,8 +232,7 @@ if __name__ == "__main__":
     sheet = lambda body: head(fonts, SHEET_CSS) + f"<body>{body}</body></html>"
     open(os.path.join(BUILD, "test.html"), "w").write(sheet(test_sheet("FRONT", a.front_dx, a.front_dy, "&rarr;")
                                                             + test_sheet("BACK", a.back_dx, a.back_dy, "&larr;")))
-    json.dump({"catalogue": cat, "qr_version": version, "listing": LISTING, "icon": os.path.basename(a.icon),
+    json.dump({"qr_version": version, "listing": LISTING, "icon": os.path.basename(a.icon),
                "offsets": {k: getattr(a, k.replace("-", "_")) for k in ("front-dx", "front-dy", "back-dx", "back-dy")}},
               open(os.path.join(BUILD, "build.json"), "w"), indent=1)
-    print(f"leader: front, back, their print pages and the test sheet written; {cat['cards']} printings, {cat['sets']} sets, "
-          f"catalogue {cat['day']}; QR version {version}")
+    print(f"leader: front, back, their print pages and the test sheet written; QR version {version}")
