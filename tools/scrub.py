@@ -45,7 +45,8 @@ ALLOW = {"README.md": ["APEX ORV", "apex-orv"],
          "tools/scrub.py": ["*"]}                  # the scrubber names what it scrubs for
 
 SHIPPED = ["www/index.html", "www/app.js", "www/privacy.html", "www/bundle/manifest.json"]
-PUBLIC_TEXT = ["README.md", "ci/RELEASE.md", "src/privacy.html", "docs/PLAY-LISTING.md", "AGENTS.md", "CLAUDE.md"]
+PUBLIC_TEXT = ["README.md", "ci/RELEASE.md", "src/privacy.html", "docs/PLAY-LISTING.md", "AGENTS.md", "CLAUDE.md",
+               "assets/user/README.md"]   # take 109: its first line named the owner, outside every list
 # The source is public too. Comments are stripped from the ARTIFACT; the tree
 # still has them, so the tree is scanned as well.
 def files_code():

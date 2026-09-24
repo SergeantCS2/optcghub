@@ -303,12 +303,18 @@ def build(verbose=True):
                      "missing_sealed": len(raw_side.get("missing_sealed", [])),
                      "alt_served": len(raw_side.get("alt", [])),
                      "exported": cat.get("alt_images", 0),
-                     "measured": "missing_sealed" in raw_side}
+                     "measured": "missing_sealed" in raw_side,
+                     # take 109 (A42): the large size as the runner measured it this run;
+                     # the app asks for it only when it served (index.html, largeOk)
+                     "large": raw_side.get("large") or {}}
     if verbose:
         im = man["images"]
         print(f"   images: {im['exported']} rows carry the second host "
               f"({im['missing_cards']} cards and {im['missing_sealed']} sealed missing at the first; "
               f"{'measured' if im['measured'] else 'sealed images not yet measured on this sidecar'})")
+        lg = im["large"]
+        print(f"   large art: " + (f"{lg.get('served', 0)} of {lg.get('probed', 0)} served at {lg.get('suffix')}, "
+                                  f"median {lg.get('w', 0)}x{lg.get('h', 0)}" if lg else "not measured on this sidecar -- the app keeps the thumbnails"))
     man["hashed"] = sum(1 for r in cat["rows"]
                         if r[cat["cols"].index("hash")] is not None)
     d1 = cat["cols"].index("d1p")

@@ -1,4 +1,221 @@
-# HANDOFF — through Take 108
+# HANDOFF — through Take 109
+
+## Take 109 — 2026-09-24 — the art layer, part 1: the record corrected, the picture measured, Prep & Play's art, a card's own page
+
+Opened before any code (PROTOCOL §6) by the UI/UX session: the fourth
+take of A42, the first half of the art layer. The owner, having seen
+take 108's look: "go, mark it ready and start take 109" -- the owner
+marked PR #32 ready and merged it at 05:17 UTC (`check` green on its
+head dcbedfa: a fresh ingest, smoke 786/786, render 122/122 in Chrome,
+the gate passed); its build, run 57, went green and published Release
+take-108 at 05:25 (the APK, 26,447,858 bytes; the AAB, 19,633,877; the
+mapping). The last nightly (run 50, 23:50 UTC) is green. This take is
+built on the merge (e634758).
+
+### The owner's words (24 Sept, this session)
+
+- On art, at the start of the series: "That wasn't a landmine set by
+  me, if we can use official art, card art or anything we can leverage
+  i'm more than okay with it. We should not be making our own images
+  from scratch however. Likely Hot-Linked Card Art, Bold"
+- The pick from the preview page: "Prep and Play/the first group of
+  screenshots, I like C, but I also like A, A deck, one Level down, same
+  with A sealed in Hunt. When you scroll down more info of course should
+  be provided, and the color blur should match the color of whatever
+  card you're looking at. I don't really like A in collect however, with
+  the most valuable card showing above my Collection, I just know that
+  art is going to look bad, weird, stretched etc."
+- Asked this take whether the pictures carry a SAMPLE watermark: "Yes,
+  some or all. Namely under the collection progress I see alot sample -
+  not idea, of course. We should be pulling the highest quality images
+  for the main cards. This is the only way using cards as a banner will
+  work."
+- Asked whether the session's VM may reach the image hosts: "I thought I
+  set it to full access, yes - whatever we need."
+
+### Measured first (this VM, 05:30-05:45 UTC)
+
+- **The network changed during the take.** At 05:01 UTC the session VM
+  reached none of TCGCSV and the two image hosts (no answer through the
+  proxy; CLAUDE.md, take 102); by 05:32, after the owner's answer above,
+  all of them and Bandai's card site answered HTTP 200. The session's
+  browsers still refuse the proxy's certificate (their NSS store is
+  empty), so the look fetches pictures through Node, which checks it.
+- **Sizes TCGplayer serves** (4 cards, then 20 served ids): `_200w`
+  200x279; `_400w` 400x559; `_in_1000x1000` 600x838 for most, 716x1000
+  for five of twenty cards looked at (the uploads were larger), 500x700
+  for one (ST04-001). **Bandai's own** card image
+  (`en.onepiece-cardgame.com/images/cardlist/card/<number>.png`) is
+  600x838 for all twenty. Nothing larger exists at either host.
+- **The retry that never served.** `refArt()`'s onerror drops `_200w`
+  and asks for `<id>.jpg`: 403 for all 221 ids the catalogue's host
+  refuses and for 20 of 20 ids it serves. Since take 86 every failed
+  picture has cost a second request that could not succeed.
+  `_in_1000x1000`: 200 for 20 of 20 served ids, 403 for all 221 refused.
+- **The SAMPLE stamp, looked at one by one** (the scratchpad's contact
+  sheets): the ready-made decks' 15 Leaders and the top card of each of
+  the five newest sets, at both hosts. **Stamped: 38 of 40 card
+  pictures** -- Bandai's 20 of 20, TCGplayer's 18 of 20; clean: ST01-001
+  and ST02-001 at TCGplayer only. The five newest booster boxes: clean
+  product pictures. An earlier pixel difference (OP01-001) spelled the
+  word out: Bandai's picture stamped, TCGplayer's clean. So the
+  publisher's own picture is not the cleaner source, and no source is
+  clean for most cards.
+- **Where the stamp sits.** On every stamped picture the word is one
+  band across the middle of the card: its letters start about 45 % down
+  and end by 60 % (guides at 38/42/44/60/64 % on six cards of four
+  kinds and colours; the first white row's median 46.8 % over 38
+  pictures). **Everything above 42 % of the card is clean on every
+  card** -- the frame, the cost and power, the character.
+
+### The plan (and one change from the plan the owner approved)
+
+The owner's pick, with what the measurement changed:
+
+- **Decks (C):** the featured deck's Leader, its art blurred from the
+  band above the stamp, fills a hero behind the mode slider; the Leader
+  card itself rises from behind the title, crisp from the 600x838
+  picture, and only its top 42 % shows -- the card's frame, power and
+  character, never the stamp. The title, a line of counts and the
+  actions sit in A's slot under it, where Sealed's will sit at take 110.
+- **Changed from the plan:** it said that if a third of the Leaders
+  looked at were stamped, the runner would measure the stamp per card
+  and the hero would show its crisp card only when clean. 13 of 15
+  are stamped at TCGplayer, so that rule would show the crisp card for
+  two Leaders of fifteen. The stamp's place is fixed, so a crop above
+  it is clean for every card: no detector, no threshold, and a render
+  check pins the crop.
+- **The ready-made decks back on Decks.** Take 61 put them "on the
+  Decks screen" (its entry, below); since at least take 66 the markup
+  has had `#dkStock` at the bottom of the deck editor, and the smoke
+  line "Decks shows them" only checked that the id existed. Each row
+  shows its Leader's picture now; the drawn cover is the picture's
+  fallback.
+- **A deck, one level down (A):** the Leader card at 96 px from the
+  600x838 picture, its name in the display face, its number, Life and
+  colours.
+- **A card's own page (C's backdrop):** the card's own art, blurred
+  from the band above the stamp, behind the top of the page; the card
+  at up to 196 px from the 600x838 picture. The picture is the card as
+  TCGplayer publishes it: for most cards, stamped (measured above).
+- **Home:** no banner (the owner's ruling).
+- **Offline, or a picture that fails:** the card's own colours, both
+  of them for a two-colour card; nothing drawn, nothing bundled.
+- **The runner** measures the 600x838 size on 40 fixed printings every
+  build and the app uses it only when that build saw it served.
+- **The record first:** landmines 26 and 28 marked superseded in part,
+  30 and 31 standing; A6, A16, A29, A41, A42; the "may not" line; V1-STATE;
+  PROVISION; RUNBOOK-play; the owner's folder README; the gate's list of
+  sentences that are no longer true.
+
+### Built
+
+- **The picture's address** (`artUrl`, `largeOk`): the large picture
+  (`_in_1000x1000`) is made from the printing's own stored URL, never a
+  card number, and used only when this build's runner saw it serve
+  (`manifest.images.large`; this VM's run: 40 of 40, median 600x838,
+  smallest width 408). `refArt(p, {size, cls})`: a large picture that
+  fails drops to its thumbnail; a thumbnail that fails is removed. The
+  retry to `<id>.jpg` is gone (landmine 150).
+- **The cut above the stamp:** `img.above{object-view-box:inset(0 0 58% 0)}`
+  -- every picture shown as art rather than as the card (the blurred grounds,
+  the rising card) is the card's top 42 %, whatever the box (landmine 151).
+- **C's ground** (`artColours`, `artBack`, `paintBack`): the card's own
+  colours (both of two, one and its shade, the mode's for a product), the
+  blurred thumbnail over them, fading into the page by a mask.
+- **Decks:** a 160 px hero (`--hero-h`) whose art reaches up behind the
+  slider and the status bar while the hero keeps its height in the flow;
+  the slider's fade steps aside at the top (`html.at-top`, a passive
+  scroll listener). The featured Leader is the newest of the collector's
+  decks with one, else the first ready-made deck's; the card rises from
+  behind the title, its top 42 % showing (715x1000 for ST01-001, 716x1000
+  for ST05-001 in the look); a credit names it; the line under the title
+  counts the decks and the legal ones.
+- **The ready-made decks back on Decks** (`#dkStock` out of the deck
+  editor; `stockPic`): the Leader's picture over the drawn cover. The
+  cover's 7 px name is gone; the row names the Leader.
+- **A deck, one level down:** the Leader at 96 px from the large picture,
+  its name in the display face, its number, Life and colours.
+- **A card's own page:** `#dBack` behind the top, the card centred at
+  `min(48vw,196px)` from the large picture; a product's photo fits whole
+  on white.
+- **The runner:** `tools/hashes.py` -- `large_url`, `large_jobs` (40 hashed
+  first-host printings spread over the catalogue's ids), `measure_large`,
+  the sidecar's `large`; `build_app.py` puts it in the manifest and says it.
+- **The look behind the proxy:** pictures fetched in Node (landmine 152) --
+  144 fetched, none refused.
+- **The record:** as planned above, plus the gate's stale-copy list (its
+  first negative control since take 8; five more present-tense files read;
+  wrapped sentences matched) and the scrubber reading the owner's README.
+
+### Tests
+
+- **Smoke 817/817** on a fresh catalogue (this VM ingested TCGCSV itself,
+  the first time since take 102). On the take-108 build the new checks
+  fail 25 -- every take-109 check and the four rewritten older ones.
+- **Render 131/132 in Chrome.** The one failure is the Decks list's Leader
+  thumbnail: this VM's browser refuses the proxy's certificate (landmine
+  152); on the runner it loads. On the take-108 build 8 fail: the seven
+  art checks and that thumbnail.
+- **The gate passed here in full** -- the catalogue checks ran on the fresh
+  ingest -- and its selftest ran 16 of 16: both new stale-copy probes
+  fire, the clean tree fires nothing. The widened stale-copy check, run
+  on take 108's record, catches all three sentences this take corrected.
+- **hashes.py's selftest:** the five new cases pass (the large URL from the
+  printing's own URL; a second-host URL, a bare number and a non-URL
+  refused; the median; a host that serves none measures 0; the sample
+  only hashed first-host printings, spread evenly).
+- **The scrubber:** clean over 63 files; on the take-108 README it refuses
+  line 1's first name.
+- **The look, take 109:** 20 of 20 at both viewports with real pictures,
+  every PNG read.
+
+### What I got wrong, and caught
+
+- The first backdrop on a card's page ran 16 px past both edges: its
+  `left/right:-16px` came from the hero, but the page is its own
+  containing block and its padding box already reaches both edges.
+  Render's sideways check caught it at 360, 412 and 820.
+- The hero's art ended in a flat `--bg` and drew a seam across Prep &
+  Play's textured page -- the look showed it; a mask fades the art into
+  the page itself now.
+- `.dklead span{display:block}` caught the colour chip too (a span) and
+  stretched it across the column -- the look showed it.
+- The stale-copy check matched plain substrings and missed a banned
+  sentence wrapped across two lines (the NSP's "including / official
+  product box shots"); it collapses whitespace now.
+- The first render checks of the crop read the pictures themselves, which
+  a refused picture removes; they read the rule from a probe in the same
+  box now, and the markup straight after a paint.
+- A product's square photo was cut at both sides in the card-shaped frame
+  (since take 95 at 112 px; plain at 196) -- it fits whole now.
+- The plan's pre-registered stamp detector: changed after measuring (above).
+
+### Ruled out
+
+- **Bandai's site as the cleaner source:** its pictures are stamped
+  (20 of 20), and they are keyed by card number, not printing (AGENTS
+  rule 3).
+- **A per-card stamp detector:** the stamp's place is fixed, so a crop
+  above it is cleaner and needs no threshold.
+- **Covering or retouching the stamp:** that would be drawing on the
+  publisher's card.
+- **A banner on Home** (the owner's ruling).
+- **Bundling or caching any picture** (landmine 26's part that stands).
+
+### DEFERRED this cycle
+
+- Take 110, the art layer's second half (Hunt first): Sealed's art
+  banner (A) from the most valuable card of the newest set, cropped
+  above the stamp; the set headers on Sealed and Releases as art strips;
+  the Play board's Leader art; art in empty states; the owner's own hero
+  pictures through `assets/user`.
+- **The owner's call:** whole-card pictures -- every thumbnail, a deck's
+  Leader, a card's own page -- show the SAMPLE stamp wherever the
+  publisher's picture carries it (most do; no clean source exists,
+  measured above). They could show the card above the stamp instead,
+  as the hero does, at the cost of no longer showing the whole card.
+- Then the voice take and the polish take (A42).
 
 ## Take 108 — 2026-09-24 — controls and icons: every icon from the sprite with one meaning each, a 44 px target for every control, a pressed and a disabled look
 

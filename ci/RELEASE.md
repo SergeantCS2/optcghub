@@ -19,6 +19,14 @@ Updates arrive through Play like any app. Your data stays across updates.
 
 ---
 
+**New at take 109:** the first card art in the design. Decks opens
+under your newest deck's Leader -- its art behind the title, the card
+rising from behind it -- and the ready-made decks are back on the Decks
+screen, each with its Leader's picture. A deck shows its Leader large,
+and a card's own page shows the card large over its own colours. The
+pictures are TCGplayer's largest; offline, each shows the card's own
+colours instead. Nothing you have saved changes.
+
 **New at take 108:** every icon is drawn the same way, and each one
 means one thing: Scan, Collection, Sealed, Releases, Local and Events
 have icons of their own. Every button is big enough for a thumb, shows

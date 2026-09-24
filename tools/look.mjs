@@ -20,7 +20,11 @@
    global copy is imported by its absolute path when the bare import fails.
    Limits, honestly: no camera, no notifications, no share sheet, no native
    Back (history Back runs the same handler chain — landmine 137's test), and
-   no CDN pictures where the VM's egress is closed (a picture is its label). */
+   no CDN pictures where the VM's egress is closed (a picture is its label).
+   Behind the session VM's proxy (take 109, landmine 152) the browser refuses
+   the proxy's certificate while Node checks it against the environment's
+   bundle: the two picture hosts are fetched in Node and handed to the page.
+   Without a proxy variable nothing of that runs. */
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
@@ -82,7 +86,17 @@ async function runStep(page, ctx, step, n) {
   return rec;
 }
 
+const PROXY = process.env.HTTPS_PROXY || process.env.https_proxy || '';
+const PICTURES = /^https:\/\/(tcgplayer-cdn|product-images)\.tcgplayer\.com\//;
+
 async function main() {
+  /* Node's fetch goes through the proxy only when it starts with NODE_USE_ENV_PROXY=1 */
+  if (PROXY && process.env.NODE_USE_ENV_PROXY !== '1') {
+    const { spawnSync } = await import('node:child_process');
+    const r = spawnSync(process.execPath, process.argv.slice(1), { stdio: 'inherit', env: { ...process.env, NODE_USE_ENV_PROXY: '1' } });
+    process.exit(r.status == null ? 1 : r.status);
+  }
+  const pictures = { fetched: 0, refused: 0 };
   const pw = await loadPlaywright();
   if (!pw) { console.log('look: playwright is not installed here (the look is the session VM\'s tool; the runner has puppeteer and render.mjs)'); process.exit(2); }
   if (!selftest && !STEPS[take]) { console.log(`look: no step list for take ${take} in tools/look/steps.mjs (have: ${Object.keys(STEPS).join(', ')})`); process.exit(2); }
@@ -97,6 +111,14 @@ async function main() {
     for (const vp of names) {
       const v = VIEWPORTS[vp]; if (!v) { console.log(`look: no viewport '${vp}' (have: ${Object.keys(VIEWPORTS).join(', ')})`); process.exit(2); }
       const page = await browser.newPage({ viewport: { width: v.width, height: v.height }, deviceScaleFactor: v.dpr });
+      if (PROXY) await page.route(PICTURES, async route => {
+        try {
+          const r = await fetch(route.request().url(), { headers: { 'User-Agent': 'Mozilla/5.0 optcghub-look' } });
+          const body = Buffer.from(await r.arrayBuffer());
+          if (r.ok) pictures.fetched += 1; else pictures.refused += 1;
+          await route.fulfill({ status: r.status, contentType: r.headers.get('content-type') || 'image/jpeg', body });
+        } catch { pictures.refused += 1; await route.abort().catch(() => {}); }
+      });
       const errors = [];
       page.on('pageerror', e => errors.push(String(e)));
       const dir = path.join(OUT, vp); fs.mkdirSync(dir, { recursive: true });
@@ -120,6 +142,7 @@ async function main() {
     console.log(`\nlook selftest: ${fired ? 'every control fired (the harness reports a wrong expectation and a blank page as failures)' : 'A CONTROL DID NOT FIRE'}`);
     process.exit(fired ? 0 : 1);
   }
+  if (PROXY) console.log(`\npictures through Node behind the proxy: ${pictures.fetched} fetched, ${pictures.refused} refused by the host`);
   console.log(`\nlook take ${take}: ${report.length} steps, ${report.length - bad.length} ok, ${bad.length} not ok — ${path.relative(ROOT, OUT)}/`);
   process.exit(bad.length ? 1 : 0);
 }

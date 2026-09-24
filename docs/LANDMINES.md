@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 108.*
+*Current as of take 109.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -159,6 +159,10 @@ Start here. Do not read top to bottom.
 | The scanner's buttons sit under the bottom nav | **146** |
 | A row of flex items squeezes its labels onto each other | **147** |
 | An icon toggle reports "filled" and draws hollow | **148** |
+| A test says a list is on a screen and it is somewhere else | **149** |
+| Every failed picture costs a second request that cannot succeed | **150** |
+| The publisher's picture carries SAMPLE; a banner shows the stamp | **151** |
+| The look's pictures fail in the VM while curl fetches them | **152** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -361,13 +365,22 @@ them and produce a plausible wrong answer.
 Toei and Viz own it. The pipeline downloads images inside the CI runner, computes
 a 64-bit dHash, and discards them. 6,860 hashes is 55 KB. What ships is derived
 data three orders of magnitude removed from the work.
+*Superseded in part at take 109 (the owner's ruling, A42):* the line above was
+the sessions', never the owner's -- "if we can use official art, card art or
+anything we can leverage i'm more than okay with it". Card art is displayed,
+boldly and hot-linked (28): the Decks hero, a card's backdrop, the card at its
+largest. What still holds: nothing is bundled into the APK or the AAB,
+committed, cached to disk or drawn from scratch, and the pipeline still hashes
+and discards.
 
 **27. The collection thumbnail is the collector's own photograph.** This is the
 consequence of 26 and it is a better product: the binder shows the actual cards,
 with their actual foiling, in their actual sleeves. The reference app cannot do
 this — every thumbnail in the owner's screenshots is a publisher SAMPLE watermark,
 which is itself evidence that they took advice on this and landed somewhere more
-constrained.
+constrained. *Take 109:* still true for a scanned card -- its own photograph
+comes first; the reference picture is for a card not yet scanned, and most carry
+the SAMPLE stamp (151).
 
 **28. Reference images are hot-linked, never cached to disk.** For cards not yet
 scanned, load `imageUrl` from the TCGplayer CDN
@@ -376,7 +389,11 @@ declared in `PROVISION.md`, allowlisted in the gate as DISPLAY-ONLY with that
 reasoning recorded *(correction, take 93: the gate checks that the host is
 declared, nothing about purpose; DISPLAY-ONLY is the declaration's prose —
 landmine 129's shape)*. It is never load-bearing: PROTOCOL §8's airplane-mode
-invariant covers scanning, which uses the collector's own photo.
+invariant covers scanning, which uses the collector's own photo. *Take 109:* the
+same rule carries the Decks hero, a card's backdrop and the card at 600x838
+(`_in_1000x1000`, measured on the runner every build, used only when that build
+saw it served); where the art is a banner rather than the card itself, only the
+part above the stamp shows (151).
 
 **29. Attribution is not optional and it is not bureaucracy.** TCGCSV is one
 person's free service carrying TCGplayer's data. Name both, in-app, with links.
@@ -2105,6 +2122,38 @@ colour, the look passed -- and the picture showed a hollow star, because
 the symbol said `fill="none"` itself. Rule: an icon a control fills leaves
 its fill open on the symbol (`svg.g` is `fill:none` by default), and a
 check reads the symbol's own attribute, or the picture.
+
+**149. A test named for a place that never checks the place passes wherever
+the thing is.** Take 61 put the ready-made decks "on the Decks screen" and
+smoke said so: "Decks shows them under their own heading" -- by testing that
+`id="dkStock"` existed anywhere in the page. From take 66 at the latest the
+markup had it at the bottom of the deck editor, one level down, and the line
+stayed green for forty takes. Rule: an assertion about where something is
+reads the enclosing screen (`closest('section.screen')`, or the section's
+slice of the markup), with a control that moves it.
+
+**150. A fallback nobody measured is a request that cannot succeed.** Since
+take 86 `refArt()` answered a failed picture by dropping `_200w` and asking
+for `<id>.jpg`. Measured at take 109: 403 for all 221 ids the host refuses and
+for 20 of 20 it serves -- the second request never once returned a picture,
+and every failure paid for it. Rule: a fallback URL is measured like the
+primary (take 100's pattern: the runner sees it serve before it ships).
+
+**151. The publisher's own picture is not the clean one.** The SAMPLE stamp
+was assumed to be the marketplace's; looked at picture by picture at take 109,
+Bandai's own card images carry it on 20 of 20, TCGplayer's on 18 of 20 (the
+ready-made decks' Leaders and the newest sets' top cards). The stamp's place is
+fixed: one band across the card from about 45 % to 60 % of its height. Rule: a
+"better source" is measured picture by picture, not reasoned about; where art
+is shown as a banner, crop above 42 % of the card and the stamp cannot show.
+
+**152. The session VM's browsers refuse the proxy's certificate even when curl
+and Node accept it.** Playwright's and puppeteer's Chromium answered
+`ERR_CERT_AUTHORITY_INVALID` for every picture while `curl` and Node's `fetch`
+(`NODE_USE_ENV_PROXY=1`, `NODE_EXTRA_CA_CERTS`) fetched them: the browsers'
+certificate store is empty. Rule: the harness fetches the picture in Node, which
+checks the certificate, and hands the bytes to the page; never switch the
+browser's check off.
 
 ## §2 — Inherited from APEX ORV
 

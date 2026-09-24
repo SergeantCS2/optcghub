@@ -499,4 +499,93 @@ const take108 = [
     } }
 ];
 
-export const STEPS = { 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108 };
+/* ---- take 109 — the art layer, part 1 (A42): Prep & Play first, with real pictures ------------
+   Behind the session VM's proxy the harness fetches the pictures in Node (landmine 152), so these
+   are TCGplayer's own. A picture's state is measured, not assumed: loaded, its natural size, and
+   the cut above the SAMPLE stamp (object-view-box, landmine 151). */
+const waitArt = (page, sel, ms = 9000) => page.waitForFunction(s => { const im = [...document.querySelectorAll(s)]; return im.length > 0 && im.every(i => i.complete); }, sel, { timeout: ms }).catch(() => {});
+const heroState = () => { const h = document.querySelector('#dkHero'), peek = h.querySelector('.peek img'), bg = h.querySelector('.artbg img');
+  const pic = i => i ? { ok: i.classList.contains('ok') && i.naturalWidth > 0, natural: `${i.naturalWidth}x${i.naturalHeight}`, cut: getComputedStyle(i).objectViewBox } : null;
+  return { shown: !h.hidden, credit: ((h.querySelector('.credit') || {}).textContent || '').trim(), card: pic(peek), blur: pic(bg),
+    slider: getComputedStyle(document.querySelector('.modebar')).backgroundImage.slice(0, 30), sub: document.querySelector('#dkSub').textContent }; };
+const newDeck = (num, name) => `(async () => { const V = window.VAULT; const L = V.CAT.rows.find(p => p.num === '${num}' && !p.sealed && p.treat === 'base') || V.CAT.rows.find(p => p.type === 'Leader' && p.img);
+  const d = V.DECKS.blank(); d.name = '${name}'; d.leader = L.id; d.created = Date.now(); V.DECKS.list.push(d); V.DECKS.save(); V.go('decks'); await new Promise(r => setTimeout(r, 450)); window.scrollTo(0, 0); return \`\${L.num} \${L.name}\`; })()`;
+const take109 = [
+  { name: 'play-decks-under-a-ready-made-leader', run: async (page, ctx) => {
+      /* a fresh phone has no deck of its own: Decks opens under the first ready-made deck's Leader */
+      await ctx.open();
+      /* both viewports share one browser's storage: the decks the cover run made are cleared first */
+      await page.evaluate(`(async () => { const V = window.VAULT; V.DECKS.list.length = 0; V.DECKS.save(); V.MODE.set('play', true); V.go('decks'); await ${pause}; window.scrollTo(0, 0); })()`);
+      await waitArt(page, '#dkHero img');
+      const m = await page.evaluate(heroState);
+      return { ok: m.shown && /ready-made/.test(m.credit) && m.slider === 'none' && /58%/.test(m.card ? m.card.cut : ''), ...m };
+    } },
+  { name: 'play-decks-under-your-newest-deck-a-stamped-card', run: async (page) => {
+      /* a deck of your own whose Leader's picture carries the SAMPLE stamp (ST05-001 Shanks, looked at in step 1 of the take): the card rises cut above it */
+      const leader = await page.evaluate(newDeck('ST05-001', 'Red-Haired Shanks'));
+      await waitArt(page, '#dkHero img');
+      const m = await page.evaluate(heroState);
+      return { ok: m.shown && /your newest deck/.test(m.credit) && /^1 deck/.test(m.sub), leader, ...m };
+    } },
+  { name: 'play-ready-made-decks-back-on-decks', run: async (page) => {
+      /* take 61 put them here; the markup had them in the deck editor from take 66 at the latest (landmine 149) */
+      await page.evaluate(() => { const s = document.querySelector('#dkStock'); s.scrollIntoView({ block: 'start', behavior: 'instant' }); window.scrollBy(0, -64); });
+      await waitArt(page, '#dkStock img', 6000); await wait(300);
+      const m = await page.evaluate(() => { const rows = [...document.querySelectorAll('#decks #dkStock [data-stock]')];
+        return { onDecks: !!document.querySelector('#decks #dkStock'), rows: rows.length, pictures: rows.filter(r => { const i = r.querySelector('img.ref'); return i && i.classList.contains('ok'); }).length,
+          covers: rows.filter(r => r.querySelector('.ph svg')).length, first: ((rows[0] || {}).textContent || '').replace(/\s+/g, ' ').trim().slice(0, 70) }; });
+      return { ok: m.onDecks && m.rows >= 10 && m.covers === m.rows, ...m };
+    } },
+  { name: 'play-deck-leader-large', run: async (page) => {
+      /* one level down (A): take 107's compact bar, the Leader card at 96 px from the large picture */
+      await page.evaluate(async () => { const V = window.VAULT; const d = V.DECKS.list[V.DECKS.list.length - 1]; V.openDeck(d.id); await new Promise(r => setTimeout(r, 450)); window.scrollTo(0, 0); });
+      await waitArt(page, '#dkLead img');
+      const m = await page.evaluate(() => { const b = document.querySelector('#dkLead').getBoundingClientRect(), i = document.querySelector('#dkLead img');
+        return { boxW: Math.round(b.width), card: i ? { ok: i.classList.contains('ok'), natural: `${i.naturalWidth}x${i.naturalHeight}` } : null, line: document.querySelector('#dkLeadLine').textContent.replace(/\s+/g, ' ').trim() }; });
+      return { ok: m.boxW === 96 && /Leader/.test(m.line), ...m };
+    } },
+  ...[['a two-colour card', p => /^[A-Z][a-z]+;[A-Z][a-z]+$/.test(p.color || '')], ['a one-colour card', p => /^(Red|Green|Blue|Purple|Black|Yellow)$/.test(p.color || '')]].map(([label, test], k) => ({
+    name: `collect-card-page-${k ? 'one' : 'two'}-colour${k ? '' : 's'}-under-its-own-art`, run: async (page) => {
+      /* a card's own page (C's backdrop): its art blurred behind the top, on its own colours; the card large and centred */
+      const card = await page.evaluate(`(async () => { const V = window.VAULT; const t = ${test.toString()};
+        const p = V.CAT.rows.filter(p => !p.sealed && t(p) && p.hash && p.market && /_200w\\.jpg$/.test(p.img || '')).sort((a, b) => b.market - a.market)[0];
+        V.MODE.set('collect', true); await ${pause}; V.openDetail(p.id); await ${pause}; window.scrollTo(0, 0); return \`\${p.num} \${p.name} (\${p.color})\`; })()`);
+      await waitArt(page, '#dArt img, #dBack img');
+      const m = await page.evaluate(() => { const a = document.querySelector('#dArt').getBoundingClientRect(), i = document.querySelector('#dArt img'), b = document.querySelector('#dBack img');
+        return { artW: Math.round(a.width), centred: Math.abs(a.left + a.width / 2 - innerWidth / 2) <= 1, card: i ? `${i.naturalWidth}x${i.naturalHeight}` : 'no picture', blur: b ? (b.classList.contains('ok') ? 'loaded' : 'waiting') : 'no picture',
+          ground: getComputedStyle(document.querySelector('#dBack')).backgroundImage.slice(0, 70) }; });
+      return { ok: m.centred && m.artW > 150 && /gradient/.test(m.ground), label, card, ...m };
+    } })),
+  { name: 'collect-card-page-a-sealed-product', run: async (page) => {
+      /* a product has no game colour: its ground is the mode's, its own photo blurred over it */
+      const product = await page.evaluate(`(async () => { const V = window.VAULT; const p = V.CAT.rows.filter(p => p.sealed && /booster box/i.test(p.name) && p.hash !== undefined && p.market).sort((a, b) => b.market - a.market)[0] || V.CAT.rows.find(p => p.sealed && p.img);
+        V.openDetail(p.id); await ${pause}; window.scrollTo(0, 0); return p.name; })()`);
+      await waitArt(page, '#dArt img, #dBack img');
+      const m = await page.evaluate(() => ({ ground: getComputedStyle(document.querySelector('#dBack')).backgroundImage.slice(0, 80), artW: Math.round(document.querySelector('#dArt').getBoundingClientRect().width) }));
+      return { ok: /gradient/.test(m.ground) && m.artW > 150, product, ...m };
+    } },
+  { name: 'collect-home-no-banner', run: async (page) => {
+      /* the owner: "I don't really like A in collect" -- Home keeps its plain header */
+      await page.evaluate(`(async () => { window.VAULT.go('home'); await ${pause}; window.scrollTo(0, 0); })()`);
+      const m = await page.evaluate(() => ({ hero: !!document.querySelector('#home .arthero'), title: document.querySelector('#home .ab-title').textContent, slider: getComputedStyle(document.querySelector('.modebar')).backgroundImage.slice(0, 30) }));
+      return { ok: !m.hero && m.slider !== 'none', ...m };
+    } },
+  { name: 'play-decks-offline-the-cards-own-colours', run: async (page) => {
+      /* no pictures: a Leader never shown before (so nothing is cached), with the picture hosts refused -- the ground is the card's colours */
+      await page.route(/tcgplayer\.com\//, r => r.abort());
+      const leader = await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('play', true); await ${pause}; return await ${newDeck('OP10-001', 'Offline test').replace(/^\(async \(\) => \{ /, '(async () => { ')}; })()`);
+      await wait(800);
+      const m = await page.evaluate(heroState);
+      await page.unroute(/tcgplayer\.com\//);
+      const ground = await page.evaluate(() => getComputedStyle(document.querySelector('#dkHero .artbg')).backgroundImage.slice(0, 80));
+      return { ok: m.shown && !(m.card && m.card.ok) && /gradient/.test(ground), leader, ground, card: m.card, blur: m.blur };
+    } },
+  { name: 'play-decks-scrolled-the-fade-returns', run: async (page) => {
+      /* scrolled, the slider's fade is back over whatever passes under it */
+      await page.evaluate(async () => { const V = window.VAULT; V.DECKS.list.splice(V.DECKS.list.findIndex(d => d.name === 'Offline test'), 1); V.DECKS.save(); V.go('decks'); await new Promise(r => setTimeout(r, 450)); window.scrollTo(0, 260); await new Promise(r => setTimeout(r, 300)); });
+      const m = await page.evaluate(() => ({ atTop: document.documentElement.classList.contains('at-top'), slider: getComputedStyle(document.querySelector('.modebar')).backgroundImage.slice(0, 40) }));
+      return { ok: !m.atTop && /gradient/.test(m.slider), ...m };
+    } }
+];
+
+export const STEPS = { 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109 };

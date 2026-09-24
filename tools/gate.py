@@ -277,13 +277,25 @@ def check_stale_copy():
         ("APEX VAULT",          "renamed at take 4"),
         ("apex-vault",          "renamed at take 4"),
         ("Unlimited scans. No", "take-2 phrasing; see A17"),
+        # take 109 (A42): the owner's ruling -- card art is shown, hot-linked; these said otherwise
+        ("the app shows none",                   "take 109: the app shows card art, hot-linked (A42; landmine 26's note)"),
+        ("including official product box shots", "take 109: what may not ship is bundled art, and a character or mark in the name, icon, splash or listing (A42)"),
+        ("carries no character art",             "take 109: the listing never said so, and the app shows card art (A29's correction)"),
+        ("no character art, no publisher mark",  "take 109: card art is shown; marks stay out of the name, icon, splash and listing (V1-STATE)"),
     ]
-    files = ["src/app.html", "README.md", "ci/RELEASE.md", "docs/RUNBOOK.md", "docs/RUNBOOK-play.md"]
+    files = ["src/app.html", "README.md", "ci/RELEASE.md", "docs/RUNBOOK.md", "docs/RUNBOOK-play.md",
+             # take 109: the present-tense record that carried the old line; the append-only
+             # history (HANDOFF, LANDMINES, AGENDA) keeps what it said and is not read here
+             "docs/V1-STATE.md", "docs/NEW-SESSION-PROMPT.md", "docs/PROVISION.md", "docs/PLAY-LISTING.md",
+             "src/privacy.html", "assets/user/README.md"]
     for f in files:
         body = read(*f.split("/"))
         # strip code comments so a landmine explanation does not trip its own guard
         stripped = re.sub(r"/\*.*?\*/", "", body, flags=re.S)
         stripped = re.sub(r"<!--.*?-->", "", stripped, flags=re.S)
+        # take 109: a sentence wrapped across two lines is still that sentence (the NSP's
+        # "including / official product box shots" slipped a plain substring match)
+        stripped = re.sub(r"\s+", " ", stripped)
         for phrase, why in BANNED:
             if phrase.lower() in stripped.lower():
                 fail("stale-copy", f"{f} still says '{phrase}' — {why}")
@@ -551,7 +563,8 @@ def selftest():
         # "fires" for that reason alone (take 102, landmine 139: eleven probes had, since
         # take 35, proved nothing; the clean-tree control above catches the next such hole)
         for item in ("docs", "BUILD", "src", "tools", ".gitignore", "www", "ci", ".github",
-                     "signing/optcghub.keystore", "catalog/star_template.json"):
+                     "signing/optcghub.keystore", "catalog/star_template.json",
+                     "README.md", "assets/user/README.md"):             # take 109: check_stale_copy reads them
             src = os.path.join(ROOT, item)
             if os.path.exists(src):
                 os.makedirs(os.path.dirname(os.path.join(tmp, item)), exist_ok=True)
@@ -565,7 +578,7 @@ def selftest():
             n = take()
             check_docs_current(n); check_handoff(n); check_agenda()
             check_landmine_citations(); check_secrets(); check_render_receipt()
-            check_workflow_copies(); check_offline(provision_hosts()); check_icon_characters()
+            check_workflow_copies(); check_offline(provision_hosts()); check_icon_characters(); check_stale_copy()
             fired = any(f.startswith(cat + ":") for f in FAILS) if cat else bool(FAILS)
             stray = [f for f in FAILS if cat and not f.startswith(cat + ":")]
         finally:
@@ -606,6 +619,12 @@ def selftest():
           .write("\n<span>\U0001F50D</span>\n"), "icons")
     probe("an icon drawn as a JS escape (take 108)", lambda t: open(os.path.join(t, "src", "app.html"), "a")
           .write("\n<script>const x = '\\u2699';</script>\n"), "icons")
+    # take 109 (landmine 88): a sentence the design made false, back in the record -- the
+    # check's first negative control since take 8, and one in a file the list grew to
+    probe("a sentence the design made false, back in V1-STATE (take 109)", lambda t: open(os.path.join(t, "docs", "V1-STATE.md"), "a")
+          .write("\nNo account, no character art, no publisher marks.\n"), "stale-copy")
+    probe("...and in the owner's folder README (take 109)", lambda t: open(os.path.join(t, "assets", "user", "README.md"), "a")
+          .write("\nBox shots were declined, and the app shows none.\n"), "stale-copy")
     probe("upload key in the tree",
           lambda t: open(os.path.join(t, "apex-upload.jks"), "w").write("x"), "secrets")
 
