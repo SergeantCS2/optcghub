@@ -45,6 +45,7 @@
   --ic-sm:16px; --ic-md:20px; --ic-lg:24px;
   --thumb-sm:36px; --thumb-md:52px; --thumb-lg:112px;
   --dur-press:120ms; --dur-ui:220ms; --dur-sheet:320ms;
+  --modebar-h:53px;   /* take 108: the sticky mode slider's height (52.3 px MEASURED in Chrome); render checks the scanner against it */
   --z-screen:1; --z-modebar:20; --z-nav:30; --z-sheet:40; --z-overlay:60; --z-toast:70; --z-splash:100;
   --on-accent:#1A1408; --accent-ink:#C9A24A; --line-strong:#6B7377;
   --accent-bg:color-mix(in srgb,var(--brass) 12%,var(--card));
@@ -83,6 +84,7 @@
 /* Take 82. Native controls wore the platform's white: every select and text
    field takes the card, the line and the accent on focus, everywhere. */
 select,input[type="text"],input[type="search"],input[type="number"],input:not([type]),textarea{
+  min-height:44px;   /* take 108: a 44 px target */
   background:var(--card2);color:var(--fg);border:1px solid var(--line-strong);border-radius:10px;padding:8px 12px;font:inherit;font-size:16px;
   -webkit-appearance:none;appearance:none}
 select{max-width:100%;padding-right:30px;background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);
@@ -94,7 +96,7 @@ input::placeholder,textarea::placeholder{color:var(--dim2)}
    fires only for keyboard focus, so a tap never shows it. */
 :focus-visible{outline:2px solid var(--brass);outline-offset:2px;border-radius:8px}
 button:focus:not(:focus-visible){outline:none}
-svg.g{display:inline-block;vertical-align:-3px;color:var(--accent-ink);flex:0 0 auto}
+svg.g{display:inline-block;vertical-align:-3px;color:var(--accent-ink);flex:0 0 auto;fill:none}   /* take 108: a symbol that leaves its fill open (the star, the bell) is hollow unless its control fills it */
 html,body{margin:0;height:100%}
 body{overflow-x:hidden}   /* belt and braces for landmine 54 */
 body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
@@ -158,7 +160,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .appbar{display:flex;align-items:flex-start;gap:var(--sp-2);min-height:56px;padding:var(--sp-3) 0 var(--sp-2)}
 .ab-back{margin-left:-10px}   /* the 44 px tap box overhangs the gutter; the arrow itself stays inside it */
 .ab-text{flex:1;min-width:0;padding-top:calc((44px - 1.1 * var(--fs-head)) / 2)}   /* the title's first line centred on the 44 px row of Back and the actions, with or without a line under it */
-.ab-title{margin:0;font-size:var(--fs-head);line-height:1.1;overflow-wrap:anywhere;text-wrap:balance}
+.ab-title{display:flow-root;margin:0;font-size:var(--fs-head);line-height:1.1;overflow-wrap:anywhere;text-wrap:balance}   /* flow-root: the deck name's 44 px field must not pull the title's box up (its margin collapsed through, take 108) */
 .ab-sub{margin:3px 0 0;font-size:var(--fs-sm);line-height:1.35;color:var(--dim)}
 .ab-sub:empty{display:none}
 .ab-sub b{color:var(--accent-ink)}
@@ -167,7 +169,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .icb{width:44px;height:44px;flex:0 0 44px;display:grid;place-items:center;border-radius:var(--r-pill);color:var(--fg)}
 .icb svg.g{color:inherit;vertical-align:0}
 /* the deck's name is its title, and stays a field you can type in */
-h1.ab-title input{display:block;width:100%;margin:0;padding:0 0 2px;background:none;border:0;border-radius:0;
+h1.ab-title input{display:block;width:100%;min-height:0;margin:-6px 0 -8px;padding:6px 0 8px;background:none;border:0;border-radius:0;   /* take 108: 44 px to tap, the text where every title is */
   border-bottom:1px dashed var(--line-strong);font:inherit;letter-spacing:inherit;color:inherit}
 h1.ab-title input:focus{border-bottom:1px solid var(--brass)}
 /* Home's two views: tabs under the title, unlike the mode slider's pill */
@@ -175,6 +177,30 @@ h1.ab-title input:focus{border-bottom:1px solid var(--brass)}
 .segtabs button{flex:1;min-height:44px;font-size:var(--fs-body);font-weight:700;color:var(--dim);
   border-bottom:2px solid transparent;margin-bottom:-1px}
 .segtabs button.on{color:var(--accent-ink);border-bottom-color:var(--brass)}
+/* ---- controls (take 108, A42): a 44 px target, a pressed look, a disabled look ---- */
+/* An icon inside a control never takes the tap from it: several handlers read e.target */
+button svg,a svg{pointer-events:none}
+/* Pressed: every control answers a touch with a lighter face; the compact ones also give a
+   little. A whole row -- a card, a set -- only lightens. (The tap highlight is off, line 82.) */
+button,a.chip,a.ghost{transition:transform var(--dur-press) ease-out,filter var(--dur-press) ease-out}
+button:not(:disabled):active,a.chip:active,a.ghost:active{filter:brightness(1.25)}
+:is(.ghost,.chip,.icb,.pill,.setchip,.range,.stepper button,.cnt button,.linkish,nav button,.mode button,.segtabs button,.opt):not(:disabled):active{transform:scale(.96)}
+/* Disabled: it looks switched off, and the pointer says so */
+button:disabled{opacity:.45;cursor:not-allowed}
+/* A toggle drawn as an icon fills while it is on (the favourites star) */
+.icb[aria-pressed="true"] svg.g{fill:currentColor}
+.icb{position:relative}
+.icb .fcount{position:absolute;top:3px;right:1px;margin:0}
+.search > .icb:first-child{margin-left:-10px}   /* its glyph where the other bars' spyglass is */
+/* 44 px targets (WCAG 2.5.5; ui-ux-pro-max §2). Real size where growing costs nothing ... */
+.ghost,.linkish{min-height:44px}
+a.ghost{display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
+.actions button{flex:0 0 auto;min-width:44px;min-height:44px}   /* flex:0 0 auto -- a min-width alone replaced the label's own minimum and squeezed the row */
+/* ... and a 44 px hit area around the drawn control where a dense row would grow */
+.chip,button.pill,.setchip,.range,.cnt button{position:relative}
+:is(.chip,button.pill,.setchip,.range,.cnt button,.mode button)::after{content:"";position:absolute;left:50%;top:50%;
+  width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+input[type="checkbox"]{width:20px;height:20px;accent-color:var(--brass)}   /* its <label> row is the 44 px target */
 .pill{display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap;
   color:var(--dim);background:var(--card2);border-radius:999px;padding:5px 11px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--up)}
@@ -228,8 +254,8 @@ h1.ab-title input:focus{border-bottom:1px solid var(--brass)}
   white-space:nowrap;color:var(--accent-ink)}
 .actions .ic{font-size:17px}
 .search{display:flex;align-items:center;gap:10px;background:var(--card2);
-  border:1px solid var(--line-strong);border-radius:999px;padding:11px 16px;margin-bottom:14px}   /* take 106: a field's edge at 3:1 */
-.search input{flex:1;background:none;border:0;outline:0;color:var(--fg);font-size:16px}   /* 16px: under it Android zooms the page on focus (take 81) */
+  border:1px solid var(--line-strong);border-radius:999px;padding:7px 8px 7px 16px;margin-bottom:14px}   /* take 106: a field's edge at 3:1; take 108: 7 px round a 44 px field and 44 px buttons */
+.search input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--fg);font-size:16px;padding-left:4px;padding-right:4px}   /* 16px: under it Android zooms the page on focus (take 81) */
 .search input::placeholder{color:var(--dim2)}
 .search:focus-within{border-color:var(--brass)}
 .search input::placeholder{color:var(--dim2)}
@@ -276,7 +302,7 @@ h1.ab-title input:focus{border-bottom:1px solid var(--brass)}
 
 /* ---- scanner ------------------------------------------------------------ */
 #scan{padding:0}
-.scanwrap{position:relative;height:calc(100vh - 76px - var(--sat) - var(--sab));background:#050607;
+.scanwrap{position:relative;height:calc(100vh - 76px - var(--sat) - var(--sab) - var(--modebar-h));   /* take 108: the sticky mode slider too -- without it the shutter row sat 52 px under the nav (PROVEN on take 106) */background:#050607;
   display:flex;flex-direction:column;align-items:center}
 #scan .appbar{align-self:stretch;padding-left:var(--pad);padding-right:var(--pad)}   /* the camera surface has no side padding; the header brings its own */
 .setchip{display:flex;align-items:center;gap:7px;background:var(--card2);
@@ -347,7 +373,7 @@ h1.ab-title input:focus{border-bottom:1px solid var(--brass)}
 /* ---- detail ------------------------------------------------------------- */
 .detail .sub{color:var(--dim);font-size:13.5px;margin-bottom:14px}
 .stepper{display:flex;align-items:center;gap:16px}
-.stepper button{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--brass2);
+.stepper button{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--brass2);   /* take 108: 44 px (it was 34) */
   color:var(--accent-ink);font-size:19px;line-height:1;display:grid;place-items:center}
 .prov{font-size:var(--fs-cap);color:var(--dim2);margin-top:9px;line-height:1.5}
 .spread{display:flex;gap:6px;align-items:center;margin-top:10px;font-size:12px;color:var(--dim)}
@@ -355,7 +381,7 @@ h1.ab-title input:focus{border-bottom:1px solid var(--brass)}
 .spreadbar i{position:absolute;top:-3px;width:3px;height:11px;border-radius:2px;background:var(--brass)}
 .seg{display:flex;gap:8px;margin:10px 0 4px}
 .seg button{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 0;
-  font-size:13px;font-weight:650;color:var(--dim)}
+  font-size:13px;font-weight:650;color:var(--dim);min-height:44px}
 .seg button.on{background:var(--accent-bg);border-color:var(--brass2);color:var(--accent-ink)}
 .note{font-size:12px;color:var(--dim2);line-height:1.5;margin-top:10px}
 
@@ -389,9 +415,9 @@ h1.ab-title input:focus{border-bottom:1px solid var(--brass)}
 
 /* ---- filter / sort sheet -------------------------------------------------- */
 .fgrp{margin:16px 0 6px;font-size:13px;color:var(--dim)}
-.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chips{display:flex;flex-wrap:wrap;gap:10px 7px}   /* take 108: a 34 px chip and a 10 px gap -- rows 44 px apart, so each chip's 44 px square is its own */
 .chip{border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13px;
-  font-weight:600;color:var(--dim);background:var(--card2)}
+  font-weight:600;color:var(--dim);background:var(--card2);min-height:34px}   /* take 108: at least 34 px, so a 10 px row gap puts wrapped rows 44 px apart (the where-to-buy chips were 31) */
 .chip.on{background:var(--accent-bg);border-color:var(--brass2);color:var(--accent-ink)}
 .chip.buy{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:var(--accent-ink);padding:5px 10px}   /* take 96: an anchor as a chip */
 .panel[hidden]{display:none}   /* landmine 136 */
@@ -555,7 +581,7 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
   <div class="stale" id="staleBanner" hidden></div>
   <div class="panel" id="whatsNew" hidden style="border-color:var(--brass)"></div>
   <div class="hero" id="hero">
-    <button class="who" id="pfSwitch" style="text-align:left;display:block"><span class="cap">Portfolio</span><em id="pfName">One Piece</em> <span style="color:var(--dim2);font-size:13px">&#9662;</span></button>
+    <button class="who" id="pfSwitch" style="text-align:left;display:block"><span class="cap">Portfolio</span><em id="pfName">One Piece</em> <svg class="g" width="16" height="16" aria-hidden="true" style="color:var(--dim2)"><use href="#g-chevron"/></svg></button>
     <div class="total mono" id="pfTotal">$0.00</div>
     <div class="delta mono" id="pfDelta">&nbsp;</div>
   </div>
@@ -595,20 +621,20 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
     <div class="ab-act"><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
   </header>
   <div class="actions">
-    <button data-act="movers"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-trigger"/></svg></span>Market Movers</button>
+    <button data-act="movers"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-trend"/></svg></span>Market Movers</button>
     <button data-act="trade"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-rope"/></svg></span>Trade Analyzer</button>
-    <button data-act="bulk"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-blocker"/></svg></span>Bulk Actions</button>
-    <button data-act="export"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-spyglass"/></svg></span>Export</button>
-    <button data-act="backup"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-counter"/></svg></span>Backup</button>
-    <button data-act="import"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-anchor"/></svg></span>Import</button>
-    <button data-act="wants"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-life"/></svg></span>Want list</button>
-    <button data-act="binder"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-stage"/></svg></span>Binder</button>
+    <button data-act="bulk"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-select"/></svg></span>Bulk Actions</button>
+    <button data-act="export"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-export"/></svg></span>Export</button>
+    <button data-act="backup"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-backup"/></svg></span>Backup</button>
+    <button data-act="import"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-import"/></svg></span>Import</button>
+    <button data-act="wants"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-bookmark"/></svg></span>Want list</button>
+    <button data-act="binder"><span class="ic" aria-hidden="true"><svg class="g" width="20" height="20"><use href="#g-binder"/></svg></span>Binder</button>
   </div>
   <div class="search">
-    <span>🔍</span>
-    <input id="colq" placeholder="Search your collection">
-    <button id="favOnly" aria-label="Show favourites only" title="Favourites only">☆</button>
-    <button id="sortBtn" title="Filter &amp; sort" aria-label="Filter and sort">⚙<span class="fcount" id="fBadgeCol" style="display:none"></span></button>
+    <svg class="g" width="18" height="18" aria-hidden="true"><use href="#g-spyglass"/></svg>
+    <input id="colq" placeholder="Search your collection" aria-label="Search your collection">
+    <button class="icb" id="favOnly" aria-label="Show favourites only" aria-pressed="false"><svg class="g" width="22" height="22" aria-hidden="true"><use href="#g-star"/></svg></button>
+    <button class="icb" id="sortBtn" aria-label="Filter and sort"><svg class="g" width="22" height="22" aria-hidden="true"><use href="#g-filter"/></svg><span class="fcount" id="fBadgeCol" style="display:none"></span></button>
   </div>
   <div id="bulkBar" style="display:none" class="panel">
     <div class="row" style="padding:0">
@@ -634,7 +660,7 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
   </header>
   <div class="search" style="margin:6px 0 10px"><svg class="g" width="18" height="18" aria-hidden="true"><use href="#g-spyglass"/></svg>
     <input id="sealedQ" placeholder="Search boxes, packs, decks" aria-label="Search sealed product"></div>
-  <div class="row" id="sealedKinds" style="gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
+  <div class="row" id="sealedKinds" style="gap:10px 6px;flex-wrap:wrap;margin-bottom:8px"></div>
   <div class="note" style="margin-bottom:10px">TCGplayer market via TCGCSV — the marketplace, not the shelf price. Store stock and local shops come to this mode next.</div>
   <div id="sealedList"></div>
 </section>
@@ -683,9 +709,9 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
     <div class="ab-act"><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
   </header>
   <div class="search">
-    <button data-go="scan" aria-label="Scan a card" title="Scan">📷</button>
-    <input id="allq" placeholder="Search the catalogue">
-    <button id="sortBtnAll" title="Filter &amp; sort" aria-label="Filter and sort">⚙<span class="fcount" id="fBadgeAll" style="display:none"></span></button>
+    <button class="icb" data-go="scan" aria-label="Scan a card"><svg class="g" width="22" height="22" aria-hidden="true"><use href="#g-scan"/></svg></button>
+    <input id="allq" placeholder="Search the catalogue" aria-label="Search the catalogue">
+    <button class="icb" id="sortBtnAll" aria-label="Filter and sort"><svg class="g" width="22" height="22" aria-hidden="true"><use href="#g-filter"/></svg><span class="fcount" id="fBadgeAll" style="display:none"></span></button>
   </div>
   <div id="allRes"></div>
   <div class="panel" id="setPanel">
@@ -699,7 +725,7 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
   <div class="scanwrap">
     <header class="appbar">
       <div class="ab-text"><h1 class="ab-title">Scan</h1></div>
-      <div class="ab-act"><button class="setchip" id="setChip">Set: <b>Any</b> ▾</button><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
+      <div class="ab-act"><button class="setchip" id="setChip">Set: <b>Any</b> <svg class="g" width="16" height="16" aria-hidden="true"><use href="#g-chevron"/></svg></button><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
     </header>
     <div class="guide" id="guide">
       <video id="cam" playsinline muted autoplay
@@ -718,9 +744,9 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
       <span><b id="scTotal" class="mono">$0.00</b> batch</span>
     </div>
     <div class="shutterbar">
-      <button class="ghost" id="btnTorch" title="Torch" aria-label="Torch" style="display:none"><svg class="g" width="18" height="18"><use href="#g-trigger"/></svg></button>
-      <button class="ghost" id="btnGallery" title="Scan from a photo" aria-label="Scan from a photo"><svg class="g" width="18" height="18"><use href="#g-stage"/></svg></button>
-      <button class="ghost" id="btnUndo">↶ Undo</button>
+      <button class="ghost" id="btnTorch" aria-label="Torch" style="display:none"><svg class="g" width="18" height="18" aria-hidden="true"><use href="#g-torch"/></svg></button>
+      <button class="ghost" id="btnGallery" aria-label="Scan from a photo"><svg class="g" width="18" height="18" aria-hidden="true"><use href="#g-photo"/></svg></button>
+      <button class="ghost" id="btnUndo"><svg class="g" width="18" height="18" aria-hidden="true"><use href="#g-undo"/></svg> Undo</button>
       <button class="shutter" id="btnShutter" aria-label="Capture"></button>
       <button class="ghost go" id="btnDone">Review →</button>
     </div>
@@ -745,7 +771,7 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
     <div class="row">
       <div class="nm"><b id="dFinish">Foil</b><span id="dCond">Near Mint</span></div>
       <div class="stepper">
-        <button id="dMinus" aria-label="One fewer">−</button><b class="mono" id="dQty">1</b><button id="dPlus" aria-label="One more">+</button>
+        <button id="dMinus" aria-label="One fewer"><svg class="g" width="20" height="20" aria-hidden="true"><use href="#g-minus"/></svg></button><b class="mono" id="dQty">1</b><button id="dPlus" aria-label="One more"><svg class="g" width="20" height="20" aria-hidden="true"><use href="#g-plus"/></svg></button>
       </div>
       <div class="v mono" id="dPrice">$0.00<span id="dDelta"></span></div>
     </div>
@@ -835,7 +861,7 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
   </div>
   <div class="search"><span><svg class="g" width="16" height="16"><use href="#g-spyglass"/></svg></span>
     <input id="dkq" placeholder="Add cards — search the catalogue">
-    <button id="dkOwn" title="Only cards I own">☐ own</button></div>
+    <button class="chip" id="dkOwn" aria-pressed="false">Owned only</button></div>
   <button class="linkish" id="dkBrowse">Browse by keyword, colour and cost for this deck</button>
   <div id="dkAddRes"></div>
   <div class="panel" id="dkValue"></div>
@@ -897,8 +923,8 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
   </header>
   <div class="search"><span><svg class="g" width="16" height="16"><use href="#g-spyglass"/></svg></span>
     <input id="cdq" placeholder="Name, number, or card text"></div>
-  <div class="chips" id="cdKw" style="margin:10px 0 6px"></div>
-  <div class="chips" id="cdCol" style="margin:0 0 6px"></div>
+  <div class="chips" id="cdKw" style="margin:10px 0 10px"></div>
+  <div class="chips" id="cdCol" style="margin:0 0 10px"></div>
   <div class="chips" id="cdCost" style="margin:0 0 10px"></div>
   <div class="note" id="cdCount"></div>
   <div id="cdRes"></div>
@@ -1043,8 +1069,8 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
     <div class="grab"></div>
     <div class="sheethead"><h2>Choose a Leader</h2><button class="icb" data-close="leaderPick" aria-label="Close"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-close"/></svg></button></div>
     <div class="note" style="margin:0 0 10px">The Leader sets the deck's colours and its Life (§5-1-2-2, §2-9).</div>
-    <div class="search" style="margin-bottom:10px"><span>🔍</span>
-      <input id="lpq" placeholder="Name or number"></div>
+    <div class="search" style="margin-bottom:10px"><svg class="g" width="18" height="18" aria-hidden="true"><use href="#g-spyglass"/></svg>
+      <input id="lpq" placeholder="Name or number" aria-label="Search the Leaders"></div>
     <div class="chips" id="lpColours" style="margin-bottom:12px"></div>
     <div id="lpList"></div>
     <button class="ghost" id="lpCancel" style="width:100%;padding:13px 0;margin-top:10px">Cancel</button>
@@ -1070,16 +1096,16 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
   <button data-go="sim"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-don"/></svg></span>Sim</button>
 </nav>
 <nav id="navHunt" hidden>
-  <button data-go="sealed" class="on"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-stage"/></svg></span>Sealed</button>
-  <button data-go="releases"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-counter"/></svg></span>Releases</button>
-  <button data-go="local"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-compass"/></svg></span>Local</button>
-  <button data-go="events"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-life"/></svg></span>Events</button>
+  <button data-go="sealed" class="on"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-box"/></svg></span>Sealed</button>
+  <button data-go="releases"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-calendar"/></svg></span>Releases</button>
+  <button data-go="local"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-pin"/></svg></span>Local</button>
+  <button data-go="events"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-trophy"/></svg></span>Events</button>
 </nav>
 <nav id="navCollect">
   <button data-go="home" class="on"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-compass"/></svg></span>Home</button>
   <button data-go="search"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-spyglass"/></svg></span>Search</button>
-  <button data-go="scan"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-blocker"/></svg></span>Scan</button>
-  <button data-go="collection"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-stage"/></svg></span>Collection</button>
+  <button data-go="scan"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-scan"/></svg></span>Scan</button>
+  <button data-go="collection"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-collection"/></svg></span>Collection</button>
   <button data-go="decks"><span class="ic" aria-hidden="true"><svg class="g" width="22" height="22"><use href="#g-cardback"/></svg></span>Decks</button>
 </nav>
 
@@ -1136,7 +1162,7 @@ async function pickCurrency() {
   const v = await new Promise(res => {
     $('#pkTitle').textContent = 'Show prices in\u2026';
     $('#pkWhy').innerHTML = `Prices are US dollars from TCGplayer. Another currency is a conversion at the ECB reference rate${R && R.date ? ' of ' + esc(R.date) : ''}, marked \u2248 \u2014 an estimate, not a quote.${R && R.stale ? ' <b>' + esc(R.stale) + '</b>' : ''}${!R ? ' <b>No rates in this build \u2014 USD only.</b>' : ''}`;
-    $('#pkOpts').innerHTML = opts.map(o => `<button class="opt" data-cur="${o.c}" ${o.ok ? '' : 'disabled'} aria-pressed="${CUR.active() === o.c}"><div class="oi"><b>${esc(o.sym.trim())} ${esc(o.c)}</b><span>${esc(o.name)}${o.ok ? (o.c === 'USD' ? '' : ' \u00b7 1 USD = ' + CUR.rate(o.c)) : ' \u00b7 no rate'}</span></div>${CUR.active() === o.c ? '<span class="note">\u2713</span>' : ''}</button>`).join('');
+    $('#pkOpts').innerHTML = opts.map(o => `<button class="opt" data-cur="${o.c}" ${o.ok ? '' : 'disabled'} aria-pressed="${CUR.active() === o.c}"><div class="oi"><b>${esc(o.sym.trim())} ${esc(o.c)}</b><span>${esc(o.name)}${o.ok ? (o.c === 'USD' ? '' : ' \u00b7 1 USD = ' + CUR.rate(o.c)) : ' \u00b7 no rate'}</span></div>${CUR.active() === o.c ? '<span class="note">' + tick(16) + '</span>' : ''}</button>`).join('');
     const h = ev => { const b = ev.target.closest('[data-cur]'); if (!b) { if (!ev.target.closest('#picker .opt')) { document.removeEventListener('click', h, true); $('#picker').classList.remove('on'); res(null); } return; } document.removeEventListener('click', h, true); ev.stopPropagation(); $('#picker').classList.remove('on'); res(b.dataset.cur); };
     setTimeout(() => document.addEventListener('click', h, true), 0); $('#picker').classList.add('on');
   });
@@ -1181,6 +1207,13 @@ function deltaHtml(p, { pctOnly = false, tile = false } = {}) {
    one file. Takes a size and an optional colour (a game colour or brass). */
 const G = (id, size = 16, style = '') =>
   `<svg class="g" width="${size}" height="${size}" style="${style}" aria-hidden="true"><use href="#g-${id}"/></svg>`;
+/* take 108: the glyphs a few painters draw inside a scope that names its own G
+   (the distributor feed): a fold's chevron (turned while closed), a link that
+   leaves the app, a tick, the stock alert's bell (filled while it watches) */
+const chev = (open, size = 16) => G('chevron', size, open ? '' : 'transform:rotate(-90deg)');
+const ext = (size = 13) => G('external', size);
+const tick = (size = 14) => G('check', size);
+const bell = (on, size = 18) => G('bell', size, on ? 'fill:currentColor' : '');
 const TYPE_GLYPH = { Leader: 'leader', Character: 'character', Event: 'event', Stage: 'stage' };
 const KW_GLYPH = { Blocker: 'blocker', Rush: 'rush', Trigger: 'trigger', Counter: 'counter',
                    'Double Attack': 'rush' };   // take 106: Banish named 'roger', removed from the sprite at take 63 (landmine 142)
@@ -1743,8 +1776,8 @@ function deckRow(p, n, L, adding = false) {
         own ? ` · <span class="up">own ${own}</span>` : ''}${
         !ok ? ` · <span class="down">${!RULES.MAIN_TYPES.has(p.type) ? p.type + ' — not a main-deck card' : 'off-colour'}</span>` : ''}</span></div>
     <div class="cnt">${adding
-      ? `<button data-dkadd="${p.id}" aria-label="Add one ${esc(p.name)}" ${ok ? '' : 'disabled'}>+</button>`
-      : `<button data-dkdec="${p.id}" aria-label="One fewer ${esc(p.name)}">−</button><b>${n}</b><button data-dkinc="${p.id}" aria-label="One more ${esc(p.name)}">+</button>`}</div>
+      ? `<button data-dkadd="${p.id}" aria-label="Add one ${esc(p.name)}" ${ok ? '' : 'disabled'}>${G('plus', 18)}</button>`
+      : `<button data-dkdec="${p.id}" aria-label="One fewer ${esc(p.name)}">${G('minus', 18)}</button><b>${n}</b><button data-dkinc="${p.id}" aria-label="One more ${esc(p.name)}">${G('plus', 18)}</button>`}</div>
   </div>`;
 }
 function paintDeckAdd() {
@@ -1793,9 +1826,9 @@ document.addEventListener('click', e => {
 });
 $('#dkq').addEventListener('input', paintDeckAdd);
 $('#dkBrowse').addEventListener('click', () => { CD.forDeck = true; go('cards'); });
-$('#dkOwn').addEventListener('click', e => {
-  const on = e.target.dataset.on === '1'; e.target.dataset.on = on ? '0' : '1';
-  e.target.textContent = (on ? '☐' : '☑') + ' own'; paintDeckAdd();
+$('#dkOwn').addEventListener('click', () => {   // take 108: a pressed chip, not a drawn box
+  const b = $('#dkOwn'), on = b.dataset.on !== '1'; b.dataset.on = on ? '1' : '0';
+  b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); paintDeckAdd();
 });
 $('#dkName').addEventListener('input', e => { dkCur.name = e.target.value; DECKS.save(); });
 /* ---- Leader picker: a sheet, art, colour filter, one row per NUMBER ------ */
@@ -1984,7 +2017,7 @@ function tradeRow(side, r) {
     <div class="oa pic" style="width:34px;flex:0 0 34px;aspect-ratio:.716;border-radius:5px;background:var(--card2);overflow:hidden;position:relative">${refArt(p)}</div>
     <div class="n"><b>${esc(p.name)}${p.treat !== 'base' ? ` <span class="badge">${esc(TREAT[p.treat] || p.treat)}</span>` : ''}</b>
       <span>${esc(p.num)} \u00b7 ${money(p.market)} each${side === 'give' && own < r.n ? ` \u00b7 <span class="down">you own ${own}</span>` : ''}</span></div>
-    <div class="cnt"><button data-trdec="${side}:${p.id}">\u2212</button><b>${r.n}</b><button data-trinc="${side}:${p.id}" aria-label="One more ${esc(p.name)}">+</button></div>
+    <div class="cnt"><button data-trdec="${side}:${p.id}" aria-label="One fewer ${esc(p.name)}">${G('minus', 18)}</button><b>${r.n}</b><button data-trinc="${side}:${p.id}" aria-label="One more ${esc(p.name)}">${G('plus', 18)}</button></div>
   </div>`;
 }
 function paintTrade() {
@@ -2200,24 +2233,24 @@ function paintPlay() {
         <div style="flex:1;text-align:center">
           <div class="note">${G('life', 13)} Life</div>
           <div class="big" style="font-size:44px;line-height:1;margin:4px 0">${pl.life}</div>
-          <div class="stepper" style="justify-content:center"><button data-pl="${i}:life:-1">\u2212</button><button data-pl="${i}:life:1" aria-label="Life up">+</button></div>
+          <div class="stepper" style="justify-content:center"><button data-pl="${i}:life:-1" aria-label="Life down">${G('minus', 20)}</button><button data-pl="${i}:life:1" aria-label="Life up">${G('plus', 20)}</button></div>
         </div>
         <div style="flex:1;text-align:center">
           <div class="note">${G('don', 13)} DON!! active</div>
           <div class="big" style="font-size:44px;line-height:1;margin:4px 0">${pl.don - pl.given}<span style="font-size:16px;color:var(--dim2)">/${pl.don}</span></div>
-          <div class="stepper" style="justify-content:center"><button data-pl="${i}:don:-1">\u2212</button><button data-pl="${i}:don:1" aria-label="DON!! up">+</button></div>
+          <div class="stepper" style="justify-content:center"><button data-pl="${i}:don:-1" aria-label="DON!! down">${G('minus', 20)}</button><button data-pl="${i}:don:1" aria-label="DON!! up">${G('plus', 20)}</button></div>
         </div>
         <div style="flex:1;text-align:center">
           <div class="note">given</div>
           <div class="big" style="font-size:44px;line-height:1;margin:4px 0">${pl.given}</div>
-          <div class="stepper" style="justify-content:center"><button data-pl="${i}:given:-1">\u2212</button><button data-pl="${i}:given:1" aria-label="Given DON!! up">+</button></div>
+          <div class="stepper" style="justify-content:center"><button data-pl="${i}:given:-1" aria-label="Given DON!! down">${G('minus', 20)}</button><button data-pl="${i}:given:1" aria-label="Given DON!! up">${G('plus', 20)}</button></div>
         </div>
       </div>
     </div>`;
   }).join('') + (PLAY.hotseat ? `<div class="note" style="text-align:center;margin:8px 0">Opponent \u2014 ${esc(PLAY.label(1 - active))}: Life <b>${other.life}</b> \u00b7 DON!! <b>${other.don - other.given}</b>/${other.don}</div>` : '') +
   `<div class="row" style="justify-content:center;gap:10px;flex-wrap:wrap">
-      <span class="note">Turn ${PLAY.turn} \u00b7 ${PLAY.turn === 1 ? 'first player: ' : ''}<button class="linkish" id="plFirst" style="display:inline;padding:0">${
-        PLAY.turn === 1 ? (PLAY.p[PLAY.first].leader ? esc(CAT.byId.get(PLAY.p[PLAY.first].leader).name) : PLAY.p[PLAY.first].name) + ' \u21c4' : ''}</button></span>
+      <span class="note">Turn ${PLAY.turn} \u00b7 ${PLAY.turn === 1 ? 'first player: ' : ''}<button class="linkish" id="plFirst" style="display:inline-flex;align-items:center;gap:4px;padding:0 4px;width:auto;vertical-align:middle">${
+        PLAY.turn === 1 ? (PLAY.p[PLAY.first].leader ? esc(CAT.byId.get(PLAY.p[PLAY.first].leader).name) : PLAY.p[PLAY.first].name) + ' ' + G('swap', 14) : ''}</button></span>
       <button class="ghost go" id="plNext" style="padding:8px 18px">${PLAY.turn === 1 ? 'Start \u2014 first player draws no card, gets 1 DON!!' : (PLAY.hotseat ? 'End turn \u2014 pass the phone' : 'Next turn \u2014 refresh, +2 DON!!')}</button></div>
     <label class="row" style="justify-content:center;gap:8px;margin-top:6px;cursor:pointer"><input type="checkbox" id="plHot" ${PLAY.hotseat ? 'checked' : ''}>
       <span class="note">Pass the phone \u2014 one player at a time, a curtain between turns</span></label>`;
@@ -2280,7 +2313,7 @@ function paintCards() {
   const deck = CD.forDeck && dkCur ? dkCur : null;
   const L = deck && deck.leader ? CAT.byId.get(deck.leader) : null;
   $('#cdForDeck').textContent = 'for this deck: ' + (deck ? (deck.name || 'untitled') : 'off');
-  $('#cdForDeck').classList.toggle('go', !!deck);
+  $('#cdForDeck').classList.toggle('go', !!deck); $('#cdForDeck').setAttribute('aria-pressed', String(!!deck));   // take 108
   $('#cdKw').innerHTML = CD_KW.map(k => `<button class="chip${CD.kw.has(k) ? ' on' : ''}" data-cdkw="${esc(k)}">${
     KW_GLYPH[k] ? G(KW_GLYPH[k], 11) + ' ' : ''}${esc(k)}</button>`).join('');
   $('#cdCol').innerHTML = COLORS.map(c => `<button class="chip${CD.col.has(c) ? ' on' : ''}" data-cdcol="${c}">
@@ -2361,7 +2394,7 @@ function paintWants() {
       <div class="oa pic" style="width:34px;flex:0 0 34px;aspect-ratio:.716;border-radius:5px;background:var(--card2);overflow:hidden;position:relative">${refArt(p)}</div>
       <div class="n" data-open="${p.id}"><b>${esc(p.name)}${p.treat !== 'base' ? ` <span class="badge">${esc(TREAT[p.treat] || p.treat)}</span>` : ''}</b>
         <span>${esc(p.num)} \u00b7 ${esc((CAT.sets.get(p.set) || {}).abbr || '')} \u00b7 ${money(p.market)}</span></div>
-      <div class="cnt"><button data-want="${esc(p.num)}" title="Remove">\u2212</button></div>
+      <div class="cnt"><button data-want="${esc(p.num)}" aria-label="Remove ${esc(p.name)} from the want list">${G('minus', 18)}</button></div>
     </div>`).join('');
 }
 $('#wtClear').addEventListener('click', () => { if (WANT.list.length && confirm('Clear the want list?')) { WANT.list = []; WANT.save(); paintWants(); } });
@@ -2389,7 +2422,7 @@ function binderSets() {
 }
 function paintBinder() {
   const sets = binderSets();
-  if (!sets.length) { $('#bnSets').innerHTML = ''; $('#bnGrid').innerHTML = `<div class="empty" style="grid-column:1/-1">${G('stage', 64)}Scan or add a card and its set\u2019s pages appear here.</div>`; $('#bnOf').textContent = ''; $('#bnPage').textContent = ''; return; }
+  if (!sets.length) { $('#bnSets').innerHTML = ''; $('#bnGrid').innerHTML = `<div class="empty" style="grid-column:1/-1">${G('binder', 64)}Scan or add a card and its set\u2019s pages appear here.</div>`; $('#bnOf').textContent = ''; $('#bnPage').textContent = ''; return; }
   if (!BN.set || !sets.some(x => x.s.id === BN.set)) BN.set = sets[0].s.id;
   $('#bnSets').innerHTML = sets.map(x => `<button class="chip${x.s.id === BN.set ? ' on' : ''}" data-bnset="${x.s.id}">${esc(x.s.abbr || x.s.name)}<small>${x.n}</small></button>`).join('');
   /* every number in the set, in numeric order; held numbers get a pocket */
@@ -2471,7 +2504,7 @@ function paintAlerts() {
       <div class="n"><b>${esc(a.name)}${a.treat !== 'base' ? ` <span class="badge">${esc(TREAT[a.treat] || a.treat)}</span>` : ''}</b>
         <span>${esc(a.num)} \u00b7 ${a.dir} ${money(a.at)} \u00b7 now ${now != null ? money(now) : '?'}${
           a.fired ? ` \u00b7 <span class="up">fired ${esc(a.fired.at.slice(0, 10))} at ${money(a.fired.price)}</span>` : a.armed ? ' \u00b7 watching' : ''}</span></div>
-      <div class="cnt">${a.fired ? `<button data-alrearm="${a.key}" title="Watch again">\u21bb</button>` : ''}<button data-alrm="${a.key}" title="Remove">\u2212</button></div>
+      <div class="cnt">${a.fired ? `<button data-alrearm="${a.key}" aria-label="Watch again">${G('refresh', 18)}</button>` : ''}<button data-alrm="${a.key}" aria-label="Remove the alert">${G('minus', 18)}</button></div>
     </div>`; }).join('') : '<div class="note">No alerts yet. Open a card and tap <b>Alert me</b>.</div>';
 }
 document.addEventListener('click', e => {
@@ -3175,8 +3208,8 @@ document.addEventListener('click', e => {
     Object.assign(FILT.own, blankFilter('own')); FILT.save('own'); paintCollection();
   }
 });
-$('#favOnly').addEventListener('click', e => {
-  favOnly = !favOnly; e.target.textContent = favOnly ? '★' : '☆'; paintCollection();
+$('#favOnly').addEventListener('click', () => {   // take 108: the star fills, and says so
+  favOnly = !favOnly; const b = $('#favOnly'); b.classList.toggle('on', favOnly); b.setAttribute('aria-pressed', String(favOnly)); paintCollection();
 });
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-open]');
@@ -3530,7 +3563,7 @@ function buySources(p) {
   return out;
 }
 function buyChips(p) {
-  const chip = s => `<a class="chip buy" href="${esc(s.url)}" target="_blank" rel="noopener" aria-label="${esc(s.label)}: open the seller's page for ${esc(p.name)}">${G(BUY_GLYPH[s.kind], 12)} ${esc(s.label)} \u2197</a>`
+  const chip = s => `<a class="chip buy" href="${esc(s.url)}" target="_blank" rel="noopener" aria-label="${esc(s.label)}: open the seller's page for ${esc(p.name)}">${G(BUY_GLYPH[s.kind], 12)} ${esc(s.label)} ${ext(12)}</a>`
     + (s.phone ? `<a class="chip buy" href="tel:${esc(s.phone)}" aria-label="Call ${esc(s.label)}">${G('phone', 12)} Call</a>` : '');
   return `<div class="chips buy" style="flex-basis:100%">${buySources(p).map(chip).join('')}</div>`;
 }
@@ -3589,8 +3622,8 @@ function paintSealed() {
   const G = HUNT.feed && HUNT.feed.sources && HUNT.feed.sources.gts; const byDist = HUNT.distByCatalogId();   // take 94
   /* starter decks, their own section (take 87): every deck product, newest set first */
   if (SEALED.kind === 'all' && !SEALED.q) { const decks = CAT.rows.filter(p => SEALED.isProduct(p) && SEALED.kindOf(p) === 'deck').sort((a, b) => (CAT.sets.get(b.set)?.pub || '').localeCompare(CAT.sets.get(a.set)?.pub || '') || a.name.localeCompare(b.name));
-    if (decks.length) out.push(`<button class="fgrp" data-setfold="decks" aria-expanded="${!SEALED.closed.has('decks')}" style="display:flex;width:100%;justify-content:space-between;align-items:center;text-align:left;padding:8px 0"><span>Starter decks <span class="note">\u00b7 ${decks.length}</span></span><span class="note" aria-hidden="true">${SEALED.closed.has('decks') ? '\u25b8' : '\u25be'}</span></button>`);
-    if (decks.length && !SEALED.closed.has('decks')) for (const p of decks.slice(0, 80)) out.push(`<div class="row" style="gap:8px;flex-wrap:wrap"><button class="row" style="flex:1;min-width:0;text-align:left;padding:0;gap:10px" data-open="${p.id}">${productPic(p)}<div class="nm" style="min-width:0"><b>${esc(p.name)}</b><span>${esc(CAT.sets.get(p.set)?.name || '')} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}</span>${(byCat[p.id] || []).map(i => targetLine(i, T)).join('')}${(byDist[p.id] || []).map(i => distLine(i, G)).join('')}</div><div class="v"><b>${money(p.market)}</b>${deltaHtml(p, { pctOnly: true })}</div></button><button class="ghost" data-stock="${p.id}" aria-label="${STOCK.has(p.id) ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${STOCK.has(p.id)}" style="flex:0 0 auto;padding:8px 10px;${STOCK.has(p.id) ? 'color:var(--brass);border-color:var(--brass)' : ''}">${STOCK.has(p.id) ? '\u25cf' : '\u25cb'}<span style="display:block;font-size:12px;line-height:1.1;margin-top:2px">${STOCK.has(p.id) ? 'watching' : 'alert'}</span></button>${buyChips(p)}</div>`); }
+    if (decks.length) out.push(`<button class="fgrp" data-setfold="decks" aria-expanded="${!SEALED.closed.has('decks')}" style="display:flex;width:100%;justify-content:space-between;align-items:center;text-align:left;padding:8px 0"><span>Starter decks <span class="note">\u00b7 ${decks.length}</span></span><span class="note" aria-hidden="true">${chev(!SEALED.closed.has('decks'))}</span></button>`);
+    if (decks.length && !SEALED.closed.has('decks')) for (const p of decks.slice(0, 80)) out.push(`<div class="row" style="gap:8px;flex-wrap:wrap"><button class="row" style="flex:1;min-width:0;text-align:left;padding:0;gap:10px" data-open="${p.id}">${productPic(p)}<div class="nm" style="min-width:0"><b>${esc(p.name)}</b><span>${esc(CAT.sets.get(p.set)?.name || '')} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}</span>${(byCat[p.id] || []).map(i => targetLine(i, T)).join('')}${(byDist[p.id] || []).map(i => distLine(i, G)).join('')}</div><div class="v"><b>${money(p.market)}</b>${deltaHtml(p, { pctOnly: true })}</div></button><button class="ghost" data-stock="${p.id}" aria-label="${STOCK.has(p.id) ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${STOCK.has(p.id)}" style="flex:0 0 auto;padding:8px 10px;${STOCK.has(p.id) ? 'color:var(--brass);border-color:var(--brass)' : ''}">${bell(STOCK.has(p.id))}<span style="display:block;font-size:12px;line-height:1.1;margin-top:2px">${STOCK.has(p.id) ? 'watching' : 'alert'}</span></button>${buyChips(p)}</div>`); }
   /* stock alerts: what is watched, and where it was last seen */
   if (STOCK.list.length) out.push(`<div class="panel"><h3>Stock alerts</h3>${STOCK.list.map(a => { const srcs = STOCK.sourcesFor(a.id); const on = srcs.filter(x => x.available);
     return `<div class="row"><div class="nm"><b>${esc(a.name)}</b><span>${on.length ? 'in stock: ' + esc(on.map(x => x.label).join(', ')) : srcs.length ? 'not in stock at ' + srcs.length + ' watched source' + (srcs.length === 1 ? '' : 's') : 'no source carries it yet'}${a.fired && a.fired.length ? ' \u00b7 last alert ' + esc(HUNT.ageLabel(a.fired[0].t)) : ''}</span></div><div class="v"><button class="ghost" data-stock="${a.id}" aria-label="Stop watching ${esc(a.name)}">\u00d7</button></div></div>`; }).join('')}
@@ -3625,14 +3658,14 @@ function paintSealed() {
   const bySet = new Map(); for (const p of rows.slice(0, 600)) { if (!bySet.has(p.set)) bySet.set(p.set, []); bySet.get(p.set).push(p); }
   let n = 0;
   for (const [setId, ps] of bySet) { const st = CAT.sets.get(setId) || {}; const open = SEALED.q || !SEALED.closed.has(setId); n++;
-    out.push(`<button class="fgrp" data-setfold="${esc(setId)}" aria-expanded="${open}" style="display:flex;width:100%;justify-content:space-between;align-items:center;text-align:left;padding:8px 0"><span>${esc(st.name || 'Other')}${st.pub ? ` <span class="note">\u00b7 ${esc(st.pub)}</span>` : ''}</span><span class="note" aria-hidden="true">${open ? '\u25be' : '\u25b8'}</span></button>`);
+    out.push(`<button class="fgrp" data-setfold="${esc(setId)}" aria-expanded="${open}" style="display:flex;width:100%;justify-content:space-between;align-items:center;text-align:left;padding:8px 0"><span>${esc(st.name || 'Other')}${st.pub ? ` <span class="note">\u00b7 ${esc(st.pub)}</span>` : ''}</span><span class="note" aria-hidden="true">${chev(open)}</span></button>`);
     if (!open) continue;
     for (const p of ps) {
     const tl = (byCat[p.id] || []).map(i => targetLine(i, T)).join('') + (byDist[p.id] || []).map(i => distLine(i, G)).join('') + LOCAL.shopLines(p.id).map(l => `<span style="display:block;color:var(--brass)">${esc(l.shop)}${l.mi != null ? ' ~' + l.mi + ' mi' : ''} ${money(l.price)} \u00b7 ${l.available ? 'in stock online' : 'sold out online'} \u00b7 ${esc(HUNT.ageLabel(LOCAL.shops.fetched_at))}</span>`).join('');
     out.push(`<div class="row" style="gap:8px;flex-wrap:wrap"><button class="row" style="flex:1;min-width:0;text-align:left;padding:0;gap:10px" data-open="${p.id}">
       ${productPic(p)}<div class="nm" style="min-width:0"><b>${esc(p.name)}</b><span>${esc(SEALED_KINDS.find(k => k[0] === SEALED.kindOf(p))?.[1] || '')} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}</span>${tl}</div>
       <div class="v"><b>${money(p.market)}</b>${deltaHtml(p, { pctOnly: true })}</div></button>
-      <button class="ghost" data-stock="${p.id}" aria-label="${STOCK.has(p.id) ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${STOCK.has(p.id)}" style="flex:0 0 auto;padding:8px 10px;${STOCK.has(p.id) ? 'color:var(--brass);border-color:var(--brass)' : ''}">${STOCK.has(p.id) ? '\u25cf' : '\u25cb'}<span style="display:block;font-size:12px;line-height:1.1;margin-top:2px">${STOCK.has(p.id) ? 'watching' : 'alert'}</span></button>${buyChips(p)}</div>`);
+      <button class="ghost" data-stock="${p.id}" aria-label="${STOCK.has(p.id) ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${STOCK.has(p.id)}" style="flex:0 0 auto;padding:8px 10px;${STOCK.has(p.id) ? 'color:var(--brass);border-color:var(--brass)' : ''}">${bell(STOCK.has(p.id))}<span style="display:block;font-size:12px;line-height:1.1;margin-top:2px">${STOCK.has(p.id) ? 'watching' : 'alert'}</span></button>${buyChips(p)}</div>`);
     }
   }
   $('#sealedList').innerHTML = out.join('') || `<div class="empty">Nothing matches.</div>`;
@@ -3725,7 +3758,7 @@ function paintLocal() {
       !shops.length ? `<div class="note">None within ${LOCAL.radius} mi of your zip area. Widen the distance.</div>` :
       shops.slice(0, 60).map(s => `<div class="row"><div class="nm" style="min-width:0"><b>${esc(s.name)}</b><span>${esc([s.addr, s.city, s.state].filter(Boolean).join(', '))}${s.mi != null ? ` \u00b7 ${s.exact ? '' : '~'}${s.mi} mi` : ''}</span>
         ${s.events && s.events.length ? `<span style="display:block;color:var(--brass)">${s.events.slice(0, 2).map(e => `${esc(e.d)} ${esc(e.t)}${e.k === 'release' ? ' \u2014 release event' : ''}`).join(' \u00b7 ')}</span>` : ''}</div>
-        <div class="v" style="flex:0 0 auto;display:flex;gap:6px">${s.phone ? `<a class="ghost" href="tel:${esc(s.phone)}" style="display:inline-block;padding:8px 12px" aria-label="Call ${esc(s.name)}">Call</a>` : ''}<button class="ghost" data-localnote="${esc(s.name)}" aria-label="Add a note for ${esc(s.name)}">Note</button></div></div>`).join('')}
+        <div class="v" style="flex:0 0 auto;display:flex;gap:6px">${s.phone ? `<a class="ghost" href="tel:${esc(s.phone)}" style="padding:8px 12px" aria-label="Call ${esc(s.name)}">Call</a>` : ''}<button class="ghost" data-localnote="${esc(s.name)}" aria-label="Add a note for ${esc(s.name)}">Note</button></div></div>`).join('')}
     <div class="note" style="margin-top:8px">From ${esc((R && R.source) || 'Bandai TCG+')}, ${R ? esc(HUNT.ageLabel(R.fetched_at)) : ''}. A store on this list registered to run events; whether it has product on the shelf is what your notes and the stock feed are for.</div></div>`);
   /* Target stores the feed checked */
   const T = HUNT.feed && HUNT.feed.sources && HUNT.feed.sources.target; const sv = HUNT.served(); const zz = T && sv.how !== 'none' ? T.zips[sv.zip] : null;
@@ -3737,7 +3770,7 @@ function paintLocal() {
       SH.shops.map(sh => { const st = (LOCAL.stores && LOCAL.stores.stores || []).find(s => s.zip === sh.zip && s.name === sh.name); const mi = LOCAL.miles(st && st.ll);
         return `<div class="row"><div class="nm"><b>${esc(sh.name)}</b><span>${mi != null ? '~' + mi + ' mi \u00b7 ' : ''}${sh.ok ? `${sh.sealed.length} sealed listed, ${sh.sealed.filter(i => i.available).length} in stock, ${sh.singles} singles` : 'unreachable: ' + esc(sh.error || '?')}</span>
           ${sh.ok && sh.sealed.length ? `<span style="display:block;color:var(--brass)">${sh.sealed.slice(0, 4).map(i => `${esc(i.title.slice(0, 40))} ${money(i.price)}${i.available ? '' : ' (out)'}`).join(' \u00b7 ')}</span>` : ''}</div>
-          <div class="v"><a class="ghost" href="${esc(sh.url)}" target="_blank" rel="noopener" style="display:inline-block;padding:8px 12px">Open</a></div></div>`; }).join('')}
+          <div class="v"><a class="ghost" href="${esc(sh.url)}" target="_blank" rel="noopener" style="padding:8px 12px">Open</a></div></div>`; }).join('')}
     <div class="note" style="margin-top:8px">${SH ? 'Fetched ' + esc(HUNT.ageLabel(SH.fetched_at)) + '. ' : ''}What a shop lists online, hourly. A shop lists what it chooses; the shelf may hold more \u2014 that is what your notes are for. The list of shops is verified by hand and grows as shops are added.</div></div>`);
   /* the collector's own notes */
   out.push(`<div class="panel"><h3>Your notes</h3>
@@ -3849,9 +3882,9 @@ function paintEvents() {
     if (!groups.length) out.push(`<div class="panel"><div class="note">Nothing in range. Widen the distance or the days.</div></div>`);
     for (const g of groups.slice(0, 60)) { const st = g.store;
       out.push(`<div class="panel" style="padding:12px 14px"><div class="row" style="padding:0 0 6px;border:0"><div class="nm" style="min-width:0"><b>${esc(st.name)}</b><span>${esc([st.addr, st.city].filter(Boolean).join(', '))}${g.mi != null ? ` \u00b7 ${st.exact ? '' : '~'}${g.mi} mi` : ''}</span></div>
-        <div class="v" style="flex:0 0 auto;display:flex;gap:6px">${st.phone ? `<a class="ghost" href="tel:${esc(st.phone)}" style="display:inline-block;padding:8px 12px" aria-label="Call ${esc(st.name)}">Call</a>` : ''}<button class="ghost" data-localnote="${esc(st.name)}" aria-label="Add a note for ${esc(st.name)}" style="padding:8px 10px">Note</button></div></div>
+        <div class="v" style="flex:0 0 auto;display:flex;gap:6px">${st.phone ? `<a class="ghost" href="tel:${esc(st.phone)}" style="padding:8px 12px" aria-label="Call ${esc(st.name)}">Call</a>` : ''}<button class="ghost" data-localnote="${esc(st.name)}" aria-label="Add a note for ${esc(st.name)}" style="padding:8px 10px">Note</button></div></div>
         ${g.evs.slice(0, 6).map(e => { const dt = new Date(e.d + 'T12:00:00'); return `<div class="row" style="padding:6px 0"><div class="nm" style="min-width:0"><b style="font-weight:600;white-space:normal">${esc(dt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }))} \u00b7 ${esc(e.title.replace(/^\[[^\]]*\]\s*/, ''))}${e.release ? ' <span class="badge">release</span>' : ''}</b><span>${e.fee > 0 ? money(e.fee) : 'free'}${e.cap ? ` \u00b7 ${e.cap} seats` : ''}</span></div>
-          <div class="v" style="flex:0 0 auto;display:flex;gap:6px">${e.url ? `<a class="ghost" href="${esc(e.url)}" target="_blank" rel="noopener" style="display:inline-block;padding:6px 10px;font-size:13px">Register</a>` : ''}<button class="ghost" data-evcal="${all.indexOf(e)}" aria-label="Add ${esc(e.title)} at ${esc(st.name)} to your calendar" style="padding:6px 8px;font-size:13px">+cal</button></div></div>`; }).join('')}${g.evs.length > 6 ? `<div class="note">and ${g.evs.length - 6} more at this store</div>` : ''}</div>`);
+          <div class="v" style="flex:0 0 auto;display:flex;gap:6px">${e.url ? `<a class="ghost" href="${esc(e.url)}" target="_blank" rel="noopener" style="padding:6px 10px;font-size:13px">Register</a>` : ''}<button class="ghost" data-evcal="${all.indexOf(e)}" aria-label="Add ${esc(e.title)} at ${esc(st.name)} to your calendar" style="padding:6px 8px;font-size:13px">+cal</button></div></div>`; }).join('')}${g.evs.length > 6 ? `<div class="note">and ${g.evs.length - 6} more at this store</div>` : ''}</div>`);
     }
     out.push(`<div class="note" style="margin-top:10px">Registration is on Bandai TCG+, in their app or site; this only points there. Fees and seats are as the store listed them. From onepieceevents.com, from TCG+.</div>`);
   }
@@ -3885,7 +3918,7 @@ function paintReleases() {
      and Calendar beside Details. */
   const cdown = pub => `<span class="note ${relBand(days(pub))}">${pub >= today ? (days(pub) === 0 ? 'today' : `in ${days(pub)} day${days(pub) === 1 ? '' : 's'}`) : `${-days(pub)} days ago`}</span>`;
   const btn = (attrs, text, aria) => `<button class="ghost" ${attrs} style="display:inline-block;padding:6px 12px;font-size:13px" aria-label="${esc(aria)}">${text}</button>`;
-  const foot = (s, label, extra = '') => `<div style="display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;padding:0 0 8px">${extra}${s.pub >= today ? btn(`data-relalert="${esc(s.id)}" data-relname="${esc(label)}" data-relpub="${esc(s.pub)}" aria-pressed="${RELALERTS.has(s.id)}"`, RELALERTS.has(s.id) ? 'Reminder set ✓' : 'Remind me', (RELALERTS.has(s.id) ? 'Remove the reminder for ' : 'Remind me the day before ') + label) + btn(`data-relcal="${esc(s.id)}" data-relname="${esc(label)}"`, 'Calendar', 'Add the release of ' + label + ' to your calendar') : ''}<a class="ghost" href="${esc(detailsUrl({ name: label }))}" target="_blank" rel="noopener" style="display:inline-block;padding:6px 12px;font-size:13px" aria-label="Full details for ${esc(label)} on TCGplayer">Details ↗</a></div>`;
+  const foot = (s, label, extra = '') => `<div style="display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;padding:0 0 8px">${extra}${s.pub >= today ? btn(`data-relalert="${esc(s.id)}" data-relname="${esc(label)}" data-relpub="${esc(s.pub)}" aria-pressed="${RELALERTS.has(s.id)}"`, RELALERTS.has(s.id) ? 'Reminder set ' + tick() : 'Remind me', (RELALERTS.has(s.id) ? 'Remove the reminder for ' : 'Remind me the day before ') + label) + btn(`data-relcal="${esc(s.id)}" data-relname="${esc(label)}"`, 'Calendar', 'Add the release of ' + label + ' to your calendar') : ''}<a class="ghost" href="${esc(detailsUrl({ name: label }))}" target="_blank" rel="noopener" style="padding:6px 12px;font-size:13px" aria-label="Full details for ${esc(label)} on TCGplayer">Details ${ext()}</a></div>`;
   const line = s => `<div class="rel"><button class="row" style="width:100%;text-align:left;padding:0;gap:10px;min-width:0" data-browse-set="${esc(s.id)}">${picFor(s)}<div class="nm" style="min-width:0"><b style="white-space:normal">${esc(s.name)}</b><span>${esc(s.abbr || '')}${s.n ? ` \u00b7 ${s.n} cards` : ' \u00b7 card list not published yet'}</span>${forSet(s).map(it => distLine(it, G)).join('')}</div><div class="v" style="flex:0 0 auto"><b>${esc(s.pub)}</b>${cdown(s.pub)}</div></button>
 ${foot(s, s.name)}</div>`;
   /* take 97 (A38 item 1): a run of two or more starter decks on one day is ONE
@@ -3895,14 +3928,14 @@ ${foot(s, s.name)}</div>`;
   const grouped = list => { const out = []; for (let i = 0; i < list.length; i++) { const s = list[i]; if (!isDeck(s)) { out.push(s); continue; }
       const run = [s]; while (i + 1 < list.length && isDeck(list[i + 1]) && list[i + 1].pub === s.pub) run.push(list[++i]);
       out.push(run.length > 1 ? { group: true, pub: s.pub, sets: run, id: s.id, name: `Starter Decks ${run[0].abbr || ''}\u2013${run[run.length - 1].abbr || ''}` } : s); } return out; };
-  const gline = g => `<div class="rel"><button class="row" style="width:100%;text-align:left;padding:0;gap:10px;min-width:0" data-browse-set="${esc(g.id)}" data-browse-q="Starter Deck">${picFor(g.sets[0])}<div class="nm" style="min-width:0"><b style="white-space:normal">${esc(g.name)}</b><span>${g.sets.length} starter decks, one release day</span>${g.sets.flatMap(s => forSet(s)).slice(0, 1).map(it => distLine(it, G)).join('')}</div><div class="v" style="flex:0 0 auto"><b>${esc(g.pub)}</b>${cdown(g.pub)}</div></button>${foot(g, g.name, `<button class="ghost" data-relfold="${esc(g.pub)}" aria-expanded="${RELF.open.has(g.pub)}" style="display:inline-block;padding:6px 12px;font-size:13px">${RELF.open.has(g.pub) ? 'Hide the decks \u25be' : `Show the ${g.sets.length} decks \u25b8`}</button>`)}${RELF.open.has(g.pub) ? `<div style="padding-left:12px;border-left:2px solid var(--line)">${g.sets.map(line).join('')}</div>` : ''}</div>`;
+  const gline = g => `<div class="rel"><button class="row" style="width:100%;text-align:left;padding:0;gap:10px;min-width:0" data-browse-set="${esc(g.id)}" data-browse-q="Starter Deck">${picFor(g.sets[0])}<div class="nm" style="min-width:0"><b style="white-space:normal">${esc(g.name)}</b><span>${g.sets.length} starter decks, one release day</span>${g.sets.flatMap(s => forSet(s)).slice(0, 1).map(it => distLine(it, G)).join('')}</div><div class="v" style="flex:0 0 auto"><b>${esc(g.pub)}</b>${cdown(g.pub)}</div></button>${foot(g, g.name, `<button class="ghost" data-relfold="${esc(g.pub)}" aria-expanded="${RELF.open.has(g.pub)}" style="display:inline-block;padding:6px 12px;font-size:13px">${RELF.open.has(g.pub) ? 'Hide the decks ' + chev(true, 14) : `Show the ${g.sets.length} decks ${chev(false, 14)}`}</button>`)}${RELF.open.has(g.pub) ? `<div style="padding-left:12px;border-left:2px solid var(--line)">${g.sets.map(line).join('')}</div>` : ''}</div>`;
   const render = list => grouped(list).map(x => x.group ? gline(x) : line(x)).join('');
   /* the distributor's unlisted starter-deck displays fold the same way, by release day */
   const isDeckItem = it => (it.codes || []).some(c => /^ST\d+$/.test(c)) && /STARTER DECK/i.test(it.name || '');
   const ditem = it => `<div class="row"><div class="nm" style="min-width:0"><b style="white-space:normal">${esc(it.name)}</b><span>${esc((it.codes || []).join(', '))}</span>${distLine(it, G)}</div></div>`;
   const dgroup = (rel, items) => { const key = 'd:' + rel; const codes = items.map(it => (it.codes || [])[0]).filter(Boolean); const same = items.every(it => it.status === items[0].status && it.allocated === items[0].allocated);
     return `<div class="row" style="flex-wrap:wrap"><div class="nm" style="min-width:0;flex:1"><b style="white-space:normal">Starter Decks ${esc(codes[0] || '')}\u2013${esc(codes[codes.length - 1] || '')}</b><span>${items.length} starter deck displays, one release day \u00b7 ${esc(codes.join(', '))}</span>${same ? distLine(items[0], G) : `<span style="display:block;color:var(--brass)">GTS Distribution \u00b7 mixed \u00b7 release ${esc(rel)}</span>`}</div>
-      <button class="ghost" data-relfold="${esc(key)}" aria-expanded="${RELF.open.has(key)}" style="flex:0 0 auto;padding:6px 12px;font-size:13px">${RELF.open.has(key) ? 'Hide \u25be' : `Show ${items.length} \u25b8`}</button>${RELF.open.has(key) ? `<div style="flex-basis:100%;padding-left:12px;border-left:2px solid var(--line)">${items.map(ditem).join('')}</div>` : ''}</div>`; };
+      <button class="ghost" data-relfold="${esc(key)}" aria-expanded="${RELF.open.has(key)}" style="flex:0 0 auto;padding:6px 12px;font-size:13px">${RELF.open.has(key) ? 'Hide ' + chev(true, 14) : `Show ${items.length} ${chev(false, 14)}`}</button>${RELF.open.has(key) ? `<div style="flex-basis:100%;padding-left:12px;border-left:2px solid var(--line)">${items.map(ditem).join('')}</div>` : ''}</div>`; };
   const drender = list => { const out = []; for (let i = 0; i < list.length; i++) { const it = list[i]; if (!isDeckItem(it)) { out.push(ditem(it)); continue; }
       const run = [it]; while (i + 1 < list.length && isDeckItem(list[i + 1]) && list[i + 1].release === it.release) run.push(list[++i]);
       out.push(run.length > 1 ? dgroup(it.release || '?', run) : ditem(it)); } return out.join(''); };
@@ -4011,7 +4044,7 @@ function paintScan() {
   $('#scCount').textContent = BATCH.rows.length;
   $('#scTotal').textContent = money(BATCH.rows.reduce((s, r) => s + (price(r.id) || 0), 0));
   const s = BATCH.setId ? CAT.sets.get(BATCH.setId) : null;
-  $('#setChip').innerHTML = 'Set: <b>' + esc(s ? (s.abbr || s.name) : 'Any') + '</b> \u25be';
+  $('#setChip').innerHTML = 'Set: <b>' + esc(s ? (s.abbr || s.name) : 'Any') + '</b> ' + chev(true);
 }
 /* The set chip is worth 7x. MEASURED take 2: code alone resolves 8.9% of
    printings, code plus the set resolves 60.2%. One tap, before the batch. */
@@ -4728,7 +4761,7 @@ function openDetail(id) {
   /* take 96 (A38 item 4): where to buy -- every seller the app knows, the seller's own page */
   $('#dBuy').hidden = !sealedP;
   $('#dBuyList').innerHTML = sealedP ? buySources(p).map(s => `<div class="row" style="align-items:center"><div class="nm" style="min-width:0"><b>${G(BUY_GLYPH[s.kind], 14)} ${esc(s.label)}</b><span>${esc(s.note)}${s.addr ? ' · ' + esc(s.addr) : ''}${s.mi != null ? ' · ~' + s.mi + ' mi' : ''}</span></div>
-      <div class="v" style="flex:0 0 auto;display:flex;gap:6px"><a class="ghost" href="${esc(s.url)}" target="_blank" rel="noopener" style="display:inline-block;padding:8px 12px">Open ↗</a>${s.phone ? `<a class="ghost" href="tel:${esc(s.phone)}" style="display:inline-block;padding:8px 12px">Call</a>` : ''}</div></div>`).join('') : '';
+      <div class="v" style="flex:0 0 auto;display:flex;gap:6px"><a class="ghost" href="${esc(s.url)}" target="_blank" rel="noopener" style="padding:8px 12px">Open ${ext()}</a>${s.phone ? `<a class="ghost" href="tel:${esc(s.phone)}" style="padding:8px 12px">Call</a>` : ''}</div></div>`).join('') : '';
 
   const graded = OWN.items.filter(i => i.id === id && i.graded);
   $('#dGradedList').innerHTML = graded.length ? graded.map(i =>
@@ -4891,7 +4924,8 @@ function paintSettings() {
         cannot read its old backups by itself, though Restore lets you pick one.</div>
     </div>
     <div class="panel"><h3>About</h3>
-      <div class="row"><div class="nm"><b id="aboutTake">Take ${TAKE} \u00b7 built ${esc((CAT.man.built_at || '').slice(0, 16))}</b><span>${CAT.man.cards ? CAT.man.cards.toLocaleString() + ' cards' : ''} \u00b7 prices ${esc((CAT.man.source_updated_at || '?').slice(0, 10))}</span></div></div></div>
+      <div class="row"><div class="nm"><b id="aboutTake">Take ${TAKE} \u00b7 built ${esc((CAT.man.built_at || '').slice(0, 16))}</b><span>${CAT.man.cards ? CAT.man.cards.toLocaleString() + ' cards' : ''} \u00b7 prices ${esc((CAT.man.source_updated_at || '?').slice(0, 10))}</span></div></div>
+      <div class="note" id="aboutIcons">Some of the icons are Lucide's (ISC licence) and Feather's (MIT licence); their notices travel inside the app.</div></div>
     <div class="panel"><h3>Self-test</h3>
       <div class="row"><div class="nm"><b>Does this phone run the app?</b><span>catalogue, scanner gate, OCR, backup, camera, fonts, sync \u2014 in one tap</span></div>
         <button class="ghost" id="stRun">Run</button></div>
@@ -5288,7 +5322,7 @@ function paintSim() {
   if (!g) {                                                    // setup
     const ds = SIMUI.legalDecks();
     box.innerHTML = `<div class="panel"><h3>Hot-seat game</h3>
-      <div class="note">Two players, one phone. The app keeps the rules \u2014 phases, DON!!, cost, the five-Character limit, who may attack whom, block, counter, damage, Life, defeat. <b>Card effects are yours to play by hand</b> (the \u22ef menu on a card): the app does not read card text and will not guess at it.</div>
+      <div class="note">Two players, one phone. The app keeps the rules \u2014 phases, DON!!, cost, the five-Character limit, who may attack whom, block, counter, damage, Life, defeat. <b>Card effects are yours to play by hand</b> (the ${G('more', 14)} menu on a card): the app does not read card text and will not guess at it.</div>
       ${ds.length ? `<div class="fgrp">Player 1 deck</div><select id="simD1">${ds.map((d, i) => `<option value="${i}" ${d.id === SIMUI.pre ? 'selected' : ''}>${esc(d.name || 'Untitled')}</option>`).join('')}</select>
       <div class="fgrp">Player 2 deck</div><select id="simD2">${ds.map((d, i) => `<option value="${i}" ${i === Math.min(1, ds.length - 1) ? 'selected' : ''}>${esc(d.name || 'Untitled')}</option>`).join('')}</select>
       <div class="fgrp">Opponent</div><select id="simOpp"><option value="human">A friend \u2014 pass the phone</option><option value="bot">The app \u2014 legal and not clever; it never sees your hand</option></select>
@@ -5308,7 +5342,7 @@ function paintSim() {
     const marked = mine && SIMUI.sel && SIMUI.sel.ref === ref;
     return `<div class="row" style="gap:8px;align-items:center;opacity:${o.rested ? .55 : 1}${marked ? ';outline:1px solid var(--brass);border-radius:8px;padding:2px 6px' : ''}"><div class="nm">${simCard(o.id, `\u2022kw:${granted.join(',')}\u2022 \u00b7 <b>${pw}</b>${o.don ? ' (+' + o.don + ' DON!!)' : ''}${o.rested ? ' \u00b7 rested' : ''}`, true)}</div>
       ${mine && g.phase === 'main' && SIM.offers(xi, 'main', ref).length ? `<button class="ghost go" data-sim="fxmain:${ref}">Main</button>` : ''}
-      ${mine && g.phase === 'main' ? `<button class="ghost" data-sim="give:${ref}" title="+1000">+DON</button><button class="ghost" data-sim="attack:${ref}">Attack</button><button class="ghost${open ? ' go' : ''}" data-sim="menu:${ref}">\u22ef</button>` : ''}
+      ${mine && g.phase === 'main' ? `<button class="ghost" data-sim="give:${ref}" title="+1000">+DON</button><button class="ghost" data-sim="attack:${ref}">Attack</button><button class="ghost${open ? ' go' : ''}" data-sim="menu:${ref}" aria-label="Actions" aria-expanded="${!!open}">${G('more', 18)}</button>` : ''}
       ${!mine && SIMUI.sel && g.phase === 'main' && (ref === 'leader' || o.rested) ? `<button class="ghost go" data-sim="target:${ref}">Target</button>` : ''}</div>
       ${open ? `<div class="row" style="gap:6px;flex-wrap:wrap;padding-left:8px"><span class="note" style="width:100%">Effects, by hand (\u00a710):</span><button class="ghost" data-sim="mp:${ref}:1000">+1000 this turn</button><button class="ghost" data-sim="mp:${ref}:-1000">\u22121000</button><button class="ghost" data-sim="mr:${ref}">${o.rested ? 'Set active' : 'Rest'}</button>${ref === 'leader' ? '' : `<button class="ghost" data-sim="mk:${ref}">K.O.</button><button class="ghost" data-sim="mh:${ref}">To hand</button>`}</div>` : ''}`; };
   if (g.phase === 'over') { box.innerHTML = `<div class="panel"><h3>${esc(SIM.P(g.over).name)} wins</h3><div class="note">${esc(g.log[0] || '')}</div><div class="row" style="margin-top:12px"><button class="ghost go" data-sim="new">New game</button></div></div>${simLog()}`; return; }
@@ -5329,7 +5363,7 @@ function paintSim() {
       <div class="row"><div class="nm">${simCard(att.id)}<span>attacks with <b>${pw.a}</b></span></div></div>
       <div class="row"><div class="nm">${simCard(tgt.id)}<span>defends with <b>${pw.d}</b>${b.counter ? ' (counters +' + b.counter + ')' : ''}${b.blocked ? ' \u00b7 blocking' : ''}</span></div></div>
       ${b.step === 'block' ? `<div class="fgrp">Block step (\u00a77-1-2)</div>${SIM.blockers().map(x => `<button class="linkish" data-sim="block:${x.ref}">Block with ${esc(x.name)}</button>`).join('') || '<div class="note">No active [Blocker]</div>'}<button class="ghost" data-sim="noblock" style="margin-top:8px">No block \u2192 counter step</button>`
-      : `<div class="fgrp">Counter step (\u00a77-1-3)</div>${SIM.counters().map(x => `<button class="linkish" data-sim="counter:${x.h}">Counter with ${esc(x.name)} (+${x.plus})</button>`).join('') || '<div class="note">No Counter cards in hand</div>'}${SIM.counterEvents().map(x => `<button class="linkish" data-sim="cev:${x.h}">Play [Counter] ${esc(x.name)} (${x.cost} DON!!)</button>`).join('')}<div class="note" style="margin-top:6px">[Counter] Events and other effects: play them by hand, then adjust with \u22ef if needed.</div><button class="ghost go" data-sim="resolve" style="margin-top:8px">Resolve \u2014 ${pw.a} vs ${pw.d}${pw.a >= pw.d ? ': hit' : ': held'}</button>`}
+      : `<div class="fgrp">Counter step (\u00a77-1-3)</div>${SIM.counters().map(x => `<button class="linkish" data-sim="counter:${x.h}">Counter with ${esc(x.name)} (+${x.plus})</button>`).join('') || '<div class="note">No Counter cards in hand</div>'}${SIM.counterEvents().map(x => `<button class="linkish" data-sim="cev:${x.h}">Play [Counter] ${esc(x.name)} (${x.cost} DON!!)</button>`).join('')}<div class="note" style="margin-top:6px">[Counter] Events and other effects: play them by hand, then adjust with ${G('more', 14)} if needed.</div><button class="ghost go" data-sim="resolve" style="margin-top:8px">Resolve \u2014 ${pw.a} vs ${pw.d}${pw.a >= pw.d ? ': hit' : ': held'}</button>`}
     </div>${simLog()}`;
     return;
   }
@@ -5341,7 +5375,7 @@ function paintSim() {
     <div class="panel"><h3>Opponent</h3>${head(O, false)}<div style="margin-top:8px">${unit(O, 1 - i, 'leader', false)}${O.chars.map((c, k) => unit(O, 1 - i, k, false)).join('')}${O.stage ? `<div class="note">Stage: ${simCard(O.stage)}</div>` : ''}</div></div>
     <div class="panel"><h3>${esc(P.name)} \u2014 turn ${g.turn}${SIMUI.sel ? ' \u00b7 <span style="color:var(--brass)">choose a target</span>' : ''}${g.bot != null && g.active === g.bot ? ' \u00b7 <span class="note">the app is moving</span>' : ''}</h3>${head(P, true)}
       <div style="margin-top:8px">${unit(P, i, 'leader', true)}${P.chars.map((c, k) => unit(P, i, k, true)).join('')}${P.stage ? `<div class="note">Stage: ${simCard(P.stage)}</div>` : ''}</div>
-      <div class="fgrp">Hand</div>${P.hand.map((id, h) => { const v = SIM.canPlay(i, h); return `<div class="row" style="gap:8px"><div class="nm">${simCard(id)}${v.ok ? '' : `<span style="display:block;color:var(--dim2);font-size:12.5px">${esc(v.why)}</span>`}</div><button class="ghost${v.ok ? ' go' : ''}" data-sim="play:${h}" ${v.ok ? '' : 'disabled'}>Play</button><button class="ghost" data-sim="trashhand:${h}" title="effect: trash">\u2715</button></div>`; }).join('') || '<div class="note">empty</div>'}
+      <div class="fgrp">Hand</div>${P.hand.map((id, h) => { const v = SIM.canPlay(i, h); return `<div class="row" style="gap:8px"><div class="nm">${simCard(id)}${v.ok ? '' : `<span style="display:block;color:var(--dim2);font-size:12.5px">${esc(v.why)}</span>`}</div><button class="ghost${v.ok ? ' go' : ''}" data-sim="play:${h}" ${v.ok ? '' : 'disabled'}>Play</button><button class="ghost" data-sim="trashhand:${h}" aria-label="Trash this card (an effect)">${G('close', 18)}</button></div>`; }).join('') || '<div class="note">empty</div>'}
       <div class="row" style="gap:10px;margin-top:14px;flex-wrap:wrap"><button class="ghost go" data-sim="end">End turn \u2014 pass the phone</button>
         <button class="ghost" data-sim="m:draw">Draw (effect)</button><button class="ghost" data-sim="m:don">+1 DON!! (effect)</button><button class="ghost" data-sim="m:life-">Life \u2192 hand (effect)</button><button class="ghost" data-sim="m:life+">+1 Life (effect)</button></div>
     </div>${simLog()}`;

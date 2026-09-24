@@ -1,6 +1,6 @@
 # UI-AUDIT — the UI series' checklist (A42)
 
-*Current as of take 107.*
+*Current as of take 108.*
 
 The audit behind the UI series, taken on the take-104 source by four
 independent read-throughs (headings and copy; components, icons and
@@ -75,11 +75,12 @@ compact bar one level down, no banner on Collect's Home.
 
 ## 3. Controls and icons — take 108
 
-- [ ] Emoji and symbols as icons: 🔍 (550, 951), 📷 (608), ⚙ for filter (553, 610), settings (727) and nothing (624), ☆★ (552), ☐☑ (757), ↶ (645), ⇄ (2119), ↻ (2373), ⋯ (5180), ▾▸, ↗ on some external links and not others, − × ✕ for remove.
-- [ ] One glyph, several meanings: `g-life` Play/Events/Want list; `g-stage` Sealed/Collection/Binder/scan-from-photo; `g-counter` Releases/Backup; `g-blocker` Scan/Bulk; `g-trigger` Movers/Torch; `g-compass` Home/Local; `g-spyglass` Search/Cards/Export.
-- [ ] Touch under 44 px: steppers 34 (301), deck +/- 28 (405), the search-bar icon buttons about 15 x 22, chips 35, `.linkish` 36, the slider 36, the currency pill 29, Releases buttons 33, "+20 for a short ad" 27, `#dkName` 34.
-- [ ] No pressed state (`-webkit-tap-highlight-color:transparent`, 59) and no disabled style (25 `disabled` buttons look live).
-- [ ] Icon buttons with no name: the gear (727), the "−" steppers (1886, 2102, 2107, 2112), "⋯" (5180), "✕" (5213); toggles with no `aria-pressed` (552, 757).
+- [x] Emoji and symbols as icons: 🔍 (550, 951), 📷 (608), ⚙ for filter (553, 610), settings (727) and nothing (624), ☆★ (552), ☐☑ (757), ↶ (645), ⇄ (2119), ↻ (2373), ⋯ (5180), ▾▸, ↗ on some external links and not others, − × ✕ for remove. *(take 108: every one a sprite symbol; the gate refuses an icon drawn as a character -- literally, as an entity or as an escape)*
+- [x] One glyph, several meanings: `g-life` Play/Events/Want list; `g-stage` Sealed/Collection/Binder/scan-from-photo; `g-counter` Releases/Backup; `g-blocker` Scan/Bulk; `g-trigger` Movers/Torch; `g-compass` Home/Local; `g-spyglass` Search/Cards/Export. *(take 108: new symbols for Scan, Collection, Sealed, Releases, Events, the actions, the torch and scan-from-a-photo; Local takes the pin; the game's glyphs keep the game's meanings; smoke holds the map as a table)*
+- [x] Touch under 44 px: steppers 34 (301), deck +/- 28 (405), the search-bar icon buttons about 15 x 22, chips 35, `.linkish` 36, the slider 36, the currency pill 29, Releases buttons 33, "+20 for a short ad" 27, `#dkName` 34. *(take 108: 520 of 1,673 controls to none -- a real 44 where growing costs nothing, a 44 px hit area round the drawn chip where a row would grow; render reads every control's square in Chrome)*
+- [x] No pressed state (`-webkit-tap-highlight-color:transparent`, 59) and no disabled style (25 `disabled` buttons look live). *(take 108: every control lightens when pressed, the compact ones give a little; a disabled button is at 0.45 and says not-allowed)*
+- [x] Icon buttons with no name: the gear (727), the "−" steppers (1886, 2102, 2107, 2112), "⋯" (5180), "✕" (5213); toggles with no `aria-pressed` (552, 757). *(take 108: every icon button named; aria-pressed on the favourites star, "Owned only" and "for this deck")*
+- [x] Found by the 44 px sweep: the scanner's shutter row sat 52 px under the nav at every size -- its height never took the sticky mode slider off. *(take 108, landmine 146)*
 
 ## 4. The art layer
 

@@ -753,6 +753,94 @@ if (puppeteer) {
   ok('take 107: Back over the filter sheet closes it and Search stays (before this take the sheet stayed open over Home)', t107b.fOpen && !t107b.fAfter.open && t107b.fAfter.screen === 'search', JSON.stringify(t107b.fAfter));
   ok('take 107: the ask sheet\'s cross closes it and answers no', t107b.askOpen && !t107b.askAfter.open && t107b.askAfter.settled === 'false', JSON.stringify(t107b.askAfter));
 
+  /* Take 108 (A42): a 44 px target for every control. Every button, link, field,
+     select and tab on the twenty screens and three sheets is brought on screen and
+     the four points 21 px from its centre are read with elementFromPoint: each must
+     land on the control or inside it (a box inside its <label>: the label). The take-107
+     build failed 525 of 1,673 this way. The control: a stepper shrunk to 34 px. */
+  const t108 = await page.evaluate(async () => {
+    const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
+    const measure = root => { const out = [];
+      const els = new Set([...root.querySelectorAll('button, a[href], select, input:not([type=hidden]), [role="tab"]')].map(e => { const l = e.closest('label'); return l && root.contains(l) ? l : e; }));
+      for (const e of els) { const r0 = e.getBoundingClientRect(); if (r0.width < 1 || r0.height < 1 || getComputedStyle(e).visibility === 'hidden') continue;
+        const navEl = [...document.querySelectorAll('nav')].find(n => !n.hidden), navTop = navEl ? navEl.getBoundingClientRect().top : innerHeight, barBottom = document.querySelector('.modebar').getBoundingClientRect().bottom;
+        if (r0.top < barBottom + 30 || r0.bottom > navTop - 30 || r0.left < 0 || r0.right > innerWidth) e.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });   // on screen, clear of the fixed bars
+        const q = e.getBoundingClientRect(), cx = q.left + q.width / 2, cy = q.top + q.height / 2;
+        const hits = [[cx - 21, cy], [cx + 21, cy], [cx, cy - 21], [cx, cy + 21]].map(([x, y]) => document.elementFromPoint(x, y));
+        const own = hits.every(t => !!t && (t === e || e.contains(t)));
+        const by = own ? '' : ' hits ' + hits.map(t => !t ? 'nothing' : (t === e || e.contains(t)) ? 'itself' : t.tagName.toLowerCase() + '.' + String(t.className).split(' ')[0] + '[' + (t.getAttribute('aria-label') || t.textContent || '').trim().slice(0, 12) + ']').join(',');
+        out.push({ own, what: ((e.id ? '#' + e.id + ' ' : '') + (e.getAttribute('aria-label') || e.textContent || '')).replace(/\s+/g, ' ').trim().slice(0, 30) + by, w: Math.round(q.width), h: Math.round(q.height) }); }
+      return out; };
+    if (!V.OWN.items.length) { const c = V.candidates('OP01-016', null)[0]; if (c) V.OWN.add(c.id, { condition: 'NM' }); }
+    const plan = [['collect', 'home'], ['collect', 'search'], ['collect', 'scan'], ['collect', 'collection'], ['collect', 'wants'], ['collect', 'binder'], ['collect', 'trade'],
+      ['collect', 'checklist'], ['collect', 'detail'], ['collect', 'settings'], ['collect', 'diag'], ['play', 'decks'], ['play', 'deck'], ['play', 'cards'], ['play', 'play'], ['play', 'sim'],
+      ['hunt', 'sealed'], ['hunt', 'releases'], ['hunt', 'local'], ['hunt', 'events'], ['collect', '#filters'], ['collect', '#picker'], ['play', '#leaderPick']];
+    let all = []; let control = null;
+    for (const [mode, id] of plan) {
+      if (V.MODE.cur !== mode) { V.MODE.set(mode, true); await wait(300); }
+      while (V.closeAnyOverlay()) {}
+      let root;
+      if (id[0] === '#') {
+        if (id === '#filters') { V.go('collection'); await wait(150); document.querySelector('#sortBtn').click(); }
+        if (id === '#picker') { V.go('home'); await wait(150); document.querySelector('#pfSwitch').click(); }
+        if (id === '#leaderPick') { V.go('decks'); await wait(100); document.querySelector('#dkNew').click(); await wait(150); document.querySelector('#dkLead').click(); }
+        await wait(250); root = document.querySelector(id + ' .sheetbody');
+      } else {
+        if (id === 'checklist') V.openChecklist([...V.CAT.sets.values()][0].id);
+        else if (id === 'detail') V.openDetail(V.OWN.items[0] ? V.OWN.items[0].id : V.CAT.rows[0].id);
+        else if (id === 'deck') { V.go('decks'); await wait(100); document.querySelector('#dkNew').click(); }
+        else V.go(id);
+        await wait(280); window.scrollTo(0, 0); root = document.getElementById(id);
+      }
+      all = all.concat(measure(root).map(r => ({ ...r, where: id })));
+      if (id === 'detail') { const b = document.querySelector('#dPlus'); b.style.width = b.style.height = '34px';   // the control: a 34 px stepper
+        control = measure(root).filter(r => !r.own).map(r => r.what); b.style.width = b.style.height = ''; }
+      if (id[0] === '#') document.querySelector(id).classList.remove('on');
+    }
+    /* the scanner's bottom row sits above the nav (it sat 52 px under it until this take) */
+    V.MODE.set('collect', true); await wait(300); V.go('scan'); await wait(250);
+    const sb = document.querySelector('.shutterbar').getBoundingClientRect(), nav = document.querySelector('#navCollect').getBoundingClientRect();
+    const scanner = { shutterbarBottom: Math.round(sb.bottom), navTop: Math.round(nav.top) };
+    V.go('home'); await wait(200); window.scrollTo(0, 0);
+    return { total: all.length, bad: all.filter(r => !r.own).map(r => `${r.where} ${r.what} ${r.w}x${r.h}`), control, scanner };
+  });
+  ok('take 108: every control on the twenty screens and three sheets has a 44 px square of its own', t108.total > 1000 && t108.bad.length === 0, `${t108.bad.length} of ${t108.total}: ${t108.bad.slice(0, 4).join(' | ')}`);
+  ok('take 108: ...control: a stepper shrunk to 34 px is caught', Array.isArray(t108.control) && t108.control.some(w => /#dPlus/.test(w)), JSON.stringify(t108.control));
+  ok('take 108: the scanner\'s bottom row sits above the nav (52 px under it before this take)', t108.scanner.shutterbarBottom <= t108.scanner.navTop, JSON.stringify(t108.scanner));
+  /* ...and the dense case the runner met first (take 108's first check run): where-to-buy strips with
+     two sellers that wrap. The fixture feed -- the saved distributor page, as smoke builds it -- gives
+     every run the same strips; each is narrowed until it wraps, then every chip's square is read. The
+     control removes the chips' 34 px floor, which put wrapped rows 41 px apart. */
+  const fxFeed = path.join(os.tmpdir(), 'optcghub-render-feed.json');
+  execSync(`python3 tools/hunt.py --from-fixtures --out ${fxFeed}`, { cwd: ROOT, stdio: 'pipe' });
+  const wrap108 = await page.evaluate(async feed => {
+    const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)), prev = V.HUNT.feed;
+    const sweep = () => { const strips = [...document.querySelectorAll('#sealedList .chips.buy')].filter(s => s.querySelectorAll('a.chip').length > 1); let bad = 0, n = 0;
+      for (const s of strips) { s.style.flexBasis = '150px'; s.style.maxWidth = '150px'; }
+      for (const s of strips) for (const e of s.querySelectorAll('a.chip')) { e.scrollIntoView({ block: 'center', behavior: 'instant' });
+        const q = e.getBoundingClientRect(), cx = q.left + q.width / 2, cy = q.top + q.height / 2; n++;
+        if (![[cx - 21, cy], [cx + 21, cy], [cx, cy - 21], [cx, cy + 21]].every(([x, y]) => { const t = document.elementFromPoint(x, y); return !!t && (t === e || e.contains(t)); })) bad++; }
+      for (const s of strips) { s.style.flexBasis = ''; s.style.maxWidth = ''; }
+      return { strips: strips.length, chips: n, bad }; };
+    V.HUNT.feed = feed; V.MODE.set('hunt', true); await wait(300); V.go('sealed'); V.paintSealed(); await wait(300); while (V.closeAnyOverlay()) {}
+    const clean = sweep();
+    const st = document.createElement('style'); st.textContent = '.chip{min-height:0!important}'; document.head.appendChild(st); await wait(50);
+    const control = sweep(); st.remove();
+    V.HUNT.feed = prev; V.paintSealed(); V.MODE.set('collect', true); await wait(300); V.go('home');
+    return { clean, control };
+  }, JSON.parse(fs.readFileSync(fxFeed, 'utf8')));
+  ok('take 108: where-to-buy chips wrapped onto two lines keep a 44 px square each', wrap108.clean.strips > 0 && wrap108.clean.chips >= 2 * wrap108.clean.strips && wrap108.clean.bad === 0, JSON.stringify(wrap108));
+  ok('take 108: ...control: without the chips\' 34 px floor the wrapped rows collide', wrap108.control.bad > 0, JSON.stringify(wrap108.control));
+  /* pressed and disabled, as a person sees them */
+  const range = await page.evaluate(() => { const b = document.querySelector('#ranges .range.on') || document.querySelector('#ranges .range'); if (!b) return null; b.scrollIntoView({ block: 'center', behavior: 'instant' }); const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+  let pressed = null;
+  if (range) { await page.mouse.move(range.x, range.y); await page.mouse.down(); await new Promise(r => setTimeout(r, 220));
+    pressed = await page.evaluate(() => { const b = document.querySelector('#ranges .range.on') || document.querySelector('#ranges .range'); const cs = getComputedStyle(b); return { filter: cs.filter, transform: cs.transform }; });
+    await page.mouse.up(); }
+  ok('take 108: a pressed control lightens and gives a little', !!pressed && /brightness\(1\.25\)/.test(pressed.filter) && /matrix\(0\.96/.test(pressed.transform), JSON.stringify(pressed));
+  const disabled = await page.evaluate(async () => { window.VAULT.go('diag'); await new Promise(r => setTimeout(r, 200)); const b = document.querySelector('#diagCopy'); const o = { disabled: b.disabled, opacity: getComputedStyle(b).opacity }; window.VAULT.go('home'); return o; });
+  ok('take 108: a disabled button looks switched off', disabled.disabled && disabled.opacity === '0.45', JSON.stringify(disabled));
+
   await browser.close();
 } else {
   /* ---------------- honest fallback ------------------------------------- */

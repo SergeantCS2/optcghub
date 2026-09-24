@@ -203,6 +203,38 @@ def check_escapes_in_markup():
                        f"(landmine 99) — use &#NNNN; entities in markup")
 
 
+def check_icon_characters():
+    """Take 108 (A42). An icon drawn as a character -- an emoji, a symbol from a
+    font -- draws differently on every phone, cannot take the palette and has
+    no name for a reader; the app's icons are the sprite's symbols
+    (assets/glyphs.svg, drawn through G() or <use href="#g-...">). This refuses
+    the emoji and the symbol blocks, and the arrows and shapes the app once
+    used as icons, in src/app.html -- written literally, as &#NNNN; or as
+    \\uXXXX. Typography stays: the minus of money, the times of a count,
+    arrows inside a label, the price triangles, the DON!! pips, dots, dashes.
+    Comments are the record's, not the app's, and are not read."""
+    src = read("src", "app.html")
+    if not src:
+        return
+    body = re.sub(r"<!--.*?-->", "", src, flags=re.S)
+    body = re.sub(r"/\*.*?\*/", "", body, flags=re.S)
+    ICONS = set("\u21b6\u21c4\u21bb\u2197\u22ef\u25be\u25b8")   # undo, swap, refresh, external, more, the carets
+    found = {}
+    def see(ch, at):
+        cp = ord(ch)
+        if ch in ICONS or 0x2600 <= cp <= 0x27BF or 0x1F000 <= cp <= 0x1FAFF:
+            found.setdefault(ch, body.count("\n", 0, at) + 1)
+    for m in re.finditer(r"&#(\d+);|&#x([0-9a-fA-F]+);|\\u([0-9a-fA-F]{4})", body):
+        see(chr(int(m.group(1)) if m.group(1) else int(m.group(2) or m.group(3), 16)), m.start())
+    for i, ch in enumerate(body):
+        if ord(ch) > 0x2000:
+            see(ch, i)
+    if found:
+        fail("icons", "src/app.html draws " + str(len(found)) + " icon(s) as characters: "
+             + ", ".join(f"U+{ord(c):04X} near line {ln}" for c, ln in sorted(found.items(), key=lambda kv: kv[1])[:6])
+             + " -- use a sprite symbol, G('name') or <use href=\"#g-name\">")
+
+
 def check_duplicate_ids():
     """Landmine 90. Two elements with id="guide": the scanner's viewfinder (take
     2) and the first-run tour (take 19). $('#guide') returned the first, the
@@ -533,7 +565,7 @@ def selftest():
             n = take()
             check_docs_current(n); check_handoff(n); check_agenda()
             check_landmine_citations(); check_secrets(); check_render_receipt()
-            check_workflow_copies(); check_offline(provision_hosts())
+            check_workflow_copies(); check_offline(provision_hosts()); check_icon_characters()
             fired = any(f.startswith(cat + ":") for f in FAILS) if cat else bool(FAILS)
             stray = [f for f in FAILS if cat and not f.startswith(cat + ":")]
         finally:
@@ -569,6 +601,11 @@ def selftest():
           .write("\n# see land" + "mine 9999\n"), "landmines")
     probe("render receipt missing (DOM-mode seal)",
           lambda t: os.path.exists(os.path.join(t, "www", "render.png")) and os.remove(os.path.join(t, "www", "render.png")), "render")
+    # take 108: an icon drawn as a character in the app, literally and as an escape
+    probe("an icon drawn as a character (take 108)", lambda t: open(os.path.join(t, "src", "app.html"), "a")
+          .write("\n<span>\U0001F50D</span>\n"), "icons")
+    probe("an icon drawn as a JS escape (take 108)", lambda t: open(os.path.join(t, "src", "app.html"), "a")
+          .write("\n<script>const x = '\\u2699';</script>\n"), "icons")
     probe("upload key in the tree",
           lambda t: open(os.path.join(t, "apex-upload.jks"), "w").write("x"), "secrets")
 
@@ -616,6 +653,7 @@ if __name__ == "__main__":
     check_stale_copy()
     check_play_readiness()
     check_escapes_in_markup()
+    check_icon_characters()
     check_duplicate_ids()
     check_prompt_ratchet()
     check_no_condition_multiplier()
