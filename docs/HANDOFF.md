@@ -126,6 +126,25 @@ and "the tutorial didn't popup for me".
   with no error record. The take-98 step seeded `V.go('home')` first;
   this one does not, on purpose.
 
+### Merged — run 54 green, Release take-105 published, the keep set took (post-merge note, rides the next PR)
+
+The owner's "continue onwards" at 02:42 taken as the go on the pictures;
+PR #29 marked ready on a head verified from its log (706 smoke, 106
+render in Chrome, GATE PASSED); merged 03:02 UTC; run 54's `apk` job
+03:03–03:09; Release take-105 published 03:09:25 with three assets.
+**MEASURED from the log and from the released mapping on this VM:**
+`com.getcapacitor.annotation.Permission -> com.getcapacitor.annotation.
+Permission`, `CapacitorPlugin`, `Bridge`, `Plugin` and
+`LocalNotificationsPlugin` all map to themselves (the take-104 map had
+`-> w2.c`); `ci/shrink.py --check-mapping` on the released file: "kept
+by name", exit 0, and the build's own readback passed. The cost of
+keeping the Capacitor layer whole: dex 6.4 → 6.6 MB raw, the APK
+installed 36.9 → 37.2 MB, the download unchanged at 26.4 MB; AAB 19.6
+MB; the map 51.8 MB. The proof that reminders ask properly again is the
+Fold's self-test on take 105 through the Play update: `Notifications
+permission` PASS with a state. The Back fix is proven the same way: a
+card from Home's top-value row, then Back.
+
 ### DEFERRED this cycle
 
 - The "reopens" after the minimize: named, not reproduced here; the fix
