@@ -1,4 +1,4 @@
-# OP TCG Hub — take 108
+# OP TCG Hub — take 110
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,16 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 110:** the redesign's second half. Hunt's Sealed opens
+under the top card of the newest set, and each set's heading carries its
+own art; the Play counter shows each player's Leader behind their side;
+Decks' art is zoomed out, with nothing over it. The words are one voice
+throughout: Collection instead of Portfolio, days like "Sep 23", amounts
+that keep their currency. Sheets rise into place, a mode switch fades
+across, an empty list says what to do, and the open Fold shows two panes
+where two fit. Bulk delete removes only the lines you can see. Nothing
+you have saved changes.
 
 **New at take 109:** the first card art in the design. Decks opens
 under your newest deck's Leader -- its art behind the title, the card

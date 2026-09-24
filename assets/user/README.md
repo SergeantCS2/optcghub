@@ -11,6 +11,8 @@ app draws it. Nothing here is required.
 | `splash-bg.jpg` | the launch screen of the Android build | 1080×1920 | `ci/apk.sh` renders the splash over it instead of the plain background |
 | `empty-collection.png` | nothing, since take 63 | — | the skull it replaced is gone and the empty Collection draws its own scan-card glyph; the file is copied but not read |
 | `guide-1.jpg` … `guide-5.jpg` | one per capability card in the guide | 1080×600 | Scan · Value · Decks · Trade · Offline, in that order |
+| `hero-play.jpg` | behind Decks' title, in place of the featured Leader's blurred art (take 110) | 1080×640, landscape | shown sharp and uncut, filling the band behind the mode slider; the slider and the status bar read over its top, so keep the top third quiet |
+| `hero-hunt.jpg` | Sealed's banner, in place of the newest set's top card (take 110) | 1080×640, landscape | shown sharp and uncut, as above |
 
 **What goes here — the owner's ruling (A42, take 106):** "if we can use
 official art, card art or anything we can leverage i'm more than okay with

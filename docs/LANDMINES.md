@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 109.*
+*Current as of take 110.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -163,6 +163,10 @@ Start here. Do not read top to bottom.
 | Every failed picture costs a second request that cannot succeed | **150** |
 | The publisher's picture carries SAMPLE; a banner shows the stamp | **151** |
 | The look's pictures fail in the VM while curl fetches them | **152** |
+| A list's empty state never shows, though the list is empty | **153** |
+| A Release's body names the take before it | **154** |
+| A bulk action reaches lines the screen does not show | **155** |
+| A control grown for thumbs spills off a narrow phone | **156** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -2154,6 +2158,39 @@ and Node accept it.** Playwright's and puppeteer's Chromium answered
 certificate store is empty. Rule: the harness fetches the picture in Node, which
 checks the certificate, and hands the bytes to the page; never switch the
 browser's check off.
+
+**153. A fallback keyed on the container never runs when something else always
+fills it.** Sealed wrote `out.join('') || 'Nothing matches'`, and the stock panels were
+always in `out` (both there at take 80, the first take the repository holds): a
+search that matched no product showed the panels and nothing else, for thirty
+takes at least. Found by take 110's empty
+state check, which painted the empty search instead of reading the source. Rule:
+an empty state is decided by the rows it stands for (`!rows.length`), never by
+the container's markup.
+
+**154. A heading typed by hand drifts from the thing it names.** Release
+take-109's body opened "# OP TCG Hub — take 108" under the title "take 109":
+the title comes from BUILD, the body is `ci/RELEASE.md` as committed, and the
+build checks only the "New at take N" paragraph. V1-STATE's heading had done
+the same at take 102. Rule: every hand-typed take number the build publishes
+has a tripwire in the gate (take 110: `check_docs_current` reads it, with a
+selftest probe).
+
+**155. A selection keyed by printing reaches every line of that printing.** Bulk
+delete held printing ids and removed every line of them -- in every collection
+and every condition, including lines the screen did not show -- while Move and
+Condition beside it kept to the collection on screen; its confirm valued one of
+each printing whatever the quantities. Rule: a bulk action acts on the lines on
+screen (`PF.scope`), and says their value with their quantities (AGENTS rule 5).
+
+**156. A control grown for thumbs must be measured at the narrowest width on
+every screen that holds it.** Take 108's 44 px steppers made the Play counter's
+three columns need 332 px; a 360 px phone's panel has 296. The page scrolled
+sideways there for two takes -- the no-sideways checks listed the screens that
+changed, and the Play counter was not one -- and take 110's `overflow:hidden`
+(for the art) turned it into a + cut in half. Rule: a size change in a shared
+control adds every screen holding it to the narrow-width checks, and a panel
+that clips is measured for what it would hide.
 
 ## §2 — Inherited from APEX ORV
 

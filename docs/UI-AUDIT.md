@@ -1,6 +1,6 @@
 # UI-AUDIT — the UI series' checklist (A42)
 
-*Current as of take 109.*
+*Current as of take 110.*
 
 The audit behind the UI series, taken on the take-104 source by four
 independent read-throughs (headings and copy; components, icons and
@@ -34,7 +34,7 @@ compact bar one level down, no banner on Collect's Home.
 - [x] Brass on `#2A2414` in Prep & Play 4.07: `.badge`, `.chip.on`, `.seg.on`. *(take 106)*
 - [x] `.ck` rarity on the "have" cell in Collect 3.45; `.ck.have b` 3.17 (Prep & Play) and 4.42 (Hunt). *(take 106)*
 - [x] The deck `.curve` bars (#1d2a2e) about 1.1:1 against the card: nearly invisible (393). *(take 106)*
-- [ ] `picBox` fallback labels (black at 65 % on a colour gradient) 1.64 to 3.23 — the face of every picture that fails (about 203 ids answer 403). *(open: the art take replaces the fallback)*
+- [x] `picBox` fallback labels (black at 65 % on a colour gradient) 1.64 to 3.23 — the face of every picture that fails (about 203 ids answer 403). *(open: the art take replaces the fallback)* *(take 110: white on a dark pill, above 4.5:1 over any card's ground; measured below by smoke)*
 
 **Text under 12 px** (25 rules)
 - [x] nav 10.5 (446); `.kwtag` 9.5 (410); `.art .own` "YOUR SCAN" 9 (214); `.free` "AD" 9 (156); `.hero .who .cap` 11 (147); `.art .ph` 11 (212); `.tile .px .dl` 10.5 (225); `.badge` 10 (226); `.opt .op span` 11 (293); `.prov` 11.5 (303); `.fcount` 10 (354); `.pocket .tag` 9.5 (365); `.pocket .n` 9 (367); `.ck` 10 (374); `.ck .qty` 9 (379); `.curve` labels 10 (395-396); `.dkrow .n > span` 11.5 (403); `.dkrow .cost` 11 (409). *(take 106)*
@@ -86,29 +86,29 @@ compact bar one level down, no banner on Collect's Home.
 
 - [x] The record first: landmines 26 and 28 corrected (display-only, hot-linked, used boldly; nothing bundled; offline falls back to the colour tile); 30 and 31 stand; NSP's "may not ship" line; A6, A16, A29, A41; V1-STATE; PROVISION's runtime rows; PLAY-LISTING; `assets/user/README.md` (whose first line also names the owner and is outside the scrubber's list); the comments in the Hunt palette, `deckCover`, `refArt` and More's data sources. *(take 109; More's data sources stayed true -- display is not storage)*
 - [x] `artUrl()` from the stored URL only (never a card number, AGENTS §3); the large size measured on the runner (`_in_1000x1000` served 600 x 838 at take 6; `{id}.jpg` unmeasured; the SAMPLE watermark unmeasured). *(take 109: measured every build, 40 of 40, median 600x838; `{id}.jpg` 403 for 241 of 241, the retry gone; the stamp on 38 of 40 card pictures, one band at 45-60 %, so art is cut above 42 %)*
-- [ ] Decks: C (the Leader's art blurred behind the crisp card; the title in the shared slot). Sealed: A (an art banner). Home: no banner. The card sheet: the backdrop from the card's own art. Offline: the card's game colours. *(take 109: all but Sealed's banner, which is take 110's)*
+- [x] Decks: C (the Leader's art blurred behind the crisp card; the title in the shared slot). Sealed: A (an art banner). Home: no banner. The card sheet: the backdrop from the card's own art. Offline: the card's game colours. *(take 109: all but Sealed's banner, which is take 110's)* *(take 110: Sealed's banner, the newest set's top card; at the owner's word the card no longer rises from behind Decks' title, and the blur shows the band above the stamp whole)*
 - [x] Leader-art deck covers (user decks show the Leader at 44 px, ready-made decks a drawn SVG: one idea, two treatments). *(take 109: the Leader's picture over the drawn cover)*
-- [ ] Set headers in Sealed and Releases with an art strip; the Play board's Leader art; art empty states.
+- [x] Set headers in Sealed and Releases with an art strip; the Play board's Leader art; art empty states. *(take 110: every heading in Sealed a strip, the Play counter's Leaders; Releases' rows and art in empty states ruled out with reasons in the HANDOFF)*
 - [x] The runner's look: `check` runs the look and keeps the PNGs, since this session's VM reaches no image host. *(take 109: not needed -- the VM reaches the image hosts, and the look fetches its pictures in Node behind the proxy, landmine 152)*
-- [ ] Thumbnails: seven widths (30 34 36 44 48 52 56), five radii, three ratios → the three `--thumb-*`.
+- [x] Thumbnails: seven widths (30 34 36 44 48 52 56), five radii, three ratios → the three `--thumb-*`. *(take 110: THUMB / --thumb-s, -m, -l -- 32 a dense deck-building list, 44 a list row, 56 a sealed product; two radii stay, a card's 6 and a box's 8)*
 - [x] The ready-made decks drawn at the bottom of the deck editor since take 66 at the latest, though take 61 put them on Decks, and a smoke line named for the place that never checked it (landmine 149). *(take 109: back on Decks; smoke reads the section)*
 - [x] The picture retry to `<id>.jpg` never served (403 for 241 of 241, landmine 150). *(take 109: gone)*
-- [ ] Whole-card pictures (thumbnails, a deck's Leader, a card's own page) show the SAMPLE stamp wherever the publisher's picture has it -- the owner's call whether they show the card above the stamp instead. *(asked at take 109)*
+- [x] Whole-card pictures (thumbnails, a deck's Leader, a card's own page) show the SAMPLE stamp wherever the publisher's picture has it -- the owner's call whether they show the card above the stamp instead. *(asked at take 109)* *(take 110, the owner: "It should show the whole card")*
 
 ## 5. The voice
 
-- [ ] Casing: sentence case for every heading, button and chip (outliers: "Most Valuable" 512, "View All" 514, "Market Movers" 540, "Trade Analyzer" 541, "Bulk Actions" 542, "+ Add a Graded Card" 702, "Starter Decks" 3767/3774); literal caps ("YOUR SCAN" 3024, "GRADED" 2902, "FAILED" 4752, "REPLACES" 3206, "MEASURED" 3894); lowercase states ("offline ok" 498, "☐ own" 757, "for this deck: off" 809, "given" 2110, "+cal" 3724).
-- [ ] Duplicate panel titles: "Performance" under Home's own Performance tab, and an "Events" panel on Events (moved here from the header section at take 107).
-- [ ] One word per thing: collection (D17: Collection for Portfolio — 504, 2506, 2508, 2519); card vs printing ("Search all N cards" 5435 vs "N printings" 2915); Refresh (#huntSync says Refresh at 3482 and Fetch at 3484; Sync now 4777); Remove (Delete, Clear, − × ✕); Sim (simulator, hot-seat, pass the phone); Export (Export CSV); Back up; Want list (wants, wanted); keywords one way (blockers, Blocker, [Blocker]).
-- [ ] Formats: one date formatter (eight styles today, ISO with a literal T at 3206, 3474); one percentage rule (0, 1 and 2 decimals); × not x (3155, 4811, 5347); curly quotes and apostrophes.
-- [ ] Money: `money(Math.abs(d)).slice(1)` (1621, 1904, 2574, 2665, 2670, 4684) drops the "$" in dollars and the "≈" in a converted currency; "in the last all time" (2574); the min/max placeholders say "$" in every currency (898, 900).
-- [ ] The developer's voice out of the UI: `<title>` "take __TAKE__" (6); "(R6)" (963); "(PROTOCOL §10)" (2993); "MEASURED:" (3894); "(landmine 25)" (4721); "Credits (A17 — ads not wired; gate OFF)" and "+20 (dev)" (4789-4795); the tour's "Two faces" and "A simulator is on the roadmap" (1981-1983); "Store stock and local shops come to this mode next" (578); "store events come with the local view" (3782); "Sealed product is manual." (4812); "the field is offline by design" (4800).
-- [ ] Button labels of three words at most (the Play Start/Next/End buttons 2120, the Sim buttons 5163-5214); labels for the inputs that have only a placeholder (551, 609, 741, 756, 811, 848, 855, 898, 900, 952, 2521; the Sim selects 5161-5164).
+- [x] Casing: sentence case for every heading, button and chip (outliers: "Most Valuable" 512, "View All" 514, "Market Movers" 540, "Trade Analyzer" 541, "Bulk Actions" 542, "+ Add a Graded Card" 702, "Starter Decks" 3767/3774); literal caps ("YOUR SCAN" 3024, "GRADED" 2902, "FAILED" 4752, "REPLACES" 3206, "MEASURED" 3894); lowercase states ("offline ok" 498, "☐ own" 757, "for this deck: off" 809, "given" 2110, "+cal" 3724). *(take 110: every one, and a sweep of the shipped labels found no others)*
+- [x] Duplicate panel titles: "Performance" under Home's own Performance tab, and an "Events" panel on Events (moved here from the header section at take 107). *(take 110: "Against what you paid", "Store events")*
+- [x] One word per thing: collection (D17: Collection for Portfolio — 504, 2506, 2508, 2519); card vs printing ("Search all N cards" 5435 vs "N printings" 2915); Refresh (#huntSync says Refresh at 3482 and Fetch at 3484; Sync now 4777); Remove (Delete, Clear, − × ✕); Sim (simulator, hot-seat, pass the phone); Export (Export CSV); Back up; Want list (wants, wanted); keywords one way (blockers, Blocker, [Blocker]). *(take 110: Collection (D17; the CSV column and the backup keep "portfolio"), Refresh, Export CSV, Back up, pass the phone, the want list, Blocker; Delete stays for what is destroyed and Clear for a list or a filter emptied -- two things, two words)*
+- [x] Formats: one date formatter (eight styles today, ISO with a literal T at 3206, 3474); one percentage rule (0, 1 and 2 decimals); × not x (3155, 4811, 5347); curly quotes and apostrophes. *(take 110: dayText and momentText -- "Sep 23", "Sep 24, 6:23 AM" -- ISO only in the diagnostics and self-test reports; one decimal for a percentage, none from 100 %; x as ×; 186 apostrophes curled in the markup and the script's strings)*
+- [x] Money: `money(Math.abs(d)).slice(1)` (1621, 1904, 2574, 2665, 2670, 4684) drops the "$" in dollars and the "≈" in a converted currency; "in the last all time" (2574); the min/max placeholders say "$" in every currency (898, 900). *(take 110: signedMoney keeps "$" and "≈"; "since the first day on file"; the price filter typed and shown in the currency on screen, kept in dollars)*
+- [x] The developer's voice out of the UI: `<title>` "take __TAKE__" (6); "(R6)" (963); "(PROTOCOL §10)" (2993); "MEASURED:" (3894); "(landmine 25)" (4721); "Credits (A17 — ads not wired; gate OFF)" and "+20 (dev)" (4789-4795); the tour's "Two faces" and "A simulator is on the roadmap" (1981-1983); "Store stock and local shops come to this mode next" (578); "store events come with the local view" (3782); "Sealed product is manual." (4812); "the field is offline by design" (4800). *(take 110: every one; the test credits moved to Diagnostics; smoke refuses the list in the shipped app)*
+- [x] Button labels of three words at most (the Play Start/Next/End buttons 2120, the Sim buttons 5163-5214); labels for the inputs that have only a placeholder (551, 609, 741, 756, 811, 848, 855, 898, 900, 952, 2521; the Sim selects 5161-5164). *(take 110: the Play counter's Start / Next turn / End turn with what happens beside it; every field named; the Sim's setup "New game"; More's link rows stay sentences)*
 
 ## 6. Polish
 
-- [ ] Motion tokens applied (sheet slide, crossfade on mode switch, press feedback), reduced motion honoured everywhere.
-- [ ] Loading, empty and error states per list; tabular figures on every number.
+- [x] Motion tokens applied (sheet slide, crossfade on mode switch, press feedback), reduced motion honoured everywhere. *(take 110: every transition on --dur-press, --dur-ui or --dur-sheet; a sheet rises as its scrim fades; a tap on the slider crossfades the new screen and turns the palette; take 106's one reduced-motion rule stops them all, measured in Chrome)*
+- [x] Loading, empty and error states per list; tabular figures on every number. *(take 110: one empty state -- glyph, what is missing, what to do -- on every list that fills a screen, and Sealed's empty search, which had shown nothing since the stock panels arrived; loading and error were already there (a Refresh disables, a failure toasts); tabular figures are the body's default)*
 - [ ] The ui-ux-pro-max pre-delivery checklist, item by item, in the PR.
 
 ## Found in passing, routed elsewhere

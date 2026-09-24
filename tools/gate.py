@@ -54,6 +54,14 @@ def check_docs_current(n):
         h = re.search(r"^# V1-STATE — what exists, as of take (\d+)$", s, re.M)
         if fn == "V1-STATE.md" and h and int(h.group(1)) != n:
             fail("docs-current", f"docs/{fn} heading says take {h.group(1)}, BUILD says {n}")
+    # take 110: the Release body is ci/RELEASE.md as committed, and its heading is typed by
+    # hand -- Release take-109 went out under "# OP TCG Hub — take 108" (the title, from
+    # BUILD, was right; the body a take behind). The same tripwire as V1-STATE's heading.
+    r = re.search(r"^# OP TCG Hub — take (\d+)$", read("ci", "RELEASE.md"), re.M)
+    if not r:
+        fail("docs-current", "ci/RELEASE.md has no '# OP TCG Hub — take N' heading")
+    elif int(r.group(1)) != n:
+        fail("docs-current", f"ci/RELEASE.md heading says take {r.group(1)}, BUILD says {n}")
 
 
 def check_handoff(n):
@@ -597,6 +605,8 @@ def selftest():
     # failure instead (take 102, landmine 139)
     probe("stale doc stamp", lambda t: open(os.path.join(t, "docs/PROTOCOL.md"), "w")
           .write(re.sub(r"\*Current as of take \d+\.\*", "*Current as of take 1.*", read("docs", "PROTOCOL.md"), count=1)), "docs-current")
+    probe("stale Release heading (take 110: Release take-109 went out headed take 108)", lambda t: open(os.path.join(t, "ci", "RELEASE.md"), "w")
+          .write(re.sub(r"^# OP TCG Hub — take \d+$", "# OP TCG Hub — take 1", read("ci", "RELEASE.md"), count=1, flags=re.M)), "docs-current")
     # take 102: the H1 of V1-STATE drifted a take behind its stamp line unnoticed
     probe("stale V1-STATE heading under a current stamp", lambda t: open(os.path.join(t, "docs/V1-STATE.md"), "w")
           .write(re.sub(r"^# V1-STATE — what exists, as of take \d+$", "# V1-STATE — what exists, as of take 1", read("docs", "V1-STATE.md"), count=1, flags=re.M)), "docs-current")
