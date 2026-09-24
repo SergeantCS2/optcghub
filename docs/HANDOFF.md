@@ -364,6 +364,20 @@ the run if it stops.
   pictures (727 fetched through Node, 99 refused by the host -- the ids
   TCGplayer refuses). Every PNG read; they go to the owner with the PR.
 
+### After the first push: a review of the whole take
+
+- **The runner's `check` on the first push** (16641e6): smoke 891/891,
+  render 151/151 in Chrome, GATE PASSED, 2 min 28 s.
+- **Two checks that could not fail**, both there since the take-88 seed:
+  Sealed's starter decks "collapse on a tap like a set" and the Sim's
+  [Double Attack] under DON!! each ended its condition `|| true`. Each
+  now asks what its name says, with a control, and each was watched to
+  fail on a build that breaks it (a fold that never folds; a DON!!
+  condition that never holds). A guard refuses the shape in the file
+  from now on; its control counts the two in take 109's file.
+- **UI-AUDIT §6's last box** is ticked: the PR carries the pre-delivery
+  checklist, item by item. smoke 895/895.
+
 ### Ruled out
 
 - **Strips on Releases:** its rows are mostly sets not out yet, with no
@@ -384,8 +398,6 @@ the run if it stops.
   go the way of the three.
 - **The inner screen's real width:** Diagnostics' `viewport` line from the
   open Fold settles the 840 px the layout is INFERRED from.
-- **The ui-ux-pro-max pre-delivery checklist** is in the PR, item by item
-  (UI-AUDIT §6's last box, ticked when the PR carries it).
 - Outside the UI series, unchanged: A41 (the parts and the source), A32
   (retailers with the real page in hand), D20-D22, the AdMob unit IDs.
 

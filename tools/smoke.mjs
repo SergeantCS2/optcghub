@@ -1346,7 +1346,10 @@ const sub = (p, t) => (p.subtypes || '').split(/[;/]/).map(x => x.trim()).includ
   const need = daT[1].if.find(c => c.c === 'donx'); P0.chars[0].don = need ? need.n : 1;
   S.mod(0, 'u' + P0.chars[0].uid, 99999, 'turn');
   S.attack(0, 0, 'leader'); S.noBlock(); const res = S.resolve();
-  ok('a continuous [Double Attack] under DON!!: a hit on the Leader takes two Life cards', S.kwOf(0, 0).includes('Double Attack') === false /* it left play? no: still there */ || true, '');
+  /* take 110: this line ended "|| true" and could not fail; it now asks what its name says, with a control */
+  const daOn = S.kwOf(0, 0).includes('Double Attack'), daGiven = P0.chars[0].don; P0.chars[0].don = daGiven - 1; const daShort = S.kwOf(0, 0).includes('Double Attack'); P0.chars[0].don = daGiven;
+  ok('a continuous [Double Attack] under DON!!: the keyword is live while the DON!! is given', daOn, JSON.stringify(S.kwOf(0, 0)));
+  ok('...control: one DON!! short, it is not', daShort === false);
   ok('...two Life cards were taken', res.win && res.life.length === 2 && P1.life.length === lb - 2, JSON.stringify(res.life.length)); }
 /* continuous Rush under DON!!: live, and gone without the DON!! */
 { P0.chars = [S.inst(+rushS[0], g.turn)];
@@ -1471,7 +1474,15 @@ ok('no select is ever wider than its container (the Sim boxes ran off the screen
   ok('Starter decks have their own section at the top of Sealed, with pictures and the bell', /Starter decks <span class="note">· \d+<\/span>/.test(hs)
      /* take 110: the first fold is the starter decks' and the name is inside its heading (a 400-character window stood for this until the heading carried its art) */
      && hs.indexOf('data-setfold="') === hs.indexOf('data-setfold="decks"') && hs.indexOf('Starter decks') < hs.indexOf('</button>', hs.indexOf('data-setfold="decks"')));
-  V.SEALED.closed.add('decks'); V.paintSealed(); ok('...and it collapses on a tap like a set', !/Starter Deck 1: Straw Hat Crew/.test(ctx.document.querySelector('#sealedList').innerHTML.split('<h3>')[0]) || true); V.SEALED.closed.clear(); V.MODE.set('collect', false); }
+  /* take 110: this line ended "|| true" from the take-88 seed on, so it could not fail; the section is now
+     read from its own heading to the next one, folded and (the control) open */
+  const deckIds = V.CAT.rows.filter(p => V.SEALED.isProduct(p) && V.SEALED.kindOf(p) === 'deck').map(p => p.id);
+  const decksSec = h => { const a = h.indexOf('data-setfold="decks"'); if (a < 0) return null; const b = h.indexOf('data-setfold="', a + 1); return h.slice(a, b < 0 ? h.length : b); };
+  const deckRows = t => deckIds.filter(id => t.includes(`data-open="${id}"`)).length;
+  V.SEALED.closed.add('decks'); V.paintSealed(); const shut = decksSec(ctx.document.querySelector('#sealedList').innerHTML), open = decksSec(hs);
+  ok('...and it folds on a tap like a set: its heading stays, marked folded, and its decks go', !!shut && /^data-setfold="decks" aria-expanded="false"/.test(shut) && deckRows(shut) === 0, (shut || '').slice(0, 120));
+  ok('...control: open, the same section lists its decks', !!open && /^data-setfold="decks" aria-expanded="true"/.test(open) && deckRows(open) > 0, String(open && deckRows(open)));
+  V.SEALED.closed.clear(); V.MODE.set('collect', false); }
 ok('the roster carries a phone and an exact point for every store the file has them for', (() => { const d = fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-r87-')); execSync(`python3 tools/hunt.py --from-fixtures --out ${d}/feed-fixture.json`, { cwd: ROOT, stdio: 'pipe' }); const r = JSON.parse(fs.readFileSync(path.join(d, 'stores-fixture.json'), 'utf8')); return r.stores.every(s => s.phone && s.exact && Array.isArray(s.ll)); })());
 /* take 86: the fourth look */
 ok('every screen ends with room for the bottom bar (nothing hides behind it)', /\.screen\{display:none;padding:0 var\(--pad\) calc\(66px \+ 34px \+ var\(--sab\)\)\}/.test(html));
@@ -2647,6 +2658,13 @@ section('take 110 — a picture that failed says what it is, readably (UI-AUDIT 
   const old = hexes.map(h => ratio(over(rgb(h), 0.65, [0, 0, 0]), rgb(h)));
   ok('...control: take 109\'s black at 65 % on the colour is caught below 4.5:1', Math.min(...old) < 4.5, old.map(r => r.toFixed(2)).join(' '));
 }
+
+section('take 110 — no check here passes whatever happens (AGENTS rule 2)');
+{ const self = fs.readFileSync(new URL(import.meta.url), 'utf8');
+  const blind = t => (t.match(/\|\| true[\s,)'"]*\);/g) || []).length;
+  ok('no check in this file ends its condition "|| true" (two did, from the take-88 seed, until take 110)', blind(self) === 0, String(blind(self)));
+  const T = '|' + '| true';   // spelled apart, or this line would be what it looks for
+  ok('...control: the take-109 lines are caught', blind(`ok('x', a ${T}); ok('y', b === false ${T}, '');`) === 2); }
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

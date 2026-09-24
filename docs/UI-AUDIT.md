@@ -109,7 +109,7 @@ compact bar one level down, no banner on Collect's Home.
 
 - [x] Motion tokens applied (sheet slide, crossfade on mode switch, press feedback), reduced motion honoured everywhere. *(take 110: every transition on --dur-press, --dur-ui or --dur-sheet; a sheet rises as its scrim fades; a tap on the slider crossfades the new screen and turns the palette; take 106's one reduced-motion rule stops them all, measured in Chrome)*
 - [x] Loading, empty and error states per list; tabular figures on every number. *(take 110: one empty state -- glyph, what is missing, what to do -- on every list that fills a screen, and Sealed's empty search, which had shown nothing since the stock panels arrived; loading and error were already there (a Refresh disables, a failure toasts); tabular figures are the body's default)*
-- [ ] The ui-ux-pro-max pre-delivery checklist, item by item, in the PR.
+- [x] The ui-ux-pro-max pre-delivery checklist, item by item, in the PR. *(take 110: the take's pull request carries it -- accessibility, touch, layout, type and colour, motion, forms, navigation, charts, content -- each item with what was measured)*
 
 ## Found in passing, routed elsewhere
 
