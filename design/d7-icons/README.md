@@ -83,7 +83,8 @@ A second panel produced the wave (three designs, two judges each). The ukiyo-e d
 style score of 6.5/10. `v4/wave.py` carries the judges' fixes, listed in its docstring.
 
 `v4/compose.py` writes `v4/svg/own-purple`: our own rose on the purple-bordered card, riding the
-wave. Measured: the mark reaches 31.3 dp and the monochrome 32.2 dp of the 33 dp safe zone.
+wave. The towering crest was then removed at the owner's word: he liked the bottom waves, not the
+one coming up the side. A distant sea band with one far crest fills that side now. Measured: the mark reaches 31.3 dp and the monochrome 32.2 dp of the 33 dp safe zone.
 
 **The owner's pick for the emblem is the printed back's emblem.** That version stays out of this
 public repository until the owner says to ship it, which reverses take 63. `own-purple` is the same

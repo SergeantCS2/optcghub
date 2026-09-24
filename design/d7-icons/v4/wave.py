@@ -1,11 +1,15 @@
 """D7 v4 sea, "ukiyoe": the Great Wave idiom (Hokusai, 1831, public domain), drawn here.
 
-The pick of a three-design panel (style 6.5/10), with the judges' fixes: a
-Prussian ichimonji band over a warmer buff sky (the old buff melted into light
-wallpapers), a Prussian backing under the claws (they smeared onto the card's
-white at launcher sizes), striations in the barrel, the wave 10 px lower and the
-left crest inward (the circle mask cut both), a lighter near swell with its own
-claw crest, and no spray (it vanished below 72 px).
+The owner, 24 Sept: "I don't like the wave coming up over the side, but I do like
+the bottom design more with the actual waves." So the towering crest and its
+barrel are gone (great_wave() stays below, unused, for the record); the two
+foreground swells with their claw crests stay, and a distant sea band with one
+small far crest (sea_back) fills the side the tower used to.
+
+Before that, the pick of a three-design panel (style 6.5/10), with the judges'
+fixes: a Prussian ichimonji band over a warmer buff sky, a Prussian backing under
+the claws, striations in the barrel, a lighter near swell with its own claw
+crest, no spray.
 
 One towering crest rising up the right-hand side and rolling over the card's
 top corner: a Prussian-blue hood banded in lighter blues, a cream foam cap whose
@@ -212,6 +216,7 @@ def great_wave():
 # rises the other way, to a crest under the barrel -- the two lock together.
 SWELL = [(-150, 450), (-80, 420), (-20, 390), (20, 374), (60, 378), (100, 392), (160, 404), (240, 404), (320, 400),
          (400, 404), (480, 410), (560, 406), (700, 410)]
+DISTANT = [(-150, 302), (0, 298), (120, 302), (240, 296), (360, 300), (440, 294), (500, 286), (560, 296), (700, 302)]
 NEAR = [(-150, 488), (-40, 482), (60, 474), (170, 470), (280, 462), (360, 454), (426, 444), (468, 436), (508, 440),
         (600, 456), (700, 470)]
 
@@ -247,14 +252,17 @@ def foreground():
     return far + near
 
 def sea_back():
-    """Behind the card: the inside of the barrel. Seen through the curl it is the
-    wave's own face, not sky (as sky it read as a tan leaf pinned beside the card)."""
-    und = cr(UNDER, 12)
-    return _sky_defs(), f'<g transform="translate(0 {DROP})">' + flat(poly(und) + f" L300,700 L300,{und[0][1]:.1f} Z", HOLLOW) + "</g>"
+    """Nothing behind the card now: the owner, 24 Sept -- "I don't like the wave
+    coming up over the side, but I do like the bottom design more with the actual
+    waves." The towering crest and its barrel are gone; only the sky's defs remain."""
+    # a distant sea on the horizon behind the card, with one small far crest on the
+    # right: it fills the side the towering crest used to, with the same actual waves
+    far = swell(DISTANT, ((0.70, 0.90, 0.40, 7, 8, (0, .3, .55, .8, 1), ((486, 16, 10, -36, -80),)),),
+                ((0.10, 0.50, 26, 5), (0.56, 0.96, 30, 5)), lit=(7, 9), body="#2c5591")
+    return _sky_defs(), far
 
 DROP = 10   # the great wave sits this much lower than v1, inside the circle mask
 
 def sea_front():
-    s = f'<g transform="translate(0 {DROP})">' + great_wave() + "</g>"
-    s += foreground()
+    s = foreground()   # the two swells with their claw crests; no towering crest
     return "", s
