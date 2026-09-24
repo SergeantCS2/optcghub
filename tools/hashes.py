@@ -17,7 +17,7 @@ roger, reprint) do not, and are flagged `same_art` in the catalogue so the
 scanner shows a picker instead of pretending.
 """
 import concurrent.futures as cf
-import io, os, sqlite3, sys, time, urllib.error, urllib.parse, urllib.request
+import io, os, re, sqlite3, sys, time, urllib.error, urllib.parse, urllib.request
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from config import CATALOG_DB, USER_AGENT, ROOT, ALT_IMAGE_CDN
 try:
@@ -161,7 +161,47 @@ def measure_alt(ids, getter=None, is_image=None, workers=4):
     return served, counts
 
 
-def _measure_extras(sealed, missing, have, extra, verbose=True, workers=8, limit=None):
+# Take 109 (A42): the largest picture the first host serves, measured before the app
+# asks for it (take 100's pattern: nothing guessed into the app). `_in_1000x1000`
+# served 600x838 and up at take 109 (20 of 20 served ids; 403 for every id the
+# thumbnail host refuses). Fetched, measured and DISCARDED (landmine 26).
+LARGE_SUFFIX = "_in_1000x1000"
+_LARGE_FROM = re.compile(r"^(https://tcgplayer-cdn\.tcgplayer\.com/product/\d+)_200w\.jpg$")
+
+
+def large_url(url):
+    """The large picture's URL, made from the printing's own stored URL and nothing
+    else (AGENTS rule 3). Refuses anything that is not the first host's thumbnail."""
+    m = _LARGE_FROM.match(url or "")
+    if not m:
+        raise ValueError(f"large_url: not a first-host thumbnail: {url!r}")
+    return m.group(1) + LARGE_SUFFIX + ".jpg"
+
+
+def large_jobs(printed, have, n=40):
+    """The fixed sample: `n` printings the first host has served (they carry a hash),
+    spread evenly over the catalogue's ids -- old sets and new, so one era's uploads
+    cannot speak for the rest."""
+    ok = sorted(((pid, url) for pid, url in printed
+                 if str(pid) in have and _LARGE_FROM.match(url or "")), key=lambda r: int(r[0]))
+    if len(ok) <= n:
+        return ok
+    step = len(ok) / n
+    return [ok[int(i * step)] for i in range(n)]
+
+
+def measure_large(jobs, getter=None, is_image=None, workers=8):
+    """-> {suffix, probed, served, w, h, min_w}: how many of the sample the large size
+    served, and its median and smallest width. The app uses the size only when a
+    build measured it (index.html reads manifest.images.large)."""
+    res = probe([(pid, large_url(url)) for pid, url in jobs], getter, is_image, workers)
+    sizes = sorted(wh for _, ok, _, wh in res if ok and wh)
+    w, h = sizes[len(sizes) // 2] if sizes else (0, 0)
+    return {"suffix": LARGE_SUFFIX, "probed": len(res), "served": len(sizes), "w": w, "h": h,
+            "min_w": min(x for x, _ in sizes) if sizes else 0}
+
+
+def _measure_extras(sealed, missing, have, extra, verbose=True, workers=8, limit=None, printed=()):
     """Take 100 (A39 item 3). The sealed images' availability (never hashed: the
     scanner is for cards) and the second host for every id the first refused.
     Recorded in the sidecar and printed with source totals (AGENTS rule 8);
@@ -182,6 +222,15 @@ def _measure_extras(sealed, missing, have, extra, verbose=True, workers=8, limit
         print(f"   second host ({ALT_HOST}): serves {len(served)} of {len(ids)} missing "
               f"(cards {cards} of {len(ids) - len(ms)}, sealed {sl} of {len(ms)}; {st})")
     extra.update({"missing_sealed": missing_sealed, "alt": sorted(served, key=int), "alt_host": ALT_HOST})
+    lj = large_jobs(printed, have)
+    if limit:
+        lj = lj[:limit]
+    if lj:                                                # take 109: the large size, measured every run
+        lg = measure_large(lj, workers=min(workers, 8))
+        extra["large"] = lg
+        if verbose:
+            print(f"   large art ({LARGE_SUFFIX}): served {lg['served']} of {lg['probed']}, "
+                  f"median {lg['w']}x{lg['h']}, smallest width {lg['min_w']}")
     _save(have, missing, extra)
 
 
@@ -244,7 +293,7 @@ def run(limit=None, verbose=True, workers=8, retry_missing=True):
     missing = set(str(x) for x in raw.get("missing", []))
     # take 100: the sidecar's other keys ride through every save (the mid-pass
     # one included) or last night's `alt` is erased before the probe rewrites it
-    extra = {k: raw[k] for k in ("missing_sealed", "alt", "alt_host") if k in raw}
+    extra = {k: raw[k] for k in ("missing_sealed", "alt", "alt_host", "large") if k in raw}
     db = sqlite3.connect(CATALOG_DB)
     printed = db.execute(
         "SELECT product_id, image_url FROM printing "
@@ -263,7 +312,7 @@ def run(limit=None, verbose=True, workers=8, retry_missing=True):
     if not rows:
         if verbose:
             print("   nothing to fetch")
-        _measure_extras(sealed, missing, have, extra, verbose, workers, limit)   # the card pass is empty, not the night
+        _measure_extras(sealed, missing, have, extra, verbose, workers, limit, printed)   # the card pass is empty, not the night
         return 0, 0
     t0 = time.time()
 
@@ -331,7 +380,7 @@ def run(limit=None, verbose=True, workers=8, retry_missing=True):
     if new and c["failed_new"] and len(new) < 20:
         print(f"   {c['failed_new']} of {len(new)} new image(s) failed — recorded, not fatal "
               f"(sample too small for a rate; landmine 106)")
-    _measure_extras(sealed, missing, have, extra, verbose, workers, limit)   # after the verdict: a refused night measures nothing more
+    _measure_extras(sealed, missing, have, extra, verbose, workers, limit, printed)   # after the verdict: a refused night measures nothing more
     return c["ok"], c["unpublished"] + c["failed"]
 
 
@@ -404,6 +453,25 @@ def selftest():
          lambda: (lambda: (alt_url("x"), False))() if False else _refused(lambda: alt_url("x")), True),
         ("the sidecar round-trip keeps the new keys through a second save, and read_alt() reads them",
          _sidecar_roundtrip, True),
+        # take 109 (A42): the large size
+        ("large_url: a first-host thumbnail becomes its 1000x1000 picture, from its own URL",
+         lambda: large_url("https://tcgplayer-cdn.tcgplayer.com/product/42_200w.jpg"),
+         "https://tcgplayer-cdn.tcgplayer.com/product/42_in_1000x1000.jpg"),
+        ("control: a second-host URL, a bare number and a non-URL are refused by large_url",
+         lambda: (_refused(lambda: large_url(alt_url(42))), _refused(lambda: large_url("OP01-001")), _refused(lambda: large_url(None))),
+         (True, True, True)),
+        ("measure_large: the served count and the median size, by status and bytes",
+         lambda: measure_large([(i, f"https://tcgplayer-cdn.tcgplayer.com/product/{i}_200w.jpg") for i in (1, 2, 3, 4)],
+                               getter=lambda u: (b"IMG", 200) if "/4_" not in u else (None, 403),
+                               is_image=lambda b: (600, 838)),
+         {"suffix": "_in_1000x1000", "probed": 4, "served": 3, "w": 600, "h": 838, "min_w": 600}),
+        ("control: a host that serves none measures served 0 and width 0 (the app keeps the thumbnail)",
+         lambda: (lambda m: (m["served"], m["w"]))(measure_large([(1, "https://tcgplayer-cdn.tcgplayer.com/product/1_200w.jpg")],
+                                                                getter=lambda u: (None, 403), is_image=lambda b: (600, 838))), (0, 0)),
+        ("large_jobs: only printings with a hash on the first host, spread evenly, at most n",
+         lambda: [p for p, _ in large_jobs([(i, f"https://tcgplayer-cdn.tcgplayer.com/product/{i}_200w.jpg") for i in range(1, 101)]
+                                           + [(500, "https://product-images.tcgplayer.com/fit-in/200x279/500.jpg")],
+                                           {str(i) for i in range(1, 101) if i % 2} | {"500"}, n=5)], [1, 21, 41, 61, 81]),
     ]
     for name, fn, want in cases100:
         try:
@@ -430,12 +498,13 @@ def _sidecar_roundtrip():
     old = SIDECAR
     SIDECAR = os.path.join(tempfile.mkdtemp(), "hashes.json")
     try:
-        _save({"1": 5}, {"2"}, {"alt": ["3"], "missing_sealed": ["4"], "alt_host": "h"})
+        _save({"1": 5}, {"2"}, {"alt": ["3"], "missing_sealed": ["4"], "alt_host": "h", "large": {"served": 1}})
         raw = json.load(open(SIDECAR))
-        extra = {k: raw[k] for k in ("missing_sealed", "alt", "alt_host") if k in raw}
+        extra = {k: raw[k] for k in ("missing_sealed", "alt", "alt_host", "large") if k in raw}
         _save({"1": 5}, {"2"}, extra)                     # a second save, as the mid-pass save is
         raw2 = json.load(open(SIDECAR))
-        return raw2.get("alt") == ["3"] and raw2.get("missing_sealed") == ["4"] and raw2.get("alt_host") == "h" and read_alt() == {"3"}
+        return (raw2.get("alt") == ["3"] and raw2.get("missing_sealed") == ["4"] and raw2.get("alt_host") == "h"
+                and raw2.get("large") == {"served": 1} and read_alt() == {"3"})
     finally:
         SIDECAR = old
 

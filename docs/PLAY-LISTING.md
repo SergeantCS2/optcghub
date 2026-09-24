@@ -1,6 +1,6 @@
 # Play listing — copy, in the shape the console wants
 
-*Current as of take 108.* Plain text: the console shows asterisks and hashes
+*Current as of take 111.* Plain text: the console shows asterisks and hashes
 literally, so there is no markdown in the paste blocks. The disclaimer is the
 first line of the full description, not the last (landmine 30, A8). Every URL
 below was requested before it was written down (RUNBOOK-play §C, take 36).
@@ -26,7 +26,7 @@ WHAT IS IN IT
 • Unlimited card scanning, with the printing picked by you when the number alone is not enough.
 • Today's TCGplayer market price on every card, with the day it was fetched and the low-to-high spread shown rather than hidden.
 • A collection that totals up, moves day over day, and shows what shifted overnight in Market Movers.
-• Portfolios, conditions, graded copies, cost basis, favourites, set checklists, a want list, a nine-pocket binder view and price alerts.
+• Separate collections (a binder, a trade pile), conditions, graded copies, cost basis, favourites, set checklists, a want list, a nine-pocket binder view and price alerts.
 • A deck builder that checks the official Comprehensive Rules as you go — Leader colours, the fifty-card count, the four-copy limit — with the cost curve, counters, blockers and triggers. Import and export lists as "4 OP01-016 Nami".
 • A Trade Analyzer: your side from your collection, theirs pasted as a list, both valued the same way.
 • A Life and DON!! counter for game day.

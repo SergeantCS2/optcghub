@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 108.* Paste the block between the rules into a new session
+*Current as of take 111.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 108 takes by previous sessions. The repo is
+built across 111 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -27,7 +27,7 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
 4. Read `docs/HANDOFF.md`, newest entry first, back to take 80 at least. Every
    take ends with a DEFERRED list; the union of those lists is the work.
 5. Read `docs/LANDMINES.md` §0 (the index) and skim §1. When you are about to
-   do something, grep the index first. 148 of them; each is a real failure.
+   do something, grep the index first. 164 of them; each is a real failure.
 6. Read `docs/AGENDA.md`: the Priorities block at the top is the live order.
 
 **The discipline, which the gate enforces:**
@@ -89,8 +89,26 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
   screen (`header.appbar`: the title, back one level down, the More
   gear on every main screen); take 108 made every icon a sprite symbol
   with one meaning, every control a 44 px target with a pressed and a
-  disabled look; then the art layer, the voice, polish. `docs/UI-AUDIT.md` is its checklist, with
-  line numbers. Touch the UI only to fix what is broken, and read the
+  disabled look; take 109 put the first card art in (Decks under its
+  Leader, the ready-made decks back on Decks, a deck's Leader large, a
+  card's own page over its own colours) and measured the picture: most
+  card pictures carry a SAMPLE stamp at both hosts, always in one band
+  (about 45-60 % of the card), so a banner shows only the card above
+  42 % (landmine 151); take 110, one take overnight at the owner's word,
+  carried the rest: Sealed's banner and strips, the Play counter's
+  Leaders, the voice (Collection for Portfolio, one date and money
+  format), polish (motion from the tokens, one empty state, three
+  thumbnail sizes) and the Fold's inner screen (two panes between 700 and
+  899 px), and a review of the whole take after its first push fixed what
+  it found (bulk actions on the lines on screen, a currency label that
+  matches its figure, words over art measured readable, landmines
+  157-160); the owner merged it without a note, and take 111 is the last
+  look the series planned -- every screen at both sizes, and what it
+  turned up (a card page that saved to another collection's line, a slab
+  that took over another's grade, the 253 DON!! cards filed as sealed and
+  treated as products, rows askew on their picture; landmines 161-164).
+  After it, refinement is the owner's call, take by take. `docs/UI-AUDIT.md` is its
+  checklist, with line numbers. Touch the UI only to fix what is broken, and read the
   tokens in `:root` before writing a size or a colour.
 
 - **The Priorities block at the top of `AGENDA.md`** is the live order: the
@@ -127,6 +145,11 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
   practice** (MEASURED take 92; GitHub delays a public repo's cron). Read
   the run's `stores:` and `events:` lines before believing a green run: a
   kept-on-failure roster is green too.
+- **The network, since take 109:** the session VM reaches TCGCSV, both
+  TCGplayer image hosts and Bandai's site (MEASURED, HTTP 200), so the
+  full pipeline runs here with a fresh ingest. The VM's browsers do not
+  trust the proxy's certificate (landmine 152): the look fetches its
+  pictures through Node, which checks it.
 - **The session VM has had no package registries for two takes** (89, 90:
   `registry.npmjs.org`, `pypi.org`, `files.pythonhosted.org` answer 403, so
   no pillow and no puppeteer). If `bash ci/deps.sh` fails the same way:
@@ -155,13 +178,15 @@ other games (A19, after Play) → the simulator's tail (A23).
 **What you may change:** anything in the tree, with the ledger updated the
 same take — the workflow files included, through the PR.
 
-**What you may not do:** ship character art or publisher marks — including
-official product box shots, declined with reasons in A29 (landmines 26, 30,
-A16); gate scanning (A17); multiply condition into a price (PROTOCOL §10);
+**What you may not do:** bundle, commit or cache card art — it is shown
+hot-linked, display-only, and never drawn from scratch (landmines 26, 28;
+the owner's ruling at A42); put a character or a publisher mark in the
+app's name, icon, splash or store listing (landmines 30, 31; A16); gate
+scanning (A17); multiply condition into a price (PROTOCOL §10);
 send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 109" and begin with PROTOCOL §0.
+Say "take 112" and begin with PROTOCOL §0.
 
 ---

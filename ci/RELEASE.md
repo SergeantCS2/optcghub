@@ -1,4 +1,4 @@
-# OP TCG Hub — take 108
+# OP TCG Hub — take 111
 
 ## If you are testing from Google Play — read this first
 
@@ -18,6 +18,31 @@ the developer. It takes ten seconds and tells us your phone runs everything.
 Updates arrive through Play like any app. Your data stays across updates.
 
 ---
+
+**New at take 111:** the redesign's last pass. Every screen was looked
+at on both of the Fold's screens, and what it found is put right: a
+card's page saves to the collection it names, a second graded copy of a
+card keeps its own grade, a DON!! card has a card's page, and Set
+completion counts numbered cards only. Nothing you have saved changes.
+
+**New at take 110:** the redesign's second half. Hunt's Sealed opens
+under the top card of the newest set, and each set's heading carries its
+own art; the Play counter shows each player's Leader behind their side;
+Decks' art is zoomed out, with nothing over it. The words are one voice
+throughout: Collection instead of Portfolio, days like "Sep 23", amounts
+that keep their currency. Sheets rise into place, a mode switch fades
+across, an empty list says what to do, and the open Fold shows two panes
+where two fit. Bulk delete, move and condition act only on the lines
+you can see, and a price's currency sign always matches its figure.
+Nothing you have saved changes.
+
+**New at take 109:** the first card art in the design. Decks opens
+under your newest deck's Leader -- its art behind the title, the card
+rising from behind it -- and the ready-made decks are back on the Decks
+screen, each with its Leader's picture. A deck shows its Leader large,
+and a card's own page shows the card large over its own colours. The
+pictures are TCGplayer's largest; offline, each shows the card's own
+colours instead. Nothing you have saved changes.
 
 **New at take 108:** every icon is drawn the same way, and each one
 means one thing: Scan, Collection, Sealed, Releases, Local and Events

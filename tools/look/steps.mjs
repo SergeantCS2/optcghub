@@ -499,4 +499,350 @@ const take108 = [
     } }
 ];
 
-export const STEPS = { 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108 };
+/* ---- take 109 — the art layer, part 1 (A42): Prep & Play first, with real pictures ------------
+   Behind the session VM's proxy the harness fetches the pictures in Node (landmine 152), so these
+   are TCGplayer's own. A picture's state is measured, not assumed: loaded, its natural size, and
+   the cut above the SAMPLE stamp (object-view-box, landmine 151). */
+const waitArt = (page, sel, ms = 9000) => page.waitForFunction(s => { const im = [...document.querySelectorAll(s)]; return im.length > 0 && im.every(i => i.complete); }, sel, { timeout: ms }).catch(() => {});
+const heroState = () => { const h = document.querySelector('#dkHero'), peek = h.querySelector('.peek img'), bg = h.querySelector('.artbg img');
+  const pic = i => i ? { ok: i.classList.contains('ok') && i.naturalWidth > 0, natural: `${i.naturalWidth}x${i.naturalHeight}`, cut: getComputedStyle(i).objectViewBox } : null;
+  return { shown: !h.hidden, credit: ((h.querySelector('.credit') || {}).textContent || '').trim(), card: pic(peek), blur: pic(bg),
+    slider: getComputedStyle(document.querySelector('.modebar')).backgroundImage.slice(0, 30), sub: document.querySelector('#dkSub').textContent }; };
+const newDeck = (num, name) => `(async () => { const V = window.VAULT; const L = V.CAT.rows.find(p => p.num === '${num}' && !p.sealed && p.treat === 'base') || V.CAT.rows.find(p => p.type === 'Leader' && p.img);
+  const d = V.DECKS.blank(); d.name = '${name}'; d.leader = L.id; d.created = Date.now(); V.DECKS.list.push(d); V.DECKS.save(); V.go('decks'); await new Promise(r => setTimeout(r, 450)); window.scrollTo(0, 0); return \`\${L.num} \${L.name}\`; })()`;
+const take109 = [
+  { name: 'play-decks-under-a-ready-made-leader', run: async (page, ctx) => {
+      /* a fresh phone has no deck of its own: Decks opens under the first ready-made deck's Leader */
+      await ctx.open();
+      /* both viewports share one browser's storage: the decks the cover run made are cleared first */
+      await page.evaluate(`(async () => { const V = window.VAULT; V.DECKS.list.length = 0; V.DECKS.save(); V.MODE.set('play', true); V.go('decks'); await ${pause}; window.scrollTo(0, 0); })()`);
+      await waitArt(page, '#dkHero img');
+      const m = await page.evaluate(heroState);
+      return { ok: m.shown && /ready-made/.test(m.credit) && m.slider === 'none' && /58%/.test(m.card ? m.card.cut : ''), ...m };
+    } },
+  { name: 'play-decks-under-your-newest-deck-a-stamped-card', run: async (page) => {
+      /* a deck of your own whose Leader's picture carries the SAMPLE stamp (ST05-001 Shanks, looked at in step 1 of the take): the card rises cut above it */
+      const leader = await page.evaluate(newDeck('ST05-001', 'Red-Haired Shanks'));
+      await waitArt(page, '#dkHero img');
+      const m = await page.evaluate(heroState);
+      return { ok: m.shown && /your newest deck/.test(m.credit) && /^1 deck/.test(m.sub), leader, ...m };
+    } },
+  { name: 'play-ready-made-decks-back-on-decks', run: async (page) => {
+      /* take 61 put them here; the markup had them in the deck editor from take 66 at the latest (landmine 149) */
+      await page.evaluate(() => { const s = document.querySelector('#dkStock'); s.scrollIntoView({ block: 'start', behavior: 'instant' }); window.scrollBy(0, -64); });
+      await waitArt(page, '#dkStock img', 6000); await wait(300);
+      const m = await page.evaluate(() => { const rows = [...document.querySelectorAll('#decks #dkStock [data-stock]')];
+        return { onDecks: !!document.querySelector('#decks #dkStock'), rows: rows.length, pictures: rows.filter(r => { const i = r.querySelector('img.ref'); return i && i.classList.contains('ok'); }).length,
+          covers: rows.filter(r => r.querySelector('.ph svg')).length, first: ((rows[0] || {}).textContent || '').replace(/\s+/g, ' ').trim().slice(0, 70) }; });
+      return { ok: m.onDecks && m.rows >= 10 && m.covers === m.rows, ...m };
+    } },
+  { name: 'play-deck-leader-large', run: async (page) => {
+      /* one level down (A): take 107's compact bar, the Leader card at 96 px from the large picture */
+      await page.evaluate(async () => { const V = window.VAULT; const d = V.DECKS.list[V.DECKS.list.length - 1]; V.openDeck(d.id); await new Promise(r => setTimeout(r, 450)); window.scrollTo(0, 0); });
+      await waitArt(page, '#dkLead img');
+      const m = await page.evaluate(() => { const b = document.querySelector('#dkLead').getBoundingClientRect(), i = document.querySelector('#dkLead img');
+        return { boxW: Math.round(b.width), card: i ? { ok: i.classList.contains('ok'), natural: `${i.naturalWidth}x${i.naturalHeight}` } : null, line: document.querySelector('#dkLeadLine').textContent.replace(/\s+/g, ' ').trim() }; });
+      return { ok: m.boxW === 96 && /Leader/.test(m.line), ...m };
+    } },
+  ...[['a two-colour card', p => /^[A-Z][a-z]+;[A-Z][a-z]+$/.test(p.color || '')], ['a one-colour card', p => /^(Red|Green|Blue|Purple|Black|Yellow)$/.test(p.color || '')]].map(([label, test], k) => ({
+    name: `collect-card-page-${k ? 'one' : 'two'}-colour${k ? '' : 's'}-under-its-own-art`, run: async (page) => {
+      /* a card's own page (C's backdrop): its art blurred behind the top, on its own colours; the card large and centred */
+      const card = await page.evaluate(`(async () => { const V = window.VAULT; const t = ${test.toString()};
+        const p = V.CAT.rows.filter(p => !p.sealed && t(p) && p.hash && p.market && /_200w\\.jpg$/.test(p.img || '')).sort((a, b) => b.market - a.market)[0];
+        V.MODE.set('collect', true); await ${pause}; V.openDetail(p.id); await ${pause}; window.scrollTo(0, 0); return \`\${p.num} \${p.name} (\${p.color})\`; })()`);
+      await waitArt(page, '#dArt img, #dBack img');
+      const m = await page.evaluate(() => { const a = document.querySelector('#dArt').getBoundingClientRect(), i = document.querySelector('#dArt img'), b = document.querySelector('#dBack img');
+        return { artW: Math.round(a.width), centred: Math.abs(a.left + a.width / 2 - innerWidth / 2) <= 1, card: i ? `${i.naturalWidth}x${i.naturalHeight}` : 'no picture', blur: b ? (b.classList.contains('ok') ? 'loaded' : 'waiting') : 'no picture',
+          ground: getComputedStyle(document.querySelector('#dBack')).backgroundImage.slice(0, 70) }; });
+      return { ok: m.centred && m.artW > 150 && /gradient/.test(m.ground), label, card, ...m };
+    } })),
+  { name: 'collect-card-page-a-sealed-product', run: async (page) => {
+      /* a product has no game colour: its ground is the mode's, its own photo blurred over it */
+      const product = await page.evaluate(`(async () => { const V = window.VAULT; const p = V.CAT.rows.filter(p => p.sealed && /booster box/i.test(p.name) && p.hash !== undefined && p.market).sort((a, b) => b.market - a.market)[0] || V.CAT.rows.find(p => p.sealed && p.img);
+        V.openDetail(p.id); await ${pause}; window.scrollTo(0, 0); return p.name; })()`);
+      await waitArt(page, '#dArt img, #dBack img');
+      const m = await page.evaluate(() => ({ ground: getComputedStyle(document.querySelector('#dBack')).backgroundImage.slice(0, 80), artW: Math.round(document.querySelector('#dArt').getBoundingClientRect().width) }));
+      return { ok: /gradient/.test(m.ground) && m.artW > 150, product, ...m };
+    } },
+  { name: 'collect-home-no-banner', run: async (page) => {
+      /* the owner: "I don't really like A in collect" -- Home keeps its plain header */
+      await page.evaluate(`(async () => { window.VAULT.go('home'); await ${pause}; window.scrollTo(0, 0); })()`);
+      const m = await page.evaluate(() => ({ hero: !!document.querySelector('#home .arthero'), title: document.querySelector('#home .ab-title').textContent, slider: getComputedStyle(document.querySelector('.modebar')).backgroundImage.slice(0, 30) }));
+      return { ok: !m.hero && m.slider !== 'none', ...m };
+    } },
+  { name: 'play-decks-offline-the-cards-own-colours', run: async (page) => {
+      /* no pictures: a Leader never shown before (so nothing is cached), with the picture hosts refused -- the ground is the card's colours */
+      await page.route(/tcgplayer\.com\//, r => r.abort());
+      const leader = await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('play', true); await ${pause}; return await ${newDeck('OP10-001', 'Offline test').replace(/^\(async \(\) => \{ /, '(async () => { ')}; })()`);
+      await wait(800);
+      const m = await page.evaluate(heroState);
+      await page.unroute(/tcgplayer\.com\//);
+      const ground = await page.evaluate(() => getComputedStyle(document.querySelector('#dkHero .artbg')).backgroundImage.slice(0, 80));
+      return { ok: m.shown && !(m.card && m.card.ok) && /gradient/.test(ground), leader, ground, card: m.card, blur: m.blur };
+    } },
+  { name: 'play-decks-scrolled-the-fade-returns', run: async (page) => {
+      /* scrolled, the slider's fade is back over whatever passes under it */
+      await page.evaluate(async () => { const V = window.VAULT; V.DECKS.list.splice(V.DECKS.list.findIndex(d => d.name === 'Offline test'), 1); V.DECKS.save(); V.go('decks'); await new Promise(r => setTimeout(r, 450)); window.scrollTo(0, 260); await new Promise(r => setTimeout(r, 300)); });
+      const m = await page.evaluate(() => ({ atTop: document.documentElement.classList.contains('at-top'), slider: getComputedStyle(document.querySelector('.modebar')).backgroundImage.slice(0, 40) }));
+      return { ok: !m.atTop && /gradient/.test(m.slider), ...m };
+    } }
+];
+
+
+/* ---- take 110 — the art layer, part 2 (A42), and the owner's word on take 109's look ------------------- */
+const artState = sel => `(() => { const h = document.querySelector('${sel}'); if (!h) return { shown: false }; const i = h.querySelector('.artbg img'), cs = i ? getComputedStyle(i) : null;
+  return { shown: !h.hidden, img: i ? { ok: i.classList.contains('ok') && i.naturalWidth > 0, natural: i.naturalWidth + 'x' + i.naturalHeight, fit: cs.objectFit, pos: cs.objectPosition, cut: cs.objectViewBox, filter: cs.filter.slice(0, 24), large: /_in_1000x1000/.test(i.currentSrc || i.src) } : null,
+    text: (h.textContent || '').trim(), rises: !!h.querySelector('.peek, img.ref'), slider: getComputedStyle(document.querySelector('.modebar')).backgroundImage.slice(0, 30) }; })()`;
+const take110 = [
+  { name: 'play-decks-the-leader-zoomed-out-nothing-over-it', run: async (page, ctx) => {
+      /* the owner on take 109's look: "I don't like the little peak we have - the blurred background should also be
+         zoomed out a bit where it's used so it's more focused on the center of the art" -- and the credit line went */
+      await ctx.open();
+      await page.evaluate(`(async () => { const V = window.VAULT; V.DECKS.list.length = 0; V.DECKS.save(); V.MODE.set('play', true); await ${pause}; })()`);
+      const leader = await page.evaluate(newDeck('ST05-001', 'Red-Haired Shanks'));
+      await waitArt(page, '#dkHero img'); await wait(300);
+      const m = await page.evaluate(artState('#dkHero'));
+      return { ok: m.shown && !m.rises && m.text === '' && !!m.img && m.img.fit === 'contain' && /58%/.test(m.img.cut) && m.slider === 'none', leader, ...m };
+    } },
+  { name: 'play-ready-made-decks-heading-and-badges-only', run: async (page) => {
+      /* the owner: "remove this text ... all of it" -- the paragraph under the heading; the heading and each row's badge say ready-made */
+      await page.evaluate(() => { const s = document.querySelector('#dkStock'); s.scrollIntoView({ block: 'start', behavior: 'instant' }); window.scrollBy(0, -64); });
+      await waitArt(page, '#dkStock img', 6000); await wait(300);
+      const m = await page.evaluate(() => ({ heading: (document.querySelector('#dkStock .fgrp') || {}).textContent, paragraph: !!document.querySelector('#dkStock .fgrp + .note'),
+        rows: document.querySelectorAll('#dkStock [data-stock]').length, badges: document.querySelectorAll('#dkStock [data-stock] .badge').length }));
+      return { ok: m.heading === 'Ready-made decks' && !m.paragraph && m.rows >= 10 && m.badges === m.rows, ...m };
+    } },
+  { name: 'play-counter-each-leader-behind-its-side', run: async (page) => {
+      /* at the table (not passing the phone), each player's Leader faint behind their side of the counter */
+      const who = await page.evaluate(`(async () => { const V = window.VAULT; const a = V.CAT.byId.get(V.CAT.stock[0].leader), b = V.CAT.byId.get(V.CAT.stock[2].leader);
+        V.PLAY.hotseat = false; V.PLAY.p[0].leader = a.id; V.PLAY.p[1].leader = b.id; V.go('play'); V.paintPlay(); await ${pause}; window.scrollTo(0, 0); return a.name + ' / ' + b.name; })()`);
+      await waitArt(page, '#plBoard .artbg img'); await wait(300);
+      const m = await page.evaluate(() => [...document.querySelectorAll('#plBoard .plpanel')].map(pn => { const i = pn.querySelector('.artbg img'), P = pn.getBoundingClientRect();
+        return { art: !!i && i.classList.contains('ok'), clipped: [...pn.querySelectorAll('button')].some(e => { const b = e.getBoundingClientRect(); return b.left < P.left - 0.5 || b.right > P.right + 0.5; }) }; }));
+      return { ok: m.length === 2 && m.every(p => p.art && !p.clipped), who, panels: m };
+    } },
+  { name: 'hunt-sealed-under-the-newest-sets-top-card', run: async (page) => {
+      /* A, the owner's pick for Hunt: the newest booster set's top card, sharp, cut above the stamp; the title under it */
+      const card = await page.evaluate(`(async () => { const V = window.VAULT; V.PLAY.p.forEach(p => { p.leader = null; }); V.paintPlay(); V.MODE.set('hunt', true); await ${pause}; V.go('sealed'); await ${pause};
+        while (V.closeAnyOverlay()) {} window.scrollTo(0, 0);   /* Hunt asks for a zip on its first visit; the sheet is not this step's subject */
+        const t = V.newestTop(); return t ? t.p.num + ' ' + t.p.name + ' · ' + (t.set.abbr || t.set.name) + ' · $' + t.p.market : 'none'; })()`);
+      await waitArt(page, '#sealedHero img'); await wait(300);
+      const m = await page.evaluate(artState('#sealedHero'));
+      const title = await page.evaluate(() => { const h = document.querySelector('#sealedHero').getBoundingClientRect(), a = document.querySelector('#sealed header.appbar').getBoundingClientRect(); return { under: Math.abs(a.top - h.bottom) < 0.6, text: document.querySelector('#sealed .ab-title').textContent }; });
+      return { ok: m.shown && !!m.img && m.img.ok && m.img.large && m.img.filter === 'none' && /58%/.test(m.img.cut) && m.text === '' && title.under && m.slider === 'none', card, title, ...m };
+    } },
+  { name: 'hunt-sealed-set-strips', run: async (page) => {
+      /* each heading in the list a strip under its own set's top card; the starter decks' under the newest deck's */
+      await page.evaluate(() => { const s = [...document.querySelectorAll('#sealedList .setstrip')][1]; s.scrollIntoView({ block: 'start', behavior: 'instant' }); window.scrollBy(0, -80); });
+      await waitArt(page, '#sealedList .setstrip img', 8000); await wait(400);
+      const m = await page.evaluate(() => { const st = [...document.querySelectorAll('#sealedList .setstrip')];
+        return { strips: st.length, withArt: st.filter(x => x.querySelector('.artbg img')).length, loaded: st.filter(x => { const i = x.querySelector('.artbg img'); return i && i.classList.contains('ok'); }).length,
+          plain: st.filter(x => !x.querySelector('.artbg')).map(x => x.textContent.replace(/\s+/g, ' ').trim().slice(0, 40)).slice(0, 4), first: st.slice(0, 3).map(x => x.textContent.replace(/\s+/g, ' ').trim().slice(0, 40)) }; });
+      return { ok: m.strips >= 10 && m.withArt >= 5 && m.loaded >= 1, ...m };
+    } },
+  { name: 'hunt-sealed-offline-the-cards-own-colours', run: async (page, ctx) => {
+      /* no pictures (the hosts refused): the banner and the strips keep the card's colours and the plain ground */
+      await page.route(/tcgplayer\.com\//, r => r.abort());
+      await ctx.open();
+      await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('hunt', true); await ${pause}; V.go('sealed'); await ${pause}; while (V.closeAnyOverlay()) {} window.scrollTo(0, 0); })()`);
+      await wait(1200);
+      const m = await page.evaluate(() => ({ shown: !document.querySelector('#sealedHero').hidden, pictures: document.querySelectorAll('#sealedHero img').length,
+        ground: getComputedStyle(document.querySelector('#sealedHero .artbg')).backgroundImage.slice(0, 80) }));
+      await page.unroute(/tcgplayer\.com\//);
+      return { ok: m.shown && m.pictures === 0 && /gradient/.test(m.ground), ...m };
+    } },
+  { name: 'collect-card-page-zoomed-out-no-note', run: async (page, ctx) => {
+      /* a card's own page: the band above the stamp whole, at the top behind the title; the card itself whole (the
+         owner: "It should show the whole card"); the condition line, and no note under the segment */
+      await ctx.open();
+      const card = await page.evaluate(`(async () => { const V = window.VAULT; const p = V.CAT.rows.filter(p => !p.sealed && p.type === 'Leader' && p.hash && p.market && /_200w\\.jpg$/.test(p.img || '')).sort((a, b) => b.market - a.market)[0];
+        V.MODE.set('collect', true); await ${pause}; while (V.closeAnyOverlay()) {} V.openDetail(p.id); await ${pause}; window.scrollTo(0, 0); return p.num + ' ' + p.name; })()`);
+      await waitArt(page, '#dArt img, #dBack img'); await wait(300);
+      const m = await page.evaluate(() => { const b = document.querySelector('#dBack img'), cs = b ? getComputedStyle(b) : null, a = document.querySelector('#dArt img');
+        return { back: cs ? { fit: cs.objectFit, pos: cs.objectPosition, cut: cs.objectViewBox } : null, whole: a ? getComputedStyle(a).objectViewBox === 'none' : false,
+          line: document.querySelector('#dCond').textContent, note: !!document.querySelector('#dCondNote'), seg: document.querySelectorAll('#dCondSeg button').length }; });
+      return { ok: !!m.back && m.back.fit === 'contain' && /58%/.test(m.back.cut) && m.whole && /^Condition · /.test(m.line) && !m.note && m.seg === 5, card, ...m };
+    } },
+  { name: 'collect-card-page-the-condition-segment-scrolled', run: async (page) => {
+      /* the same page further down: the segment under its line, where the note used to be */
+      await page.evaluate(() => { document.querySelector('#dCondSeg').scrollIntoView({ block: 'center', behavior: 'instant' }); });
+      await wait(300);
+      const m = await page.evaluate(() => ({ line: document.querySelector('#dCond').textContent, next: (document.querySelector('#dCondSeg').nextElementSibling || {}).id || '' }));
+      return { ok: m.next === 'dSpread', ...m };
+    } },
+  /* ---- the voice (A42 layer 5): the words on the screens the collector reads most ---- */
+  { name: 'voice-home-collection-and-its-delta', run: async (page, ctx) => {
+      /* D17: Collection for Portfolio; a signed amount keeps its "$"; the range said in words */
+      await ctx.open();
+      await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('collect', true); await ${pause}; while (V.closeAnyOverlay()) {}
+        if (!V.OWN.items.length) { const top = V.CAT.rows.filter(p => !p.sealed && p.market > 20 && p.d1p != null).slice(0, 6); top.forEach(p => V.OWN.add(p.id, { qty: 1 })); }
+        V.go('home'); await ${pause}; window.scrollTo(0, 0); })()`);
+      await wait(400);
+      const m = await page.evaluate(() => ({ cap: document.querySelector('#pfSwitch .cap').textContent, total: document.querySelector('#pfTotal').textContent, delta: document.querySelector('#pfDelta').textContent.trim().slice(0, 80),
+        most: [...document.querySelectorAll('#home h3')].map(h => h.textContent).slice(0, 4) }));
+      return { ok: m.cap === 'Collection' && !/in the last all time/.test(m.delta) && !/^[+−]\d/.test(m.delta), ...m };
+    } },
+  { name: 'voice-more-save-credits-and-what-it-does-not-know', run: async (page) => {
+      /* More: the credits in the collector's words, no dev button, the gap still said */
+      await page.evaluate(`(async () => { const V = window.VAULT; V.go('settings'); await ${pause}; const h = [...document.querySelectorAll('#setBody h3')].find(x => /Save credits/.test(x.textContent)); if (h) h.scrollIntoView({ block: 'start', behavior: 'instant' }); window.scrollBy(0, -80); })()`);
+      await wait(300);
+      const m = await page.evaluate(() => ({ titles: [...document.querySelectorAll('#setBody h3')].map(h => h.textContent), dev: !!document.querySelector('#setBody #devEarn'),
+        text: (document.querySelector('#setBody').textContent.match(/(Saving is free here[^.]*|Scanning never costs anything[^.]*)/) || [''])[0] }));
+      return { ok: m.titles.includes('Save credits') && !m.dev && !!m.text, ...m };
+    } },
+  { name: 'voice-filter-in-the-currency-on-screen', run: async (page) => {
+      /* the price filter's bounds say the currency the prices are shown in */
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; V.go('search'); await ${pause}; document.querySelector('#sortBtnAll').click(); await ${pause};
+        return { min: document.querySelector('#fMin').placeholder, max: document.querySelector('#fMax').placeholder, label: document.querySelector('#fMin').getAttribute('aria-label') }; })()`);
+      return { ok: /^min \S+$/.test(m.min) && /^max \S+$/.test(m.max) && m.label === 'Lowest price', ...m };
+    } },
+  { name: 'voice-play-counter-start-and-what-happens', run: async (page) => {
+      /* two words on the button; what happens beside it */
+      await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('play', true); await ${pause}; V.PLAY.turn = 1; V.go('play'); V.paintPlay(); await ${pause};
+        document.querySelector('#plNext').scrollIntoView({ block: 'center', behavior: 'instant' }); })()`);
+      await wait(300);
+      const m = await page.evaluate(() => ({ button: document.querySelector('#plNext').textContent, note: document.querySelector('#plNext').nextElementSibling.textContent }));
+      return { ok: m.button === 'Start' && /first player draws no card/.test(m.note), ...m };
+    } },
+  { name: 'voice-releases-days-in-words', run: async (page) => {
+      /* a release's day in words, the countdown beside it */
+      await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('hunt', true); await ${pause}; V.go('releases'); await ${pause}; while (V.closeAnyOverlay()) {} window.scrollTo(0, 0); })()`);
+      await wait(400);
+      const m = await page.evaluate(() => ({ days: [...document.querySelectorAll('#relList .v b')].map(b => b.textContent).slice(0, 5) }));
+      return { ok: m.days.length > 0 && m.days.every(d => /^[A-Z][a-z]{2} \d{1,2}(, \d{4})?$/.test(d)), ...m };
+    } },
+  /* ---- polish (A42 layer 6): the empty states, the three thumbnail sizes, a condition on one line ---- */
+  { name: 'polish-sealed-nothing-matches', run: async (page) => {
+      await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('hunt', true); await ${pause}; V.go('sealed'); await ${pause}; while (V.closeAnyOverlay()) {}
+        const q = document.querySelector('#sealedQ'); q.value = 'zzzz'; q.dispatchEvent(new Event('input', { bubbles: true })); await ${pause};
+        const e = document.querySelector('#sealedList .empty'); if (e) e.scrollIntoView({ block: 'center', behavior: 'instant' }); })()`);
+      await wait(300);
+      const m = await page.evaluate(() => ({ empty: (document.querySelector('#sealedList .empty') || {}).textContent || '' }));
+      return { ok: /Nothing matches/.test(m.empty), ...m };   /* the picture is taken after the step: the next step clears the search */
+    } },
+  { name: 'polish-sealed-rows-at-the-large-thumbnail', run: async (page) => {
+      await page.evaluate(`(async () => { const V = window.VAULT; const q = document.querySelector('#sealedQ'); q.value = ''; q.dispatchEvent(new Event('input', { bubbles: true })); V.paintSealed(); await ${pause}; const r = document.querySelector('#sealedList [data-open]'); r.scrollIntoView({ block: 'center', behavior: 'instant' }); })()`);
+      await wait(600);
+      const m = await page.evaluate(() => { const b = document.querySelector('#sealedList [data-open] .pic').getBoundingClientRect(); return { pic: `${Math.round(b.width)}x${Math.round(b.height)}` }; });
+      return { ok: m.pic === '56x70', ...m };
+    } },
+  { name: 'polish-search-rows-and-nothing-matches', run: async (page) => {
+      await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('collect', true); await ${pause}; V.go('search'); await ${pause}; while (V.closeAnyOverlay()) {}
+        const q = document.querySelector('#allq'); q.value = 'nami'; q.dispatchEvent(new Event('input', { bubbles: true })); await ${pause}; window.scrollTo(0, 0); })()`);
+      await wait(700);
+      const m = await page.evaluate(() => { const b = document.querySelector('#allRes .pic'); const r = b && b.getBoundingClientRect(); return { pic: r ? `${Math.round(r.width)}x${Math.round(r.height)}` : 'none', rows: document.querySelectorAll('#allRes [data-open]').length }; });
+      return { ok: m.pic === '44x61' && m.rows > 0, ...m };
+    } },
+  { name: 'polish-card-page-condition-on-one-line', run: async (page) => {
+      const card = await page.evaluate(`(async () => { const V = window.VAULT; const p = V.CAT.rows.filter(p => !p.sealed && p.market > 50 && p.hash).sort((a, b) => b.market - a.market)[0];
+        V.openDetail(p.id); await ${pause}; document.querySelector('#dCondSeg').scrollIntoView({ block: 'center', behavior: 'instant' }); return p.num + ' ' + p.name; })()`);
+      await wait(400);
+      const m = await page.evaluate(() => { const n = document.querySelector('#dCond'), cs = getComputedStyle(n), lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.45, st = document.querySelector('.dqrow .stepper').getBoundingClientRect(), nm = document.querySelector('.dqrow .nm').getBoundingClientRect();
+        return { line: n.textContent, lines: Math.round(n.getBoundingClientRect().height / lh), stepperUnder: st.top >= nm.bottom - 1 }; });   /* lines by height: getClientRects counts inline fragments */
+      return { ok: m.lines === 1 && m.stepperUnder, card, ...m };   /* take 110: the condition on one line, the quantity under it */
+    } },
+  /* take 110's review, before the merge: what two reviewers found on the first push, as the owner will see it */
+  { name: 'review-play-counter-labels-over-a-yellow-leader', run: async (page) => {
+      const leader = await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('play', true); await ${pause}; while (V.closeAnyOverlay()) {} V.go('play');
+        const L = V.CAT.rows.find(x => x.type === 'Leader' && x.color === 'Yellow' && x.img && !x.sealed); V.PLAY.hotseat = false; V.PLAY.p.forEach(p => { p.leader = L.id; }); V.paintPlay(); window.scrollTo(0, 0); return L.num + ' ' + L.name; })()`);
+      await waitArt(page, '#plBoard .plpanel img'); await wait(400);
+      const m = await page.evaluate(() => { const pn = document.querySelector('#plBoard .plpanel'), a = pn && pn.querySelector(':scope > .artbg');
+        return { label: getComputedStyle(pn.querySelector('.plcols .note')).color, shade: a ? getComputedStyle(a, '::after').backgroundColor : '' }; });
+      return { ok: m.shade === 'rgba(0, 0, 0, 0.45)', leader, ...m };
+    } },
+  { name: 'review-card-page-a-yellow-card-its-line-on-the-page', run: async (page) => {
+      const card = await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('collect', true); await ${pause}; while (V.closeAnyOverlay()) {}
+        const p = V.CAT.rows.find(x => x.type === 'Leader' && x.color === 'Yellow' && x.img && !x.sealed); V.openDetail(p.id); await ${pause}; window.scrollTo(0, 0); return p.num + ' ' + p.name; })()`);
+      await waitArt(page, '#dBack img'); await wait(300);
+      const m = await page.evaluate(() => { const bk = document.getElementById('dBack').getBoundingClientRect(), rg = document.createRange(); rg.selectNodeContents(document.getElementById('dSub'));
+        const t = rg.getClientRects()[0]; return { w: innerWidth, artRight: Math.round(bk.right), lineLeft: t ? Math.round(t.left) : -1, lineTop: t ? Math.round(t.top) : -1, buy: getComputedStyle(document.getElementById('dBuy')).display }; });
+      /* the open Fold: the art behind the card's column and the line beside it; a phone: the line under the card, as it was */
+      return { ok: m.buy === 'none' && (m.w < 700 || m.artRight <= m.lineLeft), card, ...m };
+    } },
+  { name: 'review-home-performance-set-completion-hidden', run: async (page) => {
+      await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('collect', true); await ${pause}; while (V.closeAnyOverlay()) {} V.go('home'); V.setHomeTab(true); await ${pause}; window.scrollTo(0, 0); })()`);
+      await wait(300);
+      /* the tab stays on Performance for the picture; the next step turns it back */
+      const m = await page.evaluate(() => { const mv = document.getElementById('topList').closest('.panel').getBoundingClientRect(); return { w: innerWidth, mv: Math.round(mv.width), comp: getComputedStyle(document.getElementById('setComp')).display }; });
+      return { ok: m.comp === 'none' && (m.w < 700 || m.mv > 0.8 * m.w), ...m };
+    } },
+  { name: 'review-market-movers-heading-across', run: async (page) => {
+      await page.evaluate(`(async () => { const V = window.VAULT; V.setHomeTab(false); V.MODE.set('collect', true); await ${pause}; while (V.closeAnyOverlay()) {} document.querySelector('#allq').value = '';
+        document.querySelector('[data-act="movers"]').click(); await ${pause}; window.scrollTo(0, 0); })()`);
+      await wait(300);
+      const m = await page.evaluate(() => { const p = document.querySelector('#allRes > .panel'), h = p && p.querySelector(':scope > h3'); return { h3: h ? Math.round(h.getBoundingClientRect().width) : 0, panel: p ? p.clientWidth : 0 }; });
+      return { ok: m.h3 > 0.8 * m.panel, ...m };
+    } }
+];
+
+/* ---- take 111 — the last look: every screen and the sheets, both sizes, over a seeded phone ----
+   The answer given overnight to "how many takes ... until we can hit our end goal for this redesign":
+   about four more -- the voice, polish, the Fold's inner layout, and one for what the last look turns
+   up. This is that look: the twenty screens and the sheets in the three modes, over a collection (a
+   booster box and a DON!! card among it -- the printings with no number), a deck, a want, an alert and a
+   trade, every picture read. */
+const view = (name, js, { art = null, y = 0 } = {}) => ({ name, run: async (page) => {
+  /* y < 0: the step placed the page itself (scrollIntoView) -- keep it */
+  await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} ${js}; await ${pause}; ${y >= 0 ? `window.scrollTo(0, ${y});` : ''} })()`);
+  if (art) await waitArt(page, art);
+  await wait(400);
+  const m = await page.evaluate(() => { const on = [...document.querySelectorAll('.screen.on')].map(e => e.id).join(','), sh = [...document.querySelectorAll('.sheet.on')].map(e => e.id).join(','), t = document.querySelector('.screen.on .ab-title');
+    return { on, sheet: sh, title: t ? t.textContent.trim() : '' }; });
+  return { ok: !!m.on, ...m };
+} });
+const take111 = [
+  { name: 'collect-home-seeded', run: async (page, ctx) => {
+      await ctx.open();
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {}
+        V.OWN.items = []; V.DECKS.list.length = 0; V.DECKS.save();
+        const cards = V.CAT.rows.filter(p => !p.sealed && p.market > 20 && p.hash).sort((a, b) => b.market - a.market).slice(0, 9);
+        cards.forEach((p, i) => V.OWN.add(p.id, { qty: 1 + (i % 3), condition: ['NM', 'LP', 'NM', 'MP'][i % 4] }));
+        const box = V.CAT.rows.find(p => V.SEALED.isProduct(p) && p.market > 50 && p.img); if (box) V.OWN.add(box.id, { qty: 1 });
+        /* a printing with no number that is not a product: every one is a DON!! card filed as sealed (the first
+           seed asked for !p.sealed and found none) */
+        const bare = V.CAT.rows.find(p => p.sealed && !p.num && /don!! card/i.test(p.name) && p.market > 1 && p.img); if (bare) V.OWN.add(bare.id, { qty: 1 });
+        V.OWN.save(); V.OWN.snapshot();   /* the app's own paths take the day's reading; the seed does it by hand */
+        const w = V.CAT.rows.find(p => !p.sealed && p.num && p.market > 5 && !V.OWN.items.some(i => i.id === p.id)); if (w && !V.WANT.has(w.num)) V.WANT.toggle(w.num, w.id);
+        if (!V.ALERTS.list.length) V.ALERTS.add(cards[0].id, 'below', Math.round(cards[0].market * 0.9));
+        if (!V.TRADE.give.length) { V.TRADE.add('give', cards[1].id, 1); V.TRADE.add('get', cards[2].id, 1); }
+        V.MODE.set('collect', true); await ${pause}; V.go('home'); V.setHomeTab(false); V.paintHome(); window.scrollTo(0, 0);
+        return { lines: V.OWN.items.length, bare: bare ? bare.name : null }; })()`);
+      await waitArt(page, '#topList img'); await wait(300);
+      return { ok: m.lines >= 9, ...m };
+    } },
+  view('collect-home-lists', `V.go('home'); V.setHomeTab(false); await ${pause}; document.getElementById('topList').scrollIntoView({ block: 'start' }); window.scrollBy(0, -60)`, { art: '#topList img', y: -1 }),
+  view('collect-home-performance', `V.go('home'); V.setHomeTab(true)`),
+  view('collect-search-sets', `V.setHomeTab(false); document.querySelector('#allq').value = ''; V.go('search'); V.paintSearch()`, { art: '#setList img' }),
+  view('collect-search-results', `V.go('search'); const q = document.querySelector('#allq'); q.value = 'zoro'; V.paintSearch()`, { art: '#allRes img' }),
+  view('collect-market-movers', `document.querySelector('#allq').value = ''; document.querySelector('[data-act="movers"]').click()`, { art: '#allRes img' }),
+  view('collect-filter-sheet', `V.go('search'); document.querySelector('#sortBtnAll').click()`),
+  view('collect-collection-grid', `document.querySelector('#allq').value = ''; V.go('collection')`, { art: '#colGrid img' }),
+  view('collect-collection-no-number', `V.go('collection'); await ${pause}; const b = V.OWN.items.map(i => V.CAT.byId.get(i.id)).find(p => V.SEALED.isProduct(p)); const t = b && document.querySelector('#colGrid [data-open="' + b.id + '"]'); if (t) t.scrollIntoView({ block: 'center' })`, { art: '#colGrid img', y: -1 }),
+  view('collect-collection-bulk', `V.go('collection'); document.querySelector('[data-act="bulk"]').click(); await ${pause}; const t = document.querySelector('#colGrid [data-open]'); if (t) t.click()`, { art: '#colGrid img' }),
+  view('collect-card-page', `document.querySelector('#bulkX') && document.querySelector('#bulkX').click(); V.openDetail(V.OWN.items[0].id)`, { art: '#dArt img' }),
+  view('collect-card-page-lower', `V.openDetail(V.OWN.items[0].id); await ${pause}; document.querySelector('#dCondSeg').scrollIntoView({ block: 'start' })`, { y: -1 }),
+  view('collect-sealed-page', `V.openDetail(V.CAT.rows.find(p => V.SEALED.isProduct(p) && p.market > 50 && p.img).id)`, { art: '#dArt img' }),
+  view('collect-don-card-page', `V.openDetail(V.OWN.items.map(i => V.CAT.byId.get(i.id)).find(p => p.sealed && !V.SEALED.isProduct(p)).id)`, { art: '#dArt img' }),
+  view('collect-don-card-page-lower', `V.openDetail(V.OWN.items.map(i => V.CAT.byId.get(i.id)).find(p => p.sealed && !V.SEALED.isProduct(p)).id); await ${pause}; document.querySelector('#dCondSeg').scrollIntoView({ block: 'start' })`, { y: -1 }),
+  view('collect-set-checklist', `V.openChecklist(V.CAT.byId.get(V.OWN.items[0].id).set)`, { art: '#checklist img' }),
+  view('collect-binder', `V.go('binder')`, { art: '#binder img' }),
+  view('collect-wants-and-alerts', `V.go('wants')`, { art: '#wants img' }),
+  view('collect-trade', `V.go('trade')`, { art: '#trade img' }),
+  view('collect-more', `V.go('settings')`),
+  view('collect-more-lower', `V.go('settings'); await ${pause}; window.scrollTo(0, document.body.scrollHeight)`, { y: -1 }),
+  view('collect-currency-picker', `V.go('home'); document.querySelector('[data-act="currency"]').click()`),
+  view('collect-diagnostics', `V.go('diag')`),
+  view('collect-scan', `V.go('scan')`),
+  view('play-decks', `V.MODE.set('play', true); await ${pause}; if (!V.DECKS.list.length) { const L = V.CAT.byId.get(V.CAT.stock[0].leader); const d = V.DECKS.blank(); d.name = 'My first deck'; d.leader = L.id; d.created = Date.now(); V.DECKS.list.push(d); V.DECKS.save(); } V.go('decks')`, { art: '#dkHero img' }),
+  view('play-deck', `V.MODE.set('play', true); await ${pause}; V.openDeck(V.DECKS.list[0].id)`, { art: '#deck img' }),
+  view('play-cards', `V.MODE.set('play', true); await ${pause}; V.go('cards')`, { art: '#cdRes img' }),
+  view('play-counter', `V.MODE.set('play', true); await ${pause}; V.go('play')`),
+  view('play-sim', `V.MODE.set('play', true); await ${pause}; V.go('sim')`),
+  view('hunt-sealed', `V.NAV.zipAsked = true; V.MODE.set('hunt', true); await ${pause}; V.go('sealed')`, { art: '#sealedHero img' }),   /* the zip is asked once; the look has seen that sheet */
+  view('hunt-sealed-strips', `V.MODE.set('hunt', true); await ${pause}; V.go('sealed'); await ${pause}; const st = document.querySelectorAll('#sealedList .setstrip')[2]; if (st) st.scrollIntoView({ block: 'start' }); window.scrollBy(0, -70)`, { art: '#sealedList .setstrip img', y: -1 }),
+  view('hunt-releases', `V.MODE.set('hunt', true); await ${pause}; V.go('releases')`),
+  view('hunt-local', `V.MODE.set('hunt', true); await ${pause}; V.go('local')`),
+  view('hunt-events', `V.MODE.set('hunt', true); await ${pause}; V.go('events')`)
+];
+
+export const STEPS = { 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111 };

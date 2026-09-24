@@ -1,4 +1,870 @@
-# HANDOFF — through Take 108
+# HANDOFF — through Take 111
+
+## Take 111 — 2026-09-24 — the last look: every screen at both sizes after the UI series, and what it turned up
+
+Opened before any code (PROTOCOL §6): the last take of A42 as planned
+overnight. The owner marked take 110's PR (#34) ready at 14:05 UTC and
+merged it at 14:07, then: "Merged, continue - monitor and continue with
+111". Take 110 (PR #34: `check` green on its head 9b8ec1f -- smoke
+916/916, render 161/161 in Chrome, the gate passed) merged at 14:07 UTC;
+build.yml run 59 on the merge commit 9d601c7 published Release take-110
+at 14:16:31 (the APK, 26,461,582 bytes; the AAB, 19,647,562; the mapping,
+51,817,038), its body headed "take 110" -- the first Release under the
+heading tripwire (landmine 154). The last nightly (run 50, 23:50 UTC the
+night before) was green.
+
+The answer given overnight to "how many takes do you think until we can
+hit our end goal for this redesign": about four more after the art
+layer's second half -- the voice, polish, the Fold's inner layout, and
+one for what the last look turns up. Take 110 carried the first three at
+the owner's word ("Ensure 110 has as many planned changes in it as
+possible"); this is the fourth.
+
+### The plan
+
+- **The last look:** a tour of every screen (twenty) and the sheets, in
+  all three modes, at the Fold's two sizes, over a seeded collection, a
+  deck and a want -- every picture read. What it turns up is this take.
+- **Seen already in take 110's pictures:** rows for a printing with no
+  card number open with a bare "·" (a DON!! card, a sealed product, in
+  Market movers); Home says "One reading so far — $0.00." beside an $808
+  total when the day's only reading was taken before the cards went in.
+- **The record:** the agenda's Priorities block, last rewritten at the
+  take-88 audit, still names take 105 in flight -- rewritten to the live
+  order; A42 marked done at the owner's merge; UI-AUDIT's one routed
+  finding (bulk delete) marked fixed at take 110.
+
+### What the look turned up, and what changed
+
+The tour (`node tools/look.mjs 111`: 34 views, each at the cover screen,
+411 x 960, and the open Fold, 840 x 757; 68 of 68 ran) was read picture by
+picture twice: once on take 110's app, once on the fixes. Every row below is
+something a picture showed or its reading led to.
+
+*Home and Search*
+- Set completion rows ended "· tap for the checklist" (the row is the
+  button); the words went. The Performance tab now leads with its own panel
+  ("Against what you paid"), which sat under Most valuable.
+- Set completion counted a printing with no number as a held number: a
+  starter deck still in its wrapper listed its set as "1 of 17 numbers ·
+  6%", under a note that says sealed product is left out; and a set's value
+  added every collection's copies while its count took the one on screen.
+  Both fixed in `setProgress` (landmine 162).
+- A sealed product in Most valuable read "NM · Normal · " -- a condition and
+  a finish it has not got, and a dot left hanging -- and now reads its kind
+  and set ("Box · OP01").
+- A printing with no number opened its small line with a dot: " · OP01" in
+  search, " · $55.49 each" in a trade, " · below $1.00" on an alert, " · OP01
+  · $4,680.11" on the want list, and the same in Market movers and the scan
+  result. `dotJoin` joins the parts a line has.
+- The filter sheet said "Show 7,661 printings" beside "Search all 6,987
+  cards" (the catalogue holds the sealed products too), and "N cards" over
+  the collection, which counts lines as More does: now "results" and
+  "lines".
+- A name that carries its printing's badge was cut by the ellipsis on the
+  phone: "Roronoa Zoro ..." hid "Alternate Art", "Donquixote Rosinante ..."
+  hid "SP" -- the one word that tells two printings apart (AGENTS rule 3). A
+  badged name now wraps (landmine 164).
+
+*The collection*
+- The bulk bar put four buttons on one line; at 411 px they ran off the
+  phone and over the count. On a phone: what is selected and Done, then
+  Condition, Move and Delete; one line on the open Fold.
+- A sealed product's tile showed a lone "·" over "NM · Normal"; it says
+  "Box" over "Sealed". A DON!! card's tile read "DON!! ·"; it reads "DON!!".
+
+*A card's page*
+- The Graded panel held Want and the two alerts; they have a Watch panel,
+  and Graded holds the graded copies.
+- A sealed product's page repeated its name under its name (the 40
+  products named for their set, every starter deck), said "Normal" under
+  "Ungraded", showed the day's triangle twice (on the price and on the
+  move -- every page did), offered a Graded panel and "Want this card", and
+  listed the 674 printings with no number as "Every printing of this
+  number". It now says "Sealed", its kind ("Box", "Deck", ...), one
+  triangle, and has none of the rest.
+- The 253 DON!! cards are filed as sealed (they have no number) and take
+  95's page treated each as a product: no condition, the stock alert,
+  Where to buy. A DON!! card's page is a card's: its finish, a condition,
+  Graded; with no number, no Want and no list of printings (landmine 162).
+- "Want this card" on a printing with no number: the want list is kept by
+  number, so `WANT.has('')` answered for every product and DON!! card once
+  one was wanted. Hidden where there is no number.
+- Save, the stepper, a condition tap and the cost basis took the
+  printing's first line in any collection: on the Trade pile's page, Save
+  set the main collection's count. The page's line is now the one in the
+  collection it names ("Adding to …"), and the button says "Save" on a copy
+  you have, "Add to collection" on one you have not (landmine 163).
+- A second slab of one printing was counted into the first and wrote its
+  grader, grade and cert over the first one's; a slab is now a line of its
+  own (landmine 163). A cost basis set on a card not yet owned added it
+  without the day's reading; it takes one.
+
+*Collect's other screens*
+- The binder opened a set at its first page -- nine empty pockets when the
+  collector's cards sit further in. It opens at the page of the first held
+  card, and a page the collector turned to is kept, the first one too.
+- An alert's line was cut at "fired Sep 23 at …"; it wraps.
+- The currency pill and picker said "CHF CHF" (the franc's sign is its
+  code); now "CHF", while "$ USD" and "€ EUR" keep their sign.
+- Scan's note under the camera ran edge to edge with the camera; it keeps
+  the page's margins. More → About gave the prices' day as "2026-09-23";
+  now "Sep 23", as every other day.
+
+*Prep & Play*
+- A ready-made deck's badge sat beside its name and took its width; it
+  rides the line under the name, with the count.
+- A deck's search prompt, "Add cards — search the catalogue", was 253 px of
+  text in a 208 px box at 411 px; now "Add cards".
+- A deck's value left its Leader out while the deck's history counted it
+  (an empty deck read $0.00 beside a move of its Leader's price); the Leader
+  is counted, and an empty deck says "no cards in it yet", not "you own
+  every card in it".
+
+*Hunt*
+- Sealed and Releases rows sat askew: `.row{align-items:baseline}` put a
+  textless picture's foot on the first line of text, 33 to 55 px off
+  centre. A row that leads with a picture centres it; the Sealed row's
+  bell, which then hung from the picture's foot, centres too (landmine
+  161).
+- Local, before the shop list was fetched: "From Bandai TCG+, ."; now
+  "From Bandai TCG+.".
+
+*The tour itself*
+- Its seed asked for a printing with no number as `!p.sealed && !p.num`
+  and found none (every one is filed as sealed); it seeds a DON!! card, and
+  the tour gained the tiles and the DON!! card's page. It also took no
+  day's reading (the app's own paths take one) and the zip sheet covered
+  Hunt's first view; both fixed.
+- Not the app's: Home's "One reading so far — $0.00" beside the total, seen
+  in take 110's pictures, was the seed's reading taken before its cards
+  went in.
+
+### Tests
+
+- smoke **956/956**: take 110's 916 with six changed on purpose (the
+  filter's words, the deck's value, the sealed page's line and subtitle),
+  and 40 new in "take 111 — the last look". render **176/176** in Chrome:
+  161 with three changed on purpose (the filter's "lines") and 15 new.
+- Watched to fail on take 110's app, built from `origin/main`: 41 in smoke
+  and 10 in render -- every check of this take but those that hold on both
+  builds by design: the controls, the fixtures, the binder keeping a page
+  turned to, the open Fold's one-line bar, and landmine 16's merge.
+- The harness: smoke's DOM stub gained `document.removeEventListener` (the
+  ask sheet's cleanup calls it; a browser always has it).
+
+### What I got wrong
+
+- The first cut made a DON!! card's page a product's (landmine 162): it
+  took `p.sealed` for "a sealed product", as take 95 had. A probe of the
+  catalogue before the tests caught it -- 253 DON!! cards with a finish and
+  a rarity.
+- Centring the rows moved the Sealed bell; the second reading of the
+  pictures found it (landmine 161).
+- The badge check was first written at 411 px, where the look saw the
+  fault; in the runner's Chrome the row fits with 6 px to spare, so the
+  control could not fail. It reads 360 px now (landmine 164).
+
+### Ruled out
+
+- Fitting a binder page to the open Fold (three pockets of about 400 px
+  across; a page of nine needs a scroll there) -- a page that fits is
+  pockets near 110 px wide: a design trade-off for the UI/UX session, not a
+  fault.
+- Splitting a slab merged before this take: its first grade was written
+  over, and nothing kept it.
+
+### DEFERRED this cycle
+
+- The binder on the open Fold, above -- the UI/UX session's.
+- The Cards list shows "·" in the cost circle for the 16 of 2,712 playable
+  numbers the feed gives no cost (Barrier Bulls OP15-019, OP12's Haki
+  events, EB04-009 ...) and sorts them with the zeros. A data gap: the feed
+  or the rules text would have to supply it.
+- A want of a printing with no number saved before this take stays on the
+  list (its row now reads without the dot); remove it by hand.
+- Sealed's banner on the open Fold is the top card cut to 840 px wide, the
+  face filling the band -- take 110's design, merged without a note.
+
+## Take 110 — 2026-09-24 — the UI series' second half in one take, overnight: the art layer's second half, the voice, polish, the Fold's inner screen, and the planned leftovers
+
+Opened before any code (PROTOCOL §6) by the UI/UX session: the fifth
+take of A42. The owner, having seen take 109's look: "go, mark it ready
+and start take 110". Take 109 (PR #33: `check` green on its head 3d470bd
+-- a fresh ingest, the runner's own probe "large art (_in_1000x1000):
+served 40 of 40, median 600x838, smallest width 408", smoke 817/817,
+render 132/132 in Chrome, the gate passed) merged at 06:15 UTC; its
+build published Release take-109 at 06:23 (the APK, 26,453,770 bytes;
+the AAB, 19,639,891; the mapping, 51,817,038). That Release's body opened
+"# OP TCG Hub — take 108" under the title "take 109" (measured below).
+The nightly after the merge (06cf32d) measured the large size itself:
+40 of 40.
+
+The owner's words during the take, verbatim:
+
+- On take 109's look, three texts: "While you're here, remove this text
+  when you get the chance - all of it - it adds to the apps not so
+  premium feel that we'll improve in the polish stage, and with what
+  we're doing now. Continue" -- the credit line under the art, the
+  paragraph under the ready-made decks' heading, the note under a card's
+  conditions.
+- On take 109's question (whole-card pictures and the stamp), and the
+  hero: "It should show the whole card. I don't like the little peak we
+  have - the blurred backround should also be zoomed out a bit where
+  it's used so it's more focused on the center of the art. Continue"
+- On the series: "I really like where we're headed from the preview
+  screenshots and the testing i've done so far, but alot of work to do -
+  this is the foundation - how many takes do you think until we can hit
+  our end goal for this redesign. Can you run autonomously overnight on
+  this project, minimizing the amount of approvals needed, and github
+  pushes? You will check your work along the way then we will push to
+  github as one massive take. Continue"
+
+The answer given: about four more takes at the usual pace after the art
+layer's second half -- the voice, polish, the Fold's inner layout (the
+owner's "later"), and one for what the last look turns up. So this take
+carries the series' remaining layers in order, each checked before the
+next (smoke, render, the look, every PNG read), committed on the branch
+and pushed once at the end. An hourly check-in to this session resumes
+the run if it stops.
+
+### The plan
+
+1. **The art layer, second half** (Hunt first): Sealed's banner (A) --
+   the most valuable card of the newest booster set out whose picture
+   the runner fetched, sharp at the large size, cut above the stamp;
+   every heading in Sealed a strip under its own set's top card; each
+   Leader faint behind its side of the Play counter; the owner's own
+   hero pictures. With the owner's three removals, the peek gone, the
+   blur zoomed out, whole cards whole.
+2. **The voice** (UI-AUDIT §5).
+3. **Polish** (UI-AUDIT §6).
+4. **The Fold's inner layout**, if the first three are done and checked
+   (they were; and at the owner's "Ensure 110 has as many planned changes
+   in it as possible", the planned leftovers after it).
+
+### Measured first
+
+- **The stamp under the blur** (the zoom-out's limit). ST02-001 is the
+  one Leader looked at whose TCGplayer picture is clean while Bandai's
+  is stamped, and the stamp band (43-55 % down the card) is the only
+  difference between the two. Both, through the blurred layer, at
+  Decks' hero (412x249), a card's page (412x419), a Play panel (380x190)
+  and the Fold's inner hero (840x249): with the whole card in the frame
+  (at the box's width, centred on the art) the stamped one differs by
+  up to 29-38 levels of 255 on the hero, 71-80 on a card's page and
+  65-72 on a panel -- a light band, plainly visible; with the band above
+  the stamp, by 6 at every size, the two pictures' own noise. So the
+  zoom-out stays inside the band.
+- **The zoom.** The band (the thumbnail's top 200x117), cut to cover its
+  box, was 2.54x on Decks, 3.99x on a card's page and 2.14x on a Play
+  panel. Shown whole at the box's width it is 2.06x, 2.06x (at the top
+  of the page) and 1.62x: 19 %, 48 % and 24 % further out. On the Fold's
+  inner screen Decks' band is 426 px of 840, the card's colours either
+  side.
+- **The Play counter below 400 px.** Three steppers of two 44 px buttons
+  (take 108) with their 16 px gap need 3 x 104 + 20 = 332 px; a 360 px
+  phone's panel has 296 inside (390 px: 326; the Fold's cover: 348). The
+  take-109 build scrolled sideways at 360 with both Leaders chosen; with
+  this take's `overflow:hidden` on the panel (for the art) the third +
+  was cut at the panel's edge instead -- render, in Chrome: "Given DON!!
+  up" on both sides.
+- **Release take-109's heading.** The title comes from BUILD; the body is
+  `ci/RELEASE.md` as committed, whose first line is typed by hand. Take
+  109 wrote its "New at take 109" paragraph (the build refuses without
+  it) and left the line at 108. Nothing checked it.
+
+### Built -- the art layer, second half
+
+- **Sealed's banner** (A): `newestTop()` -- the newest set of kind `main`
+  published on or before today with a card picture (today OP17; its top
+  card OP17-079 Monkey.D.Luffy, $1,776.47), found through `setTop()`: a
+  set's most valuable printing with a hash (a picture that served), by
+  printing id, kept until the catalogue changes. Sharp at the large size,
+  cut above the stamp, the thumbnail if the large one fails; the title in
+  A's slot, where Decks' is. No picture in any set: the plain header.
+- **The strips:** every heading in Sealed, the starter decks' too (the
+  newest deck set's top card); a set with no picture yet (OP18, EB05
+  today) keeps the plain ground; the name in white over a scrim from the
+  left; a date never breaks at its hyphens (the look found "2026-10-"
+  over "30"). Releases keeps its rows (ruled out below).
+- **The Play counter:** each side's Leader, blurred and faint (0.6),
+  behind its panel; none until a Leader is chosen. Its steppers' gaps
+  give way below 412 px (`clamp`), the buttons keep 44 px; at 411 px and
+  wider nothing moves.
+- **The owner's own pictures:** `assets/user/hero-hunt.jpg` for Sealed,
+  `hero-play.jpg` for Decks, shown uncut (they are not cards).
+- **The owner's removals:** the credit line under the art (Decks and
+  Sealed, with its style), the ready-made decks' paragraph, the card
+  page's condition note (`#dCondNote` and both its texts). What stays
+  said: the card page's line names the condition ("Condition · Near
+  Mint"), a sealed product's says "Sealed — no condition"; the per-
+  condition gap is in More's "What this app does not know", on the trade
+  screen and in the bulk picker; the ready-made decks' heading and every
+  row's badge say ready-made.
+- **The owner's ruling on the hero and the blur:** no card rises from
+  behind Decks' title; the blurred art shows the band above the stamp
+  whole at the box's width (`object-fit:contain`), centred, and at the
+  top of a card's page, where it shows beside the card; the sharp art
+  still fills its band. Whole cards stay whole (the owner's ruling; no
+  change).
+- **The Release heading's tripwire:** the gate refuses a
+  `ci/RELEASE.md` heading that is not BUILD's take (the V1-STATE
+  heading's check, beside it), with a selftest probe; the heading reads
+  take 110.
+
+### Tests -- the art layer, second half
+
+- **smoke** 847/847. On the take-109 build the checks fail 26 -- every
+  take-110 check but the four that hold on both (the controls on the
+  removed lines, the per-condition gap still said, the condition lines)
+  plus the six older checks this take rewrote.
+- **render** in Chrome: 142 checks, one failing here -- the Decks list's
+  thumbnail, the proxy's certificate (landmine 152); the runner has it.
+  On the take-109 build 12 fail; on this take's build before the
+  steppers' gaps, the cut + at 360 px.
+- **The look, take 110:** 16 of 16 at both sizes, with real pictures
+  (170 fetched through Node, 37 refused by the host -- the ids TCGplayer
+  refuses). Every PNG read.
+
+### What I got wrong, and caught
+
+- **Take 109's Release went out under take 108's heading:** I wrote the
+  paragraph the build asks for and never read the line above it. The
+  gate reads it now.
+- **My first zoom-out put the whole card in the blur.** Measured before
+  it shipped: the stamp comes through a blur as a light band, up to 80
+  levels. The band above the stamp stays the frame.
+- **The 360 px Play counter:** take 108's 44 px steppers overflowed it,
+  and neither take 108's nor take 109's no-sideways check had the Play
+  screen in it. This take's check found it on the take-109 build.
+- **The look's first run showed the banner at the thumbnail:** this VM's
+  build predated the move onto main, whose nightly had measured the
+  large size; the manifest said "not measured" and the app, correctly,
+  kept the thumbnail. Rebuilt and run again.
+- **The look's second run had Hunt's zip sheet over every Hunt picture
+  and a card's page:** my steps switched modes by script, which a person
+  cannot do under the sheet. The steps close it, as render's do.
+- **Smoke's starter-decks line** asked for the name within 400
+  characters of the first fold -- a stand-in the heading's art broke. It
+  asks what it meant now: the first fold is the starter decks', the name
+  inside its heading.
+
+- **A smoke log read stale:** a patch that stopped on its first missing
+  anchor short-circuited the rebuild and smoke, and I read the earlier
+  run's file as a new failure. The tree was right; the anchors now match
+  without their indentation.
+- **My empty-state helper named its glyph through a variable**, which take
+  108's sprite check (landmine 142) refuses because it cannot read it; the
+  glyphs go through `EMPTY_GLYPH` now, a map the check reads.
+- **Two look steps undid their own subject** before the picture was taken
+  (the search cleared, the zip sheet left open by a scripted mode switch);
+  the harness photographs after the step returns.
+- **I wrote "take 72" into landmine 153 before checking it;** the history
+  starts at take 80 (a seed import), so the entry says "at take 80, the
+  first take the repository holds".
+### Built -- the voice (A42 layer 5, UI-AUDIT §5)
+
+- **The developer's wording out:** the page's title is "OP TCG Hub" (the
+  take lives in More's About); "(R6)", "(PROTOCOL §10)", "(landmine 25)"
+  and "MEASURED:" gone from the screens (the set-chip note says "about 1
+  card in 10; with the set chosen, about 6 in 10"); More's credits panel
+  is "Save credits" in the collector's words, and its "+20 (dev)" button
+  -- credits without an ad -- moved to Diagnostics as "+20 test credits";
+  the tour's "Two faces" and "A simulator is on the roadmap" became
+  "Three modes" (Collect, Prep & Play, Hunt) with the Sim that exists;
+  Sealed's "Store stock and local shops come to this mode next",
+  Releases' "store events come with the local view", More's "the field
+  is offline by design" and "Sealed product is manual" rewritten to what
+  is true now.
+- **Sentence case** for every heading, button and chip the audit listed
+  ("Most valuable", "View all", "Market movers", "Trade analyzer", "Bulk
+  actions", "+ Add a graded card", "Starter decks", "Your scan", "Graded",
+  "Backup failed", "This replaces", "Offline OK", "For this deck", "DON!!
+  given", "Calendar"); a sweep of the shipped labels found no others.
+- **One word per thing:** *Collection* for Portfolio everywhere on screen
+  (D17; "Names a collector gave stay as given", and the CSV column and
+  the backup keep the word `portfolio`, so any take's export imports);
+  (D17 marked applied in DECISIONS-OPEN; PLAY-LISTING's feature bullet says
+  "Separate collections" -- the owner pastes it into Play when they choose);
+  *Refresh* for the three hourly feeds (it was Fetch on three screens and
+  Refresh on one); *Export CSV* and *Back up* in Collection's grid as in
+  More; *pass the phone* for the Sim as for the counter; the want list by
+  its name in the toasts; *Blocker* as the game writes it. Home's
+  Performance panel is "Against what you paid", Events' panel "Store
+  events". Delete stays for what is destroyed and Clear for a list or a
+  filter emptied -- two things, two words.
+- **Money:** `signedMoney()` -- "+$12.50", "≈+C$12.50"; seven places had
+  written `money(x).slice(1)`, which dropped the "$" in dollars and the
+  "≈" of a converted currency. The range line says "in the last 7 days",
+  "since the first day on file" (it said "in the last all time"). The
+  price filter's bounds are typed and shown in the currency on screen,
+  kept in dollars ("min $" said "$" in every currency).
+- **Percentages:** one decimal, none from 100 % up (they were 0, 1 or 2
+  by place).
+- **Days and moments:** "Sep 23" (the year only when it is not this one)
+  and "Sep 24, 6:23 AM" wherever a screen wrote an ISO date or a time with
+  a literal T -- prices, backups, releases, a strip's date, alerts,
+  staleness; ISO stays where a machine reads it (the diagnostics and
+  self-test reports, file names, the calendar file). "×" for "x".
+  186 straight apostrophes between letters curled, 11 in the markup's text
+  and 175 in the script's strings (none in an attribute, a regex or the
+  licence notices, which live in `assets/glyphs.svg`).
+- **Labels:** every field has a name a screen reader says (13 had only a
+  placeholder, which vanishes as typing starts); the Play counter's
+  button is "Start", "Next turn" or "End turn" with what happens beside
+  it; the Sim's setup is "New game". Home's update note starts with a
+  capital (the release paragraph is written to follow "New at take N:").
+
+### Tests -- the voice
+
+- **smoke** 870/870. The voice's 15 checks each fail on the build before
+  it (this take's part 1, 90efb0f): the developer's words, the credits
+  in Diagnostics, the casing list, the word list, signed money (and in a
+  converted currency), the percentage rule, the dates and moments, ISO
+  only in the reports, Sealed's line, the filter's currency, every field
+  named, the Play button. Each list has its control, and the data still
+  says `portfolio`.
+- **render** in Chrome: 141 of 142, the one the proxy's certificate
+  (above).
+- **The look:** five steps added (Home's collection and delta, More's
+  credits, the filter's currency, the Play counter, Releases' days); 26
+  of 26 at both sizes.
+
+### Built -- polish (A42 layer 6, UI-AUDIT §6)
+
+- **Motion from the tokens:** the six transitions that named their own
+  duration (.12s to .35s) take --dur-press, --dur-ui or --dur-sheet. A
+  sheet rises from the bottom edge as its scrim fades in (320 ms, eased
+  out); a tap on the mode slider crossfades the new mode's screen and turns
+  the page's colours with it (220 ms), and the class comes off after so a
+  later screen change does not fade. Take 106's one reduced-motion rule
+  stops them all: measured in Chrome, the sheet's animation takes 0 s
+  under an emulated `prefers-reduced-motion: reduce`.
+- **One empty state:** `emptyHtml()` -- the list's glyph (through a glyph
+  map, so take 108's sprite check reads it), what is missing, what to do --
+  on Decks, the card browse, the want list, alerts, Search and Sealed, the
+  look Collection's, Decks' and the Binder's already had. **Found by the
+  new check:** Sealed with a search that matched nothing showed nothing at
+  all; the stock panels always filled the list, so the "Nothing matches"
+  fallback never ran. It shows under the panels now.
+- **Tabular figures** are the body's default, so every number lines up,
+  not only the `.mono` ones.
+- **Three thumbnail sizes** where there were seven (30 to 56 px):
+  `THUMB` and `--thumb-s/-m/-l` -- 32 in the dense deck-building lists,
+  44 in a list row (Search, Home, Trade, Releases, the decks, the Play
+  counter), 56 for a sealed product. Two radii stay: a card's 6, a box's 8.
+- **A card's copy row is two lines:** the finish and its condition beside
+  the price, the quantity under them by the condition buttons. In one line
+  the name had about 60 px of a 345 px row, and the look had "Near" over
+  "Mint". `.nw` keeps a name, a date or an amount whole besides, and the
+  card page's "as of" date uses it.
+
+### Tests -- polish
+
+- **smoke** 882/882: the tokens only (control: a take-109 literal), the
+  sheet's rise, the crossfade's on-and-off, the reduced-motion rule, the
+  empty states (control: the take-109 bare lines) and Sealed's painted,
+  tabular figures, the three sizes (control: a call with its own size),
+  the unbreakable condition name. Take 93's cardPic check follows the size
+  (44x61).
+- **render** in Chrome: 145 of 146 (the proxy's thumbnail): the sheet's
+  animation is `sheetUp` at 0.32 s and 0 s under reduced motion; a real
+  tap on the slider crossfades and the class comes off; a sealed
+  product's picture is 56x70; the body's figures are tabular. Take 93's
+  search-row check follows the size (44x61); take 82's palette check reads
+  Prep & Play's charcoal once the colours have turned (220 ms).
+- **The look:** four steps added; 34 of 34 at both sizes.
+
+### Built -- the Fold's inner screen (the owner's "Fold layout later", brought into this take)
+
+- **Between a phone and the desktop column:** under 700 px is a phone;
+  from 900 px a desktop browser keeps take 60's centred 520 px column.
+  Between them, the open Fold (about 840 px, INFERRED from the device's
+  resolution until Diagnostics' viewport line comes from the open phone)
+  had every screen stretched to 840 px -- a 196 px card in a field of
+  backdrop, rows 800 px wide, two collection tiles of 400 px. It gets two
+  panes where two fit:
+  - **a card's page:** the card at 300 px on the left, its sub line,
+    stats and panels beside it (`float` and `flow-root`, so the page keeps
+    its order and the later panels run the full width under the card);
+  - **Home:** the value and its chart across the top, Most valuable and
+    Set completion side by side under them;
+  - **lists of rows two to a line:** Search, the card browse, Sealed (its
+    strips and panels span both), Releases, Decks and the ready-made decks
+    (a line of deck panels at one height), Events and Local;
+  - **the collection's tiles four across;**
+  - **a sheet** centred at 640 px, still rising from the bottom.
+  The Play counter, the Sim and a deck's editor keep one column (a second
+  would not help), and nothing moves on the phone or on a desktop.
+
+### Tests -- the Fold's inner screen
+
+- **smoke** 885/885: the rules inside the 700-899 px range (control: a
+  stylesheet without them), and the phone and the desktop column as they
+  were.
+- **render** in Chrome, at 840 px: the card is 300 px on the left with its
+  page beside it; Home's two lists share a line; Search's and Releases'
+  rows are two to a line; no sideways scroll at 700, 840 or 899 px on
+  Home, a card, Sealed, Releases and Decks; on the phone the card is
+  centred at 196 px as before. 151 of 151 (this run the proxy let the
+  Decks thumbnail through as well).
+- **The look:** every take-110 step at the inner size shows the two panes;
+  34 of 34.
+
+### Built -- the planned leftovers
+
+- **Bulk delete keeps to the collection on screen** (landmine 155; the UI
+  audit's finding in passing, a data-loss risk under AGENTS rule 5):
+  `bulkLines()` takes the selected printings' lines in the active
+  collection only, as Move and Condition already did; the confirm values
+  them with their quantities.
+- **A failed picture's label** is white on a dark pill: black at 65 % on
+  the card's gradient measured 1.64 to 3.23:1 (the audit's last open box
+  of §1); smoke measures the pill above 4.5:1 over all six game colours.
+- **Home says "a snapshot is taken each day" once** (the chart's note
+  repeated the line under the value).
+- **Seven long notes on the main screens say the same in fewer words** --
+  Where to buy, a graded copy, the stock alerts, the distributor's panel
+  and releases, the shops, Releases' dates. No disclosure dropped: the
+  referral, the ungraded price, when the alert runs, what sold out and
+  allocated mean, the date's source. More's reference panels, the deck
+  rules and the Sim's limits keep their length.
+
+### The take, at the seal
+
+- **The full pipeline, here:** a fresh ingest from TCGCSV, the hash step
+  (the second host 1 of 244; the large size "served 40 of 40, median
+  600x838, smallest width 408"), the build, smoke 890/890, render 151/151
+  in Chrome, then the gate -- which stopped it once on a line I wrote
+  tonight: More's credits said "shows no ads" in the browser copy, and the
+  stale-copy check refuses that phrase (landmine 88: the app has rewarded
+  ads). Reworded to what is true: credits and their ads apply only in the
+  Android app.
+- **smoke** 891/891 on this build; on the take-109 build it fails 72 -- 58
+  of this take's checks and the 14 older ones this take rewrote (the
+  copy row's check came after that count).
+- **The gate** passed; its selftest 17/17, the new Release-heading probe
+  among them; the scrubber clean over 63 files.
+- **The look, take 110:** 34 steps at both sizes, 34 ok, with real
+  pictures (727 fetched through Node, 99 refused by the host -- the ids
+  TCGplayer refuses). Every PNG read; they go to the owner with the PR.
+
+### After the first push: a review of the whole take
+
+- **The runner's `check` on the first push** (16641e6): smoke 891/891,
+  render 151/151 in Chrome, GATE PASSED, 2 min 28 s.
+- **Two checks that could not fail**, both there since the take-88 seed:
+  Sealed's starter decks "collapse on a tap like a set" and the Sim's
+  [Double Attack] under DON!! each ended its condition `|| true`. Each
+  now asks what its name says, with a control, and each was watched to
+  fail on a build that breaks it (a fold that never folds; a DON!!
+  condition that never holds). A guard refuses the shape in the file
+  from now on; its control counts the two in take 109's file.
+- **UI-AUDIT §6's last box** is ticked: the PR carries the pre-delivery
+  checklist, item by item. smoke 895/895.
+- **The runner's `check` on the review pass** (40c7d7f): smoke 895/895,
+  render 151/151 in Chrome, GATE PASSED.
+- **Two reviewers read the whole diff**, one the script and one the
+  layout, in Chrome where it could be measured. What was real, and fixed:
+  - *Bulk actions still took lines the screen hid* (landmine 155, whole
+    now): with Near Mint filtered in, Delete took the graded copy of the
+    printing tapped, and Move and Condition changed it; the bar valued a
+    printing at the first line found in any collection (4 x where the
+    confirm said 3 x). `shownLines()` is what the grid draws and what an
+    action takes; the bar and the confirm count the same lines.
+  - *A euro sign on a dollar figure* (landmine 157, from take 85): a saved
+    currency with no rate in the build drew "€10.00" for $10, with no ≈.
+    `sym()` reads the currency shown.
+  - *Words over art* (landmine 158), measured from pixels over a yellow
+    card: the Play counter's labels 2.0:1 (4.4 at best, black), now 5.1 to
+    8.3 offline and 6.7 or better over three real pictures, under a 45 %
+    shade in --dim; a card's line beside it on the open Fold 1.0:1, now
+    5.1:1 on every colour with the art behind the card's column only; a
+    Sealed strip's date 2.3:1 over bright art, now 5.1:1 or better with the
+    scrim held to .55.
+  - *The open Fold:* an empty "Where to buy" under every card (landmine
+    136 again); Market movers' heading and the Decks and card-search empty
+    states in half a line, a lone Events panel half the screen, Local's
+    sixty shops beside 8,000 px of empty column (landmine 160, Local now one
+    column); Performance kept Set completion beside a gap -- its list named
+    Search's panel from take 64 on, so Search's set list was what it hid.
+    Set completion has an id now, and Most valuable takes the line alone.
+  - *A double tap closed the sheet it opened* (landmine 159): the second
+    tap landed on the scrim while the sheet rose. A tap on a rising scrim
+    waits.
+  - *The art blinked on every repaint:* a keystroke in Sealed's search
+    rebuilt every strip at opacity 0 and faded it in again, and a tap on the
+    Play counter its Leaders. A picture that loaded once is drawn at once.
+  - Smaller: "−0.0%" and "+0.0%" at one decimal (a sign only on a figure
+    that is not zero), 99.96 as "100.0%", the owner's hero-play.jpg hidden
+    on Decks with no Leader anywhere, the card search's divider rule aimed
+    at a class its rows never have, Diagnostics' four buttons past the edge
+    at 360 px.
+  - *Days still in ISO on a screen*, seen in the look's pictures of the
+    fixes: Market movers' heading ("2026-09-22 → 2026-09-23"), the range
+    label over a gap, the rate's date in the currency picker, Where to buy,
+    your own shop notes. All in words now; the shared collection page and a
+    trade's text carry the year, since they are read later.
+- **Checked and clean by the reviewers:** export, backup and import keep
+  `portfolio`; the price filter stores dollars and round-trips; a day
+  carries no timezone shift; nothing removed is still referenced; every
+  inactive screen stays hidden under the Fold's grid; no sideways scroll at
+  700, 840 or 899 px on twelve screens; no motion left half-run.
+- **Tests:** smoke 916/916, render 161/161 in Chrome. On the review pass's
+  build the new checks fail, 16 in smoke and 5 in render, and both runs go
+  on past a helper that build lacks instead of stopping; each control
+  passes on both builds.
+- **Left as it is:** a width strictly between 899 and 900 px matches
+  neither the Fold's query nor the desktop column's (no device is known to
+  report one); a bulk tap still selects a printing, and the action takes
+  that printing's lines on screen; an alert's "fired" day is the day in UTC
+  (as it was before this take), a day early on a US evening.
+- **What I got wrong:** the first push measured the stamp under the art and
+  not the words over it; the Fold's grid was written per container without
+  going through what each holds; landmine 155's rule stopped at the
+  collection; the session prompt's landmine count sat at 152 through four
+  new ones.
+
+### Ruled out
+
+- **Strips on Releases:** its rows are mostly sets not out yet, with no
+  card picture, and each row already shows its box.
+- **Art in empty states:** Decks' hero already stands over its empty
+  state, and Collect keeps its drawn glyphs (the owner's ruling on
+  Collect).
+- **The whole card in the blur** (measured above: the stamp shows).
+- **A banner on Home** (the owner's ruling, unchanged).
+- **Cropping whole cards above the stamp** (the owner: "It should show
+  the whole card").
+
+### DEFERRED this cycle
+
+- **The owner's review of the whole take** (the look's pictures go with the
+  PR): the blur's framing (zoomed out 19 % on Decks, 48 % on a card's page,
+  inside the band above the stamp), and whether any other long note should
+  go the way of the three.
+- **The inner screen's real width:** Diagnostics' `viewport` line from the
+  open Fold settles the 840 px the layout is INFERRED from.
+- Outside the UI series, unchanged: A41 (the parts and the source), A32
+  (retailers with the real page in hand), D20-D22, the AdMob unit IDs.
+
+## Take 109 — 2026-09-24 — the art layer, part 1: the record corrected, the picture measured, Prep & Play's art, a card's own page
+
+Opened before any code (PROTOCOL §6) by the UI/UX session: the fourth
+take of A42, the first half of the art layer. The owner, having seen
+take 108's look: "go, mark it ready and start take 109" -- the owner
+marked PR #32 ready and merged it at 05:17 UTC (`check` green on its
+head dcbedfa: a fresh ingest, smoke 786/786, render 122/122 in Chrome,
+the gate passed); its build, run 57, went green and published Release
+take-108 at 05:25 (the APK, 26,447,858 bytes; the AAB, 19,633,877; the
+mapping). The last nightly (run 50, 23:50 UTC) is green. This take is
+built on the merge (e634758).
+
+### The owner's words (24 Sept, this session)
+
+- On art, at the start of the series: "That wasn't a landmine set by
+  me, if we can use official art, card art or anything we can leverage
+  i'm more than okay with it. We should not be making our own images
+  from scratch however. Likely Hot-Linked Card Art, Bold"
+- The pick from the preview page: "Prep and Play/the first group of
+  screenshots, I like C, but I also like A, A deck, one Level down, same
+  with A sealed in Hunt. When you scroll down more info of course should
+  be provided, and the color blur should match the color of whatever
+  card you're looking at. I don't really like A in collect however, with
+  the most valuable card showing above my Collection, I just know that
+  art is going to look bad, weird, stretched etc."
+- Asked this take whether the pictures carry a SAMPLE watermark: "Yes,
+  some or all. Namely under the collection progress I see alot sample -
+  not idea, of course. We should be pulling the highest quality images
+  for the main cards. This is the only way using cards as a banner will
+  work."
+- Asked whether the session's VM may reach the image hosts: "I thought I
+  set it to full access, yes - whatever we need."
+
+### Measured first (this VM, 05:30-05:45 UTC)
+
+- **The network changed during the take.** At 05:01 UTC the session VM
+  reached none of TCGCSV and the two image hosts (no answer through the
+  proxy; CLAUDE.md, take 102); by 05:32, after the owner's answer above,
+  all of them and Bandai's card site answered HTTP 200. The session's
+  browsers still refuse the proxy's certificate (their NSS store is
+  empty), so the look fetches pictures through Node, which checks it.
+- **Sizes TCGplayer serves** (4 cards, then 20 served ids): `_200w`
+  200x279; `_400w` 400x559; `_in_1000x1000` 600x838 for most, 716x1000
+  for five of twenty cards looked at (the uploads were larger), 500x700
+  for one (ST04-001). **Bandai's own** card image
+  (`en.onepiece-cardgame.com/images/cardlist/card/<number>.png`) is
+  600x838 for all twenty. Nothing larger exists at either host.
+- **The retry that never served.** `refArt()`'s onerror drops `_200w`
+  and asks for `<id>.jpg`: 403 for all 221 ids the catalogue's host
+  refuses and for 20 of 20 ids it serves. Since take 86 every failed
+  picture has cost a second request that could not succeed.
+  `_in_1000x1000`: 200 for 20 of 20 served ids, 403 for all 221 refused.
+- **The SAMPLE stamp, looked at one by one** (the scratchpad's contact
+  sheets): the ready-made decks' 15 Leaders and the top card of each of
+  the five newest sets, at both hosts. **Stamped: 38 of 40 card
+  pictures** -- Bandai's 20 of 20, TCGplayer's 18 of 20; clean: ST01-001
+  and ST02-001 at TCGplayer only. The five newest booster boxes: clean
+  product pictures. An earlier pixel difference (OP01-001) spelled the
+  word out: Bandai's picture stamped, TCGplayer's clean. So the
+  publisher's own picture is not the cleaner source, and no source is
+  clean for most cards.
+- **Where the stamp sits.** On every stamped picture the word is one
+  band across the middle of the card: its letters start about 45 % down
+  and end by 60 % (guides at 38/42/44/60/64 % on six cards of four
+  kinds and colours; the first white row's median 46.8 % over 38
+  pictures). **Everything above 42 % of the card is clean on every
+  card** -- the frame, the cost and power, the character.
+
+### The plan (and one change from the plan the owner approved)
+
+The owner's pick, with what the measurement changed:
+
+- **Decks (C):** the featured deck's Leader, its art blurred from the
+  band above the stamp, fills a hero behind the mode slider; the Leader
+  card itself rises from behind the title, crisp from the 600x838
+  picture, and only its top 42 % shows -- the card's frame, power and
+  character, never the stamp. The title, a line of counts and the
+  actions sit in A's slot under it, where Sealed's will sit at take 110.
+- **Changed from the plan:** it said that if a third of the Leaders
+  looked at were stamped, the runner would measure the stamp per card
+  and the hero would show its crisp card only when clean. 13 of 15
+  are stamped at TCGplayer, so that rule would show the crisp card for
+  two Leaders of fifteen. The stamp's place is fixed, so a crop above
+  it is clean for every card: no detector, no threshold, and a render
+  check pins the crop.
+- **The ready-made decks back on Decks.** Take 61 put them "on the
+  Decks screen" (its entry, below); since at least take 66 the markup
+  has had `#dkStock` at the bottom of the deck editor, and the smoke
+  line "Decks shows them" only checked that the id existed. Each row
+  shows its Leader's picture now; the drawn cover is the picture's
+  fallback.
+- **A deck, one level down (A):** the Leader card at 96 px from the
+  600x838 picture, its name in the display face, its number, Life and
+  colours.
+- **A card's own page (C's backdrop):** the card's own art, blurred
+  from the band above the stamp, behind the top of the page; the card
+  at up to 196 px from the 600x838 picture. The picture is the card as
+  TCGplayer publishes it: for most cards, stamped (measured above).
+- **Home:** no banner (the owner's ruling).
+- **Offline, or a picture that fails:** the card's own colours, both
+  of them for a two-colour card; nothing drawn, nothing bundled.
+- **The runner** measures the 600x838 size on 40 fixed printings every
+  build and the app uses it only when that build saw it served.
+- **The record first:** landmines 26 and 28 marked superseded in part,
+  30 and 31 standing; A6, A16, A29, A41, A42; the "may not" line; V1-STATE;
+  PROVISION; RUNBOOK-play; the owner's folder README; the gate's list of
+  sentences that are no longer true.
+
+### Built
+
+- **The picture's address** (`artUrl`, `largeOk`): the large picture
+  (`_in_1000x1000`) is made from the printing's own stored URL, never a
+  card number, and used only when this build's runner saw it serve
+  (`manifest.images.large`; this VM's run: 40 of 40, median 600x838,
+  smallest width 408). `refArt(p, {size, cls})`: a large picture that
+  fails drops to its thumbnail; a thumbnail that fails is removed. The
+  retry to `<id>.jpg` is gone (landmine 150).
+- **The cut above the stamp:** `img.above{object-view-box:inset(0 0 58% 0)}`
+  -- every picture shown as art rather than as the card (the blurred grounds,
+  the rising card) is the card's top 42 %, whatever the box (landmine 151).
+- **C's ground** (`artColours`, `artBack`, `paintBack`): the card's own
+  colours (both of two, one and its shade, the mode's for a product), the
+  blurred thumbnail over them, fading into the page by a mask.
+- **Decks:** a 160 px hero (`--hero-h`) whose art reaches up behind the
+  slider and the status bar while the hero keeps its height in the flow;
+  the slider's fade steps aside at the top (`html.at-top`, a passive
+  scroll listener). The featured Leader is the newest of the collector's
+  decks with one, else the first ready-made deck's; the card rises from
+  behind the title, its top 42 % showing (715x1000 for ST01-001, 716x1000
+  for ST05-001 in the look); a credit names it; the line under the title
+  counts the decks and the legal ones.
+- **The ready-made decks back on Decks** (`#dkStock` out of the deck
+  editor; `stockPic`): the Leader's picture over the drawn cover. The
+  cover's 7 px name is gone; the row names the Leader.
+- **A deck, one level down:** the Leader at 96 px from the large picture,
+  its name in the display face, its number, Life and colours.
+- **A card's own page:** `#dBack` behind the top, the card centred at
+  `min(48vw,196px)` from the large picture; a product's photo fits whole
+  on white.
+- **The runner:** `tools/hashes.py` -- `large_url`, `large_jobs` (40 hashed
+  first-host printings spread over the catalogue's ids), `measure_large`,
+  the sidecar's `large`; `build_app.py` puts it in the manifest and says it.
+- **The look behind the proxy:** pictures fetched in Node (landmine 152) --
+  144 fetched, none refused.
+- **The record:** as planned above, plus the gate's stale-copy list (its
+  first negative control since take 8; five more present-tense files read;
+  wrapped sentences matched) and the scrubber reading the owner's README.
+
+### Tests
+
+- **Smoke 817/817** on a fresh catalogue (this VM ingested TCGCSV itself,
+  the first time since take 102). On the take-108 build the new checks
+  fail 25 -- every take-109 check and the four rewritten older ones.
+- **Render 131/132 in Chrome.** The one failure is the Decks list's Leader
+  thumbnail: this VM's browser refuses the proxy's certificate (landmine
+  152); on the runner it loads. On the take-108 build 8 fail: the seven
+  art checks and that thumbnail.
+- **The gate passed here in full** -- the catalogue checks ran on the fresh
+  ingest -- and its selftest ran 16 of 16: both new stale-copy probes
+  fire, the clean tree fires nothing. The widened stale-copy check, run
+  on take 108's record, catches all three sentences this take corrected.
+- **hashes.py's selftest:** the five new cases pass (the large URL from the
+  printing's own URL; a second-host URL, a bare number and a non-URL
+  refused; the median; a host that serves none measures 0; the sample
+  only hashed first-host printings, spread evenly).
+- **The scrubber:** clean over 63 files; on the take-108 README it refuses
+  line 1's first name.
+- **The look, take 109:** 20 of 20 at both viewports with real pictures,
+  every PNG read.
+
+### What I got wrong, and caught
+
+- The first backdrop on a card's page ran 16 px past both edges: its
+  `left/right:-16px` came from the hero, but the page is its own
+  containing block and its padding box already reaches both edges.
+  Render's sideways check caught it at 360, 412 and 820.
+- The hero's art ended in a flat `--bg` and drew a seam across Prep &
+  Play's textured page -- the look showed it; a mask fades the art into
+  the page itself now.
+- `.dklead span{display:block}` caught the colour chip too (a span) and
+  stretched it across the column -- the look showed it.
+- The stale-copy check matched plain substrings and missed a banned
+  sentence wrapped across two lines (the NSP's "including / official
+  product box shots"); it collapses whitespace now.
+- The first render checks of the crop read the pictures themselves, which
+  a refused picture removes; they read the rule from a probe in the same
+  box now, and the markup straight after a paint.
+- A product's square photo was cut at both sides in the card-shaped frame
+  (since take 95 at 112 px; plain at 196) -- it fits whole now.
+- The plan's pre-registered stamp detector: changed after measuring (above).
+
+### Ruled out
+
+- **Bandai's site as the cleaner source:** its pictures are stamped
+  (20 of 20), and they are keyed by card number, not printing (AGENTS
+  rule 3).
+- **A per-card stamp detector:** the stamp's place is fixed, so a crop
+  above it is cleaner and needs no threshold.
+- **Covering or retouching the stamp:** that would be drawing on the
+  publisher's card.
+- **A banner on Home** (the owner's ruling).
+- **Bundling or caching any picture** (landmine 26's part that stands).
+
+### DEFERRED this cycle
+
+- Take 110, the art layer's second half (Hunt first): Sealed's art
+  banner (A) from the most valuable card of the newest set, cropped
+  above the stamp; the set headers on Sealed and Releases as art strips;
+  the Play board's Leader art; art in empty states; the owner's own hero
+  pictures through `assets/user`.
+- **The owner's call:** whole-card pictures -- every thumbnail, a deck's
+  Leader, a card's own page -- show the SAMPLE stamp wherever the
+  publisher's picture carries it (most do; no clean source exists,
+  measured above). They could show the card above the stamp instead,
+  as the hero does, at the cost of no longer showing the whole card.
+- Then the voice take and the polish take (A42).
 
 ## Take 108 — 2026-09-24 — controls and icons: every icon from the sprite with one meaning each, a 44 px target for every control, a pressed and a disabled look
 

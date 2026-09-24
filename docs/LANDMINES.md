@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 108.*
+*Current as of take 111.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -159,6 +159,23 @@ Start here. Do not read top to bottom.
 | The scanner's buttons sit under the bottom nav | **146** |
 | A row of flex items squeezes its labels onto each other | **147** |
 | An icon toggle reports "filled" and draws hollow | **148** |
+| A test says a list is on a screen and it is somewhere else | **149** |
+| Every failed picture costs a second request that cannot succeed | **150** |
+| The publisher's picture carries SAMPLE; a banner shows the stamp | **151** |
+| The look's pictures fail in the VM while curl fetches them | **152** |
+| A list's empty state never shows, though the list is empty | **153** |
+| A Release's body names the take before it | **154** |
+| A bulk action reaches lines the screen does not show | **155** |
+| A control grown for thumbs spills off a narrow phone | **156** |
+| A price says € on a dollar figure, with no ≈ | **157** |
+| Words over art are hard to read on one colour | **158** |
+| A double tap closes the sheet it opened | **159** |
+| A heading or an empty state takes half a line on the open Fold | **160** |
+| A row's picture or button sits off the middle of its row | **161** |
+| A DON!! card's page reads like a sealed product's | **162** |
+| A save on one collection's page changes another's count | **163** |
+| A second slab of a card took over the first one's grade | **163** |
+| A check at the width where the look saw a fault passes anyway | **164** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -361,13 +378,22 @@ them and produce a plausible wrong answer.
 Toei and Viz own it. The pipeline downloads images inside the CI runner, computes
 a 64-bit dHash, and discards them. 6,860 hashes is 55 KB. What ships is derived
 data three orders of magnitude removed from the work.
+*Superseded in part at take 109 (the owner's ruling, A42):* the line above was
+the sessions', never the owner's -- "if we can use official art, card art or
+anything we can leverage i'm more than okay with it". Card art is displayed,
+boldly and hot-linked (28): the Decks hero, a card's backdrop, the card at its
+largest. What still holds: nothing is bundled into the APK or the AAB,
+committed, cached to disk or drawn from scratch, and the pipeline still hashes
+and discards.
 
 **27. The collection thumbnail is the collector's own photograph.** This is the
 consequence of 26 and it is a better product: the binder shows the actual cards,
 with their actual foiling, in their actual sleeves. The reference app cannot do
 this — every thumbnail in the owner's screenshots is a publisher SAMPLE watermark,
 which is itself evidence that they took advice on this and landed somewhere more
-constrained.
+constrained. *Take 109:* still true for a scanned card -- its own photograph
+comes first; the reference picture is for a card not yet scanned, and most carry
+the SAMPLE stamp (151).
 
 **28. Reference images are hot-linked, never cached to disk.** For cards not yet
 scanned, load `imageUrl` from the TCGplayer CDN
@@ -376,7 +402,11 @@ declared in `PROVISION.md`, allowlisted in the gate as DISPLAY-ONLY with that
 reasoning recorded *(correction, take 93: the gate checks that the host is
 declared, nothing about purpose; DISPLAY-ONLY is the declaration's prose —
 landmine 129's shape)*. It is never load-bearing: PROTOCOL §8's airplane-mode
-invariant covers scanning, which uses the collector's own photo.
+invariant covers scanning, which uses the collector's own photo. *Take 109:* the
+same rule carries the Decks hero, a card's backdrop and the card at 600x838
+(`_in_1000x1000`, measured on the runner every build, used only when that build
+saw it served); where the art is a banner rather than the card itself, only the
+part above the stamp shows (151).
 
 **29. Attribution is not optional and it is not bureaucracy.** TCGCSV is one
 person's free service carrying TCGplayer's data. Name both, in-app, with links.
@@ -1957,7 +1987,10 @@ property, passed. The house already knew: `.stale[hidden]`,
 runner's Chrome assertion on take 95's first run (check run 17). Rule: an
 element hidden by attribute gets a `<selector>[hidden]{display:none}`
 rule beside its display rule, and the render measures its height, not
-its attribute.
+its attribute. *Take 110:* again -- `#detail > .panel{display:flow-root}`, in
+the open Fold's range only, outranked `.panel[hidden]` and put an empty
+"Where to buy" under every card at 700-899 px; the phone never showed it.
+Found by the review's Chrome run; `:not([hidden])` and a render check at 840 px.
 
 **137. A screen listed as an overlay: Back turns it off and navigates
 nowhere, and a watchdog that heals the symptom hides the cause.**
@@ -2105,6 +2138,153 @@ colour, the look passed -- and the picture showed a hollow star, because
 the symbol said `fill="none"` itself. Rule: an icon a control fills leaves
 its fill open on the symbol (`svg.g` is `fill:none` by default), and a
 check reads the symbol's own attribute, or the picture.
+
+**149. A test named for a place that never checks the place passes wherever
+the thing is.** Take 61 put the ready-made decks "on the Decks screen" and
+smoke said so: "Decks shows them under their own heading" -- by testing that
+`id="dkStock"` existed anywhere in the page. From take 66 at the latest the
+markup had it at the bottom of the deck editor, one level down, and the line
+stayed green for forty takes. Rule: an assertion about where something is
+reads the enclosing screen (`closest('section.screen')`, or the section's
+slice of the markup), with a control that moves it.
+
+**150. A fallback nobody measured is a request that cannot succeed.** Since
+take 86 `refArt()` answered a failed picture by dropping `_200w` and asking
+for `<id>.jpg`. Measured at take 109: 403 for all 221 ids the host refuses and
+for 20 of 20 it serves -- the second request never once returned a picture,
+and every failure paid for it. Rule: a fallback URL is measured like the
+primary (take 100's pattern: the runner sees it serve before it ships).
+
+**151. The publisher's own picture is not the clean one.** The SAMPLE stamp
+was assumed to be the marketplace's; looked at picture by picture at take 109,
+Bandai's own card images carry it on 20 of 20, TCGplayer's on 18 of 20 (the
+ready-made decks' Leaders and the newest sets' top cards). The stamp's place is
+fixed: one band across the card from about 45 % to 60 % of its height. Rule: a
+"better source" is measured picture by picture, not reasoned about; where art
+is shown as a banner, crop above 42 % of the card and the stamp cannot show.
+
+**152. The session VM's browsers refuse the proxy's certificate even when curl
+and Node accept it.** Playwright's and puppeteer's Chromium answered
+`ERR_CERT_AUTHORITY_INVALID` for every picture while `curl` and Node's `fetch`
+(`NODE_USE_ENV_PROXY=1`, `NODE_EXTRA_CA_CERTS`) fetched them: the browsers'
+certificate store is empty. Rule: the harness fetches the picture in Node, which
+checks the certificate, and hands the bytes to the page; never switch the
+browser's check off.
+
+**153. A fallback keyed on the container never runs when something else always
+fills it.** Sealed wrote `out.join('') || 'Nothing matches'`, and the stock panels were
+always in `out` (both there at take 80, the first take the repository holds): a
+search that matched no product showed the panels and nothing else, for thirty
+takes at least. Found by take 110's empty
+state check, which painted the empty search instead of reading the source. Rule:
+an empty state is decided by the rows it stands for (`!rows.length`), never by
+the container's markup.
+
+**154. A heading typed by hand drifts from the thing it names.** Release
+take-109's body opened "# OP TCG Hub — take 108" under the title "take 109":
+the title comes from BUILD, the body is `ci/RELEASE.md` as committed, and the
+build checks only the "New at take N" paragraph. V1-STATE's heading had done
+the same at take 102. Rule: every hand-typed take number the build publishes
+has a tripwire in the gate (take 110: `check_docs_current` reads it, with a
+selftest probe).
+
+**155. A selection keyed by printing reaches every line of that printing.** Bulk
+delete held printing ids and removed every line of them -- in every collection
+and every condition, including lines the screen did not show -- while Move and
+Condition beside it kept to the collection on screen; its confirm valued one of
+each printing whatever the quantities. Rule: a bulk action acts on the lines on
+screen (`PF.scope`), and says their value with their quantities (AGENTS rule 5).
+*Take 110's review, before the merge:* the collection on screen was half of
+it. A filter, the favourites star and the search hide lines too, and the
+selection is by printing: with Near Mint filtered in, Delete still took the
+graded copy of the printing whose tile was tapped, and Move and Condition
+changed it; the bar beside them valued a printing at the first line found in
+any collection. Rule, whole: an action takes `shownLines()` -- what
+`paintCollection` draws -- and the bar and the confirm count the same lines.
+
+**156. A control grown for thumbs must be measured at the narrowest width on
+every screen that holds it.** Take 108's 44 px steppers made the Play counter's
+three columns need 332 px; a 360 px phone's panel has 296. The page scrolled
+sideways there for two takes -- the no-sideways checks listed the screens that
+changed, and the Play counter was not one -- and take 110's `overflow:hidden`
+(for the art) turned it into a + cut in half. Rule: a size change in a shared
+control adds every screen holding it to the narrow-width checks, and a panel
+that clips is measured for what it would hide.
+
+**157. A figure's label and its value read from two places part when one
+falls back.** `money()` converted at the active currency's rate -- US
+dollars when the saved code has no rate in this build -- and took its
+symbol from `CUR.sym()`, which read the saved code: a euro chosen once and a
+build whose rates failed drew "€10.00" for ten dollars, with no ≈. From take
+85 on; take 110 added the price filter's "min €" on the same symbol. Found by
+take 110's review. Rule: a label is read from the same resolved value as the
+figure it labels (`sym()` reads `active()`), and a check runs the fallback.
+
+**158. Words over art are measured, not assumed.** Take 110's first push
+measured the SAMPLE stamp under every art layer and not the words over them:
+the Play counter's labels read 2.0:1 over a yellow Leader (3.5 red, 4.4
+black), a card's line beside it on the open Fold 1.0:1, a Sealed strip's
+date 2.3:1 over bright art. The review measured them from pixels -- the
+words made transparent, the page shot, the ground under them read back.
+Rule: every text over an art layer is measured that way at the worst colour
+(yellow), offline and with art, and render keeps the check (take 110:
+`groundContrast`).
+
+**159. A motion that moves a target moves it out from under the finger.**
+A sheet that rises for 320 ms is not yet where it will be: the second tap
+of a double tap on its button landed on the scrim where the sheet was about
+to be, and closed what the first had opened. With the motion reduced it
+stayed open -- the bug is the animation's. Rule: while a sheet rises, a tap
+on its scrim is ignored (`risingScrim`), and render double-taps.
+
+**160. A list turned into a grid puts every child in a cell.** The open
+Fold's two columns were set on containers by id: Market movers' heading
+took half its line beside the first mover, Decks' empty state the left
+column alone, a lone Events panel half the screen, and Local's one panel of
+sixty shops stood beside the Target panel over 8,000 px of empty column.
+Rule: a container made a grid names what spans (anything that is not a row
+of the list), and a container of sections is not made a grid.
+
+**161. A flex row's baseline comes from somewhere.** `.row{align-items:
+baseline}` lines a textless picture's foot up with the first line of the
+words beside it: every Sealed and Releases row sat 33 to 55 px off centre,
+and nothing measured it until take 111's look. Centring those rows
+(`.row:has(> .pic)`) then moved the row that held one: a flex container none
+of whose items align by baseline takes its baseline from its first item --
+here the picture's foot -- and the Sealed row's bell, aligned to that
+baseline, dropped (it was 13 to 24 px off on take 110 already). Rule: a row
+that holds a picture or another row centres explicitly, and render measures
+centres, not boxes.
+
+**162. "Sealed" in the catalogue means "no card number".** TCGCSV files 253
+DON!! cards with the sealed products because they have no number; each is a
+single card with a finish, a grade and a condition. Take 95's card page keyed
+on `p.sealed` and gave every DON!! card a product's page (no condition, the
+stock alert, Where to buy), and take 111's first cut went further ("Sealed",
+"Sealed product", no Graded panel). The empty number is shared by all 674:
+`candidates('')` listed them as one card's printings, `WANT.has('')`
+answered for every one once one was wanted, and Set completion counted ''
+as a held number. The look's own seed asked for `!p.sealed && !p.num`,
+found nothing, and its step still said ok. Rule: a product is
+`p.sealed && !SEALED.isDon(p)`; nothing keys on the empty number; a fixture
+that can come back empty is asserted.
+
+**163. A line is found by everything that makes it a different line.** The
+card page's Save, stepper, condition tap and cost basis took the printing's
+first line in any collection: on the Trade pile's page, Save set the main
+collection's count (3 became 2 in the check). `OWN.add` merged by printing,
+condition and collection, and a slab's condition is "GRADED": a second slab
+of one printing was counted into the first and wrote its grader, grade and
+cert over the first one's. Both from before take 88; found by take 111's
+reading of the card page. Rule: the page's line is the one in the
+collection it names (`dLine`), and a slab never merges (AGENTS rule 5).
+
+**164. A width that is borderline in one engine passes in another.** The
+look (Playwright's Chromium) showed "Roronoa Zoro ..." with its "Alternate
+Art" badge cut at 411 px; the runner's Chrome fits the same row with 6 px
+to spare, so a check at 411 passed with the fault in place and its control
+could not fail. Rule: a control is read where the fault cannot help but
+happen (360 px), and the rule is held at every width it names.
 
 ## §2 — Inherited from APEX ORV
 

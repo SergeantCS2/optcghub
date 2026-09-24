@@ -1,80 +1,69 @@
 # AGENDA
 
-*Current as of take 108.* Ranked by blocking-ness, not by interest.
+*Current as of take 111.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
 
 ---
 
-## Priorities — as of the take-88 audit
+## Priorities — as of take 111
 
 The live order, top first. Everything below this block is the record of how
-each item got where it is; this block is what to do next.
+each item got where it is; this block is what to do next. (Rewritten at take
+111: it had stood since the take-88 audit, with take 105 still "in flight".)
 
 **The owner's, gating everything else**
 1. **LIVE on Google Play since 24 Sept 2026** —
    `play.google.com/store/apps/details?id=com.optcghub.app`, take 101's
-   bundle; the owner's own phone runs the Play build now. From here every
-   take is one upload of `optcghub-take-N.aab` to the production track,
-   once (landmine 33); the sideload APK no longer installs over the phone
-   (landmine 34) — a sideload proof means export → uninstall → sideload →
-   import, so the production track is the proof route. **Next upload:
-   take 105** (the Back fix and the reminders' permission on the shrunk
-   build). Send the two real AdMob rewarded unit IDs (D11) and the next
-   take carries them — test units earn nothing, and the app is live.
-2. **Answers still open:** the six take-98 steps and the two Diagnostics
-   lines (`viewport` with the Fold open, `pictures`) from whichever build
-   you run; the look's "tiny bit of work" (which picture, what); A41's
-   parts and the source.
+   bundle first. Every merged take's AAB is one upload to the production
+   track, once (landmine 33); the newest Release is the one to upload
+   (take-110, 14:16 UTC on 24 Sept). The sideload APK does not install
+   over the Play build (landmine 34): a sideload proof means export →
+   uninstall → sideload → import. Send the two real AdMob rewarded unit
+   IDs (D11) and the next take carries them -- test units earn nothing,
+   and the app is live.
+2. **Answers still open:** the Diagnostics `viewport` line with the Fold
+   open (the inner screen's two panes are laid out for an INFERRED 840 px
+   until it comes, take 110) and the `pictures` line; A41's parts and the
+   source; the take-100 look's "tiny bit of work" (which picture, what).
 3. **D22** background stock checks; **D21** local stock for unserved zips;
    **D20** a crowd-report inbox. Each caps a Hunt feature until answered.
-4. Shop URLs for stores he knows (A32's storefront list, one entry today).
-5. D7 the icon; D16 the faces. Domain access: a *new* session is what
-   receives it (this one is refused every host but GitHub and the package
-   registries, MEASURED again after the restart at take 102).
+4. Shop URLs for stores the owner knows (A32's storefront list, one entry
+   today).
+5. D7 the icon; D16 the faces.
 
-**UI design and refinement belong to a separate UI/UX session (the
-owner, 24 Sept, take 104).** This session changes the UI only when
-something is broken or off course; refinement is that session's.
-Its series is A42 (take 106 onward: foundation, one header, controls
-and icons, art, voice, polish), after the other session's take 105 in
-the take order.
+**UI design and refinement belong to the UI/UX session (the owner, 24
+Sept, take 104).** Its series is A42: foundation, one header, controls and
+icons, the art layer, the voice, polish and the Fold's inner screen
+shipped at takes 106-110, and take 111 is its last look -- the fourth of
+the "about four more" takes named overnight. Refinement after it is the
+owner's call, take by take.
 
 **Mine, in order**
-1. **Take 105 — the Fold's first run of the shrunk build** (in flight;
-   104 merged 02:13 and released 02:19): Back from a card on a fresh
-   launch goes home, never out (landmine 140: the boot never pushed
-   Home); the notifications permission on the shrunk build (landmine
-   141: R8 dropped the plugin's permission annotation — the keep set,
-   a mapping readback, an `unknown` path in the app); the cover viewport
-   measured. **A14 is PROVEN** on the Fold (the OCR read on the R8 +
-   Latin-only build).
-2. **A41** — waits on the owner's list of the parts and the source;
-   then one take per source, measured on the runner first.
-2. **A39 item 3 (take 100, measured and closed by the owner's check),
-   A40 (take 99), A39 (take 98), A38 (takes 95–97)** — done; the look
-   runs on every take from here.
-3. **The look's "tiny bit of work"** — the owner's note on the take-100
-   screenshots, not yet named; asked.
-4. **A32**: retailer sources one session each with the real page in hand
+1. **Take 111 -- the last look** (in flight): every screen at both sizes,
+   and what it turns up.
+2. **A41** -- waits on the owner's list of the parts and the source; then
+   one take per source, measured on the runner first.
+3. **A32**: retailer sources one session each with the real page in hand
    (GTS built at take 94; Southern Hobby next, its host is open; GameStop,
    Walmart, Meijer, eBay need a residential IP → the sideload build); the
    restock pattern sentence once a fortnight of hourly history exists on
    Pages; the distributor state timeline from the history rows.
-3. **A23** the sim's tail — modal effects, ordering, protection, the
-   opponent's hidden choices — one mechanism per take, when wanted.
-4. **A31** Collectr import, the day a real exported file exists.
-5. The standing offer: the release-notes trim. (The seed-on-releases
-   `build.yml` offer is moot since take 89: takes ship as PRs.)
+4. **A23** the sim's tail -- modal effects, ordering, protection, the
+   opponent's hidden choices -- one mechanism per take, when wanted.
+5. **A31** Collectr import, the day a real exported file exists.
+6. The standing offer: the release-notes trim.
 
-**Closed since the last audit (takes 57–94):** A26 colour/contrast/desktop,
-A29 stock decks, A30 the tester report in full, A33 all six (item 6 at
-take 93), A34 currency and splash, A35 all thirteen, A36 the set chips
-(take 90), A37 More unreachable (take 91), the first paste's three items
-(take 92); A32
-steps 1–3 and Local, Events, storefronts, stock alerts, the calendar tap,
-exact distances, the first distributor (take 94).
+**Closed since the take-88 audit:** A36 the set chips (take 90), A37 More
+unreachable (take 91), A38 (takes 95-97), A39 (takes 98 and 100), A40 the
+look (take 99), A14 PROVEN on the Fold (take 105), A42's seven layers
+(takes 106-110; the item closes with take 111's merge). Before it (takes
+57-94): A26 colour/contrast/desktop, A29 stock decks, A30 the tester
+report in full, A33 all six, A34 currency and splash, A35 all thirteen,
+the first paste's three items (take 92); A32 steps 1-3 and Local, Events,
+storefronts, stock alerts, the calendar tap, exact distances, the first
+distributor (take 94).
 
 **Stale and marked so:** A19 other games and A11 Japanese printings stay
 ruled out; A20's backlog is where ideas wait, not a queue.
@@ -302,6 +291,10 @@ Take 1 had this as a detail. Take 2 measured it and it is the architecture.
   publisher SAMPLE watermark.
 - **Open:** what a not-yet-scanned card shows in search. Currently: hot-linked
   CDN image, memory-cache only, declared in PROVISION, DISPLAY-ONLY in the gate.
+- *Take 109:* the same hot-linked picture is now used boldly (A42, the owner's
+  ruling): the Decks hero, a card's backdrop, the card at 600x838. The two
+  **Ruled out** lines above stand -- nothing is bundled, nothing is cached to
+  disk -- and a scanned card still shows its own photograph first.
 
 ## A7 — Sealed product · MANUAL ENTRY SHIPPED take 15 · barcode RULED OUT
 
@@ -1133,9 +1126,48 @@ mode by mode leaves the app less uniform in between):
 4. **The art layer:** the record's art policy corrected first (landmines
    26 and 28 corrected, not renumbered; 30 and 31 stand), then the
    banners, backdrops and Leader-art covers, measured on the runner.
+   *Take 109, the first half:* the record corrected; the picture
+   measured (TCGplayer's largest is 600x838, up to 716x1000; Bandai's
+   is 600x838; the SAMPLE stamp on 38 of 40 card pictures at the two
+   hosts, always one band from about 45 % to 60 % of the card, so a
+   banner shows only the card above 42 %); Decks under its Leader (C,
+   the title in A's slot), the ready-made decks back on Decks with their
+   Leaders' pictures, a deck's Leader large, a card's own page over its
+   own colours. The owner, asked about the stamp: "We should be pulling
+   the highest quality images for the main cards. This is the only way
+   using cards as a banner will work." *Take 110, the second half:*
+   Sealed's banner (A), every Sealed heading a strip, each Leader behind
+   its side of the Play counter, the owner's own hero pictures; at the
+   owner's word the card no longer rises from behind Decks' title, the
+   blur shows the band above the stamp whole (the whole card in a blur
+   still shows the stamp, MEASURED), whole cards stay whole ("It should
+   show the whole card"), and three texts are gone.
 5. **The voice:** one word per thing, one date and money format,
-   Collection for Portfolio, the developer's voice out of the UI.
+   Collection for Portfolio, the developer's voice out of the UI. *Take
+   110.*
 6. **Polish:** motion, loading, empty and error states, the checklist.
+   *Take 110*, with the thumbnail tokens and a readable fallback label.
+7. **The Fold's inner screen:** two panes where two fit, between a phone
+   and the desktop column. *Take 110*, brought forward at the owner's word
+   ("Ensure 110 has as many planned changes in it as possible"); its width
+   is INFERRED until Diagnostics' viewport line comes from the open phone.
+
+Take 110 carried layers 4 (second half) to 7 in one take, overnight, at
+the owner's word: "You will check your work along the way then we will
+push to github as one massive take." What is left is the owner's review.
+*Take 111:* the owner merged take 110 at 14:07 UTC on 24 Sept without a
+note on the look ("Merged, continue - monitor and continue with 111"); take
+111 is the last look -- every screen at both sizes -- and what it turns up.
+The item closes when take 111 merges. What it turned up (the HANDOFF has
+each): a dot opening a line for a printing with no number; the filter's
+words; a printing's badge cut by the ellipsis on the phone (landmine 164);
+the bulk bar off a 411 px phone; a sealed product's page and the 253 DON!!
+cards filed as sealed (landmine 162); Set completion counting products;
+the card page saving to another collection's line and a second slab taking
+over the first's grade (landmine 163, AGENTS rule 5); the binder opening on
+empty pockets; rows askew on their picture (landmine 161); and a dozen
+words. Left for the UI/UX session: a binder page that fits the open Fold
+(pockets near 110 px wide, or a scroll, as now).
 
 The audit behind it, with line numbers and a box per finding, is
 `docs/UI-AUDIT.md`; each take ticks its boxes.
@@ -1145,8 +1177,15 @@ two proposals were a landing page and a generic palette; the app keeps
 its own four faces and three palettes); converting one mode at a time;
 re-adding the skull glyph (removed at the owner's ask, take 63);
 bundling art in the APK (the owner's own hero pictures through
-`assets/user` remain the owner's choice and the owner's exposure); the Fold's inner
-layout for now.
+`assets/user` remain the owner's choice and the owner's exposure); Bandai's card site as the cleaner picture (take 109: its
+pictures carry the stamp, 20 of 20, and it keys by card number); a
+per-card stamp detector (take 109: the stamp's place is fixed, so a crop
+above it is clean for every card and needs no threshold); covering or
+retouching the stamp (drawing on the publisher's card); the whole card
+in a blurred backdrop (take 110: the stamp comes through a blur as a light
+band, up to 80 levels of 255, MEASURED on ST02-001's clean and stamped
+pictures); strips on Releases and art in empty states (take 110: the
+reasons are in its HANDOFF).
 
 ## A41 — Missing images elsewhere in the app, sourced from somewhere other than TCGplayer · OPENED take 100
 
@@ -1163,10 +1202,18 @@ by the app on purpose, take 62), Local and Events (no images by design).
 The second host served one id of 242 (599838, a card). Any new source is a PROVISION
 row and a display-only reference (landmine 26: art is never hosted);
 the runner measures availability before a URL ships (the take-100
-pattern — one constant per host).
+pattern — one constant per host). *Take 109:* the owner's ruling for the
+UI series ("if we can use official art, card art or anything we can
+leverage i'm more than okay with it") answers whether art may be shown;
+which parts, and from where, is still this item. Measured at take 109:
+Bandai's card site serves every card looked at (600x838) but stamped
+SAMPLE on 20 of 20 -- not a cleaner source -- and names a card by its
+number, not its printing (AGENTS rule 3). The 221 ids TCGplayer refuses
+are refused at every size it serves (`_in_1000x1000` included).
 
 **Ruled out:** hosting or caching any image; a source without terms
-the app can cite; shipping a URL the runner has not seen serve.
+the app can cite; shipping a URL the runner has not seen serve; a
+source keyed by card number standing in for a printing.
 
 ## A40 — The look: the session clicks through and screenshots every change before a take ships · OPENED take 99
 
@@ -1609,6 +1656,16 @@ the portfolio or anything."*
   copy and would ship no defaults. **The only path to the real images** is
   written permission from Bandai, which is a real thing to ask for and not
   something to assume.
+- *Take 109 — superseded for the app's own screens, and one claim above
+  corrected.* The owner's ruling for the UI series: "if we can use official
+  art, card art or anything we can leverage i'm more than okay with it"
+  (A42). Each ready-made deck now shows its Leader's picture, hot-linked like
+  every other card picture, over the drawn cover as its fallback. The claim
+  that the approved listing "states the app carries no character art and no
+  publisher marks" was wrong: `docs/PLAY-LISTING.md` has no such sentence,
+  and its content-rating note says trading-card artwork is displayed from the
+  publisher's own previews. What stands: no mark or art in the icon, the
+  splash or the listing (landmines 30, 31), and no box shot on a cover.
 - **The slot stays open.** If real quantities arrive — the owner's own
   decks, a licensed list, a paid export — they replace the generated lists
   in the same place and the names lose "built from".
@@ -1626,9 +1683,17 @@ the portfolio or anything."*
   against the app* becomes a one-tap thing for a tester with no collection
   and no deck of their own, which is most of them.
 - **Ruled out ahead of time: shipping card images or scans with them.**
-  Landmine 26 and A16; a stock deck is numbers and names.
+  Landmine 26 and A16; a stock deck is numbers and names. *(Take 109: still
+  nothing shipped with them -- the Leader's picture is the same hot-linked
+  one every card row shows.)*
 - **Ruled out: seeding them into the collection as "owned".** The owner said
   no, and it would be a lie about what a person owns (PROTOCOL §9).
+- *Take 110:* the paragraph under the Ready-made decks heading ("17 legal
+  decks built from the starter-deck sets ... never count toward its value")
+  went at the owner's word, with two other texts: "remove this text when
+  you get the chance - all of it". The heading and every row's badge still
+  say ready-made, and a stock deck is still never in the collection
+  (smoke's take-61 checks, unchanged).
 
 ## A28 — The on-device self-test · BUILT take 45
 
@@ -2150,7 +2215,10 @@ he will send more screenshots.
   franchise wordmark, the Toei/Bandai/Shueisha marks — not in the icon, not in
   the splash, not in the store listing.
 - **Ruled out: bundling any card art or character image** for theming. Landmine
-  26, unchanged.
+  26, unchanged. *(Take 109: showing hot-linked card art inside the app is the
+  owner's call and he made it -- A42, "Hot-Linked Card Art, Bold". The icon,
+  the splash and the store listing stay clear of characters and marks, as
+  this item says.)*
 - **Ruled out: a "Straw Hat" motif in the icon.** It is the one nautical symbol
   that IS the franchise.
 - **Take 17 — DECLINED, and written down so it is not quietly reversed:** the owner
