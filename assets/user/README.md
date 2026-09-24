@@ -8,7 +8,7 @@ app draws it. Nothing here is required.
 |---|---|---|---|
 | `guide-bg.jpg` | behind the first-run guide | 1080×1920, portrait | dark-ish, or the text won't read; the app lays the page colour over it, 55 % at the top to 92 % at the bottom |
 | `home-bg.jpg` | faint, behind the Home hero | 1080×800 | under the page colour at 88 %, fading to solid |
-| `splash-bg.jpg` | the launch screen of the Android build | 1080×1920 | `ci/apk.sh` renders the splash over it instead of the plain background |
+| `splash-bg.jpg` | the launch screen of the Android build | 1080×1920 | `ci/icon.py` (run by `ci/apk.sh`) renders the splash over it instead of the plain background |
 | `empty-collection.png` | nothing, since take 63 | — | the skull it replaced is gone and the empty Collection draws its own scan-card glyph; the file is copied but not read |
 | `guide-1.jpg` … `guide-5.jpg` | one per capability card in the guide | 1080×600 | Scan · Value · Decks · Trade · Offline, in that order |
 | `hero-play.jpg` | behind Decks' title, in place of the featured Leader's blurred art (take 110) | 1080×640, landscape | shown sharp and uncut, filling the band behind the mode slider; the slider and the status bar read over its top, so keep the top third quiet |

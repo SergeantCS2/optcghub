@@ -70,7 +70,8 @@ What the risk judges took out, and why:
 - **The rose's inner ring.** It echoes the printed emblem's ring pair.
 
 **Only our own card back lives here.** The owner also saw a private redraw of the printed emblem for
-comparison. It is not in this repository and is not for shipping (take 63; landmines 26, 30).
+comparison. It was not for shipping (take 63; landmines 26, 30), until the owner reversed that for his
+v4 pick: see `SHIP.md`.
 
 ## v4: the Great Wave (`v4/`)
 
@@ -86,20 +87,14 @@ style score of 6.5/10. `v4/wave.py` carries the judges' fixes, listed in its doc
 wave. The towering crest was then removed at the owner's word: he liked the bottom waves, not the
 one coming up the side. A distant sea band with one far crest fills that side now. Measured: the mark reaches 31.3 dp and the monochrome 32.2 dp of the 33 dp safe zone.
 
-**The owner's pick for the emblem is the printed back's emblem.** That version stays out of this
-public repository until the owner says to ship it, which reverses take 63. `own-purple` is the same
-design with our rose.
+**The owner's pick for the emblem is the printed back's emblem.** He put it on Play and asked for it in
+the app ("Out with the old, in with the new"), which reverses take 63. It ships as `assets/icon*.svg`.
+`own-purple` is the same design with our rose, and it is the ready swap.
 
-## If this is chosen, the take that ships it
+## Shipping it
 
-- **Render real adaptive layers.** `ci/apk.sh` (the launcher-icon step) should render `-bg` and `-fg`
-  as real layers, plus `-mono` as `<monochrome>`. Today it shrinks the whole square onto `#05080A`,
-  and there is no monochrome layer.
-- **Give the reminders an icon they can find.** They pass `smallIcon: 'ic_launcher'` (`src/app.html`).
-  `@capacitor/local-notifications` 8.3.1 looks that name up only among drawables, finds nothing (it is
-  a mipmap), and falls back to `android.R.drawable.ic_dialog_info`. This is read from the plugin
-  source, not yet seen on the Fold. The fix:
-  - ship `drawable/ic_stat_don.png` from `-stat`
-  - point `smallIcon` at it
-  - keep it with `tools:keep`, since `shrinkResources` is on (`ci/shrink.py`; landmine 141's shape)
-- **Upload the master as it is.** It becomes the Play icon; the feature graphic follows it.
+The owner chose it. `SHIP.md` is the hand-off to the take that ships it, which is 113. It covers:
+- what the branch changes: the five layers in `assets/`, `ci/icon.py`, and the reminders' drawable
+- what was verified here, and what only the runner and the Fold can show
+- the owner's reversal of landmines 30 and 31 and A16, with its risk and the swap back to our rose
+- draft ledger text

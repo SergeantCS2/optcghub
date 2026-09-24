@@ -109,7 +109,7 @@ def check_docs_complete():
             fail("docs", f"docs/{fn} is {os.path.getsize(path)} bytes — a stub is not a doc")
     for fn in ("AGENTS.md", "README.md", "BUILD", "ci/RELEASE.md", "ci/build.yml",
                "ci/bootstrap.yml", "ci/hunt.yml", "ci/check.yml", "ci/apk.sh",
-               "ci/bundle.sh", "ci/check.sh", "ci/deps.sh"):
+               "ci/bundle.sh", "ci/check.sh", "ci/deps.sh", "ci/icon.py"):
         if not os.path.exists(os.path.join(ROOT, fn)):
             fail("docs", f"{fn} is missing from the tree")
 
@@ -549,6 +549,10 @@ def check_selftests():
                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=ROOT)
     if r.returncode:
         fail("selftest", "shrink.py controls did not all pass (take 103):\n" + r.stdout)
+    r = subprocess.run([sys.executable, os.path.join(ROOT, "ci", "icon.py"), "--selftest"],
+                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=ROOT)
+    if r.returncode:
+        fail("selftest", "icon.py controls did not all pass (D7; the icon step's first real run is the Release build):\n" + r.stdout)
     r = subprocess.run(["bash", os.path.join(ROOT, "ci", "check.sh"), "--selftest"],
                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=ROOT)
     if r.returncode:

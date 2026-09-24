@@ -131,76 +131,16 @@ PYCAM
 echo "::endgroup::"
 
 echo "::group::launcher icon"
-# The icon is the committed SVG rendered at build time. PNGs are never
-# committed: one source of truth, and a placeholder that is easy to replace by
-# swapping one file (A16). Capacitor's default icon shipped in the take-14 test
-# APK until this existed -- landmine 78.
+# The icon is the committed SVGs rendered at build time; PNGs are never
+# committed (A16). ci/icon.py writes the legacy, round and adaptive launcher
+# icons (background, foreground and a monochrome layer for themed icons), the
+# reminders' status-bar glyph with its keep rule, the splash and the Play icon,
+# then checks every one; its controls run under the gate. Capacitor's default
+# icon shipped in the take-14 test APK until this step existed -- landmine 78.
+# The drawn 1024x500 feature graphic is retired: the listing's banner is built
+# in design/play-listing and uploaded by hand (D7).
 pip install --quiet --break-system-packages cairosvg pillow 2>/dev/null || true
-python3 - <<'PYICON'
-import cairosvg, os
-from PIL import Image, ImageDraw
-svg = open('assets/icon.svg', 'rb').read()
-cairosvg.svg2png(bytestring=svg, write_to='/tmp/icon-1024.png', output_width=1024, output_height=1024)
-png = Image.open('/tmp/icon-1024.png').convert('RGBA')
-for d, sz in {'mdpi': 48, 'hdpi': 72, 'xhdpi': 96, 'xxhdpi': 144, 'xxxhdpi': 192}.items():
-    dd = f'android/app/src/main/res/mipmap-{d}'; os.makedirs(dd, exist_ok=True)
-    png.resize((sz, sz), Image.LANCZOS).save(f'{dd}/ic_launcher.png')
-    m = Image.new('L', (sz, sz), 0); ImageDraw.Draw(m).ellipse((0, 0, sz - 1, sz - 1), fill=255)
-    r = png.resize((sz, sz), Image.LANCZOS).copy(); r.putalpha(m); r.save(f'{dd}/ic_launcher_round.png')
-    fs = int(sz * 1.5); fg = Image.new('RGBA', (fs, fs), (0, 0, 0, 0))
-    inner = png.resize((int(fs * .66), int(fs * .66)), Image.LANCZOS)
-    fg.paste(inner, ((fs - inner.width) // 2, (fs - inner.height) // 2), inner)
-    fg.save(f'{dd}/ic_launcher_foreground.png')
-bg = 'android/app/src/main/res/values/ic_launcher_background.xml'
-t = open(bg).read().replace('#FFFFFF', '#05080A'); open(bg, 'w').write(t)
-assert os.path.getsize('android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png') > 2000, "icon did not render"
-print("  launcher icons rendered from assets/icon.svg")
-
-# The splash: the icon at ~30% width, centred on the app's background, for
-# every drawable density Capacitor's template ships. Until take 15 the first
-# second of every launch was Capacitor's own artwork (landmine 78's twin).
-import glob
-# assets/user/splash-bg.jpg, if the owner supplied one (A18), becomes the splash:
-# cover-fit, darkened, icon centred on top. Otherwise the icon on navy.
-user_bg = 'assets/user/splash-bg.jpg'
-bg_img = Image.open(user_bg).convert('RGB') if os.path.exists(user_bg) else None
-for d in glob.glob('android/app/src/main/res/drawable*'):
-    for f in glob.glob(f'{d}/splash.png'):
-        base = Image.open(f); W, H = base.size
-        if bg_img:
-            r = max(W / bg_img.width, H / bg_img.height)
-            fit = bg_img.resize((int(bg_img.width * r) + 1, int(bg_img.height * r) + 1), Image.LANCZOS)
-            canvas = fit.crop(((fit.width - W) // 2, (fit.height - H) // 2,
-                               (fit.width - W) // 2 + W, (fit.height - H) // 2 + H)).convert('RGBA')
-            shade = Image.new('RGBA', (W, H), (11, 22, 34, 140)); canvas = Image.alpha_composite(canvas, shade)
-        else:
-            canvas = Image.new('RGBA', (W, H), (11, 22, 34, 255))
-        side = int(min(W, H) * 0.30)
-        ic = png.resize((side, side), Image.LANCZOS)
-        canvas.paste(ic, ((W - side) // 2, (H - side) // 2), ic)
-        canvas.convert('RGB').save(f)
-print("  splash screens rendered" + (" over assets/user/splash-bg.jpg" if bg_img else " on the app background"))
-
-# Play store graphics (A21 #5), from the same SVG: icon 512 and a 1024x500
-# feature graphic -- icon left, wordmark right, on the night sea.
-os.makedirs('play-assets', exist_ok=True)
-png.resize((512, 512), Image.LANCZOS).save('play-assets/icon-512.png')
-from PIL import ImageDraw, ImageFont
-fg = Image.new('RGBA', (1024, 500), (11, 22, 34, 255))
-d = ImageDraw.Draw(fg)
-ic = png.resize((360, 360), Image.LANCZOS); fg.paste(ic, (70, 70), ic)
-try:
-    f1 = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf', 74)
-    f2 = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 30)
-except Exception:
-    f1 = f2 = ImageFont.load_default()
-d.text((470, 150), "OP TCG Hub", font=f1, fill=(201, 162, 74))
-d.text((472, 250), "Scan without a cap.", font=f2, fill=(234, 223, 200))
-d.text((472, 292), "Value, build, trade. Offline.", font=f2, fill=(160, 142, 112))
-fg.convert('RGB').save('play-assets/feature-1024x500.png')
-assert os.path.getsize('play-assets/icon-512.png') > 5000 and os.path.getsize('play-assets/feature-1024x500.png') > 5000
-print("  play-assets: icon-512.png, feature-1024x500.png")
-PYICON
+python3 ci/icon.py android/app/src/main/res play-assets
 echo "::endgroup::"
 
 echo "::group::APK size — ABI filter"

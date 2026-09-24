@@ -149,7 +149,8 @@ shows its centring.
 
 ## Not here
 
-- **The owner's icon pick** (the printed back's emblem). It stays out of this public repository until
-  he says to ship it, and the card's art defaults to our own rose (`own-purple`).
+- **The owner's icon pick** (the printed back's emblem) as the default. It now ships as
+  `assets/icon*.svg` (`design/d7-icons/SHIP.md`). `python3 design/business-card/leader.py assets/icon`
+  builds the card he prints with it, and the default stays our own rose (`own-purple`).
 - **Anything rendered.** PNGs and PDFs are generated, and they stay outside the tree.
 - **Google's badge.** It is fetched at build time into the output directory, and never committed.
