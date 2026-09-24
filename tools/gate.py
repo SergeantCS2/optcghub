@@ -48,6 +48,12 @@ def check_docs_current(n):
             note(f"docs/{fn} has no stamp line")
         elif int(m.group(1)) != n:
             fail("docs-current", f"docs/{fn} stamped take {m.group(1)}, BUILD says {n}")
+        # take 102: V1-STATE's H1 carries the take too, and it sat a take behind a
+        # current stamp for a take (the review's finding 10) -- the stamp is written by
+        # tools/stamp.py, the heading by hand, so the heading needs its own tripwire
+        h = re.search(r"^# V1-STATE — what exists, as of take (\d+)$", s, re.M)
+        if fn == "V1-STATE.md" and h and int(h.group(1)) != n:
+            fail("docs-current", f"docs/{fn} heading says take {h.group(1)}, BUILD says {n}")
 
 
 def check_handoff(n):
@@ -429,7 +435,7 @@ def check_scrub():
     ledgers (the repo is public). tools/scrub.py --check --docs; its own
     negative controls run under check_selftests."""
     r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "scrub.py"), "--docs"],
-                       capture_output=True, text=True, cwd=ROOT)
+                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=ROOT)
     if r.returncode:
         fail("scrub", r.stdout.strip())
 
@@ -438,12 +444,12 @@ def check_selftests():
     """Run the guards' own negative controls. A gate that trusts other guards
     without watching them fail is a gate with a hole in it."""
     r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "validate.py"),
-                        "--selftest"], capture_output=True, text=True)
+                        "--selftest"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     if r.returncode:
         fail("selftest", "validate.py negative controls did not all fire:\n"
                          + r.stdout)
     r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "variants.py")],
-                       capture_output=True, text=True)
+                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     if r.returncode:
         fail("selftest", "variants.py cases failed:\n" + r.stdout)
     # Landmine 114/115 lint (take 80): a smoke assertion that pins a number to
@@ -460,31 +466,35 @@ def check_selftests():
     if pinned:
         fail("smoke-lint", "an assertion pins a number to something the nightly moves (landmine 115):\n  " + "\n  ".join(pinned))
     r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "hunt.py"), "--selftest"],
-                       capture_output=True, text=True)
+                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     if r.returncode:
         fail("selftest", "hunt.py parsers did not all pass against the saved responses:\n" + r.stdout)
     r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "stockdecks.py"), "--selftest"],
-                       capture_output=True, text=True)
+                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     if r.returncode:
         fail("selftest", "stockdecks.py guards did not all pass:\n" + r.stdout)
     r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "effects.py"), "--selftest"],
-                       capture_output=True, text=True)
+                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     if r.returncode:
         fail("selftest", "effects.py negative controls did not all fire:\n" + r.stdout)
     r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "scrub.py"), "--selftest"],
-                       capture_output=True, text=True)
+                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     if r.returncode:
         fail("selftest", "scrub.py negative controls did not all fire:\n" + r.stdout)
     r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "hashes.py"), "--selftest"],
-                       capture_output=True, text=True)
+                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     if r.returncode:
         fail("selftest", "hashes.py guard controls did not all fire (landmine 124):\n" + r.stdout)
     r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "shipped.py"), "--selftest"],
-                       capture_output=True, text=True)
+                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     if r.returncode:
         fail("selftest", "shipped.py controls did not all pass (take 101):\n" + r.stdout)
+    r = subprocess.run(["bash", os.path.join(ROOT, "ci", "signer.sh"), "--selftest"],
+                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=ROOT)
+    if r.returncode:
+        fail("selftest", "signer.sh controls did not all pass (take 102):\n" + r.stdout)
     r = subprocess.run(["bash", os.path.join(ROOT, "ci", "check.sh"), "--selftest"],
-                       capture_output=True, text=True, cwd=ROOT)
+                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=ROOT)
     if r.returncode:
         fail("selftest", "check.sh runner-owned-files guard controls did not all fire (landmine 116):\n" + r.stdout)
 
@@ -495,12 +505,20 @@ def selftest():
     import tempfile, shutil
     results = []
 
-    def probe(name, mutate):
+    def probe(name, mutate, cat=None, expect=True):
+        """cat: the failure category the mutation must produce (None: any). expect=False
+        is the clean control: the copy itself must fire nothing."""
         global FAILS, NOTES, ROOT
         tmp = tempfile.mkdtemp()
-        for item in ("docs", "BUILD", "src", "tools", ".gitignore", "www", "ci", ".github"):
+        # the copy carries everything the probed checks read -- the sideload keystore and
+        # the star template included, else check_secrets fails EVERY copy and every probe
+        # "fires" for that reason alone (take 102, landmine 139: eleven probes had, since
+        # take 35, proved nothing; the clean-tree control above catches the next such hole)
+        for item in ("docs", "BUILD", "src", "tools", ".gitignore", "www", "ci", ".github",
+                     "signing/optcghub.keystore", "catalog/star_template.json"):
             src = os.path.join(ROOT, item)
             if os.path.exists(src):
+                os.makedirs(os.path.dirname(os.path.join(tmp, item)), exist_ok=True)
                 (shutil.copytree if os.path.isdir(src) else shutil.copy2)(
                     src, os.path.join(tmp, item))
         mutate(tmp)
@@ -512,31 +530,43 @@ def selftest():
             check_docs_current(n); check_handoff(n); check_agenda()
             check_landmine_citations(); check_secrets(); check_render_receipt()
             check_workflow_copies(); check_offline(provision_hosts())
-            fired = bool(FAILS)
+            fired = any(f.startswith(cat + ":") for f in FAILS) if cat else bool(FAILS)
+            stray = [f for f in FAILS if cat and not f.startswith(cat + ":")]
         finally:
             globals()["ROOT"] = old
             FAILS, NOTES = saved
         shutil.rmtree(tmp, ignore_errors=True)
-        results.append((name, fired))
+        results.append((name, fired == expect and not stray, fired))
+        if stray:
+            print(f"  FAIL  {name}: the copy fails outside '{cat}' -- the probe cannot be trusted:\n        " + "\n        ".join(stray))
 
+    # take 102 (landmine 139): the control of the controls. An unmutated copy must fire
+    # NOTHING, else every "guard fires" below is the copy's own defect, not the guard.
+    probe("control: an unmutated tree fires nothing", lambda t: None, expect=False)
+    # the mutation is a pattern, not the literal "take 2.*" it was from take 2 to 101: that
+    # literal matched nothing after take 2, and the probe "fired" on the copy's own
+    # failure instead (take 102, landmine 139)
     probe("stale doc stamp", lambda t: open(os.path.join(t, "docs/PROTOCOL.md"), "w")
-          .write(read("docs", "PROTOCOL.md").replace("take 2.*", "take 1.*")))
+          .write(re.sub(r"\*Current as of take \d+\.\*", "*Current as of take 1.*", read("docs", "PROTOCOL.md"), count=1)), "docs-current")
+    # take 102: the H1 of V1-STATE drifted a take behind its stamp line unnoticed
+    probe("stale V1-STATE heading under a current stamp", lambda t: open(os.path.join(t, "docs/V1-STATE.md"), "w")
+          .write(re.sub(r"^# V1-STATE — what exists, as of take \d+$", "# V1-STATE — what exists, as of take 1", read("docs", "V1-STATE.md"), count=1, flags=re.M)), "docs-current")
     probe("missing HANDOFF entry", lambda t: open(os.path.join(t, "docs/HANDOFF.md"), "w")
-          .write("# HANDOFF — through Take 2\n\nnothing here\n"))
+          .write("# HANDOFF — through Take 2\n\nnothing here\n"), "handoff")
     probe("HANDOFF with no DEFERRED", lambda t: open(os.path.join(t, "docs/HANDOFF.md"), "w")
-          .write("# HANDOFF — through Take 2\n\n## Take 2 — x\n\nall done\n"))
+          .write("# HANDOFF — through Take 2\n\n## Take 2 — x\n\nall done\n"), "handoff")
     probe("agenda item with no ruled-out", lambda t: open(os.path.join(t, "docs/AGENDA.md"), "w")
-          .write("# AGENDA\n\n## A99 — something\n\nno evidence here\n"))
+          .write("# AGENDA\n\n## A99 — something\n\nno evidence here\n"), "agenda")
     # The token is assembled at runtime on purpose: written as a literal, this
     # file would cite a landmine that does not exist and the guard would flag
     # its own test data. A probe is code and gets the same suspicion (PROTOCOL §0).
     probe("bogus landmine citation",
           lambda t: open(os.path.join(t, "tools/config.py"), "a")
-          .write("\n# see land" + "mine 9999\n"))
+          .write("\n# see land" + "mine 9999\n"), "landmines")
     probe("render receipt missing (DOM-mode seal)",
-          lambda t: os.path.exists(os.path.join(t, "www", "render.png")) and os.remove(os.path.join(t, "www", "render.png")))
+          lambda t: os.path.exists(os.path.join(t, "www", "render.png")) and os.remove(os.path.join(t, "www", "render.png")), "render")
     probe("upload key in the tree",
-          lambda t: open(os.path.join(t, "apex-upload.jks"), "w").write("x"))
+          lambda t: open(os.path.join(t, "apex-upload.jks"), "w").write("x"), "secrets")
 
     def bad_host(t):
         # take 100: an undeclared host carried in the bundle's img column, not in the code
@@ -546,23 +576,23 @@ def selftest():
         ci = cat["cols"].index("img")
         cat["rows"][0][ci] = "https://evil.example.com/product/1.jpg"
         json.dump(cat, open(b, "w"))
-    probe("undeclared host in the bundle's img column (take 100)", bad_host)
+    probe("undeclared host in the bundle's img column (take 100)", bad_host, "offline")
 
     def drift(t):
         # the live copy and the ci/ copy of one workflow, one byte apart (take 89)
         os.makedirs(os.path.join(t, ".github", "workflows"), exist_ok=True)
         open(os.path.join(t, ".github", "workflows", "probe.yml"), "w").write("name: probe\n")
         open(os.path.join(t, "ci", "probe.yml"), "w").write("name: probe # drifted\n")
-    probe("workflow copies drift (ci/ vs .github/workflows)", drift)
+    probe("workflow copies drift (ci/ vs .github/workflows)", drift, "workflows")
     probe("seed zip not ignored",
           lambda t: open(os.path.join(t, ".gitignore"), "w")
-          .write(read(".gitignore").replace("optcghub-seed*.zip", "")))
+          .write(read(".gitignore").replace("optcghub-seed*.zip", "")), "secrets")
 
-    w = max(len(n) for n, _ in results)
-    for name, fired in results:
-        print(f"  {'ok  ' if fired else 'FAIL'}  {name:<{w}}  "
-              f"{'guard fires' if fired else 'GUARD DID NOT FIRE'}")
-    return all(f for _, f in results)
+    w = max(len(n) for n, _, _ in results)
+    for name, good, fired in results:
+        print(f"  {'ok  ' if good else 'FAIL'}  {name:<{w}}  "
+              f"{'guard fires' if fired else 'guard silent' if good else 'GUARD DID NOT FIRE'}")
+    return all(g for _, g, _ in results)
 
 
 if __name__ == "__main__":

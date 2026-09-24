@@ -35,13 +35,17 @@ MARKERS = [
     ("credential",   re.compile(r"AIza[0-9A-Za-z_\-]{20,}|ghp_[0-9A-Za-z]{20,}|github_pat_[0-9A-Za-z_]{20,}|sk-[0-9A-Za-z]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY|xox[bp]-[0-9A-Za-z\-]{10,}")),
     ("leftover",     re.compile(r"\b(TODO|FIXME|XXX|HACK)\b")),
 ]
+# Two literal file names, allowed everywhere as the whole token only (take 102): the
+# root file the owner asked for by name, and the skill that made it. The vendor's
+# name in prose, beside them or alone, still fires (the controls under --selftest).
+ALLOW_TOKENS = [re.compile(r"\bCLAUDE\.md\b(?![\w-])"), re.compile(r"\bclaude-md-improver\b(?![\w-])")]
 # Names an ALLOWED public link may carry: the sibling repo is the owner's own.
 ALLOW = {"README.md": ["APEX ORV", "apex-orv"],
          "tools/seal.sh": ["/mnt/user-data"],     # where this container hands files over; a tool, not a ship
          "tools/scrub.py": ["*"]}                  # the scrubber names what it scrubs for
 
 SHIPPED = ["www/index.html", "www/app.js", "www/privacy.html", "www/bundle/manifest.json"]
-PUBLIC_TEXT = ["README.md", "ci/RELEASE.md", "src/privacy.html", "docs/PLAY-LISTING.md", "AGENTS.md"]
+PUBLIC_TEXT = ["README.md", "ci/RELEASE.md", "src/privacy.html", "docs/PLAY-LISTING.md", "AGENTS.md", "CLAUDE.md"]
 # The source is public too. Comments are stripped from the ARTIFACT; the tree
 # still has them, so the tree is scanned as well.
 def files_code():
@@ -65,8 +69,11 @@ def scan(paths, root=ROOT):
         if not os.path.exists(p):
             continue
         for ln, line in enumerate(open(p, encoding="utf8", errors="replace"), 1):
+            allowed = [(a.start(), a.end()) for rx in ALLOW_TOKENS for a in rx.finditer(line)]
             for what, rx in MARKERS:
                 for m in rx.finditer(line):
+                    if any(a <= m.start() and m.end() <= b for a, b in allowed):
+                        continue
                     hits.append((rel, ln, what, m.group(0), line.strip()[:110]))
     return hits
 
@@ -165,6 +172,15 @@ def selftest():
             fired = any(h[2] == what for h in hits)
             print(f"  {'ok  ' if fired else 'FAIL'}  planted {what}: {'guard fires' if fired else 'GUARD DID NOT FIRE'}")
             ok &= fired
+        # take 102: the root file the owner named, and the skill that made it, are file
+        # names, not the vendor's name in prose -- allowed as the literal tokens only
+        for body, want, label in (("// see CL" + "AUDE.md and cl" + "aude-md-improver\n", False, "the two literal file names pass"),
+                                  ("// CL" + "AUDE.md, written by Cl" + "aude\n", True, "control: the bare vendor word beside the file name still fires"),
+                                  ("// CL" + "AUDE.mdx\n", True, "control: a longer token than the file name is not the file name")):
+            open(os.path.join(tmp, "www", "app.js"), "w").write("const x = 1;\n" + body)
+            fired = any(h[2] == "AI vendor" for h in scan(SHIPPED, root=tmp))
+            print(f"  {'ok  ' if fired == want else 'FAIL'}  {label}")
+            ok &= fired == want
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
     return ok

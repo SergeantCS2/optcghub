@@ -1,6 +1,6 @@
 # RUNBOOK — Google Play, from the repo to a running 14-day clock
 
-*Current as of take 101.* The whole procedure, in the order it must happen,
+*Current as of take 102.* The whole procedure, in the order it must happen,
 with who does each step. Everything on the repo side is already built; what
 follows is the owner's, and none of it is hard. The gate at the end is calendar
 time: **12 testers opted in for 14 continuous days** (landmine 35; re-checked
@@ -73,28 +73,40 @@ right failure.)
 tree, a seed, or a session (landmine 23). Losing it is recoverable through Play
 App Signing's upload-key reset, but it is a support ticket and days.
 
-**The reset, when Play expects a different key (take 101).** Two cases
-end here: the key folder is lost, or the *first* bundle ever uploaded was a
-`DEVKEY-DO-NOT-UPLOAD` one, so Play registered the sideload key as the
-upload key and refuses every upload-key-signed bundle since with "wrong
-key". Tell them apart in one look: **Play Console → Test and release →
-Setup → App signing → Upload key certificate.** The sideload key's SHA-1 is
-`8A:17:C1:B9:8C:44:4F:AE:36:12:54:0E:1A:E5:95:92:45:5C:65:68` (the
-committed `signing/optcghub.keystore`, `CN=OP TCG Hub, OU=sideload`). If
-that is the fingerprint shown, reset; any other fingerprint is the upload
-key and uploads work. The reset, in order:
+**The reset (take 101, corrected take 102).** Two different situations end
+at Play's *Request upload key reset*, and they need different first steps:
 
-1. On that page, **Request upload key reset** → Google asks for a new
-   upload certificate (`.pem`). Make it from the *existing* upload
-   keystore the script generated (`keytool -export -rfc -keystore
-   upload.jks -alias <alias> -file upload_cert.pem`) — the key in the
-   secrets is fine; only Play's record of it is wrong.
-2. Upload the `.pem` in the form. Google confirms by email in a few days;
-   the old key stops working then.
-3. Nothing changes on the repo: the secrets already hold that key. Run
-   **Actions → build → Run workflow** once after the confirmation and read
-   the `AAB signer:` line — `CN=OP TCG Hub upload` — then upload that
-   take's bundle.
+- **(a) The key folder is lost** (`~/optcghub-play-key/`). The key survives
+  only as the four repository secrets, which cannot be read back. Run
+  `bash tools/play-key.sh` afresh: it makes a *new* keystore and password
+  and **sets the four secrets** to the new key. Then export the new
+  certificate and request the reset (below). The next build after the
+  reset is confirmed signs with the new key; the `AAB signer:` line must
+  still read `CN=OP TCG Hub upload`.
+- **(b) Play registered a different key than the secrets hold** — the
+  symptom is "wrong key" on an upload whose build log says `CN=OP TCG Hub
+  upload`. The keystore is fine; only Play's record is wrong. Export the
+  certificate from the *existing* keystore and request the reset; the
+  secrets do not change. (Take 102 closed this case for this app: Play
+  accepted the upload-key-signed take 101, so the registered key is the
+  one the secrets hold.)
+
+The export, in full, from the values `tools/play-key.sh` uses:
+
+```
+keytool -exportcert -rfc \
+  -keystore ~/optcghub-play-key/upload.jks -alias optcghub-upload \
+  -storepass "$(cat ~/optcghub-play-key/password.txt)" \
+  -file ~/optcghub-play-key/upload_cert.pem
+```
+
+Then **Play Console → Test and release → Setup → App signing → Request
+upload key reset**, attach `upload_cert.pem`, and wait for Google's email
+(a few days; the old key stops working then). Tell them apart from the
+console: the *Upload key certificate* on that page shows a SHA-1; the
+committed sideload key's is
+`8A:17:C1:B9:8C:44:4F:AE:36:12:54:0E:1A:E5:95:92:45:5C:65:68` and must
+never be the one shown.
 
 ## 3. Create the app — The owner, Play Console
 
@@ -182,11 +194,27 @@ days from there. Watch *Testing → Closed testing → Testers* for the count.
 Each new take: upload the new `.aab` to the same track. Testers update from
 Play; nothing resets.
 
-## 8. Apply for production — day 15
+## 8. Apply for production — day 15 — DONE (approved, 24 Sept 2026, take 102)
 
 **Dashboard → Apply for production access.** Three short sections: how you
 recruited testers, what you learned, what changed. Google answers in about a
-week. Then a production release from the same bundle.
+week. **Approved.** Then the production release, below.
+
+## 8b. The production release — The owner, Play Console
+
+**Production → Create new release → upload the current take's
+`optcghub-take-N.aab`** (take 101's is the first; it is already on the
+closed track, which is fine — a bundle can go to both) → release notes: the
+"New at take N" paragraphs from `ci/RELEASE.md` → *Next → Save → Review
+release* → **Start rollout**. A staged rollout (10% → 50% → 100%) costs
+nothing and can be halted; a full rollout is also fine for an app this
+size. Google reviews a production release too (hours to a day).
+
+After go-live: every take is one upload to the **production** track (§
+"Every take after the first"); the closed track can stay for early testers
+or be retired. The real AdMob rewarded unit IDs (D11) go into
+`tools/config.py` in the take after the owner sends them — production is
+real users, which is when §9's rule says they belong.
 
 ## 9. Ads — AdMob, in parallel, none of it blocks the clock
 
@@ -227,8 +255,10 @@ the free hobbyist tier is worth ten minutes when the console offers it (A12).
 
 Merge the take's PR → the build runs → the Release carries
 `optcghub-take-N.aab` signed with the upload key (the `apk` job's log line
-`AAB signer: Owner: CN=OP TCG Hub upload` is the proof; since take 101 an
-unreadable signer fails the build). Upload it to the closed track.
+`AAB signer: Owner: CN=OP TCG Hub upload` is the proof; since take 102 any
+other signer, readable or not, fails the build and the certificate's
+SHA-256 is printed beside it). Upload it to the **production** track once
+the app is live (§8b), to the closed track before.
 `versionCode` is the take number and never goes backwards (landmine 33).
 Two things per take:
 

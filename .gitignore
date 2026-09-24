@@ -6,6 +6,7 @@ www/fonts/
 www/hunt/
 www/privacy.html
 www/render.png
+www/render-sim.png
 android/
 node_modules/
 __pycache__/

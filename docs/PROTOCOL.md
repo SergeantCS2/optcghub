@@ -1,6 +1,6 @@
 # PROTOCOL
 
-*Current as of take 101.*
+*Current as of take 102.*
 
 The working rules for this project. The gate enforces the ones it can.
 
@@ -145,6 +145,11 @@ order:
    his "go". The step list is the take's, in `tools/look/steps.mjs`; a
    take that changes what the collector sees adds its steps there.
 5. Gate, ship.
+6. **After the merge (take 102):** a note written once the PR has merged —
+   the release's landing, the runner's numbers, an answer that arrived —
+   is committed on the same branch and rides the *next* take's PR. Never
+   a PR of its own, never left uncommitted: the next session branches
+   from `main` and would not see it.
 
 If a response runs out of room, what is lost is the build — one message away and
 obviously missing — instead of the record, which is silently gone forever.

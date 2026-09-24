@@ -1,4 +1,4 @@
-# OP TCG Hub — take 101
+# OP TCG Hub — take 102
 
 ## If you are testing from Google Play — read this first
 
@@ -19,8 +19,12 @@ Updates arrive through Play like any app. Your data stays across updates.
 
 ---
 
-**New at take 101:** nothing visible; the Play bundle's signing is now
-verified and recorded from the build's own log on every release.
+**New at take 102:** nothing visible; the build's own checks are
+hardened after a review, and the record moves to production.
+
+**New at take 101:** nothing visible; a Play bundle whose signer cannot
+be read now fails the build, and the size of what shipped is recorded
+from the build's own log on every release.
 
 **New at take 100:** pictures for the boxes, packs and cards whose first
 image address is empty, whenever TCGplayer's second address has one —
