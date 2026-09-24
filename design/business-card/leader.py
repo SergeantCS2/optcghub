@@ -41,6 +41,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 from cards import (qr_svg, b64, LISTING, PRUSSIAN, BUFF, CREAM, INK, GREEN, PURPLE, PAPER)
+# The card's QR carries a campaign tag, so Play Console can count the installs it brings: Grow users > Store
+# performance > Conversion analysis, traffic source "ads and referrals", UTM source business_card, campaign
+# card_qr. The format is Google's Play URL builder's (UTM values URL-encoded inside `referrer`), the one
+# Play Console's help links to for "Tracked channels (UTM)".
+CARD_URL = LISTING + "&referrer=utm_source%3Dbusiness_card%26utm_campaign%3Dcard_qr"
 sys.path.insert(0, os.path.join(REPO, "design", "d7-icons", "v3"))
 import parts as PT
 
@@ -134,10 +139,10 @@ FACE_CSS = f"""
 .back .motif{{position:absolute;inset:0;width:100%;height:100%}}
 .back .title{{position:absolute;left:0;right:0;top:0.13in;text-align:center;font-size:17px;line-height:1;--fill:{PRUSSIAN};--k:1.3px;--o:1.3px 1.6px}}
 .back .scan{{position:absolute;left:0;right:0;top:0.36in;text-align:center;font-size:7pt;font-weight:800;letter-spacing:.14em;color:{PURPLE}}}
-.back .qr{{position:absolute;left:50%;top:0.76in;width:1.14in;height:1.14in;transform:translateX(-50%);border:1.2px solid {INK};border-radius:5px;overflow:hidden;
+.back .qr{{position:absolute;left:50%;top:0.76in;width:1.24in;height:1.24in;transform:translateX(-50%);border:1.2px solid {INK};border-radius:5px;overflow:hidden;
   box-shadow:1.4px 1.8px 0 {GREEN}}}
-.back .search{{position:absolute;left:0;right:0;top:2.34in;text-align:center;font-size:7pt;color:{INK}}}
-.back .facts{{position:absolute;left:0.12in;right:0.12in;top:2.6in;text-align:center;font-size:6.5pt;font-weight:800;letter-spacing:.1em;line-height:1.45;
+.back .search{{position:absolute;left:0;right:0;top:2.36in;text-align:center;font-size:7pt;color:{INK}}}
+.back .facts{{position:absolute;left:0.12in;right:0.12in;top:2.62in;text-align:center;font-size:6.5pt;font-weight:800;letter-spacing:.1em;line-height:1.45;
   color:{PURPLE}}}
 /* lettering knocks the screentone out, as in a manga panel: a paper pad that follows each line of text */
 .ko{{background:{FIELD};padding:0 3px;border-radius:2px;-webkit-box-decoration-break:clone;box-decoration-break:clone}}
@@ -156,7 +161,7 @@ def back_motif(uid):
     """Our card back's field, in 1/100 in across the panel: screentone at the corners (manga, not rays) and
     our compass rose round the QR, its centre on the QR's (inner ring off: the icon's ruling)."""
     W, H = PANEL_W * 100, PANEL_H * 100
-    cx, cy, R = W / 2, 133, 76
+    cx, cy, R = W / 2, 138, 82        # the QR's centre: its tile is 1.24 in, top 0.76 in (the tagged URL is version 9)
     dots = []
     for yi in range(0, int(H) + 1, 5):
         for xi in range(0, int(W) + 1, 5):
@@ -245,7 +250,7 @@ if __name__ == "__main__":
     a = ap.parse_args()
     fonts = (b64(os.path.join(REPO, "assets", "fonts", "display.woff2"), "font/woff2"),
              b64(os.path.join(REPO, "assets", "fonts", "body.woff2"), "font/woff2"))
-    qr, version = qr_svg()
+    qr, version = qr_svg(CARD_URL)
     os.makedirs(BUILD, exist_ok=True)
     badge, badge_px = badge_png(a.badge)
     F = lambda i: front(art_svg(a.icon, f"a{i}"), badge)
@@ -257,7 +262,7 @@ if __name__ == "__main__":
     sheet = lambda body: head(fonts, SHEET_CSS) + f"<body>{body}</body></html>"
     open(os.path.join(BUILD, "test.html"), "w").write(sheet(test_sheet("FRONT", a.front_dx, a.front_dy, "&rarr;")
                                                             + test_sheet("BACK", a.back_dx, a.back_dy, "&larr;")))
-    json.dump({"qr_version": version, "listing": LISTING, "icon": os.path.basename(a.icon),
+    json.dump({"qr_version": version, "listing": LISTING, "qr_url": CARD_URL, "icon": os.path.basename(a.icon),
                "badge": {"source": a.badge and os.path.basename(a.badge) or BADGE_URL, "px": badge_px,
                          "printed_in": [round(GP_H * badge_px[0] / badge_px[1], 3), GP_H], "dpi": round(badge_px[1] / GP_H)},
                "offsets": {k: getattr(a, k.replace("-", "_")) for k in ("front-dx", "front-dy", "back-dx", "back-dy")}},

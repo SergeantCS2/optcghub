@@ -7,7 +7,8 @@
 - The fronts: each of the ten cells is the front preview turned a quarter clockwise (the card's top
   east). Its control: the same cell against the other quarter turn must differ by far more.
 - The backs: each cell is the back preview turned the other way (long edge), or the same way (short
-  edge), with the same control. Every one of the ten QRs decodes to the listing.
+  edge), with the same control. Every one of the ten QRs decodes to the card's URL (build.json's qr_url:
+  the listing, tagged for Play Console's campaign counts).
 - The bleed reaches 1/16 in into the sheet's margins, and no further.
 - The back preview's QR: it decodes at 300 and 90 dpi, and not with a finder pattern painted over.
 
@@ -21,6 +22,7 @@ REPO = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 from verify import decode, qr_box
 from cards import LISTING
+EXPECT = LISTING      # the URL every QR must decode to: build.json's qr_url (the campaign-tagged listing) once main reads it
 from leader import SHEET_W, SHEET_H, CELL_W, CELL_H, COLS, ROWS, BLEED
 D = os.path.join(os.environ.get("CARD_OUT") or os.path.join(os.path.dirname(REPO), "business-card-build"), "leader")
 DPI = 300
@@ -82,7 +84,7 @@ def check_cells(im, face, turn, wrong, off, qr=False):
             got = cell(im, c, r, off[0], off[1])
             row = {"cell": r * COLS + c + 1, "mad": round(mad(got, right_im), 2), "mad_wrong_turn": round(mad(got, wrong_im), 2)}
             if qr:
-                row["qr"] = decode(got) == [LISTING]
+                row["qr"] = decode(got) == [EXPECT]
             out.append(row)
     return out
 
@@ -103,14 +105,15 @@ def check_bleed(im, off):
 
 def check_preview_qr():
     im = Image.open(os.path.join(D, "png", "back.png")).convert("RGB")
-    full = decode(im) == [LISTING]
-    small = decode(im.resize((im.width * 90 // DPI, im.height * 90 // DPI), Image.LANCZOS)) == [LISTING]
+    full = decode(im) == [EXPECT]
+    small = decode(im.resize((im.width * 90 // DPI, im.height * 90 // DPI), Image.LANCZOS)) == [EXPECT]
     x0, y0, x1, y1 = qr_box(im); m = (x1 - x0) / 41
     hurt = im.copy(); ImageDraw.Draw(hurt).rectangle([x0 - m, y0 - m, x0 + 8 * m, y0 + 8 * m], fill="#FBF7EC")
-    return {"full": full, "at90dpi": small, "control_refused": LISTING not in decode(hurt), "qr_in": round((x1 - x0) / DPI, 2)}
+    return {"full": full, "at90dpi": small, "control_refused": EXPECT not in decode(hurt), "qr_in": round((x1 - x0) / DPI, 2)}
 
 if __name__ == "__main__":
     build = json.load(open(os.path.join(D, "build.json")))
+    EXPECT = build.get("qr_url", LISTING)
     off = build["offsets"]
     front = Image.open(os.path.join(D, "png", "front.png")).convert("RGB")
     back = Image.open(os.path.join(D, "png", "back.png")).convert("RGB")
@@ -163,4 +166,4 @@ if __name__ == "__main__":
     if bad:
         print("checksheet: refused\n  " + "\n  ".join(bad[:12])); sys.exit(1)
     print("checksheet: 3 PDFs, Letter at 100 %, fonts embedded; the cut lines on the perforations; 40 cells the right way up "
-          "(and not the wrong way); 20 QRs to the listing; bleed 1/16 in into the margins only")
+          "(and not the wrong way); 20 QRs to the card's tagged URL; bleed 1/16 in into the margins only")

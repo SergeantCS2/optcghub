@@ -41,7 +41,8 @@ instead.
 
 **Back:** our own card back, as he approved it: the white field, the purple border, and our compass rose
 (inner ring off, as the icon's risk panel ruled).
-- **The QR** is the rose's hub, 1.14 in on its tile, and leads to the live listing.
+- **The QR** is the rose's hub, 1.24 in on its tile. It leads to the live listing, tagged so the
+  installs it brings can be counted (see Counting the card's installs).
 - **Below it:** the search fallback, then ANDROID · NO ACCOUNT / WORKS OFFLINE.
 - **No disclaimer.** The owner took it off: it matters to Google Play, not to the card.
 - **Texture:** manga screentone in the corners, knocked out behind the lettering. There are no radiating
@@ -103,10 +104,35 @@ Two HTML impositions failed first, and `checksheet.py` refused both:
 - **Cell orientation.** Each of the 40 cells matches its face turned the right way. The worst mean
   difference was 2.6 of 255 on the first imposition. The control is the same cell against the wrong
   turn, which differed by 45 or more.
-- **QRs.** All 20 on the back pages decode to the listing.
+- **QRs.** All 20 on the back pages decode to the card's tagged URL (`qr_url` in `build.json`). It was
+  watched to refuse the untagged PDF printed before the tag: 0 of 20 matched.
 - **Bleed.** It shows 0.03 in past the grid, and paper shows at 0.10 in.
-- **The back preview's QR.** It is level Q, version 6, about 0.9 in without its quiet zone. It decodes
-  at 300 and 90 dpi, and a copy with one finder pattern painted over is refused.
+- **The back preview's QR.** It is level Q, version 9 (the tagged URL is 123 characters), on a 1.24 in
+  tile. It decodes at 300 and 90 dpi, and a copy with one finder pattern painted over is refused.
+
+## Counting the card's installs
+
+The QR carries Google's Play URL-builder format, the one Play Console's help links to for "Tracked
+channels (UTM)":
+
+```
+https://play.google.com/store/apps/details?id=com.optcghub.app&referrer=utm_source%3Dbusiness_card%26utm_campaign%3Dcard_qr
+```
+
+**Where to read it:** Play Console → **Grow users → Store performance → Conversion analysis**, with the
+traffic source filtered to ads and referrals. Then filter by **UTM source `business_card`** or **UTM
+campaign `card_qr`** for the card's store listing visitors and installs.
+
+What it counts:
+- **What reaches it:** scans that open the listing in the Play Store app, which is the usual path on
+  Android. A scan that opens in a browser, or on an iPhone, doesn't reach the Play Store app.
+- **What it doesn't count:** people. Figures are visits and installs from the card.
+- **When:** figures arrive a day or two later.
+
+The app itself reads no referrer, and has no analytics SDK.
+
+A second print run can carry its own campaign (say, separate cards for players and for stores). That
+means a new `CARD_URL` and its own print file.
 
 ## Printing it
 
