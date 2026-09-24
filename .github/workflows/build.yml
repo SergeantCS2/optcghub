@@ -200,6 +200,10 @@ jobs:
         with: { name: apk, path: "${{ steps.pkg.outputs.apk }}" }
       - uses: actions/upload-artifact@v6
         with: { name: aab, path: "${{ steps.pkg.outputs.aab }}" }
+      # take 103: R8's mapping rides the Release -- a Play crash report de-obfuscates
+      # with it and with nothing else
+      - uses: actions/upload-artifact@v6
+        with: { name: mapping, path: "${{ steps.pkg.outputs.mapping }}" }
 
       # Release notes come from ci/RELEASE.md, in the REPO. Inline here they
       # would freeze at whatever take was last pasted (APEX landmine 96).
@@ -212,12 +216,12 @@ jobs:
         run: |
           tag="take-${{ steps.pkg.outputs.take }}"
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" "${{ steps.pkg.outputs.apk }}" "${{ steps.pkg.outputs.aab }}" --clobber
+            gh release upload "$tag" "${{ steps.pkg.outputs.apk }}" "${{ steps.pkg.outputs.aab }}" "${{ steps.pkg.outputs.mapping }}" --clobber
             gh release edit "$tag" --notes-file ci/RELEASE.md
             echo "updated $tag with tonight's build"
           else
             gh release create "$tag" \
-              "${{ steps.pkg.outputs.apk }}" "${{ steps.pkg.outputs.aab }}" \
+              "${{ steps.pkg.outputs.apk }}" "${{ steps.pkg.outputs.aab }}" "${{ steps.pkg.outputs.mapping }}" \
               --title "OP TCG Hub — take ${{ steps.pkg.outputs.take }}" \
               --notes-file ci/RELEASE.md
           fi

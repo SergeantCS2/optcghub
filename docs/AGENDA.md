@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 102.* Ranked by blocking-ness, not by interest.
+*Current as of take 103.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -32,10 +32,12 @@ each item got where it is; this block is what to do next.
    registries, MEASURED again after the restart at take 102).
 
 **Mine, in order**
-1. **Take 102 — harden, clean up, tie up** (the take-101 review's
-   thirteen findings; the record to production; a CLAUDE.md). Then
-   **take 103 — optimize:** R8 and the non-Latin OCR models, proven on
-   the Fold; the upload key's fingerprint pinned from the printed line.
+1. **Take 103 — optimize** (in flight; 102 merged 24 Sept 01:05): R8,
+   the Latin-only OCR model, the mapping on the Release, the upload key's
+   fingerprint pinned from the take-102 build's printed line. The
+   measurement is the `apk` job's size table beside take 102's; the proof
+   is the Fold's self-test and a manual pass — the harness cannot see a
+   `NoClassDefFoundError` on a phone.
 2. **A41** — waits on the owner's list of the parts and the source;
    then one take per source, measured on the runner first.
 2. **A39 item 3 (take 100, measured and closed by the owner's check),
@@ -534,7 +536,7 @@ is what stands between the seed and that clock, in order, with who does it.
 |---|---|---|---|
 | 1 | **D14 — one game or many, and therefore the package name** | The owner | DONE take 24; `com.optcghub.app` registered with Play at the take-35 upload, permanent |
 | 2 | Stand up the repo: RUNBOOK §1–4 | The owner | **DONE** — read off the repo at take 34: public, run #3 green end to end (seed 6 s, bundle 42 s, apk 4 m 36 s, pages 14 s), Release **take-31**, Pages live. PROVEN |
-| 3 | First CI build produces the AAB | CI | **DONE** — the four secrets are set; every build's `apk` job prints `AAB signer: Owner: CN=OP TCG Hub upload, OU=play` and names the file `optcghub-take-N.aab` (PROVEN from run 48's log, take 101). **The registered upload key is that key — PROVEN take 102:** Play accepted the upload-key-signed take 101 |
+| 3 | First CI build produces the AAB | CI | **DONE** — the four secrets are set; every build's `apk` job prints `AAB signer: Owner: CN=OP TCG Hub upload, OU=play` and names the file `optcghub-take-N.aab` (PROVEN from run 48's log, take 101). **The registered upload key is that key — PROVEN take 102:** Play accepted the upload-key-signed take 101. **Its fingerprint is pinned since take 103** (`ci/signer.sh`, from run 51's printed line, `32:8E:60:…:28:95`): a bundle carrying the upload DN with any other fingerprint fails the build before Play can refuse it |
 | 4 | Play Console: create the app, Play App Signing, the four secrets | The owner | **DONE** — personal account; app created; version code 35 accepted into internal testing (two optional warnings). **UNKNOWN: whether the upload-key bundle or the DEVKEY one was the first upload** — RUNBOOK-play §2 says how to reset if the latter |
 | 5 | Listing: title, short and full description opening with the disclaimer, screenshots, icon 512, feature graphic 1024×500 | The owner | copy pasted (take 36); screenshots from the Fold with the take-37 showcase files; the console shows the jolly roger icon — swap to `play-assets-t33/icon-512.png` or say so (D7) |
 | 6 | Privacy policy live on Pages, naming AdMob | take 30 | Pages deployed at `https://sergeantcs2.github.io/optcghub/` (run #3); the policy is `/privacy.html` there |
@@ -2132,7 +2134,21 @@ he will send more screenshots.
   the app should render in the six colours or stay teal-on-black with colour
   accents; whether the splash is the icon large or something else.
 
-## A14 — Trimming the ML Kit language models · OPEN, UNVERIFIED
+## A14 — Trimming the ML Kit language models · BUILT take 103, the Fold's proof pending
+
+*Take 103 addendum — BUILT:* the four non-Latin `com.google.mlkit:
+text-recognition-*` modules excluded from every configuration in
+`ci/apk.sh` (their AARs carry the models, so the assets leave with them:
+3.81 MB raw / 2.39 packed, measured from take 100's files), `-dontwarn`
+for the four option packages the plugin's switch still names, and R8 on
+the release build (`minifyEnabled`, `shrinkResources`, the optimize
+defaults) against 23.0 MB of raw dex. The build refuses an APK that still
+carries a non-Latin model or lacks the Latin one. Proven on the runner at
+the merge only (this VM has no Android SDK); PROVEN on the Fold when the
+self-test's ML Kit line passes on take 103. **Ruled out:** the asset-level
+knobs (`aaptOptions`, `packagingOptions` scope the app's own assets and
+Java resources, not a library's); patching the plugin under
+`node_modules`.
 
 *Take 101 addendum — MEASURED from Release take-100's files (`tools/shipped.py`):*
 the OCR language models are **5.5 MB raw / 3.7 MB packed** in the APK, of

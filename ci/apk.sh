@@ -227,6 +227,19 @@ print("  APK and AAB limited to arm64-v8a + armeabi-v7a (the filter sits in defa
 PYABI
 echo "::endgroup::"
 
+echo "::group::shrink — R8 and the Latin-only OCR (take 103)"
+# MEASURED from Release take-100's files (A14, HANDOFF take 103): dex 23.0 MB raw
+# with R8 off; the four non-Latin OCR models 3.81 MB raw / 2.39 packed, never
+# used -- the app asks the plugin for LATIN only (landmine 11) and the recogniser
+# is charset-constrained. The plugin declares all five ML Kit artifacts; the
+# exclude drops the four AARs and the models they carry. Its Java still names
+# the four option classes inside a switch the LATIN path never reaches, so R8
+# is told not to warn about them (AGP 8 fails the build on a missing class
+# otherwise). The marker is VERSIONED and an older block is REPLACED (landmine
+# A-211); any change to what this writes bumps the version.
+python3 ci/shrink.py android/app     # the patch and its controls live there; the gate runs `ci/shrink.py --selftest`
+echo "::endgroup::"
+
 echo "::group::signing config"
 # The sideload keystore is COMMITTED on purpose (signing/optcghub.keystore):
 # a stable key is what lets take N install over take N-1 without losing the
@@ -284,6 +297,19 @@ case "$SIGNER" in *"CN=OP TCG Hub, OU=sideload"*) ;;
   *) echo "::error::APK is not signed by the committed sideload key — takes would not install over each other (A8)"; exit 1;; esac
 "$BT/aapt2" dump badging "$APK" | grep -oE "versionCode='[0-9]+'|application-label:'[^']+'" | tr '\n' ' '; echo
 echo "apk=$APK" >> "$GITHUB_OUTPUT"
+# take 103: what the shrink promised, read back off the artifact (landmine A-211's
+# rule applies to every patch, not just the signer)
+NONLATIN=$(unzip -l "$APK" | grep -cE "Beng_ctc|Deva_ctc|Hani_ctc|Jpan_ctc|Kore_ctc" || true)
+LATIN=$(unzip -l "$APK" | grep -c "Latn_ctc" || true)
+echo "  OCR models in the APK: Latin entries $LATIN, non-Latin entries $NONLATIN"
+[ "$NONLATIN" = 0 ] || { echo "::error::the APK still carries $NONLATIN non-Latin OCR model entries — the exclude did not take (A14)"; exit 1; }
+[ "$LATIN" -gt 0 ] || { echo "::error::the APK carries no Latin OCR model — the scanner would read nothing (landmine 11)"; exit 1; }
+MAPPING=android/app/build/outputs/mapping/release/mapping.txt
+[ -s "$MAPPING" ] || { echo "::error::R8 left no mapping.txt — the release was not shrunk (A14)"; exit 1; }
+MAP="optcghub-take-$TAKE-mapping.txt"; cp "$MAPPING" "$MAP"
+echo "mapping=$MAP" >> "$GITHUB_OUTPUT"
+USAGE=android/app/build/outputs/mapping/release/usage.txt
+echo "  R8: mapping $(wc -l < "$MAP") lines; usage.txt (what was removed) $( [ -f "$USAGE" ] && wc -l < "$USAGE" || echo 0) lines"
 echo "::endgroup::"
 
 echo "::group::Play AAB"
@@ -306,7 +332,8 @@ if [ -n "${PLAY_UPLOAD_KEYSTORE_B64:-}" ]; then
   echo "  AAB signer: $SIGNER"
   echo "  AAB signer $(signer_sha256 "$AAB")"
   case "$(classify_signer "$SIGNER")" in
-    upload) ;;
+    upload)     fingerprint_ok "$(signer_sha256 "$AAB")" >/dev/null \
+                  || { echo "::error::AAB signer has the upload DN but NOT the pinned fingerprint ($(signer_sha256 "$AAB")) — a regenerated key; Play would refuse it and burn versionCode $TAKE (landmine 33). Pin a new key only from a printed line (ci/signer.sh)"; exit 1; };;
     sideload)   echo "::error::AAB is signed with the SIDELOAD key, not the upload key"; exit 1;;
     unreadable) echo "::error::AAB signer could not be read off the bundle (no signature block, or keytool failed)"; exit 1;;
     *)          echo "::error::AAB is signed with a key that is NOT the Play upload key ($SIGNER) — the secrets hold the wrong keystore; Play would refuse it and burn versionCode $TAKE (landmine 33)"; exit 1;;
@@ -328,7 +355,7 @@ ls -lh "$APK" "$AAB"
 # for both artifacts -- the owner read 56 MB on the phone for a 34.9 MB file and
 # the answer is this table. A size take is measured against it, never guessed.
 python3 tools/shipped.py "$APK" "$AAB" || echo "::warning::the size table failed — a report, never a reason to hold a release"
-unzip -l "$APK" | grep -c 'assets/public' || true
+echo "  assets/public entries in the APK: $(unzip -l "$APK" | grep -c 'assets/public' || true)"   # take 103: labelled; it printed a bare count
 # The catalogue must actually be inside the APK. An app that ships without it
 # shows an empty binder and the only thing that catches that is a count.
 unzip -l "$APK" | grep -q 'assets/public/bundle/catalog.json' \

@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 102
+# V1-STATE — what exists, as of take 103
 
-*Current as of take 102.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 103.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -35,7 +35,10 @@ refresh from Pages (take 27).
   take-100's files):** APK 34.7 MB packed / 58.0 MB raw (what the phone
   reports as installed); AAB 23.6 MB packed. Dex 23.0 MB raw, the OCR
   engine 11.1 MB (arm64) + 6.8 MB (armeabi-v7a), the app and catalogue
-  8.6 MB raw / 1.8 packed, the OCR language models 5.5 MB raw. The apk
+  8.6 MB raw / 1.8 packed, the OCR language models 5.5 MB raw. **Take
+  103** shrinks the code (R8) and drops the four non-Latin models (3.8
+  MB raw); the *after* is the take-103 build's size table, recorded here
+  once it runs. The apk
   job prints this breakdown every build since take 101 (`tools/shipped.py`).
 - **Play:** the app exists in the console as `com.optcghub.app` on a personal
   account; version code 35 accepted into internal testing; advertising-ID
@@ -101,6 +104,16 @@ the pattern is real and the missing pictures are not there either. The
 owner's image address from TCGplayer's own page is the next measurement;
 the phone's picture is the proof.
 
+**Harness totals, take 103:** smoke.mjs 691 (no app change; 689 on the
+session VM against the nightly's newer sidecar — the runner's number
+counts); signer.sh 10 controls (+3: the pinned fingerprint passes, the
+upload DN with another fingerprint and an empty line are refused);
+shrink.py 11 controls, new (the fixture and Capacitor's own template:
+the build type flips, the block sits before `android {`, a second run
+changes nothing, four rules once; a `build.gradle` without a release
+block is refused — every one watched to fail against a silent patch);
+gate 12 probes +1 selftest hook; render 105 of 106 in local Chrome.
+
 **Harness totals, take 102:** smoke.mjs 691 assertions (unchanged: no app
 change); gate 12 probes, each with a named failure category and the first
 an unmutated copy that must fire nothing (landmine 139: the eleven before
@@ -163,7 +176,7 @@ reproductions, outside the harness).
 | Importing from other apps (Collectr) | needs one real exported file; guessing the format would mis-key printings | A31 |
 | Colour direction | D15; parked, not a priority | A24 |
 | Icon motif | D7; the take-16 placeholder is back by request | A16 |
-| A14 ML Kit language trim (~10 MB) | needs a device to verify no NoClassDefFoundError | A14 |
+| A14 ML Kit language trim (3.8 MB raw of models, plus R8 on 23 MB of dex) | BUILT take 103; the Fold's self-test (the ML Kit line) is the proof, the take-103 build log the measurement | A14 |
 | Backlog 8.9–8.11, 8.13–8.16 | not scheduled; 8.12 done take 42 | ROADMAP Phase 8 |
 | Other games | measured, one-app-per-game or packs; not before Play | A19 |
 | Simulator step (2), the rest | more whole templates with tests; Event timings; chained sentences — coverage is 6.1% and grows only by whole templates | A23 |
