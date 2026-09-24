@@ -8,6 +8,14 @@
    Everything inside page.evaluate runs in the real app: window.VAULT is the
    same surface smoke.mjs drives, and clicks are real clicks. */
 
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { execSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+
 /* The Fold 7: the cover screen is the harness's phone -- MEASURED at take 105 from the
    owner's Diagnostics (`viewport: 411x960 @2.625`, the take-104 install); the inner screen is
    INFERRED until he pastes the same line from the open phone (More → About ×5 → ## device). */
@@ -845,4 +853,118 @@ const take111 = [
   view('hunt-events', `V.MODE.set('hunt', true); await ${pause}; V.go('events')`)
 ];
 
-export const STEPS = { 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111 };
+/* ---- take 112 — A32's second distributor: Southern Hobby beside GTS, read off its real pages ----
+   The feed is the fixture smoke and render build (hunt.py --from-fixtures: the saved listing and three
+   product pages); the served feed carries no Southern Hobby until this take is merged, so the page's own
+   sync is stubbed on this throwaway page, or it would replace the fixture mid-step. */
+let F112 = null;
+const feed112 = () => {
+  if (!F112) { const d = fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-look-112-')), f = path.join(d, 'feed-fixture.json');
+    execSync(`python3 tools/hunt.py --from-fixtures --out ${f}`, { cwd: ROOT, stdio: 'pipe' }); F112 = JSON.parse(fs.readFileSync(f, 'utf8')); fs.rmSync(d, { recursive: true, force: true }); }
+  return F112;
+};
+const HUNT112 = `V.HUNT.sync = async () => false; V.HUNT.syncHistory = async () => false; V.HUNT.feed = window.__F112; V.NAV.zipAsked = true;
+  for (const id of Object.keys(V.HUNT.distByCatalogId())) { const p = V.CAT.byId.get(+id); if (p) { V.SEALED.closed.delete(p.set); V.SEALED.open.add(p.set); } }
+  V.MODE.set('hunt', true); await ${pause}; V.HUNT.feed = window.__F112`;
+const DLINES = `(box) => [...box.querySelectorAll('.nm > span')].filter(s => /^(GTS Distribution|Southern Hobby) · /.test(s.textContent))`;
+const take112 = [
+  /* the owner's word, after the first pictures: "I don't want them flooding the screen" -- a row carries each
+     distributor as one short line under its chips, which opens the product's page at Distributor info; the long
+     text sits under closed "Distributor info" drop-downs. Every tap below is a real click. */
+  { name: 'hunt-sealed-distributor-lines', run: async (page, ctx) => {
+      await ctx.open(); await page.evaluate(F => { window.__F112 = F; }, feed112());
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} ${HUNT112}; V.DISTF.open.clear(); V.go('sealed'); V.paintSealed(); await ${pause};
+        const lines = [...document.querySelectorAll('#sealedList .dline')]; const row = lines.map(l => l.closest('.row')).find(r => r.querySelectorAll('.dline').length > 1) || (lines[0] && lines[0].closest('.row'));
+        if (row) row.scrollIntoView({ block: 'center' });
+        return { lines: lines.length, row: row ? row.querySelector('.nm b').textContent : null, its: row ? [...row.querySelectorAll('.dline')].map(l => l.textContent.trim()) : [] }; })()`);
+      await waitArt(page, '#sealedList img'); await wait(300);
+      return { ok: m.lines > 0 && m.its.length > 1, ...m };
+    } },
+  { name: 'hunt-sealed-distributor-info-closed', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.HUNT.feed = window.__F112; V.DISTF.open.clear(); V.go('sealed'); V.paintSealed(); await ${pause};
+        const f = document.querySelector('#sealedList [data-distfold="sealed"]'); if (f) { f.scrollIntoView({ block: 'start' }); window.scrollBy(0, -140); }
+        return { fold: f ? f.textContent.trim() : null, open: f ? f.getAttribute('aria-expanded') : null }; })()`);
+      await wait(300);
+      return { ok: m.open === 'false' && /^Distributor info/.test(m.fold || ''), ...m };
+    } },
+  { name: 'hunt-sealed-distributor-info-open', run: async (page) => {
+      await page.evaluate(() => document.querySelector('#sealedList [data-distfold="sealed"]').scrollIntoView({ block: 'center' }));
+      await page.click('#sealedList [data-distfold="sealed"]'); await wait(300);
+      const m = await page.evaluate(() => { const f = document.querySelector('#sealedList [data-distfold="sealed"]'); f.scrollIntoView({ block: 'start' }); window.scrollBy(0, -140);
+        return { open: f.getAttribute('aria-expanded'), secs: [...f.closest('.panel').querySelectorAll('.dsec > b')].map(b => b.textContent) }; });
+      await wait(300);
+      return { ok: m.open === 'true' && m.secs.join() === 'GTS Distribution,Southern Hobby', ...m };
+    } },
+  { name: 'hunt-sheet-from-a-distributor-line', run: async (page) => {
+      await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.HUNT.feed = window.__F112; V.DISTF.open.clear(); V.go('sealed'); V.paintSealed(); await ${pause};
+        const l = [...document.querySelectorAll('#sealedList .dline')].find(x => /^Southern Hobby/.test(x.textContent.trim()) && x.closest('.row').querySelectorAll('.dline').length > 1);
+        l.setAttribute('data-look', 'tap'); l.scrollIntoView({ block: 'center' }); })()`);
+      await page.click('#sealedList .dline[data-look="tap"]'); await wait(700);
+      const m = await page.evaluate(() => { const d = document.getElementById('dDist'), f = d.querySelector('[data-distfold="detail"]');
+        return { on: [...document.querySelectorAll('.screen.on')].map(e => e.id).join(), open: f.getAttribute('aria-expanded'), top: Math.round(d.getBoundingClientRect().top), names: [...d.querySelectorAll('.dsec .nm b')].map(b => b.textContent) }; });
+      return { ok: m.on === 'detail' && m.open === 'true' && m.top > 0 && m.top < 500 && m.names.length > 1, ...m };
+    } },
+  { name: 'hunt-releases-short-lines', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.HUNT.feed = window.__F112; V.DISTF.open.clear(); V.go('releases'); V.paintReleases(); await ${pause};
+        const row = [...document.querySelectorAll('#relList [data-browse-set]')].find(r => r.querySelectorAll('.nm > span[style*="display:block"]').length > 1);
+        if (row) row.scrollIntoView({ block: 'center' });
+        return { set: row ? row.querySelector('.nm b').textContent : null, lines: row ? [...row.querySelectorAll('.nm > span[style*="display:block"]')].map(s => s.textContent) : [] }; })()`);
+      await waitArt(page, '#relList img'); await wait(300);
+      return { ok: m.lines.length === 2 && m.lines.every(l => !/MSRP|release /.test(l)), ...m };
+    } },
+  { name: 'hunt-releases-distributor-info-closed', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.HUNT.feed = window.__F112; V.DISTF.open.clear(); V.go('releases'); V.paintReleases(); await ${pause};
+        const f = document.querySelector('#relList [data-distfold="releases"]'); if (f) { f.scrollIntoView({ block: 'center' }); }
+        return { fold: f ? f.textContent.trim() : null, open: f ? f.getAttribute('aria-expanded') : null }; })()`);
+      await wait(300);
+      return { ok: m.open === 'false' && /products not in the catalogue yet/.test(m.fold || ''), ...m };
+    } },
+  { name: 'hunt-releases-distributor-info-open', run: async (page) => {
+      await page.click('#relList [data-distfold="releases"]'); await wait(300);
+      const m = await page.evaluate(() => { const f = document.querySelector('#relList [data-distfold="releases"]'); f.scrollIntoView({ block: 'start' }); window.scrollBy(0, -140);
+        return { open: f.getAttribute('aria-expanded'), rows: f.closest('.panel').querySelectorAll('.dbody .row').length }; });
+      await wait(300);
+      return { ok: m.open === 'true' && m.rows > 3, ...m };
+    } },
+  { name: 'hunt-releases-distributor-info-lower', run: async (page) => {
+      const m = await page.evaluate(() => { const f = document.querySelector('#relList [data-distfold="releases"]'); const notes = [...f.closest('.panel').querySelectorAll('.note')]; const last = notes[notes.length - 1];
+        last.scrollIntoView({ block: 'end' }); window.scrollBy(0, 110); return { checked: last.textContent.slice(0, 160) }; });
+      await wait(300);
+      return { ok: /Checked GTS Distribution .* Southern Hobby/.test(m.checked || ''), ...m };
+    } },
+  { name: 'hunt-sealed-sheet-no-photo-yet', run: async (page) => {
+      /* the DP-13 display: the host refuses its photo (403), as it does every product too new to have one */
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.HUNT.feed = window.__F112;
+        const it = V.HUNT.distItems().find(i => i._d === 'southern' && i.catalog_id && /Display/.test((V.CAT.byId.get(i.catalog_id) || {}).name || ''));
+        const p = it && V.CAT.byId.get(it.catalog_id); if (p) V.openDetail(p.id); await ${pause}; window.scrollTo(0, 0); return { product: p ? p.name : null }; })()`);
+      await page.waitForFunction(() => { const a = document.querySelector('#dArt'), i = a && a.querySelector('img.ref'); return !i || i.classList.contains('ok'); }, null, { timeout: 12000 }).catch(() => {});
+      await wait(300);
+      const a = await page.evaluate(() => { const e = document.querySelector('#dArt'); return { photo: !!e.querySelector('img.ref.ok'), label: (e.querySelector('.phl') || {}).textContent || '', bg: getComputedStyle(e).backgroundColor, ground: getComputedStyle(e).backgroundImage.slice(0, 16) }; });
+      return { ok: !!m.product && (a.photo ? a.bg === 'rgb(255, 255, 255)' : !!a.label && /gradient/.test(a.ground)), ...m, ...a };
+    } },
+  { name: 'hunt-sheet-from-its-row', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.HUNT.feed = window.__F112;
+        const it = V.HUNT.distItems().find(i => i._d === 'southern' && i.catalog_id && /Display/.test((V.CAT.byId.get(i.catalog_id) || {}).name || ''));
+        const p = it && V.CAT.byId.get(it.catalog_id); if (p) V.openDetail(p.id); await ${pause}; const b = document.getElementById('dBuy'); if (b && !b.hidden) { b.scrollIntoView({ block: 'start' }); window.scrollBy(0, -70); }
+        const f = document.querySelector('#dDist [data-distfold="detail"]');
+        return { product: p ? p.name : null, buy: [...document.querySelectorAll('#dBuyList .nm b')].map(x => x.textContent.trim()), dist: f ? f.getAttribute('aria-expanded') : null }; })()`);
+      await waitArt(page, '#dArt img'); await wait(300);
+      return { ok: !!m.product && !m.buy.some(c => /Southern Hobby|GTS/.test(c)) && m.dist === 'false', ...m };
+    } },
+  { name: 'diagnostics-feed-line', run: async (page) => {
+      /* the report is written when Run is tapped; its network probes are stubbed here (the look's Chromium
+         has no route to Pages) so the step waits on the report, not on a timeout */
+      await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.HUNT.feed = window.__F112; V.DIAG.probe = async () => 'not probed in the look';
+        V.go('diag'); await ${pause}; document.getElementById('diagRun').click(); })()`);
+      await page.waitForFunction(() => /feed on phone/.test(document.getElementById('diagOut').textContent), null, { timeout: 30000 }).catch(() => {});
+      const m = await page.evaluate(() => { const pre = document.getElementById('diagOut'), w = document.createTreeWalker(pre, NodeFilter.SHOW_TEXT);
+        for (let n = w.nextNode(); n; n = w.nextNode()) { const i = n.data.indexOf('feed on phone'); if (i < 0) continue;
+          const r = document.createRange(); r.setStart(n, i); r.setEnd(n, i + 13); window.scrollBy(0, r.getBoundingClientRect().top - innerHeight / 2);
+          const e = n.data.indexOf('\n', i); return { line: n.data.slice(i, e < 0 ? undefined : e) }; }
+        return { line: null }; });
+      await wait(300);
+      return { ok: /southern 20 products/.test(m.line || ''), ...m };
+    } }
+];
+
+export const STEPS = { 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112 };

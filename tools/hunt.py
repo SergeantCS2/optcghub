@@ -13,7 +13,7 @@ as failed with the reason and the last good time stays in the feed.
 import argparse, json, os, re, sqlite3, sys, time
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tools"))
-from hunt import target, roster, shops, gts  # noqa: E402   (landmine 133: this is the package tools/hunt/, not this file)
+from hunt import target, roster, shops, gts, southern  # noqa: E402   (landmine 133: this is the package tools/hunt/, not this file)
 
 OUT = os.path.join(ROOT, "www", "hunt", "feed.json")
 HIST = os.path.join(ROOT, "www", "hunt", "history.json")
@@ -59,6 +59,9 @@ def snapshot(feed):
     g = feed["sources"].get("gts") or {}
     if g.get("ok") and not g.get("kept"):                    # take 94: each SKU's state, so a flip is dated from now on
         row["gts"] = {it["sku"]: it["status"] for it in g.get("items", [])}
+    so = feed["sources"].get("southern") or {}
+    if so.get("ok") and not so.get("kept"):                  # take 112: each item's state from its dates -- the timeline's input
+        row["southern"] = {it["id"]: it["state"] for it in so.get("items", [])}
     if not t.get("ok"):
         return row
     for it in t.get("items", []):
@@ -150,6 +153,18 @@ def match(title, sealed):
     return (best["id"], round(score, 2)) if best and score >= bar else (None, round(score, 2))
 
 
+def southern_match(name, codes, sold_as, sealed):
+    """Take 112: a Southern Hobby name through its own normaliser -- or no match
+    while the unit it is sold as is unread and the name cannot say it. The unit
+    is part of the identity: a CASE matches only a catalogue case, and anything
+    else never matches one (the live pages sell IB-09 and IB-10 as cases, and
+    the tie-break of landmine 134 took the single box for a case)."""
+    if southern.unit_unknown(name, sold_as):
+        return None, 0.0
+    case = (sold_as or "").upper() == "CASE"
+    return match(southern.retail_title(name, codes, sold_as), [s for s in sealed if ("case" in s["toks"]) == case])
+
+
 def from_fixtures():
     """A feed built from the saved real responses, no network: what smoke tests
     against, and what a session without Target access can look at."""
@@ -190,6 +205,19 @@ def build(zips, radius, previous=None, fixtures=False):
         last = previous["sources"]["gts"]; last["stale_since"] = last.get("stale_since") or feed["fetched_at"]; last["error"] = g.get("error"); last["kept"] = True
         g = last
     feed["sources"]["gts"] = g
+    # take 112: the second distributor. The unit a product page says it is sold
+    # as decides the match (a Display, a Box); a failed fetch keeps the last good
+    # one and says since when; a page read rides forward from the previous feed.
+    fx = os.path.join(ROOT, "tools", "fixtures")
+    prev_s = (previous or {}).get("sources", {}).get("southern")
+    so = southern.from_fixture(os.path.join(fx, "southern_listing.html"), fx) if fixtures else southern.fetch(previous=prev_s)
+    if so.get("ok"):
+        for it in so["items"]:
+            it["catalog_id"], it["match_score"] = southern_match(it["name"], it.get("codes"), (it.get("page") or {}).get("sold_as"), sealed)
+    elif prev_s and prev_s.get("ok"):
+        last = prev_s; last["stale_since"] = last.get("stale_since") or feed["fetched_at"]; last["error"] = so.get("error"); last["kept"] = True
+        so = last
+    feed["sources"]["southern"] = so
     return feed
 
 
@@ -237,6 +265,33 @@ def selftest():
     else:
         print("  skip  no catalogue here; match checks run where catalog.sqlite exists")
     ok &= gts.selftest(open(os.path.join(fx, "gts_listing.html"), encoding="utf8").read())
+    ok &= southern.selftest(open(os.path.join(fx, "southern_listing.html"), encoding="utf8").read(),
+                            {k: open(os.path.join(fx, v), encoding="utf8").read() for k, v in southern.FIXTURE_PAGES.items()})
+    if sealed:
+        # take 112: Southern Hobby's names, through its own normaliser; the unit it is sold as picks Display from single
+        sm = lambda n, codes, sold: name(southern_match(n, codes, sold, sealed)[0])   # noqa: E731
+        check("Southern Hobby's DP-13, sold as a Display, matches the Display", sm("Bandai - One Piece Card Game: DP-13 Double Pack Set 13", ["DP13"], "DISPLAY") == "Double Pack Set Vol. 13 Display",
+              str(sm("Bandai - One Piece Card Game: DP-13 Double Pack Set 13", ["DP13"], "DISPLAY")))
+        check("...and with the unit not read yet, nothing: the name alone cannot tell the single set from the display (rule 4)", sm("Bandai - One Piece Card Game: DP-13 Double Pack Set 13", ["DP13"], None) is None,
+              str(sm("Bandai - One Piece Card Game: DP-13 Double Pack Set 13", ["DP13"], None)))
+        check("...control: a name that carries its count is a display without the page", southern.retail_title("Bandai - One Piece Card Game: ST-37 Starter Deck 37 6CT", ["ST37"]) == "ST37 STARTER DECK 37 DISPLAY"
+              and not southern.unit_unknown("Bandai - One Piece Card Game: ST-37 Starter Deck 37 6CT") and southern.unit_unknown("Bandai - One Piece Card Game: DP-13 Double Pack Set 13"))
+        check("Southern Hobby's OP-18 box, EB-05 pack and SD-01 match their catalogue products",
+              sm("Bandai - One Piece Card Game: OP-18 Booster Box", ["OP18"], "BOX") == "The Dominance of God Booster Box"
+              and sm("Bandai - One Piece Card Game: EB-05 Extra Booster Pack 05", ["EB05"], "EACH") == "Extra Booster: One Piece Heroines Edition Vol.2 - Booster Pack"
+              and sm("Bandai - One Piece Card Game: SD-01 Set Sail Deck Set", ["SD01"], "EACH") == "Set Sail Deck Set")
+        check("control: the Heroines Gift Collection the catalogue lacks is not matched to Gift Collection 2023", sm("Bandai - One Piece Card Game: Heroines Gift Collection 6CT", [], "DISPLAY") is None,
+              str(sm("Bandai - One Piece Card Game: Heroines Gift Collection 6CT", [], "DISPLAY")))
+        # the unit is the identity: a case to a case, never to the one box
+        ib8 = "Bandai - One Piece Card Game: IB-08 Illustration Box 08"
+        check("a product Southern Hobby sells as a CASE matches the catalogue's case, never the single box (IB-08, an OP-12 box case, an ST-19 display case)",
+              sm(ib8, ["IB08"], "CASE") == "One Piece Card Game Illustration Box Vol. 8 Case" and sm("Bandai - One Piece Card Game: OP-12 Booster Box", ["OP12"], "CASE") == "Legacy of the Master Booster Box Case"
+              and sm("Bandai - One Piece Card Game: ST-19 Starter Deck 19", ["ST19"], "CASE") == "Starter Deck 19: BLACK Smoker Display Case",
+              str([sm(ib8, ["IB08"], "CASE"), sm("Bandai - One Piece Card Game: OP-12 Booster Box", ["OP12"], "CASE"), sm("Bandai - One Piece Card Game: ST-19 Starter Deck 19", ["ST19"], "CASE")]))
+        check("...control: with no case in the catalogue a case matches nothing -- IB-04 (the single box is there)", sm("Bandai - One Piece Card Game: IB-04 Illustration Box 04", ["IB04"], "CASE") is None,
+              str(sm("Bandai - One Piece Card Game: IB-04 Illustration Box 04", ["IB04"], "CASE")))
+        check("...control: a box or a display never matches the case beside it", sm(ib8, ["IB08"], "BOX") == "One Piece Card Game Illustration Box Vol. 8"
+              and sm("Bandai - One Piece Card Game: ST-19 Starter Deck 19", ["ST19"], "DISPLAY") == "Starter Deck 19: BLACK Smoker Display", str([sm(ib8, ["IB08"], "BOX"), sm("Bandai - One Piece Card Game: ST-19 Starter Deck 19", ["ST19"], "DISPLAY")]))
     ev = json.load(open(os.path.join(fx, "events_us.json")))["events"]
     ok &= roster.selftest(ev, roster.zcta())
     # take 92, landmine 130: a failed rebuild keeps the roster AND the events table
@@ -342,6 +397,8 @@ if __name__ == "__main__":
         raise SystemExit(0 if carry_over(os.path.dirname(a.out)) >= 0 else 1)
     if a.selftest:
         print("hunt.py parsers against saved real responses:"); raise SystemExit(0 if selftest() else 1)
+    if "feed" not in os.path.basename(a.out):   # take 112: the sidecars below are named by replacing "feed", so any other name wrote the history over the feed
+        ap.error(f"--out must name a feed file such as feed.json or feed-fixture.json, not {os.path.basename(a.out)}: its stores, shops, events and history are named from it")
     prev = None if a.from_fixtures else load_previous(a.out, "feed.json")
     if prev:
         print(f"   previous feed: {prev.get('fetched_at')} (cursor {prev.get('sources', {}).get('target', {}).get('cursor')})")
@@ -395,4 +452,14 @@ if __name__ == "__main__":
               f"{st('preorder')} preorders open, {st('coming')} coming, {st('in_stock')} in stock, {st('call')} call; {g.get('calls')} call(s)")
     else:
         print(f"   gts: FAILED {g.get('error')}")
+    so = feed["sources"]["southern"]
+    if so.get("kept"):
+        print(f"   southern: this fetch FAILED ({so.get('error')}); kept the last good fetch from {so.get('fetched_at')} (stale since {so.get('stale_since')})")
+    elif so.get("ok"):
+        n = so["items"]; st = lambda s: sum(1 for i in n if i["state"] == s)   # noqa: E731
+        print(f"   southern: {len(n)} of {so.get('count')} products ({sum(1 for i in n if i.get('catalog_id'))} matched), {st('orders_open')} open to orders, {st('orders_closed')} closed, {st('released')} released, "
+              f"{sum(1 for i in n if (i.get('page') or {}).get('restricted'))} in-store only; pages: {so.get('pages_read')} read, {so.get('pages_failed')} failed, {sum(1 for i in n if i.get('page'))} on file; {so.get('calls')} call(s)"
+              + (f"; the budget was spent, {so.get('pages_skipped')} page(s) wait for the next run" if so.get("budget_spent") else ""))
+    else:
+        print(f"   southern: FAILED {so.get('error')}")
     print(f"   feed: {os.path.relpath(a.out, ROOT)} {os.path.getsize(a.out) // 1024} KB")

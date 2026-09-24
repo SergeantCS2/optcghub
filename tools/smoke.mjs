@@ -1969,20 +1969,38 @@ ok('Diagnostics names the distributor beside the feed', /, gts \$\{HUNT\.feed\.s
 V.HUNT.feed = F94; V.HUNT.setZip(''); V.MODE.set('hunt', false); V.SEALED.kind = 'all'; V.SEALED.q = '';   // a known state: earlier sections leave a kind chip or a search behind
 for (const id of Object.keys(V.HUNT.distByCatalogId())) { const p = V.CAT.byId.get(+id); if (p) { V.SEALED.closed.delete(p.set); V.SEALED.open.add(p.set); } }
 V.paintSealed(); const h94 = ctx.document.querySelector('#sealedList').innerHTML;
-ok('the matched products\' rows are on screen (their sets opened)', Object.keys(V.HUNT.distByCatalogId()).every(id => new RegExp('data-open="' + id + '"').test(h94)), `${Object.keys(V.HUNT.distByCatalogId()).length} matched, kind ${V.SEALED.kind}, q "${V.SEALED.q}"`);
-ok('the Sealed screen carries a GTS Distribution panel with the counts and what a distributor is', /<h3>GTS Distribution<\/h3>/.test(h94) && /11 One Piece products at the distributor: <b>7<\/b> sold out, <b>8<\/b> allocated, 0 with preorders open, 1 coming, 1 in stock for stores/.test(h94) && /A distributor sells to stores, not to you/.test(h94));
-ok('a matched row carries the distributor line in its words: sold out, allocated, MSRP named as MSRP with the case configuration, the release date, the age',
-   new RegExp('data-open="' + by.BJP2850164.catalog_id + '"[\\s\\S]*?GTS Distribution · sold out · allocated · MSRP \\$119\\.76 \\(12 cards / 24 packs / 12 displays\\) · release 2026-06-12 · (just now|\\d+ min ago)').test(h94),
-   (h94.match(/GTS Distribution · [^<]{0,140}/) || ['no distributor line in #sealedList'])[0]);
-ok('a coming preorder says when it opens, on the Releases list (no catalogue product to hang it on)', (() => { V.paintReleases(); return /PREMIUM EXTRA BOOSTER \(PEB01\)[\s\S]*?GTS Distribution · preorders open on 2026-10-14 · allocated · MSRP/.test(ctx.document.querySelector('#relList').innerHTML); })());
+/* take 112: Sealed lists priced products; Southern Hobby's DP-13 matched the Vol. 13 Display, which has no market price yet */
+ok('the matched products\' rows are on screen (their sets opened) -- every one Sealed lists, a priced product', Object.keys(V.HUNT.distByCatalogId()).filter(id => V.SEALED.isProduct(V.CAT.byId.get(+id))).every(id => new RegExp('data-open="' + id + '"').test(h94)), `${Object.keys(V.HUNT.distByCatalogId()).length} matched, kind ${V.SEALED.kind}, q "${V.SEALED.q}"`);
+/* take 112, the owner's word ("I don't want them flooding the screen"): the distributors' panels sit under one closed
+   Distributor info; a row carries one short line per distributor, which opens its page at Distributor info */
+ok('the Sealed screen carries one closed Distributor info that says what it holds, and none of the panels\' text until it opens',
+   /data-distfold="sealed" aria-expanded="false"/.test(h94) && /<span class="ttl">Distributor info<\/span><span class="note">2 distributors · checked (just now|\d+ min ago)<\/span>/.test(h94) && !/One Piece products at the distributor/.test(h94),
+   (h94.match(/Distributor info[\s\S]{0,160}/) || ['no Distributor info on Sealed'])[0]);
+V.distFoldTap('sealed'); const h94o = ctx.document.querySelector('#sealedList').innerHTML; V.distFoldTap('sealed');
+ok('...opened, it carries GTS Distribution with the counts and what a distributor is, and a second tap closes it',
+   /data-distfold="sealed" aria-expanded="true"/.test(h94o) && /<b>GTS Distribution<\/b>/.test(h94o) && /11 One Piece products at the distributor: <b>7<\/b> sold out, <b>8<\/b> allocated, 0 with preorders open, 1 coming, 1 in stock for stores/.test(h94o) && /A distributor sells to stores, not to you/.test(h94o)
+   && /data-distfold="sealed" aria-expanded="false"/.test(ctx.document.querySelector('#sealedList').innerHTML));
+ok('a matched row carries one short line per distributor under its chips -- its name and its state -- which opens its page at Distributor info',
+   new RegExp('data-open="' + by.BJP2850164.catalog_id + '" data-distinfo="1" aria-label="GTS Distribution · sold out: open [^"]+ at Distributor info"><span>GTS Distribution · sold out</span>').test(h94),
+   (h94.match(/<button class="dline"[^>]*>[^<]*<span>[^<]*/) || ['no distributor line in #sealedList'])[0]);
+const pg94 = V.CAT.byId.get(by.BJP2850164.catalog_id); V.openDetail(pg94.id, { dist: true }); const d94 = ctx.document.querySelector('#dDist').innerHTML;
+ok('...and there, open, the distributor\'s full words: sold out, allocated, MSRP named as MSRP with the case configuration, the release date, the age, and its own page',
+   /data-distfold="detail" aria-expanded="true"/.test(d94) && /GTS Distribution<\/b><span>sold out · allocated · MSRP \$119\.76 \(12 cards \/ 24 packs \/ 12 displays\) · release Jun 12 · (just now|\d+ min ago)<\/span>/.test(d94) && /href="https:\/\/www\.gtsdistribution\.com\/[^"]+" target="_blank" rel="noopener"/.test(d94),
+   d94.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 300));
+while (V.closeAnyOverlay()) {} V.go('sealed');
+ok('a coming preorder says when it opens, under Releases\' Distributor info (no catalogue product to hang it on)', (() => { V.DISTF.open.add('releases'); V.paintReleases(); const r = /PREMIUM EXTRA BOOSTER \(PEB01\)[\s\S]*?GTS Distribution · preorders open on Oct 14 · allocated · MSRP/.test(ctx.document.querySelector('#relList').innerHTML); V.DISTF.open.delete('releases'); return r; })());
 const dead94 = JSON.parse(JSON.stringify(F94)); dead94.sources.gts = { ok: false, error: 'HTTP 403', fetched_at: F94.fetched_at, stale_since: F94.fetched_at, items: [] };
-V.HUNT.feed = dead94; V.paintSealed(); V.paintReleases();
-ok('a failed distributor fetch says it could not reach GTS Distribution and since when, on Sealed and on Releases, never an empty list', /Could not reach GTS Distribution since/.test(ctx.document.querySelector('#sealedList').innerHTML) && /Could not reach GTS Distribution since/.test(ctx.document.querySelector('#relList').innerHTML));
-V.HUNT.feed = F94; V.paintReleases(); const rel94 = ctx.document.querySelector('#relList').innerHTML;
-ok('Releases lists what the distributor has that the catalogue lacks, by release date, with the codes: OP-19 first, then PEB-01 and ST44',
-   /<h3>At the distributor, not in the catalogue yet<\/h3>/.test(rel94) && /BOOSTER \(OP-19\)[\s\S]*?<span>OP19<\/span>[\s\S]*?PEB01[\s\S]*?ST44/.test(rel94) && rel94.slice(rel94.indexOf('At the distributor'), rel94.indexOf('<h3>Recent</h3>')).split('class="row"').length === 4,
-   (rel94.match(/At the distributor[\s\S]{0,700}/) || ['no distributor panel in #relList'])[0].replace(/\s+/g, ' '));
-ok('the OP18 row (in the catalogue, releasing 2026-11-20) carries the distributor line: sold out, allocated', /<span>OP18 · [^<]*<\/span><span style="display:block;color:var\(--brass\)">GTS Distribution · sold out · allocated/.test(rel94));
+V.HUNT.feed = dead94; V.DISTF.open.add('sealed'); V.DISTF.open.add('releases'); V.paintSealed(); V.paintReleases();
+ok('a failed distributor fetch says it could not reach GTS Distribution and since when, under Distributor info on Sealed and on Releases, never an empty list', /Could not reach GTS Distribution since/.test(ctx.document.querySelector('#sealedList').innerHTML) && /Could not reach GTS Distribution since/.test(ctx.document.querySelector('#relList').innerHTML));
+V.DISTF.open.clear(); V.paintSealed(); V.paintReleases();
+ok('...and closed, the Distributor info line says one was not reached', /1 not reached/.test(ctx.document.querySelector('#sealedList').innerHTML) && /1 not reached/.test(ctx.document.querySelector('#relList').innerHTML));
+V.HUNT.feed = F94; V.DISTF.open.add('releases'); V.paintReleases(); const rel94 = ctx.document.querySelector('#relList').innerHTML; V.DISTF.open.delete('releases');
+/* take 112: two distributors in the panel -- GTS's three rows keep their order among Southern Hobby's */
+const panel94 = rel94.slice(rel94.indexOf('At the distributors'), rel94.indexOf('<h3>Recent</h3>'));
+const gtsRows94 = [...panel94.matchAll(/<b style="white-space:normal">[^<]*<\/b><span>([^<]*)<\/span><span style="display:block;color:var\(--brass\)">GTS Distribution/g)].map(m => m[1]);
+ok('Releases lists what the distributors have that the catalogue lacks, by release date, with the codes: GTS\'s OP-19 first, then PEB-01 and ST44',
+   /data-distfold="releases" aria-expanded="true"/.test(rel94) && /At the distributors, not in the catalogue yet<\/div>/.test(rel94) && /BOOSTER \(OP-19\)[\s\S]*?<span>OP19<\/span>/.test(panel94) && gtsRows94.join() === 'OP19,PEB01,ST44', gtsRows94.join() || (rel94.match(/At the distributor[\s\S]{0,700}/) || ['no distributor panel in #relList'])[0].replace(/\s+/g, ' '));
+ok('the OP18 row (in the catalogue, releasing 2026-11-20) carries the distributor\'s short line: its name and its state', /<span>OP18 · [^<]*<\/span><span style="display:block;color:var\(--brass\)">GTS Distribution · sold out<\/span>/.test(rel94));
 ok('control: a set the distributor does not list (OP17) carries no distributor line', /<span>OP17 · [^<]*<\/span><\/div>/.test(rel94) && !/<span>OP17 · [^<]*<\/span><span[^>]*>GTS/.test(rel94));
 /* the alert source */
 const watched94 = V.CAT.byId.get(by.BJP2850164.catalog_id);
@@ -2045,17 +2063,24 @@ const shop96 = V.LOCAL.shops.shops[0]; V.LOCAL.stores.stores.push({ name: shop96
 const gtsIt96 = V.HUNT.feed.sources.gts.items.find(i => i.catalog_id); const pG = V.CAT.byId.get(gtsIt96.catalog_id);
 const srcG = V.buySources(pG);
 ok('a sealed product always has TCGplayer first, at its own product page from the catalogue id, with no parameter, the market price and its date as the note', srcG[0].label === 'TCGplayer' && srcG[0].url === 'https://www.tcgplayer.com/product/' + pG.id && !/[?#]/.test(srcG[0].url) && /market · [A-Z][a-z]{2} \d{1,2}(, \d{4})?$/.test(srcG[0].note), JSON.stringify(srcG[0]));   /* take 110: the day in words */
-ok('a product the distributor lists has the distributor as a source, in its words, saying to stores, at its own page', srcG.some(s => s.kind === 'dist' && s.label === 'GTS Distribution' && /sold out · allocated · to stores/.test(s.note) && /^https:\/\/www\.gtsdistribution\.com\//.test(s.url)), JSON.stringify(srcG.map(s => s.label)));
+/* take 112, the owner's word: the distributors left the buy list for the page's Distributor info -- they sell to stores */
+ok('a product the distributor lists has no distributor among its buy sources', !srcG.some(s => s.kind === 'dist'), JSON.stringify(srcG.map(s => s.label)));
+V.openDetail(pG.id); const dd96 = ctx.document.getElementById('dDist') || { hidden: true, innerHTML: '' };   // a page without the panel fails here, it does not throw
+ok('...its page carries Distributor info, closed when the page was opened from its row', dd96.hidden === false && /data-distfold="detail" aria-expanded="false"/.test(dd96.innerHTML) && !/gtsdistribution\.com/.test(dd96.innerHTML));
+V.distFoldTap('detail');
+ok('...and opened, the distributor in its words, at its own page in the browser', /GTS Distribution<\/b><span>sold out · allocated · /.test(dd96.innerHTML) && /href="https:\/\/www\.gtsdistribution\.com\/[^"]+" target="_blank" rel="noopener"/.test(dd96.innerHTML), dd96.innerHTML.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 200));
+V.distFoldTap('detail'); while (V.closeAnyOverlay()) {}
 const shopIt96 = shop96.sealed.find(i => i.catalog_id); const pS = V.CAT.byId.get(shopIt96.catalog_id);
 const srcS = V.buySources(pS); const local96 = srcS.find(s => s.kind === 'local');
 ok('a product a local shop lists has the shop as a source: its storefront link, price and stock, and the roster\'s street address, phone and distance', !!local96 && local96.label === shop96.name && local96.url === shopIt96.url && /\$/.test(local96.note) && local96.addr === '1 Main St, Waterford' && local96.phone === '2485550100' && typeof local96.mi === 'number', JSON.stringify(local96));
 /* the rows */
 V.MODE.set('hunt', false); V.SEALED.q = ''; V.SEALED.kind = 'all'; for (const p of [pG, pS]) { V.SEALED.closed.delete(p.set); V.SEALED.open.add(p.set); } V.paintSealed();
 const h96 = ctx.document.getElementById('sealedList').innerHTML;
-ok('every sealed row carries a chip strip, and every strip sits after the row\'s buttons, never inside one', count96(h96, /data-open="/g) > 0 && count96(h96, /<div class="chips buy"/g) === count96(h96, /data-open="/g) && count96(h96, /<\/button><div class="chips buy"/g) === count96(h96, /<div class="chips buy"/g), `${count96(h96, /<div class="chips buy"/g)} strips for ${count96(h96, /data-open="/g)} rows`);
+ok('every sealed row carries a chip strip, and every strip sits after the row\'s buttons, never inside one (a distributor line opens a page too, and is no row)', count96(h96, /data-open="\d+">/g) > 0 && count96(h96, /<div class="chips buy"/g) === count96(h96, /data-open="\d+">/g) && count96(h96, /<\/button><div class="chips buy"/g) === count96(h96, /<div class="chips buy"/g), `${count96(h96, /<div class="chips buy"/g)} strips for ${count96(h96, /data-open="\d+">/g)} rows`);
 const strip96 = (h, id) => { const r = h.slice(h.indexOf('data-open="' + id + '"')); const a = r.indexOf('<div class="chips buy"'); return r.slice(a, r.indexOf('</div>', a) + 6); };
 const sG = strip96(h96, pG.id), sS = strip96(h96, pS.id);
-ok('the distributor-listed product\'s strip: a cart and TCGplayer ↗, a truck and GTS Distribution ↗, each to the seller\'s own page in the browser, no image', /g-cart/.test(sG) && /TCGplayer <svg[^>]*><use href="#g-external"/.test(sG) && /g-truck/.test(sG) && /GTS Distribution <svg[^>]*><use href="#g-external"/.test(sG) && !/<img/.test(sG) && count96(sG, /target="_blank" rel="noopener"/g) === count96(sG, /<a class="chip buy" href="http/g), sG.slice(0, 200));
+ok('the distributor-listed product\'s strip: a cart and TCGplayer ↗, to the seller\'s own page in the browser, no image -- and no distributor chip (take 112)', /g-cart/.test(sG) && /TCGplayer <svg[^>]*><use href="#g-external"/.test(sG) && !/g-truck/.test(sG) && !/GTS Distribution/.test(sG) && !/<img/.test(sG) && count96(sG, /target="_blank" rel="noopener"/g) === count96(sG, /<a class="chip buy" href="http/g), sG.slice(0, 200));
+ok('...under the strip, the distributor\'s short line, opening the page at Distributor info', h96.slice(h96.indexOf(sG) + sG.length).startsWith(`<div class="dlines"><button class="dline" data-open="${pG.id}" data-distinfo="1"`), h96.slice(h96.indexOf(sG) + sG.length, h96.indexOf(sG) + sG.length + 120));
 ok('the shop-listed product\'s strip: a pin and the shop\'s name ↗, and a handset Call chip with a tel: link', /g-pin/.test(sS) && new RegExp(shop96.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' <svg[^>]*><use href="#g-external"').test(sS) && /href="tel:2485550100"/.test(sS) && /g-phone/.test(sS), sS.slice(0, 240));
 /* the sheet */
 V.openDetail(pS.id); const l96 = ctx.document.getElementById('dBuyList').innerHTML;
@@ -2105,11 +2130,11 @@ const fxDir97 = fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-rel-')); const f
 execSync(`python3 tools/hunt.py --from-fixtures --out ${feed97}`, { cwd: ROOT, stdio: 'pipe' });
 const F97 = JSON.parse(fs.readFileSync(feed97, 'utf8')); const st44 = F97.sources.gts.items.find(i => i.sku === 'BJP2904577');
 F97.sources.gts.items.push({ ...st44, sku: 'BJP2904574', name: 'ONE PIECE TCG: TITLE TBA STARTER DECK [ST43] (6CT)', codes: ['ST43'] });   // a second display on the same day, from the saved page's shape
-V.HUNT.feed = F97; V.RELF.open = new Set(); V.paintReleases(); const r97d = ctx.document.getElementById('relList').innerHTML;
-ok('two unlisted starter-deck displays on one release day fold into one distributor row naming the range', /Starter decks ST43–ST44/.test(r97d) && /2 starter deck displays, one release day/.test(r97d) && !/STARTER DECK \[ST44\]/.test(r97d) && /data-relfold="d:2027-04-23"/.test(r97d));
-V.RELF.open.add('d:2027-04-23'); V.paintReleases();
+V.HUNT.feed = F97; V.RELF.open = new Set(); V.DISTF.open.add('releases'); V.paintReleases(); const r97d = ctx.document.getElementById('relList').innerHTML;   /* take 112: the list sits under Distributor info */
+ok('two unlisted starter-deck displays on one release day fold into one distributor row naming the range', /Starter decks ST43–ST44/.test(r97d) && /2 starter deck displays, one release day/.test(r97d) && !/STARTER DECK \[ST44\]/.test(r97d) && /data-relfold="d:gts:2027-04-23"/.test(r97d));   /* take 112: the fold key names its distributor -- two can share a day */
+V.RELF.open.add('d:gts:2027-04-23'); V.paintReleases();
 ok('...and open, both displays are listed', /STARTER DECK \[ST44\]/.test(ctx.document.getElementById('relList').innerHTML) && /STARTER DECK \[ST43\]/.test(ctx.document.getElementById('relList').innerHTML));
-V.RELF.open = new Set(); V.HUNT.feed = null; V.RELALERTS.list = []; V.MODE.set('collect', false); V.go('home');
+V.RELF.open = new Set(); V.DISTF.open.clear(); V.HUNT.feed = null; V.RELALERTS.list = []; V.MODE.set('collect', false); V.go('home');
 }
 
 section('take 98 — the take-97 look: Back from a sheet goes back (landmine 137), the most-valuable rows open, one splash colour, a toast that wraps, the decks fold, a condition tap that works');
@@ -2367,10 +2392,11 @@ section('take 108 — controls and icons (A42): every icon a sprite symbol with 
   { const fb = ctx.document.querySelector('#favOnly'); fb._ev.click({ target: fb, preventDefault() {} });
     ok('tapping favourites presses the star and says so', fb.getAttribute('aria-pressed') === 'true' && fb.classList.contains('on'));
     fb._ev.click({ target: fb, preventDefault() {} }); }
-  /* a painter that names its own G (the distributor feed) must not call it for a glyph: the helpers close over the real one */
+  /* a painter that names its own G (the distributor feed) must not call it for a glyph: the helpers close over the real one.
+     Take 112: two such painters now (Sealed, the stock alert) -- Releases reads HUNT.dist() and names no G */
   const shadowed = [...js.matchAll(/const G = HUNT\.feed/g)].map(m => { const rest = js.slice(m.index); const end = rest.search(/\n\}\n/); return rest.slice(0, end < 0 ? 4000 : end); });
   ok('no painter that names its own G calls it for a glyph (a TypeError at the first paint); chev, ext, tick and bell close over the real one',
-     shadowed.length >= 3 && shadowed.every(b => !/\bG\('/.test(b)) && /const chev = \(open, size = 16\) => G\('chevron'/.test(js) && /const bell = \(on, size = 18\) => G\('bell'/.test(js));
+     shadowed.length >= 2 && shadowed.every(b => !/\bG\('/.test(b)) && /const chev = \(open, size = 16\) => G\('chevron'/.test(js) && /const bell = \(on, size = 18\) => G\('bell'/.test(js));
   ok('...control: a glyph call inside such a painter is caught', !/\bG\('/.test(shadowed[0]) && /\bG\('/.test(shadowed[0] + " G('chevron')"));
   /* the targets and the states, in the CSS (render measures them in Chrome) */
   ok('pressed: every control lightens, the compact ones give a little; disabled: switched off, and the pointer says so',
@@ -2880,6 +2906,91 @@ section('take 111 — the last look (A42): every screen at both of the Fold\'s s
      /class="row bulkrow"/.test(html) && /\.bulkrow\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\);grid-template-areas:"nm nm x" "c m d"/.test(css) && /\.bulkrow\{grid-template-columns:minmax\(0,1fr\) repeat\(4,auto\);grid-template-areas:"nm c m d x"\}/.test(css));
   ok('Scan\'s note under the camera keeps the page\'s margins (the camera runs edge to edge; the note ran with it)', /#scan \.unlim\{margin-left:var\(--pad\);margin-right:var\(--pad\)\}/.test(css));
 }
+
+section('take 112 — A32\'s second distributor: Southern Hobby, read off its real pages (dates, not stock words)');
+{ const fxDir = fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-sh-')); const feedF = path.join(fxDir, 'feed-fixture.json');
+  execSync(`python3 tools/hunt.py --from-fixtures --out ${feedF}`, { cwd: ROOT, stdio: 'pipe' });
+  const F = JSON.parse(fs.readFileSync(feedF, 'utf8')); const S = F.sources.southern || {}; const it = Object.fromEntries((S.items || []).map(i => [i.id, i]));
+  const n = st => (S.items || []).filter(i => i.state === st).length;
+  ok('the feed carries Southern Hobby: ok, the footer\'s count and its twenty rows, three product pages on file, the states from the dates (1 open, 18 closed, 1 released)',
+     S.ok === true && S.count === 20 && (S.items || []).length === 20 && S.items.filter(i => i.page).length === 3 && n('orders_open') === 1 && n('orders_closed') === 18 && n('released') === 1,
+     JSON.stringify({ ok: S.ok, count: S.count, pages: (S.items || []).filter(i => i.page).length, open: n('orders_open'), closed: n('orders_closed'), released: n('released') }));
+  ok('every item: its page on the distributor, its item number, ISO dates or none; the set code from the item number (DP14 where the name says DP-15)',
+     (S.items || []).every(i => /^https:\/\/www\.southernhobby\.com\/[^"]+\/p\d+\/$/.test(i.url) && i.item && (i.release === null || /^\d{4}-\d\d-\d\d$/.test(i.release)) && (i.due === null || /^\d{4}-\d\d-\d\d$/.test(i.due)))
+     && it['81328'] && it['81328'].codes.join() === 'DP14' && /DP-15/.test(it['81328'].name));
+  ok('the history rows carry each item\'s state (the timeline\'s input), and the app never fetches the distributor',
+     (() => { const h = JSON.parse(fs.readFileSync(path.join(fxDir, 'history-fixture.json'), 'utf8')); return h.runs[0].southern && h.runs[0].southern['81327'] === 'orders_closed' && Object.keys(h.runs[0].southern).length === 20; })() && !/southernhobby\.com/.test(js));
+  ok('Diagnostics names Southern Hobby beside GTS', /, southern \$\{HUNT\.feed\.sources && HUNT\.feed\.sources\.southern/.test(js));
+  /* on screen -- take 112, the owner's word: "I don't want them flooding the screen". A row carries each distributor
+     as one short line that opens the product's page at Distributor info; the long text sits under closed drop-downs */
+  V.HUNT.feed = F; V.HUNT.setZip(''); V.MODE.set('hunt', false); V.SEALED.kind = 'all'; V.SEALED.q = ''; V.DISTF.open.clear();
+  const eb05 = V.CAT.byId.get(it['78743'] && it['78743'].catalog_id), op18 = V.CAT.byId.get(it['79311'] && it['79311'].catalog_id);
+  for (const p of [eb05, op18]) if (p) { V.SEALED.closed.delete(p.set); V.SEALED.open.add(p.set); }
+  V.paintSealed(); const h = ctx.document.querySelector('#sealedList').innerHTML;
+  ok('the EB-05 pack (matched) carries Southern Hobby as one short line under its chips: its name and its state, opening its page at Distributor info',
+     !!eb05 && new RegExp('<button class="dline" data-open="' + eb05.id + '" data-distinfo="1" aria-label="[^"]*"><span>Southern Hobby · orders closed May\u00a017</span>').test(h), (h.match(/<span>Southern Hobby · [^<]{0,60}/) || ['no Southern Hobby line on Sealed'])[0]);
+  const nm = id => { const i = h.indexOf('data-open="' + id + '">'); const j = h.indexOf('<div class="v">', i); return i < 0 ? '' : h.slice(i, j); };
+  const eb05it = V.HUNT.distItems().find(x => x._d === 'southern' && x.id === '78743');
+  ok('a short line\'s day never breaks: its month and day are joined by a non-breaking space', !!eb05it && V.distShort(eb05it) === 'Southern Hobby · orders closed May\u00a017', JSON.stringify(eb05it && V.distShort(eb05it)));
+  ok('...control: the day in words by itself breaks at its space', V.dayText('2026-05-17') === 'May 17');
+  ok('...no row floods: no distributor\'s words inside any row\'s name block -- no MSRP, no release, no age', !!eb05 && !!op18 && [eb05, op18].every(p => { const t = nm(p.id); return t && !/GTS Distribution|Southern Hobby|MSRP|release [A-Z]/.test(t); }), nm(op18 && op18.id).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 200));
+  ok('...control: the take-111 row carried them there (the line this take moved)', /Southern Hobby · stores’ orders closed May 17 · release Oct 30 · in-store only/.test('<div class="nm"><b>x</b><span>Southern Hobby · stores’ orders closed May 17 · release Oct 30 · in-store only · just now</span></div>'));
+  V.openDetail(eb05.id, { dist: true }); const dd = ctx.document.querySelector('#dDist').innerHTML;
+  ok('...its page, reached from that line, opens at Distributor info with the full words -- stores’ orders closed May 17, release Oct 30, in-store only, when it was read -- and Southern Hobby\'s own page',
+     /data-distfold="detail" aria-expanded="true"/.test(dd) && /Southern Hobby<\/b><span>stores’ orders closed May 17 · release Oct 30 · in-store only · (just now|\d+ min ago)<\/span>/.test(dd) && dd.includes(`href="${it['78743'].url}" target="_blank" rel="noopener"`), dd.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 300));
+  V.openDetail(eb05.id); const dc = ctx.document.querySelector('#dDist').innerHTML;
+  ok('...control: opened from its row, the page\'s Distributor info is there and closed', /data-distfold="detail" aria-expanded="false"/.test(dc) && !/in-store only/.test(dc));
+  ok('the open handler passes a distributor line\'s wish to the page, and only its', /else openDetail\(id, \{ dist: !!t\.dataset\.distinfo \}\);/.test(js) && /data-distinfo="1"/.test(js));
+  while (V.closeAnyOverlay()) {} V.go('sealed');
+  ok('Where to buy offers no distributor now: they sell to stores, and their words are under Distributor info', eb05 && !V.buySources(eb05).some(s => s.kind === 'dist'), JSON.stringify(eb05 && V.buySources(eb05).map(s => s.label)));
+  ok('Sealed carries one closed Distributor info saying how many distributors and when they were checked', /data-distfold="sealed" aria-expanded="false"/.test(h) && /<span class="note">2 distributors · checked (just now|\d+ min ago)<\/span>/.test(h) && !/listed to stores/.test(h));
+  V.distFoldTap('sealed'); const ho = ctx.document.querySelector('#sealedList').innerHTML; V.distFoldTap('sealed');
+  ok('...opened: Southern Hobby\'s counts from its dates, the in-store count from the pages read, and why allocation goes unsaid',
+     /<b>Southern Hobby<\/b>/.test(ho) && /20 One Piece products listed to stores: <b>1<\/b> still taking their orders, 18 with orders closed, 1 released; 1 in-store only \(3 of 20 product pages read so far\)/.test(ho)
+     && /marks every One Piece presell subject to allocation, so that says nothing about one product/.test(ho), (ho.match(/<b>Southern Hobby<\/b>[\s\S]{0,300}/) || ['no Southern Hobby section'])[0].replace(/\s+/g, ' '));
+  V.paintReleases(); const rc = ctx.document.querySelector('#relList').innerHTML;
+  const op18row = (rc.match(/<span>OP18 · [^<]*<\/span>((?:<span style="display:block;color:var\(--brass\)">[^<]*<\/span>)*)/) || ['', ''])[1];
+  const lines18 = (op18row.match(/<span style="display:block;color:var\(--brass\)">/g) || []).length;
+  ok('the OP18 row on Releases carries one short line from each distributor: GTS\'s, then Southern Hobby\'s for the set\'s own box', lines18 === 2 && /GTS Distribution · sold out<\/span><span style="display:block;color:var\(--brass\)">Southern Hobby · orders closed May\u00a029<\/span>/.test(op18row), op18row.replace(/<[^>]+>/g, ' | '));
+  const sh18 = (S.items || []).filter(i => i.catalog_id && (V.CAT.byId.get(i.catalog_id) || {}).set === (op18 || {}).set);
+  ok('...control: Southern Hobby matched more than one product into that set (the box and the DP-13 display), so one line each is a choice, not the data', sh18.length >= 2, String(sh18.length));
+  /* 17 = GTS's OP-19, PEB-01 and ST44 display + Southern Hobby's IB-09, IB-10, ST-37, ST-38, EB-06, DP14, OP-19, PEB-01 and
+     ST-39 to ST-44 (the look counted 11 rows: the starter-deck displays fold by day) */
+  ok('Releases\' not-in-the-catalogue list sits under one closed Distributor info that says how long it is', /data-distfold="releases" aria-expanded="false"/.test(rc) && /<span class="note">17 products not in the catalogue yet · 2 distributors · checked (just now|\d+ min ago)<\/span>/.test(rc) && !/OP-19 Booster Box/.test(rc),
+     (rc.match(/data-distfold="releases"[\s\S]{0,260}/) || ['no Distributor info on Releases'])[0]);
+  V.distFoldTap('releases'); const r = ctx.document.querySelector('#relList').innerHTML; V.distFoldTap('releases');
+  const panel = r.slice(r.indexOf('At the distributors'), r.indexOf('<h3>Recent</h3>'));
+  ok('...opened, it carries Southern Hobby\'s: PEB-01 still taking stores’ orders until Oct 14, OP-19 with its prerelease, and ST39–ST44 folded on their day',
+     /PEB01<\/span><span style="display:block;color:var\(--brass\)">Southern Hobby · stores order by Oct 14 · release Apr 23, 2027/.test(panel) && /OP-19 Booster Box<\/b><span>OP19<\/span><span style="display:block;color:var\(--brass\)">Southern Hobby · stores’ orders closed Aug 26 · release Mar 5, 2027 · prerelease Feb 26, 2027/.test(panel)
+     && /Starter decks ST39–ST44<\/b><span>6 starter deck displays, one release day/.test(panel) && /data-relfold="d:southern:2027-04-23"/.test(panel), panel.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 400));
+  ok('...each fold names its distributor: GTS\'s and Southern Hobby\'s displays of one day never share a key', !/data-relfold="d:2027-04-23"/.test(r) && /Checked GTS Distribution [^,]+, Southern Hobby /.test(panel));
+  const iso = t => /(GTS Distribution|Southern Hobby) · [^<]*\b\d{4}-\d\d-\d\d\b/.test(t) || /(GTS Distribution|Southern Hobby)<\/b><span>[^<]*\b\d{4}-\d\d-\d\d\b/.test(t);
+  ok('every day on a distributor line is in words, as everywhere else -- the rows, the open lists and a page\'s Distributor info', !iso(h) && !iso(ho) && !iso(rc) && !iso(r) && !iso(dd) && /GTS Distribution · sold out · allocated · [^<]*· release Mar 5, 2027 · /.test(r), (String(h + ho + rc + r + dd).match(/(GTS Distribution|Southern Hobby)(<\/b><span>| · )[^<]*\d{4}-\d\d-\d\d[^<]*/) || [''])[0]);
+  ok('...control: an ISO day on either shape of line is caught', iso('<span>GTS Distribution · sold out · release 2026-06-12 · just now</span>') && iso('<b>Southern Hobby</b><span>released 2026-09-18</span>'));
+  /* no stock words, so no stock alert */
+  if (eb05) { V.STOCK.list = []; V.STOCK.toggle(eb05.id); }
+  const src = eb05 ? V.STOCK.sourcesFor(eb05.id) : [];
+  ok('Southern Hobby is no stock-alert source -- it publishes no availability to flip', !!eb05 && !src.some(x => /^southern:/.test(x.key)), JSON.stringify(src.map(x => x.key)));
+  if (eb05) V.STOCK.toggle(eb05.id); V.STOCK.list = [];
+  /* a source that fails */
+  const dead = JSON.parse(JSON.stringify(F)); dead.sources.southern = { ok: false, error: 'HTTP 503', fetched_at: F.fetched_at, stale_since: F.fetched_at, items: [] };
+  V.HUNT.feed = dead; V.DISTF.open.add('sealed'); V.DISTF.open.add('releases'); V.paintSealed(); V.paintReleases();
+  const hd = ctx.document.querySelector('#sealedList').innerHTML, rd = ctx.document.querySelector('#relList').innerHTML; V.DISTF.open.clear();
+  ok('a failed fetch says it could not reach Southern Hobby and since when, under Distributor info on Sealed and on Releases, while GTS\'s lines stay', /Could not reach Southern Hobby since/.test(hd) && /Could not reach Southern Hobby since/.test(rd) && /GTS Distribution · /.test(rd) && !/Southern Hobby · (stores|orders)/.test(hd + rd));
+  /* the look opened DP-13's display for its Southern Hobby chip: the host refuses its photo (403, a product too new
+     to have one), and the sheet stood an empty white frame -- white is a product photo's ground, and the placeholder
+     carried the number a product does not have */
+  const dp13d = V.CAT.byId.get(it['79312'] && it['79312'].catalog_id);
+  const code13 = dp13d ? ((V.CAT.sets.get(dp13d.set) || {}).abbr || '').replace(/-/g, '').slice(0, 5) : '';
+  if (dp13d) V.openDetail(dp13d.id); const art = ctx.document.querySelector('#dArt').innerHTML;
+  const css112 = (html.match(/<style>([\s\S]*?)<\/style>/) || [, ''])[1];
+  ok('a product\'s sheet labels its picture frame with its set\'s code on the row tile\'s ground, and turns white only under a photo that arrived',
+     !!dp13d && !!code13 && art.includes(`<span class="phl">${code13}</span>`) && /\.dhero \.art\.product\{background:linear-gradient\(160deg,var\(--brass2\),var\(--card2\)\)\}/.test(css112)
+     && /\.dhero \.art\.product:has\(img\.ref\.ok\)\{background:#fff\}/.test(css112) && !/\.dhero \.art\.product\{background:#fff\}/.test(css112), JSON.stringify({ code13, art: art.slice(0, 160) }));
+  const card112 = V.CAT.rows.find(x => !x.sealed && x.num && x.img); V.openDetail(card112.id); const artc = ctx.document.querySelector('#dArt').innerHTML;
+  ok('...control: a card\'s frame still carries its number, and no set pill', artc.includes(`>${card112.num}</div>`) && !/class="phl"/.test(artc), artc.slice(0, 120));
+  while (V.closeAnyOverlay()) {}
+  V.HUNT.feed = null; V.MODE.set('collect', false); V.go('home'); }
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
