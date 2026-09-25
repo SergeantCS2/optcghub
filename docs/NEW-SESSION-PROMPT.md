@@ -123,7 +123,21 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
     - Target's history line in days ("N checks over D days so far");
     - One Piece Collection Sets under its own name on Sealed, "sealed
       products only" on Search, and More's "85 sets";
-    - Diagnostics' lines (pictures, sealed products, the catalogue, storage).
+    - Diagnostics' lines (pictures, sealed products, the catalogue, storage);
+    - Collect's selected tints lighter (8 %, "not legal" 10 %) so every text
+      on them clears 4.5:1; the nav's active item on the opaque tint; the
+      splash's mark Collect's brass in every mode;
+    - chip counts and stat labels at 12 px, full strength;
+    - a trash glyph for every remove (g-minus is only "one fewer", g-close
+      only "close"); the external-link glyph on every link that leaves;
+    - a deck's Leader box in the card's colours when its picture fails;
+      trade and want rows at 32 px, the picker at 56 px;
+    - days in words on Local's events and in the reminders; keywords one
+      way; the Sim's buttons at three words with a note beside each; curled
+      apostrophes; set completion to one decimal;
+    - badged names that wrap in deck, trade, want and alert rows;
+    - Sealed's strips a little darker at their right end, the date white;
+      the deck-name field 44 px tall.
   - **Its open list:** UI-AUDIT's unticked boxes (§7, §8, "Found in
     passing") and A43's part for it. UI-AUDIT is the checklist with line
     numbers; tick a box only when every item its line names is done

@@ -22,8 +22,9 @@ everything.
 makes the scanner ask about cards it knows. A price alert typed in another
 currency keeps your figure. The binder turns to the right page. A
 distributor the app could not reach says so. A backup now runs on every
-save and keeps your stock alerts, reminders and notes. Some text is easier
-to read. Nothing you have saved changes.
+save and keeps your stock alerts, reminders and notes, and a restore can be
+undone. Remove buttons show a trash can. Some text is easier to read.
+Nothing you have saved changes.
 
 **New at take 114:** A sealed product's Distributor info now has, under
 each distributor, a "History" line you can tap. It opens what the app's
