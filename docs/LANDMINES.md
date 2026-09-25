@@ -186,6 +186,7 @@ Start here. Do not read top to bottom.
 | A field's meaning is taken from its key's name | **172** |
 | A cap on rows is recorded as a span of time | **173** |
 | A scratch copy writes the repo's own files | **174** |
+| A test's ratio of two prices goes red when one price moves | **175** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -2417,6 +2418,17 @@ row count and an assumed cadence.
 
 Rule: a scratch tree copies what a step writes, and links only what it
 reads. Run `git status` after.
+
+**175. A ratio of two prices is a price.** On 24 Sep 2026 main's nightly
+and take 114's PR check went red on smoke's "the SP is worth at least 100x
+the base". The catalogue and the app were right: EB03-024's base rose from
+$1.11 to $5.89 in five days while its SP held at $441.73, so the spread went
+from about 400x to 75x. Landmine 62 took the price pins out at take 6, and
+put this ratio in their place. The ratio encoded one market too.
+
+Rule: a data assertion states what the code guarantees (each printing carries
+its own price; a value keyed off the number gives one price, 1x), with room
+for the market. Give it a control built from the fault it guards against.
 
 ## §2 — Inherited from APEX ORV
 

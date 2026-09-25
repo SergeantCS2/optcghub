@@ -199,7 +199,7 @@ for word:
 ### Tests and the look
 
 Every new check was watched to fail on the build before it.
-- **smoke 1038/1038.**
+- **smoke 1039/1039** (1038 before the SP check below and its control).
   - On take 113's build: 31 failed, the new checks and the 6 changed pins.
   - On the build before the owner's answers: 4 failed, the tucked checks
     and the alert.
@@ -272,6 +272,26 @@ build before it, or by a sabotage asserted as landed:
 Not changed: "order due date ahead" on the due day itself. The owner
 approved the words, "stores order by Oct 14" is true that day, and GTS's own
 countdown hides on it (MEASURED).
+
+### The check that went red on the market (landmine 175)
+
+The PR's first `check` failed on one smoke line that is not this take's:
+"the SP is worth at least 100x the base", 75x.
+- Main's scheduled nightly had failed on the same line two minutes before,
+  on take 113's code (run 36075219383, 987/988). It opened issue #38.
+- It reproduced here on the same day's TCGCSV data.
+- The catalogue is right. EB03-024 has three printings, the SP is the
+  dearest and the base the cheapest. The base's market price rose from
+  $1.11 (Sep 19) to $5.89 (Sep 24), and the SP held at $441.73. The ratio
+  went from about 400x to 75x.
+- I proposed the fix on the PR and did not push it, because it was outside
+  this take. The owner ruled that take 114 carries it: "Carry it in 114".
+- **The fix:** the line now asks for an order of magnitude, "at least 10x".
+  What landmine 1 guards is that each printing carries its own price.
+  Its negative control, one price keyed off the card number (every printing
+  given the dearest's price, 1x), fails the same check.
+- Watched to fail: the old line fails on this data (75x); the new one
+  passes, and so does its control.
 
 ### What I got wrong
 

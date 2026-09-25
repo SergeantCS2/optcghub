@@ -27,7 +27,8 @@ dates. Nothing is added to a row. GTS's date is the day stores must order
 by, as GTS's own page labels it. The app used to call it the day preorders
 open, which was wrong. A stock alert watching GTS Distribution now fires
 only when GTS shows stock for stores, and no longer when a product's order
-due date passes. Your saved alerts stay.
+due date passes. Your saved alerts stay. The nightly catalogue build,
+which a price test stopped on 24 September, runs again.
 
 **New at take 113:** The app wears the icon the Play listing shows: the
 card-back emblem on a purple-bordered card over waves, with ドン!!. It is

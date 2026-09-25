@@ -136,9 +136,17 @@ ok('EB03-024 resolves to 3 printings', vivi.length === 3, `got ${vivi.length}`);
 ok('dearest is the SP', vivi[0].treat === 'sp', `${vivi[0]?.treat}`);
 ok('cheapest is the base',
    vivi[vivi.length - 1].treat === 'base', vivi[vivi.length - 1]?.treat);
-ok('the SP is worth at least 100x the base',
-   vivi[0].market / vivi[vivi.length - 1].market > 100,
-   (vivi[0].market / vivi[vivi.length - 1].market).toFixed(0) + 'x');
+/* Take 114: this said "at least 100x" and went red on 24 Sep 2026, on main's
+   nightly and on the take-114 PR alike, when the base rose from $1.11 to $5.89
+   in five days and the SP held at $441.73 (75x; it was ~400x on the 19th). A
+   ratio is a price too (landmine 62). What landmine 1 guards is that each
+   printing carries its own price: a value keyed off the number gives the three
+   one price, 1x. An order of magnitude says that with room for a market. */
+const priceSpan = ps => ps[0].market / ps[ps.length - 1].market;
+ok('the SP is worth at least 10x the base -- its own price, not the number\'s',
+   priceSpan(vivi) > 10, priceSpan(vivi).toFixed(0) + 'x');
+ok('negative control: one price keyed off the number (every printing the dearest\'s) is 1x, and fails that',
+   !(priceSpan(vivi.map(p => ({ ...p, market: vivi[0].market }))) > 10));
 ok('and the prices are plausible at all',
    vivi[0].market > 50 && vivi[vivi.length - 1].market < 50,
    `${vivi[0].market} / ${vivi[vivi.length - 1].market}`);
