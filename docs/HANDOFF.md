@@ -1,4 +1,161 @@
-# HANDOFF — through Take 115
+# HANDOFF — through Take 116
+
+## Take 116 — 2026-09-25 — the first-open experience: the opening screen and the guide in the store listing's frame
+
+Opened before any code (PROTOCOL §6) by the UI/UX session, on take 115's
+baseline: PR #40 merged at 14:32 UTC and Release take-115 built its APK and
+AAB at 14:42. Take 115's after-merge note, if one is needed, goes under
+take 115.
+
+The owner, word for word, over the drafts this session sent as pictures
+while take 115 was under review: "Tutorial is looking much better ... ensure
+we refine this a bit more"; "D2, S1 for sure"; on the picks from the numbered
+sheets, V5 (the band at 20vh, the card centred in the buff) and V3 (the app's
+own card as a square tile on the last page); "there's a black line separating
+the top from the bottom, the dot background gradient abruptly just cuts off,
+maybe it should fade into/under the blue top ... The gradient should also
+not go over the logo or any card/button ... Why don't we have a Hunt
+tutorial, this should also talk about local events/stock"; and, on the
+result, "Looks much better! Maybe some small refinement here or there, but
+i'm a massive fan".
+
+### What this take changes
+
+- **One scene.** The opening screen and the first-open guide share the store
+  listing's frame: a Prussian band with the word-mark and the three modes
+  under it, a buff sky, the app's own card (the icon, `bundle/icon.svg`) on a
+  calm sea. The grain of the icon's paper fades in under the sky and sits
+  under every element; there is no line at the band's foot. Every colour is
+  a literal of the scene, never the mode's (take 98's one splash colour,
+  kept), so the launch image `ci/icon.py` paints and the page are the same
+  picture, and the guide that follows is the same frame again.
+- **The guide is four pages,** one per mode and one for what stays on the
+  phone: Collect (the dearest card in the catalogue, with its picture), Prep
+  & Play (the Decks hero's Leader), Hunt ("Sealed prices, what is in stock at
+  stores near you, and the events and releases coming up." -- Sealed, Local
+  stock, Events, Releases -- the newest set's top card), Yours offline (the
+  app's own card as a square tile like the opening screen's). Each picture
+  is a real printing looked up when the guide opens, never a pinned id
+  (AGENTS rule 3); offline, the card's own colours with its name pill. Skip
+  and Next on pages 1-3; Look around first and Scan a card on page 4 (the
+  scanner, with Home under it).
+- **Next pages the strip** -- it never did (landmine 202). **The phone's
+  Back closes the guide unseen,** so it returns next launch -- it could not
+  see it (landmine 201). The guide is a dialog: `role="dialog"`,
+  `aria-modal`, a name, focus on the dialog itself so no button wears a ring
+  at first paint; the dots are indicators and the page is read out
+  (`#tourPage`, `aria-live`). A card is 100 % of the strip with a 16 px gap
+  (the neighbours peeked at 32 px narrower); the band is `--gband:
+  clamp(160px, 20vh, 232px)`; the card is centred in the buff up to 280 px;
+  the foot is capped at 520 px on the open Fold. The key is
+  `optcghub.guide.v3`, so everyone sees it once more; More keeps "Show the
+  guide again".
+- **The native launch image** is the same scene, painted by `ci/icon.py`:
+  the word-mark traced from the app's own faces with fontTools (the heavy
+  face is a variable font, instanced at 800; `fonttools brotli` join
+  `ci/deps.sh` and `ci/apk.sh`), the sea read off the page's own splash,
+  ground first, then the grain with the same fade, then the tile and the
+  sea; `check()` refuses any other image. `SPLASH_BG` is the band's
+  Prussian and `ci/apk.sh` writes it as `windowSplashScreenBackground` into
+  the launch theme, so the system splash, the window's image and the page
+  are one picture. The owner's `splash-bg.jpg` slot is retired (it was never
+  used); `assets/icon.svg` is copied beside the bundle for the page.
+
+### How it was built
+
+- Drafted and pre-built in a scratch copy of the tree on take 114 while take
+  115 was reviewed, as anchored patch scripts (every replacement asserts its
+  anchor), and proven there: smoke, render, the look at both sizes, and every
+  new guard watched red on take 114's build. Ported onto take 115's tree the
+  hour PR #40 opened: an anchor checker (every long literal of every script,
+  tested against the 114 and 115 trees) found five literals take 115 had
+  moved -- the splash block gained `#splash .swords`, `closeAnyOverlay`
+  answers the picker's prompt first, BUILD, the release title, render's
+  viewport comment -- each re-based; two hand edits the pre-build copy
+  carried outside its scripts, found by replaying the scripts on a fresh
+  tree (icon.py's docstring named the refused file; render's routing of the
+  bundle's own update check behind the proxy), became scripts of their own.
+- Three of take 115's lines met on the way, each answered rather than
+  loosened: every art template carries `loading="lazy"` (the guide's tile
+  does now; the opening screen's tile is markup, not a template, and loads at
+  first paint); SPEC-106-28 pinned the old splash's mark to Collect's brass
+  -- the scene has no mark, so the line asserts that nothing reaches `#splash
+  .swords` and no swords svg is in the markup, with a planted control; the
+  look's offline-face step, at the open Fold's measured 749 px, took its
+  picture while the strip was still sliding back to page 1 -- it waits for
+  the strip to settle now.
+- Take 115's landmines run to 200, so the two this take opens are 201 and
+  202 (the pre-build had numbered them 176 and 177).
+
+### Measured
+
+- The look at the owner's MEASURED sizes (take 115: 411 x 960 and 749 x 832
+  at 2.625): 18 steps, 18 ok at both, every picture read. The band, the card
+  in the buff, the chips and the two buttons sit as drafted at both sizes;
+  the offline face (the card's own colours with the name pill) centred on
+  both once the step waited for the strip.
+- The scene's contrast, measured before drawing: the word-mark's cream on
+  the Prussian 9.9:1, the tagline's `--t-text` 7.6:1, the chips' ink on the
+  buff 12.8:1, Next's cream on the green 4.6:1 (the button is 44 px and its
+  text 650 weight).
+- Negative controls, take 116's harness on take 115's build: smoke red on
+  fifteen lines (the take-116 lines, the SPEC-106-28 line in its new form,
+  the Hunt line that now refuses the swords), then it stops at the
+  four-pages line, which reads `V.GUIDE` on a build that has none; render
+  red on the two take-116 lines, then stops at the guide's Next. Recorded
+  as what a control tree can and cannot show.
+
+### What I got wrong
+
+- The first strip card was `calc(100% - 32px)`: the neighbours peeked.
+- The guide's last-page tile took the class `tile`, which the collection's
+  tiles already own: render's "tiles are wide enough" read 0 width. It is
+  `gsq`.
+- Focus went to Next at first paint, so Next wore a ring before any key was
+  pressed; the dialog takes focus itself.
+- The pre-build copy carried two hand edits its scripts did not: found only
+  by replaying the scripts on a fresh tree, which every pre-build gets from
+  now on.
+- The offline-face look step trusted a 400 ms wait for a smooth scroll.
+
+### Ruled out
+
+- Flipping `documentElement.dataset.mode` per guide page (the mode's
+  palette under each page): the guide is one frame on purpose.
+- A `<dialog>` element: the DOM stub has no `showModal`, and the phone's
+  Back would need a second path; a div with the dialog's role and the
+  existing overlay walk does the same.
+- `role="tab"` on the dots: four 44 px targets seven pixels apart would sit
+  on each other; the dots are indicators and the page is read out.
+- Coach marks over the live screens, and a guided first scan (it needs a
+  camera on first run).
+- Keeping the `splash-bg.jpg` slot: the launch image is the scene, painted,
+  and `check()` refuses any other; the owner's own pictures stay in
+  `home-bg.jpg`, `hero-play.jpg`, `hero-hunt.jpg` and the fonts.
+
+### Tests
+
+- On this branch (take 115's tree plus the port), the whole pipeline in
+  311 s -- the catalogue ingested fresh, 6,766 artwork hashes restored from
+  the sidecar, coverage 100 % -- then **smoke** 1268 passed, 0 failed;
+  **render** 217 passed, 0 failed, `(mode: chrome)`; **the look** 18 of 18
+  at both sizes; the same figures as the port. `ci/icon.py --selftest` 33
+  ok; `scrub --check --docs` clean; `seal.sh --gate-only` as its last line
+  says below the pull request.
+
+### DEFERRED
+
+- The launch image is a plain bitmap the window stretches to its size
+  (Capacitor's template): a layer-list drawable with the band, the tile and
+  the sea placed by gravity would end the stretch; a small `ci/apk.sh`
+  change, its own take.
+- The guide's refinement as the owner sees it on the phone (the band's text
+  block, the chips' wording per page).
+- A guided first scan stays ruled out until a first run has a camera.
+- Takes 117 (the owner's polish list and the audit's fixes) and 118 (Collect
+  on indigo and gold, Home's premium pass, Hunt in kraft) are ported onto
+  this baseline the same way and wait in the session's scratch trees, each
+  its own pull request after this one merges.
 
 ## Take 115 — 2026-09-25 — the production baseline: a two-axis review of takes 106-114, every confirmed finding fixed or handed on, the record made whole for the next sessions
 

@@ -161,6 +161,19 @@ assert 'android.permission.CAMERA' in t, "CAMERA permission did not land (APEX l
 assert 'android.hardware.camera' in t and 'required="false"' in t, "camera feature flag missing"
 print("  CAMERA permission + camera feature (required=false)")
 PYCAM
+
+# The system splash (Android 12+) shows the launcher icon on the launch theme's ground. The band's Prussian
+# makes it the first frame of the one scene the launch image and the page's opening screen continue (take 116).
+python3 - <<'PYLAUNCH'
+Y = "android/app/src/main/res/values/styles.xml"
+t = open(Y).read()
+if "windowSplashScreenBackground" not in t:
+    t = t.replace('<item name="android:background">@drawable/splash</item>',
+                  '<item name="android:background">@drawable/splash</item>\n        <item name="windowSplashScreenBackground">#1f3d72</item>', 1)
+    open(Y, "w").write(t)
+assert '<item name="windowSplashScreenBackground">#1f3d72</item>' in open(Y).read(), "the launch theme's ground did not land (APEX landmine 99)"
+print("  launch theme: the system splash on the band's colour (#1f3d72)")
+PYLAUNCH
 echo "::endgroup::"
 
 echo "::group::launcher icon"
@@ -173,7 +186,7 @@ echo "::group::launcher icon"
 # icon shipped in the take-14 test APK until this step existed -- landmine 78.
 # The drawn 1024x500 feature graphic is retired: the listing's banner is built
 # in design/play-listing and uploaded by hand (D7).
-pip install --quiet --break-system-packages cairosvg pillow 2>/dev/null || true
+pip install --quiet --break-system-packages cairosvg pillow fonttools brotli 2>/dev/null || true
 python3 ci/icon.py android/app/src/main/res play-assets
 echo "::endgroup::"
 

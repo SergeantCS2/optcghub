@@ -122,14 +122,29 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
 .rel{border-bottom:1px solid var(--line)}
 .rel .cd1{color:var(--up);font-weight:700} .rel .cd2{color:var(--accent-ink)} .rel .cd3{color:var(--fg)} .rel .cd4{color:var(--dim2)}   /* take 97: the countdown by nearness */
 .rel:last-child{border-bottom:0}
-#splash{position:fixed;inset:0;z-index:var(--z-splash);display:flex;align-items:center;justify-content:center;background:#0B1622;
-  background-image:radial-gradient(60% 45% at 50% 35%,rgba(201,162,74,.18) 0%,transparent 70%);
-  transition:opacity var(--dur-sheet) ease;color:#C9A24A}   /* take 106: every colour literal and Collect's, as take 98 meant */
+/* Take 116: the opening screen and the first-run guide share ONE scene -- the store listing's frame: a Prussian
+   band, a buff sky, the app's card on a calm sea, an ink keyline and a green offset print. Every colour is a
+   literal of that scene, never the mode's (take 98's one splash colour, kept), so the launch image ci/icon.py
+   paints and this page are the same picture, and the guide that follows is the same frame again. */
+#splash,#tour{--t-prussian:#1f3d72;--t-sky:#5f7ba8;--t-haze:#d9dfe6;--t-buff:#efd9a8;--t-buff2:#f2e4c2;--t-ink:#1E1A14;--t-green:#2e9e5b;--t-cream:#F6EEDA;--t-text:#DCE4F0}
+#splash{position:fixed;inset:0;z-index:var(--z-splash);background:linear-gradient(180deg,#1f3d72 0,#1f3d72 31%,#5f7ba8 37%,#d9dfe6 45%,#efd9a8 56%,#f2e4c2 100%);
+  transition:opacity var(--dur-sheet) ease;color:#F6EEDA}
 #splash.off{opacity:0;pointer-events:none}
-#splash .mark{text-align:center}
-#splash .swords{color:#C9A24A}   /* take 115: the mark too -- .swords reads the mode's --accent-ink, and boot sets the mode while the splash is up (it turned red in Prep & Play) */
-#splash .wm{font-family:var(--display);font-size:var(--fs-hero);letter-spacing:.02em;color:#EADFC8}
-#splash .tag{margin-top:6px;font-size:var(--fs-cap);letter-spacing:.18em;text-transform:uppercase;color:#A08E70}
+#splash .sband{position:absolute;left:0;right:0;top:calc(var(--sat) + 13vh);text-align:center;padding:0 22px}
+#splash .wm{font-family:var(--display);font-weight:400;font-size:var(--fs-total);line-height:1.02;letter-spacing:.01em;text-transform:uppercase;color:#F6EEDA;text-shadow:5px 6px 0 var(--t-green);-webkit-text-stroke:3px var(--t-ink);paint-order:stroke fill}
+#splash .tag{margin-top:14px;font-family:var(--heavy);font-weight:800;font-size:var(--fs-sm);letter-spacing:.24em;text-transform:uppercase;color:var(--t-text)}
+#splash .stile{position:absolute;left:50%;top:42%;width:min(200px,48vw);aspect-ratio:1;transform:translateX(-50%)}
+.stile .print,.gpic .print{position:absolute;inset:0;transform:translate(9px,11px);background:var(--t-green);border-radius:var(--t-r,16px)}
+.stile .tile{position:absolute;inset:0;border:6px solid var(--t-ink);border-radius:var(--t-r,16px);overflow:hidden;background:var(--t-buff)}
+.stile .tile img{display:block;width:100%;height:100%}
+#splash .gsea,#tour .gsea{position:absolute;left:0;right:0;bottom:0;z-index:1;pointer-events:none}
+#splash .gsea{height:calc(12.5% + var(--sab))}
+.gsea svg{position:absolute;inset:0;width:100%;height:100%}
+/* the paper's grain on the buff: the icon's screentone, faint */
+#splash::after,#tour::after{content:"";position:absolute;left:0;right:0;bottom:0;z-index:0;background:radial-gradient(circle,rgba(30,26,20,.13) 1px,transparent 1.4px) 0 0/7px 7px;pointer-events:none;
+  -webkit-mask-image:linear-gradient(transparent,#000 160px);mask-image:linear-gradient(transparent,#000 160px)}
+#splash::after{top:31%}
+#splash .sband,#splash .stile{z-index:1}
 :root[data-mode="play"] body::before{background:
   radial-gradient(ellipse at 50% 0%,rgba(240,178,122,.10),transparent 50%),
   repeating-linear-gradient(0deg,transparent 0 23px,rgba(255,255,255,.012) 23px 24px)}
@@ -477,33 +492,48 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .seg button.on{background:var(--accent-bg);border-color:var(--brass2);color:var(--accent-ink)}
 .note{font-size:12px;color:var(--dim2);line-height:1.5;margin-top:10px}
 
-/* ---- first-run guide ------------------------------------------------------ */
-#tour{position:fixed;inset:0;z-index:var(--z-overlay);background:var(--bg);display:flex;flex-direction:column}
+/* ---- first-run guide (take 116): four pages in the listing's frame ------------ */
+/* The band carries each page's title; the page's card rides the buff; the controls sit on the buff above a low
+   calm sea. The guide is an overlay like the sheets (.on), so Back closes it (landmine 201); a page is set by a
+   tap, a swipe or the keys, and the strip's scroll handler only reads the page back -- it never scrolls, so
+   Next cannot be undone by its own scroll (landmine 202). */
+#tour{--gband:clamp(160px,20vh,232px);position:fixed;inset:0;z-index:var(--z-overlay);display:none;flex-direction:column;color:var(--t-ink);
+  background:linear-gradient(180deg,var(--t-prussian) 0,var(--t-prussian) calc(var(--sat) + var(--gband)),var(--t-sky) calc(var(--sat) + var(--gband) + 60px),var(--t-haze) calc(var(--sat) + var(--gband) + 136px),var(--t-buff) calc(var(--sat) + var(--gband) + 238px),var(--t-buff2) 100%)}
+#tour.on{display:flex}
 #tour[hidden]{display:none}
-#tour .gbg{position:absolute;inset:0;background:
-  radial-gradient(circle at 50% 22%,color-mix(in srgb,var(--brass) 16%,transparent),transparent 48%),var(--bg);
-  background-size:cover;background-position:center}
-#tour .gbg.img{background-image:linear-gradient(color-mix(in srgb,var(--bg) 55%,transparent),color-mix(in srgb,var(--bg) 92%,transparent)),var(--guide-bg)}
-#tour .gwrap{position:relative;z-index:1;display:flex;flex-direction:column;height:100%;
-  padding:calc(24px + var(--sat)) 0 calc(20px + var(--sab))}
-#tour .ghead{padding:0 22px 14px}
-#tour .ghead h2{font-size:32px;color:var(--accent-ink)}
-#tour .ghead p{margin:6px 0 0;color:var(--dim);font-size:15px}
-#tour .gcards{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;
-  padding:6px 16px;scrollbar-width:none}
+#tour [hidden]{display:none}
+#tour:focus-visible{outline:none}
+#tour::after{top:calc(var(--sat) + var(--gband))}
+#tour .gwrap{position:relative;z-index:1;display:flex;flex-direction:column;height:100%;padding:calc(22px + var(--sat)) 0 calc(20px + var(--sab))}
+#tour .gcards{flex:1;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;gap:16px;padding:0 16px;scrollbar-width:none}
 #tour .gcards::-webkit-scrollbar{display:none}
-#tour .gcard{flex:0 0 calc(100% - 32px);scroll-snap-align:center;scroll-snap-stop:always;background:var(--card);
-  border:1px solid var(--line);border-radius:18px;padding:22px 20px;display:flex;flex-direction:column;gap:10px;
-  position:relative;overflow:hidden}
-#tour .gcard .gpic{height:150px;border-radius:12px;background:var(--card2);display:flex;align-items:center;
-  justify-content:center;color:var(--accent-ink);margin-bottom:6px;background-size:cover;background-position:center}
-#tour .gcard h3{font-family:var(--display);font-weight:400;font-size:22px;color:var(--accent-ink)}
-#tour .gcard p{margin:0;color:var(--dim);font-size:14.5px;line-height:1.5}
-#tour .gcard ul{margin:4px 0 0;padding-left:18px;color:var(--dim);font-size:13.5px;line-height:1.55}
-#tour .gcard li b{color:var(--fg);font-weight:600}
-#tour .gdots{display:flex;justify-content:center;gap:7px;padding:14px 0 16px}
-#tour .gdots i{width:7px;height:7px;border-radius:50%;background:var(--line)}
-#tour .gdots i.on{background:var(--brass);width:18px;border-radius:4px}
+#tour .gcard{flex:0 0 100%;scroll-snap-align:center;scroll-snap-stop:always;display:flex;flex-direction:column;align-items:center;overflow-y:auto;scrollbar-width:none}
+#tour .gt{height:calc(var(--gband) - 22px);flex:0 0 auto;text-align:center;padding:0 6px;margin-bottom:24px}
+#tour .gt small{display:block;font-family:var(--heavy);font-weight:800;font-size:var(--fs-cap);letter-spacing:.22em;text-transform:uppercase;color:var(--t-text)}
+#tour .gt h2{margin-top:8px;font-family:var(--display);font-weight:400;font-size:var(--fs-total);line-height:1.02;letter-spacing:.01em;text-transform:uppercase;color:var(--t-cream);
+  text-shadow:5px 6px 0 var(--t-green);-webkit-text-stroke:3px var(--t-ink);paint-order:stroke fill;text-wrap:balance}
+#tour .gt p{margin:12px auto 0;max-width:340px;font-size:var(--fs-row);line-height:1.35;color:var(--t-text);text-wrap:balance}
+#tour .gpic{position:relative;margin-top:auto;width:clamp(140px,calc((100vh - var(--gband) - 300px - var(--sat) - var(--sab)) * .716),280px);flex:0 0 auto}   /* the auto margins, with .gverbs', centre the card in the buff */
+#tour .gcard:nth-child(odd) .gpic{transform:rotate(1.5deg)}
+#tour .gcard:nth-child(even) .gpic{transform:rotate(-1.5deg)}
+#tour .gpic .card{position:relative;aspect-ratio:.716;border:6px solid var(--t-ink);border-radius:var(--t-r,16px);overflow:hidden;background:var(--card);box-shadow:0 18px 30px rgba(30,26,20,.28)}
+#tour .gpic .pic{position:absolute;inset:0}
+#tour .gpic .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--t-cream);font-size:var(--fs-sm);text-align:center;padding:12px}
+#tour .gpic .own{background:var(--t-buff)}
+#tour .gpic .own .ph{color:var(--t-ink)}
+#tour .gpic.gsq .card{aspect-ratio:1}
+#tour .gpic .own img.ref{object-fit:cover}
+#tour .gverbs{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;padding:0 4px;margin:22px 0 auto;padding-bottom:12px}
+#tour .gverbs span{padding:7px 13px;border-radius:var(--r-pill);font-size:var(--fs-sm);font-weight:600;background:var(--t-cream);border:2px solid var(--t-ink);color:var(--t-ink);box-shadow:3px 3px 0 var(--t-green)}
+#tour .gfoot{position:relative;z-index:2;padding:0 16px calc(96px + 8px);width:100%;max-width:520px;margin:0 auto}
+#tour .gdots{display:flex;justify-content:center;gap:7px;padding:0 0 14px}
+#tour .gdots i{width:7px;height:7px;border-radius:50%;background:var(--t-cream);border:2px solid var(--t-ink);transition:width var(--dur-ui)}
+#tour .gdots i.on{width:18px;border-radius:4px;background:var(--t-green)}
+#tour .gpage{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+#tour .gbtns{display:flex;gap:10px}
+#tour .gbtns .ghost{flex:1;min-height:46px;border-radius:var(--r-pill);font-size:var(--fs-body);font-weight:650;background:var(--t-cream);border:2px solid var(--t-ink);color:var(--t-ink);box-shadow:3px 3px 0 var(--t-ink)}
+#tour .gbtns .ghost.go{flex:2;background:var(--t-green);border-color:var(--t-ink);color:var(--t-ink)}
+#tour .gsea{height:calc(96px + var(--sab))}
 
 /* ---- filter / sort sheet -------------------------------------------------- */
 .fgrp{margin:16px 0 6px;font-size:13px;color:var(--dim)}
@@ -705,8 +735,9 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
      reads as intended rather than as a flicker, and never later than 2.5 s
      whatever the boot does. A word-mark and a line -- no art. -->
 <div id="splash" aria-hidden="true">
-  <div class="mark"><svg class="swords" viewBox="0 0 18 18" aria-hidden="true" style="width:34px;height:34px;margin:0 0 6px"><path d="M3 15L13 5M6 16L16 6M2 12L12 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-    <div class="wm">OP TCG Hub</div><div class="tag">Collect &#183; Prep &amp; Play &#183; Hunt</div></div>
+  <div class="sband"><div class="wm">OP TCG Hub</div><div class="tag">Collect &#183; Prep &amp; Play &#183; Hunt</div></div>
+  <div class="stile" style="--t-r:46px"><div class="print"></div><div class="tile"><img src="bundle/icon.svg" alt="" decoding="async" onerror="this.remove()"></div></div>
+  <div class="gsea"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 411 100" preserveAspectRatio="none" aria-hidden="true"><path d="M -20 33 L -20 30.2 L -12 31.3 L -4 32.4 L 4 33.6 L 12 34.7 L 20 35.8 L 28 36.8 L 36 37.6 L 44 38.2 L 52 38.7 L 60 39.0 L 68 39.0 L 76 38.8 L 84 38.4 L 92 37.8 L 100 37.0 L 108 36.0 L 116 35.0 L 124 33.9 L 132 32.7 L 140 31.6 L 148 30.5 L 156 29.5 L 164 28.6 L 172 27.9 L 180 27.4 L 188 27.1 L 196 27.0 L 204 27.1 L 212 27.5 L 220 28.1 L 228 28.8 L 236 29.7 L 244 30.7 L 252 31.8 L 260 33.0 L 268 34.2 L 276 35.3 L 284 36.3 L 292 37.2 L 300 37.9 L 308 38.5 L 316 38.9 L 324 39.0 L 332 38.9 L 340 38.6 L 348 38.1 L 356 37.4 L 364 36.5 L 372 35.5 L 380 34.4 L 388 33.3 L 396 32.1 L 404 31.0 L 412 30.0 L 420 29.0 L 428 28.2 L 431 300 L -20 300 Z" fill="#a6c3db"/><path d="M -20 38 L -20 35.2 L -12 36.3 L -4 37.4 L 4 38.6 L 12 39.7 L 20 40.8 L 28 41.8 L 36 42.6 L 44 43.2 L 52 43.7 L 60 44.0 L 68 44.0 L 76 43.8 L 84 43.4 L 92 42.8 L 100 42.0 L 108 41.0 L 116 40.0 L 124 38.9 L 132 37.7 L 140 36.6 L 148 35.5 L 156 34.5 L 164 33.6 L 172 32.9 L 180 32.4 L 188 32.1 L 196 32.0 L 204 32.1 L 212 32.5 L 220 33.1 L 228 33.8 L 236 34.7 L 244 35.7 L 252 36.8 L 260 38.0 L 268 39.2 L 276 40.3 L 284 41.3 L 292 42.2 L 300 42.9 L 308 43.5 L 316 43.9 L 324 44.0 L 332 43.9 L 340 43.6 L 348 43.1 L 356 42.4 L 364 41.5 L 372 40.5 L 380 39.4 L 388 38.3 L 396 37.1 L 404 36.0 L 412 35.0 L 420 34.0 L 428 33.2 L 431 300 L -20 300 Z" fill="#4d7ab3"/><path d="M -20 58 L -20 64.5 L -12 64.9 L -4 65.0 L 4 64.6 L 12 63.8 L 20 62.7 L 28 61.4 L 36 59.8 L 44 58.2 L 52 56.5 L 60 54.9 L 68 53.5 L 76 52.4 L 84 51.6 L 92 51.1 L 100 51.0 L 108 51.4 L 116 52.1 L 124 53.1 L 132 54.4 L 140 56.0 L 148 57.6 L 156 59.3 L 164 60.9 L 172 62.3 L 180 63.5 L 188 64.4 L 196 64.9 L 204 65.0 L 212 64.7 L 220 64.0 L 228 63.0 L 236 61.7 L 244 60.2 L 252 58.6 L 260 56.9 L 268 55.3 L 276 53.9 L 284 52.6 L 292 51.7 L 300 51.2 L 308 51.0 L 316 51.2 L 324 51.9 L 332 52.8 L 340 54.1 L 348 55.6 L 356 57.2 L 364 58.9 L 372 60.5 L 380 62.0 L 388 63.2 L 396 64.2 L 404 64.8 L 412 65.0 L 420 64.8 L 428 64.2 L 431 300 L -20 300 Z" fill="#a6c3db"/><path d="M -20 63 L -20 69.5 L -12 69.9 L -4 70.0 L 4 69.6 L 12 68.8 L 20 67.7 L 28 66.4 L 36 64.8 L 44 63.2 L 52 61.5 L 60 59.9 L 68 58.5 L 76 57.4 L 84 56.6 L 92 56.1 L 100 56.0 L 108 56.4 L 116 57.1 L 124 58.1 L 132 59.4 L 140 61.0 L 148 62.6 L 156 64.3 L 164 65.9 L 172 67.3 L 180 68.5 L 188 69.4 L 196 69.9 L 204 70.0 L 212 69.7 L 220 69.0 L 228 68.0 L 236 66.7 L 244 65.2 L 252 63.6 L 260 61.9 L 268 60.3 L 276 58.9 L 284 57.6 L 292 56.7 L 300 56.2 L 308 56.0 L 316 56.2 L 324 56.9 L 332 57.8 L 340 59.1 L 348 60.6 L 356 62.2 L 364 63.9 L 372 65.5 L 380 67.0 L 388 68.2 L 396 69.2 L 404 69.8 L 412 70.0 L 420 69.8 L 428 69.2 L 431 300 L -20 300 Z" fill="#1f3d72"/><path d="M -20 82 L -20 82.9 L -12 83.7 L -4 84.5 L 4 85.2 L 12 85.8 L 20 86.3 L 28 86.6 L 36 86.9 L 44 87.0 L 52 87.0 L 60 86.8 L 68 86.5 L 76 86.1 L 84 85.5 L 92 84.9 L 100 84.2 L 108 83.4 L 116 82.6 L 124 81.7 L 132 80.9 L 140 80.1 L 148 79.4 L 156 78.7 L 164 78.1 L 172 77.6 L 180 77.3 L 188 77.1 L 196 77.0 L 204 77.1 L 212 77.3 L 220 77.6 L 228 78.1 L 236 78.6 L 244 79.3 L 252 80.0 L 260 80.8 L 268 81.6 L 276 82.5 L 284 83.3 L 292 84.1 L 300 84.8 L 308 85.5 L 316 86.0 L 324 86.5 L 332 86.8 L 340 87.0 L 348 87.0 L 356 86.9 L 364 86.7 L 372 86.3 L 380 85.8 L 388 85.2 L 396 84.5 L 404 83.8 L 412 83.0 L 420 82.1 L 428 81.3 L 431 300 L -20 300 Z" fill="#4d7ab3" opacity=".9"/><path d="M -20 87 L -20 87.9 L -12 88.7 L -4 89.5 L 4 90.2 L 12 90.8 L 20 91.3 L 28 91.6 L 36 91.9 L 44 92.0 L 52 92.0 L 60 91.8 L 68 91.5 L 76 91.1 L 84 90.5 L 92 89.9 L 100 89.2 L 108 88.4 L 116 87.6 L 124 86.7 L 132 85.9 L 140 85.1 L 148 84.4 L 156 83.7 L 164 83.1 L 172 82.6 L 180 82.3 L 188 82.1 L 196 82.0 L 204 82.1 L 212 82.3 L 220 82.6 L 228 83.1 L 236 83.6 L 244 84.3 L 252 85.0 L 260 85.8 L 268 86.6 L 276 87.5 L 284 88.3 L 292 89.1 L 300 89.8 L 308 90.5 L 316 91.0 L 324 91.5 L 332 91.8 L 340 92.0 L 348 92.0 L 356 91.9 L 364 91.7 L 372 91.3 L 380 90.8 L 388 90.2 L 396 89.5 L 404 88.8 L 412 88.0 L 420 87.1 L 428 86.3 L 431 300 L -20 300 Z" fill="#183260"/></svg></div>
 </div>
 <div class="modebar">
   <div class="mode" id="modeSlider" role="tablist" aria-label="Mode">
@@ -1180,25 +1211,26 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
   </div>
 </div>
 
-<!-- ── FIRST-RUN GUIDE (A18, take 19) ─────────────────────────────────────
+<!-- ── FIRST-RUN GUIDE (A18, take 19; rewritten take 116) ────────────────────────
      Shown once on first open, versioned so a rewrite shows again, reachable
-     afterwards from More → How it works. Every line is a fact the app can
-     back up. The background is assets/user/guide-bg.jpg if the owner supplies
-     one, else the compass on the sea. -->
-<div id="tour" hidden>
-  <div class="gbg" id="tourBg"></div>
+     afterwards from More → How it works. Four pages, one per mode and one for
+     what stays on the phone, in the store listing's frame; the pictures are the
+     catalogue's own cards, hot-linked, with the card's colours when they cannot
+     load. An overlay like the sheets: Back closes it, Skip and Start mark it seen. -->
+<div id="tour" hidden role="dialog" aria-modal="true" aria-label="Welcome to OP TCG Hub" tabindex="-1">
   <div class="gwrap">
-    <div class="ghead">
-      <h2>OP TCG Hub</h2>
-      <p>Your One Piece cards, scanned, valued, and yours to keep.</p>
-    </div>
     <div class="gcards" id="tourCards"></div>
-    <div class="gdots" id="tourDots"></div>
-    <div class="row" style="gap:10px;padding:0 16px">
-      <button class="ghost" id="tourSkip" style="flex:1">Skip</button>
-      <button class="ghost go" id="tourNext" style="flex:2">Next</button>
+    <div class="gfoot">
+      <div class="gdots" id="tourDots" aria-hidden="true"></div><span class="gpage" id="tourPage" aria-live="polite"></span>
+      <div class="gbtns">
+        <button class="ghost" id="tourSkip">Skip</button>
+        <button class="ghost go" id="tourNext">Next</button>
+        <button class="ghost" id="tourLook" hidden>Look around first</button>
+        <button class="ghost go" id="tourStart" hidden>Scan a card</button>
+      </div>
     </div>
   </div>
+  <div class="gsea" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 411 100" preserveAspectRatio="none" aria-hidden="true"><path d="M -20 33 L -20 30.2 L -12 31.3 L -4 32.4 L 4 33.6 L 12 34.7 L 20 35.8 L 28 36.8 L 36 37.6 L 44 38.2 L 52 38.7 L 60 39.0 L 68 39.0 L 76 38.8 L 84 38.4 L 92 37.8 L 100 37.0 L 108 36.0 L 116 35.0 L 124 33.9 L 132 32.7 L 140 31.6 L 148 30.5 L 156 29.5 L 164 28.6 L 172 27.9 L 180 27.4 L 188 27.1 L 196 27.0 L 204 27.1 L 212 27.5 L 220 28.1 L 228 28.8 L 236 29.7 L 244 30.7 L 252 31.8 L 260 33.0 L 268 34.2 L 276 35.3 L 284 36.3 L 292 37.2 L 300 37.9 L 308 38.5 L 316 38.9 L 324 39.0 L 332 38.9 L 340 38.6 L 348 38.1 L 356 37.4 L 364 36.5 L 372 35.5 L 380 34.4 L 388 33.3 L 396 32.1 L 404 31.0 L 412 30.0 L 420 29.0 L 428 28.2 L 431 300 L -20 300 Z" fill="#a6c3db"/><path d="M -20 38 L -20 35.2 L -12 36.3 L -4 37.4 L 4 38.6 L 12 39.7 L 20 40.8 L 28 41.8 L 36 42.6 L 44 43.2 L 52 43.7 L 60 44.0 L 68 44.0 L 76 43.8 L 84 43.4 L 92 42.8 L 100 42.0 L 108 41.0 L 116 40.0 L 124 38.9 L 132 37.7 L 140 36.6 L 148 35.5 L 156 34.5 L 164 33.6 L 172 32.9 L 180 32.4 L 188 32.1 L 196 32.0 L 204 32.1 L 212 32.5 L 220 33.1 L 228 33.8 L 236 34.7 L 244 35.7 L 252 36.8 L 260 38.0 L 268 39.2 L 276 40.3 L 284 41.3 L 292 42.2 L 300 42.9 L 308 43.5 L 316 43.9 L 324 44.0 L 332 43.9 L 340 43.6 L 348 43.1 L 356 42.4 L 364 41.5 L 372 40.5 L 380 39.4 L 388 38.3 L 396 37.1 L 404 36.0 L 412 35.0 L 420 34.0 L 428 33.2 L 431 300 L -20 300 Z" fill="#4d7ab3"/><path d="M -20 58 L -20 64.5 L -12 64.9 L -4 65.0 L 4 64.6 L 12 63.8 L 20 62.7 L 28 61.4 L 36 59.8 L 44 58.2 L 52 56.5 L 60 54.9 L 68 53.5 L 76 52.4 L 84 51.6 L 92 51.1 L 100 51.0 L 108 51.4 L 116 52.1 L 124 53.1 L 132 54.4 L 140 56.0 L 148 57.6 L 156 59.3 L 164 60.9 L 172 62.3 L 180 63.5 L 188 64.4 L 196 64.9 L 204 65.0 L 212 64.7 L 220 64.0 L 228 63.0 L 236 61.7 L 244 60.2 L 252 58.6 L 260 56.9 L 268 55.3 L 276 53.9 L 284 52.6 L 292 51.7 L 300 51.2 L 308 51.0 L 316 51.2 L 324 51.9 L 332 52.8 L 340 54.1 L 348 55.6 L 356 57.2 L 364 58.9 L 372 60.5 L 380 62.0 L 388 63.2 L 396 64.2 L 404 64.8 L 412 65.0 L 420 64.8 L 428 64.2 L 431 300 L -20 300 Z" fill="#a6c3db"/><path d="M -20 63 L -20 69.5 L -12 69.9 L -4 70.0 L 4 69.6 L 12 68.8 L 20 67.7 L 28 66.4 L 36 64.8 L 44 63.2 L 52 61.5 L 60 59.9 L 68 58.5 L 76 57.4 L 84 56.6 L 92 56.1 L 100 56.0 L 108 56.4 L 116 57.1 L 124 58.1 L 132 59.4 L 140 61.0 L 148 62.6 L 156 64.3 L 164 65.9 L 172 67.3 L 180 68.5 L 188 69.4 L 196 69.9 L 204 70.0 L 212 69.7 L 220 69.0 L 228 68.0 L 236 66.7 L 244 65.2 L 252 63.6 L 260 61.9 L 268 60.3 L 276 58.9 L 284 57.6 L 292 56.7 L 300 56.2 L 308 56.0 L 316 56.2 L 324 56.9 L 332 57.8 L 340 59.1 L 348 60.6 L 356 62.2 L 364 63.9 L 372 65.5 L 380 67.0 L 388 68.2 L 396 69.2 L 404 69.8 L 412 70.0 L 420 69.8 L 428 69.2 L 431 300 L -20 300 Z" fill="#1f3d72"/><path d="M -20 82 L -20 82.9 L -12 83.7 L -4 84.5 L 4 85.2 L 12 85.8 L 20 86.3 L 28 86.6 L 36 86.9 L 44 87.0 L 52 87.0 L 60 86.8 L 68 86.5 L 76 86.1 L 84 85.5 L 92 84.9 L 100 84.2 L 108 83.4 L 116 82.6 L 124 81.7 L 132 80.9 L 140 80.1 L 148 79.4 L 156 78.7 L 164 78.1 L 172 77.6 L 180 77.3 L 188 77.1 L 196 77.0 L 204 77.1 L 212 77.3 L 220 77.6 L 228 78.1 L 236 78.6 L 244 79.3 L 252 80.0 L 260 80.8 L 268 81.6 L 276 82.5 L 284 83.3 L 292 84.1 L 300 84.8 L 308 85.5 L 316 86.0 L 324 86.5 L 332 86.8 L 340 87.0 L 348 87.0 L 356 86.9 L 364 86.7 L 372 86.3 L 380 85.8 L 388 85.2 L 396 84.5 L 404 83.8 L 412 83.0 L 420 82.1 L 428 81.3 L 431 300 L -20 300 Z" fill="#4d7ab3" opacity=".9"/><path d="M -20 87 L -20 87.9 L -12 88.7 L -4 89.5 L 4 90.2 L 12 90.8 L 20 91.3 L 28 91.6 L 36 91.9 L 44 92.0 L 52 92.0 L 60 91.8 L 68 91.5 L 76 91.1 L 84 90.5 L 92 89.9 L 100 89.2 L 108 88.4 L 116 87.6 L 124 86.7 L 132 85.9 L 140 85.1 L 148 84.4 L 156 83.7 L 164 83.1 L 172 82.6 L 180 82.3 L 188 82.1 L 196 82.0 L 204 82.1 L 212 82.3 L 220 82.6 L 228 83.1 L 236 83.6 L 244 84.3 L 252 85.0 L 260 85.8 L 268 86.6 L 276 87.5 L 284 88.3 L 292 89.1 L 300 89.8 L 308 90.5 L 316 91.0 L 324 91.5 L 332 91.8 L 340 92.0 L 348 92.0 L 356 91.9 L 364 91.7 L 372 91.3 L 380 90.8 L 388 90.2 L 396 89.5 L 404 88.8 L 412 88.0 L 420 87.1 L 428 86.3 L 431 300 L -20 300 Z" fill="#183260"/></svg></div>
 </div>
 
 <div class="sheet" id="askSheet">
@@ -1781,7 +1813,7 @@ function refArt(p, { size = 'thumb', cls = '' } = {}) {
   /* The placeholder is absolutely positioned and therefore stacks ABOVE the
      image; hide it on load rather than fight z-index. */
   return `<img class="ref${cls ? ' ' + cls : ''}" loading="lazy" decoding="async" src="${esc(src)}" alt=""${src !== p.img ? ` data-thumb="${esc(p.img)}"` : ''}
-            onload="this.classList.add('ok');var q=this.parentNode.querySelector('.ph');if(q)q.style.display='none'"
+            onload="this.classList.add('ok');var p=this.parentNode,q=p&&p.querySelector('.ph');if(q)q.style.display='none'"
             onerror="var t=this.dataset.thumb;if(t){delete this.dataset.thumb;this.src=t}else{this.remove()}">`;
 }
 /* The card’s own colours for the art’s ground: both of a two-colour card, the one
@@ -2552,61 +2584,72 @@ $('#trShare').addEventListener('click', () => {
  * app can back up today; when a capability changes, the card changes and
  * the version bumps. Pictures come from assets/user/ if the owner supplies them.
  * ===================================================================== */
-const GUIDE_KEY = 'optcghub.guide.v2';   // v2: the modes card (take 25)
+const GUIDE_KEY = 'optcghub.guide.v3';   // v3: four pages, one per mode, in the listing's frame (take 116)
+/* A page: its glyph (the picture's fallback), its title, one line, three or four words, and the printing whose
+   picture it carries -- looked up when the guide opens, never a pinned id (AGENTS rule 3): Collect the dearest
+   card with a picture, Prep & Play the Decks hero's Leader, Hunt the newest set's top card. */
 const GUIDE = [
-  { g: 'blocker', t: 'Scan',
-    p: 'Point the camera at a card. It reads the printed number and shows you exactly which printings share it — the base, the alt-art, the SP — because the same number can be worth $0.07 or $467.',
-    l: ['Scanning is <b>free and unlimited</b>, always', 'Set the <b>set chip</b> first and it asks less', '<b>Your photo</b> becomes the card\u2019s picture'] },
-  { g: 'compass', t: 'Value',
-    p: 'Every card carries the TCGplayer market price and the day it was fetched. The collection totals up, moves day over day, and the chart is yours, not a reconstruction.',
-    l: ['A price is a <b>model, not an offer</b> — the low-to-high spread is shown', 'Condition is <b>what you tell it</b>; nothing is invented', 'Market movers shows what shifted since the last catalogue'] },
-  { g: 'leader', t: 'Decks',
-    p: 'Pick a Leader, add fifty cards, and the builder checks the rules as you go — colour, the four-copy limit, the count — and shows the curve, Counters, Blockers and Triggers.',
-    l: ['Legality follows the <b>official Comprehensive Rules</b>, section by section', 'Import or export a list as <b>4 OP01-016 Nami</b>', 'Choose <b>which printing</b> is sleeved in the deck'] },
-  { g: 'rope', t: 'Trade',
-    p: 'Your side from the collection, theirs pasted as a list. Both valued the same way, with the spread, and the difference stated plainly. It tells you the market; you decide.',
-    l: ['Collections keep a binder, a trade pile and deck stock apart', 'Bulk actions move, re-condition, delete', 'Share the summary as text'] },
-  { g: 'wheel', t: 'Three modes',
-    p: 'The slider at the top. Collect is your cards, their value and the scanner. Prep & Play is the table: decks, a card browse built for deck-building, a Life and DON!! counter and the Sim. Hunt is sealed product: prices, stock, releases and events near you.',
-    l: ['The whole app changes colour so you always know where you are', 'One collection underneath all three', 'The Sim plays two decks on one phone, or you against the app'] },
-  { g: 'anchor', t: 'Yours, offline',
-    p: 'The catalogue is on the phone. Scanning, valuing, building and saving all work with no signal. A backup is written to Documents on every save and survives uninstalling.',
-    l: ['<b>CSV export</b> any time — no account, no lock-in', 'Restore from backup in one tap', 'Nothing you do is sent anywhere'] }
+  { g: 'scancard', t: 'Collect', p: 'Scan a card and it is valued the day you add it.', l: ['Scan', 'Value', 'Back up'], pic: () => topCard() },
+  { g: 'leader', t: 'Prep & Play', p: 'Build a deck against the official rules, then play it on one phone.', l: ['Decks', 'Cards', 'Play'], pic: () => (heroLeader() || {}).L || null },
+  { g: 'box', t: 'Hunt', p: 'Sealed prices, what is in stock at stores near you, and the events and releases coming up.', l: ['Sealed', 'Local stock', 'Events', 'Releases'], pic: () => (newestTop() || {}).p || null },
+  { g: 'scancard', t: 'Yours, offline', p: 'Everything works with no signal, and nothing you do is sent anywhere.', l: ['Export', 'Restore', 'No account'], pic: null }
 ];
-let guidePage = 0;
-function guideOpen() {
+/* the dearest card whose picture the runner saw serve: setTop's pass, once, then the top of every set */
+function topCard() { setTop(null); let best = null; for (const p of SET_TOP.map.values()) if (!best || p.market > best.market) best = p; return best; }
+let guidePage = 0, guideFrom = null, guideScrolling = false, guideScrollT = 0, guideSyncT = 0;
+function guideCard(c, i) {
+  const p = c.pic ? c.pic() : null;
+  const pic = p && p.img ? `<div class="pic" style="background:linear-gradient(160deg,${artColours(p).join(',')})"><div class="ph"><span class="phl">${esc(p.name)}</span></div>${refArt(p, { size: 'large' })}</div>`
+    : c.pic ? `<div class="pic"><div class="ph">${G(c.g, 64)}</div></div>`
+    : `<div class="pic own"><div class="ph">${G(c.g, 64)}</div><img class="ref" loading="lazy" src="bundle/icon.svg" alt="" decoding="async" onload="this.classList.add('ok');var p=this.parentNode,q=p&&p.querySelector('.ph');if(q)q.style.display='none'" onerror="this.remove()"></div>`;
+  return `<div class="gcard" role="group" aria-label="Page ${i + 1} of ${GUIDE.length}">
+    <div class="gt"><small>OP TCG Hub \u00b7 ${i + 1} of ${GUIDE.length}</small><h2>${esc(c.t)}</h2><p>${esc(c.p)}</p></div>
+    <div class="gpic${c.pic ? '' : ' gsq'}"><div class="print"></div><div class="card">${pic}</div></div>
+    <div class="gverbs">${c.l.map(x => `<span>${esc(x)}</span>`).join('')}</div></div>`;
+}
+function guideOpen() {   // called with a click event from More's "Show the guide again": the argument is ignored
   const g = $('#tour'); if (!g) return;
-  const bg = $('#tourBg');
-  const custom = (CAT.man.user || []).includes('guide-bg.jpg');
-  if (custom) { bg.style.setProperty('--guide-bg', 'url(bundle/user/guide-bg.jpg)'); bg.classList.add('img'); }
-  const pics = CAT.man.user || [];
-  $('#tourCards').innerHTML = GUIDE.map((c, i) => `
-    <div class="gcard">
-      <div class="gpic" ${pics.includes(`guide-${i + 1}.jpg`) ? `style="background-image:url(bundle/user/guide-${i + 1}.jpg)"` : ''}>${
-        pics.includes(`guide-${i + 1}.jpg`) ? '' : G(c.g, 64)}</div>
-      <h3>${esc(c.t)}</h3><p>${c.p}</p>
-      <ul>${c.l.map(x => `<li>${x}</li>`).join('')}</ul>
-    </div>`).join('');
-  guidePage = 0; guidePaint(); g.hidden = false;
+  while (closeAnyOverlay()) {}   // a zip ask under the guide would take the first Back
+  guideFrom = (typeof document !== 'undefined' && document.activeElement) || null;
+  const cards = $('#tourCards'); if (cards) cards.innerHTML = GUIDE.map(guideCard).join('');
+  guidePage = 0; g.hidden = false; g.classList.add('on'); guidePaint();
+  if (typeof g.focus === 'function') { try { g.focus(); } catch (e) {} }   // the dialog itself: its name is read out, and no button wears a focus ring at first paint
 }
+/* the dots and the buttons for the page: what a swipe repaints too */
+function guidePaintDots() {
+  const n = GUIDE.length, last = guidePage === n - 1;
+  const dots = $('#tourDots'); if (dots) dots.innerHTML = GUIDE.map((_, i) => `<i class="${i === guidePage ? 'on' : ''}"></i>`).join('');
+  const pg = $('#tourPage'); if (pg) pg.textContent = `Page ${guidePage + 1} of ${n}`;
+  for (const [id, show] of [['#tourSkip', !last], ['#tourNext', !last], ['#tourLook', last], ['#tourStart', last]]) { const b = $(id); if (b) b.hidden = !show; }
+}
+/* ...and the strip's place: the one caller that scrolls (a tap, a key, the open) */
 function guidePaint() {
-  $('#tourDots').innerHTML = GUIDE.map((_, i) => `<i class="${i === guidePage ? 'on' : ''}"></i>`).join('');
-  $('#tourNext').textContent = guidePage === GUIDE.length - 1 ? 'Start' : 'Next';
-  const cards = $('#tourCards'); const el = cards.children[guidePage];
-  if (el) cards.scrollTo({ left: el.offsetLeft - 16, behavior: reducedMotion() ? 'auto' : 'smooth' });
+  guidePaintDots();
+  const cards = $('#tourCards'); const el = cards && cards.children ? cards.children[guidePage] : null;
+  if (!el || typeof cards.scrollTo !== 'function') return;
+  guideScrolling = true; clearTimeout(guideScrollT); guideScrollT = setTimeout(() => { guideScrolling = false; }, 700);
+  cards.scrollTo({ left: el.offsetLeft - 16, behavior: reducedMotion() ? 'auto' : 'smooth' });
 }
+function guideGo(n) { if (n < 0 || n >= GUIDE.length) return; guidePage = n; guidePaint(); }
 function guideClose(mark) {
-  $('#tour').hidden = true;
+  const g = $('#tour'); if (!g) return;
+  g.hidden = true; g.classList.remove('on');
   if (mark) { try { localStorage.setItem(GUIDE_KEY, '1'); } catch (e) {} }
+  if (guideFrom && typeof guideFrom.focus === 'function') { try { guideFrom.focus(); } catch (e) {} } guideFrom = null;
 }
-$('#tourNext').addEventListener('click', () => {
-  if (guidePage < GUIDE.length - 1) { guidePage++; guidePaint(); } else guideClose(true);
-});
+/* the last page's button: into Collect's scanner, with Home under it so Back lands there */
+function guideStart() { guideClose(true); if (MODE.cur !== 'collect') MODE.set('collect'); go('scan'); }
+$('#tourNext').addEventListener('click', () => guideGo(guidePage + 1));
 $('#tourSkip').addEventListener('click', () => guideClose(true));
+$('#tourLook').addEventListener('click', () => guideClose(true));
+$('#tourStart').addEventListener('click', guideStart);
+$('#tour').addEventListener('keydown', e => { if (e.key === 'ArrowRight') guideGo(guidePage + 1); else if (e.key === 'ArrowLeft') guideGo(guidePage - 1); else if (e.key === 'Escape') guideClose(false); });
+/* a swipe: read the page off the strip once it settles; never scroll from here (landmine 202) */
 $('#tourCards').addEventListener('scroll', () => {
-  const c = $('#tourCards'); const w = c.children[0] ? c.children[0].offsetWidth + 12 : 1;
-  const pg = Math.round(c.scrollLeft / w);
-  if (pg !== guidePage && pg >= 0 && pg < GUIDE.length) { guidePage = pg; guidePaint(); }
+  clearTimeout(guideSyncT); guideSyncT = setTimeout(() => {
+    if (guideScrolling) return; const c = $('#tourCards'); const first = c && c.children ? c.children[0] : null; if (!first) return;
+    const pg = Math.round(c.scrollLeft / (first.offsetWidth + 16));   // the card plus the strip's gap
+    if (pg !== guidePage && pg >= 0 && pg < GUIDE.length) { guidePage = pg; guidePaintDots(); } }, 100);
 });
 
 /* One input sheet, three shapes. Replaces the last six prompt()s (take 21);
@@ -3064,7 +3107,7 @@ function closeAnyOverlay() {
   /* take 107: Back left the filter, Leader and printing sheets open while the
      screen under them changed (PROVEN in Chrome: the filter sheet over Home,
      the Leader sheet over Decks). They are overlays; Back closes them first. */
-  for (const id of ['#picker', '#filters', '#leaderPick', '#printPick', '#tour', '#simCurtain']) { const el = $(id); if (el && el.classList.contains('on')) { if (id === '#picker') PICKER.dismiss(); else el.classList.remove('on'); return true; } }   // take 115: a prompt on the picker answers no
+  for (const id of ['#picker', '#filters', '#leaderPick', '#printPick', '#tour', '#simCurtain']) { const el = $(id); if (el && el.classList.contains('on')) { if (id === '#picker') PICKER.dismiss(); else if (id === '#tour') guideClose(false); else el.classList.remove('on'); return true; } }   // take 115: a prompt on the picker answers no; take 116: the guide is an overlay by class; Back closes it unseen (landmine 201)
   return false;
 }
 /* take 107: the header’s back arrow is the phone’s Back, not a second route.
@@ -6509,7 +6552,7 @@ async function runSelfTest() {
      day and a hardcoded placeholder is landmine 62 in a text box. */
   $('#allq').placeholder = `Search all ${(CAT.man.cards || 0).toLocaleString()} cards`;
   paintNet(); paintHome();
-  window.VAULT = { dotJoin, curLabel, paintBinder, sealedKind, sealedWord, sealedRow, gameColours, distWords, feedLine, sourceLead, picturesLine, sealedCountLine, catalogueNote, setsWithCards, setCards, paintDevEarn, backArrow, closeSheet, setHomeTab, bulkLines, bulkSum, shownLines, signedMoney, pctNum, signedPct, dayText, momentText, fromShown, toShown, setTop, newestTop, paintSealedHero, ownBack, artBack, artUrl, artColours, largeOk, heroLeader, paintDeckHero, paintBack, stockPic, CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, setCond, toast, cameraVerdict, effectsLine, HUNT, targetLine, distLine, distShort, distRowLines, distFold, distFoldTap, distSummary, DISTF, paintDetailDist, distHistory, distHistTap, tlDay, tlWindow, gtsDue, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
+  window.VAULT = { get guidePage() { return guidePage; }, guideOpen, guideClose, guideGo, guideStart, guidePaint, GUIDE, topCard, dotJoin, curLabel, paintBinder, sealedKind, sealedWord, sealedRow, gameColours, distWords, feedLine, sourceLead, picturesLine, sealedCountLine, catalogueNote, setsWithCards, setCards, paintDevEarn, backArrow, closeSheet, setHomeTab, bulkLines, bulkSum, shownLines, signedMoney, pctNum, signedPct, dayText, momentText, fromShown, toShown, setTop, newestTop, paintSealedHero, ownBack, artBack, artUrl, artColours, largeOk, heroLeader, paintDeckHero, paintBack, stockPic, CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, setCond, toast, cameraVerdict, effectsLine, HUNT, targetLine, distLine, distShort, distRowLines, distFold, distFoldTap, distSummary, DISTF, paintDetailDist, distHistory, distHistTap, tlDay, tlWindow, gtsDue, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
                    cardPic, setPic, picBox, deckRow, paintHome, paintDecks, paintSearch, openDeck,
                    FILT, loadFilter, applyFilter, sortRows, blankFilter, activeCount,
                    DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,

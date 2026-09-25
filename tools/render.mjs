@@ -27,6 +27,19 @@ const ok = (n, c, x = '') => { c ? pass++ : (fail++, console.log(`  FAIL  ${n}  
 const sec = s => console.log(`\n\u2500\u2500 ${s}`);
 
 /* ---------------- try a real browser first ------------------------------ */
+/* Take 116. Behind an outbound proxy (the session VM) Chrome does not trust the proxy's certificate, so every card
+   picture fails with a certificate error: the guide's pictures could not be measured and the console errors failed
+   'no page errors'. The look's route (take 111) is used here too: Node fetches the two picture hosts and answers the
+   page. Node's fetch goes through the proxy only when the process starts with NODE_USE_ENV_PROXY=1, so the run
+   restarts itself once with it. The runner has no proxy, and all of this is inert there. */
+const PROXY = process.env.HTTPS_PROXY || process.env.https_proxy || '';
+if (PROXY && process.env.NODE_USE_ENV_PROXY !== '1') {
+  const { spawnSync } = await import('node:child_process');
+  const r = spawnSync(process.execPath, process.argv.slice(1), { stdio: 'inherit', env: { ...process.env, NODE_USE_ENV_PROXY: '1' } });
+  process.exit(r.status ?? 1);
+}
+const PICTURES = /^https:\/\/(tcgplayer-cdn|product-images)\.tcgplayer\.com\//;
+
 let puppeteer = null;
 try { puppeteer = (await import('puppeteer')).default; } catch { /* not installed */ }
 
@@ -37,6 +50,20 @@ if (puppeteer) {
   });
   const page = await browser.newPage();
   await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });   // a phone; the owner's own sizes are FOLD, below
+  if (PROXY) {
+    /* ...and the bundle's own update check, 1.5 s after every boot, reaches the update URL: behind the proxy it cannot,
+       and its certificate error lands on the console before the first check below once the guide's pictures make the
+       first boot slower (the reason take 114 never saw it). The served manifest is the bundle's own: already current. */
+    const man = JSON.parse(fs.readFileSync(W('bundle/manifest.json'), 'utf8'));
+    await page.setRequestInterception(true);
+    page.on('request', async req => {
+      if (man.updateUrl && req.url() === man.updateUrl + 'manifest.json') return req.respond({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: fs.readFileSync(W('bundle/manifest.json')) });   // the page is file://, so the answer needs CORS as Pages gives it
+      if (!PICTURES.test(req.url())) return req.continue();
+      try { const r = await fetch(req.url(), { headers: { 'User-Agent': 'Mozilla/5.0 optcghub-render' } }); const body = Buffer.from(await r.arrayBuffer());
+            await req.respond({ status: r.status, contentType: r.headers.get('content-type') || 'image/jpeg', body }); }
+      catch { await req.abort().catch(() => {}); }
+    });
+  }
   /* take 115: the owner's Galaxy Z Fold 7, MEASURED on his Diagnostics at take 114, portrait -- the cover screen 411 x 960
      and the open Fold 749 x 832 CSS px, both at a pixel ratio of 2.625. Take 110 had inferred the open Fold at 840 x 757 @2,
      and older checks here used 412 and 673 for it; 673 is under the 700 px where the two panes begin (landmine 186) */
@@ -476,10 +503,10 @@ if (puppeteer) {
     const t = document.querySelector('#toast').getBoundingClientRect(); const long = { left: Math.round(t.left), right: Math.round(t.right), h: Math.round(t.height) };
     V.toast('Saved'); await new Promise(r => setTimeout(r, 50)); const s = document.querySelector('#toast').getBoundingClientRect(); const short = { h: Math.round(s.height) };
     document.querySelector('#toast').classList.remove('on');
-    let splash = ''; for (const sh of document.styleSheets) { try { for (const r of sh.cssRules) if (r.selectorText === '#splash') splash = r.style.backgroundColor; } catch (e) {} }
+    let splash = ''; for (const sh of document.styleSheets) { try { for (const r of sh.cssRules) if (r.selectorText === '#splash') splash = r.style.backgroundImage; } catch (e) {} }
     return { vw, long, short, splash }; });
   ok('a long toast stays inside the screen on both sides and wraps to more than one line; a short one is one line', r98c.long.left >= 0 && r98c.long.right <= r98c.vw && r98c.long.h > r98c.short.h * 1.6, JSON.stringify(r98c));
-  ok('the splash rule is one literal colour, Collect\'s blue', r98c.splash === 'rgb(11, 22, 34)', JSON.stringify(r98c.splash));
+  ok('the splash rule is one literal scene, the listing\'s Prussian band down to the buff (take 116)', /^linear-gradient\((180deg, )?rgb\(31, 61, 114\)/.test(r98c.splash) && /rgb\(239, 217, 168\)/.test(r98c.splash), JSON.stringify(r98c.splash));   // Chrome's computed value drops the default direction
 
   /* Take 60: Pages serves this same file to a desktop browser, where the app
      used to run edge to edge. It stays a phone-width column there. */
@@ -714,17 +741,26 @@ if (puppeteer) {
   await new Promise(r => setTimeout(r, 900));
   const tour = await page.evaluate(() => {
     const t = document.querySelector('#tour'); const r = t.getBoundingClientRect();
-    return { hidden: t.hidden, w: Math.round(r.width), h: Math.round(r.height),
-             cards: document.querySelectorAll('#tour .gcard').length };
+    return { hidden: t.hidden, on: t.classList.contains('on'), role: t.getAttribute('role'), w: Math.round(r.width), h: Math.round(r.height),
+             cards: document.querySelectorAll('#tour .gcard').length, pics: document.querySelectorAll('#tour .gpic img.ref').length,
+             dots: document.querySelectorAll('#tour .gdots i').length, on1: document.querySelectorAll('#tour .gdots i.on').length, tabs: document.querySelectorAll('#tour [role="tab"]').length };
   });
-  ok('the tour shows on first open and paints full-screen (landmine 90)',
-     !tour.hidden && tour.w >= 400 && tour.h >= 800 && tour.cards >= 5, JSON.stringify(tour));
+  ok('take 116: the guide shows on first open as a dialog, full-screen, four pages with pictures, four dots with one on, no tabs (landmine 90 stays covered)',
+     !tour.hidden && tour.on && tour.role === 'dialog' && tour.w >= 400 && tour.h >= 800 && tour.cards === 4 && tour.pics >= 3 && tour.dots === 4 && tour.on1 === 1 && tour.tabs === 0, JSON.stringify(tour));
+  /* landmine 202: a tap on Next used to be undone by the strip's own scroll handler; it pages now, in real Chrome */
+  await page.evaluate(() => document.querySelector('#tourNext').click()); await new Promise(r => setTimeout(r, 900));
+  const paged = await page.evaluate(() => ({ page: window.VAULT.guidePage, left: Math.round(document.querySelector('#tourCards').scrollLeft), on: [...document.querySelectorAll('#tour .gdots i')].findIndex(i => i.classList.contains('on')), read: document.querySelector('#tourPage').textContent }));
+  ok('a tap on Next lands on page 2 and stays there after the smooth scroll settles', paged.page === 1 && paged.on === 1 && paged.left > 100 && paged.read === 'Page 2 of 4', JSON.stringify(paged));
+  /* landmine 201: Back closes the guide (the overlay walk) and leaves it unseen */
+  const back = await page.evaluate(async () => { const V = window.VAULT; const closed = V.closeAnyOverlay(); await new Promise(r => setTimeout(r, 100)); return { closed, hidden: document.querySelector('#tour').hidden, on: document.querySelector('#tour').classList.contains('on'), seen: Object.keys(localStorage).some(k => k.startsWith('optcghub.guide.') && localStorage.getItem(k) === '1') }; });
+  ok('Back closes the guide and leaves it unseen, so it returns next launch', back.closed === true && back.hidden === true && !back.on && !back.seen, JSON.stringify(back));
+  await page.evaluate(() => { window.VAULT.guideOpen(); });
   await page.evaluate(() => document.querySelector('#tourSkip').click());
   ok('the tour dismisses and remembers', await page.evaluate(() =>
-     document.querySelector('#tour').hidden && Object.keys(localStorage).some(k => k.startsWith('optcghub.guide.') && localStorage.getItem(k) === '1')));
+     document.querySelector('#tour').hidden && !document.querySelector('#tour').classList.contains('on') && Object.keys(localStorage).some(k => k.startsWith('optcghub.guide.') && localStorage.getItem(k) === '1')));
 
   /* Take 24: switching mode changes the palette and the nav, in Chrome. */
-  await page.evaluate(() => { localStorage.setItem('optcghub.guide.v1', '1'); document.querySelector('#tour').hidden = true;
+  await page.evaluate(() => { localStorage.setItem('optcghub.guide.v1', '1'); document.querySelector('#tour').hidden = true; document.querySelector('#tour').classList.remove('on');
                               document.querySelector('#modeSlider [data-mode="play"]').click(); });
   await new Promise(r => setTimeout(r, 400));
   const md = await page.evaluate(() => ({

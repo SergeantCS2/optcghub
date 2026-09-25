@@ -1,4 +1,4 @@
-# OP TCG Hub — take 115
+# OP TCG Hub — take 116
 
 ## Installing — read this first
 
@@ -17,6 +17,13 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 116:** The opening screen and the first-open guide are redone
+in the store listing's frame: a Prussian band, a buff sky, the app's card on a
+calm sea. The guide is four pages, one per mode and one for what stays on
+your phone, with real cards from the catalogue; Next moves the pages (it did
+not before), the phone's Back closes it, and it shows once more for everyone.
+Nothing you have saved changes.
 
 **New at take 115:** a clean-up for everyday use. A price update no longer
 makes the scanner ask about cards it knows. A price alert typed in another

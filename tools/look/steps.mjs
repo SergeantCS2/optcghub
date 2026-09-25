@@ -59,10 +59,10 @@ const take98 = [
   { name: 'splash-colour', run: async (page, ctx) => {
       /* the opening screen must be ONE colour in every mode: read it in the first moment, before it is removed */
       await page.goto(ctx.url, { waitUntil: 'commit' });
-      const bg = await page.evaluate(() => { const s = document.querySelector('#splash'); return s ? getComputedStyle(s).backgroundColor : 'no splash yet'; });
+      const bg = await page.evaluate(() => { const s = document.querySelector('#splash'); return s ? getComputedStyle(s).backgroundImage.slice(0, 48) : 'no splash yet'; });
       const shot = await ctx.shot('00-splash');
       await ctx.open();
-      return { ok: bg === 'rgb(11, 22, 34)', bg, shot };
+      return { ok: /^linear-gradient\((180deg, )?rgb\(31, 61, 114\)/.test(bg), bg, shot };   /* take 116: one scene, the listing's frame, in every mode */
     } },
   { name: 'home-most-valuable-row-opens', run: async (page) => {
       /* seed a small collection through the app's own API, then a REAL click on a most-valuable row */
@@ -1467,4 +1467,42 @@ const take115 = [
     } }
 ];
 
-export const STEPS = { 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
+/* ---- take 116 — the first-open experience: the opening screen and the guide in the listing's frame ----------- */
+const take116 = [
+  { name: 'splash-scene', run: async (page, ctx) => {
+      await page.goto(ctx.url, { waitUntil: 'commit' });
+      const m = await page.evaluate(() => { const s = document.querySelector('#splash'); return s ? { bg: getComputedStyle(s).backgroundImage.slice(0, 48), tile: !!s.querySelector('.stile img'), sea: !!s.querySelector('.gsea svg') } : { bg: 'no splash yet' }; });
+      const shot = await ctx.shot('00-splash'); await ctx.open();
+      return { ok: /^linear-gradient\((180deg, )?rgb\(31, 61, 114\)/.test(m.bg) && m.tile && m.sea, ...m, shot };
+    } },
+  { name: 'guide-page-1-collect', run: async page => {
+      await page.evaluate(() => { Object.keys(localStorage).filter(k => k.startsWith('optcghub.guide.')).forEach(k => localStorage.removeItem(k)); window.VAULT.guideOpen(); });
+      await waitArt(page, '#tour .gpic img.ref'); await wait(400);
+      return page.evaluate(() => ({ ok: document.querySelector('#tour').classList.contains('on') && window.VAULT.guidePage === 0, page: window.VAULT.guidePage, pics: document.querySelectorAll('#tour .gpic img.ref.ok').length }));
+    } },
+  { name: 'guide-next-to-page-2', run: async page => { await page.click('#tourNext'); await wait(900); return page.evaluate(() => ({ ok: window.VAULT.guidePage === 1, page: window.VAULT.guidePage, left: Math.round(document.querySelector('#tourCards').scrollLeft) })); } },
+  { name: 'guide-page-3-hunt', run: async page => { await page.click('#tourNext'); await wait(900); return page.evaluate(() => ({ ok: window.VAULT.guidePage === 2, page: window.VAULT.guidePage })); } },
+  { name: 'guide-page-4-yours-offline', run: async page => { await page.click('#tourNext'); await wait(900); return page.evaluate(() => ({ ok: window.VAULT.guidePage === 3 && !document.querySelector('#tourStart').hidden, page: window.VAULT.guidePage })); } },
+  { name: 'guide-back-leaves-it-unseen', run: async page => {
+      await page.evaluate(() => history.back()); await wait(600);
+      return page.evaluate(() => ({ ok: document.querySelector('#tour').hidden && !Object.keys(localStorage).some(k => k.startsWith('optcghub.guide.') && localStorage.getItem(k) === '1'), hidden: document.querySelector('#tour').hidden, on: [...document.querySelectorAll('.screen.on')].map(e => e.id).join() }));
+    } },
+  { name: 'guide-scan-a-card-from-hunt', run: async page => {
+      await page.evaluate(() => { window.VAULT.MODE.set('hunt', true); }); await wait(300);
+      await page.evaluate(() => { window.VAULT.guideOpen(); window.VAULT.guideGo(3); }); await wait(800);
+      await page.click('#tourStart'); await wait(700);
+      return page.evaluate(() => ({ ok: window.VAULT.MODE.cur === 'collect' && [...document.querySelectorAll('.screen.on')].map(e => e.id).join() === 'scan' && document.querySelector('#tour').hidden, mode: window.VAULT.MODE.cur, on: [...document.querySelectorAll('.screen.on')].map(e => e.id).join() }));
+    } },
+  { name: 'guide-offline-face', run: async page => {
+      await page.evaluate(() => { window.VAULT.guideOpen(); document.querySelectorAll('#tour .gpic img.ref').forEach(i => i.remove()); document.querySelectorAll('#tour .gpic .ph').forEach(q => { q.style.display = ''; }); }); await wait(400);
+      await page.waitForFunction(() => window.VAULT.guidePage === 0 && document.querySelector('#tourCards').scrollLeft < 2, { timeout: 3000 }).catch(() => {}); await wait(150);   /* the strip's slide back to page 1 settles first: at 749 px the picture was taken mid-slide (the take-116 port) */
+      return page.evaluate(() => ({ ok: document.querySelectorAll('#tour .gpic .phl').length === 3, pills: document.querySelectorAll('#tour .gpic .phl').length }));
+    } },
+  { name: 'guide-again-from-more', run: async page => {
+      await page.evaluate(() => { const V = window.VAULT; V.guideClose(true); V.MODE.set('collect', true); }); await wait(300);
+      await page.evaluate(() => window.VAULT.go('settings')); await wait(300); await page.click('#guideAgain'); await wait(500);
+      return page.evaluate(() => ({ ok: !document.querySelector('#tour').hidden && window.VAULT.guidePage === 0, page: window.VAULT.guidePage }));
+    } }
+];
+
+export const STEPS = { 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };

@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 115.* Paste the block between the rules into a new session
+*Current as of take 116.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 115 takes by previous sessions. The repo is
+built across 116 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -109,10 +109,13 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   TCGCSV lists new sets (landmines 195-199). Code written from here builds
   on it.
 
-- **For the UI/UX session (the owner, take 115).** It has been drafting
-  while take 115's review ran and waits for take 115 to merge; it starts
-  from `main` after that, on its own branch, as take 116 or later, one
-  take one PR like any other. The owner's words for it: it "will be
+- **For the UI/UX session (the owner, take 115).** It drafted while
+  take 115's review ran and started from `main` the hour take 115 merged:
+  take 116 is its first take (the opening screen and the guide in the
+  store listing's frame, HANDOFF take 116); takes 117 (the owner's polish
+  list and the audit's fixes) and 118 (Collect on indigo and gold, Home's
+  premium pass, Hunt in kraft) are ported onto the same baseline and
+  follow, one take one PR like any other. The owner's words for it: it "will be
   improving collect, the loading screen, tutorial, hunt and much more,
   mostly UI changes".
   - **What take 115 changed on screen** (each in HANDOFF take 115):
@@ -250,6 +253,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 116" and begin with PROTOCOL §0.
+Say "take 117" and begin with PROTOCOL §0.
 
 ---

@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 115.*
+*Current as of take 116.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -213,6 +213,8 @@ Start here. Do not read top to bottom.
 | A fixture's facts checked against the live catalogue | **199** |
 | A job refuses what only another job can repair | **200** |
 | Pipeline stops on a resumed run | 51 |
+| The guide's Next does nothing and the dots never move | 202 |
+| The phone's Back leaves the screen with the guide still up, or closes it for good | 201 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -2671,6 +2673,26 @@ sidecar against a fresh ingest -- and the hourly never hashes. A new set's
 and paused the feed, until the nightly committed its hashes. Rule: a job
 refuses what it produced or can repair; the rest is the refusal of the job
 that can.
+
+**201. The guide opened with one switch and Back checked another.** The
+first-run guide showed by clearing `hidden`; the phone's Back walks
+`closeAnyOverlay`, which reads `.on` on each overlay in its list -- `#tour`
+was in the list and never `.on`, so Back closed nothing and the walk went on
+to leave the screen with the guide still up. Take 116 gives the guide the
+overlay class like every other overlay and a branch in the walk that closes
+it unseen (`guideClose(false)`), so it returns next launch. Rule: an overlay
+is shown and found by the same switch; smoke asserts the guide's class and
+the walk together.
+
+**202. A tap on Next was undone by the strip's own scroll handler.** Next
+scrolled the guide's strip to the next page; the strip's scroll listener,
+firing during that smooth scroll, read the page from `scrollLeft` -- still
+the first page -- and painted the page back, dots and all, from inside the
+scroll. In the DOM stub nothing scrolls, so smoke never saw it; render, in
+Chrome, does (take 116). Rule: a scroll handler reports where the strip
+settled and never sets the page; the tap sets the page. The same shape
+bit the look's offline-face step, which took its picture mid-slide until it
+waited for the strip to settle.
 
 ## §2 — Inherited from APEX ORV
 

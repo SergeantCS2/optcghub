@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 115
+# V1-STATE — what exists, as of take 116
 
-*Current as of take 115.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 116.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -77,7 +77,7 @@ since 24 Sept 2026.
 | Trade | two lists valued with spread; paste their list; share summary | smoke |
 | Wants & alerts | want list valued at likeliest printing; set checklist grid; binder pages; price alerts via local notifications, idempotent per catalogue date | smoke |
 | Ads | AdMob 8.1.0, the app's own app ID with Google's test ad units (take 41); credit ledger; pending tray; reward from the event only | smoke; **no ad has been seen on a device** |
-| Onboarding | first-run tour v2 (6 cards), versioned; picture slots in assets/user; **New in this update** on Home once per take, from the release note (take 53) | render; smoke 3 |
+| Onboarding | the opening screen and the first-open guide in the store listing's frame (take 116): four pages, one per mode and one for what stays on the phone, each with a real printing looked up when it opens; Next pages, Back closes it unseen, a dialog for screen readers; the key `optcghub.guide.v3`; the native launch image is the same scene, painted by `ci/icon.py`; **New in this update** on Home once per take, from the release note (take 53) | render 2; smoke 14; the look 18 |
 | Packaging | signed APK (committed sideload key), AAB branch for Play (needs 4 secrets), one standard icon: the adaptive icon (background and foreground; no themed layer, at the owner's word), legacy and round icons, the reminders' glyph, the splash and the Play icon from four SVGs (`ci/icon.py`, checked, its controls in the gate; take 113, the owner's pick), CAMERA + POST_NOTIFICATIONS + AD_ID in the manifest | built every take since 9; signer verified by aapt2/apksigner |
 | CI | build.yml on `main` only (seed → bundle → pages + apk → report), nightly 21:30 UTC with sidecar commit-back; **check.yml runs the whole pipeline on every PR with a read-only token (take 89)**; hunt.yml hourly; bootstrap.yml as recovery. Since take 89 the workflows live in git, byte-identical to their `ci/` copies, and a take is a PR the owner merges. *Take 115:* a report job that needs every job files one `nightly-failure` thread for any failed job and closes it only on a run where every job ran green, and the hourly does the same under `hourly-failure` (landmine 184); the nightly's Pages deploy reads the hourly's files again inside the `pages` group the hourly holds; the hourly validates the catalogue it deploys; the Release carries the Play icon; `apk.sh` stops on a Gradle failure (landmine 183) and `check.sh` fails when it cannot fetch main | **ran green on a runner at take 32; APK installed by the owner.** Four red nights 09-18..21 read at take 89: the Events fixture's clock and the hashes guard's treatment of unpublished images (landmines 123, 124); both fixed with controls |
 | Self-test | More → Self-test: 17 on-device checks (catalogue, gate, search, fonts, storage, Filesystem, share, camera, ML Kit on a drawn code, notifications, ads, sim, sync), shareable report | smoke 9; **run on the Fold at take 91: 16 pass, and the one FAIL was the check's own (`m.num`, landmine 131) — fixed take 92. On take 114 (the owner, 25 Sept): 17 pass, 0 fail, on the Play build** |
