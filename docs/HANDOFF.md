@@ -86,6 +86,136 @@ What is too large for one take, or is the owner's, goes to AGENDA A43 with
 its fix sketch, and the UI/UX session is told in the session prompt that
 take 115 is the baseline it waits for.
 
+### How it was built
+
+Two lanes on files that never overlap, run by agents, each batch reading
+the review's findings and fix sketches, verifying each claim at the current
+code, fixing it the smallest way, and watching every new check fail on take
+114's build in a scratch tree first. The app lane ran one batch after
+another (A1 to A5) on `src/app.html`, `tools/build_app.py`, `tools/smoke.mjs`
+and `tools/render.mjs`; the runner lane (B1, B2) ran beside it on the tools,
+the scripts and the workflows. The container restarted during A4; the five
+finished batches' reports were in the workflow's journal, their work was on
+disk and green, and it was committed (8f7f75e) before the rest ran again.
+
+### Built
+
+**Production safety (A1):**
+- **The scanner's index is rebuilt, not appended to.** `indexCatalogue`
+  builds fresh maps and `loadCatalogue` swaps them in whole. MEASURED on
+  take 114 through the real sync path: 6,987 entries became 13,974 after
+  one sync and 20,961 after two; 100 of 100 artwork auto-accepts became
+  asks; the picker for one number went from 3 printings to 6 (landmine 176).
+- **A synced catalogue is checked before it is written.** Its shape is read
+  against the bundled catalogue the build shipped (the lists, the columns,
+  the row widths); additions from a newer take are accepted. Sync checks
+  both files' HTTP status and never says "Prices updated" for a copy it set
+  aside. At launch, a synced copy that fails falls back to the bundled one,
+  and the reason goes to Diagnostics.
+- **Every stored value is read through one reader** (`readJson`): a value
+  that does not parse, or is the wrong kind, falls back and is recorded; for
+  the collector's own data the unreadable text is kept aside first
+  (`<key>.unreadable`). The error buffer and the splash fallback moved to
+  the top of the script, before the first read. When the collection itself
+  could not be read, every backup waits (`vault.backupHold`) until a
+  restore, so an empty collection is never written over the file Restore
+  reads (landmine 177).
+- **Every write goes through one writer** (`saveJson`): a failed write is
+  recorded once per key and shows one toast telling the collector to export.
+  Diagnostics lists `vault.items` (it named a key, `vault.collection`, that
+  never existed), any unreadable copies, the writes that failed and whether
+  backups are held.
+- **Every request has a deadline** (60 s; the catalogue 240 s, sized from
+  the files' measured sizes at a slow phone link), and the five refresh
+  buttons recover.
+
+**The collection and money (A2):**
+- **One function commits a change to the collection** (`commitOwn`): CSV
+  import, bulk delete, move and condition, removing a collection, a cost
+  basis, a graded copy, a restore, Save on a card's page and the pending
+  tray now all save, take today's reading when the value can have moved,
+  and schedule the backup. Seven of the ten ways never scheduled it
+  (landmine 179). A change to the trade, want, alert, stock-alert, note or
+  reminder lists schedules it too.
+- **The backup carries the stock alerts, the release reminders, the Hunt
+  notes and the trade lists**, and restore puts them back and re-arms the
+  reminders. Restore checks the file first (this app's, every list a list,
+  every line a printing) and refuses with a reason; it keeps what it
+  replaces (`vault.beforeRestore`, and on the phone
+  `Documents/OPTCGHub/backup-before-restore.json`), and Restore then offers
+  "What the last restore replaced".
+- **The picker's prompts settle every way the sheet closes** (landmine 178):
+  on take 114 one grade pick after three closed prompts opened four grade
+  prompts.
+- **The binder turns from the page on screen** (take 114: from page 3,
+  Next went to page 2 of 66). **The featured Leader is the newest deck's**
+  (take 114 compared ISO strings as numbers and featured the oldest).
+- **A price alert keeps the collector's currency**: the box shows the market
+  in the currency on screen and the typed figure is stored in dollars
+  through the same rate (take 114 stored 264 typed in euros as $264; "1,200"
+  became $1). **An alert's fired day is the phone's day** (it was UTC).
+- **One place decides which line a copy counts into** (`OWN.target`,
+  `OWN.line`); on the way, CSV import's cost basis went to the printing's
+  first line anywhere, a slab included, and now goes on the line it adds.
+
+**Hunt, honestly (A3):**
+- **A kept distributor reads "not reached since …"** on Sealed, a product's
+  page, Releases and Diagnostics, and its kept copy is still shown; one
+  predicate (`HUNT.unreached`), and a control built through `hunt.py`'s own
+  code from the live 25 Sept timeout's shape (landmine 180).
+- **Target's history line counts days** from the rows' own times ("N checks
+  over D days so far"); take 114 said "20 hourly checks" for 20 checks over
+  16 days and nothing at all for 48 runs over 7.7 days.
+- **The sealed-only set One Piece Collection Sets (23304) is back**
+  (`EXISTS` in `build_app.py`): its ten priced products move from "Other" to
+  their own set; an empty group like 24834 stays out (landmine 181).
+- **Diagnostics' counts say what they count**: "221 cards, 5 DON!! cards and
+  19 sealed products have no picture …", "350 priced (675 rows filed as
+  sealed: 254 DON!! cards, 71 unpriced)", "7662 printings (6987 cards, 675
+  without a number), 86 sets (85 with cards)"; More says 85 sets, the sets
+  the cards are in.
+- One Southern Hobby state-to-date map; the Diagnostics distributor line
+  built from the list of distributors; the local `G` that shadowed the glyph
+  helper renamed; one sealed-product predicate, one sealed row template, one
+  colour split; the card page's backdrop loads lazily (PROVISION's claim is
+  now true); the test-credit label read from the credits it adds; the
+  OP01-016 ratio and the no-flood guard's control made real (landmine 175's
+  rule).
+
+**The tools (B1):**
+- `hunt.py`: one request function and one retry loop for the history and the
+  carry-over; the `--out` refusal (landmine 166) tested, with its positive
+  half. Hunt selftest 119 → 123 ok.
+- `southern.py`: an unread Illustration Box, or an unread name that says
+  Case, matches nothing (landmine 167's addendum); the fixture's four
+  matches are unchanged.
+- `hashes.py`: one list of the sidecar's carried keys, and a check that every
+  key the build writes is carried (22 → 23 ok).
+- `ci/icon.py`: controls for an empty foreground, an empty status glyph,
+  reminders with no small icon, and an assets folder without the foreground
+  (24 → 28 checks).
+- `tools/gate.py`: the icon-character check decodes surrogate pairs and
+  `\u{…}` escapes (17 → 20 probes).
+- `tools/scrub.py` reads every text file at every level of `tools/` and
+  `ci/` (64 → 85 files), and found the owner's first name in a take-4
+  comment in `tools/phase0.html`, now "the owner" (landmine 182).
+- `ci/apk.sh` runs Gradle in a subshell and stops with its own message,
+  shredding the upload key on a failure (landmine 183; a new selftest, run
+  by the gate); `ci/check.sh` fails when it cannot fetch main.
+
+**The workflows (B2):**
+- A **report** job needs every job of the nightly and files one
+  `nightly-failure` thread for any failed job, closing it only when every
+  job ran green; the hourly has its own under `hourly-failure`; the Pages job
+  lost `continue-on-error` (landmine 184).
+- **The nightly race is closed**: the Pages job reads the hourly's files
+  again inside the `pages` group the hourly holds, then deploys.
+- **The hourly validates** the catalogue it deploys (`validate --strict`,
+  with the nightly's cache for the per-group counts).
+- **Every Release carries the Play icon** (`icon-512.png`).
+- Seven new hunt selftest checks, each with a control, fail on take 114's
+  workflows (124 ok / 11 FAIL there); 135 ok on this tree.
+
 ## Take 114 — 2026-09-24 — A32's distributor state timeline, from the history rows
 
 Opened before any code (PROTOCOL §6). Take 113 merged as PR #37 at 19:43

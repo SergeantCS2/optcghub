@@ -7,55 +7,57 @@ way, so nobody re-derives a dead end.
 
 ---
 
-## Priorities — as of take 114
+## Priorities — as of take 115
 
 The live order, top first. Everything below this block is the record of how
 each item got where it is; this block is what to do next. (Rewritten at take
-111: it had stood since the take-88 audit, with take 105 still "in flight".)
+115, the production baseline: its review of takes 106-114 is in HANDOFF, and
+what it handed on is A43.)
 
 **The owner's, gating everything else**
-1. **LIVE on Google Play since 24 Sept 2026** —
-   `play.google.com/store/apps/details?id=com.optcghub.app`, take 101's
-   bundle first. Every merged take's AAB is one upload to the production
-   track, once (landmine 33); the newest Release is the one to upload
-   (take-111, 16:40 UTC on 24 Sept). The sideload APK does not install
+1. **Merge take 115, then upload Release take-115's AAB** to the production
+   track. The app is LIVE on Google Play since 24 Sept 2026
+   (`play.google.com/store/apps/details?id=com.optcghub.app`); every merged
+   take's AAB is one upload, once (landmine 33), and only take 101's upload
+   is recorded -- say which you upload. The sideload APK does not install
    over the Play build (landmine 34): a sideload proof means export →
-   uninstall → sideload → import. Send the two real AdMob rewarded unit
-   IDs (D11) and the next take carries them -- test units earn nothing,
-   and the app is live.
-2. **Answers still open:** the Diagnostics `viewport` line with the Fold
-   open (the inner screen's two panes are laid out for an INFERRED 840 px
-   until it comes, take 110) and the `pictures` line; A41's parts and the
-   source; the take-100 look's "tiny bit of work" (which picture, what).
-3. **D22** background stock checks; **D21** local stock for unserved zips;
+   uninstall → sideload → import.
+2. **D11, needed now:** the two real AdMob rewarded unit IDs. Register your
+   phones as AdMob test devices first; the take that carries the IDs
+   switches every install at its next sync.
+3. **Take 113's Fold check:** the launcher on both screens, the splash, a
+   reminder's ドン!! glyph (landmine 170).
+4. **Answers still open:** A43's large items -- ad consent for EEA and UK
+   users, reproducible builds (a lockfile or pinned versions, and the
+   nightly's AAB), a measurement of the app's data folder before any
+   automatic-backup rule, and More's "Last backup" line after the
+   sideload-to-Play switch; A41's parts and the source; the take-100 look's
+   "tiny bit of work" (which picture, what).
+5. **D22** background stock checks; **D21** local stock for unserved zips;
    **D20** a crowd-report inbox. Each caps a Hunt feature until answered.
-4. Shop URLs for stores the owner knows (A32's storefront list, one entry
-   today).
-5. D7 the icon; D16 the faces.
+6. Shop URLs for stores you know (A32's storefront list, one entry today).
+7. D16 the faces.
+8. If your want list shows a sealed product or a DON!! card saved before
+   take 111, remove it by hand (take 111 stopped new ones).
 
-**UI design and refinement belong to the UI/UX session (the owner, 24
-Sept, take 104).** Its series is A42: foundation, one header, controls and
-icons, the art layer, the voice, polish and the Fold's inner screen
-shipped at takes 106-110, and take 111 is its last look -- the fourth of
-the "about four more" takes named overnight. Refinement after it is the
-owner's call, take by take.
+*Answered at take 115 by the owner's Diagnostics on take 114:* the
+`viewport` line (the Fold's open screen is 749 x 832 at 2.625, the cover
+411 x 960) and the `pictures` line (221 cards, 5 DON!! cards and 19 sealed
+products without a picture at the first host).
+
+**The UI/UX session's, the owner's call take by take:** from take 116, on
+take 115's baseline -- Collect, the loading screen, the tutorial, Hunt and
+more, mostly UI changes (the owner, take 115). Its open list is UI-AUDIT's
+unticked boxes and A43's UI part; the session prompt's section for it says
+what take 115 changed on screen.
 
 **Mine, in order**
-1. **A32** -- take 114 in flight: the distributor state timeline on a
-   product's page, tucked away until tapped; GTS's date read as its Order
-   Due Date; the GTS alert on stock only; an hourly that stops rather than
-   lose the history. Next:
-   - date moves ("release moved Nov 20 → Dec 4"), which need the runner to
-     record each change's dates -- the rows keep states only;
-   - the history on Releases' not-in-the-catalogue list, and a name for a
-     delisted item;
-   - the restock pattern sentence, once a fortnight of history exists on
-     Pages (the runs are about four-hourly, so a fortnight is about 84
-     rows, not 336);
-   - GameStop, Walmart, Meijer and eBay need a residential IP, so they
-     wait for the sideload build.
-2. **Take 113's Fold check** -- the owner's: the launcher, the splash and a
-   reminder's status-bar icon (the APK was decoded after the merge).
+1. **A43's small items**, when wanted: the gate checks (the catalogue's
+   shape; "Say take N" = BUILD + 1), the Restore file picker, the waiting
+   batch in the backup, the cost basis in the currency on screen.
+2. **A32's Next** (its take-115 section): date moves, a delisted item, the
+   history on Releases, Southern Hobby's paging, the retailers that need a
+   residential IP.
 3. **A41** -- waits on the owner's list of the parts and the source; then
    one take per source, measured on the runner first.
 4. **A23** the sim's tail -- modal effects, ordering, protection, the
@@ -66,12 +68,14 @@ owner's call, take by take.
 **Closed since the take-88 audit:** A36 the set chips (take 90), A37 More
 unreachable (take 91), A38 (takes 95-97), A39 (takes 98 and 100), A40 the
 look (take 99), A14 PROVEN on the Fold (take 105), A42 (its seven layers
-at takes 106-110 and the last look at take 111, closed at that merge). Before it (takes
-57-94): A26 colour/contrast/desktop, A29 stock decks, A30 the tester
-report in full, A33 all six, A34 currency and splash, A35 all thirteen,
-the first paste's three items (take 92); A32 steps 1-3 and Local, Events,
-storefronts, stock alerts, the calendar tap, exact distances, the first
-distributor (take 94).
+at takes 106-110 and the last look at take 111, closed at that merge), D7
+the icon (take 113, the owner's pick; the Fold check is item 3 above), A24
+(answered with D15 at take 106), A32's state timeline (take 114) and the
+nightly race (take 115). Before it (takes 57-94): A26 colour/contrast/
+desktop, A29 stock decks, A30 the tester report in full, A33 all six, A34
+currency and splash, A35 all thirteen, the first paste's three items (take
+92); A32 steps 1-3 and Local, Events, storefronts, stock alerts, the
+calendar tap, exact distances, the first distributor (take 94).
 
 **Stale and marked so:** A19 other games and A11 Japanese printings stay
 ruled out; A20's backlog is where ideas wait, not a queue.
