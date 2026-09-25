@@ -405,7 +405,9 @@ every collection's under any collection (SPEC-111-52).
   guard, gate 2, scrub 1, apk 3, check 1); B2 124 ok, 11 FAIL on take 114's
   workflows; the look's take-115 list 9 ok, 27 not ok.
 - **The self-review's checks** failed on 8f5034b's build as listed above
-  (its smoke there: 1233 passed, 15 failed).
+  (its smoke there: 1233 passed, 15 failed -- fourteen of them the new
+  checks, the fifteenth the ignore check, which needs the `.git` a scratch
+  copy has not got); the rest failed on their planted faults.
 - The runner's `check` on the PR is the seal: the whole pipeline from a
   clean clone, render in Chrome, the gate.
 
