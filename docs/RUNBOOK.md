@@ -125,9 +125,12 @@ public repo's free runner time.
   hourly's files again (`bash ci/bundle.sh --carry-over`). So no hourly lands
   between the nightly's read and its deploy (landmine 184's take; take 114's
   deferred race).
-- The hourly restores the nightly's catalogue cache and runs `validate
-  --strict` before it deploys a catalogue it ingested itself. A catalogue the
-  validator refuses stops that hourly, so the feed pauses for that run too.
+- The hourly restores the nightly's catalogue cache and runs
+  `tools/validate.py` before it deploys a catalogue it ingested itself. A
+  catalogue the validator refuses stops that hourly, so the feed pauses for
+  that run too. It is not `--strict`: the hourly never hashes, so hash
+  coverage (a new set's unhashed printings) is the nightly's refusal alone
+  (take 115's self-review; 139 unhashed printings refused every hourly).
 - A red hourly opens (or comments on) one issue labelled `hourly-failure`, and
   the next green hourly closes it. The nightly's **report** job does the same
   under `nightly-failure` for any failed job -- seed, bundle, pages or apk --

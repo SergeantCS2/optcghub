@@ -12,7 +12,8 @@ name: hunt
 # tools/hunt.py, and deploy www/ to Pages. The app reads hunt/feed.json from
 # Pages; the Play build never scrapes a retailer itself (A32). Every installed
 # app adopts the catalogue this deploys at its next sync, so it passes the
-# nightly's validate first (take 115).
+# nightly's validate first, all but the hash coverage the nightly measures
+# (take 115).
 #
 # Cost: ~2 min of a free public-repo runner per run (MEASURED: 1-2 min), plus
 # a few seconds for the report job. 24 runs a day are scheduled; GitHub fired
@@ -73,15 +74,21 @@ jobs:
           # the app build strips comments through acorn (tools/scrub.py --strip);
           # take 84: this workflow forgot to install it and would have gone red
           npm install --silent --no-save acorn
-          # Take 115: `validate` (validate.py --strict) before `app`. Through take
-          # 114 this built and deployed a fresh ingest that no check had read:
-          # the card-count floor, the source's age, a set with no prices, a
-          # printing with no number, a >10x overnight move, the confidence
-          # tables, and hash coverage from the committed sidecar (the nightly
-          # hashes; this does not). A refused catalogue stops the run before
-          # anything is deployed: Pages keeps its last deploy, the feed with
-          # it, and the report job opens the thread. Cost: under a second.
-          python3 tools/pipeline.py ingest history catalog validate app
+          # Take 115: validate.py before `app`. Through take 114 this built and
+          # deployed a fresh ingest that no check had read: the card-count
+          # floor, the source's age, a set with no prices, a printing with no
+          # number, a >10x overnight move, the confidence tables. A refused
+          # catalogue stops the run before anything is deployed: Pages keeps
+          # its last deploy, the feed with it, and the report job opens the
+          # thread. Cost: under a second. Not --strict: its hash coverage reads
+          # the committed sidecar against this fresh ingest, and this job never
+          # hashes -- a new set's 139th unhashed printing (MEASURED: 138 pass)
+          # refused every hourly until the nightly committed its hashes. Hash
+          # coverage is the nightly's refusal; a printing with no hash yet is
+          # asked about at a scan, never matched wrongly.
+          python3 tools/pipeline.py ingest history catalog
+          python3 tools/validate.py
+          python3 tools/pipeline.py app
           python3 tools/hunt.py --zips "${HUNT_ZIPS:-48329}" --radius "${HUNT_RADIUS:-50}"
         env:
           HUNT_ZIPS: ${{ vars.HUNT_ZIPS }}

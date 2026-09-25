@@ -637,17 +637,22 @@ def selftest():
             yml.replace("\n    timeout-minutes: 15\n", "\n    timeout-minutes: 15\n    continue-on-error: true\n", 1)]
     check("...control: a report job that misses the apk job, one that runs only on success, or a pages job with continue-on-error is not wired",
           yml not in muts and not any(report_wired(m, False) for m in muts))
-    # take 115: the hourly validates the catalogue it deploys (every installed app adopts it at its next sync), and reads the nightly's cache for landmine 5
-    sys.path.insert(0, os.path.join(ROOT, "tools")); import pipeline   # noqa: E402
+    # take 115: the hourly validates the catalogue it deploys (every installed app adopts it at its next sync), and reads the nightly's cache for landmine 5.
+    # Its self-review: every refusal but hash coverage -- the hourly never hashes, so --strict read the committed sidecar against a
+    # fresh ingest, and a new set's 139th unhashed printing refused every hourly until the nightly's hashes committed (MEASURED)
     def validates(text):
-        m = re.search(r"\n *python3 tools/pipeline\.py ([a-z ]+)\n", text); names = [n for n, _, _ in pipeline.STEPS]
-        ran = m.group(1).split() if m else []
-        return bool(ran) and all(x in names for x in ran) and {"catalog", "validate", "app"} <= set(ran) and names.index("validate") < names.index("app") \
-            and "--strict" in dict((n, a) for n, a, _ in pipeline.STEPS)["validate"] and "uses: actions/cache/restore@" in text and "uses: actions/cache@" not in text
-    check("the hourly runs validate --strict before it builds the app it deploys, and reads the nightly's catalogue cache without saving one",
-          validates(hyml), re.search(r"python3 tools/pipeline\.py [a-z ]+", hyml).group(0) if re.search(r"python3 tools/pipeline\.py [a-z ]+", hyml) else "no pipeline line")
-    muts = [hyml.replace(" catalog validate app", " catalog app"), hyml.replace("actions/cache/restore@", "actions/cache@")]
-    check("...control: the take-114 step list, or a cache step that saves every hour, does not validate", hyml not in muts and not any(validates(m) for m in muts))
+        lines = [x.strip() for x in text.splitlines()]
+        at = lambda rx: next((i for i, x in enumerate(lines) if re.match(rx, x)), -1)
+        cat, val, app = at(r"python3 tools/pipeline\.py( [a-z]+)* catalog( |$)"), at(r"python3 tools/validate\.py( |$)"), at(r"python3 tools/pipeline\.py( [a-z]+)* app( |$)")
+        return 0 <= cat < val < app and "--strict" not in lines[val] and not re.search(r"python3 tools/pipeline\.py( [a-z]+)* (validate|hashes)( |$)", text, re.M) \
+            and "uses: actions/cache/restore@" in text and "uses: actions/cache@" not in text
+    check("the hourly runs validate.py between the catalogue and the app it deploys -- every refusal but the hash coverage only the nightly can meet -- and reads the nightly's cache without saving one",
+          validates(hyml), " | ".join(re.findall(r"python3 tools/(?:pipeline|validate)\.py[a-z -]*", hyml)) or "no pipeline line")
+    t115 = hyml.replace("python3 tools/pipeline.py ingest history catalog\n          python3 tools/validate.py\n          python3 tools/pipeline.py app", "python3 tools/pipeline.py ingest history catalog validate app")
+    muts = [t115, t115.replace(" catalog validate app", " catalog app"), hyml.replace("python3 tools/validate.py", "python3 tools/validate.py --strict"),
+            hyml.replace("python3 tools/validate.py\n          python3 tools/pipeline.py app", "python3 tools/pipeline.py app\n          python3 tools/validate.py"), hyml.replace("actions/cache/restore@", "actions/cache@")]
+    check("...control: take 115's first list (validate --strict), take 114's (none), --strict by hand, validate after the app, or a cache step that saves every hour, does not pass",
+          len(set(muts)) == len(muts) and hyml not in muts and not any(validates(m) for m in muts))
     # take 115 (SPEC-113-56): the Play icon ci/apk.sh draws rides the Release, on the first publish and on every nightly's
     apk_sh = open(os.path.join(ROOT, "ci", "apk.sh"), encoding="utf8").read()
     def icon_rides(text):

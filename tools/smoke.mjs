@@ -13,6 +13,7 @@ import os from 'node:os';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
 import vm from 'node:vm';
+import zlib from 'node:zlib';
 
 const ROOT = path.dirname(path.dirname(new URL(import.meta.url).pathname));
 const W = p => path.join(ROOT, 'www', p);
@@ -1490,7 +1491,10 @@ ok('Sealed groups by set: a header per set, every set open by default, a tap col
 { V.SEALED.q = ''; V.SEALED.open = new Set(); V.HUNT.setZip(''); V.paintSealed(); const hf = ctx.document.querySelector('#sealedList').innerHTML;
   const headers = (hf.match(/data-setfold=/g) || []).length, rows = (hf.match(/data-open="/g) || []).length;
   ok('...every product is on screen under its set header', headers >= 10 && rows >= 300, `${headers} set headers, ${rows} rows shown`);
-  V.SEALED.closed.add([...V.CAT.sets.keys()][0]); V.paintSealed(); ok('...and a collapsed set hides only its own rows', (ctx.document.querySelector('#sealedList').innerHTML.match(/data-open="/g) || []).length < rows); V.SEALED.closed.clear(); }
+  /* take 115 (self-review): the first set DRAWN with rows -- the catalogue's newest group can be sealed-only with nothing
+     priced, or a starter deck drawn under Starter decks, and collapsing it hid nothing */
+  const first93 = +(hf.match(/data-setfold="(\d+)"/) || [])[1];
+  V.SEALED.closed.add(first93); V.paintSealed(); ok('...and a collapsed set hides only its own rows', (ctx.document.querySelector('#sealedList').innerHTML.match(/data-open="/g) || []).length < rows, String(first93)); V.SEALED.closed.clear(); }
 /* take 87: the fourth look, part two */
 ok('MAX wears an AD badge and is unlocked for a day by a rewarded ad; with no ad plugin it simply opens', /'<span class="free">AD<\/span>'/.test(js) && /const MAXLOCK = \{/.test(js) && /24 \* 3600e3/.test(js) && /!PLATFORM\.plugin\('AdMob'\) \|\| !CAT\.man\.ads \|\| Date\.now\(\) < this\.until/.test(js) && !/FREE<\/span>/.test(js));
 ok('...and the reward listener routes a max ad to the unlock, not to scan credits', /if \(this\._pendingKind === 'max'\) \{ this\._pendingKind = null; MAXLOCK\.grant\(\)/.test(js));
@@ -1799,7 +1803,7 @@ V.HUNT.feed = F; V.HUNT.setZip('48329'); V.MODE.set('hunt', false); V.paintSeale
 const h73 = ctx.document.querySelector('#sealedList').innerHTML;
 ok('the product line says it: last seen shipping N days ago, restocked 2× in 14 d with the store and day named', /last seen shipping 5 days ago/.test(h73) && /restocked 2× in 14 d: Auburn Hills/.test(h73));
 V.HUNT.hist = { runs: rows.slice(0, 5), since: rows[0].t, stores: { '48329': T.zips['48329'].stores }, titles: {} }; V.paintSealed();
-ok('with five checks it lists what it saw and says a pattern needs a fortnight -- never a prediction on thin data', /5 checks in less than a day so far — a pattern needs a fortnight/.test(ctx.document.querySelector('#sealedList').innerHTML));   // take 115: in days from the rows, never "hourly" (landmine 173)
+ok('with five checks it lists what it saw and says a pattern needs a fortnight -- never a prediction on thin data', /5 checks of it in less than a day so far — a pattern needs a fortnight/.test(ctx.document.querySelector('#sealedList').innerHTML));   // take 115: in days from the rows, never "hourly" (landmine 173), and only the runs that read it
 V.HUNT.hist = null; V.paintSealed();
 ok('with no history there is no history line at all', !/a pattern needs a fortnight|last seen shipping/.test(ctx.document.querySelector('#sealedList').innerHTML));
 /* take 74: Local -- the roster, distances from the zip area, the dropdown, own notes */
@@ -2146,8 +2150,11 @@ ok('opening the fold shows every deck of the run as its own row, and the fold sa
 ok('the group\'s tap searches Sealed for every starter deck, not one set', /data-browse-q="Starter Deck"/.test(r97b) && (() => { V.SEALED.q = ''; V.browseSet(run[0].id, 'Starter Deck'); const q = V.SEALED.q; V.SEALED.q = ''; ctx.document.getElementById('sealedQ').value = ''; return q === 'Starter Deck'; })());
 V.RELF.open = new Set(); V.paintReleases(); const r97c = ctx.document.getElementById('relList').innerHTML;
 const upcoming97 = [...V.CAT.sets.values()].filter(s => s.pub && s.pub >= today97);
-ok('every upcoming row\'s countdown carries the band of its distance, and a recent row carries the past band', upcoming97.every(s => new RegExp('data-browse-set="' + s.id + '"[\\s\\S]*?<span class="note ' + V.relBand(days97(s.pub)) + '">').test(r97c)) && /<span class="note cd4">\d+ days ago<\/span>/.test(r97c), `${upcoming97.length} upcoming`);
-ok('every upcoming row and group has Remind me and Calendar beside Details; a recent one has Details only', count97(r97c, /data-relalert="/g) >= upcoming97.length && count97(r97c, /data-relcal="/g) === count97(r97c, /data-relalert="/g) && (() => { const rec = r97c.slice(r97c.indexOf('<h3>Recent</h3>')); return !/data-relalert=/.test(rec) && /Details <svg[^>]*><use href="#g-external"/.test(rec); })());
+/* take 115 (self-review): rows, not sets -- starter decks that share a day are one row (its first deck's), and since take 115
+   a group is listed as soon as it lists a product, so ST39-ST44 on one day would have turned these two red */
+const rows97 = upcoming97.filter(s => new RegExp('data-browse-set="' + s.id + '"').test(r97c) || !(/^Starter Deck/i.test(s.name) && new RegExp('data-relfold="' + s.pub + '"').test(r97c)));
+ok('every upcoming row\'s countdown carries the band of its distance, and a recent row carries the past band', rows97.every(s => new RegExp('data-browse-set="' + s.id + '"[\\s\\S]*?<span class="note ' + V.relBand(days97(s.pub)) + '">').test(r97c)) && /<span class="note cd4">\d+ days ago<\/span>/.test(r97c), `${rows97.length} upcoming rows of ${upcoming97.length} sets`);
+ok('every upcoming row and group has Remind me and Calendar beside Details; a recent one has Details only', count97(r97c, /data-relalert="/g) >= rows97.length && count97(r97c, /data-relcal="/g) === count97(r97c, /data-relalert="/g) && (() => { const rec = r97c.slice(r97c.indexOf('<h3>Recent</h3>')); return !/data-relalert=/.test(rec) && /Details <svg[^>]*><use href="#g-external"/.test(rec); })());
 /* the reminder: on, the day before, once; off */
 const s97 = upcoming97.sort((a, b) => a.pub.localeCompare(b.pub))[0];
 if (s97) {
@@ -3004,6 +3011,14 @@ section('take 112 — A32\'s second distributor: Southern Hobby, read off its re
   ok('...opened: Southern Hobby\'s counts from its dates, the in-store count from the pages read, and why allocation goes unsaid',
      /<b>Southern Hobby<\/b>/.test(ho) && /20 One Piece products listed to stores: <b>1<\/b> still taking their orders, 18 with orders closed, 1 released; 1 in-store only \(3 of 20 product pages read so far\)/.test(ho)
      && /marks every One Piece presell subject to allocation, so that says nothing about one product/.test(ho), (ho.match(/<b>Southern Hobby<\/b>[\s\S]{0,300}/) || ['no Southern Hobby section'])[0].replace(/\s+/g, ' '));
+  /* take 115 (self-review): the fixture's unlisted products are sets TCGCSV had not listed on 25 Sept, and since take 115
+     a group enters the catalogue as soon as it lists one product -- any night could list one and turn the count and the
+     rows below red with nothing wrong. They are the fixture's facts, so the fixture's catalogue is read: those sets are
+     set aside for this read and put back in their order after it. */
+  const FX115 = new Set(['IB09', 'IB10', 'ST37', 'ST38', 'EB06', 'DP14', 'OP19', 'PEB01', 'ST39', 'ST40', 'ST41', 'ST42', 'ST43', 'ST44']);
+  const norm115 = x => String(x || '').toUpperCase().replace(/[^A-Z0-9]/g, ''), setsAll115 = [...V.CAT.sets];
+  const aside115 = setsAll115.filter(([, st]) => [norm115(st.abbr), ...String(st.abbr || '').split(/[-\/]/).map(norm115)].some(c => FX115.has(c))).map(([k]) => k);
+  for (const k of aside115) V.CAT.sets.delete(k);
   V.paintReleases(); const rc = ctx.document.querySelector('#relList').innerHTML;
   const op18row = (rc.match(/<span>OP18 · [^<]*<\/span>((?:<span style="display:block;color:var\(--brass\)">[^<]*<\/span>)*)/) || ['', ''])[1];
   const lines18 = (op18row.match(/<span style="display:block;color:var\(--brass\)">/g) || []).length;
@@ -3021,6 +3036,7 @@ section('take 112 — A32\'s second distributor: Southern Hobby, read off its re
      && panel.includes(`OP-19 Booster Box</b><span>OP19</span><span style="display:block;color:var(--brass)">Southern Hobby · stores’ orders closed ${D112(I112('81327').due)} · release ${D112(I112('81327').release)} · prerelease ${D112((I112('81327').page || {}).prerelease)}`)
      && /Starter decks ST39–ST44<\/b><span>6 starter deck displays, one release day/.test(panel) && /data-relfold="d:southern:2027-04-23"/.test(panel), panel.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 400));
   ok('...each fold names its distributor: GTS\'s and Southern Hobby\'s displays of one day never share a key', !/data-relfold="d:2027-04-23"/.test(r) && /Checked GTS Distribution [^,]+, Southern Hobby /.test(panel));
+  V.CAT.sets.clear(); for (const [k, st] of setsAll115) V.CAT.sets.set(k, st);   // the live catalogue back, in its order
   const iso = t => /(GTS Distribution|Southern Hobby) · [^<]*\b\d{4}-\d\d-\d\d\b/.test(t) || /(GTS Distribution|Southern Hobby)<\/b><span>[^<]*\b\d{4}-\d\d-\d\d\b/.test(t);
   ok('every day on a distributor line is in words, as everywhere else -- the rows, the open lists and a page\'s Distributor info', !iso(h) && !iso(ho) && !iso(rc) && !iso(r) && !iso(dd) && new RegExp(`GTS Distribution · sold out · allocated · [^<]*· release ${D112((F.sources.gts.items.find(i => i.sku === 'BJP2884797') || {}).release)} · `).test(r), (String(h + ho + rc + r + dd).match(/(GTS Distribution|Southern Hobby)(<\/b><span>| · )[^<]*\d{4}-\d\d-\d\d[^<]*/) || [''])[0]);
   ok('...control: an ISO day on either shape of line is caught', iso('<span>GTS Distribution · sold out · release 2026-06-12 · just now</span>') && iso('<b>Southern Hobby</b><span>released 2026-09-18</span>'));
@@ -3303,7 +3319,13 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
     const { doc: d, listeners: dl } = makeDom(html);   // A2: its document's click listeners, to tap a sheet's option
     const c = { console, navigator: { vibrate: () => true, onLine: false }, location: { href: 'https://localhost/' },
       localStorage: { getItem: k => { if (getThrows && getThrows(k)) throw new Error('SecurityError: storage is blocked'); return st[k] ?? null; },
-                      setItem: (k, v) => { if (full && full.on) { const e = new Error("Failed to execute 'setItem' on 'Storage': exceeded the quota."); e.name = 'QuotaExceededError'; throw e; } st[k] = String(v); },
+                      /* full.on refuses every write; full.quota refuses only a write that takes the total past it, as Chromium
+                         does -- a shorter value always fits, which is how clearing the batch got through (take 115, self-review) */
+                      setItem: (k, v) => { v = String(v);
+                        const size = () => Object.entries(st).reduce((a, [x, y]) => a + x.length + String(y).length, 0);
+                        if (full && (full.on || (full.quota != null && size() - (k in st ? k.length + String(st[k]).length : 0) + k.length + v.length > full.quota))) {
+                          const e = new Error("Failed to execute 'setItem' on 'Storage': exceeded the quota."); e.name = 'QuotaExceededError'; throw e; }
+                        st[k] = v; },
                       removeItem: k => { delete st[k]; } },
       URL, Blob: class { constructor(p) { this.p = p; } }, BigInt, Math, Date, JSON, Promise, clearTimeout, devicePixelRatio: 2, AbortController,
       setTimeout: timers ? (f, ms, ...a) => { timers.push([f, ms]); return setTimeout(f, ms, ...a); } : setTimeout,
@@ -3423,16 +3445,37 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
        !!B.V && B.V.OWN.items.length === 0 && B.st['vault.items.unreadable'] === corrupt['vault.items'] && B.st['vault.items'] !== corrupt['vault.items'], JSON.stringify({ kept: B.st['vault.items.unreadable'], now: B.st['vault.items'] }));
     ok('...a cache or a preference that does not read is simply refetched or reset: recorded, no copy kept', !!B.V && ['vault.hunt', 'vault.filt.own'].every(k => B.V.ERRS.list.some(e => e.msg.startsWith(k + ' was unreadable')) && !((k + '.unreadable') in B.st)));
     await sleep(5);
-    ok('...the collector is told, and pointed at Restore', /^Your saved collection could not be read — use Restore from backup, under More$/.test(toastText(B.d)), toastText(B.d));
-    const manual = holds(() => B.V.scheduleBackup('manual')); holds(() => B.V.scheduleBackup('batch')); await sleep(450);
+    ok('...the collector is told, and pointed at Restore (the collection first, then how many other lists)', /^Your saved collection and 10 other lists could not be read — use Restore from backup, under More$/.test(toastText(B.d)), toastText(B.d));
+    /* take 115 (self-review): what Back up asked is recorded, and a throw is a failure -- holds() read a throw as false,
+       the Cancel's own value, so a Back up that crashed or refused without asking passed */
+    const call = f => { try { return { v: f() }; } catch (e) { return { e: String((e && e.message) || e) }; } };
+    const asked = []; B.c.confirm = m => { asked.push(m); return false; };   // Back up, answered Cancel
+    const manual = call(() => B.V.scheduleBackup('manual')); holds(() => B.V.scheduleBackup('batch')); await sleep(450);
     ok('...and no backup writes the empty collection over the good file: the automatic one keeps the file, Back up asks first and a Cancel keeps it too',
-       holds(() => B.V.backupHeld()) === true && manual === false && B.st['vault.backup'] === good, JSON.stringify({ manual, kept: B.st['vault.backup'] === good }));
+       holds(() => B.V.backupHeld()) === true && !manual.e && manual.v === false && asked.length === 1 && /could not be read/.test(asked[0]) && B.st['vault.backup'] === good,
+       JSON.stringify({ manual, asked: asked.length, kept: B.st['vault.backup'] === good }));
+    const K = await bootFresh({ st: { 'vault.items': corrupt['vault.items'], 'vault.backup': good } }), kAsked = []; K.c.confirm = m => { kAsked.push(m); return true; };
+    const kManual = call(() => K.V.scheduleBackup('manual')); await sleep(450);
+    ok('...and Back up answered OK ends the hold: the collector\'s own backup is written over the kept file',
+       kAsked.length === 1 && !kManual.e && kManual.v !== false && holds(() => K.V.backupHeld() === false) && !!K.st['vault.backup'] && K.st['vault.backup'] !== good,
+       JSON.stringify({ kManual, asked: kAsked.length, held: holds(() => K.V.backupHeld()) }));
     const R = await bootFresh({ st: B.st, answers: [true] }); await sleep(5);
     ok('...the hold outlives the launch: the next launch, on an empty collection that now reads, still keeps the file and says so again',
-       !!R.V && R.V.backupHeld() === true && R.V.OWN.items.length === 0 && /^Your saved collection could not be read/.test(toastText(R.d)) && (R.V.scheduleBackup('sync'), await sleep(450), R.st['vault.backup'] === good), R.V ? toastText(R.d) : 'no app');
+       !!R.V && R.V.backupHeld() === true && R.V.OWN.items.length === 0 && /^Your saved collection and 10 other lists could not be read/.test(toastText(R.d)) && (R.V.scheduleBackup('sync'), await sleep(450), R.st['vault.backup'] === good), R.V ? toastText(R.d) : 'no app');
     if (R.V) await R.V.restoreFromBackup();
     ok('...and a restore brings the collection back and ends the hold: the next backup is written again', !!R.V && R.V.OWN.items.length === 1 && R.V.OWN.items[0].qty === 3 && !R.V.backupHeld()
        && (R.V.scheduleBackup('batch'), await sleep(450), JSON.parse(R.st['vault.backup']).at !== JSON.parse(good).at && JSON.parse(R.st['vault.backup']).items.length === 1), R.V ? JSON.stringify({ n: R.V.OWN.items.length, held: R.V.backupHeld() }) : 'no app');
+    /* take 115 (self-review): every list the backup carries holds it -- the hold was the collection's alone, so an
+       unreadable decks list started empty and the first commit wrote that over the backup's decks */
+    const line1 = JSON.stringify([{ id, qty: 1, condition: 'NM', pf: 'main', game: 'optcg' }]);
+    const goodD = JSON.stringify({ app: 'OP TCG Hub', take: V.TAKE, at: later(manifest.source_updated_at, -1), items: JSON.parse(line1), decks: [{ id: 'dk115', name: 'Kept 115', leader: null, cards: {} }] });
+    const D = await bootFresh({ st: { 'vault.items': line1, 'vault.decks': '[{"id": "dk115", "na', 'vault.backup': goodD } }); await sleep(5);
+    const dHeld = holds(() => D.V.backupHeld()); holds(() => D.V.commitOwn('detail')); await sleep(450);
+    ok('an unreadable list the backup carries (the decks) holds the backup too: a commit keeps the file\'s deck, and the collector is told which list could not be read',
+       dHeld === true && D.st['vault.backup'] === goodD && /^Your saved decks could not be read — use Restore from backup, under More$/.test(toastText(D.d)), JSON.stringify({ dHeld, kept: D.st['vault.backup'] === goodD, toast: toastText(D.d) }));
+    const Bt = await bootFresh({ st: { 'vault.items': line1, 'vault.batch': '[1,', 'vault.backup': goodD } });
+    const btHeld = holds(() => Bt.V.backupHeld()); holds(() => Bt.V.commitOwn('detail')); await sleep(450);
+    ok('control: an unreadable batch (in no backup) holds nothing -- the backup is written', btHeld === false && !!Bt.st['vault.backup'] && Bt.st['vault.backup'] !== goodD, JSON.stringify({ btHeld }));
     const N = await bootFresh({ st: { 'vault.backupHold': 'x', 'vault.items': '[]' } });
     const nHeld = holds(() => N.V.backupHeld()); holds(() => N.V.scheduleBackup('batch')); await sleep(450);
     ok('control: a hold with no backup on file protects nothing -- the first backup is written and ends it', nHeld === true && !!N.st['vault.backup'] && holds(() => N.V.backupHeld() === false), JSON.stringify({ nHeld, wrote: !!N.st['vault.backup'] }));
@@ -3456,10 +3499,14 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
     full.on = true;
     const done = F.d.getElementById('btnDone'), res = await settle(Promise.resolve().then(() => done._ev.click({ target: done })), 2000);
     await sleep(5);
-    ok('storage full at a batch commit: the commit does not stop half-way -- all three cards are in the collection on screen', !res.e && !res.hung && three.every(id => F.V.OWN.items.some(i => i.id === id)), JSON.stringify({ res, items: F.V && F.V.OWN.items.length }));
+    /* take 115 (self-review): the commit no longer throws half-way, and the cards leave the batch only once the
+       collection has stored them -- take 115's first version put them in the collection on screen and cleared the
+       batch, which a real quota lets through (below), so the next launch had them in neither */
+    ok('storage full at a batch commit: the commit does not throw half-way, and the three cards stay in the batch -- on screen and stored -- since the collection could not store them',
+       !res.e && !res.hung && F.V.BATCH.rows.length === 3 && F.V.OWN.items.length === 0 && JSON.parse(F.st['vault.batch']).rows.length === 3, JSON.stringify({ res, items: F.V && F.V.OWN.items.length, batch: F.V && F.V.BATCH.rows.length }));
     ok('...the collector is told to export (Export CSV reads what is on screen)', /^Could not save on this phone — export your collection now \(Export CSV\)$/.test(toastText(F.d)), toastText(F.d));
     const once = k => F.V.ERRS.list.filter(e => e.kind === 'storage' && e.msg.startsWith(k + ' was not saved')).length;
-    for (let i = 0; i < 30; i++) holds(() => F.V.OWN.save());
+    for (let i = 0; i < 30; i++) holds(() => (F.V.OWN.save(), F.V.BATCH.save()));
     ok('...each failed write is in the last errors once, however often it is tried (twenty records hold the rest)', holds(() => once('vault.items') === 1 && once('vault.batch') === 1 && /QuotaExceededError/.test(F.V.ERRS.list.find(e => /^vault\.items was not saved/.test(e.msg)).msg)), JSON.stringify(F.V.ERRS.list.map(e => e.msg)));
     const saves = { portfolio: () => F.V.PF.save(), decks: () => F.V.DECKS.save(), credits: () => F.V.CREDITS.save(), batch: () => F.V.BATCH.save(), trade: () => F.V.TRADE.save(), wants: () => F.V.WANT.save(),
       alerts: () => F.V.ALERTS.save(), 'stock alerts': () => F.V.STOCK.save(), notes: () => F.V.LOCAL.saveNotes(), 'release reminders': () => F.V.RELALERTS.save(), 'the mode': () => F.V.MODE.set('hunt', false), currency: () => F.V.CUR.set('USD') };
@@ -3467,18 +3514,56 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
     ok('every other save survives full storage too: portfolio, decks, credits, batch, trade, wants, alerts, stock alerts, notes, reminders, the mode, the currency', threw.length === 0, 'threw: ' + threw.join(', '));
     ok('...and a save that failed says so to its caller', holds(() => F.V.OWN.save() === false && F.V.saveJson('vault.decks', []) === false));
     full.on = false; F.V.MODE.set('collect', false);
-    ok('when there is room again the next save goes through and clears the failure', holds(() => F.V.OWN.save() === true && !F.V.STORE.failed.has('vault.items') && JSON.parse(F.st['vault.items']).length === 3), holds(() => JSON.stringify([...F.V.STORE.failed])) || 'no STORE');
+    const again = await settle(Promise.resolve().then(() => done._ev.click({ target: done })), 2000); await sleep(5);
+    ok('when there is room again the same Commit stores the three and clears the failure, and only then the batch',
+       !again.e && holds(() => !F.V.STORE.failed.has('vault.items') && JSON.parse(F.st['vault.items']).length === 3 && JSON.parse(F.st['vault.batch']).rows.length === 0 && F.V.BATCH.rows.length === 0),
+       holds(() => JSON.stringify({ failed: [...F.V.STORE.failed], items: JSON.parse(F.st['vault.items'] || '[]').length, batch: F.V.BATCH.rows.length })) || 'no STORE');
     F.c.navigator.onLine = false; const rep = await F.V.DIAG.report();
     ok('Diagnostics\' storage lines name the collection\'s real keys (vault.items, vault.snaps) with their sizes, never vault.collection, and the writes that failed',
        /^vault\.items: \d+ KB$/m.test(rep) && /^vault\.snaps: \d+ KB$/m.test(rep) && !/vault\.collection/.test(rep) && /^writes that failed: /m.test(rep), (rep.match(/## storage[\s\S]*?\n\n/) || [''])[0].slice(0, 400));
+
+    /* take 115 (self-review, high): a storage AT its quota refuses the longer collection but lets the shorter batch
+       or tray through. The cards must leave where they waited only after the collection (or the tray) stored them. */
+    const cards = V.CAT.rows.filter(p => p.num && !V.SEALED.isProduct(p)).slice(3, 8).map(p => p.id), two = cards.slice(0, 2), wait3 = cards.slice(2);
+    const row = id => ({ id, photo: null }), lineOf = id => ({ id, qty: 1, condition: 'NM', photo: null, pf: 'main', game: 'optcg', added: '2026-09-01T00:00:00.000Z', fav: false });
+    const atQuota = async (st, credits = null) => {
+      const q = { on: false }, Q = await bootFresh({ full: q, st: { 'vault.items': JSON.stringify(two.map(lineOf)), ...st } });
+      if (credits) { Q.V.CREDITS.enabled = () => true; Object.assign(Q.V.CREDITS.state, credits); Q.V.CREDITS.save(); }
+      q.quota = Object.entries(Q.st).reduce((a, [x, y]) => a + x.length + String(y).length, 0) + 16;   // 16 bytes to spare
+      return Q; };
+    const stored = (Q, k) => { try { return JSON.parse(Q.st[k]); } catch (e) { return null; } };
+    const Q1 = await atQuota({ 'vault.batch': JSON.stringify({ rows: wait3.map(row), setId: null }) });
+    const d1 = Q1.d.getElementById('btnDone'), q1 = await settle(Promise.resolve().then(() => d1._ev.click({ target: d1 })), 2000); await sleep(5);
+    const N1 = await bootFresh({ st: { ...Q1.st } });
+    ok('storage at its quota at a batch commit: the batch keeps the three cards, stored and at the next launch, and the collection is the two lines it stored',
+       !q1.e && (stored(Q1, 'vault.batch') || {}).rows?.length === 3 && stored(Q1, 'vault.items')?.length === 2 && Q1.V.OWN.items.length === 2 && Q1.V.BATCH.rows.length === 3
+       && N1.V.BATCH.rows.length === 3 && N1.V.OWN.items.length === 2 && /export your collection now/.test(toastText(Q1.d)),
+       JSON.stringify({ q1, batch: (stored(Q1, 'vault.batch') || {}).rows?.length, items: stored(Q1, 'vault.items')?.length, onScreen: Q1.V.OWN.items.length, next: [N1.V.BATCH.rows.length, N1.V.OWN.items.length], toast: toastText(Q1.d) }));
+    const Q2 = await atQuota({}, { scan: 5, pending: wait3.map(row) }); holds(() => Q2.V.CREDITS.drain()); await sleep(5);
+    ok('...a pending tray drained at its quota keeps its cards, stored, and the collection is the two lines it stored',
+       (stored(Q2, 'vault.credits') || {}).pending?.length === 3 && Q2.V.CREDITS.state.pending.length === 3 && stored(Q2, 'vault.items')?.length === 2 && Q2.V.OWN.items.length === 2,
+       JSON.stringify({ pending: (stored(Q2, 'vault.credits') || {}).pending?.length, inMemory: Q2.V.CREDITS.state.pending.length, items: stored(Q2, 'vault.items')?.length }));
+    const Q3 = await atQuota({ 'vault.batch': JSON.stringify({ rows: wait3.map(row), setId: null }) }, { scan: 0, pending: [] });
+    const d3 = Q3.d.getElementById('btnDone'), q3 = await settle(Promise.resolve().then(() => d3._ev.click({ target: d3 })), 2000); await sleep(5);
+    ok('...a batch with no credits whose tray cannot be stored stays in the batch (the tray takes nothing it could not keep)',
+       !q3.e && (stored(Q3, 'vault.batch') || {}).rows?.length === 3 && Q3.V.CREDITS.state.pending.length === 0 && ((stored(Q3, 'vault.credits') || {}).pending || []).length === 0,
+       JSON.stringify({ q3, batch: (stored(Q3, 'vault.batch') || {}).rows?.length, tray: Q3.V.CREDITS.state.pending.length }));
   });
 
   /* (11) no deadline on any request: Sync and the Hunt refresh buttons stayed grey until a stalled request gave up */
   await guard('deadlines', async () => {
-    const catBytes = fs.statSync(W('bundle/catalog.json')).size, SLOW = 256e3;   // bit/s: a slow phone link
-    const hd = W('hunt'), huntMax = fs.existsSync(hd) ? Math.max(0, ...fs.readdirSync(hd).filter(f => f.endsWith('.json')).map(f => fs.statSync(path.join(hd, f)).size)) : 0;
-    ok(`the deadlines are sized for a slow phone link (256 kbit/s): the ${(catBytes / 1048576).toFixed(1)} MB catalogue inside the long one, ${huntMax ? `the largest Hunt file (${(huntMax / 1048576).toFixed(1)} MB)` : 'a Hunt file'} inside the default`,
-       V.NET.WAIT_BIG / 1000 * SLOW / 8 >= catBytes && (huntMax === 0 || V.NET.WAIT / 1000 * SLOW / 8 >= huntMax) && V.NET.WAIT < V.NET.WAIT_BIG, JSON.stringify({ WAIT: V.NET.WAIT, WAIT_BIG: V.NET.WAIT_BIG, catBytes, huntMax }));
+    /* take 115 (self-review): the catalogue as it crosses the link. Pages sends it gzipped (MEASURED 25 Sept: 739,429 B
+       for 5,147,553, content-encoding gzip); its raw size grows 37.8 KB with each night's history day and would have
+       crossed the long deadline near the 80th day -- a red nightly with no change. gzip's fastest level is a bound on
+       what Pages sends (906,802 B today). */
+    const catBytes = zlib.gzipSync(fs.readFileSync(W('bundle/catalog.json')), { level: 1 }).length, SLOW = 256e3;   // bit/s: a slow phone link
+    /* the Hunt files uncompressed, the stricter measure, with Pages' largest as the floor: on the runner www/hunt holds
+       only zcta.json when smoke runs (build_app.py copies it; the rest arrive with the carry-over, after smoke) --
+       MEASURED 25 Sept: hunt/stores.json 1,099,659 B on Pages */
+    const HUNT_MEASURED = 1099659, hd = W('hunt');
+    const huntMax = Math.max(HUNT_MEASURED, ...(fs.existsSync(hd) ? fs.readdirSync(hd).filter(f => f.endsWith('.json')).map(f => fs.statSync(path.join(hd, f)).size) : []));
+    ok(`the deadlines are sized for a slow phone link (256 kbit/s): the ${(catBytes / 1048576).toFixed(1)} MB catalogue as sent (gzip) inside the long one, the largest Hunt file (${(huntMax / 1048576).toFixed(1)} MB uncompressed) inside the default`,
+       V.NET.WAIT_BIG / 1000 * SLOW / 8 >= catBytes && V.NET.WAIT / 1000 * SLOW / 8 >= huntMax && V.NET.WAIT < V.NET.WAIT_BIG, JSON.stringify({ WAIT: V.NET.WAIT, WAIT_BIG: V.NET.WAIT_BIG, catBytes, huntMax }));
     V.NET.WAIT = 40; V.NET.WAIT_BIG = 40; ctx.navigator.onLine = true;
     const aborted = [];
     const stall = async (u, o) => { if (!u.startsWith('https://pages.invalid/')) return undefined;
@@ -3536,6 +3621,7 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
      retaken when it can have moved, the backup scheduled. Six of the paths below never scheduled it. */
   await guard('every commit of the collection is backed up', async () => {
     const PF = V.PF, keep = { items: V.OWN.items, snaps: V.OWN.snaps, active: PF.active, list: PF.list.slice(), f: JSON.parse(JSON.stringify(V.FILT.own)), wants: V.WANT.list.slice(),
+      alerts: V.ALERTS.list.slice(), notes: V.LOCAL.notes.slice(), rel: V.RELALERTS.list.slice(),
       give: V.TRADE.give.slice(), get: V.TRADE.get.slice(), stock: V.STOCK.list.slice(), last: V.OWN.lastBackup, conf: ctx.confirm };
     Object.assign(V.FILT.own, V.blankFilter('own')); ctx.confirm = () => true;
     if (!PF.list.some(p => p.id === 'tr115')) PF.list.push({ id: 'tr115', name: 'Trade 115' });
@@ -3568,14 +3654,25 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
       doc._ids.set('askIn', { value: '10' }); doc.getElementById('askOk')._ev.click(); await sleep(0); doc.getElementById('askOk')._ev.click(); await settle(run, 500); doc._ids.delete('askIn'); },
       b => b.items.some(i => i.id === A && i.graded && i.graded.grader === 'PSA'));
     ok('a graded copy is backed up', r7.reason === 'graded' && r7.good, JSON.stringify(r7));
-    const r8 = await backedUp(() => { V.WANT.toggle(pC.num, pC.id); V.TRADE.add('give', pC.id); V.STOCK.toggle(pC.id); },
-      b => b.wants.some(w => w.num === pC.num) && ((b.trade || {}).give || []).some(x => x.id === pC.id) && (b.stockAlerts || []).some(x => x.id === pC.id));
-    ok('a change to a list the backup carries (a want, a trade row, a stock alert) is backed up with it', r8.reason === 'lists' && r8.good, JSON.stringify(r8));
+    /* take 115 (self-review): one list per wait. The backup keeps only the last call's timer and carries every list, so
+       three changes before one wait passed while any one of their saves still scheduled it -- five of six unguarded */
+    const listCases = [
+      ['a want', () => V.WANT.toggle(pC.num, pC.id), b => (b.wants || []).some(w => w.num === pC.num)],
+      ['a trade row', () => V.TRADE.add('give', pC.id), b => ((b.trade || {}).give || []).some(x => x.id === pC.id)],
+      ['a stock alert', () => V.STOCK.toggle(pC.id), b => (b.stockAlerts || []).some(x => x.id === pC.id)],
+      ['a price alert', () => V.ALERTS.add(pC.id, 'above', 1e6), b => (b.alerts || []).some(a => a.id === pC.id && a.at === 1e6)],
+      ['a Hunt note', () => { V.LOCAL.notes.push({ store: 'Shop 115', what: 'boxes', price: null, phone: null, when: utcDay() }); V.LOCAL.saveNotes(); }, b => (b.notes || []).some(n => n.store === 'Shop 115')],
+      ['a release reminder', () => V.RELALERTS.toggle('rel115', 'Set 115', '2099-01-01'), b => (b.relAlerts || []).some(a => a.id === 'rel115')]];
+    const r8 = {};
+    for (const [what, act, has] of listCases) { const r = await backedUp(act, has); r8[what] = r.reason === 'lists' && r.good ? true : r; }
+    ok(`a change to each list the backup carries is backed up with it, one list at a time (${listCases.map(c => c[0]).join(', ')})`, Object.values(r8).every(v => v === true),
+       JSON.stringify(Object.fromEntries(Object.entries(r8).filter(([, v]) => v !== true))));
     const r0 = await backedUp(() => { V.openDetail(B); doc.getElementById('dSave')._ev.click(); }, b => !!line(b, B));
     ok('control: Save on a card\'s page -- which always backed up -- is seen by the same measure', r0.reason === 'detail' && r0.good, JSON.stringify(r0));
     doc.getElementById('bulkX')._ev.click();
     V.OWN.items = keep.items; V.OWN.snaps = keep.snaps; V.OWN.lastBackup = keep.last; V.OWN.save(); PF.active = keep.active; PF.list = keep.list; PF.save();
     Object.assign(V.FILT.own, keep.f); V.WANT.list = keep.wants; V.TRADE.give = keep.give; V.TRADE.get = keep.get; V.STOCK.list = keep.stock; ctx.confirm = keep.conf;
+    V.ALERTS.list = keep.alerts; V.ALERTS.save(true); V.LOCAL.notes = keep.notes; V.saveJson('vault.hunt.notes', keep.notes); V.RELALERTS.list = keep.rel; V.RELALERTS.save(true);
     await sleep(450); delete store['vault.backup']; V.go('home');
   });
 
@@ -3666,6 +3763,18 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
     full.on = true; await settle(restoreIn(Fu), 2000); full.on = false;
     ok('when what is on the phone cannot be kept aside (storage full), the restore asks before it goes on, and a No keeps the phone as it was',
        asked.length === 2 && /could not be kept aside/.test(asked[1]) && Fu.V.OWN.items.length === 2, JSON.stringify({ asked: asked.map(m => m.slice(0, 40)), n: Fu.V.OWN.items.length }));
+    /* take 115 (self-review): on the phone the file copy alone was counted as kept. Restore offers only the copy in
+       storage, so a full storage restored with no second question, and an older copy passed for what it replaced. */
+    const older = JSON.stringify({ ...file, items: [], at: new Date(Date.now() - 15 * 864e5).toISOString() });
+    const qd = { 'OPTCGHub/backup-latest.json': JSON.stringify(file) }, qf = { on: false }, pAsked = [];
+    const P = await bootFresh({ st: { ...phone, 'vault.beforeRestore': older }, disk: qd, full: qf });
+    P.c.confirm = m => { pAsked.push(m); return true; };   // yes to the restore, and yes to "restore anyway"
+    qf.quota = Object.entries(P.st).reduce((a, [x, y]) => a + x.length + String(y).length, 0) + 16;   // a new copy of the phone does not fit
+    const runP = restoreIn(P); await sleep(5); tapIn(P.L || {}, '[data-rsrc]', { rsrc: 'latest' }); await settle(runP, 2000); qf.quota = null;
+    const pFile = (() => { try { return JSON.parse(qd['OPTCGHub/backup-before-restore.json']); } catch (e) { return null; } })();
+    ok('on the phone, when storage cannot keep what the restore replaces, the file alone does not count as kept: the restore asks first, and on a Yes no older copy is left to pass for it',
+       pAsked.length === 2 && /could not be kept aside/.test(pAsked[1]) && !('vault.beforeRestore' in P.st) && !!pFile && pFile.items.length === 2 && P.V.OWN.items.length === 1,
+       JSON.stringify({ asked: pAsked.length, older: 'vault.beforeRestore' in P.st, file: pFile && pFile.items.length, n: P.V.OWN.items.length }));
     /* a phone with nothing on it keeps nothing, and no older copy is left to pass for what this restore replaced */
     const E = await bootFresh({ st: { 'vault.backup': JSON.stringify(file), 'vault.beforeRestore': JSON.stringify({ ...file, at: new Date(Date.now() - 9 * 864e5).toISOString() }) } }); E.c.confirm = () => true;
     const runE = restoreIn(E); await sleep(5); tapIn(E.L || {}, '[data-rsrc]', { rsrc: 'latest' }); await settle(runE, 2000);
@@ -3696,8 +3805,10 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
       const e = await alertAt(shown), ph = (e.field.match(/placeholder="([^"]*)"/) || [])[1];
       ok(`in ${code} the alert's box shows the market in ${code} as a plain number (it showed it after the symbol, "${sym}")`, ph === shown, JSON.stringify(ph));
       ok(`...its note names ${code} and says the alert is kept in US dollars (it said "USD.")`, e.why.includes(code) && /kept in US dollars/.test(e.why) && !/^USD\./.test(e.why), e.why);
+      /* take 115 (self-review): money() groups thousands, so the echo is read without its commas -- the watched card is the
+         catalogue's first priced printing, and past about $1,137 its figure in euros would have read red with nothing wrong */
       ok(`...and the figure typed in ${code} is the one watched: kept in dollars as it ÷ the rate, echoed back as typed (it stored ${shown} dollars)`,
-         !!e.a && Math.abs(e.a.at * rate - +shown) < 1e-9 && Math.abs(e.a.at - card.market) <= 0.005 / rate + 1e-9 && e.toast.endsWith(V.money(e.a.at)) && V.money(e.a.at).includes(Number(shown).toFixed(2)),
+         !!e.a && Math.abs(e.a.at * rate - +shown) < 1e-9 && Math.abs(e.a.at - card.market) <= 0.005 / rate + 1e-9 && e.toast.endsWith(V.money(e.a.at)) && V.money(e.a.at).replace(/,/g, '').includes(Number(shown).toFixed(2)),
          JSON.stringify({ at: e.a && e.a.at, market: card.market, rate, toast: e.toast }));
     }
     V.CUR.set('USD');
@@ -3852,6 +3963,18 @@ def answer(k):
 H.target.fetch, H.gts.fetch, H.southern.fetch = answer("target"), answer("gts"), answer("southern")
 json.dump(H.build(F["zips"], F["radius"], previous=copy.deepcopy(F)), sys.stdout)
 `, stdio: ['pipe', 'pipe', 'pipe'] }).toString());
+    /* take 115 (self-review): a source never read, as hunt.py writes it -- its real fetch failing (the getter raises)
+       and no previous feed to keep from: ok false, and the failed run's own time */
+    const runNever = k => JSON.parse(execSync('python3 -', { cwd: ROOT, input: `
+import copy, importlib.util, json, sys
+spec = importlib.util.spec_from_file_location("hunt_file", "tools/hunt.py"); H = importlib.util.module_from_spec(spec); spec.loader.exec_module(H)
+F = json.load(open(${JSON.stringify(feedA3)}))
+def down(*a, **kw): raise TimeoutError("The read operation timed out")
+for m in ("target", "gts", "southern"):
+    if m != ${JSON.stringify(k)}: setattr(getattr(H, m), "fetch", (lambda m: lambda *a, **kw: copy.deepcopy(F["sources"][m]))(m))
+getattr(H, ${JSON.stringify(k)}).get = down
+json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
+`, stdio: ['pipe', 'pipe', 'pipe'] }).toString());
     const F0 = JSON.parse(fs.readFileSync(feedA3, 'utf8')), K = runBuild(['gts', 'target']);
     const kg = K.sources.gts, kt = K.sources.target;
     ok('premise: after a failed fetch the feed keeps the last good copy with ok still true -- kept, stale_since, the error, the same items (the shape hunt.py wrote live on 25 Sept)',
@@ -3896,9 +4019,11 @@ json.dump(H.build(F["zips"], F["radius"], previous=copy.deepcopy(F)), sys.stdout
     ok('control: when every fetch answers, nothing is "not reached" and each panel says when it was checked', W.sources.gts.kept === undefined && /^2 distributors · checked (just now|\d+ min ago)$/.test(sw) && /<b>GTS Distribution<\/b>\s*<div class="note">Checked (just now|\d+ min ago) · /.test(hwo) && !/Could not reach/.test(hwo), sw);
     V.openDetail(gi.catalog_id, { dist: true }); const dw = ctx.document.querySelector('#dDist').innerHTML;
     ok('control: ...and the product\'s own page says nothing of it then, its summary only the names', !/not reached|could not reach/i.test(dw) && /^GTS Distribution(, Southern Hobby)?$/.test(sumOf(dw, 'detail')), sumOf(dw, 'detail'));
-    const D0 = JSON.parse(JSON.stringify(W)); D0.sources.southern = { ok: false, error: 'HTTP 503', items: [] };
-    V.HUNT.feed = D0; V.paintSealed(); const s0 = sumOf(ctx.document.querySelector('#sealedList').innerHTML, 'sealed');
-    ok('control: a source never read (ok false, no time) is "1 not reached", with no "since" it cannot know', /· 1 not reached$/.test(s0) && /checked (just now|\d+ min ago)/.test(s0), s0);
+    const D0 = runNever('southern'), n0 = D0.sources.southern;
+    V.HUNT.feed = D0; V.paintSealed(); const s0 = sumOf(ctx.document.querySelector('#sealedList').innerHTML, 'sealed'), lead0 = txt(V.sourceLead('Southern Hobby', n0));
+    ok('a source never read -- as hunt.py writes it, ok false with the failed run\'s own time -- is "1 not reached" with no "since", and its panel says when it was last tried (both said "since" that run)',
+       n0.ok === false && !!n0.fetched_at && !n0.stale_since && /TimeoutError/.test(n0.error || '') && /· 1 not reached$/.test(s0) && /checked (just now|\d+ min ago)/.test(s0)
+       && /^Could not reach Southern Hobby when last tried, /.test(lead0) && !/since/.test(lead0), JSON.stringify({ n0: { ok: n0.ok, at: n0.fetched_at, since: n0.stale_since, error: n0.error }, s0, lead0 }));
     V.HUNT.feed = null; V.paintSealed(); V.paintReleases();
 
     /* (A3-2) loose-record 2, landmine 173: Target's history line counted runs and called them hourly. The history on
@@ -3907,13 +4032,17 @@ json.dump(H.build(F["zips"], F["radius"], previous=copy.deepcopy(F)), sys.stdout
     const ts = LIVE.runs.map(r => Date.parse(r.t)), spanD = (Math.max(...ts) - Math.min(...ts)) / 864e5, dN = Math.max(1, Math.round(spanD));
     const T0 = F0.sources.target, tit = T0.items.find(i => i.catalog_id) || T0.items[0];
     const line = hist => { V.HUNT.hist = hist; const t = txt(V.targetLine(tit, T0)); V.HUNT.hist = null; return t; };
-    const liveLine = line(LIVE);
-    ok(`Target's line says the history's span in days from the rows' own times: "${LIVE.runs.length} checks over ${dN} days so far" (at ${LIVE.runs.length} runs it said nothing, and before 24 "N hourly checks")`,
-       spanD > 1 && spanD < 13 && liveLine.includes(`${LIVE.runs.length} checks over ${dN} days so far — a pattern needs a fortnight`) && !/hourly/.test(liveLine), liveLine);
-    const rows = (n, stepH) => ({ runs: Array.from({ length: n }, (_, k) => ({ t: new Date(Date.now() - (n - 1 - k) * stepH * 3600e3).toISOString(), online: {}, shelf: {} })), stores: {}, titles: {} });
-    const sparse = line(rows(20, 20)), fort = line(rows(85, 4)), five = line(rows(5, 1));
+    /* take 115 (self-review): only the runs that read this product are its checks. The live history's runs never read
+       this one (Target answered 435), and take 115's first version said "N checks over D days" of it all the same */
+    const liveLine = line(LIVE), liveChecks = LIVE.runs.filter(r => (r.online || {})[tit.tcin] != null).length;
+    ok(`Target's line counts only the runs that read this product: the live history's ${LIVE.runs.length} runs over ${dN} days never read it, so there is no count (it said "${LIVE.runs.length} checks over ${dN} days so far")`,
+       spanD > 1 && spanD < 13 && liveChecks === 0 && !/checks? of it|checks over|a pattern needs a fortnight|hourly/.test(liveLine), liveLine);
+    /* rows that read the product every `every`-th run, so the count is never the number of runs */
+    const rows = (n, stepH, every = 1) => ({ runs: Array.from({ length: n }, (_, k) => ({ t: new Date(Date.now() - (n - 1 - k) * stepH * 3600e3).toISOString(), online: k % every === 0 ? { [tit.tcin]: 0 } : {}, shelf: {} })), stores: {}, titles: {} });
+    const sparse = line(rows(20, 20)), fort = line(rows(85, 4)), five = line(rows(5, 1)), some = line(rows(50, 4, 6));
+    ok('...a product read in 9 of 50 runs over 8 days says "9 checks of it over 8 days", from its own checks\' times (it said "50 checks")', some.includes('9 checks of it over 8 days so far — a pattern needs a fortnight') && !/50 checks/.test(some), some);
     ok('...20 checks over about 16 days is past a fortnight: no "needs a fortnight" (it said "20 hourly checks so far")', !/a pattern needs a fortnight/.test(sparse), sparse);
-    ok('...five checks in four hours say "in less than a day" (it said "5 hourly checks")', five.includes('5 checks in less than a day so far — a pattern needs a fortnight'), five);
+    ok('...five checks in four hours say "in less than a day" (it said "5 hourly checks")', five.includes('5 checks of it in less than a day so far — a pattern needs a fortnight'), five);
     ok('...control: a fortnight at the measured four-hourly cadence (85 rows) has no such line', !/a pattern needs a fortnight/.test(fort), fort);
 
     /* (A3-3) loose-diagnostics 1: the sets, and the counts in Diagnostics and the self-test */
@@ -4101,10 +4230,13 @@ json.dump(H.build(F["zips"], F["radius"], previous=copy.deepcopy(F)), sys.stdout
     const res4 = holds(() => SIM4.resolve()); if (res4) { SU.result = res4; SU.post = { i: 1, att: 0 }; } shot(); const postBoard = boards[boards.length - 1];
     SU.post = null; SU.result = null; SU.offer = { i: g4.active, list: [{ e: { raw: 'A4 probe: draw 1 card.' }, steps: [{ a: 'draw' }], step: 0, targets: null, ref: null, cardId: dA.leader }] }; shot(); const offerBoard = boards[boards.length - 1];
     SU.offer = null; g4.phase = 'over'; g4.over = 0; shot();
-    const painted = [...doc._ids].filter(([k, e]) => e._html !== before4.get(k)).map(([, e]) => e._html).concat(boards);
+    /* take 115 (self-review): the Play screens' roots are read whether or not this block changed them -- an earlier
+       section left the counter painted with the same markup, so its paint here was no change and never read */
+    const read4 = ['dkList', 'dkRows', 'cdRes', 'plBoard'], rootHtml = k => (doc.getElementById(k) || {})._html || '';
+    const painted = [...doc._ids].filter(([k, e]) => read4.includes(k) || e._html !== before4.get(k)).map(([, e]) => e._html).concat(boards);
     const brassHits = painted.flatMap(brassText);
     ok('(SPEC-106-31) nothing on a Prep & Play screen is text in the fill\'s colour: every Play screen painted in Play\'s palette, the Sim in seven states, read for an inline color:var(--brass) or a class that sets it',
-       brassHits.length === 0 && painted.length >= 8 && boards.length === 7 && att && att.ok === true && /is attacked/.test(blockBoard) && /Counter step/.test(counterBoard) && brassCls.length >= 1, brassHits.slice(0, 4).join(' | ') || `${painted.length} painted, attack ${JSON.stringify(att)}`);
+       brassHits.length === 0 && read4.every(k => rootHtml(k).length > 0) && /class="panel plpanel"/.test(rootHtml('plBoard')) && boards.length === 7 && att && att.ok === true && /is attacked/.test(blockBoard) && /Counter step/.test(counterBoard) && brassCls.length >= 1, brassHits.slice(0, 4).join(' | ') || `${painted.length} painted, roots ${read4.map(k => k + ' ' + rootHtml(k).length).join(', ')}, attack ${JSON.stringify(att)}`);
     ok('...the two it had -- "choose a target" and the given DON!! -- are --accent-ink now (#E0553D was 4.25:1 on Play\'s card)',
        /<span style="color:var\(--accent-ink\)">choose a target<\/span>/.test(mainBoard) && /<span style="color:var\(--accent-ink\)">\u25cf/.test(mainBoard));
     ok('...control: take 114\'s span and a Hunt line are caught', brassText('<h3>X \u00b7 <span style="color:var(--brass)">choose a target</span></h3>').length === 1 && brassText('<button class="dline">GTS</button>').length === (brassCls.includes('dline') ? 1 : 0) && brassText('<i style="border-color:var(--brass)">x</i>').length === 0);

@@ -1330,13 +1330,29 @@ window.addEventListener('unhandledrejection', e => ERRS.push('rejection', (e.rea
    errors: before this one unreadable value threw while the script loaded.
    The collector's own data is never lost to that fallback -- the unreadable
    text is copied beside its key (vault.items.unreadable) before anything can
-   write over it, and no backup writes the empty collection over the good file
-   until a restore (backupHeld). keep = false for caches and preferences.
+   write over it, and no backup writes the empty list over the good file until
+   a restore (backupHeld) -- for every list the backup carries (HELD), not the
+   collection alone. keep = false for caches and preferences.
    A write that fails -- storage full: the Hunt caches share it -- no longer
    throws half-way through a commit with no message: it is recorded once per
    key and the collector is told to export, which reads what is in memory. */
 const STORE = { unreadable: [], failed: new Set(), holdBackup: false, _w: null,
   warn() { if (this._w) return; this._w = setTimeout(() => { this._w = null; toast('Could not save on this phone \u2014 export your collection now (Export CSV)', 6000); }, 0); } };
+/* take 115 (self-review): the lists the backup carries, each by the name the hold's words use. An unreadable
+   one starts empty, and the first commit wrote that over the backup's copy -- the hold was the collection's
+   alone. vault.batch is in no backup, so it holds nothing. */
+const HELD = { 'vault.items': 'collection', 'vault.snaps': 'value history', 'vault.decks': 'decks', 'vault.pfs': 'collections',
+  'vault.credits': 'waiting cards', 'vault.wants': 'wants', 'vault.alerts': 'price alerts', 'vault.stockAlerts': 'stock alerts',
+  'vault.relAlerts': 'release reminders', 'vault.hunt.notes': 'Hunt notes', 'vault.trade.give': 'trade lists', 'vault.trade.get': 'trade lists' };
+function heldKeys() {
+  let h = null; try { h = JSON.parse(localStorage.getItem('vault.backupHold') || 'null'); } catch (e) {}
+  const had = h && Array.isArray(h.keys) ? h.keys : [];
+  return Object.keys(HELD).filter(k => STORE.unreadable.includes(k) || had.includes(k));
+}
+function heldWhat() {
+  const n = [...new Set(heldKeys().map(k => HELD[k]))];
+  return !n.length ? 'data' : n.length === 1 ? n[0] : n.length === 2 ? n.join(' and ') : `${n[0]} and ${n.length - 1} other lists`;
+}
 const kindOf = x => Array.isArray(x) ? 'list' : x === null ? 'null' : typeof x;
 function readJson(key, fallback, keep = true) {
   let raw = null;
@@ -1350,8 +1366,8 @@ function readJson(key, fallback, keep = true) {
   if (!why) return v === null ? fallback : v;
   STORE.unreadable.push(key);
   let kept = false; if (keep) { try { localStorage.setItem(key + '.unreadable', raw); kept = true; } catch (e) {} }
-  if (key === 'vault.items') { STORE.holdBackup = true; try { localStorage.setItem('vault.backupHold', new Date().toISOString()); } catch (e) {} }
-  ERRS.push('storage', `${key} was unreadable (${why}); started from the default` + (keep ? (kept ? `, the text kept as ${key}.unreadable` : ', and the text could not be kept') : '') + (key === 'vault.items' ? '; the last backup is kept until a restore' : ''), 'readJson');
+  if (key in HELD) { STORE.holdBackup = true; try { localStorage.setItem('vault.backupHold', JSON.stringify({ at: new Date().toISOString(), keys: heldKeys() })); } catch (e) {} }
+  ERRS.push('storage', `${key} was unreadable (${why}); started from the default` + (keep ? (kept ? `, the text kept as ${key}.unreadable` : ', and the text could not be kept') : '') + (key in HELD ? '; the last backup is kept until a restore' : ''), 'readJson');
   return fallback;
 }
 function saveJson(key, value) {
@@ -1635,13 +1651,18 @@ const CREDITS = {
     this.save(); this.drain();
   },
   /* The pending tray: commits that were scanned offline or over the limit. */
-  defer(rows) { this.state.pending.push(...rows); this.save(); },
+  /* take 115: false when the tray could not be stored -- the rows are taken back out and stay where they were */
+  defer(rows) {
+    const at = this.state.pending.length; this.state.pending.push(...rows);
+    if (saveJson('vault.credits', this.state)) return true;
+    this.state.pending.length = at; return false;
+  },
   drain() {
     if (!this.enabled()) return;
     const n = Math.min(this.state.pending.length, this.state.scan);
     if (!n) return;
-    const go = this.state.pending.splice(0, n);
-    go.forEach(r => OWN.add(r.id, { condition: 'NM', photo: r.photo || null }));
+    if (!OWN.moveIn(this.state.pending.slice(0, n))) return;   // the tray keeps them; STORE.warn has told the collector
+    this.state.pending.splice(0, n);
     this.spendScan(n); this.save(); commitOwn('pending');
     toast(`${n} pending card${n === 1 ? '' : 's'} added`);
   }
@@ -1688,13 +1709,25 @@ const OWN = {
      condition, that collection, never a slab -- decided here only (the card page wrote it out twice more) */
   target(pf = null) { return pf || (PF.active === 'all' ? 'main' : PF.active); },
   line(id, cond = null, pf = null) { const t = this.target(pf); return this.items.find(i => i.id === id && (cond == null || i.condition === cond) && (i.pf || 'main') === t && !i.graded); },
-  add(productId, { qty = 1, condition = 'NM', photo = null, pf = null, graded = null } = {}) {
+  /* save = false: the caller writes vault.items once and knows whether it was stored (take 115: moveIn) */
+  add(productId, { qty = 1, condition = 'NM', photo = null, pf = null, graded = null, save = true } = {}) {
     const target = this.target(pf);
     const hit = graded ? null : this.line(productId, condition, target);
     if (hit) { hit.qty += qty; }
     else this.items.push({ id: productId, qty, condition, photo, pf: target, game: 'optcg',
                            added: new Date().toISOString(), fav: false, ...(graded ? { graded } : {}) });
-    this.save(); return hit || this.items[this.items.length - 1];
+    if (save) this.save(); return hit || this.items[this.items.length - 1];
+  },
+  /* take 115 (self-review): rows that leave the batch or the pending tray go into the collection here, in one
+     write, and the caller clears them from where they waited only when that write returned true. A full
+     storage refuses the longer collection but lets the shorter batch through, so clearing first lost the
+     cards on the next launch; now the collection in memory goes back to what is stored and the rows wait. */
+  moveIn(rows) {
+    if (!rows.length) return true;
+    const before = this.items.map(i => ({ ...i }));
+    rows.forEach(r => this.add(r.id, { condition: 'NM', photo: r.photo || null, save: false }));
+    if (saveJson('vault.items', this.items)) return true;
+    this.items = before; return false;
   },
   total(all = false) { return (all ? this.items : PF.scope(this.items)).reduce((s, i) => s + (price(i.id) || 0) * i.qty, 0); },
   /* A snapshot series, not a reconstruction (AGENDA A10): if you sell half the
@@ -3811,8 +3844,8 @@ function backupJson(keepPhotos = false) {
    basis, a graded copy and a restore never scheduled the backup. */
 function commitOwn(reason, { snap = true } = {}) { if (snap) OWN.snapshot(); else OWN.save(); scheduleBackup(reason); }
 let _backupTimer = null;
-/* take 115: when the stored collection could not be read the app runs on an empty one, and a backup would
-   write that over the good file -- the one Restore reads. So readJson sets a hold (vault.backupHold) that
+/* take 115: when a stored list the backup carries could not be read the app runs on an empty one, and a backup
+   would write that over the good file -- the one Restore reads. So readJson sets a hold (vault.backupHold) that
    outlives the launch: while it stands no backup is written over a backup on file, and every launch says
    so. A restore ends it; so does the collector's own Back up, after a confirm that says what it replaces;
    and with no backup on file there is nothing to keep, so the first backup ends it too. */
@@ -3823,7 +3856,7 @@ function backupHeld() {
 function releaseBackupHold() { STORE.holdBackup = false; try { localStorage.removeItem('vault.backupHold'); } catch (e) {} }
 function scheduleBackup(reason) {
   if (reason === 'manual' && backupHeld()) {
-    if (!confirm('The collection saved on this phone could not be read, so your last backup may hold cards the app cannot show.\n\nBack up now and replace it? Restore from backup brings it back instead.')) return false;
+    if (!confirm(`The ${heldWhat()} saved on this phone could not be read, so your last backup may hold what the app cannot show now.\n\nBack up now and replace it? Restore from backup brings it back instead.`)) return false;
     releaseBackupHold();
   }
   clearTimeout(_backupTimer);
@@ -3856,8 +3889,11 @@ function keptBeforeRestore() { try { return localStorage.getItem('vault.beforeRe
 async function keepBeforeRestore() {
   const any = [OWN.items, DECKS.list, WANT.list, ALERTS.list, STOCK.list, RELALERTS.list, LOCAL.notes, TRADE.give, TRADE.get].some(l => l && l.length);
   if (!any) { try { localStorage.removeItem('vault.beforeRestore'); } catch (e) {} return true; }   // nothing to keep; no older copy left to pass for it
-  const json = backupJson(true), here = saveJson('vault.beforeRestore', json), there = await PLATFORM.keepAside(json);
-  return here || !!there;
+  const json = backupJson(true), here = saveJson('vault.beforeRestore', json);
+  await PLATFORM.keepAside(json);   // on the phone, the file beside the backups too: it outlives an uninstall
+  /* take 115 (self-review): kept means the copy Restore offers -- the one in storage. The file alone was counted,
+     so a full storage restored with no second question and the next Restore offered no undo. */
+  return here;
 }
 async function restoreFromBackup() {
   let raw = await PLATFORM.readBackup(), src = 'latest';
@@ -3883,7 +3919,10 @@ async function restoreFromBackup() {
   if (why) { ERRS.push('restore', `refused: ${why}`, 'restoreFromBackup'); return toast(`Nothing restored \u2014 ${why}`, 6000); }
   const n = b.items.length, d = (b.decks || []).length;
   if (!confirm(`Restore ${n} collection line${n === 1 ? '' : 's'} and ${d} deck${d === 1 ? '' : 's'} from ${momentText(b.at)}?\n\nThis replaces what is on the phone now. What it replaces is kept: Restore from backup offers it.`)) return;
-  if (!(await keepBeforeRestore()) && !confirm('What is on the phone now could not be kept aside (the storage is full).\n\nRestore anyway? Cancel, then Export CSV, keeps it.')) return;
+  if (!(await keepBeforeRestore())) {
+    if (!confirm('What is on the phone now could not be kept aside (the storage is full).\n\nRestore anyway? Cancel, then Export CSV, keeps it.')) return;
+    try { localStorage.removeItem('vault.beforeRestore'); } catch (e) {}   // an older copy must not pass for what this restore replaced
+  }
   const own = src === 'kept';   // the kept copy is this phone's own: its photos are still here
   OWN.items = b.items.map(i => ({ ...i, photo: own && i.photo && i.photo !== '(on device)' ? i.photo : null }));   // photos are derived; rescans restore them
   OWN.snaps = b.snaps || []; DECKS.list = b.decks || [];
@@ -4004,8 +4043,15 @@ const HUNT = {
     const runs = h.runs; const out = { runs: runs.length, since: h.since, lastShip: null, shipRuns: 0, events: [] };
     /* take 115 (loose-record 2, landmine 173): the days the rows span, from their own times -- the runs come about
        four-hourly, not hourly, so a count of runs is no measure of time */
-    const ts = runs.map(r => Date.parse(r && r.t)).filter(t => !isNaN(t)); out.days = ts.length > 1 ? (Math.max(...ts) - Math.min(...ts)) / 864e5 : 0;
-    for (const r of runs) { const o = r.online && r.online[tcin]; if (o != null) { out.shipRuns++; if (o) out.lastShip = r.t; } }
+    const at = r => Date.parse(r && r.t), span = ts => { ts = ts.filter(t => !isNaN(t)); return ts.length > 1 ? (Math.max(...ts) - Math.min(...ts)) / 864e5 : 0; };
+    out.days = span(runs.map(at));
+    /* take 115 (self-review): and only the runs that read THIS product count as its checks -- its online status, or its
+       shelf at the served zip. The runs were counted: "50 checks over 8 days" of a product no run had read. */
+    const seen = [], shelf = [];
+    for (const r of runs) { const o = r.online && r.online[tcin], sh = zip && r.shelf && r.shelf[zip] && r.shelf[zip][tcin];
+      if (o != null) { out.shipRuns++; if (o) out.lastShip = r.t; }
+      if (sh) shelf.push(at(r)); if (o != null || sh) seen.push(at(r)); }
+    out.checks = seen.length; out.checkDays = span(seen); out.shelfRuns = shelf.length; out.shelfDays = span(shelf);
     if (zip) { const prev = {};
       for (const r of runs) { const st = r.shelf && r.shelf[zip] && r.shelf[zip][tcin]; if (!st) continue;
         for (const [sid, q] of Object.entries(st)) { if ((prev[sid] || 0) === 0 && q > 0) out.events.push({ t: r.t, store: sid, qty: q }); prev[sid] = q; } } }
@@ -4080,11 +4126,12 @@ function targetLine(it, T) {
     else { const st = zz.stock[it.tcin] || {}; const on = Object.entries(st).filter(([, v]) => (v.qty || 0) > 0).map(([id, v]) => { const x = zz.stores.find(y => y.id === id); return `${x ? x.name : id} (${v.qty})`; });
       shelfTxt = (on.length ? `on the shelf: ${on.join(', ')}` : `not on a shelf within ${T.radius || 50} mi of ${sv.zip}`) + ` ${HUNT.ageLabel(zz.checked_at[it.tcin])}`; } }
   const sv2 = HUNT.served(); const rs = HUNT.restocks(it.tcin, sv2.how !== 'none' ? sv2.zip : null); let histTxt = '';
-  if (rs && rs.runs >= 2) { const days = Math.max(1, Math.round(rs.days));
+  if (rs && rs.runs >= 2) { const dd = x => Math.max(1, Math.round(x)), days = dd(rs.shelfDays), cd = dd(rs.checkDays);
     const ship = rs.lastShip ? `last seen shipping ${HUNT.ageLabel(rs.lastShip)}` : (rs.shipRuns ? `not seen shipping in ${rs.shipRuns} checks` : '');
     const ev = rs.events.slice(-3).map(e => `${HUNT.storeName(sv2.zip, e.store)} ${new Date(e.t).toLocaleDateString(undefined, { weekday: 'short', hour: 'numeric' })}`).join(', ');
-    histTxt = [ship, rs.events.length ? `restocked ${rs.events.length}\u00d7 in ${days} d: ${ev}` : (sv2.how !== 'none' && rs.days >= 1 ? `no shelf restock seen in ${days} d` : '')].filter(Boolean).join(' \u00b7 ');
-    if (Math.round(rs.days) < 14) histTxt += `${histTxt ? ' \u00b7 ' : ''}${rs.runs} checks ${rs.days < 1 ? 'in less than a day' : `over ${days} day${days === 1 ? '' : 's'}`} so far \u2014 a pattern needs a fortnight`; }
+    /* the shelf's words from its own checks at this zip; the count from the runs that read this product (take 115, self-review) */
+    histTxt = [ship, rs.events.length ? `restocked ${rs.events.length}\u00d7 in ${days} d: ${ev}` : (sv2.how !== 'none' && rs.shelfRuns >= 2 && rs.shelfDays >= 1 ? `no shelf restock seen in ${days} d` : '')].filter(Boolean).join(' \u00b7 ');
+    if (rs.checks && Math.round(rs.checkDays) < 14) histTxt += `${histTxt ? ' \u00b7 ' : ''}${rs.checks} check${rs.checks === 1 ? '' : 's'} of it ${rs.checkDays < 1 ? 'in less than a day' : `over ${cd} day${cd === 1 ? '' : 's'}`} so far \u2014 a pattern needs a fortnight`; }
   return `<span style="display:block;color:var(--brass)">Target ${money(it.price)} \u00b7 ${esc(online)}${shelfTxt ? ' \u00b7 ' + esc(shelfTxt) : ''}</span>${histTxt ? `<span style="display:block;color:var(--dim2);font-size:12.5px">${esc(histTxt)}</span>` : ''}`;
 }
 /* take 114: GTS's preorder_date is its "Order Due Date" -- the last day a store orders by, read off GTS's own product
@@ -4127,7 +4174,9 @@ function distSummary(extra) {
      made a failed source look fresh -- and "not reached" says since when (the first failure a kept copy carries) */
   const src = HUNT.DISTS.map(([k]) => HUNT.dist(k)).filter(Boolean), live = src.filter(D => !HUNT.unreached(D)), dead = src.filter(D => HUNT.unreached(D));
   const at = live.map(D => D.fetched_at).sort().pop(), stale = live.filter(D => HUNT.stale(D.fetched_at)).length;
-  const since = dead.map(D => D.stale_since || D.fetched_at).filter(Boolean).sort()[0];
+  /* take 115 (self-review): a "since" only when every source not reached carries the first failure (a kept copy's
+     stale_since). A source never read has only the failed run's own time, which moved forward every run. */
+  const since = dead.length && dead.every(D => D.stale_since) ? dead.map(D => D.stale_since).sort()[0] : '';
   return [extra, `${src.length} distributor${src.length === 1 ? '' : 's'}`, at ? 'checked ' + esc(HUNT.ageLabel(at)) : '', stale ? `${stale} out of date` : '', dead.length ? `${dead.length} not reached${since ? ' since ' + esc(nbsp(momentText(since))) : ''}` : ''].filter(Boolean).join(' \u00b7 ');
 }
 /* take 115 (STAN-112-21): Diagnostics' feed line, the distributors from HUNT.DISTS; a kept copy says so (SPEC-112-54) */
@@ -4166,7 +4215,9 @@ function feedLine() {
 /* take 115 (SPEC-112-54): what a source's panel leads with -- when it was checked; or since when it could not be
    reached, and for a kept copy that the check shown is its last good one */
 function sourceLead(name, D) {
-  const lost = `Could not reach ${esc(name)} since ${esc(momentText(D.stale_since || D.fetched_at))}`;
+  /* take 115 (self-review): since the first failure a kept copy carries; a source never read says when it was last
+     tried -- its only time is that failed run's, and "since" it moved forward every run */
+  const lost = `Could not reach ${esc(name)}` + (D.stale_since ? ` since ${esc(momentText(D.stale_since))}` : !D.ok && D.fetched_at ? ` when last tried, ${esc(momentText(D.fetched_at))}` : '');
   if (!D.ok) return lost + '.';
   return D.kept ? `${lost}; its last check, ${esc(HUNT.ageLabel(D.fetched_at))}, is shown` : `Checked ${esc(HUNT.ageLabel(D.fetched_at))}${HUNT.stale(D.fetched_at) ? ' \u2014 <b>out of date</b>' : ''}`;
 }
@@ -4874,10 +4925,13 @@ $('#btnDone').addEventListener('click', () => {
      the tray -- never discarded, never blocked from being scanned. */
   const n = BATCH.rows.length;
   const ok = CREDITS.canCommit(n);
-  BATCH.rows.slice(0, ok).forEach(r => OWN.add(r.id, { condition: 'NM', photo: r.photo || null }));
+  /* take 115 (self-review): the batch is cleared only of what the collection or the tray stored; with a full
+     storage the review stays as it was and STORE.warn says to export */
+  if (!OWN.moveIn(BATCH.rows.slice(0, ok))) return;
   CREDITS.spendScan(ok);
-  if (ok < n) CREDITS.defer(BATCH.rows.slice(ok));
-  BATCH.rows = []; BATCH.save(); OWN.snapshot(); paintScan(); scheduleBackup('batch');
+  const wait = BATCH.rows.slice(ok);
+  BATCH.rows = wait.length && !CREDITS.defer(wait) ? wait : [];
+  BATCH.save(); OWN.snapshot(); paintScan(); scheduleBackup('batch');
   toast(ok === n ? `Committed ${n} card${n > 1 ? 's' : ''}`
                  : `${ok} added · ${n - ok} waiting for credits`);
   go('collection');
@@ -5542,10 +5596,10 @@ function paintDetailDist(p) {
      as if it were a check. The summary says how many were not reached and since when, as distSummary does, and the
      kept distributor's line says so, while its words are still the kept copy's */
   const ks = [...new Set(list.map(it => it._d))], dead = ks.map(k => HUNT.dist(k)).filter(D => HUNT.unreached(D));
-  const since = dead.map(D => D.stale_since || D.fetched_at).filter(Boolean).sort()[0];
+  const since = dead.length && dead.every(D => D.stale_since) ? dead.map(D => D.stale_since).sort()[0] : '';   // as distSummary
   const summary = esc(ks.map(k => HUNT.distName(k)).join(', ')) + (dead.length ? ` \u00b7 ${dead.length} not reached${since ? ' since ' + esc(nbsp(momentText(since))) : ''}` : '');
   const when = it => { const D = HUNT.dist(it._d) || {};
-    return HUNT.unreached(D) ? `could not reach it since ${esc(nbsp(momentText(D.stale_since || D.fetched_at)))}; its last check, ${esc(HUNT.ageLabel(D.fetched_at))}, is shown` : esc(HUNT.ageLabel(D.fetched_at)); };
+    return HUNT.unreached(D) ? `could not reach it${D.stale_since ? ' since ' + esc(nbsp(momentText(D.stale_since))) : ''}; its last check, ${esc(HUNT.ageLabel(D.fetched_at))}, is shown` : esc(HUNT.ageLabel(D.fetched_at)); };
   el.innerHTML = distFold('detail', summary,
     list.map((it, i) => `<div class="dsec"><div class="row" style="align-items:center;gap:10px;padding:0"><div class="nm" style="min-width:0"><b>${esc(HUNT.distName(it._d))}</b><span>${distWords(it).join(' \u00b7 ')} \u00b7 ${when(it)}</span></div>${it.url ? `<a class="ghost" href="${esc(it.url)}" target="_blank" rel="noopener" style="flex:0 0 auto;padding:8px 12px" aria-label="Open ${esc(HUNT.distName(it._d))}'s page for ${esc(p.name)}">Open ${ext()}</a>` : ''}</div>${distHistory(it, tls[i])}</div>`).join('')
     + '<div class="note" style="margin-top:10px">A distributor sells to stores, not to you: these are the dates and words it gives the shops.</div>'
@@ -6331,7 +6385,7 @@ const DIAG = {
     for (const f of ['feed.json', 'history.json', 'stores.json', 'events.json', 'shops.json', 'zcta.json']) line('  ' + f, await this.probe(HUNT.url() ? HUNT.url().replace(/feed\.json$/, f) : null));
     line('feed on phone', feedLine()); line('history on phone', HUNT.hist ? [`${HUNT.hist.runs.length} runs`, ...HUNT.DISTS.map(([k]) => `${k} in ${HUNT.hist.runs.filter(r => r && r[k] && typeof r[k] === 'object' && !Array.isArray(r[k])).length}`), HUNT.hist.runs.length ? 'ends ' + momentText(HUNT.hist.runs[HUNT.hist.runs.length - 1].t) : ''].filter(Boolean).join(', ') : 'none');   /* take 114: which runs read each distributor, and where the copy ends */ line('stores on phone', LOCAL.stores ? `${LOCAL.stores.stores.length}, ${HUNT.ageLabel(LOCAL.stores.fetched_at)}${HUNT.zip ? ', ' + LOCAL.stores.stores.filter(s => s.zip && s.zip.slice(0, 3) === HUNT.zip.slice(0, 3)).length + ' in your zip area' : ''}` : 'none'); line('events on phone', EVENTS.tab ? `${EVENTS.tab.rows.length} rows` : 'none'); line('shops on phone', LOCAL.shops ? `${LOCAL.shops.shops.length}` : 'none'); line('exact distances', LOCAL.exact()); line('stock alerts', STOCK.list.length); line('local notes', LOCAL.notes.length);
     L.push('', '## storage'); for (const k of ['vault.items', 'vault.snaps', 'vault.decks', 'vault.hunt', 'vault.hunt.hist', 'vault.hunt.stores', 'vault.hunt.events', 'vault.hunt.shops', 'vault.hunt.zcta', 'vault.alerts', 'vault.stockAlerts', 'vault.beforeRestore', ...STORE.unreadable.filter(k => this.kb(k + '.unreadable') !== '-').map(k => k + '.unreadable')]) line(k, this.kb(k));   /* take 115: the collection is vault.items and vault.snaps -- 'vault.collection' named a key that never existed; vault.beforeRestore is what the last restore replaced */
-    line('writes that failed', [...STORE.failed].join(', ') || 'none'); line('backups held', backupHeld() ? 'yes \u2014 the stored collection could not be read; the last backup is kept until a restore' : 'no');
+    line('writes that failed', [...STORE.failed].join(', ') || 'none'); line('backups held', backupHeld() ? `yes \u2014 the stored ${heldWhat()} could not be read; the last backup is kept until a restore` : 'no');
     L.push('', '## counts (never contents)'); line('collection items', OWN.items.length); line('decks', DECKS.list.length); line('price alerts', ALERTS.list.length);
     L.push('', '## last errors'); if (!ERRS.list.length) L.push('none'); else for (const e of ERRS.list) L.push(`${e.t.slice(0, 19).replace('T', ' ')} ${e.kind}: ${e.msg}${e.where ? ' @ ' + e.where : ''}`);   /* take 91: records outlive the day now */
     L.push('', '## self-test'); try { await runSelfTest(); L.push(...(SELFTEST.text() || 'no result').split('\n').slice(1)); } catch (e) { L.push('self-test threw: ' + (e.message || e)); }
@@ -6427,7 +6481,7 @@ async function runSelfTest() {
   splashDone();
   ALERTS.check().then(f => { if (f.length) toast(`${f.length} price alert${f.length === 1 ? '' : 's'} fired`); });
   RELALERTS.check();                                       /* take 97: a release reminder whose day has come, once */
-  if (backupHeld()) setTimeout(() => toast('Your saved collection could not be read \u2014 use Restore from backup, under More', 6000), 0);   /* take 115: every launch until a restore */
+  if (backupHeld()) setTimeout(() => toast(`Your saved ${heldWhat()} could not be read \u2014 use Restore from backup, under More`, 6000), 0);   /* take 115: every launch until a restore */
   if (navigator.onLine && CAT.man.updateUrl && PLATFORM.quietSyncAllowed()) setTimeout(() => PLATFORM.refreshCatalogue({ quiet: true }), 1500);
   /* A17 at boot. Constants from the manifest (D10), gate on only where an ad
      can actually be shown. */
