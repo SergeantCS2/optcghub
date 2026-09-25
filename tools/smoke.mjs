@@ -1401,7 +1401,7 @@ section('take 53 — what\'s new on Home; a deck\'s sim-readiness; the board\'s 
 ok('the manifest carries this take\'s release note, lifted from ci/RELEASE.md', manifest.whatsNew && manifest.whatsNew.take === V.TAKE && manifest.whatsNew.text.length > 20, JSON.stringify(manifest.whatsNew));
 const relTxt = fs.readFileSync(path.join(ROOT, 'ci', 'RELEASE.md'), 'utf8');
 ok('...and it is the first "New at take" paragraph, word for word', relTxt.includes(manifest.whatsNew.text.split(' ').slice(0, 6).join(' ')));
-ok('Home shows it once per take and remembers the dismissal', /vault\.seenTake/.test(js) && /id="whatsNew"/.test(html) && /id="wnOk"/.test(js));
+ok('the release note is a closed drop-down under More, About, once per take; Home carries none (take 117, the owner\'s word)', /<details class="wn"><summary>New in this update<\/summary>/.test(js) && !/id="whatsNew"/.test(html) && !/wnOk/.test(js));
 const PL9 = new Function('return ' + js.match(/function parseListLine\(raw\) \{[\s\S]*?\n\}/)[0])();
 const mk = () => { const d = V.DECKS.blank(); for (const raw of fs.readFileSync(path.join(ROOT, 'showcase', 'deck.txt'), 'utf8').split(/\r?\n/)) { const line = raw.trim(); if (!line || line.startsWith('#')) continue; const m = PL9(line); const num = m[2].toUpperCase(); const p = (V.CAT.byNum.get(num) || []).filter(x => x.num === num).sort((a, b) => (a.market || 9e9) - (b.market || 9e9))[0]; if (p.type === 'Leader') d.leader = p.id; else d.cards.push({ id: p.id, n: +m[1] }); } return d; };
 const sr = V.simReadiness(mk());
@@ -1483,7 +1483,7 @@ ok('a wide viewport gets a phone-width column rather than a sprawl', /@media \(m
 /* take 81: the owner's first impressions of Hunt on the Fold */
 ok('the page cannot zoom on input focus and every text input is 16px -- the zip sheet was zoomed off-screen (take 81)', /maximum-scale=1/.test(html) && /user-scalable=no/.test(html) && /\.search input\{[^}]*font-size:16px/.test(html));
 ok('the search bar is themed, with an icon, and lights its border on focus', /\.search:focus-within\{border-color:var\(--brass\)\}/.test(html) && /class="search"[^>]*><svg/.test(html));
-ok('the mode labels are readable: 14px, not 12.5', /\.mode button\{[^}]*font-size:14px/.test(html) && !/\.mode button\{[^}]*font-size:12\.5px/.test(html));
+ok('the mode labels are readable: the label size (14px), not 12.5', /\.mode button\{[^}]*font-size:var\(--fs-label\)/.test(html) && !/\.mode button\{[^}]*font-size:12\.5px/.test(html));   // take 117: the token
 ok('the tour stops on every card: one swipe, one card', /scroll-snap-stop:always/.test(html));
 ok('the phone\'s back button walks the screen stack, closes any open sheet first, and minimises at the bottom rather than exiting', /addListener\('backButton'/.test(js) && /closeAnyOverlay\(\)/.test(js) && /minimizeApp/.test(js) && /popstate/.test(js));
 ok('back cancels the zip sheet through its own Cancel, so the pending ask resolves', /askCancel'\)\.click\(\)/.test(js));
@@ -1491,7 +1491,8 @@ ok('on relaunch the app opens on the saved mode\'s own home, not Collect\'s — 
 ok('Sealed groups by set: a header per set, every set open by default, a tap collapses one (take 86: the owner found the count and the closed folds confusing)', /data-setfold=/.test(js) && /SEALED\.closed/.test(js) && !/\$\{ps\.length\} \$\{open/.test(js));
 { V.SEALED.q = ''; V.SEALED.open = new Set(); V.HUNT.setZip(''); V.paintSealed(); const hf = ctx.document.querySelector('#sealedList').innerHTML;
   const headers = (hf.match(/data-setfold=/g) || []).length, rows = (hf.match(/data-open="/g) || []).length;
-  ok('...every product is on screen under its set header', headers >= 10 && rows >= 300, `${headers} set headers, ${rows} rows shown`);
+  V.SEALED.closed.delete('decks'); V.paintSealed(); const rowsOpen = (ctx.document.querySelector('#sealedList').innerHTML.match(/data-open="/g) || []).length; V.SEALED.closed.add('decks'); V.paintSealed();
+  ok('...every product is on screen under its set header, or under Starter decks once that section is open (take 117: a deck set lives there and nowhere else)', headers >= 10 && rows >= 250 && rowsOpen >= 300 && rowsOpen > rows, `${headers} set headers, ${rows} rows shown, ${rowsOpen} with the decks open`);
   /* take 115 (self-review): the first set DRAWN with rows -- the catalogue's newest group can be sealed-only with nothing
      priced, or a starter deck drawn under Starter decks, and collapsing it hid nothing */
   const first93 = +(hf.match(/data-setfold="(\d+)"/) || [])[1];
@@ -1501,7 +1502,7 @@ ok('MAX wears an AD badge and is unlocked for a day by a rewarded ad; with no ad
 ok('...and the reward listener routes a max ad to the unlock, not to scan credits', /if \(this\._pendingKind === 'max'\) \{ this\._pendingKind = null; MAXLOCK\.grant\(\)/.test(js));
 ok('no select is ever wider than its container (the Sim boxes ran off the screen)', /select\{max-width:100%/.test(html));
 { V.MODE.set('hunt', false); V.SEALED.q = ''; V.SEALED.kind = 'all'; V.SEALED.closed.clear(); V.paintSealed(); const hs = ctx.document.querySelector('#sealedList').innerHTML;
-  ok('Starter decks have their own section at the top of Sealed, with pictures and the bell', /Starter decks <span class="note">· \d+<\/span>/.test(hs)
+  ok('Starter decks have their own section at the top of Sealed, with pictures and the bell', /Starter decks<span class="note">\d+ products<\/span>/.test(hs)
      /* take 110: the first fold is the starter decks' and the name is inside its heading (a 400-character window stood for this until the heading carried its art) */
      && hs.indexOf('data-setfold="') === hs.indexOf('data-setfold="decks"') && hs.indexOf('Starter decks') < hs.indexOf('</button>', hs.indexOf('data-setfold="decks"')));
   /* take 110: this line ended "|| true" from the take-88 seed on, so it could not fail; the section is now
@@ -1584,9 +1585,9 @@ section('take 91 — More is a screen (A37, landmine 128)');
   delete store['vault.errs'];
 }
 ok('NAV.back() pops past anything that is not a screen', (() => { V.NAV.stack = ['sealed', 'ghost', 'local']; const r = V.NAV.back(); return r && V.NAV.stack[V.NAV.stack.length - 1] === 'sealed'; })());
-ok('the bottom bar is one bar in every mode: fixed height, near-black, items stretch equally, the accent only on the active item', /nav\{[^}]*height:66px[^}]*#0B0D10/.test(html) && /nav button\{flex:1 1 0/.test(html) && /nav button\.on\{color:var\(--accent-ink\)\}/.test(html));
+ok('the bottom bar is one bar in every mode: fixed height, near-black, items stretch equally, the accent only on the active item', /nav\{[^}]*height:66px[^}]*#0B0D10/.test(html) && /nav button\{flex:1 1 0/.test(html) && /nav button\.on\{[^}]*color:var\(--accent-ink\)/.test(html));   // take 117: one rule for the active item, its colour and its ground
 ok('every screen title bar has the same minimum height', /\.appbar\{[^}]*min-height:56px/.test(html));   // take 107: the header, one per screen
-ok('the Portfolio label is a small caption above the name, which keeps the display face at the hero\'s size', /\.hero \.who \.cap\{[^}]*text-transform:uppercase/.test(html) && /<span class="cap">Collection<\/span><em id="pfName">/.test(html) && /\.hero \.who em\{[^}]*font-size:24px/.test(html));
+ok('the Portfolio label is a small caption above the name, which keeps the display face at the hero\'s size', /\.hero \.who \.cap\{[^}]*text-transform:uppercase/.test(html) && /<span class="cap">Collection<\/span><em id="pfName">/.test(html) && /\.hero \.who em\{[^}]*font-size:var\(--fs-head\)/.test(html));   // take 117: the token (26px)
 { const boxes = V.CAT.rows.filter(p => V.SEALED.isProduct(p));
   ok('every sealed product carries a product photo url (343 of 343 today)', boxes.length > 300 && boxes.every(p => p.img));
   const pic = V.productPic(boxes[0]);
@@ -2368,7 +2369,7 @@ section('take 107 — one header on every screen (A42): the title in one place, 
   /* Home's two views */
   ok('Home\'s two views are a tab row under its title: a tablist, two button tabs, one selected, one tab stop',
      /<div class="segtabs" role="tablist" aria-label="Home">\s*<button class="on" id="tabOver" role="tab" aria-selected="true" tabindex="0">Overview<\/button>\s*<button id="tabPerf" role="tab" aria-selected="false" tabindex="-1">Performance<\/button>/.test(html));
-  ok('under the tab row the release note draws no second rule, and "Got it" keeps to one line (both seen at take 106, left for this take)', /#home \.segtabs \+ \.stale \+ #whatsNew\{border-top:0/.test(html) && /#wnOk\{flex:0 0 auto;white-space:nowrap\}/.test(html));
+  ok('the release note left Home at take 117, and its two Home rules went with it', !/#whatsNew/.test(html) && !/#wnOk/.test(html));
   /* the sheets */
   const sheets = ['picker', 'filters', 'askSheet', 'leaderPick', 'printPick'];
   ok('every sheet has a title in the header\'s face and a close button of its own', sheets.every(id => new RegExp(`<div class="sheet" id="${id}">\\s*<div class="sheetbody">\\s*<div class="grab"></div>\\s*<div class="sheethead"><h2[^>]*>[^<]*</h2><button class="icb" data-close="${id}" aria-label="Close">`).test(html)) && /\.sheethead h2\{[^}]*font-size:var\(--fs-title\)/.test(html));
@@ -4238,7 +4239,9 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
     const painted = [...doc._ids].filter(([k, e]) => read4.includes(k) || e._html !== before4.get(k)).map(([, e]) => e._html).concat(boards);
     const brassHits = painted.flatMap(brassText);
     ok('(SPEC-106-31) nothing on a Prep & Play screen is text in the fill\'s colour: every Play screen painted in Play\'s palette, the Sim in seven states, read for an inline color:var(--brass) or a class that sets it',
-       brassHits.length === 0 && read4.every(k => rootHtml(k).length > 0) && /class="panel plpanel"/.test(rootHtml('plBoard')) && boards.length === 7 && att && att.ok === true && /is attacked/.test(blockBoard) && /Counter step/.test(counterBoard) && brassCls.length >= 1, brassHits.slice(0, 4).join(' | ') || `${painted.length} painted, roots ${read4.map(k => k + ' ' + rootHtml(k).length).join(', ')}, attack ${JSON.stringify(att)}`);
+       brassHits.length === 0 && read4.every(k => rootHtml(k).length > 0) && /class="panel plpanel"/.test(rootHtml('plBoard')) && boards.length === 7 && att && att.ok === true && /is attacked/.test(blockBoard) && /Counter step/.test(counterBoard), brassHits.slice(0, 4).join(' | ') || `${painted.length} painted, roots ${read4.map(k => k + ' ' + rootHtml(k).length).join(', ')}, attack ${JSON.stringify(att)}`);
+    ok('...control: a class that set the fill colour on text would be listed -- take 117 moved the last one, .dline, to --accent-ink, so the list is empty by design and a planted class is the proof',
+       brassCls.length === 0 && topRules(css + '\n.probe117{color:var(--brass)}').filter(r => /(?:^|;)\s*color\s*:\s*var\(--brass\)/.test(r.body)).flatMap(r => r.sels).includes('.probe117'));
     ok('...the two it had -- "choose a target" and the given DON!! -- are --accent-ink now (#E0553D was 4.25:1 on Play\'s card)',
        /<span style="color:var\(--accent-ink\)">choose a target<\/span>/.test(mainBoard) && /<span style="color:var\(--accent-ink\)">\u25cf/.test(mainBoard));
     ok('...control: take 114\'s span and a Hunt line are caught', brassText('<h3>X \u00b7 <span style="color:var(--brass)">choose a target</span></h3>').length === 1 && brassText('<button class="dline">GTS</button>').length === (brassCls.includes('dline') ? 1 : 0) && brassText('<i style="border-color:var(--brass)">x</i>').length === 0);
@@ -4308,7 +4311,7 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
     const under = c => shrunk(c).filter(([, s]) => !(s >= 12));
     ok('(STAN-106-2) every <small> the app writes is 12 px or more as drawn: a chip\'s count and a stat\'s label take --fs-cap, not the browser\'s "smaller" (10 and 10.8 px at take 114)',
        shrunk(css).length >= 4 && under(css).length === 0, under(css).map(([w, s]) => `${w} ${s.toFixed(1)}px`).join(' | ') || shrunk(css).map(([, s]) => s).join(','));
-    ok('...control: take 114\'s rule, with no size of its own, is caught', (() => { const c = css.split('.chip small{font-size:var(--fs-cap);').length === 2 ? css.replace('.chip small{font-size:var(--fs-cap);', '.chip small{') : null; return !!c && under(c).length >= 4; })());
+    ok('...control: take 114\'s rule, with no size of its own, is caught', (() => { const c = css.split('.chip small{font-size:var(--fs-cap);').length === 2 ? css.replace('.chip small{font-size:var(--fs-cap);', '.chip small{') : null; return !!c && under(c).length >= 3; })());   // take 117: the three chip counts -- the stat cells' small label left with the cells (their labels are spans at --fs-cap)
     const rel = t => [...t.matchAll(/font-size:\s*(?:[\d.]+(?:em|rem|%)|smaller|x-small|xx-small|small)\b|(?:^|[;{"\s])font:\s*(?:[a-z-]+\s+)*[\d.]+(?:em|rem|%)/g)].map(m => m[0]);
     const shortPx = t => [...t.matchAll(/(?:^|[;{"\s])font:\s*(?:[a-z0-9-]+\s+)*?([\d.]+)px/g)].map(m => +m[1]).filter(v => v < 12);
     ok('...and no size in the app is relative (em, rem, %, smaller) or a font shorthand under 12 px -- the forms the literal check cannot read', rel(html + js).length === 0 && shortPx(html + js).length === 0, rel(html + js).concat(shortPx(html + js)).join(', '));
@@ -4487,6 +4490,50 @@ section('take 116 — the first-open experience: the opening screen and the guid
   let started = null; try { V.guideStart(); started = true; } catch (e) { started = String(e && e.stack || e); }
   ok('Scan a card from any mode lands in Collect\'s scanner with Home under it, the guide seen', started === true && V.MODE.cur === 'collect' && V.NAV.stack.slice(-2).join(',') === 'home,scan' && tour.hidden === true, String(started).slice(0, 200) + ' ' + V.NAV.stack.join('>'));
   while (V.closeAnyOverlay()) {} V.MODE.set('collect', false); V.go('home'); }
+
+
+section('take 117 — the owner\'s polish: starter decks once, the strips readable, three numbers on a card, the shutter row on a grid, the top bar seamless, the note under More');
+{ V.MODE.set('hunt', false); V.SEALED.q = ''; V.SEALED.kind = 'all'; V.SEALED.closed.clear(); V.paintSealed();
+  const hs = ctx.document.querySelector('#sealedList').innerHTML;
+  const deckSet = [...V.CAT.sets.entries()].find(([id, st]) => st.kind === 'deck' && V.CAT.rows.some(p => p.set === id && V.SEALED.isProduct(p)));
+  const ids = deckSet ? V.CAT.rows.filter(p => p.set === deckSet[0] && V.SEALED.isProduct(p)).map(p => p.id) : [];
+  const times = id => (hs.match(new RegExp('data-open="' + id + '"', 'g')) || []).length;
+  ok('a starter-deck set\'s products are listed once, in the Starter decks section, and the set has no strip of its own (at take 114 they were listed twice: 32 of 85 strips)', !!deckSet && ids.length > 0 && ids.every(id => times(id) === 1) && !new RegExp('data-setfold="' + deckSet[0] + '"').test(hs), deckSet ? deckSet[1].name + ' ' + ids.map(times).join(',') : 'no deck set');
+  ok('...control: the section is open, so the count is of drawn rows', /data-setfold="decks" aria-expanded="true"/.test(hs));
+  const dated = [...hs.matchAll(/<button class="fgrp setstrip" data-setfold="(?!decks)[^"]+"[^>]*>(?:<div class="artbg crisp"[\s\S]*?<\/div>)?<span>[^<]*<span class="note">(Released|Releases) [^<]+<\/span>/g)];
+  ok('every set strip says when the set was released, in words, on its own line', dated.length >= 20, String(dated.length));
+  ok('the strip is 104 px tall with the name centred at the title size and the art placed on the card\'s face (B3, the owner\'s pick)', /\.setstrip\{[^}]*min-height:104px[^}]*align-items:center/.test(html) && /\.setstrip \.artbg\.crisp img\{object-position:50% 62%\}/.test(html) && /\.setstrip > span:first-of-type\{[^}]*font-size:var\(--fs-title\)/.test(html));
+  V.SEALED.closed.add('decks'); V.MODE.set('collect', false);
+  /* the card page: three numbers, never chips */
+  const leader = V.CAT.rows.find(p => p.type === 'Leader' && p.life && p.power); const chr = V.CAT.rows.find(p => p.type === 'Character' && p.cost != null && p.cost !== '' && p.power && p.counter);
+  V.openDetail(chr.id); const c1 = ctx.document.querySelector('#dStats').innerHTML;
+  ok('a Character shows Type, Cost and Power as three cells, each label above its value -- no counter, no colour (the owner: you can just read the card)', /class="statbar"/.test(c1) && (c1.match(/<div><span>/g) || []).length === 3 && /<span>Type<\/span><b class="word">Character<\/b>/.test(c1) && /Cost<\/span>/.test(c1) && /Power<\/span>/.test(c1) && !/Counter/.test(c1) && !/class="chip"/.test(c1), c1.slice(0, 160));
+  V.openDetail(leader.id); const c2 = ctx.document.querySelector('#dStats').innerHTML;
+  ok('a Leader shows the same three: Type, Life in the cost cell, Power', (c2.match(/<div><span>/g) || []).length === 3 && /<span>Type<\/span><b class="word">Leader<\/b>/.test(c2) && /Life<\/span>/.test(c2) && /Power<\/span>/.test(c2) && !/Cost<\/span>/.test(c2), c2.slice(0, 160));
+  const ev = V.CAT.rows.find(p => p.type === 'Event' && p.cost != null && p.cost !== '' && !p.power); V.openDetail(ev.id); const c3 = ctx.document.querySelector('#dStats').innerHTML;
+  ok('an Event, which has no power, still shows three cells: a dash where the number would be (the owner: every card the same three squares)', (c3.match(/<div><span>/g) || []).length === 3 && /<span>Power<\/span><b>—<\/b>/.test(c3), c3.slice(0, 160));
+  const don = V.CAT.rows.find(p => p.sealed && !p.num && /don!! card/i.test(p.name)); if (don) { V.openDetail(don.id); ok('...and a DON!! card, with none of the three, shows no row', ctx.document.querySelector('#dStats').innerHTML === ''); }
+  ok('the row keeps 14 px under it, so the cells never touch the panel below (seen in the first look)', /\.statbar\{display:flex;gap:8px;margin:2px 0 14px\}/.test(html));
+  ok('the cells are token-sized in one row that never wraps, each a third at most', /\.statbar\{display:flex/.test(html) && /\.statbar>div\{[^}]*max-width:calc\(\(100% - 16px\) \/ 3\)/.test(html) && /\.statbar b\{[^}]*font-size:var\(--fs-title\)/.test(html));
+  ok('the printing\'s badge sits on the title\'s centre line (measured at 4x: +0.1 px on the caps\' centre)', /\.ab-title \.badge\{vertical-align:middle;line-height:1;padding:4px 6px 1px\}/.test(html));
+  while (V.closeAnyOverlay()) {} V.go('home');
+  /* the shutter row */
+  ok('the shutter row is a three-column grid: the icon buttons left, the shutter centred, Review right, nothing wraps', /\.shutterbar\{display:grid;grid-template-columns:minmax\(0,1fr\) auto minmax\(0,1fr\)/.test(html) && /<div class="shl">/.test(html) && /<div class="shr">/.test(html) && /\.shutterbar \.shl \.ghost\{width:44px;height:44px/.test(html) && /\.shutterbar \.shr \.ghost\{white-space:nowrap/.test(html) && /id="btnUndo" aria-label="Undo the last scan"/.test(html));
+  /* the top bar */
+  ok('the mode bar starts at the very top and carries the status-bar inset itself, so its ground covers the inset once the page scrolls (the owner\'s screenshot: art under the clock)', /\.modebar\{position:sticky;top:0;[^}]*padding:calc\(var\(--sat\) \+ 6px\) 0 2px/.test(html) && /:root:not\(\.at-top\) \.modebar\{background:linear-gradient\(var\(--bg\) 78%,transparent\)\}/.test(html) && !/body\{[^}]*padding-top:var\(--sat\)/.test(html));
+  /* the release note */
+  V.go('settings'); const more = ctx.document.querySelector('#setBody').innerHTML;
+  ok('More draws the release note for this take under About, closed', /<details class="wn"><summary>New in this update<\/summary>/.test(more) && !/<details class="wn" open/.test(more));
+  /* the fallback label, the deck editor's row, the nav's one rule, the sizes */
+  ok('a tile whose picture is missing stacks the name pill over the number (the flex row ran them together: "Nefeltari ViviEB03-024")', /\.art \.ph\{[^}]*flex-direction:column/.test(html) && /<span class="phl">\$\{esc\(p\.name\)\}<\/span><span class="num">\$\{esc\(p\.num\)\}<\/span>/.test(js) && /\.opt \.oa \.ph\{[^}]*flex-direction:column/.test(html));
+  ok('the deck editor\'s bottom row wraps on a narrow phone instead of scrolling the page sideways (360 px, landmine 156)', /\.dkfoot\{flex-wrap:wrap\}/.test(html) && /@media \(max-width:380px\)\{\.dkfoot #dkSave\{flex:1 1 100%\}\}/.test(html));
+  ok('the nav\'s label colour is one rule, the token, not a hex a later rule overrode', (html.match(/\nnav button\{/g) || []).length === 1 && !/color:#B9BEC7/.test(html) && (html.match(/\nnav button\.on\{/g) || []).length === 1);
+  const cssPart = html.slice(0, html.indexOf('<script'));
+  const offScale = [...cssPart.matchAll(/font-size:(\d+(?:\.\d+)?)px/g)].map(m => +m[1]).filter(v => ![12, 13, 14, 15, 16, 18, 26, 34, 44].includes(v));
+  ok('every font-size in the stylesheet is on the token scale (25 literals were off it at take 114)', offScale.length === 0, offScale.join(','));
+  ok('the placeholder rule is declared once, and the distributor line\'s text uses the ink token', (html.match(/\.search input::placeholder\{/g) || []).length === 1 && /\.dline\{[^}]*color:var\(--accent-ink\)\}/.test(html) && !/\.dline\{[^}]*color:var\(--brass\)/.test(html));
+  ok('the Sim\'s opponent line says "in play", not "char"', / in play'/.test(js) && !/' char'/.test(js));
+  V.go('home'); }
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

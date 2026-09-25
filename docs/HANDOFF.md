@@ -1,4 +1,166 @@
-# HANDOFF — through Take 116
+# HANDOFF — through Take 117
+
+## Take 117 — 2026-09-25 — the owner's polish list and the audit's fixes: strips, cells, the badge, the shutter row, the top bar, the note to More
+
+Opened before any code (PROTOCOL §6) by the UI/UX session. Take 116 merged
+as PR #41 at 16:08 UTC and Release take-116 built its APK and AAB at 16:20.
+No after-merge note for take 116 is needed: its Release carries the scene.
+
+The owner, word for word, over the take-114 look and this session's
+rendered audit (sent as numbered sheets): on Sealed's set strips "B3 for
+sure"; on the printing's badge "center it in the box better, so 1, but
+polished"; on the top bar "1 probably - whatever makes the top bar look
+seamless while scrolling taking into account the notification bar if the
+user has it, and different android OS's"; on the release note leaving Home
+for More, "move is good"; on a card's page, "ensure a card always has three
+squares in some way, so they're all the same in some way ... Maybe we just
+do Character/Leader/Whatever, Cost and Power ... Those three tiles sometimes
+hit the box below", then "make power, type, and life on top, rather than
+below the value".
+
+### What this take changes
+
+- **Sealed.** A starter-deck set's products -- the decks and their displays
+  -- live under Starter decks and nowhere else; the by-set fold skips them
+  ("77 products"; at take 114, 32 of 85 strips were deck sets listed twice).
+  Every set strip is 104 px, centred on the card's face
+  (`.setstrip .artbg.crisp img{object-position:50% 62%}`), the name at the
+  title size with "Released Sep 18" or "Releases Nov 20" under it in the
+  body face (B3, the owner's pick).
+- **A card's page.** Three cells on every card, the same three -- **Type ·
+  Cost (a Leader's Life) · Power** -- each label above its value, a dash
+  where a card has none (an Event's power), no row on a product or a DON!!
+  card, 14 px under the row so the cells never touch the panel below. The
+  counter and the colour are read off the card. The printing's badge sits on
+  the title's centre line (`.ab-title .badge{vertical-align:middle;
+  line-height:1;padding:4px 6px 1px}`, measured at 4x: +0.1 px on the caps'
+  centre; the owner: "finally looks great").
+- **Scan.** The shutter row is a grid `minmax(0,1fr) auto minmax(0,1fr)`:
+  torch, photo and undo as 44 px round icon buttons on the left, the shutter
+  centred within 2 px, "Review ->" on one line on the right, the same at
+  360, 411 and 749 px (landmine 203). The hint under the well sits in the
+  column's flow, so a two-line "Camera unavailable: ..." takes its height
+  from the well instead of running into the frame or the note (found in the
+  port's look at the open Fold's 749 px).
+- **The top bar** starts at the very top and carries the status-bar inset
+  itself (`.modebar{top:0;padding-top:calc(var(--sat) + 6px)}`,
+  `body{padding-top:0}`); once a page scrolls its ground covers every point
+  of its band at insets 0, 24, 40 and 48 (`:root:not(.at-top) .modebar`
+  wears a gradient from the page colour; 53 % at take 114 with a 40 px
+  inset). The art still shows through behind the pill at the top of a hero
+  screen.
+- **The release note** leaves Home for More -> About as a closed
+  `<details>`; `#whatsNew`, `#wnOk` and `vault.seenTake` go; the release-note
+  pipeline stays.
+- **The audit's fixes.** A tile whose picture is missing stacks the name
+  pill over the number (the flex row ran them together: "Nefeltari
+  ViviEB03-024"); the deck editor's bottom row wraps under 380 px instead
+  of scrolling the page sideways (landmine 156); every stylesheet
+  `font-size` is on the token scale (12.5 -> sm, 13.5 -> label, 14.5 ->
+  body, 15.5 -> row, 17 -> title, 24 -> head, 46 -> total, the stepper's
+  glyph on `--ic-md`; the three input rules keep a literal 16px, under which
+  Android zooms on focus, pinned since take 81); the nav's label colour is
+  one rule, the token; the placeholder rule is declared once; the
+  distributor line's text is `--accent-ink`; the Sim says "in play" where it
+  said "char".
+
+### How it was built
+
+- Pre-built in a scratch copy on the take-116 copy while take 115 was
+  reviewed, proven there with every new guard watched red on 116's build,
+  then ported: the copy's whole change as one diff over the take-116 port
+  (a replay of its patch scripts on a fresh tree had shown two post-check
+  counts patched by hand, so the scripts were not the record; the diff is),
+  applied with `git apply --reject`; the fourteen hunks take 115 had touched
+  -- the strips' white note, the sealed row helper, the release note's
+  `saveJson`, the nav's opaque tint, the Sim's head, the font sizes take 115
+  had already put on the scale, and the harness's Sealed lines -- re-applied
+  by hand, each anchored and asserted.
+- Three of take 115's checks met on the way, each answered rather than
+  loosened: SPEC-106-31 wanted at least one class that sets the fill colour
+  on text, to prove its detector had something to find -- this take moved
+  the last one (`.dline`) to `--accent-ink`, so the list is empty by design
+  and a planted class is the control; STAN-106-2's control stripped the chip
+  count's size and expected four small texts under 12 px -- the stat cells'
+  small label left with the cells, so three chip counts remain; the two
+  strip controls planted a weak scrim at the strip's end, where the date
+  sat -- since B3 the date sits under the name at the start, so the weak
+  value is planted under the whole strip.
+- Two look steps changed on purpose: the take-82 slider check reads the pill
+  (`.modebar .mode`), since the bar itself starts at the top and carries
+  the inset; the take-108 chip sweep opens the Starter decks section, where
+  a deck set's products now live.
+
+### Measured
+
+- The shutter row in real Chrome at 360 and 411 px with the torch shown:
+  three 44 px icon buttons, the shutter 74 px and centred within 2 px,
+  Review on one line (at take 114: Undo stacked over its word, Review on two
+  lines, the shutter 71 px and 29 px off centre).
+- The mode bar with the page scrolled at a 24, 40 and 48 px inset: the bar
+  alone answers every point of its band, the inset included (53 % at 114).
+- The badge on the title's centre line: +0.1 px at 4x.
+- Sealed with the live feed: 32 of 85 strips were deck sets listed twice at
+  114; none now, and the Starter decks section says "77 products".
+- The look for take 117 at the owner's MEASURED sizes: 18 steps, 18 ok at
+  both, every picture read -- the strips, the Starter decks section open, a
+  Character's and a Leader's cells, the shutter row with the torch, the bar
+  at a 40 px inset, the release note open under About, a tile without a
+  picture.
+- Negative controls, this harness on the take-116 build: smoke red on 25
+  lines (every take-117 line, the two re-planted controls), render red on 5
+  (the shutter row at 360 and 411, the bar at 24, 40 and 48).
+
+### What I got wrong
+
+- The shutter row's first grid was `1fr auto 1fr`: a `1fr` column keeps its
+  content's width when the content is wider than its share, and Review
+  pushed the shutter 29 px off centre (landmine 203).
+- The bar's height floor was written as 53 + the inset and measured 52.3.
+- The scanner's hint was first anchored by its bottom 34 px under the well
+  (a second line grew up into the frame), then hung from the well's edge (a
+  second line ran into the note); it sits in the column's flow now.
+- The pre-build copy's scripts had two post-check counts patched by hand
+  after the fact (" in play" twice, the hero's margin twice); a replay on a
+  fresh tree found them, which every pre-build gets from now on.
+
+### Ruled out
+
+- Five cells (Type, Cost, Power, Counter, Colour): they overflowed at 411 px
+  and the owner asked for three.
+- Captions under the scan row's icon buttons: the row keeps one shape on
+  every phone with icons alone; captions are a one-rule rider if the owner
+  wants them (DEFERRED).
+- A whole-card thumbnail beside the strip name: the owner chose the taller
+  strip on the card's face (B3).
+- The hint above the well: the well's top is where the eye lands.
+
+### Tests
+
+- On this branch (the take-116 merge plus the port, its code files equal to
+  the port byte for byte), the whole pipeline in 433 s -- the catalogue
+  ingested fresh, 6,766 artwork hashes restored from the sidecar, coverage
+  100 % -- then **smoke** 1289 passed, 0 failed; **render** 223 passed, 0
+  failed, `(mode: chrome)`; **the look** 18 of 18 at both sizes, the same
+  figures as the port. `ci/icon.py --selftest` 33 ok; `scrub --check
+  --docs` clean; `seal.sh --gate-only` as its last line says below the
+  pull request.
+
+### DEFERRED
+
+- The literal radii onto `--r-*` (12 -> md, 8/9 -> md, 5/7 -> sm; 2, 3 and 4
+  stay) and the script's inline sizes onto the tokens, each checked in the
+  look: take 119's riders.
+- UI-AUDIT §9's open boxes that are not on the owner's list: the Sim's
+  battle panel's glued power, the empty grey box for a refused picture, a
+  deck row's second line cut at 411, set completion's names cut at 749, a
+  Sealed row's plural kind, Releases' upcoming group with only a sealed
+  listing, the strips over a white picture, the tokens nothing reads.
+- Captions under the scan row's icon buttons, if the owner wants them.
+- Take 118 (Collect on indigo and gold, Home's premium pass, Hunt in kraft)
+  is ported onto this baseline and opens after this take's Release builds;
+  take 119's previews (the surface beyond Home, the tiles, Play, the mode
+  swipe) are with the owner.
 
 ## Take 116 — 2026-09-25 — the first-open experience: the opening screen and the guide in the store listing's frame
 

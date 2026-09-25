@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 116.*
+*Current as of take 117.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -215,6 +215,7 @@ Start here. Do not read top to bottom.
 | Pipeline stops on a resumed run | 51 |
 | The guide's Next does nothing and the dots never move | 202 |
 | The phone's Back leaves the screen with the guide still up, or closes it for good | 201 |
+| The shutter sits off centre and Review wraps: a grid column swallowed the space | 203 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -2693,6 +2694,17 @@ Chrome, does (take 116). Rule: a scroll handler reports where the strip
 settled and never sets the page; the tap sets the page. The same shape
 bit the look's offline-face step, which took its picture mid-slide until it
 waited for the strip to settle.
+
+**203. A `1fr` grid column keeps its content's width.** The scanner's
+shutter row was a grid `1fr auto 1fr`: the icon buttons left, the shutter
+centred, Review right. A `1fr` track's minimum is `auto`, so a column whose
+content is wider than its share keeps that width, and Review's column pushed
+the shutter 29 px off centre at 411 px (take 114's look, the owner's
+screenshot: Undo stacked over its word, Review on two lines). `minmax(0,1fr)`
+lets the two outer columns share the space evenly and the shutter sits
+centred within 2 px at 360, 411 and 749 px (take 117). Rule: a grid column
+meant to share space is `minmax(0,1fr)`, never `1fr` alone; render measures
+the shutter's centre at 360 and 411 with the torch shown.
 
 ## §2 — Inherited from APEX ORV
 
