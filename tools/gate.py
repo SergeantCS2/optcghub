@@ -223,7 +223,9 @@ def check_icon_characters():
     Comments are the record's, not the app's, and are not read. Take 115: an
     emoji written as a JS escape is two code units or one \\u{...}, and each
     is decoded to its code point first (the check read a surrogate pair as two
-    halves, neither an emoji: the take-108 icons it removed, as escapes, passed)."""
+    halves, neither an emoji: the take-108 icons it removed, as escapes, passed);
+    and the times sign as a button's whole face -- a remove drawn as a character
+    -- is refused, while the times of a count stays."""
     src = read("src", "app.html")
     if not src:
         return
@@ -245,6 +247,8 @@ def check_icon_characters():
              else int(cp or unit, 16))
         if c <= 0x10FFFF:
             see(chr(c), m.start())
+    for m in re.finditer(r"<button\b[^>]*>\s*(?:\u00d7|&times;|&#215;|&#x[dD]7;|\\u00[dD]7)\s*</button>", body):
+        found.setdefault("\u00d7", body.count("\n", 0, m.start()) + 1)
     for i, ch in enumerate(body):
         if ord(ch) > 0x2000:
             see(ch, i)
@@ -653,7 +657,9 @@ def selftest():
           .write("\n<script>const x = '\\uD83D\\uDD0D';</script>\n"), "icons")
     probe("an emoji drawn as a \\u{...} escape (take 115)", lambda t: open(os.path.join(t, "src", "app.html"), "a")
           .write("\n<script>const x = '\\u{1F4F7}';</script>\n"), "icons")
-    probe("control: the DON!! pips and an astral escape outside the emoji blocks pass (take 115)",
+    probe("a remove button drawn as the times sign (take 115)", lambda t: open(os.path.join(t, "src", "app.html"), "a")
+          .write("\n<script>const r = `<button class=\"ghost\" aria-label=\"Remove\">\\u00d7</button>`;</script>\n"), "icons")
+    probe("control: the times of a count, the DON!! pips and an astral escape outside the emoji blocks pass (take 115)",
           lambda t: open(os.path.join(t, "src", "app.html"), "a")
           .write("\n<script>const c = `<span>\\u00d73</span><b>7\u00d7 apart</b><button>Qty \u00d72</button>` + '\u25cf\u25cb' + '\\u{2014}\\uD835\\uDC00';</script>\n"),
           expect=False)

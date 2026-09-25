@@ -39,21 +39,20 @@
      the accent fill. --line is a divider; --line-strong a control's edge
      (3:1, WCAG 1.4.11). The derived tints mix from each palette's own. */
   --fs-cap:12px; --fs-sm:13px; --fs-label:14px; --fs-body:15px; --fs-row:16px;
-  --fs-title:18px; --fs-head:26px; --fs-hero:34px; --fs-total:44px;
+  --fs-title:18px; --fs-head:26px; --fs-hero:34px; --fs-total:46px;   /* take 115: .total's size, which it reads (the token said 44 beside a 46 px rule) */
   --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px;
   --r-sm:6px; --r-md:10px; --r-lg:14px; --r-pill:999px;
   --ic-sm:16px; --ic-md:20px; --ic-lg:24px;
-  --thumb-sm:36px; --thumb-md:52px; --thumb-lg:112px;
   --dur-press:120ms; --dur-ui:220ms; --dur-sheet:320ms;
   --modebar-h:53px;   /* take 108: the sticky mode slider's height (52.3 px MEASURED in Chrome); render checks the scanner against it */
   --thumb-s:32px; --thumb-m:44px; --thumb-l:56px;   /* take 110: the three thumbnail sizes (THUMB in the script) -- a dense list, a list row, a sealed product */
   --hero-h:160px;     /* take 109: an art hero's height under the slider; Decks now, Sealed at take 110 */
   --z-screen:1; --z-modebar:20; --z-nav:30; --z-sheet:40; --z-overlay:60; --z-toast:70; --z-splash:100;
   --on-accent:#1A1408; --accent-ink:#C9A24A; --line-strong:#6B7377;
-  --accent-bg:color-mix(in srgb,var(--brass) 12%,var(--card));
+  --accent-bg:color-mix(in srgb,var(--brass) 8%,var(--card));   /* take 115: 8% in Collect -- at 12% --dim, --dim2 and --down read 4.24, 4.21 and 4.18 on it (a picker's best match, a bulk-selected tile); the other two keep 12% */
   --warn-bg:color-mix(in srgb,var(--gold) 12%,var(--bg));
   --ok-bg:color-mix(in srgb,var(--up) 14%,var(--card));
-  --bad-bg:color-mix(in srgb,var(--down) 14%,var(--card));
+  --bad-bg:color-mix(in srgb,var(--down) 10%,var(--card));   /* take 115: 10% in Collect -- --down read 4.30 on 14% ("not legal" on a deck); the other two keep 14% */
   --scrim:rgba(0,0,0,.82);
   /* Typography (take 33). Four ROLES, resolved by build_app.py from
      assets/fonts (OFL/Apache defaults) or assets/user/fonts (a licensed face
@@ -81,6 +80,7 @@
   --brass:#E0553D; --brass2:#B64731; --teal:#E0553D; --gold:#F0B27A;
   --up:#8FD19E; --down:#F28B7B;
   --accent-ink:#E5705C; --line-strong:#71747A;   /* take 106: the red as text, 5.22 on card and 4.66 on card2 (#E0553D was 4.25 and 3.79); the fill stays #E0553D */
+  --accent-bg:color-mix(in srgb,var(--brass) 12%,var(--card)); --bad-bg:color-mix(in srgb,var(--down) 14%,var(--card));   /* take 115: take 106's tints -- every pair on them clears 4.5 here (smoke computes them); Collect's are lighter */
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 /* Take 82. Native controls wore the platform's white: every select and text
@@ -115,6 +115,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
   --brass:#D6B04C; --brass2:#9A7A2B; --teal:#D6B04C; --gold:#E8C972;
   --up:#8FD19E; --down:#F0806E;
   --accent-ink:#D6B04C; --line-strong:#64856C;
+  --accent-bg:color-mix(in srgb,var(--brass) 12%,var(--card)); --bad-bg:color-mix(in srgb,var(--down) 14%,var(--card));   /* take 115: take 106's tints, as in Prep & Play */
 }
 :root[data-mode="hunt"] body::before{background:radial-gradient(60% 40% at 50% 0%,#1E4A2C 0%,transparent 70%)}
 .swords{display:inline-block;width:18px;height:18px;vertical-align:-3px;margin-right:6px;color:var(--accent-ink)}
@@ -126,6 +127,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
   transition:opacity var(--dur-sheet) ease;color:#C9A24A}   /* take 106: every colour literal and Collect's, as take 98 meant */
 #splash.off{opacity:0;pointer-events:none}
 #splash .mark{text-align:center}
+#splash .swords{color:#C9A24A}   /* take 115: the mark too -- .swords reads the mode's --accent-ink, and boot sets the mode while the splash is up (it turned red in Prep & Play) */
 #splash .wm{font-family:var(--display);font-size:var(--fs-hero);letter-spacing:.02em;color:#EADFC8}
 #splash .tag{margin-top:6px;font-size:var(--fs-cap);letter-spacing:.18em;text-transform:uppercase;color:#A08E70}
 :root[data-mode="play"] body::before{background:
@@ -174,7 +176,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .icb{width:44px;height:44px;flex:0 0 44px;display:grid;place-items:center;border-radius:var(--r-pill);color:var(--fg)}
 .icb svg.g{color:inherit;vertical-align:0}
 /* the deck's name is its title, and stays a field you can type in */
-h1.ab-title input{display:block;width:100%;min-height:0;margin:-6px 0 -8px;padding:6px 0 8px;background:none;border:0;border-radius:0;   /* take 108: 44 px to tap, the text where every title is */
+h1.ab-title input{display:block;width:100%;min-height:44px;margin:-6px 0 -8px;padding:6px 0 8px;background:none;border:0;border-radius:0;   /* take 108: 44 px to tap, the text where every title is (take 115: min-height 44 -- the padding, the border and the title's line came to 43.6, which render's 42 px cross passed; SPEC-108-39) */
   border-bottom:1px dashed var(--line-strong);font:inherit;letter-spacing:inherit;color:inherit}
 h1.ab-title input:focus{border-bottom:1px solid var(--brass)}
 /* Home's two views: tabs under the title, unlike the mode slider's pill */
@@ -241,9 +243,9 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .setstrip{position:relative;display:flex;width:100%;min-height:64px;justify-content:space-between;align-items:flex-end;gap:10px;text-align:left;
   padding:0 14px 10px;margin:12px 0 6px;border-radius:12px;overflow:hidden;background:linear-gradient(160deg,var(--brass2),var(--card2))}
 .setstrip > .artbg{position:absolute;inset:0;-webkit-mask-image:none;mask-image:none}
-.setstrip > .artbg::after{background:linear-gradient(90deg,rgba(0,0,0,.8),rgba(0,0,0,.55) 70%,rgba(0,0,0,.45))}   /* take 110's review: a date at the end of a long name measured 2.3:1 over bright art at .25; 5.4 at .55 */
+.setstrip > .artbg::after{background:linear-gradient(90deg,rgba(0,0,0,.8),rgba(0,0,0,.55) 70%)}   /* take 110's review: a date at the end of a long name measured 2.3:1 over bright art at .25; 5.4 at .55. Take 115 (landmine 158): .55 to the right end -- at .45, with the date 82% white, a date at the strip's end read 3.1 to 3.4:1 over 14 of the 33 yellow Leaders' art and a name 4.4 over 2 (measured in Chrome); render reads both over a white picture, the brightest any art can be: 4.74 */
 .setstrip > span{position:relative;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85)}
-.setstrip .note{color:rgba(255,255,255,.82);white-space:nowrap}   /* a date breaks nowhere, least of all at its own hyphens (the take-110 look: "2026-10-" / "30") */
+.setstrip .note{color:#fff;white-space:nowrap}   /* a date breaks nowhere, least of all at its own hyphens (the take-110 look: "2026-10-" / "30"); white since take 115, as the name (at 82% white it would need the scrim at .62, darker over the art, to clear 4.5 over a white picture) */
 /* The Play counter: each player's Leader behind their side, faint, fading before the numbers. */
 .plpanel{position:relative;overflow:hidden}
 .plpanel > .artbg{position:absolute;inset:0;opacity:.6}
@@ -287,7 +289,7 @@ img.above{object-view-box:inset(0 0 58% 0)}
 /* take 83: the label is a caption above the name, so one face carries the name at the hero's scale and the other stays small and quiet */
 .hero .who .cap{display:block;font-family:var(--heavy);font-weight:800;font-size:var(--fs-cap);letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:-1px}
 .hero .who em{color:var(--fg);font-style:normal;font-family:var(--display);font-weight:400;font-size:24px;letter-spacing:.01em}
-.total{font-size:46px;margin:2px 0 0;color:var(--accent-ink);font-variant-numeric:lining-nums tabular-nums}
+.total{font-size:var(--fs-total);margin:2px 0 0;color:var(--accent-ink);font-variant-numeric:lining-nums tabular-nums}
 .delta{font-size:15px;font-weight:600;margin-top:2px}
 .up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--dim)}
 #spark{width:100%;height:150px;display:block;margin:8px 0 2px}
@@ -445,8 +447,8 @@ img.above{object-view-box:inset(0 0 58% 0)}
   border:1px solid var(--line);border-radius:14px;padding:11px;margin-bottom:10px;
   background:var(--card2)}
 .opt.best{border-color:var(--brass2);background:var(--accent-bg)}
-.opt .oa{width:52px;flex:0 0 52px;aspect-ratio:.716;border-radius:7px;
-  background:var(--card2);overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;text-align:center}
+.opt .oa{width:var(--thumb-l);flex:0 0 var(--thumb-l);aspect-ratio:.716;border-radius:6px;
+  background:var(--card2);overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;text-align:center}   /* take 115: the largest of the three sizes and a card's radius (take 110 left it at 52 and 7) */
 /* 203 of the catalogue's images answer 403 (landmine 51) -- release-event and
    demo-deck promos among them, which is exactly what the picker shows for a
    common card. An empty grey box read as "broken". The placeholder names the
@@ -525,17 +527,15 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .dtl{margin-top:6px;font-size:12.5px;line-height:1.45;color:var(--dim2)}
 .dtl > span{display:block}
 .dtl > span + span{margin-top:2px}
-.dtl-h{display:flex;align-items:center;gap:6px;width:100%;min-height:44px;margin:0;padding:0;background:none;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.dtl-h{display:flex;align-items:center;gap:6px;width:100%;min-height:44px;margin:0;padding:0;background:none;border:0;color:inherit;font:inherit;text-align:left}   /* take 115: no pointer here -- the button has the global one, and the header with nothing to open is not a control (landmine 118) */
 .dtl-h > span{flex:1;min-width:0}
 .dtl-h svg{flex:0 0 auto}
 .panel[hidden]{display:none}   /* landmine 136 */
-.chip small{opacity:.6;font-weight:600;margin-left:4px}
+.chip small{font-size:var(--fs-cap);font-weight:600;margin-left:4px}   /* take 115: a size of its own -- the browser's "smaller" drew these counts at 10 and 10.8 px; no opacity -- at .6 they read 2.6:1 */
 /* take 106: the filter's price row was a second .range rule; the hero's range pills
    leaked into it and its inputs fell to 14px (landmine 119) */
 .frange{display:flex;gap:8px;align-items:center}
-.frange input{width:100px;background:var(--card2);color:var(--fg);border:1px solid var(--line-strong);
-  border-radius:8px;padding:8px 10px;font:inherit;font-size:16px}
-.frange input:focus{border-color:var(--brass);outline:none}   /* the rule above outranks the global focus rule (same specificity, later) */
+.frange input{width:100px;border-radius:8px;padding:8px 10px}   /* take 115: the one field rule gives the rest -- the card, the edge, 16 px, the brass on focus; a copy of it here had outranked the focus rule */
 .fcount{display:inline-block;min-width:18px;height:18px;line-height:18px;border-radius:9px;
   background:var(--brass);color:var(--on-accent);font-size:var(--fs-cap);font-weight:800;text-align:center;
   vertical-align:top;margin-left:2px}
@@ -569,7 +569,7 @@ img.above{object-view-box:inset(0 0 58% 0)}
 
 /* ---- deck builder --------------------------------------------------------- */
 .dkhead{display:flex;gap:12px;align-items:center;padding:12px 0 6px}
-.dkhead .lead{width:96px;flex:0 0 96px;aspect-ratio:.716;border-radius:7px;background:var(--card2);overflow:hidden;position:relative}
+.dkhead .lead{width:96px;flex:0 0 96px;aspect-ratio:.716;border-radius:7px;background:linear-gradient(160deg,var(--a1,var(--card2)),var(--a2,var(--card2)));overflow:hidden;position:relative}   /* take 115: the Leader's own colours under its picture (paintDeck sets them) -- offline, or a picture that failed, was an empty grey box */
 .dkhead .lead img{width:100%;height:100%;object-fit:cover}
 .dkcount{font-size:26px;font-weight:750;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .dkcount.ok{color:var(--up)} .dkcount.over{color:var(--down)}
@@ -584,6 +584,7 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .dkrow:first-child{border-top:0}
 .dkrow .n{flex:1;min-width:0}
 .dkrow .n b{display:block;font-size:14px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dkrow .n b:has(> .badge){white-space:normal}   /* take 115: the deck, trade, want and alert rows too -- the badge is the word that tells two printings apart (landmine 164) */
 /* Direct child only. `.dkrow .n span` caught the .badge inside <b> and drew
    it as a full-width bar — landmine 86's third instance. */
 .dkrow .n > span{font-size:var(--fs-cap);color:var(--dim);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -635,7 +636,7 @@ nav button{display:flex;flex-direction:column;align-items:center;gap:3px;
 nav button svg.g{color:var(--dim2)}
 nav button.on svg.g{color:var(--accent-ink)}
 nav button .ic{font-size:19px;line-height:1}
-nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 70%,var(--brass) 12%)}
+nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115: the selected tint, opaque -- the 82% mix over the 92% bar read 4.42:1 in Prep & Play, less with a picture scrolled under it */
 .empty{text-align:center;color:var(--dim);padding:56px 20px 48px;line-height:1.6;font-size:14.5px;position:relative}
 .empty svg.g{display:block;width:64px;height:64px;margin:0 auto 14px;opacity:.6}
 .nw{white-space:nowrap}
@@ -653,8 +654,8 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
 .toast.on{opacity:1}
 /* Take 110 (A42, the owner's "Fold layout later", brought forward at the owner's word for this take):
    the Fold's inner screen. Under 700 px is a phone; from 900 px a desktop browser gets take 60's centred
-   phone column. Between them the open Fold (about 840 px wide, INFERRED from the device's resolution
-   until Diagnostics' viewport line comes from the open phone) gets two panes where two fit: a card's page
+   phone column. Between them the open Fold (749 x 832 CSS px at a pixel ratio of 2.625, MEASURED on the
+   owner's Diagnostics at take 114; take 110 had inferred about 840) gets two panes where two fit: a card's page
    beside its card, Home's two lists side by side, a list of rows two to a line, the collection's tiles
    four across, a sheet held to a readable width. Every screen keeps its order and its one column where a
    second would not help (a deck's editor, the Play counter, the Sim). */
@@ -710,9 +711,9 @@ nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 
 <div class="modebar">
   <div class="mode" id="modeSlider" role="tablist" aria-label="Mode">
     <div class="knob"></div>
-    <button data-mode="collect" class="on" role="tab">Collect</button>
-    <button data-mode="play" role="tab">Prep &amp; Play</button>
-    <button data-mode="hunt" role="tab">Hunt</button>
+    <button data-mode="collect" class="on" role="tab" aria-selected="true">Collect</button>
+    <button data-mode="play" role="tab" aria-selected="false">Prep &amp; Play</button>
+    <button data-mode="hunt" role="tab" aria-selected="false">Hunt</button>
   </div>
 </div>
 <!-- __GLYPHS__ : assets/glyphs.svg is inlined here at build time (build_app.py)
@@ -2139,7 +2140,9 @@ function paintDeck() {
   if (!dkCur) return go('decks');
   const A = analysis(dkCur), L = A.leader;
   $('#dkName').value = dkCur.name || '';
-  $('#dkLead').innerHTML = L ? refArt(L, { size: 'large' }) : '<div class="ph" style="font-size:12px">Leader</div>';
+  const lead = $('#dkLead'), [la1, la2] = L ? artColours(L) : [];
+  lead.style.cssText = L ? `--a1:${la1};--a2:${la2}` : '';   /* take 115: the Leader's own colours under its picture -- offline, or a picture that failed, left an empty grey box (take 109's plan) */
+  lead.innerHTML = L ? refArt(L, { size: 'large' }) : '<div class="ph" style="font-size:12px">Leader</div>';
   $('#dkLeadLine').innerHTML = L   /* take 109 (A42): the Leader large, its name in the display face */
     ? `<b>${esc(L.name)}</b><span class="meta">${esc(L.num)} \u00b7 Leader \u00b7 ${G('life', 13)} ${L.life || '?'} Life</span>${colourDots(L)}`
     : '<span class="meta">Tap the card to choose a Leader</span>';
@@ -2159,8 +2162,8 @@ function paintDeck() {
   $('#dkAvg').textContent = A.total ? `avg cost ${A.avgCost.toFixed(1)} · 2 DON!! a turn (§6-4)` : '';
   const chip = (v, k) => `<span class="chip" style="padding:4px 9px;font-size:12px">${v}<small>${k}</small></span>`;
   $('#dkStats').innerHTML = [
-    [A.counters, 'counter cards'], [A.counterEvents, '[Counter] events'], [A.blockers, 'blockers'],
-    [A.triggers, 'triggers'], [A.rush, 'rush'], [money(A.value), 'value']].map(([v, k]) => chip(v, k)).join('');
+    [A.counters, 'Counter cards'], [A.counterEvents, '[Counter] Events'], [A.blockers, 'Blockers'],
+    [A.triggers, 'Triggers'], [A.rush, 'Rush'], [money(A.value), 'value']].map(([v, k]) => chip(v, k)).join('');
   $('#dkTypes').textContent = `${A.chars} characters · ${A.events} events · ${A.stages} stages`;
   /* 8.7: what the deck is worth, and what it was worth on each day on file --
      the same estimate the portfolio draws, dashed, labelled. A deck is a list;
@@ -2432,7 +2435,7 @@ function tradeRow(side, r) {
   const p = CAT.byId.get(r.id); if (!p) return '';
   const own = OWN.items.filter(i => i.id === p.id).reduce((a, i) => a + i.qty, 0);
   return `<div class="dkrow" data-tr="${side}:${p.id}">
-    <div class="oa pic" style="width:34px;flex:0 0 34px;aspect-ratio:.716;border-radius:5px;background:var(--card2);overflow:hidden;position:relative">${refArt(p)}</div>
+    ${cardPic(p, THUMB.s)}
     <div class="n"><b>${esc(p.name)}${p.treat !== 'base' ? ` <span class="badge">${esc(TREAT[p.treat] || p.treat)}</span>` : ''}</b>
       <span>${dotJoin(esc(p.num), money(p.market) + ' each')}${side === 'give' && own < r.n ? ` \u00b7 <span class="down">you own ${own}</span>` : ''}</span></div>
     <div class="cnt"><button data-trdec="${side}:${p.id}" aria-label="One fewer ${esc(p.name)}">${G('minus', 18)}</button><b>${r.n}</b><button data-trinc="${side}:${p.id}" aria-label="One more ${esc(p.name)}">${G('plus', 18)}</button></div>
@@ -2611,7 +2614,8 @@ const MODE = {
     this.cur = m; saveJson('vault.mode', m);
     const root = document.documentElement; if (root && root.dataset) root.dataset.mode = m;
     $('#modeSlider').classList.toggle('play', m === 'play'); $('#modeSlider').classList.toggle('hunt', m === 'hunt');
-    $$('#modeSlider button').forEach(b => b.classList.toggle('on', b.dataset.mode === m));
+    /* take 115: the slider is a tablist, and a tab says which one is selected (A4 found it missing) */
+    $$('#modeSlider button').forEach(b => { const on = b.dataset.mode === m; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
     $('#navCollect').hidden = m !== 'collect'; $('#navPlay').hidden = m !== 'play'; $('#navHunt').hidden = m !== 'hunt';
     if (navigate) go(this.home[m]);
   }
@@ -2736,11 +2740,11 @@ function paintCards() {
   const L = deck && deck.leader ? CAT.byId.get(deck.leader) : null;
   $('#cdForDeck').textContent = 'For this deck: ' + (deck ? (deck.name || 'untitled') : 'off');
   $('#cdForDeck').classList.toggle('go', !!deck); $('#cdForDeck').setAttribute('aria-pressed', String(!!deck));   // take 108
-  $('#cdKw').innerHTML = CD_KW.map(k => `<button class="chip${CD.kw.has(k) ? ' on' : ''}" data-cdkw="${esc(k)}">${
+  $('#cdKw').innerHTML = CD_KW.map(k => `<button class="chip${CD.kw.has(k) ? ' on' : ''}" data-cdkw="${esc(k)}" aria-pressed="${CD.kw.has(k)}">${
     KW_GLYPH[k] ? G(KW_GLYPH[k], 11) + ' ' : ''}${esc(k)}</button>`).join('');
-  $('#cdCol').innerHTML = COLORS.map(c => `<button class="chip${CD.col.has(c) ? ' on' : ''}" data-cdcol="${c}">
+  $('#cdCol').innerHTML = COLORS.map(c => `<button class="chip${CD.col.has(c) ? ' on' : ''}" data-cdcol="${c}" aria-pressed="${CD.col.has(c)}">
     <i style="display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px;background:var(--c-${CCLASS[c]})"></i>${c}</button>`).join('');
-  $('#cdCost').innerHTML = CD_COST.map(([l]) => `<button class="chip${CD.cost === l ? ' on' : ''}" data-cdcost="${l}">${G('don', 11)} ${l}</button>`).join('');
+  $('#cdCost').innerHTML = CD_COST.map(([l]) => `<button class="chip${CD.cost === l ? ' on' : ''}" data-cdcost="${l}" aria-pressed="${CD.cost === l}">${G('don', 11)} ${l}</button>`).join('');
   const q = ($('#cdq').value || '').trim().toLowerCase();
   const range = CD_COST.find(([l]) => l === CD.cost);
   const byNum = new Map();
@@ -2813,10 +2817,10 @@ function paintWants() {
         `<div class="row"><div class="nm"><span>${esc((CAT.sets.get(sid) || {}).name || '')}</span></div><div class="v mono" style="font-size:13px;color:var(--dim)">${money(v)}</div></div>`).join('')
     : emptyHtml('bookmark', 'Nothing on your want list yet', 'Open a set from Home and tap the cards you are missing.');
   $('#wtRows').innerHTML = rows.map(({ w, p }) => `<div class="dkrow">
-      <div class="oa pic" style="width:34px;flex:0 0 34px;aspect-ratio:.716;border-radius:5px;background:var(--card2);overflow:hidden;position:relative">${refArt(p)}</div>
+      ${cardPic(p, THUMB.s)}
       <div class="n" data-open="${p.id}"><b>${esc(p.name)}${p.treat !== 'base' ? ` <span class="badge">${esc(TREAT[p.treat] || p.treat)}</span>` : ''}</b>
         <span>${dotJoin(esc(p.num), esc((CAT.sets.get(p.set) || {}).abbr || ''), money(p.market))}</span></div>
-      <div class="cnt"><button data-want="${esc(p.num)}" aria-label="Remove ${esc(p.name)} from the want list">${G('minus', 18)}</button></div>
+      <div class="cnt"><button data-want="${esc(p.num)}" aria-label="Remove ${esc(p.name)} from the want list">${G('trash', 18)}</button></div>
     </div>`).join('');
 }
 $('#wtClear').addEventListener('click', () => { if (WANT.list.length && confirm('Clear the want list?')) { WANT.list = []; WANT.save(); paintWants(); } });
@@ -2846,7 +2850,7 @@ function paintBinder() {
   const sets = binderSets();
   if (!sets.length) { $('#bnSets').innerHTML = ''; $('#bnGrid').innerHTML = `<div class="empty" style="grid-column:1/-1">${G('binder', 64)}Scan or add a card and its set\u2019s pages appear here.</div>`; $('#bnOf').textContent = ''; $('#bnPage').textContent = ''; return; }
   if (!BN.set || !sets.some(x => x.s.id === BN.set)) BN.set = sets[0].s.id;
-  $('#bnSets').innerHTML = sets.map(x => `<button class="chip${x.s.id === BN.set ? ' on' : ''}" data-bnset="${x.s.id}">${esc(x.s.abbr || x.s.name)}<small>${x.n}</small></button>`).join('');
+  $('#bnSets').innerHTML = sets.map(x => `<button class="chip${x.s.id === BN.set ? ' on' : ''}" data-bnset="${x.s.id}" aria-pressed="${x.s.id === BN.set}">${esc(x.s.abbr || x.s.name)}<small>${x.n}</small></button>`).join('');
   /* every number in the set, in numeric order; held numbers get a pocket */
   const byNum = new Map();
   for (const p of CAT.rows) if (p.set === BN.set && p.num) { const c = byNum.get(p.num); if (!c || likelihood(p, null) > likelihood(c, null)) byNum.set(p.num, p); }
@@ -2931,7 +2935,7 @@ function paintAlerts() {
       <div class="n"><b>${esc(a.name)}${a.treat !== 'base' ? ` <span class="badge">${esc(TREAT[a.treat] || a.treat)}</span>` : ''}</b>
         <span style="white-space:normal">${dotJoin(esc(a.num), `${a.dir} ${money(a.at)}`, `now ${now != null ? money(now) : '?'}`)}${
           a.fired ? ` \u00b7 <span class="up">fired ${esc(dayText(localDay(a.fired.at) || a.fired.at))} at ${money(a.fired.price)}</span>` : a.armed ? ' \u00b7 watching' : ''}</span></div>
-      <div class="cnt">${a.fired ? `<button data-alrearm="${a.key}" aria-label="Watch again">${G('refresh', 18)}</button>` : ''}<button data-alrm="${a.key}" aria-label="Remove the alert">${G('minus', 18)}</button></div>
+      <div class="cnt">${a.fired ? `<button data-alrearm="${a.key}" aria-label="Watch again">${G('refresh', 18)}</button>` : ''}<button data-alrm="${a.key}" aria-label="Remove the alert">${G('trash', 18)}</button></div>
     </div>`; }).join('') : emptyHtml('bell', 'No alerts yet', 'Open a card and tap <b>Alert me</b>.');
 }
 document.addEventListener('click', e => {
@@ -2965,7 +2969,7 @@ function paintChecklist() {
   $('#ckSummary').innerHTML = `<b>${have} of ${nums.length}</b> \u00b7 ${esc(s.name)}. ` +
     (missing.length ? `The ${missing.length} missing come to <b>${money(missingCost)}</b> at each one’s likeliest printing.` : 'Complete.');
   $('#ckFilter').innerHTML = [['all', 'All'], ['missing', 'Missing'], ['have', 'Have']].map(([k, l]) =>
-    `<button class="chip${ckMode === k ? ' on' : ''}" data-ckmode="${k}">${l}</button>`).join('');
+    `<button class="chip${ckMode === k ? ' on' : ''}" data-ckmode="${k}" aria-pressed="${ckMode === k}">${l}</button>`).join('');
   const shown = nums.filter(n => ckMode === 'all' || (ckMode === 'have') === held.has(n));
   $('#ckGrid').innerHTML = shown.map(n => { const p = byNum.get(n); const h = held.get(n) || 0;
     return `<button class="ck${h ? ' have' : ''}${WANT.has(n) ? ' want' : ''}" data-ck="${esc(n)}" data-ckid="${p.id}" title="${esc(p.name)}">
@@ -2986,7 +2990,7 @@ document.addEventListener('click', e => {
     const s = CAT.sets.get(ckSet); const held = new Set(PF.scope(OWN.items).map(i => (CAT.byId.get(i.id) || {}).num));
     let n = 0; const seen = new Set();
     for (const p of CAT.rows) if (p.set === ckSet && p.num && !held.has(p.num) && !seen.has(p.num)) { seen.add(p.num); if (!WANT.has(p.num)) { WANT.toggle(p.num, p.id); n++; } }
-    paintChecklist(); toast(`Wanted ${n} from ${s.abbr || s.name}`); return;
+    paintChecklist(); toast(`On your want list: ${n} more from ${s.abbr || s.name}`); return;
   }
   const w = e.target.closest('[data-want]'); if (w) { WANT.toggle(w.dataset.want); if ($('#wants').classList.contains('on')) paintWants(); return; }
 });
@@ -3166,7 +3170,7 @@ function paintHome() {
     : 'Not enough history yet — a snapshot is taken each day.';
 
   $('#ranges').innerHTML = RANGES.map(r =>
-    `<button class="range${r === range ? ' on' : ''}" data-r="${r}">${r}${
+    `<button class="range${r === range ? ' on' : ''}" data-r="${r}" aria-pressed="${r === range}">${r}${
       r === 'MAX' && !MAXLOCK.open() ? '<span class="free">AD</span>' : ''}</button>`).join('');
   spark(series, S.kind);
 
@@ -3185,12 +3189,12 @@ function paintHome() {
 
   const prog = setProgress();
   $('#setDone').innerHTML = prog.length ? prog.slice(0, 8).map(x => {
-    const pct = x.all ? Math.round(100 * x.have / x.all) : 0;
+    const pct = x.all ? 100 * x.have / x.all : 0;   /* take 115: through pctNum, like every percentage -- 1 of 592 read "0%", 590 of 592 "100%" */
     return `<button class="row" style="width:100%;text-align:left;align-items:center" data-checklist="${x.s.id}">${setPic(x.s)}<div class="nm">
         <b>${esc(x.s.name || '?')}</b>
-        <span>${x.have} of ${x.all} numbers \u00b7 ${pct}%</span>
+        <span>${x.have} of ${x.all} numbers \u00b7 ${pctNum(pct)}</span>
         <span class="spreadbar" style="display:block;margin-top:6px;height:4px">
-          <i style="left:0;width:${pct}%;height:4px;top:0;border-radius:3px"></i></span>
+          <i style="left:0;width:${pct.toFixed(1)}%;height:4px;top:0;border-radius:3px"></i></span>
       </div><div class="v mono">${money(x.val)}</div></button>`;
   }).join('') : '<div class="note">Add a card and its set shows up here.</div>';
 
@@ -3470,7 +3474,7 @@ function openFilters(scope) {
     : CAT.rows.map(p => ({ p, i: null }));
   const chips = (id, opts, key, labelFn) => {
     $(id).innerHTML = opts.map(([v, lbl, n]) =>
-      `<button class="chip${f[key].includes(v) ? ' on' : ''}" data-fk="${key}" data-fv="${esc(v)}">${
+      `<button class="chip${f[key].includes(v) ? ' on' : ''}" data-fk="${key}" data-fv="${esc(v)}" aria-pressed="${f[key].includes(v)}">${
         esc(labelFn ? labelFn(v, lbl) : lbl)}${n != null ? `<small>${n}</small>` : ''}</button>`).join('');
   };
   const count = fn => { const m = new Map(); pool.forEach(x => { const k = fn(x.p, x.i); if (k) m.set(k, (m.get(k) || 0) + 1); }); return m; };
@@ -3479,7 +3483,7 @@ function openFilters(scope) {
   const byCol = new Map(); pool.forEach(x => cardColors(x.p).forEach(c => byCol.set(c, (byCol.get(c) || 0) + 1)));
 
   $('#fSort').innerHTML = Object.entries(SORTS[scope]).map(([k, lbl]) =>
-    `<button class="chip${f.sort === k ? ' on' : ''}" data-sort="${k}">${lbl}${
+    `<button class="chip${f.sort === k ? ' on' : ''}" data-sort="${k}" aria-pressed="${f.sort === k}">${lbl}${
       f.sort === k ? (f.dir < 0 ? ' \u2193' : ' \u2191') : ''}</button>`).join('');
   chips('#fSet', [...bySet.entries()].sort((a, b) => b[1] - a[1]).slice(0, 24)
     .map(([id, n]) => [id, (CAT.sets.get(id) || {}).abbr || (CAT.sets.get(id) || {}).name || id, n]), 'set');
@@ -3489,7 +3493,7 @@ function openFilters(scope) {
   chips('#fTreat', [...byTreat.entries()].sort((a, b) => b[1] - a[1]).map(([t, n]) => [t, TREAT[t] || t, n]), 'treat');
   chips('#fCond', CONDS.concat(['GRADED']).filter(c => byCond.has(c)).map(c => [c, c === 'GRADED' ? 'Graded' : c, byCond.get(c)]), 'cond');   // take 110: a word in sentence case beside the five codes
   $('#fOnly').innerHTML = ONLY[scope].map(([v, lbl]) =>
-    `<button class="chip${f.only.includes(v) ? ' on' : ''}" data-only="${v}">${lbl}</button>`).join('');
+    `<button class="chip${f.only.includes(v) ? ' on' : ''}" data-only="${v}" aria-pressed="${f.only.includes(v)}">${lbl}</button>`).join('');
   $('#fMin').value = toShown(f.min); $('#fMax').value = toShown(f.max);
   $('#fMin').placeholder = 'min ' + CUR.sym().trim(); $('#fMax').placeholder = 'max ' + CUR.sym().trim();   // take 110: "$" in every currency was wrong
   paintFilterCount();
@@ -3513,11 +3517,11 @@ $('#filters').addEventListener('click', e => {
            /* dataset is always a string; the set facet is keyed by int (landmine 126) */
            const v = NUMERIC_FACETS.includes(k) ? +c.dataset.fv : c.dataset.fv;
            const i = f[k].indexOf(v); i >= 0 ? f[k].splice(i, 1) : f[k].push(v);
-           c.classList.toggle('on'); paintFilterCount(); return; }
+           c.classList.toggle('on', i < 0); c.setAttribute('aria-pressed', String(i < 0)); paintFilterCount(); return; }   /* take 115: from the filter, not a flip of the class */
   const o = e.target.closest('[data-only]');
   if (o) { const v = o.dataset.only; const i = f.only.indexOf(v);
            i >= 0 ? f.only.splice(i, 1) : f.only.push(v);
-           o.classList.toggle('on'); paintFilterCount(); return; }
+           o.classList.toggle('on', i < 0); o.setAttribute('aria-pressed', String(i < 0)); paintFilterCount(); return; }
   const so = e.target.closest('[data-sort]');
   if (so) { if (f.sort === so.dataset.sort) f.dir = -f.dir; else { f.sort = so.dataset.sort; f.dir = -1; }
             openFilters(sheetScope); return; }
@@ -4393,7 +4397,7 @@ function paintSealed() {
     if (decks.length && !SEALED.closed.has('decks')) for (const p of decks.slice(0, 80)) out.push(sealedRow(p, esc(CAT.sets.get(p.set)?.name || ''), (byCat[p.id] || []).map(i => targetLine(i, T)).join(''), byDist)); }
   /* stock alerts: what is watched, and where it was last seen */
   if (STOCK.list.length) out.push(`<div class="panel"><h3>Stock alerts</h3>${STOCK.list.map(a => { const srcs = STOCK.sourcesFor(a.id); const on = srcs.filter(x => x.available);
-    return `<div class="row"><div class="nm"><b>${esc(a.name)}</b><span>${on.length ? 'in stock: ' + esc(on.map(x => x.label).join(', ')) : srcs.length ? 'not in stock at ' + srcs.length + ' watched source' + (srcs.length === 1 ? '' : 's') : 'no source carries it yet'}${a.fired && a.fired.length ? ' \u00b7 last alert ' + esc(HUNT.ageLabel(a.fired[0].t)) : ''}</span></div><div class="v"><button class="ghost" data-stock="${a.id}" aria-label="Stop watching ${esc(a.name)}">\u00d7</button></div></div>`; }).join('')}
+    return `<div class="row"><div class="nm"><b>${esc(a.name)}</b><span>${on.length ? 'in stock: ' + esc(on.map(x => x.label).join(', ')) : srcs.length ? 'not in stock at ' + srcs.length + ' watched source' + (srcs.length === 1 ? '' : 's') : 'no source carries it yet'}${a.fired && a.fired.length ? ' \u00b7 last alert ' + esc(HUNT.ageLabel(a.fired[0].t)) : ''}</span></div><div class="v"><button class="ghost" data-stock="${a.id}" aria-label="Stop watching ${esc(a.name)}">${G('trash', 18)}</button></div></div>`; }).join('')}
     <div class="note" style="margin-top:6px">An alert fires once when a watched product comes into stock, and again only after it sells out and returns. It checks when the feed refreshes \u2014 the app must be opened for that.</div></div>`);
   /* the retailer panel: what the runner saw, and when */
   if (T) {
@@ -4534,7 +4538,7 @@ function paintLocal() {
       !HUNT.zip ? '<div class="note">Enter your zip above.</div>' :
       !shops.length ? `<div class="note">None within ${LOCAL.radius} mi of your zip area. Widen the distance.</div>` :
       shops.slice(0, 60).map(s => `<div class="row"><div class="nm" style="min-width:0"><b>${esc(s.name)}</b><span>${esc([s.addr, s.city, s.state].filter(Boolean).join(', '))}${s.mi != null ? ` \u00b7 ${s.exact ? '' : '~'}${s.mi} mi` : ''}</span>
-        ${s.events && s.events.length ? `<span style="display:block;color:var(--brass)">${s.events.slice(0, 2).map(e => `${esc(e.d)} ${esc(e.t)}${e.k === 'release' ? ' \u2014 release event' : ''}`).join(' \u00b7 ')}</span>` : ''}</div>
+        ${s.events && s.events.length ? `<span style="display:block;color:var(--brass)">${s.events.slice(0, 2).map(e => `${esc(dayText(e.d))} ${esc(e.t)}${e.k === 'release' ? ' \u2014 release event' : ''}`).join(' \u00b7 ')}</span>` : ''}</div>
         <div class="v" style="flex:0 0 auto;display:flex;gap:6px">${s.phone ? `<a class="ghost" href="tel:${esc(s.phone)}" style="padding:8px 12px" aria-label="Call ${esc(s.name)}">Call</a>` : ''}<button class="ghost" data-localnote="${esc(s.name)}" aria-label="Add a note for ${esc(s.name)}">Note</button></div></div>`).join('')}
     <div class="note" style="margin-top:8px">From ${esc((R && R.source) || 'Bandai TCG+')}${R ? ', ' + esc(HUNT.ageLabel(R.fetched_at)) : ''}. A store on this list registered to run events; whether it has product on the shelf is what your notes and the stock feed are for.</div></div>`);
   /* Target stores the feed checked */
@@ -4547,11 +4551,11 @@ function paintLocal() {
       SH.shops.map(sh => { const st = (LOCAL.stores && LOCAL.stores.stores || []).find(s => s.zip === sh.zip && s.name === sh.name); const mi = LOCAL.miles(st && st.ll);
         return `<div class="row"><div class="nm"><b>${esc(sh.name)}</b><span>${mi != null ? '~' + mi + ' mi \u00b7 ' : ''}${sh.ok ? `${sh.sealed.length} sealed listed, ${sh.sealed.filter(i => i.available).length} in stock, ${sh.singles} singles` : 'unreachable: ' + esc(sh.error || '?')}</span>
           ${sh.ok && sh.sealed.length ? `<span style="display:block;color:var(--brass)">${sh.sealed.slice(0, 4).map(i => `${esc(i.title.slice(0, 40))} ${money(i.price)}${i.available ? '' : ' (out)'}`).join(' \u00b7 ')}</span>` : ''}</div>
-          <div class="v"><a class="ghost" href="${esc(sh.url)}" target="_blank" rel="noopener" style="padding:8px 12px">Open</a></div></div>`; }).join('')}
+          <div class="v"><a class="ghost" href="${esc(sh.url)}" target="_blank" rel="noopener" style="padding:8px 12px" aria-label="Open ${esc(sh.name)}\u2019s online store">Open ${ext()}</a></div></div>`; }).join('')}
     <div class="note" style="margin-top:8px">${SH ? 'Fetched ' + esc(HUNT.ageLabel(SH.fetched_at)) + '. ' : ''}What each shop lists online, hourly; the shelf may hold more \u2014 that is what your notes are for.</div></div>`);
   /* the collector’s own notes */
   out.push(`<div class="panel"><h3>Your notes</h3>
-    ${LOCAL.notes.length ? LOCAL.notes.slice().reverse().map((n, i) => `<div class="row"><div class="nm"><b>${esc(n.store)}</b><span>${esc(n.what)}${n.price ? ' \u00b7 ' + money(n.price) : ''} \u00b7 ${esc(dayText(n.when))}</span>${n.phone ? `<span style="display:block"><a href="tel:${esc(n.phone)}" style="color:var(--brass)">Call ${esc(n.phone)}</a></span>` : ''}</div><div class="v"><button class="ghost" data-localdel="${LOCAL.notes.length - 1 - i}" aria-label="Delete this note">\u00d7</button></div></div>`).join('') : '<div class="note">What you saw, where, for how much. A store that publishes nothing online is still a store you walked into.</div>'}
+    ${LOCAL.notes.length ? LOCAL.notes.slice().reverse().map((n, i) => `<div class="row"><div class="nm"><b>${esc(n.store)}</b><span>${esc(n.what)}${n.price ? ' \u00b7 ' + money(n.price) : ''} \u00b7 ${esc(dayText(n.when))}</span>${n.phone ? `<span style="display:block"><a href="tel:${esc(n.phone)}" style="color:var(--brass)">Call ${esc(n.phone)}</a></span>` : ''}</div><div class="v"><button class="ghost" data-localdel="${LOCAL.notes.length - 1 - i}" aria-label="Delete this note">${G('trash', 18)}</button></div></div>`).join('') : '<div class="note">What you saw, where, for how much. A store that publishes nothing online is still a store you walked into.</div>'}
     <div class="row" style="margin-top:8px"><button class="ghost go" id="localAdd">Add a note</button></div></div>`);
   $('#localList').innerHTML = out.join('');
   const lz = $('#localZip'); if (lz) lz.addEventListener('click', async () => { if (await askZip()) paintLocal(); });
@@ -4615,7 +4619,7 @@ const RELALERTS = {
   nid(id) { return 7000 + (Math.abs(hashStr('rel:' + id)) % 1000); },
   /* the notification for one reminder, at 09:00 local the day before; take 115: a restore arms what it puts back */
   arm(a) { if (!a || a.fired || !/^\d{4}-\d\d-\d\d$/.test(a.pub || '')) return;   // a day that does not read schedules nothing (dayBefore would throw)
-    const at = new Date(this.dayBefore(a.pub) + 'T09:00:00'); if (at.getTime() > Date.now()) PLATFORM.notifyAt(this.nid(a.id), `${a.name} releases tomorrow`, `${a.pub} \u2014 from OP TCG Hub`, at); },
+    const at = new Date(this.dayBefore(a.pub) + 'T09:00:00'); if (at.getTime() > Date.now()) PLATFORM.notifyAt(this.nid(a.id), `${a.name} releases tomorrow`, `${dayText(a.pub)} \u2014 from OP TCG Hub`, at); },   /* take 115: the day in words (the .ics keeps ISO) */
   dayBefore(pub) { return new Date(Date.parse(pub + 'T00:00:00Z') - 864e5).toISOString().slice(0, 10); },
   /* on: a notification at 09:00 local the day before (scheduled; INFERRED plugin
      API) and the on-open check below; off: the schedule cancelled, the entry gone */
@@ -4630,7 +4634,7 @@ const RELALERTS = {
     for (const a of this.list) {
       if (a.fired || today < this.dayBefore(a.pub)) continue;
       a.fired = today; fired.push(a);
-      await PLATFORM.notify(this.nid(a.id), `${a.name} releases ${today >= a.pub ? (today === a.pub ? 'today' : 'on ' + a.pub) : 'tomorrow'}`, `${a.pub} \u2014 from OP TCG Hub`);
+      await PLATFORM.notify(this.nid(a.id), `${a.name} releases ${today >= a.pub ? (today === a.pub ? 'today' : 'on ' + dayText(a.pub)) : 'tomorrow'}`, `${dayText(a.pub)} \u2014 from OP TCG Hub`);
     }
     if (fired.length) this.save(true);
     return fired;
@@ -4663,7 +4667,7 @@ function paintEvents() {
       out.push(`<div class="panel" style="padding:12px 14px"><div class="row" style="padding:0 0 6px;border:0"><div class="nm" style="min-width:0"><b>${esc(st.name)}</b><span>${esc([st.addr, st.city].filter(Boolean).join(', '))}${g.mi != null ? ` \u00b7 ${st.exact ? '' : '~'}${g.mi} mi` : ''}</span></div>
         <div class="v" style="flex:0 0 auto;display:flex;gap:6px">${st.phone ? `<a class="ghost" href="tel:${esc(st.phone)}" style="padding:8px 12px" aria-label="Call ${esc(st.name)}">Call</a>` : ''}<button class="ghost" data-localnote="${esc(st.name)}" aria-label="Add a note for ${esc(st.name)}" style="padding:8px 10px">Note</button></div></div>
         ${g.evs.slice(0, 6).map(e => { const dt = new Date(e.d + 'T12:00:00'); return `<div class="row" style="padding:6px 0"><div class="nm" style="min-width:0"><b style="font-weight:600;white-space:normal">${esc(dt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }))} \u00b7 ${esc(e.title.replace(/^\[[^\]]*\]\s*/, ''))}${e.release ? ' <span class="badge">release</span>' : ''}</b><span>${e.fee > 0 ? money(e.fee) : 'free'}${e.cap ? ` \u00b7 ${e.cap} seats` : ''}</span></div>
-          <div class="v" style="flex:0 0 auto;display:flex;gap:6px">${e.url ? `<a class="ghost" href="${esc(e.url)}" target="_blank" rel="noopener" style="padding:6px 10px;font-size:13px">Register</a>` : ''}<button class="ghost" data-evcal="${all.indexOf(e)}" aria-label="Add ${esc(e.title)} at ${esc(st.name)} to your calendar" style="padding:6px 8px;font-size:13px">Calendar</button></div></div>`; }).join('')}${g.evs.length > 6 ? `<div class="note">and ${g.evs.length - 6} more at this store</div>` : ''}</div>`);
+          <div class="v" style="flex:0 0 auto;display:flex;gap:6px">${e.url ? `<a class="ghost" href="${esc(e.url)}" target="_blank" rel="noopener" style="padding:6px 10px;font-size:13px" aria-label="Register for ${esc(e.title.replace(/^\[[^\]]*\]\s*/, ''))} at ${esc(st.name)} on Bandai TCG+">Register ${ext()}</a>` : ''}<button class="ghost" data-evcal="${all.indexOf(e)}" aria-label="Add ${esc(e.title)} at ${esc(st.name)} to your calendar" style="padding:6px 8px;font-size:13px">Calendar</button></div></div>`; }).join('')}${g.evs.length > 6 ? `<div class="note">and ${g.evs.length - 6} more at this store</div>` : ''}</div>`);
     }
     out.push(`<div class="note" style="margin-top:10px">Registration is on Bandai TCG+, in their app or site; this only points there. Fees and seats are as the store listed them. From onepieceevents.com, from TCG+.</div>`);
   }
@@ -4738,13 +4742,13 @@ ${foot(s, s.name)}</div>`;
 $('#releases').addEventListener('click', e => {
   const f = e.target.closest('[data-relfold]'); if (f) { e.stopPropagation(); const k = f.dataset.relfold; if (RELF.open.has(k)) RELF.open.delete(k); else RELF.open.add(k); paintReleases(); return; }
   const a = e.target.closest('[data-relalert]'); if (a) { e.stopPropagation(); const on = RELALERTS.toggle(+a.dataset.relalert, a.dataset.relname, a.dataset.relpub);
-    if (on) PLATFORM.notifyPermission().then(perm => toast(perm === 'unknown' ? 'Reminder set — if none arrives, check the phone\'s notification settings for this app' : perm === 'denied' ? 'Reminder set — notifications are off, so it will show here instead' : `Reminder set for the day before ${a.dataset.relpub}`)); else toast('Reminder removed');
+    if (on) PLATFORM.notifyPermission().then(perm => toast(perm === 'unknown' ? 'Reminder set — if none arrives, check the phone\u2019s notification settings for this app' : perm === 'denied' ? 'Reminder set — notifications are off, so it will show here instead' : `Reminder set for the day before ${dayText(a.dataset.relpub)}`)); else toast('Reminder removed');
     paintReleases(); return; }
   const c = e.target.closest('[data-relcal]'); if (c) { e.stopPropagation(); const s = CAT.sets.get(+c.dataset.relcal); if (s) addEventToCalendar(releaseEvent(s, c.dataset.relname)); }
 });
 $('#sealed').addEventListener('click', e => { const k = e.target.closest('[data-skind]'); if (k) { SEALED.kind = k.dataset.skind; paintSealed(); return; }
   const f = e.target.closest('[data-setfold]'); if (f) { const id = isNaN(+f.dataset.setfold) ? f.dataset.setfold : +f.dataset.setfold; if (SEALED.closed.has(id)) SEALED.closed.delete(id); else SEALED.closed.add(id); paintSealed(); return; }
-  const b = e.target.closest('[data-stock]'); if (b) { e.stopPropagation(); const on = STOCK.toggle(+b.dataset.stock); if (on) { PLATFORM.notifyPermission().then(perm => toast(perm === 'unknown' ? 'Watching \u2014 if no alert arrives, check the phone\'s notification settings for this app' : perm === 'denied' ? 'Watching \u2014 notifications are off, so it will show here instead' : 'Watching for stock')); STOCK.check(); } paintSealed(); } });
+  const b = e.target.closest('[data-stock]'); if (b) { e.stopPropagation(); const on = STOCK.toggle(+b.dataset.stock); if (on) { PLATFORM.notifyPermission().then(perm => toast(perm === 'unknown' ? 'Watching \u2014 if no alert arrives, check the phone\u2019s notification settings for this app' : perm === 'denied' ? 'Watching \u2014 notifications are off, so it will show here instead' : 'Watching for stock')); STOCK.check(); } paintSealed(); } });
 $('#sealedQ').addEventListener('input', e => { SEALED.q = e.target.value; paintSealed(); });
 
 /* ---- search ------------------------------------------------------------ */
@@ -5533,8 +5537,17 @@ function paintDetailDist(p) {
   const el = $('#dDist'); const list = (SEALED.isGoods(p) && HUNT.distByCatalogId()[p.id]) || [];
   el.hidden = !list.length; if (!list.length) { el.innerHTML = ''; return; }
   const tls = list.map(distTl);   /* take 114: each distributor's history on file, under its own words, drawn only inside the open fold */
-  el.innerHTML = distFold('detail', esc([...new Set(list.map(it => HUNT.distName(it._d)))].join(', ')),
-    list.map((it, i) => `<div class="dsec"><div class="row" style="align-items:center;gap:10px;padding:0"><div class="nm" style="min-width:0"><b>${esc(HUNT.distName(it._d))}</b><span>${distWords(it).join(' \u00b7 ')} \u00b7 ${esc(HUNT.ageLabel((HUNT.dist(it._d) || {}).fetched_at))}</span></div>${it.url ? `<a class="ghost" href="${esc(it.url)}" target="_blank" rel="noopener" style="flex:0 0 auto;padding:8px 12px" aria-label="Open ${esc(HUNT.distName(it._d))}'s page for ${esc(p.name)}">Open ${ext()}</a>` : ''}</div>${distHistory(it, tls[i])}</div>`).join('')
+  /* take 115 (SPEC-112-54, the look): Sealed and Releases said a distributor kept after a failed fetch was not reached,
+     and the product's own page did not -- its summary named the distributors and GTS's line gave the kept copy's age
+     as if it were a check. The summary says how many were not reached and since when, as distSummary does, and the
+     kept distributor's line says so, while its words are still the kept copy's */
+  const ks = [...new Set(list.map(it => it._d))], dead = ks.map(k => HUNT.dist(k)).filter(D => HUNT.unreached(D));
+  const since = dead.map(D => D.stale_since || D.fetched_at).filter(Boolean).sort()[0];
+  const summary = esc(ks.map(k => HUNT.distName(k)).join(', ')) + (dead.length ? ` \u00b7 ${dead.length} not reached${since ? ' since ' + esc(nbsp(momentText(since))) : ''}` : '');
+  const when = it => { const D = HUNT.dist(it._d) || {};
+    return HUNT.unreached(D) ? `could not reach it since ${esc(nbsp(momentText(D.stale_since || D.fetched_at)))}; its last check, ${esc(HUNT.ageLabel(D.fetched_at))}, is shown` : esc(HUNT.ageLabel(D.fetched_at)); };
+  el.innerHTML = distFold('detail', summary,
+    list.map((it, i) => `<div class="dsec"><div class="row" style="align-items:center;gap:10px;padding:0"><div class="nm" style="min-width:0"><b>${esc(HUNT.distName(it._d))}</b><span>${distWords(it).join(' \u00b7 ')} \u00b7 ${when(it)}</span></div>${it.url ? `<a class="ghost" href="${esc(it.url)}" target="_blank" rel="noopener" style="flex:0 0 auto;padding:8px 12px" aria-label="Open ${esc(HUNT.distName(it._d))}'s page for ${esc(p.name)}">Open ${ext()}</a>` : ''}</div>${distHistory(it, tls[i])}</div>`).join('')
     + '<div class="note" style="margin-top:10px">A distributor sells to stores, not to you: these are the dates and words it gives the shops.</div>'
     + (list.some((it, i) => tlNeedsNote(it, tls[i])) ? `<div class="note" style="margin-top:6px">${esc(TL_NOTE)}</div>` : ''));
 }
@@ -5592,7 +5605,7 @@ function openDetail(id, { dist = false } = {}) {
   $('#dCond').innerHTML = sealedP ? 'No condition to record' : 'Condition · <span class="nw">' + esc(COND_NAMES[dCond] || dCond) + '</span>';
   $('#dCondSeg').hidden = sealedP;
   $('#dCondSeg').innerHTML = sealedP ? '' : CONDS.map(c =>
-    `<button class="${c === dCond ? 'on' : ''}" data-cond="${c}">${c}</button>`).join('');
+    `<button class="${c === dCond ? 'on' : ''}" data-cond="${c}" aria-pressed="${c === dCond}">${c}</button>`).join('');
   /* take 95 (A38 item 7): the stock alert where the owner looks -- the take-77 watch, from the sheet */
   $('#dStock').hidden = !sealedP;
   /* take 111: the want list is kept by number, so a printing with none (a product, a DON!! card) cannot be on it --
@@ -5602,7 +5615,7 @@ function openDetail(id, { dist = false } = {}) {
   /* take 96 (A38 item 4): where to buy -- every seller the app knows, the seller’s own page */
   $('#dBuy').hidden = !sealedP;
   $('#dBuyList').innerHTML = sealedP ? buySources(p).map(s => `<div class="row" style="align-items:center"><div class="nm" style="min-width:0"><b>${G(BUY_GLYPH[s.kind], 14)} ${esc(s.label)}</b><span>${esc(s.note)}${s.addr ? ' · ' + esc(s.addr) : ''}${s.mi != null ? ' · ~' + s.mi + ' mi' : ''}</span></div>
-      <div class="v" style="flex:0 0 auto;display:flex;gap:6px"><a class="ghost" href="${esc(s.url)}" target="_blank" rel="noopener" style="padding:8px 12px">Open ${ext()}</a>${s.phone ? `<a class="ghost" href="tel:${esc(s.phone)}" style="padding:8px 12px">Call</a>` : ''}</div></div>`).join('') : '';
+      <div class="v" style="flex:0 0 auto;display:flex;gap:6px"><a class="ghost" href="${esc(s.url)}" target="_blank" rel="noopener" style="padding:8px 12px" aria-label="${esc(s.label)}: open the seller\u2019s page for ${esc(p.name)}">Open ${ext()}</a>${s.phone ? `<a class="ghost" href="tel:${esc(s.phone)}" style="padding:8px 12px">Call</a>` : ''}</div></div>`).join('') : '';
 
   const graded = PF.scope(OWN.items).filter(i => i.id === id && i.graded);
   $('#dGradedList').innerHTML = graded.length ? graded.map(i =>
@@ -5665,7 +5678,7 @@ function setCond(c) {
   dQty = owned ? owned.qty : 1; $('#dQty').textContent = dQty;
   $('#dSave').textContent = owned ? 'Save' : 'Add to collection';
   $('#dCond').innerHTML = 'Condition · <span class="nw">' + esc(COND_NAMES[dCond] || dCond) + '</span>';
-  $('#dCondSeg').innerHTML = CONDS.map(k => `<button class="${k === dCond ? 'on' : ''}" data-cond="${k}">${k}</button>`).join('');
+  $('#dCondSeg').innerHTML = CONDS.map(k => `<button class="${k === dCond ? 'on' : ''}" data-cond="${k}" aria-pressed="${k === dCond}">${k}</button>`).join('');
   $('#dPaid').textContent = owned && owned.paid ? money(owned.paid) : 'Set';
   return true;
 }
@@ -5697,11 +5710,11 @@ $('#dAlert').addEventListener('click', async () => {
   const at = fromShown(typedAmount(v)); if (!(at > 0)) return toast('Not a number');
   const perm = await PLATFORM.notifyPermission();
   ALERTS.add(dCur.id, dir, at);
-  toast(perm === 'unknown' ? 'Watching \u2014 if no alert arrives, check the phone\'s notification settings for this app' : perm === 'denied' ? 'Watching \u2014 notifications are off, so it will show here instead' : `Watching ${dCur.name} ${dir} ${money(at)}`);
+  toast(perm === 'unknown' ? 'Watching \u2014 if no alert arrives, check the phone\u2019s notification settings for this app' : perm === 'denied' ? 'Watching \u2014 notifications are off, so it will show here instead' : `Watching ${dCur.name} ${dir} ${money(at)}`);
 });
 $('#dStock').addEventListener('click', () => {
   if (!dCur) return; const on = STOCK.toggle(dCur.id);
-  if (on) { PLATFORM.notifyPermission().then(perm => toast(perm === 'unknown' ? 'Watching — if no alert arrives, check the phone\'s notification settings for this app' : perm === 'denied' ? 'Watching — notifications are off, so it will show here instead' : 'Watching for stock')); STOCK.check(); }
+  if (on) { PLATFORM.notifyPermission().then(perm => toast(perm === 'unknown' ? 'Watching — if no alert arrives, check the phone\u2019s notification settings for this app' : perm === 'denied' ? 'Watching — notifications are off, so it will show here instead' : 'Watching for stock')); STOCK.check(); }
   else toast('Stopped watching');
   $('#dStock').textContent = on ? 'Watching for stock — stop' : 'Alert me when in stock';
 });
@@ -5930,7 +5943,7 @@ const SIM = {
     if (this.firstTurnOf(i)) return { ok: false, why: 'no battle on your first turn (§6-5-6-1)' };
     const P = this.P(i); const o = ref === 'leader' ? P.leader : P.chars[ref]; if (!o) return { ok: false, why: 'no such card' };
     if (o.rested) return { ok: false, why: 'already rested' };
-    if (ref !== 'leader' && o.turn === g.turn && !this.has(i, ref, 'Rush')) return { ok: false, why: 'played this turn and no [Rush] (§10-1)' };
+    if (ref !== 'leader' && o.turn === g.turn && !this.has(i, ref, 'Rush')) return { ok: false, why: 'played this turn and no Rush (§10-1)' };
     return { ok: true }; },
   targets(i) { const O = this.P(1 - i); const t = [{ ref: 'leader', name: this.card(O.leader.id).name }]; O.chars.forEach((c, k) => { if (c.rested) t.push({ ref: k, name: this.card(c.id).name }); }); return t; },
   attack(i, ref, tref) { const v = this.canAttack(i, ref); if (!v.ok) return v; const O = this.P(1 - i);
@@ -5942,7 +5955,7 @@ const SIM = {
   blockers() { const b = this.g.battle; if (!b || b.step !== 'block') return []; const O = this.P(b.def);
     return O.chars.map((c, k) => ({ k, c })).filter(x => !x.c.rested && this.has(b.def, x.k, 'Blocker') && x.k !== b.dref).map(x => ({ ref: x.k, name: this.card(x.c.id).name })); },
   block(k) { const b = this.g.battle; if (!b || b.step !== 'block') return { ok: false }; const O = this.P(b.def); const c = O.chars[k];
-    if (!c || c.rested || !this.has(b.def, k, 'Blocker')) return { ok: false, why: 'not an active [Blocker]' };
+    if (!c || c.rested || !this.has(b.def, k, 'Blocker')) return { ok: false, why: 'not an active Blocker' };
     c.rested = true; b.dref = k; b.blocked = true; b.step = 'counter'; this.log(`${O.name}: ${this.card(c.id).name} blocks`); return { ok: true }; },
   noBlock() { const b = this.g.battle; if (b && b.step === 'block') b.step = 'counter'; },
   /* §7-1-3 counter: trash a card with a Counter value from hand, +1000/+2000 to the defender. */
@@ -6173,7 +6186,7 @@ function paintSim() {
   let i = SIMUI.post ? SIMUI.post.i : (g.phase === 'battle' && !(SIMUI.offer && SIMUI.offer.i === g.active) ? g.battle.def : g.active);
   if (g.bot != null && !SIMUI.post && !(g.phase === 'battle')) i = 1 - g.bot;    // the human’s screen, always, against the app
   const P = SIM.P(i), O = SIM.P(1 - i);
-  const pips = X => { const given = X.leader.don + X.chars.reduce((a, c) => a + c.don, 0); return `<span title="DON!!: ${X.don.active} active, ${X.don.rested} rested, ${given} given, ${X.donDeck} in the DON!! deck" style="letter-spacing:1px">${'\u25cf'.repeat(X.don.active)}<span style="opacity:.35">${'\u25cf'.repeat(X.don.rested)}</span><span style="color:var(--brass)">${'\u25cf'.repeat(given)}</span><span style="opacity:.18">${'\u25cb'.repeat(X.donDeck)}</span></span>`; };
+  const pips = X => { const given = X.leader.don + X.chars.reduce((a, c) => a + c.don, 0); return `<span title="DON!!: ${X.don.active} active, ${X.don.rested} rested, ${given} given, ${X.donDeck} in the DON!! deck" style="letter-spacing:1px">${'\u25cf'.repeat(X.don.active)}<span style="opacity:.35">${'\u25cf'.repeat(X.don.rested)}</span><span style="color:var(--accent-ink)">${'\u25cf'.repeat(given)}</span><span style="opacity:.18">${'\u25cb'.repeat(X.donDeck)}</span></span>`; };
   const head = (X, mine) => `<div class="row" style="gap:8px;flex-wrap:wrap"><b>${esc(X.name)}</b><span class="note">Life <b>${X.life.length}</b> \u00b7 Deck ${X.deck.length} \u00b7 Hand ${X.hand.length}${mine ? '' : ' \u00b7 ' + (X.chars.length) + ' char'}</span></div><div class="note" style="margin-top:2px">DON!! ${pips(X)}</div>`;
   const unit = (X, xi, ref, mine) => { const o = ref === 'leader' ? X.leader : X.chars[ref]; const pw = SIM.power(xi, ref);
     const open = mine && SIMUI.menu === String(ref);
@@ -6201,21 +6214,21 @@ function paintSim() {
     box.innerHTML = `${simOfferPanel()}<div class="panel"><h3>${esc(P.name)} is attacked</h3>
       <div class="row"><div class="nm">${simCard(att.id)}<span>attacks with <b>${pw.a}</b></span></div></div>
       <div class="row"><div class="nm">${simCard(tgt.id)}<span>defends with <b>${pw.d}</b>${b.counter ? ' (counters +' + b.counter + ')' : ''}${b.blocked ? ' \u00b7 blocking' : ''}</span></div></div>
-      ${b.step === 'block' ? `<div class="fgrp">Block step (\u00a77-1-2)</div>${SIM.blockers().map(x => `<button class="linkish" data-sim="block:${x.ref}">Block with ${esc(x.name)}</button>`).join('') || '<div class="note">No active Blocker</div>'}<button class="ghost" data-sim="noblock" style="margin-top:8px">No block \u2192 counter step</button>`
-      : `<div class="fgrp">Counter step (\u00a77-1-3)</div>${SIM.counters().map(x => `<button class="linkish" data-sim="counter:${x.h}">Counter with ${esc(x.name)} (+${x.plus})</button>`).join('') || '<div class="note">No Counter cards in hand</div>'}${SIM.counterEvents().map(x => `<button class="linkish" data-sim="cev:${x.h}">Play [Counter] ${esc(x.name)} (${x.cost} DON!!)</button>`).join('')}<div class="note" style="margin-top:6px">[Counter] Events and other effects: play them by hand, then adjust with ${G('more', 14)} if needed.</div><button class="ghost go" data-sim="resolve" style="margin-top:8px">Resolve \u2014 ${pw.a} vs ${pw.d}${pw.a >= pw.d ? ': hit' : ': held'}</button>`}
+      ${b.step === 'block' ? `<div class="fgrp">Block step (\u00a77-1-2)</div>${SIM.blockers().map(x => `<button class="linkish" data-sim="block:${x.ref}">Block with ${esc(x.name)}</button>`).join('') || '<div class="note">No active Blocker</div>'}<button class="ghost" data-sim="noblock" style="margin-top:8px">No block</button><span class="note" style="margin-left:8px">then the counter step</span>`
+      : `<div class="fgrp">Counter step (\u00a77-1-3)</div>${SIM.counters().map(x => `<button class="linkish" data-sim="counter:${x.h}">Counter with ${esc(x.name)} (+${x.plus})</button>`).join('') || '<div class="note">No Counter cards in hand</div>'}${SIM.counterEvents().map(x => `<button class="linkish" data-sim="cev:${x.h}">Play ${esc(x.name)} (${x.cost} DON!!)</button>`).join('')}<div class="note" style="margin-top:6px">[Counter] Events and other effects: play them by hand, then adjust with ${G('more', 14)} if needed.</div><button class="ghost go" data-sim="resolve" style="margin-top:8px">Resolve</button><span class="note" style="margin-left:8px">${pw.a} vs ${pw.d}${pw.a >= pw.d ? ': hit' : ': held'}</span>`}
     </div>${simLog()}`;
     return;
   }
   if (SIMUI.post) { const res = SIMUI.result || { win: false, a: 0, d: 0, life: [] };
-    box.innerHTML = `<div class="panel" style="border-color:var(--brass)"><h3>${res.win ? 'Hit' : 'Held'} \u2014 ${res.a} vs ${res.d}</h3>${res.ko ? `<div class="note">${esc(res.ko)} K.O.\u2019d</div>` : ''}${res.life.map(l => `<div class="note">Life card ${l.banished ? 'banished' : 'to hand'}: <b>${esc(l.name)}</b>${l.trigger && !SIMUI.offer ? ' \u2014 has [Trigger]: play it by hand if you choose' : ''}</div>`).join('')}</div>
-      ${simOfferPanel()}${SIMUI.offer ? '' : `<div class="row" style="margin-top:10px"><button class="ghost go" data-sim="post">Done \u2014 hand back to ${esc(SIM.P(SIMUI.post.att).name)}</button></div>`}${simLog()}`; return; }
+    box.innerHTML = `<div class="panel" style="border-color:var(--brass)"><h3>${res.win ? 'Hit' : 'Held'} \u2014 ${res.a} vs ${res.d}</h3>${res.ko ? `<div class="note">${esc(res.ko)} K.O.\u2019d</div>` : ''}${res.life.map(l => `<div class="note">Life card ${l.banished ? 'banished' : 'to hand'}: <b>${esc(l.name)}</b>${l.trigger && !SIMUI.offer ? ' \u2014 has a Trigger: play it by hand if you choose' : ''}</div>`).join('')}</div>
+      ${simOfferPanel()}${SIMUI.offer ? '' : `<div class="row" style="margin-top:10px;flex-wrap:wrap"><button class="ghost go" data-sim="post" style="flex:none">Hand back</button><span class="note" style="margin:0">to ${esc(SIM.P(SIMUI.post.att).name)}</span></div>`}${simLog()}`; return; }
   const res = SIMUI.result; SIMUI.result = null;
   box.innerHTML = `${simOfferPanel()}${res && i !== (g.battle ? g.battle.def : -1) ? `<div class="panel" style="border-color:var(--brass)"><h3>${res.win ? 'Hit' : 'Held'} \u2014 ${res.a} vs ${res.d}</h3>${res.ko ? `<div class="note">${esc(res.ko)} K.O.\u2019d</div>` : ''}${res.life.map(l => `<div class="note">Life card ${l.banished ? 'banished' : 'to hand'}: <b>${esc(l.name)}</b></div>`).join('')}</div>` : ''}
     <div class="panel"><h3>Opponent</h3>${head(O, false)}<div style="margin-top:8px">${unit(O, 1 - i, 'leader', false)}${O.chars.map((c, k) => unit(O, 1 - i, k, false)).join('')}${O.stage ? `<div class="note">Stage: ${simCard(O.stage)}</div>` : ''}</div></div>
-    <div class="panel"><h3>${esc(P.name)} \u2014 turn ${g.turn}${SIMUI.sel ? ' \u00b7 <span style="color:var(--brass)">choose a target</span>' : ''}${g.bot != null && g.active === g.bot ? ' \u00b7 <span class="note">the app is moving</span>' : ''}</h3>${head(P, true)}
+    <div class="panel"><h3>${esc(P.name)} \u2014 turn ${g.turn}${SIMUI.sel ? ' \u00b7 <span style="color:var(--accent-ink)">choose a target</span>' : ''}${g.bot != null && g.active === g.bot ? ' \u00b7 <span class="note">the app is moving</span>' : ''}</h3>${head(P, true)}
       <div style="margin-top:8px">${unit(P, i, 'leader', true)}${P.chars.map((c, k) => unit(P, i, k, true)).join('')}${P.stage ? `<div class="note">Stage: ${simCard(P.stage)}</div>` : ''}</div>
-      <div class="fgrp">Hand</div>${P.hand.map((id, h) => { const v = SIM.canPlay(i, h); return `<div class="row" style="gap:8px"><div class="nm">${simCard(id)}${v.ok ? '' : `<span style="display:block;color:var(--dim2);font-size:12.5px">${esc(v.why)}</span>`}</div><button class="ghost${v.ok ? ' go' : ''}" data-sim="play:${h}" ${v.ok ? '' : 'disabled'}>Play</button><button class="ghost" data-sim="trashhand:${h}" aria-label="Trash this card (an effect)">${G('close', 18)}</button></div>`; }).join('') || '<div class="note">empty</div>'}
-      <div class="row" style="gap:10px;margin-top:14px;flex-wrap:wrap"><button class="ghost go" data-sim="end">End turn \u2014 pass the phone</button>
+      <div class="fgrp">Hand</div>${P.hand.map((id, h) => { const v = SIM.canPlay(i, h); return `<div class="row" style="gap:8px"><div class="nm">${simCard(id)}${v.ok ? '' : `<span style="display:block;color:var(--dim2);font-size:12.5px">${esc(v.why)}</span>`}</div><button class="ghost${v.ok ? ' go' : ''}" data-sim="play:${h}" ${v.ok ? '' : 'disabled'}>Play</button><button class="ghost" data-sim="trashhand:${h}" aria-label="Trash this card (an effect)">${G('trash', 18)}</button></div>`; }).join('') || '<div class="note">empty</div>'}
+      <div class="row" style="gap:10px;margin-top:14px;flex-wrap:wrap"><button class="ghost go" data-sim="end">End turn</button><span class="note" style="margin:0">${g.bot != null ? 'then the app plays its turn' : 'then pass the phone'}</span>
         <button class="ghost" data-sim="m:draw">Draw (effect)</button><button class="ghost" data-sim="m:don">+1 DON!! (effect)</button><button class="ghost" data-sim="m:life-">Life \u2192 hand (effect)</button><button class="ghost" data-sim="m:life+">+1 Life (effect)</button></div>
     </div>${simLog()}`;
 }
@@ -6226,7 +6239,7 @@ function simOfferPanel() {
   return `<div class="panel" style="border-color:var(--brass)"><h3>${esc(nm)} \u2014 effect</h3><div class="note">${esc(cur.e.raw)}</div>
     ${cur.steps.length > 1 ? `<div class="note">step ${cur.step + 1} of ${cur.steps.length}${/^cost_/.test(cur.steps[cur.step].a) ? ' \u2014 the cost; skipping declines the effect' : ''}</div>` : ''}
     ${cur.targets && cur.targets.length ? `<div class="fgrp">Choose</div>${cur.targets.map(t => `<button class="linkish" data-sim="fx:${t.ref}">${esc(t.name)}</button>`).join('')}` : (cur.targets && !cur.targets.length ? '<div class="note">No legal target for this step.</div>' : '')}
-    <div class="row" style="gap:10px;margin-top:8px">${!(cur.targets && cur.targets.length) || cur.steps[cur.step].upto ? `<button class="ghost go" data-sim="fxapply">${cur.targets ? (cur.steps[cur.step].upto ? 'Trash none' : 'Continue') : 'Apply'}</button>` : ''}<button class="ghost" data-sim="fxskip">Skip (play it by hand)</button></div></div>`;
+    <div class="row" style="gap:10px;margin-top:8px;flex-wrap:wrap">${!(cur.targets && cur.targets.length) || cur.steps[cur.step].upto ? `<button class="ghost go" data-sim="fxapply" style="flex:none">${cur.targets ? (cur.steps[cur.step].upto ? 'Trash none' : 'Continue') : 'Apply'}</button>` : ''}<button class="ghost" data-sim="fxskip" style="flex:none">Skip</button><span class="note" style="margin:0">play it by hand</span></div></div>`;
 }
 function simOffer(i, trigger, ref, cardId, fromLife) { const list = SIM.offers(i, trigger, ref, cardId, fromLife); if (!list.length) return false; SIMUI.offer = SIMUI.offer && SIMUI.offer.i === i ? { i, list: SIMUI.offer.list.concat(list) } : { i, list }; return true; }
 function simOfferAll(i, trigger) { const P = SIM.P(i); let any = simOffer(i, trigger, 'leader'); P.chars.forEach((c, k) => { if (simOffer(i, trigger, k)) any = true; }); return any; }
@@ -6235,7 +6248,7 @@ function simOfferAll(i, trigger) { const P = SIM.P(i); let any = simOffer(i, tri
 function simAfterOffers() { const g = SIM.g; if (!g || SIMUI.offer) return;
   if (SIMUI.afterOffer === 'endTurn') { SIMUI.afterOffer = null; const who = 1 - g.active; SIM.endTurn(); SIMUI.sel = null; if (g.phase !== 'over') simCurtain(SIM.P(who).name, `turn ${g.turn}`); if (g.bot != null) simBotRun(); }
   if (SIMUI.afterOffer === 'toDefender' && g.phase === 'battle') { SIMUI.afterOffer = null; if (g.bot === g.battle.def) BOT.defend(); else simCurtain(SIM.P(g.battle.def).name, 'an attack is coming \u2014 block or counter'); } }
-function simLog() { return `<div class="panel"><h3>Log</h3><div class="note">${SIM.g.log.slice(0, 8).map(esc).join('<br>') || '\u2014'}</div><button class="linkish" data-sim="sharelog" style="margin-top:6px">Share the game log</button></div>`; }
+function simLog() { return `<div class="panel"><h3>Log</h3><div class="note">${SIM.g.log.slice(0, 8).map(esc).join('<br>') || '\u2014'}</div><button class="linkish" data-sim="sharelog" style="margin-top:6px">Share the log</button></div>`; }
 function simLogText() { const g = SIM.g; if (!g) return ''; const P = i => g.players[i]; return [`OP TCG Hub sim \u2014 take ${TAKE}`, `${P(0).name} (${CAT.byId.get(P(0).leader.id)?.name}) vs ${P(1).name} (${CAT.byId.get(P(1).leader.id)?.name}), turn ${g.turn}`, '', ...g.log.slice().reverse()].join('\n'); }
 $('#sim').addEventListener('click', e => {
   const b = e.target.closest('[data-sim]'); if (!b) return; const [act, arg] = b.dataset.sim.split(':'); const g = SIM.g; let g2;

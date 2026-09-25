@@ -511,7 +511,7 @@ section('take 90 — the set chips (A36, landmine 126)');
   const setId = V.CAT.byId.get(c[0].id).set;               // OWNROWS above: three items, from c[0]'s and c[1]'s sets
   const inSet = OWNROWS.filter(x => x.p.set === setId).length;
   const filters = ctx.document.getElementById('filters');
-  const chip = { dataset: { fk: 'set', fv: String(setId) }, classList: { toggle() {} } };
+  const chip = { dataset: { fk: 'set', fv: String(setId) }, classList: { toggle() {} }, setAttribute() {} };   // take 115: a DOM element has setAttribute -- the chip now says aria-pressed
   const tap = () => filters._ev.click({ target: { closest: sel => sel === '[data-fk]' ? chip : null, id: '' } });
   V.FILT.own.set = [];                                       // sheetScope is 'own' until a sheet opens
   tap();
@@ -1812,7 +1812,7 @@ const mi = V.LOCAL.miles([42.26, -83.72]);   // Ann Arbor from the 483 area
 ok('distance from the zip area to a store is computed in miles, about right (Ann Arbor ~35-45 from Waterford)', mi >= 25 && mi <= 55, String(mi));
 ok('a store the app cannot place has no distance and is kept only when the filter is Any', V.LOCAL.miles(null) === null && (V.LOCAL.radius = 50, !V.LOCAL.within(null)) && (V.LOCAL.radius = 0, V.LOCAL.within(null)));
 V.LOCAL.radius = 50; V.paintLocal(); const hl = ctx.document.querySelector('#localList').innerHTML;
-ok('Local lists the shops within the radius with address, miles (exact where the file has the point, ~ otherwise), a Call and their next event', /Shops that run One Piece events/.test(hl) && /~?\d+ mi/.test(hl) && /2026-\d\d-\d\d/.test(hl) && /href="tel:\d+"/.test(hl));
+ok('Local lists the shops within the radius with address, miles (exact where the file has the point, ~ otherwise), a Call and their next event', /Shops that run One Piece events/.test(hl) && /~?\d+ mi/.test(hl) && /<span style="display:block;color:var\(--brass\)">[A-Z][a-z]{2} \d{1,2}\b/.test(hl) && /href="tel:\d+"/.test(hl));   // take 115: the next event's day in words (SPEC-110-43)
 ok('...and says what the list means: registered to run events, not proof of shelf stock', /registered to run events/.test(hl));
 V.LOCAL.radius = 10; V.paintLocal();
 ok('the distance dropdown narrows the list', (ctx.document.querySelector('#localList').innerHTML.match(/~?\d+ mi/g) || []).length < (hl.match(/~?\d+ mi/g) || []).length);
@@ -1962,8 +1962,8 @@ section('take 93 — a picture beside every row that had none (A33 item 6)');
        `top ${count(ctx.document.getElementById('topList').innerHTML, /class="pic"/g)}, sets ${count(ctx.document.getElementById('setDone').innerHTML, /class="pic"/g)}`); }
   if (typeof V.paintDecks === 'function') { V.paintDecks();
     ok('the Decks list Leader box is a sized pic box (landmine 132)', !V.DECKS.list.length || /class="lead pic"/.test(ctx.document.getElementById('dkList').innerHTML)); }
-  ok('the Trade and Wants thumbnails and the Play board Leader are sized pic boxes (landmine 132)',
-     /class="oa pic" style="[^"]*position:relative/.test(js) && count(js, /class="oa pic"/g) === 2 && /class="lead pic" data-plleader/.test(js));
+  ok('the Trade and Wants thumbnails and the Play board Leader are sized pic boxes (landmine 132; take 115: the trade and want rows draw the dense list\'s cardPic)',
+     count(js, /class="oa pic"/g) === 0 && count(js, /\$\{cardPic\(p, THUMB\.s\)\}/g) >= 4 && /function tradeRow[\s\S]{0,400}\$\{cardPic\(p, THUMB\.s\)\}/.test(js) && /class="lead pic" data-plleader/.test(js));
   V.go('home');
 }
 
@@ -2312,8 +2312,8 @@ section('take 106 — the UI series\' foundation (A42): one set of tokens, the a
   ok('the selected tint is mixed from each palette, not one brass tint for all three (#2A2414 is gone)', /--accent-bg:color-mix\(in srgb,var\(--brass\) 12%,var\(--card\)\)/.test(html) && !/#2A2414/.test(html));
   ok('the knob\'s label is --on-accent in every mode: no per-mode override is left', /\.mode button\.on\{color:var\(--on-accent\)\}/.test(html) && !/\] \.mode button\.on\{/.test(html));
   ok('the slider is one rule and three equal columns under the knob, and no label wraps (the look caught "Prep & Play" on two lines at equal flex thirds)', (html.match(/\.mode button\{/g) || []).length === 1 && /\.mode\{display:inline-grid;grid-template-columns:repeat\(3,1fr\)/.test(html) && /\.mode button\{[^}]*white-space:nowrap/.test(html));
-  ok('the filter\'s price row is its own rule at 16px (it inherited the range pills\' 14px -- landmine 119)', /\.frange input\{[^}]*font-size:16px/.test(html) && (html.match(/^\.range\{/gm) || []).length === 1 && /class="frange"/.test(html));
-  ok('the filter\'s price boxes and the ask sheet\'s text box light up on focus and are 16px (a later rule and an inline border had outranked the focus rule; the text box was 13.5px, landmine 119)', /\.frange input:focus\{border-color:var\(--brass\)/.test(html) && /<textarea id="askIn"[^>]*style="width:100%;padding:10px;font:16px/.test(js) && !/<textarea id="askIn"[^>]*border:/.test(js));
+  ok('the filter\'s price row is its own rule, its boxes at the one field rule\'s 16px (they inherited the range pills\' 14px -- landmine 119; take 115: no copy of the field rule)', /\.frange input\{/.test(html) && !/\.frange input\{[^}]*(?:font|font-size|border|background|color)\s*:/.test(html) && /<input id="fMin" (?![^>]*\btype=)/.test(html) && /input:not\(\[type\]\),textarea\{[^}]*font-size:16px/.test(html) && (html.match(/^\.range\{/gm) || []).length === 1 && /class="frange"/.test(html));
+  ok('the filter\'s price boxes and the ask sheet\'s text box light up on focus and are 16px (a later rule and an inline border had outranked the focus rule; the text box was 13.5px, landmine 119)', !/\.frange input:focus/.test(html) && /select:focus,input:focus,textarea:focus\{border-color:var\(--brass\)/.test(html) && /<textarea id="askIn"[^>]*style="width:100%;padding:10px;font:16px/.test(js) && !/<textarea id="askIn"[^>]*border:/.test(js));
   ok('a field\'s edge is --line-strong in the one field rule, not a second rule after the focus rule', /select,input\[type="text"\][^{]*\{[^}]*border:1px solid var\(--line-strong\)/.test(html) && !/\}\s*select,input\[type="text"\][^{]*\{border-color:/.test(html));
   ok('the toast sits above the tour and the curtains', /\.toast\{[^}]*z-index:var\(--z-toast\)/.test(html) && /--z-toast:70/.test(html) && /--z-overlay:60/.test(html));
   ok('no invisible block above an empty state', !/\.empty::before/.test(html));
@@ -2414,8 +2414,15 @@ section('take 108 — controls and icons (A42): every icon a sprite symbol with 
     for (const [k, g] of Object.entries(m)) if (GAME.includes(g)) bad.push(`${k} borrows the game's g-${g}`);
     return bad; };
   ok('one meaning per glyph: each nav and action draws its own symbol, Search and Cards share the one for finding a card, the game\'s glyphs are the game\'s', misfits(html).length === 0, misfits(html).join('; '));
-  ok('...control: take 107\'s map is caught (Scan on Blocker, Collection and Sealed on Stage, Releases on Counter, Events on Life)',
-     misfits(html.replace('#g-scan"', '#g-blocker"').replace('#g-collection"', '#g-stage"').replace('#g-box"', '#g-stage"')).length >= 3);
+  /* take 115 (STAN-108-6): the first plant was '#g-scan"', which is Search's scan button first -- it planted nothing on the nav,
+     and Releases and Events were never planted; each is now planted on its nav button's own markup, found once, and named */
+  const plant107 = [['#g-scan"/></svg></span>Scan<', 'blocker', 'nav scan: blocker'], ['#g-collection"/></svg></span>Collection<', 'stage', 'nav collection: stage'],
+    ['#g-box"/></svg></span>Sealed<', 'stage', 'nav sealed: stage'], ['#g-calendar"/></svg></span>Releases<', 'counter', 'nav releases: counter'], ['#g-trophy"/></svg></span>Events<', 'life', 'nav events: life']];
+  const put107 = (s, [a, g]) => (s !== null && s.split(a).length === 2 ? s.replace(a, a.replace(/#g-[\w-]+"/, `#g-${g}"`)) : null);
+  const all107 = plant107.reduce(put107, html), each107 = plant107.map(p => { const one = put107(html, p); return one !== null && misfits(one).includes(p[2]); });
+  ok('...control: take 107\'s map is caught (Scan on Blocker, Collection and Sealed on Stage, Releases on Counter, Events on Life) -- each planted once on its nav button, and each misfit named',
+     all107 !== null && plant107.every(p => misfits(all107).includes(p[2])) && each107.every(Boolean), JSON.stringify(each107));
+  ok('...and a plant that is not on its nav button alone is refused, not counted (the bare \'#g-scan"\' is two buttons)', put107(html, ['#g-scan"', 'blocker']) === null);
   ok('every new symbol is in the sprite', ['scan', 'collection', 'box', 'calendar', 'trophy', 'bookmark', 'export', 'import', 'backup', 'select', 'trend', 'torch', 'photo', 'binder',
      'filter', 'star', 'undo', 'swap', 'refresh', 'more', 'chevron', 'external', 'minus', 'plus', 'check', 'bell'].every(g => new RegExp(`<symbol id="g-${g}" viewBox="0 0 24 24"`).test(html)));
   ok('Lucide\'s notices ship inside the app (an element, not a comment) and About credits them',
@@ -2444,7 +2451,7 @@ section('take 108 — controls and icons (A42): every icon a sprite symbol with 
      && /:is\(\.chip,button\.pill,\.setchip,\.range,\.cnt button,\.mode button\)::after\{content:"";position:absolute;left:50%;top:50%;\s*width:max\(100%,44px\);height:max\(100%,44px\)/.test(html) && /\.chips\{display:flex;flex-wrap:wrap;gap:10px 7px\}/.test(html) && /\.chip\{[^}]*min-height:34px\}/.test(html));   // a chip at least 34 px: wrapped rows 44 px apart (the runner caught 31 px where-to-buy chips wrapping)
   ok('the actions keep their width: flex:0 0 auto beside the 44 px minimum (a min-width alone squeezed the row -- seen in this take)', /\.actions button\{flex:0 0 auto;min-width:44px;min-height:44px\}/.test(html));
   ok('the scanner\'s height takes the sticky mode slider off too (its shutter row sat 52 px under the nav)', /\.scanwrap\{position:relative;height:calc\(100vh - 76px - var\(--sat\) - var\(--sab\) - var\(--modebar-h\)\)/.test(html) && /--modebar-h:53px/.test(html));
-  ok('the deck\'s name is a 44 px target that keeps its title\'s place', /h1\.ab-title input\{display:block;width:100%;min-height:0;margin:-6px 0 -8px;padding:6px 0 8px/.test(html)); }
+  ok('the deck\'s name is a 44 px target that keeps its title\'s place', /h1\.ab-title input\{display:block;width:100%;min-height:44px;margin:-6px 0 -8px;padding:6px 0 8px/.test(html)); }   /* take 115: min-height 44 (0 drew 43.6 px -- render reads the size now, SPEC-108-39) */
 
 section('take 109 — the art layer, part 1 (A42): the picture measured, Decks under its Leader, the ready-made decks back on Decks, a deck\'s Leader large, a card\'s own page over its own colours');
 { const man = V.CAT.man, keepImg = man.images, nof = () => undefined;
@@ -2890,7 +2897,7 @@ section('take 111 — the last look (A42): every screen at both of the Fold\'s s
   ok('Home\'s Performance tab leads with its own panel, above Most valuable (it sat under the list)', html.indexOf('id="perfPanel"') > 0 && html.indexOf('id="perfPanel"') < html.indexOf('<h3>Most valuable</h3>'));
   { V.OWN.items = []; V.OWN.add(card.id, { condition: 'NM' }); V.OWN.add(box.id, { condition: 'NM' }); V.OWN.add(don.id, { condition: 'NM' }); V.paintHome();
     const sd = el('setDone').innerHTML, top = el('topList').innerHTML;
-    ok('Home\'s Set completion rows say how far along a set is and stop there ("tap for the checklist" went)', / numbers · \d+%<\/span>/.test(sd) && !/tap for the checklist/.test(sd), sd.replace(/\s+/g, ' ').slice(0, 160));
+    ok('Home\'s Set completion rows say how far along a set is and stop there ("tap for the checklist" went)', / numbers · \d+(?:\.\d)?%<\/span>/.test(sd) && !/tap for the checklist/.test(sd), sd.replace(/\s+/g, ' ').slice(0, 160));
     const boxLine = ((top.split(`data-open="${box.id}"`)[1] || '').match(/<span>([^<]*)<\/span>/) || [])[1];
     ok('...a sealed product in Most valuable says what it is and its set ("Box · OP01"), not a condition and a finish it has not got ("NM · Normal · ")', boxLine != null && boxLine.startsWith('Box · ') && !/NM|Normal|·\s*$/.test(boxLine), JSON.stringify(boxLine));
     const keepFO = JSON.parse(JSON.stringify(V.FILT.own)); Object.assign(V.FILT.own, V.blankFilter('own'));
@@ -3048,9 +3055,11 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
   const F = JSON.parse(fs.readFileSync(feedF, 'utf8')); const R0 = JSON.parse(fs.readFileSync(path.join(fxDir, 'history-fixture.json'), 'utf8')).runs[0];
   /* take 114 (the review): the timeline's days and clocks are this phone's, so the section runs in the owner's zone -- the runner
      and the session VM run UTC, where the phone's day and the UTC day are one day and a timeline drawn in UTC passes. Node 22 reads
-     TZ again when it is set (measured); the fixtures above were built first, in the runner's own zone; the zone goes back at the end */
-  const TZ0 = process.env.TZ, off0 = new Date('2026-12-01T12:00:00Z').getTimezoneOffset(); process.env.TZ = 'America/Detroit';
-  ok('premise: this section runs in America/Detroit, and the app with it -- 02:00 UTC on 24 Sept is the 23rd there, four hours behind in September and five in December',
+     TZ again when it is set (measured); the fixtures above were built first, in the runner's own zone; the zone goes back at the end.
+     Take 115: America/New_York, MEASURED on the owner's Diagnostics (take 114 ran America/Detroit, INFERRED from the zip 48329 --
+     the same offsets and the same daylight-saving days in 2026) */
+  const TZ0 = process.env.TZ, off0 = new Date('2026-12-01T12:00:00Z').getTimezoneOffset(); process.env.TZ = 'America/New_York';
+  ok('premise: this section runs in America/New_York, and the app with it -- 02:00 UTC on 24 Sept is the 23rd there, four hours behind in September and five in December',
      new Date('2026-09-24T02:00:00Z').getDate() === 23 && new Date('2026-09-24T02:00:00Z').getTimezoneOffset() === 240 && new Date('2026-12-01T12:00:00Z').getTimezoneOffset() === 300
      && /^Sep 23\b.*10:00/.test(V.momentText('2026-09-24T02:00:00Z')), `${new Date('2026-09-24T02:00:00Z').getTimezoneOffset()} ${V.momentText('2026-09-24T02:00:00Z')}`);
   /* the history on Pages at 24 Sept 20:02 UTC, saved as it was: every count below is read off its rows, never written */
@@ -3234,7 +3243,7 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
   const mg = many.runs.filter(r => isRead(r, 'gts')), mflips = mg.map((r, i) => i && r.gts.BJP2873812 !== mg[i - 1].gts.BJP2873812 ? { from: mg[i - 1].gts.BJP2873812, to: r.gts.BJP2873812, after: mg[i - 1].t, by: r.t } : null).filter(Boolean);
   ok('more than three changes: the state at the first check, how many earlier changes are not shown, then the last three, oldest first',
      mflips.length > SHOW && tm.changes.length === mflips.length && JSON.stringify(gm) === JSON.stringify([head(fg), `${TLW.gts.coming} at the first check`, `${mflips.length - SHOW} earlier changes not shown`, ...mflips.slice(-SHOW).map(c => `${TLW.gts[c.from]} → ${TLW.gts[c.to]} · ${btw(c)} · read off its page`)]), JSON.stringify(gm.slice(0, 4)));
-  /* take 114 (the review): 1 November 2026, the clocks go back in Detroit and 1:00 to 2:00 AM comes twice -- two checks an hour
+  /* take 114 (the review): 1 November 2026, the clocks go back in New York and 1:00 to 2:00 AM comes twice -- two checks an hour
      apart, both at 1:30 AM on the clock, EDT then EST */
   const FB = { from: 'sold_out', to: 'call', after: '2026-11-01T05:30:00Z', by: '2026-11-01T06:30:00Z', kind: 'page' }, FS = { ...FB, after: '2026-11-01T07:30:00Z', by: '2026-11-01T09:30:00Z' };
   const fbH = { runs: [[FB.after, 'sold_out'], [FB.by, 'call']].map(([t, st]) => ({ t, online: {}, shelf: {}, gts: { ...R0.gts, BJP2873812: st } })), since: FB.after, stores: {}, titles: {} };
@@ -3273,7 +3282,7 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
   ok('...and the zone the run began with is back after the section', process.env.TZ === TZ0 && new Date('2026-12-01T12:00:00Z').getTimezoneOffset() === off0, `${process.env.TZ} ${new Date('2026-12-01T12:00:00Z').getTimezoneOffset()} ${off0}`);
   fs.rmSync(fxDir, { recursive: true, force: true }); }
 
-{ section('take 115 — production safety (A1): the scanner index survives a sync, a synced catalogue this build cannot read is set aside, stored values that do not read or do not save never stop the app, every request has a deadline; the collection and money (A2): every save of the collection backed up, a restore that reads first and can be undone, the prompts on the picker, the pages of the binder, the featured Leader, an alert in the currency on screen, the line a copy counts into; the Hunt\'s honesty and the data (A3): a distributor kept after a failed fetch reads as not reached, Target\'s history in days, every set with a product, counts that say what they count, one of each duplicate');
+{ section('take 115 — production safety (A1): the scanner index survives a sync, a synced catalogue this build cannot read is set aside, stored values that do not read or do not save never stop the app, every request has a deadline; the collection and money (A2): every save of the collection backed up, a restore that reads first and can be undone, the prompts on the picker, the pages of the binder, the featured Leader, an alert in the currency on screen, the line a copy counts into; the Hunt\'s honesty and the data (A3): a distributor kept after a failed fetch reads as not reached, Target\'s history in days, every set with a product, counts that say what they count, one of each duplicate; the spec\'s own words (A4): the splash\'s mark, every text on a tint at 4.5:1, accent as text, nothing under 12 px as drawn, one field rule, the tokens, one glyph per meaning, every link that leaves marked, every toggle pressed, a Leader\'s own colours, the thumbnail sizes, days in words, keywords one way, buttons of three words, curled apostrophes, one percentage rule, a badged name that wraps, a pointer only on a control');
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const settle = (p, ms) => Promise.race([Promise.resolve(p).then(v => ({ v }), e => ({ e: String((e && e.message) || e) })), sleep(ms).then(() => ({ hung: true }))]);
   const guard = async (name, fn) => { try { await fn(); } catch (e) { ok(`${name}: the block ran to its end`, false, String((e && e.stack) || e).slice(0, 400)); } };
@@ -3872,12 +3881,21 @@ json.dump(H.build(F["zips"], F["radius"], previous=copy.deepcopy(F)), sys.stdout
     const rpanel = ro.slice(ro.indexOf('At the distributors'), ro.indexOf('<h3>Recent</h3>'));
     ok('Releases says it too: closed, "1 not reached since"; opened, that GTS could not be reached and its last check is shown, above the products its kept copy lists',
        rsum.includes(`1 not reached since ${since}`) && txt(rpanel).includes(txt(`Could not reach GTS Distribution since ${V.momentText(kg.stale_since)}; its last check, `) + ' ') && /GTS Distribution · /.test(rpanel), `${rsum} | ${txt(rpanel).slice(0, 240)}`);
+    /* the product's own page -- the take-115 look found it silent: its summary named the two distributors and GTS's
+       line gave the kept copy's age as if it were a check */
+    const gi = K.sources.gts.items.find(i => i.catalog_id && V.CAT.byId.get(i.catalog_id));
+    V.openDetail(gi.catalog_id, { dist: true }); const dd = ctx.document.querySelector('#dDist').innerHTML, dsum = sumOf(dd, 'detail');
+    const dgts = txt((dd.match(/<b>GTS Distribution<\/b><span>([\s\S]*?)<\/span>/) || [, ''])[1]);
+    ok('a product\'s own Distributor info says it too: its summary "1 not reached since", and GTS\'s line that it could not be reached and that its last check is shown (it read "GTS Distribution, Southern Hobby" and "… · 4 h ago")',
+       dsum.includes(`1 not reached since ${since}`) && dgts.includes(txt(`could not reach it since ${V.momentText(kg.stale_since)}; its last check, `)), `${dsum} | ${dgts}`);
     const rep = holds(() => V.feedLine()) || '';
     ok('Diagnostics\' feed line names a kept copy (it read "gts 11 products")', rep.includes(`gts ${kg.items.length} products (kept; not reached since ${V.momentText(kg.stale_since)})`) && rep.includes(`target ok (kept; not reached since`), rep);
     /* the controls: a fetch that worked, and a source never read (ok false) */
     const W = runBuild([]); V.HUNT.feed = W; V.paintSealed(); const hw = ctx.document.querySelector('#sealedList').innerHTML, sw = sumOf(hw, 'sealed');
     V.distFoldTap('sealed'); const hwo = ctx.document.querySelector('#sealedList').innerHTML; V.DISTF.open.clear();
     ok('control: when every fetch answers, nothing is "not reached" and each panel says when it was checked', W.sources.gts.kept === undefined && /^2 distributors · checked (just now|\d+ min ago)$/.test(sw) && /<b>GTS Distribution<\/b>\s*<div class="note">Checked (just now|\d+ min ago) · /.test(hwo) && !/Could not reach/.test(hwo), sw);
+    V.openDetail(gi.catalog_id, { dist: true }); const dw = ctx.document.querySelector('#dDist').innerHTML;
+    ok('control: ...and the product\'s own page says nothing of it then, its summary only the names', !/not reached|could not reach/i.test(dw) && /^GTS Distribution(, Southern Hobby)?$/.test(sumOf(dw, 'detail')), sumOf(dw, 'detail'));
     const D0 = JSON.parse(JSON.stringify(W)); D0.sources.southern = { ok: false, error: 'HTTP 503', items: [] };
     V.HUNT.feed = D0; V.paintSealed(); const s0 = sumOf(ctx.document.querySelector('#sealedList').innerHTML, 'sealed');
     ok('control: a source never read (ok false, no time) is "1 not reached", with no "since" it cannot know', /· 1 not reached$/.test(s0) && /checked (just now|\d+ min ago)/.test(s0), s0);
@@ -3974,6 +3992,319 @@ json.dump(H.build(F["zips"], F["radius"], previous=copy.deepcopy(F)), sys.stdout
     ok('Diagnostics reads the distributors from HUNT.DISTS (STAN-112-21), and no painter names its own G -- the glyph helper is the only one', !/HUNT\.feed\.sources\.(gts|southern)\b/.test(js) && n(/\b(?:const|let|var)\s+G\s*=/g) === 1, `${n(/\b(?:const|let|var)\s+G\s*=/g)} bindings named G`);
     const nG = t => (t.match(/\b(?:const|let|var)\s+G\s*=/g) || []).length;
     ok('...control: take 114\'s shadow, planted, is counted', nG(js + '\n  const G = HUNT.feed && HUNT.feed.sources && HUNT.feed.sources.gts;') === nG(js) + 1);
+  });
+
+  /* (A4) the spec's own words and the UI's contract -- each check names its finding (SPEC-106..111, STAN-106..114) and each
+     was watched to fail on take 114's build. This DOM computes no style, so the CSS is read the way the browser resolves it
+     for the element in question: the rule that matches, the palette's tokens, a translucent colour laid over what lies
+     under it, the browser's own "smaller" for a <small> no rule sizes. */
+  await guard('A4: the spec\'s own words', async () => {
+    const css = (html.match(/<style>([\s\S]*?)<\/style>/) || [, ''])[1];
+    const topRules = c => { const t = c.replace(/\/\*[\s\S]*?\*\//g, ''), out = []; let i = 0;
+      const split = p => { const r = []; let d = 0, cur = ''; for (const ch of p) { if (ch === '(') d++; else if (ch === ')') d--; if (ch === ',' && !d) { r.push(cur.trim()); cur = ''; } else cur += ch; } r.push(cur.trim()); return r; };
+      while (i < t.length) { const o = t.indexOf('{', i); if (o < 0) break; const pre = t.slice(i, o).trim(); let d = 1, j = o + 1;
+        while (j < t.length && d) { if (t[j] === '{') d++; else if (t[j] === '}') d--; j++; }
+        if (!pre.startsWith('@')) out.push({ sels: split(pre), body: t.slice(o + 1, j - 1) }); i = j; }
+      return out; };
+    const declOf = (body, prop) => { let v = null; for (const m of body.matchAll(/(?:^|;)\s*([\w-]+)\s*:\s*([^;]*)/g)) if (m[1] === prop) v = m[2].trim(); return v; };
+    const ruleVal = (c, sel, prop) => { let v = null; for (const r of topRules(c)) if (r.sels.includes(sel)) { const x = declOf(r.body, prop); if (x != null) v = x; } return v; };
+    const tokens = (c, mode) => { const rs = topRules(c), t = {};
+      const take = sel => { for (const r of rs) if (r.sels.includes(sel)) for (const m of r.body.matchAll(/(--[\w-]+)\s*:\s*([^;]*)/g)) t[m[1]] = m[2].trim(); };
+      take(':root'); if (mode !== 'collect') take(`:root[data-mode="${mode}"]`); return t; };
+    const argsOf = s => { const r = []; let d = 0, cur = ''; for (const ch of s) { if (ch === '(') d++; else if (ch === ')') d--; if (ch === ',' && !d) { r.push(cur.trim()); cur = ''; } else cur += ch; } r.push(cur.trim()); return r; };
+    const colOf = (v, T, depth = 0) => { v = String(v == null ? '' : v).trim(); let m; if (depth > 12) return null;
+      if ((m = /^var\((--[\w-]+)\s*(?:,\s*(.+))?\)$/.exec(v))) return T[m[1]] != null ? colOf(T[m[1]], T, depth + 1) : (m[2] ? colOf(m[2], T, depth + 1) : null);
+      if (/^#[0-9a-f]{6}$/i.test(v)) return [1, 3, 5].map(i => parseInt(v.slice(i, i + 2), 16)).concat(1);
+      if (/^#[0-9a-f]{3}$/i.test(v)) return [1, 2, 3].map(i => parseInt(v[i] + v[i], 16)).concat(1);
+      if (v === 'transparent') return [0, 0, 0, 0];
+      if ((m = /^rgba?\(([^)]*)\)$/.exec(v))) { const p = m[1].split(',').map(x => parseFloat(x)); return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; }
+      if ((m = /^color-mix\(in srgb,\s*([\s\S]*)\)$/.exec(v))) {   /* CSS Color 5: percentages under 100 in sum lower the alpha */
+        const [a, b] = argsOf(m[1]).map(x => { const k = /^([\s\S]*?)\s+([\d.]+)%$/.exec(x); return k ? [k[1], +k[2]] : [x, null]; });
+        let pa = a[1], pb = b[1]; if (pa == null && pb == null) pa = pb = 50; else if (pa == null) pa = 100 - pb; else if (pb == null) pb = 100 - pa;
+        const s = pa + pb, ca = colOf(a[0], T, depth + 1), cb = colOf(b[0], T, depth + 1); if (!ca || !cb || !s) return null;
+        const wa = pa / s, wb = pb / s, al = ca[3] * wa + cb[3] * wb; if (!al) return [0, 0, 0, 0];
+        return [0, 1, 2].map(i => (ca[i] * ca[3] * wa + cb[i] * cb[3] * wb) / al).concat(al * Math.min(s, 100) / 100); }
+      return null; };
+    const over = (f, b) => { const a = f[3] == null ? 1 : f[3]; return [0, 1, 2].map(i => f[i] * a + b[i] * (1 - a)).concat(1); };
+    const px = c => c.slice(0, 3).map(Math.round);
+    const lum4 = c => { const [r, g, b] = px(c).map(x => x / 255).map(x => x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4)); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+    const cr = (a, b) => { const [x, y] = [lum4(a), lum4(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+    const MODES = ['collect', 'play', 'hunt'];
+
+    /* (SPEC-106-28) the splash is wholly Collect's -- the mark too. Two rules reach the splash's svg: .swords (the mode's
+       --accent-ink) and, from take 115, #splash .swords, which outranks it; boot sets the mode while the splash is up. */
+    const markCol = (c, mode) => { const T = tokens(c, mode), v = ruleVal(c, '#splash .swords', 'color') ?? ruleVal(c, '.swords', 'color') ?? ruleVal(c, '#splash', 'color'); const k = colOf(v, T); return k ? px(k).join(',') : String(v); };
+    const swordsRules = topRules(css).flatMap(r => r.sels).filter(s => /\.swords$/.test(s));
+    ok('(SPEC-106-28) the splash\'s mark is Collect\'s brass in every mode: #splash .swords pins the literal over .swords, which follows the mode (it turned red in Prep & Play while the splash was up)',
+       MODES.every(m => markCol(css, m) === '201,162,74') && swordsRules.join('|') === '.swords|#splash .swords' && !/<svg class="swords"[^>]*style="[^"]*color/.test(html), MODES.map(m => `${m} ${markCol(css, m)}`).join(', '));
+    ok('...control: without that rule the mark follows the mode (take 114: 229,112,92 in Prep & Play)', markCol(css.replace(/#splash \.swords\{[^}]*\}/, ''), 'play') === '229,112,92');
+
+    /* (SPEC-106-29, SPEC-106-30, STAN-106-2's contrast) every text on a tint, per palette, from the shipped rules: what sits on
+       the selected tint (the picker's best match: its lines in --dim and --dim2, an owned line in --up, a look-alike in --gold;
+       a bulk-selected tile: --dim lines, a rise and a fall; a selected chip or tab: --accent-ink; a checklist cell: --fg), the
+       bad, good and warning tints, a chip's count at the count's own opacity, and the nav's active label on its own ground
+       laid over the bar, laid over the page */
+    const pairs = (c, mode) => { const T = tokens(c, mode), C = k => colOf(`var(${k})`, T), R = [];
+      const tint = C('--accent-bg');
+      for (const k of ['--fg', '--dim', '--dim2', '--accent-ink', '--up', '--down', '--gold']) R.push([`${k.slice(2)} on the selected tint`, C(k), tint]);
+      R.push(['down on the bad tint', C('--down'), C('--bad-bg')], ['up on the good tint', C('--up'), C('--ok-bg')], ['gold on the warning tint', C('--gold'), over(C('--warn-bg'), C('--bg'))]);
+      const op = parseFloat(ruleVal(c, '.chip small', 'opacity') ?? '1'), chipFg = colOf(ruleVal(c, '.chip', 'color'), T), chipBg = colOf(ruleVal(c, '.chip', 'background'), T);
+      const onFg = colOf(ruleVal(c, '.chip.on', 'color'), T), onBg = colOf(ruleVal(c, '.chip.on', 'background'), T);
+      R.push(['a chip\'s count', chipFg && chipBg && over([...chipFg.slice(0, 3), op], chipBg), chipBg], ['a selected chip\'s count', onFg && onBg && over([...onFg.slice(0, 3), op], onBg), onBg]);
+      const bar = over(colOf(ruleVal(c, 'nav', 'background'), T) || [0, 0, 0, 0], C('--bg')), pill = colOf(ruleVal(c, 'nav button.on', 'background'), T);
+      R.push(['the nav\'s active label', colOf(ruleVal(c, 'nav button.on', 'color'), T), pill ? over(pill, bar) : bar], ['the nav\'s other labels', colOf(ruleVal(c, 'nav button', 'color'), T), bar]);
+      return R.map(([n, f, b]) => [n, f && b ? cr(f, b) : 0]); };
+    const lowPairs = (c, mode) => pairs(c, mode).filter(([, r]) => !(r >= 4.5));
+    for (const mode of MODES) ok(`(SPEC-106-29, SPEC-106-30) ${mode}: every text on a tint clears 4.5:1, computed from the shipped rules -- the selected tint, the bad, good and warning tints, a chip\'s count, the nav\'s labels`,
+       pairs(css, mode).length === 14 && lowPairs(css, mode).length === 0, lowPairs(css, mode).map(([n, r]) => `${n} ${r.toFixed(2)}`).join(', ') || pairs(css, mode).map(([n, r]) => `${n.split(' ')[0]} ${r.toFixed(2)}`).join(' '));
+    { /* take 114's rules, planted back one by one -- each plant checked to have landed */
+      const plant = (c, a, b) => (c.split(a).length === 2 ? c.replace(a, b) : null);
+      const t12 = plant(css, '--accent-bg:color-mix(in srgb,var(--brass) 8%,var(--card))', '--accent-bg:color-mix(in srgb,var(--brass) 12%,var(--card))');
+      const t14 = plant(css, '--bad-bg:color-mix(in srgb,var(--down) 10%,var(--card))', '--bad-bg:color-mix(in srgb,var(--down) 14%,var(--card))');
+      const n82 = plant(css, 'nav button.on{color:var(--accent-ink);background:var(--accent-bg)}', 'nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 70%,var(--brass) 12%)}');
+      const o6 = plant(css, '.chip small{font-size:var(--fs-cap);', '.chip small{opacity:.6;font-size:var(--fs-cap);');
+      const names = (c, m) => c ? lowPairs(c, m).map(([n]) => n) : ['(plant did not land)'];
+      ok('...control: take 114\'s Collect tint (12%) leaves --dim, --dim2 and --down under 4.5 on it, and its 14% bad tint --down (4.30)',
+         !!t12 && !!t14 && ['dim on the selected tint', 'dim2 on the selected tint', 'down on the selected tint'].every(n => names(t12, 'collect').includes(n)) && names(t14, 'collect').includes('down on the bad tint') && names(t12, 'play').length === 0,
+         `${names(t12, 'collect').join(', ')} | ${names(t14, 'collect').join(', ')}`);
+      ok('...control: take 114\'s translucent pill puts Prep & Play\'s active nav label under 4.5 (4.42), and only there', !!n82 && names(n82, 'play').join() === 'the nav\'s active label' && names(n82, 'collect').length === 0 && names(n82, 'hunt').length === 0, `${names(n82, 'play')}`);
+      ok('...control: a count at .6 opacity is caught in every palette (2.6:1 in Collect)', !!o6 && MODES.every(m => names(o6, m).includes('a chip\'s count') && names(o6, m).includes('a selected chip\'s count')));
+    }
+    ok('(SPEC-106-29) the tints are take 106\'s in Prep & Play and Hunt, lighter only in Collect', ['play', 'hunt'].every(m => tokens(css, m)['--accent-bg'] === 'color-mix(in srgb,var(--brass) 12%,var(--card))' && tokens(css, m)['--bad-bg'] === 'color-mix(in srgb,var(--down) 14%,var(--card))')
+       && tokens(css, 'collect')['--accent-bg'] === 'color-mix(in srgb,var(--brass) 8%,var(--card))' && tokens(css, 'collect')['--bad-bg'] === 'color-mix(in srgb,var(--down) 10%,var(--card))');
+
+    /* (SPEC-106-31) accent as text reads --accent-ink: nothing drawn on a Prep & Play screen is text in the fill's colour.
+       Every Play screen is painted in Play's palette -- Decks, a deck, Cards, the Play counter, and the Sim from setup through
+       a target being chosen with a DON!! given, the block and counter steps, the result, an effect offered and the end -- and
+       whatever changed is read: an inline color:var(--brass), or a class whose rule colours its text with it (Hunt's lines) */
+    const brassCls = topRules(css).filter(r => /(?:^|;)\s*color\s*:\s*var\(--brass\)/.test(r.body)).flatMap(r => r.sels).map(s => (s.match(/\.([\w-]+)$/) || [])[1]).filter(Boolean);
+    const brassText = h => { const hits = []; for (const m of h.matchAll(/style="([^"]*)"/g)) if (/(?:^|;)\s*color\s*:\s*var\(--brass\)/.test(m[1])) hits.push(m[0].slice(0, 70));
+      for (const k of brassCls) if (new RegExp(`class="(?:[^"]*\\s)?${k}(?:\\s[^"]*)?"`).test(h)) hits.push('.' + k); return hits; };
+    const PLx = new Function('return ' + js.match(/function parseListLine\(raw\) \{[\s\S]*?\n\}/)[0])();
+    const mkDeck4 = name => { const d = V.DECKS.blank(); d.name = name;
+      for (const raw of fs.readFileSync(path.join(ROOT, 'showcase', 'deck.txt'), 'utf8').split(/\r?\n/)) { const line = raw.trim(); if (!line || line.startsWith('#')) continue;
+        const m = PLx(line); const num = m[2].toUpperCase(); const p = (V.CAT.byNum.get(num) || []).filter(x => x.num === num).sort((a, b) => (a.market || 9e9) - (b.market || 9e9))[0];
+        if (p.type === 'Leader') d.leader = p.id; else d.cards.push({ id: p.id, n: +m[1] }); } return d; };
+    const keepDecks = V.DECKS.list.slice(), SIM4 = V.SIM, SU = V.SIMUI, boards = [];
+    const dA = mkDeck4('A4 one'), dB = mkDeck4('A4 two'); dB.id = dA.id + '-b'; V.DECKS.list = keepDecks.concat([dA, dB]);
+    V.MODE.set('play', false);
+    const before4 = new Map([...doc._ids].map(([k, e]) => [k, e._html]));
+    const shot = () => { V.paintSim(); boards.push(doc.getElementById('simBoard')._html); };
+    holds(() => V.paintDecks()); holds(() => V.openDeck(dA.id)); const dkStats = (doc.getElementById('dkStats') || {})._html || '';
+    holds(() => V.paintCards()); holds(() => V.paintPlay());
+    SIM4.g = null; SU.sel = null; SU.post = null; SU.result = null; SU.offer = null; holds(() => V.go('sim')); shot();
+    const g4 = SIM4.new(dA, dB, 0); SIM4.mulligan(0, false); SIM4.mulligan(1, false);
+    holds(() => SIM4.giveDon(0, 'leader')); SU.sel = { ref: 'leader' }; shot(); const mainBoard = boards[boards.length - 1];
+    SU.sel = null; SIM4.endTurn(); SIM4.endTurn(); const P0 = SIM4.P(0); P0.leader.rested = false; P0.mods = { leader: 0 };
+    const att = holds(() => SIM4.attack(0, 'leader', 'leader')); shot(); const blockBoard = boards[boards.length - 1];
+    holds(() => SIM4.noBlock()); shot(); const counterBoard = boards[boards.length - 1];
+    const res4 = holds(() => SIM4.resolve()); if (res4) { SU.result = res4; SU.post = { i: 1, att: 0 }; } shot(); const postBoard = boards[boards.length - 1];
+    SU.post = null; SU.result = null; SU.offer = { i: g4.active, list: [{ e: { raw: 'A4 probe: draw 1 card.' }, steps: [{ a: 'draw' }], step: 0, targets: null, ref: null, cardId: dA.leader }] }; shot(); const offerBoard = boards[boards.length - 1];
+    SU.offer = null; g4.phase = 'over'; g4.over = 0; shot();
+    const painted = [...doc._ids].filter(([k, e]) => e._html !== before4.get(k)).map(([, e]) => e._html).concat(boards);
+    const brassHits = painted.flatMap(brassText);
+    ok('(SPEC-106-31) nothing on a Prep & Play screen is text in the fill\'s colour: every Play screen painted in Play\'s palette, the Sim in seven states, read for an inline color:var(--brass) or a class that sets it',
+       brassHits.length === 0 && painted.length >= 8 && boards.length === 7 && att && att.ok === true && /is attacked/.test(blockBoard) && /Counter step/.test(counterBoard) && brassCls.length >= 1, brassHits.slice(0, 4).join(' | ') || `${painted.length} painted, attack ${JSON.stringify(att)}`);
+    ok('...the two it had -- "choose a target" and the given DON!! -- are --accent-ink now (#E0553D was 4.25:1 on Play\'s card)',
+       /<span style="color:var\(--accent-ink\)">choose a target<\/span>/.test(mainBoard) && /<span style="color:var\(--accent-ink\)">\u25cf/.test(mainBoard));
+    ok('...control: take 114\'s span and a Hunt line are caught', brassText('<h3>X \u00b7 <span style="color:var(--brass)">choose a target</span></h3>').length === 1 && brassText('<button class="dline">GTS</button>').length === (brassCls.includes('dline') ? 1 : 0) && brassText('<i style="border-color:var(--brass)">x</i>').length === 0);
+
+    /* (SPEC-110-46) the Sim's buttons are three words at most, what happens said beside them as take 110 did the Play counter:
+       every data-sim button in the shipped script, a card's or a player's name not counted as words, the longer of two words
+       counted, a number counted, an arrow or a dash not */
+    const unesc = t => t.replace(/\\u([0-9a-fA-F]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+    const labelWords = inner => unesc(inner).replace(/\$\{([^}]*)\}/g, (_, e) => /\bG\(|\b(tick|chev|ext|bell)\(/.test(e) || /\.name\)?\s*$/.test(e) ? ' '
+         : ([...e.matchAll(/'([^']*)'/g)].map(x => x[1]).sort((a, b) => b.length - a.length)[0] ?? ' 0 ')).replace(/<[^>]+>/g, ' ').split(/\s+/).filter(w => /[A-Za-z0-9]/.test(w));
+    const simButtons = t => [...t.matchAll(/<button\b[^>]*\bdata-sim="[^"]*"[^>]*>([\s\S]*?)<\/button>/g)].map(m => [m[0].slice(0, 60), labelWords(m[1])]);
+    const wordy = t => simButtons(t).filter(([, w]) => w.length > 3).map(([b, w]) => w.join(' '));
+    ok('(SPEC-110-46) the Sim\'s buttons are three words at most (a name is not a word): End turn, No block, Resolve, Hand back, Skip, Share the log', simButtons(js).length >= 25 && wordy(js).length === 0, wordy(js).join(' | ') || String(simButtons(js).length));
+    /* (A4's held-back change, landmine 187's kind) the mode slider is a tablist whose tabs said nothing of which was on;
+       render now counts selected tabs per tablist, so they can */
+    { /* the stub cannot select the slider's buttons, so the source is read here, and render counts the selected tab of
+         each tablist in Chrome, the Mode list's among them */
+      const marks = (h, j) => /<button data-mode="collect" class="on" role="tab" aria-selected="true">/.test(h) && /<button data-mode="play" role="tab" aria-selected="false">/.test(h)
+        && /<button data-mode="hunt" role="tab" aria-selected="false">/.test(h) && /\$\$\('#modeSlider button'\)\.forEach\(b => \{ const on = b\.dataset\.mode === m; b\.classList\.toggle\('on', on\); b\.setAttribute\('aria-selected', String\(on\)\); \}\)/.test(j);
+      ok('the mode slider\'s tabs say which mode is on (aria-selected), in the markup and as MODE.set changes it', marks(html, js));
+      ok('...control: take 114\'s slider, tabs with no selected state, is caught', !marks('<button data-mode="collect" class="on" role="tab">Collect</button><button data-mode="play" role="tab">', "$$('#modeSlider button').forEach(b => b.classList.toggle('on', b.dataset.mode === m));")); }
+    /* the take-115 look: "Hand back" broke onto two lines at 411 px (110 x 65), squeezed by the note beside it, which names a
+       deck and can be long; a button beside a note that can grow keeps its width, and the row wraps instead */
+    const holdsWidth = t => /<div class="row" style="[^"]*flex-wrap:wrap[^"]*"><button class="ghost go" data-sim="post" style="flex:none">Hand back<\/button>/.test(t)
+      && /<div class="row" style="[^"]*flex-wrap:wrap[^"]*">[\s\S]{0,400}?<button class="ghost" data-sim="fxskip" style="flex:none">Skip<\/button>/.test(t);
+    ok('(the look) a Sim button beside a note that can grow keeps its width, in a row that wraps: Hand back, Skip (Hand back broke onto two lines at 411)', holdsWidth(js));
+    ok('...control: the rows as A4 first wrote them are caught', !holdsWidth('<div class="row" style="margin-top:10px"><button class="ghost go" data-sim="post">Hand back</button><span class="note" style="margin:0">to X</span></div><div class="row" style="gap:10px;margin-top:8px"><button class="ghost" data-sim="fxskip">Skip</button><span class="note" style="margin:0">play it by hand</span></div>'));
+    ok('...control: take 114\'s labels are caught', wordy('<button class="ghost go" data-sim="end">End turn \\u2014 pass the phone</button><button class="ghost go" data-sim="resolve">Resolve \\u2014 ${pw.a} vs ${pw.d}${pw.a >= pw.d ? \': hit\' : \': held\'}</button><button data-sim="block:1">Block with ${esc(x.name)}</button>').length === 2);
+    ok('...and what happens is said beside them, on the painted board: then pass the phone, then the counter step, who has hit, to whom the phone goes, play it by hand',
+       /data-sim="end">End turn<\/button><span class="note"[^>]*>then pass the phone<\/span>/.test(mainBoard) && /data-sim="noblock"[^>]*>No block<\/button><span class="note"[^>]*>then the counter step<\/span>/.test(blockBoard)
+       && /data-sim="resolve"[^>]*>Resolve<\/button><span class="note"[^>]*>\d+ vs \d+: (?:hit|held)<\/span>/.test(counterBoard) && /data-sim="post"[^>]*>Hand back<\/button><span class="note"[^>]*>to [^<]+<\/span>/.test(postBoard)
+       && /data-sim="fxskip"[^>]*>Skip<\/button><span class="note"[^>]*>play it by hand<\/span>/.test(offerBoard), [mainBoard, blockBoard, counterBoard, postBoard, offerBoard].map(b => (b.match(/data-sim="(?:end|noblock|resolve|post|fxskip)"[^>]*>[^<]*<\/button>(?:<span[^>]*>[^<]*<\/span>)?/) || ['-'])[0]).join(' | '));
+
+    /* (SPEC-110-45) keywords one way: the deck's stats chips as the game and the tour write them, the Sim's reasons without
+       brackets, a Trigger named plainly, the want list by its name */
+    const OLD4 = ["'counter cards'", "'[Counter] events'", "'blockers'", "'triggers'", "'rush']", 'no [Rush]', 'active [Blocker]', 'has [Trigger]', 'toast(`Wanted ${n}'];
+    const old4 = t => OLD4.filter(w => t.includes(w));
+    ok('(SPEC-110-45) keywords one way: "Blockers", "Triggers", "Rush", "Counter cards", "[Counter] Events" on a deck\'s stats; "no Rush", "an active Blocker", "a Trigger" in the Sim; the want list named in the checklist\'s toast',
+       old4(js).length === 0 && /<small>Blockers<\/small>/.test(dkStats) && /<small>Triggers<\/small>/.test(dkStats) && /<small>\[Counter\] Events<\/small>/.test(dkStats) && /toast\(`On your want list: \$\{n\} more from/.test(js), old4(js).join(' | ') || dkStats.slice(0, 120));
+    ok('...control: each take-114 form is caught', OLD4.every(w => old4('x' + w + 'x').length === 1));
+
+    /* (SPEC-109-41) a deck's Leader: under its picture the card's own colours, both of a two-colour Leader; no Leader, the plain box */
+    const L2 = V.CAT.rows.find(p => p.type === 'Leader' && /^[A-Z][a-z]+;[A-Z][a-z]+$/.test(p.color || '') && p.img), dL = V.DECKS.blank(); dL.id = dA.id + '-l'; dL.name = 'A4 leader'; dL.leader = L2 && L2.id;
+    const dN = V.DECKS.blank(); dN.id = dA.id + '-n'; dN.name = 'A4 none'; V.DECKS.list = V.DECKS.list.concat([dL, dN]);
+    holds(() => V.openDeck(dL.id)); const leadCss = String(doc.getElementById('dkLead').style.cssText), ac = L2 ? V.artColours(L2) : [];
+    holds(() => V.openDeck(dN.id)); const noneCss = doc.getElementById('dkLead').style.cssText;
+    ok('(SPEC-109-41) a deck\'s Leader box is the card\'s own colours under its picture -- both of a two-colour Leader -- offline or when the picture fails; a deck with no Leader keeps the plain box',
+       !!L2 && leadCss === `--a1:${ac[0]};--a2:${ac[1]}` && /var\(--c-/.test(ac[1]) && ac[0] !== ac[1] && noneCss === '' && ruleVal(css, '.dkhead .lead', 'background') === 'linear-gradient(160deg,var(--a1,var(--card2)),var(--a2,var(--card2)))', `${leadCss} | ${ruleVal(css, '.dkhead .lead', 'background')}`);
+    V.DECKS.list = keepDecks; SIM4.g = null; SU.sel = null; SU.post = null; SU.result = null; SU.offer = null; V.MODE.set('collect', false); V.go('home');
+
+    /* (STAN-106-2) nothing under 12 px as the browser draws it: every <small>, <sub> and <sup> the app writes, sized by the rule
+       that reaches it or by the browser's own "smaller" (the size of its parent over 1.2) -- the literal-px check above passed
+       while the counts drew at 10 and 10.8 px */
+    const fsPx = (v, T, parent) => { v = String(v == null ? '' : v).trim(); let m;
+      if ((m = /^var\((--[\w-]+)\)$/.exec(v))) return fsPx(T[m[1]], T, parent);
+      if ((m = /^([\d.]+)px$/.exec(v))) return +m[1]; if ((m = /^([\d.]+)em$/.exec(v))) return +m[1] * parent;
+      if ((m = /^([\d.]+)%$/.exec(v))) return +m[1] * parent / 100; if (v === 'smaller') return parent / 1.2; return null; };
+    const shrunk = c => { const T = tokens(c, 'collect'), src = html + '\n' + js, out = [];
+      for (const m of src.matchAll(/<(small|sub|sup)\b/g)) {
+        const tags = [...src.slice(Math.max(0, m.index - 600), m.index).matchAll(/<([a-z]+)\b((?:[^>$]|\$\{[^}]*\})*)>/g)], par = tags[tags.length - 1] || [, 'body', ''];
+        const cls = ((par[2].match(/class="([^"]*)"/) || [, ''])[1]).replace(/\$\{[^}]*\}/g, ' ').split(/\s+/).filter(Boolean);
+        const inl = (par[2].match(/font-size:\s*([\d.]+px)/) || [])[1];
+        const psz = fsPx(inl || cls.map(k => ruleVal(c, '.' + k, 'font-size')).filter(Boolean).pop() || '15px', T, 15);
+        const own = cls.map(k => ruleVal(c, `.${k} ${m[1]}`, 'font-size')).filter(Boolean).pop() || ruleVal(c, m[1], 'font-size') || 'smaller';
+        out.push([`<${par[1]} class="${cls.join(' ')}"> <${m[1]}>`, fsPx(own, T, psz)]); }
+      return out; };
+    const under = c => shrunk(c).filter(([, s]) => !(s >= 12));
+    ok('(STAN-106-2) every <small> the app writes is 12 px or more as drawn: a chip\'s count and a stat\'s label take --fs-cap, not the browser\'s "smaller" (10 and 10.8 px at take 114)',
+       shrunk(css).length >= 4 && under(css).length === 0, under(css).map(([w, s]) => `${w} ${s.toFixed(1)}px`).join(' | ') || shrunk(css).map(([, s]) => s).join(','));
+    ok('...control: take 114\'s rule, with no size of its own, is caught', (() => { const c = css.split('.chip small{font-size:var(--fs-cap);').length === 2 ? css.replace('.chip small{font-size:var(--fs-cap);', '.chip small{') : null; return !!c && under(c).length >= 4; })());
+    const rel = t => [...t.matchAll(/font-size:\s*(?:[\d.]+(?:em|rem|%)|smaller|x-small|xx-small|small)\b|(?:^|[;{"\s])font:\s*(?:[a-z-]+\s+)*[\d.]+(?:em|rem|%)/g)].map(m => m[0]);
+    const shortPx = t => [...t.matchAll(/(?:^|[;{"\s])font:\s*(?:[a-z0-9-]+\s+)*?([\d.]+)px/g)].map(m => +m[1]).filter(v => v < 12);
+    ok('...and no size in the app is relative (em, rem, %, smaller) or a font shorthand under 12 px -- the forms the literal check cannot read', rel(html + js).length === 0 && shortPx(html + js).length === 0, rel(html + js).concat(shortPx(html + js)).join(', '));
+    ok('...control: a relative size and a shorthand at 11 px are caught', rel('.x{font-size:.8em}.y{font-size:smaller}').length === 2 && shortPx('.z{font:600 11px/1.2 x}').length === 1);
+
+    /* (STAN-106-3) the price boxes take the one field rule: no copy of it that outranks the focus rule, and no patch for that */
+    const frange = ruleVal(css, '.frange input', 'width'), fcopy = ['font', 'font-size', 'border', 'border-color', 'background', 'color'].filter(p => ruleVal(css, '.frange input', p) != null);
+    const fieldSel = topRules(css).find(r => r.sels.includes('input:not([type])'));
+    ok('(STAN-106-3) the filter\'s price boxes take the one field rule -- its card, edge and 16 px, and the brass on focus -- with no copy of it and no focus patch',
+       frange === '100px' && fcopy.length === 0 && !topRules(css).some(r => r.sels.includes('.frange input:focus')) && !!fieldSel && declOf(fieldSel.body, 'font-size') === '16px' && /<input id="fMin" (?![^>]*\btype=)[^>]*>/.test(html) && ruleVal(css, 'input:focus', 'border-color') === 'var(--brass)',
+       `copies: ${fcopy.join(', ')}`);
+
+    /* (STAN-106-4) one thumbnail vocabulary, and the total's size named by its token */
+    const T4 = tokens(css, 'collect');
+    ok('(STAN-106-4) the dead --thumb-sm, -md and -lg are gone; --fs-total is .total\'s size and .total reads it', !/--thumb-(?:sm|md|lg)\s*:/.test(css) && T4['--fs-total'] === '46px' && ruleVal(css, '.total', 'font-size') === 'var(--fs-total)' && T4['--thumb-s'] === '32px',
+       `${T4['--fs-total']} / ${ruleVal(css, '.total', 'font-size')}`);
+
+    /* (SPEC-110-42) the trade and want rows draw the dense list's thumbnail, the picker's picture reads a token */
+    const card4 = V.CAT.rows.find(p => p.num && !p.sealed && p.img && p.treat === 'base'), keepTr = [V.TRADE.give, V.TRADE.get], keepW = V.WANT.list;
+    V.TRADE.give = [{ id: card4.id, n: 1 }]; V.TRADE.get = []; holds(() => V.go('trade')); const trH = (doc.getElementById('trGive') || {})._html || '';
+    V.WANT.list = [{ num: card4.num, id: card4.id, added: new Date().toISOString() }]; holds(() => V.go('wants')); const wtH = (doc.getElementById('wtRows') || {})._html || '';
+    V.TRADE.give = keepTr[0]; V.TRADE.get = keepTr[1]; V.WANT.list = keepW; V.go('home');
+    ok('(SPEC-110-42) a trade line and a want-list row draw the dense list\'s thumbnail (32 px, a card\'s 6 px), and the picker\'s picture reads --thumb-l at a card\'s radius -- no 34 px or 52 px box left',
+       /<div class="pic" style="width:32px;height:45px;[^"]*border-radius:6px/.test(trH) && /<div class="pic" style="width:32px;height:45px;[^"]*border-radius:6px/.test(wtH) && !/class="oa pic"/.test(js) && !/width:34px;flex:0 0 34px/.test(js)
+       && ruleVal(css, '.opt .oa', 'width') === 'var(--thumb-l)' && ruleVal(css, '.opt .oa', 'border-radius') === '6px', `${(trH.match(/<div class="pic" style="[^"]*"/) || ['-'])[0]} | ${ruleVal(css, '.opt .oa', 'width')}`);
+
+    /* (SPEC-111-50) a badged name wraps in the deck, trade, want and alert rows as it does in a search row */
+    ok('(SPEC-111-50) a name that carries its printing\'s badge wraps in the dense rows too (.dkrow .n b), as it does in the search rows', ruleVal(css, '.dkrow .n b:has(> .badge)', 'white-space') === 'normal' && ruleVal(css, '.row .nm b:has(> .badge)', 'white-space') === 'normal' && ruleVal(css, '.dkrow .n b', 'white-space') === 'nowrap');
+
+    /* (STAN-114-26) a pointer only on a control: the history header with nothing to open is a span */
+    ok('(STAN-114-26) the history\'s header shows a pointer only where it opens something: .dtl-h sets none, the button keeps the global one',
+       ruleVal(css, '.dtl-h', 'cursor') == null && ruleVal(css, '.dtl > span', 'cursor') == null && ruleVal(css, 'button', 'cursor') === 'pointer' && /: `<span class="dtl-h">\$\{esc\(head\)\}<\/span>`/.test(js), String(ruleVal(css, '.dtl-h', 'cursor')));
+
+    /* (SPEC-108-34, SPEC-108-37) one glyph for remove and discard: the want list, an alert, a stock watch, a note and the Sim's
+       trash draw g-trash; the minus is only "one fewer" and the cross only closes a sheet; no remove drawn as a times sign */
+    const buttons4 = t => [...t.matchAll(/<button\b([^>]*)>((?:(?!<\/button>)[\s\S]){0,600}?)<\/button>/g)].map(m => ({ a: m[1], g: [...m[2].matchAll(/\bG\('([\w-]+)'|#g-([\w-]+)"/g)].map(x => x[1] || x[2]), inner: m[2] }));
+    const label4 = a => unesc((a.match(/aria-label="([^"]*)"/) || [, ''])[1]);
+    const misread = t => buttons4(t).flatMap(b => b.g.map(g => [g, b])).filter(([g, b]) => (g === 'minus' && !/^One fewer|\bdown$/.test(label4(b.a))) || (g === 'close' && !/\bdata-close=/.test(b.a))
+         || (g === 'trash' && !/^(?:Remove|Delete|Stop watching|Trash)\b/.test(label4(b.a)))).map(([g, b]) => `g-${g} on "${label4(b.a) || b.a.slice(0, 40)}"`);
+    const removers = ['data-want=', 'data-alrm=', 'data-sim="trashhand:', 'aria-label="Stop watching ${esc(a.name)}"', 'data-localdel='];
+    const drawn = t => removers.map(r => buttons4(t).filter(b => b.a.includes(r)).map(b => b.g.join('+')).join('/'));
+    const times = t => (t.match(/>\s*(?:\u00d7|&times;|&#215;|&#x[dD]7;|\\u00[dD]7)\s*<\/button>/g) || []).length;
+    ok('(SPEC-108-34, SPEC-108-37) one glyph per meaning: a want, an alert, a stock watch, a note and the Sim\'s trash are removed with g-trash; g-minus is only "one fewer", g-close only closes a sheet; no remove drawn as a times sign',
+       /<symbol id="g-trash" viewBox="0 0 24 24"/.test(html) && misread(js + html).length === 0 && drawn(js).every(d => d === 'trash') && times(js + html) === 0, misread(js + html).concat(drawn(js)).join(' | ') + ` | times ${times(js + html)}`);
+    ok('...control: take 114\'s want list, the Sim\'s trash and a times sign are caught', misread('<button data-want="x" aria-label="Remove A from the want list">${G(\'minus\', 18)}</button><button data-sim="trashhand:1" aria-label="Trash this card (an effect)">${G(\'close\', 18)}</button>').length === 2
+       && times('<button class="ghost" data-localdel="0" aria-label="Delete this note">\\u00d7</button>') === 1 && times('<b>Qty \u00d72</b>') === 0);
+
+    /* (SPEC-108-35) every link that leaves the app says so, and says where */
+    const leaving = t => [...t.matchAll(/<a\b([^>]*\btarget="_blank"[^>]*)>([\s\S]*?)<\/a>/g)].map(m => ({ a: m[1], inner: m[2] }));
+    const unmarked = t => leaving(t).filter(l => !/\$\{ext\(/.test(l.inner) || !/aria-label=/.test(l.a)).map(l => l.inner.slice(0, 30));
+    const fxA4 = fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-a4-'));   /* the Hunt's fixtures, built from the saved responses as the take-74 to take-76 sections build them */
+    execSync(`python3 tools/hunt.py --from-fixtures --out ${path.join(fxA4, 'feed-fixture.json')}`, { cwd: ROOT, stdio: 'pipe' });
+    const keepSh = V.LOCAL.shops, keepSt = V.LOCAL.stores, keepZ = V.HUNT.zip, keepR = V.LOCAL.radius, keepN = V.LOCAL.notes, keepEv = V.EVENTS.tab;
+    V.LOCAL.shops = JSON.parse(fs.readFileSync(path.join(fxA4, 'shops-fixture.json'), 'utf8')); V.LOCAL.stores = JSON.parse(fs.readFileSync(path.join(fxA4, 'stores-fixture.json'), 'utf8'));
+    V.LOCAL.notes = [{ store: 'A4 probe store', what: 'a box', price: 90, when: new Date().toISOString().slice(0, 10) }]; V.HUNT.setZip('48329'); V.LOCAL.radius = 0; V.paintLocal(); const loc4 = doc.getElementById('localList')._html;
+    const RealDate4 = ctx.Date, evTab = JSON.parse(fs.readFileSync(path.join(fxA4, 'events-fixture.json'), 'utf8')), ev0 = RealDate4.parse(evTab.rows.map(r => r[1]).sort()[0] + 'T12:00:00Z');
+    ctx.Date = class extends RealDate4 { constructor(...a) { super(...(a.length ? a : [ev0])); } static now() { return ev0; } };   /* landmine 123: the fixture's events are read under their own first day */
+    let evH = ''; try { V.EVENTS.tab = evTab; V.paintEvents(); evH = doc.getElementById('eventsList')._html; } finally { ctx.Date = RealDate4; }
+    ok('(SPEC-108-35) every link that leaves the app carries the external glyph and a name: all six in the script, and on screen Local\'s Open and Events\' Register',
+       leaving(js).length >= 6 && unmarked(js).length === 0 && /aria-label="Open [^"]+\u2019s online store">Open <svg class="g"[^>]*><use href="#g-external"\/><\/svg><\/a>/.test(loc4)
+       && /aria-label="Register for [^"]+ on Bandai TCG\+">Register <svg class="g"[^>]*><use href="#g-external"\/><\/svg><\/a>/.test(evH), unmarked(js).join(' | ') || `${leaving(js).length} links`);
+    ok('...control: take 114\'s bare Open is caught', unmarked('<a class="ghost" href="${esc(sh.url)}" target="_blank" rel="noopener" style="padding:8px 12px">Open</a>').length === 1);
+    ok('(SPEC-108-34) on screen: a note\'s Delete draws g-trash, not a times sign', /data-localdel="0" aria-label="Delete this note"><svg class="g"[^>]*><use href="#g-trash"\/>/.test(loc4) && !/\u00d7<\/button>/.test(loc4));
+
+    /* (SPEC-110-43) a day in words on Local and in the release reminders; the calendar file keeps ISO for the calendar */
+    const iso4 = /\b\d{4}-\d\d-\d\d\b/;
+    ok('(SPEC-110-43) Local\'s shop list writes each event\'s day in words, as the Events screen does ("2026-09-16 Store Championship" before)', !iso4.test(loc4) && /<span style="display:block;color:var\(--brass\)">[A-Z][a-z]{2} \d{1,2}(?:, \d{4})? /.test(loc4), (loc4.match(iso4) || [''])[0]);
+    V.LOCAL.shops = keepSh; V.LOCAL.stores = keepSt; V.LOCAL.notes = keepN; V.EVENTS.tab = keepEv; V.LOCAL.radius = keepR; V.HUNT.setZip(keepZ || '');
+    const sent = [], P4 = V.PLATFORM, keepP = { notify: P4.notify, notifyAt: P4.notifyAt, cancelNotify: P4.cancelNotify, notifyPermission: P4.notifyPermission }, keepRel = V.RELALERTS.list;
+    P4.notify = async (id, title, body) => { sent.push(['now', title, body]); return true; }; P4.notifyAt = async (id, title, body) => { sent.push(['at', title, body]); return true; }; P4.cancelNotify = async () => true;
+    try {
+      const today4 = new Date().toISOString().slice(0, 10), pub4 = later(today4 + 'T00:00:00Z', 3).slice(0, 10), past4 = later(today4 + 'T00:00:00Z', -2).slice(0, 10);
+      V.RELALERTS.list = []; V.RELALERTS.toggle(9001, 'A4 set', pub4);                                  /* armed for the day before */
+      V.RELALERTS.list = [{ id: 9002, name: 'A4 late', pub: past4, created: today4, fired: null }]; await V.RELALERTS.check(today4);   /* the app opened after the day */
+      P4.notifyPermission = async () => 'granted'; V.RELALERTS.list = [];
+      const rel = doc.getElementById('releases'), tgt = { dataset: { relalert: '9003', relname: 'A4 toast', relpub: pub4 } }; tgt.closest = s => (s === '[data-relalert]' ? tgt : null);
+      const sent2 = sent.slice();   /* the toggle below arms a third, for the day before */
+      holds(() => rel._ev.click({ target: tgt, stopPropagation() {} })); await sleep(20);
+      const toast4 = doc.getElementById('toast')._text || '';
+      ok('(SPEC-110-43) a release reminder says its day in words -- scheduled, late and in the toast that sets it ("2026-11-20 \u2014 from OP TCG Hub" before)',
+         sent2.length === 2 && sent.length === 3 && sent.every(([, t, b]) => !iso4.test(t) && !iso4.test(b)) && sent2[0][2].startsWith(V.dayText(pub4)) && sent2[1][1].endsWith('on ' + V.dayText(past4)) && toast4 === `Reminder set for the day before ${V.dayText(pub4)}`,
+         JSON.stringify(sent) + ' | ' + toast4);
+      ok('...and the calendar file keeps ISO, where a machine reads it', /releases \d{4}-\d\d-\d\d\./.test(V.releaseEvent({ id: 1, pub: pub4, name: 'A4', abbr: '' }, 'A4').notes));
+    } finally { Object.assign(P4, keepP); V.RELALERTS.list = keepRel; }
+
+    /* (SPEC-108-36) every toggle says whether it is on: a template that lights a button carries aria-pressed from the same test,
+       a chip the filter sheet flips in place says it too, and the mode slider's tabs say which one is selected */
+    const onTpl = t => [...t.matchAll(/<button\b((?:[^>$]|\$\{[^}]*\})*)>/g)].map(m => m[1]).filter(a => /class="[^"]*\$\{[^}]*\?\s*' ?on'\s*:\s*''\}/.test(a));
+    const unpressed = t => onTpl(t).filter(a => !/aria-pressed="\$\{/.test(a)).map(a => a.slice(0, 50));
+    ok('(SPEC-108-36) every toggle template carries aria-pressed from the test that lights it: Cards\' chips, the binder\'s sets, the checklist, Home\'s ranges, the filter sheet, the condition buttons',
+       onTpl(js).length >= 13 && unpressed(js).length === 0 && !/classList\.toggle\('on'\)/.test(js), unpressed(js).join(' | ') || String(onTpl(js).length));
+    ok('...control: a lit chip with no aria-pressed is caught', unpressed('<button class="chip$' + '{x ? \' on\' : \'\'}" data-q="1">').length === 1);
+    const keepItems4 = V.OWN.items, keepFA = JSON.parse(JSON.stringify(V.FILT.all));
+    V.OWN.items = [{ id: card4.id, qty: 1, condition: 'NM', pf: V.PF.active === 'all' ? 'main' : V.PF.active }];
+    const shown4 = {};
+    holds(() => V.paintCards()); for (const id of ['cdKw', 'cdCol', 'cdCost']) shown4[id] = doc.getElementById(id)._html;
+    holds(() => V.go('binder')); shown4.bnSets = doc.getElementById('bnSets')._html;
+    holds(() => V.openChecklist(card4.set)); shown4.ckFilter = doc.getElementById('ckFilter')._html;
+    holds(() => V.paintHome()); shown4.ranges = doc.getElementById('ranges')._html;
+    holds(() => V.openDetail(card4.id)); shown4.dCondSeg = doc.getElementById('dCondSeg')._html;
+    holds(() => doc.getElementById('sortBtnAll')._ev.click()); for (const id of ['fSort', 'fSet', 'fRarity', 'fColor', 'fOnly']) shown4[id] = doc.getElementById(id)._html;
+    const offState = Object.entries(shown4).flatMap(([id, h]) => [...h.matchAll(/<button\b[^>]*>/g)].map(m => m[0]).filter(b => { const p = (b.match(/aria-pressed="(true|false)"/) || [])[1], on = /class="(?:[^"]*\s)?on(?:\s[^"]*)?"/.test(b); return !p || (p === 'true') !== on; }).map(b => `${id}: ${b.slice(0, 50)}`));
+    const counted4 = Object.values(shown4).reduce((a, h) => a + (h.match(/<button\b/g) || []).length, 0);
+    /* a tap on a filter chip, in place: the state follows the filter */
+    const rar = (shown4.fRarity.match(/data-fk="rarity" data-fv="([^"]*)"/) || [])[1], cls4 = new Set(), attrs4 = {};
+    const chip4 = { dataset: { fk: 'rarity', fv: rar }, classList: { toggle: (c, on) => { (on === undefined ? !cls4.has(c) : on) ? cls4.add(c) : cls4.delete(c); return cls4.has(c); }, contains: c => cls4.has(c), add: c => cls4.add(c), remove: c => cls4.delete(c) },
+      setAttribute: (k, v) => { attrs4[k] = String(v); }, getAttribute: k => attrs4[k] ?? null, closest: s => (s === '[data-fk]' ? chip4 : null) };
+    const tap4 = () => holds(() => { doc.getElementById('filters')._ev.click({ target: chip4 }); return true; });
+    tap4(); const t1 = [attrs4['aria-pressed'], cls4.has('on'), V.FILT.all.rarity.includes(rar)]; tap4(); const t2 = [attrs4['aria-pressed'], cls4.has('on'), V.FILT.all.rarity.includes(rar)];
+    Object.assign(V.FILT.all, keepFA); doc.getElementById('filters').classList.remove('on'); V.OWN.items = keepItems4; while (V.closeAnyOverlay()) {} V.go('home');
+    ok('...painted: every one of them says what it shows -- aria-pressed on each, "true" exactly where it is lit', counted4 >= 20 && offState.length === 0, offState.slice(0, 4).join(' | ') || String(counted4));
+    ok('...and a chip the filter sheet flips in place says so, from the filter itself', !!rar && t1.join() === 'true,true,true' && t2.join() === 'false,false,false', JSON.stringify([rar, t1, t2]));
+
+    /* (SPEC-110-47) no straight apostrophe between letters in the script, escaped or not -- the four "phone's" were escaped */
+    const straight = t => (t.match(/[A-Za-z]\\?'[A-Za-z]/g) || []);
+    ok('(SPEC-110-47) no straight apostrophe between letters in the shipped script, escaped or not (four toasts said "the phone\\\'s notification settings")', straight(js).length === 0 && (js.match(/phone\\u2019s notification settings/g) || []).length === 4, straight(js).join(' | '));
+    ok('...control: the escaped and the plain forms are caught, the curled one is not', straight("check the phone\\'s settings").length === 1 && straight("don't").length === 1 && straight('the phone\u2019s').length === 0);
+
+    /* (SPEC-110-48) set completion through pctNum: one decimal, none from 100 up -- 1 of the largest set is not 0%, 2 short is not 100% */
+    const bySet4 = new Map(); for (const p of V.CAT.rows) if (p.num && !p.sealed) (bySet4.get(p.set) || bySet4.set(p.set, new Map()).get(p.set)).set(p.num, p);
+    const [bigSet, bigNums] = [...bySet4.entries()].sort((a, b) => b[1].size - a[1].size)[0], bigList = [...bigNums.values()], nAll = bigList.length;
+    const keepItems48 = V.OWN.items, row48 = k => { V.OWN.items = bigList.slice(0, k).map(p => ({ id: p.id, qty: 1, condition: 'NM', pf: 'main' })); V.paintHome(); return (doc.getElementById('setDone')._html.match(new RegExp(`${k} of ${nAll} numbers \u00b7 ([^<]*)<`)) || [])[1]; };
+    const keepPF48 = V.PF.active; V.PF.active = 'main';
+    const one48 = holds(() => row48(1)), near48 = holds(() => row48(nAll - 2)); V.OWN.items = keepItems48; V.PF.active = keepPF48; V.paintHome();
+    ok(`(SPEC-110-48) set completion says it through pctNum: 1 of ${nAll} reads ${V.pctNum(100 / nAll)}, ${nAll - 2} of ${nAll} never 100% (take 114: "0%" and "100%")`,
+       nAll >= 150 && one48 === V.pctNum(100 / nAll) && one48 !== '0%' && near48 === V.pctNum(100 * (nAll - 2) / nAll) && near48 !== '100%' && !/numbers \\u00b7 \$\{pct\}%/.test(js), `${one48} | ${near48}`);
+
+    /* the open Fold, measured (the owner's Diagnostics at take 114): the Fold block's comment says what was measured */
+    const src4 = fs.readFileSync(path.join(ROOT, 'src', 'app.html'), 'utf8');
+    ok('the Fold block says the open Fold is MEASURED at 749 x 832 CSS px (2.625), no longer "about 840, INFERRED"', /open Fold \(749 x 832 CSS px at a pixel ratio of 2\.625, MEASURED/.test(src4) && !/about 840 px wide, INFERRED/.test(src4));
   });
 
   /* leave the shared app as the sections before found it */

@@ -36,7 +36,12 @@ if (puppeteer) {
     args: ['--no-sandbox', '--disable-dev-shm-usage', '--allow-file-access-from-files']
   });
   const page = await browser.newPage();
-  await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
+  await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });   // a phone; the owner's own sizes are FOLD, below
+  /* take 115: the owner's Galaxy Z Fold 7, MEASURED on his Diagnostics at take 114, portrait -- the cover screen 411 x 960
+     and the open Fold 749 x 832 CSS px, both at a pixel ratio of 2.625. Take 110 had inferred the open Fold at 840 x 757 @2,
+     and older checks here used 412 and 673 for it; 673 is under the 700 px where the two panes begin (landmine 186) */
+  const FOLD = { cover: { width: 411, height: 960, deviceScaleFactor: 2.625 }, inner: { width: 749, height: 832, deviceScaleFactor: 2.625 } };
+  const PHONE = (width, height = 915) => ({ width, height, deviceScaleFactor: 2 });
   const errors = [];
   /* Landmine 82. Simulate what Capacitor's SystemBars injects on Android so a
      regression in inset handling fails here, not on a phone. */
@@ -61,9 +66,9 @@ if (puppeteer) {
   ok('no page errors', errors.length === 0, errors.slice(0, 2).join(' | '));
   /* Take 33 -- typography. A @font-face that 404s falls back silently and
      every layout check still passes on the system font, so ask the engine:
-     did the four role faces LOAD, and is the display face what h2 resolved to?
-     Then the control: a face pointed at a file that does not exist must
-     report 'error', or this probe cannot see a missing font (landmine 55). */
+     did the four role faces LOAD, and is the display face what the screen's
+     h1 title resolved to? Then the control: a face pointed at a file that does
+     not exist must report 'error', or this probe cannot see a missing font (landmine 55). */
   const fonts = await page.evaluate(async () => {
     await document.fonts.ready;
     /* take 107: Home's first screen no longer sets anything in the comic face
@@ -71,16 +76,24 @@ if (puppeteer) {
        'unloaded'. Load each one: a file that is missing still reports 'error'. */
     await Promise.all([...document.fonts].map(f => f.load().catch(() => 0)));
     const st = {}; for (const f of document.fonts) st[f.family] = f.status;
-    const h2 = document.querySelector('.screen.on .ab-title') || document.querySelector('h2');   // take 107: the screen's own title
-    const fam = h2 ? getComputedStyle(h2).fontFamily : '';
     const nope = new FontFace('OPH Nope', 'url(fonts/does-not-exist.woff2)');
     await nope.load().catch(() => 0);
-    return { st, fam, control: nope.status };
+    return { st, control: nope.status };
   });
+  /* take 115 (STAN-107-5): the probe reads the screen's own h1 title and nothing else -- take 107's fell back to the
+     page's first h2, a hidden sheet's title in the same face, so a screen that lost its title passed */
+  const titleFace = () => { const t = document.querySelector('.screen.on h1.ab-title'); return { found: !!t, fam: t ? getComputedStyle(t).fontFamily : '' }; };
+  const title = await page.evaluate(titleFace);
   ok('the four role faces are LOADED in Chrome',
      ['OPH Display', 'OPH Comic', 'OPH Body', 'OPH Heavy'].every(f => fonts.st[f] === 'loaded'),
      JSON.stringify(fonts.st));
-  ok('the screen title resolves to the display face', /OPH Display/.test(fonts.fam), fonts.fam);
+  ok('the screen title (the screen\'s own h1) resolves to the display face', title.found && /OPH Display/.test(title.fam), JSON.stringify(title));
+  await page.evaluate(() => { const t = document.querySelector('.screen.on h1.ab-title'); if (t) { t.classList.replace('ab-title', 'ab-titlex'); t.dataset.ctl107 = '1'; } });
+  const titleGone = await page.evaluate(titleFace);
+  const titleOld = await page.evaluate(() => { const h2 = document.querySelector('.screen.on .ab-title') || document.querySelector('h2'); return h2 ? { tag: h2.tagName, id: h2.id, onScreen: !!h2.closest('.screen.on'), fam: getComputedStyle(h2).fontFamily } : {}; });   // take 114's probe
+  await page.evaluate(() => { const t = document.querySelector('[data-ctl107]'); if (t) { t.classList.replace('ab-titlex', 'ab-title'); delete t.dataset.ctl107; } });
+  ok('negative control: a screen whose title lost its class fails the probe (take 114\'s fallback read a sheet\'s hidden h2 in the same face and passed)',
+     !titleGone.found && titleOld.tag === 'H2' && !titleOld.onScreen && /OPH Display/.test(titleOld.fam || ''), JSON.stringify({ titleGone, titleOld }));
   ok('negative control: a missing font file reports error', fonts.control === 'error', fonts.control);
   ok('catalogue reached the page',
      await page.evaluate(() => !!window.VAULT && window.VAULT.CAT.ready));
@@ -254,10 +267,10 @@ if (puppeteer) {
      geo.tiles.every(t => t.w >= 140), JSON.stringify(geo.tiles.map(t => t.w)));
 
   /* Four device widths, because "tuned to one screen size" is APEX landmine 95
-     and the Fold is two of them. */
-  for (const [w, name] of [[360, 'small phone'], [412, 'Fold outer'],
-                           [673, 'Fold inner'], [820, 'tablet']]) {
-    await page.setViewport({ width: w, height: 900, deviceScaleFactor: 2 });
+     and the Fold is two of them (take 115: its two MEASURED sizes). */
+  for (const [vp, name] of [[PHONE(360, 900), 'small phone'], [FOLD.cover, 'Fold cover'],
+                            [FOLD.inner, 'Fold inner'], [PHONE(820, 900), 'tablet']]) {
+    const w = vp.width; await page.setViewport(vp);
     await new Promise(r => setTimeout(r, 120));
     const m = await page.evaluate(() => ({
       scroll: document.body.scrollWidth, vw: document.documentElement.clientWidth,
@@ -290,8 +303,8 @@ if (puppeteer) {
      of subtitle, not the picture: a fixed bound was landmine 62's shape). */
   ok('search hits: the box is card-shaped at the list-row size (44x61 since take 110) and the picture does not stretch the row',
      srch.boxW === 44 && srch.boxH === 61 && srch.rowH <= Math.max(srch.boxH, srch.nmH) + srch.pad + 1, JSON.stringify(srch));
-  for (const [w, name] of [[360, 'small phone'], [412, 'Fold outer'], [673, 'Fold inner'], [820, 'tablet']]) {
-    await page.setViewport({ width: w, height: 900, deviceScaleFactor: 2 }); await new Promise(r => setTimeout(r, 120));
+  for (const [vp, name] of [[PHONE(360, 900), 'small phone'], [FOLD.cover, 'Fold cover'], [FOLD.inner, 'Fold inner'], [PHONE(820, 900), 'tablet']]) {
+    const w = vp.width; await page.setViewport(vp); await new Promise(r => setTimeout(r, 120));
     const m = await page.evaluate(() => ({ scroll: document.body.scrollWidth, vw: document.documentElement.clientWidth }));
     ok(`search with pictures, ${name} (${w}px): no sideways scroll`, m.scroll <= m.vw + 1, JSON.stringify(m));
   }
@@ -303,10 +316,19 @@ if (puppeteer) {
     V.MODE.set('play', false); V.paintDecks(); V.go('decks'); return d.id;
   });
   await new Promise(r => setTimeout(r, 700));
-  const lead = await page.evaluate(() => { const box = document.querySelector('#dkList .lead.pic'); const img = box && box.querySelector('img.ref');
-    const b = box && box.getBoundingClientRect(), i = img && img.getBoundingClientRect();
-    return { box: !!box, img: !!img, fits: !!i && Math.abs(i.width - b.width) <= 1 && Math.abs(i.height - b.height) <= 1, boxW: b && Math.round(b.width), imgW: i && Math.round(i.width) }; });
+  /* take 115: where the picture hosts refuse (the session VM), a refused thumbnail removes itself (refArt) -- this read it
+     only when the refusal came after 700 ms, which the queue of earlier requests decided (it failed one run of five here;
+     alone, the refusal came at 230-260 ms). A thumbnail that is not there is given one drawn in the page, a real
+     thumbnail's size (200 x 280), in the same box and markup, so the fit landmine 132 is about is read every run */
+  const lead = await page.evaluate(async () => { const box = document.querySelector('#dkList .lead.pic'); if (!box) return { box: false };
+    let img = box.querySelector('img.ref'), stand = false;
+    if (!img || !(img.complete && img.naturalWidth)) { if (img) img.remove(); const c = document.createElement('canvas'); c.width = 200; c.height = 280; c.getContext('2d').fillRect(0, 0, 200, 280);
+      img = new Image(); img.className = 'ref ok'; img.alt = ''; img.src = c.toDataURL(); await img.decode(); box.appendChild(img); stand = true; }
+    const read = () => { const b = box.getBoundingClientRect(), i = img.getBoundingClientRect(); return { fits: Math.abs(i.width - b.width) <= 1 && Math.abs(i.height - b.height) <= 1, boxW: Math.round(b.width), imgW: Math.round(i.width) }; };
+    const clean = read(), st = document.createElement('style'); st.textContent = '.pic img.ref{position:static!important;width:auto!important;height:auto!important}'; document.head.appendChild(st);
+    const control = read(); st.remove(); if (stand) img.remove(); return { box: true, img: true, stand, ...clean, control }; });
   ok('Decks list: the Leader thumbnail fills its box exactly (landmine 132)', lead.box && lead.img && lead.fits, JSON.stringify(lead));
+  ok('...control: a thumbnail drawn at its own size (landmine 132\'s fault) does not fit, so the check can tell', !!lead.control && !lead.control.fits, JSON.stringify(lead.control));
   await page.evaluate(id => window.VAULT.openDeck(id), dkId);
   await new Promise(r => setTimeout(r, 400));
   const dkRows = await page.evaluate(() => ({ rows: document.querySelectorAll('#deck .dkrow').length, pics: document.querySelectorAll('#deck .dkrow .pic').length,
@@ -387,10 +409,10 @@ if (puppeteer) {
   ok('the sealed sheet draws no condition segment and draws the stock alert; the card sheet the reverse', d95.segH === 0 && d95.stH > 0 && d95.segH2 > 0 && d95.stH2 === 0, JSON.stringify(d95));
   await new Promise(r => setTimeout(r, 200));
   /* take 96 -- where to buy: the chip strip draws under the row, inside its
-     width, at both Fold widths; the sheet's panel draws for a sealed product
+     width, at both Fold widths (take 115: the MEASURED ones); the sheet's panel draws for a sealed product
      and not for a card. The same fixture feed as take 94. */
-  for (const [w, name] of [[412, 'Fold outer'], [673, 'Fold inner']]) {
-    await page.setViewport({ width: w, height: 915, deviceScaleFactor: 2 }); await new Promise(r => setTimeout(r, 120));
+  for (const [vp, name] of [[FOLD.cover, 'Fold cover'], [FOLD.inner, 'Fold inner']]) {
+    const w = vp.width; await page.setViewport(vp); await new Promise(r => setTimeout(r, 120));
     const m = await page.evaluate(F => { const V = window.VAULT; V.HUNT.feed = F; V.HUNT.setZip(''); V.MODE.set('hunt', true); V.SEALED.q = ''; V.SEALED.kind = 'all';
       for (const id of Object.keys(V.HUNT.distByCatalogId())) { const p = V.CAT.byId.get(+id); if (p) { V.SEALED.closed.delete(p.set); V.SEALED.open.add(p.set); } } V.paintSealed();
       const strip = document.querySelector('#sealedList .chips.buy'); const row = strip && strip.parentElement; const r = row && row.getBoundingClientRect(); const s = strip && strip.getBoundingClientRect();
@@ -465,10 +487,10 @@ if (puppeteer) {
   await new Promise(r => setTimeout(r, 150));
   const wide = await page.evaluate(() => {
     const b = document.body.getBoundingClientRect(); const n = [...document.querySelectorAll('nav')].find(x => x.offsetParent !== null || x.getBoundingClientRect().width > 0);
-    const h2 = document.querySelector('.screen.on .ab-title');   // take 107: the header's title
+    const title = document.querySelector('.screen.on h1.ab-title');   // take 107: the header's title (take 115: named for what it holds, STAN-107-5)
     return { bodyW: Math.round(b.width), vw: document.documentElement.clientWidth,
              navW: n ? Math.round(n.getBoundingClientRect().width) : 0,
-             headColour: h2 ? getComputedStyle(h2).color : '' };
+             headColour: title ? getComputedStyle(title).color : '' };
   });
   ok('desktop (1440px): the app is a centred phone-width column, not a sprawl',
      wide.bodyW <= 560 && wide.vw >= 1400, JSON.stringify(wide));
@@ -538,8 +560,18 @@ if (puppeteer) {
              tabs: [...document.querySelectorAll('[role="tab"]')].map(e => e.getAttribute('aria-selected')) };
   });
   ok('every visible control has an accessible name', a11y.bad === 0 && a11y.total > 10, JSON.stringify(a11y));
-  ok('screen titles are headings and exactly one real tab is selected',
-     a11y.headings >= 1 && a11y.tabs.filter(x => x === 'true').length === 1, JSON.stringify(a11y.tabs));
+  /* take 115: read per tablist -- the mode slider is a tablist too, and giving its tabs their selected state (which they
+     lack; take 115's A4 found it and backed it out) made this page-wide count two. Each tablist that marks its tabs marks
+     every one and selects exactly one, and Home's is among them. The control: a second tab selected in Home's list */
+  const tabLists = () => page.evaluate(() => [...document.querySelectorAll('[role="tablist"]')].map(l => ({ name: l.getAttribute('aria-label') || l.id, sel: [...l.querySelectorAll('[role="tab"]')].map(t => t.getAttribute('aria-selected')) })));
+  const oneEach = ls => { const marked = ls.filter(l => l.sel.some(x => x !== null)); return ['Home', 'Mode'].every(n => marked.some(l => l.name === n)) && marked.every(l => l.sel.every(x => x === 'true' || x === 'false') && l.sel.filter(x => x === 'true').length === 1); };   /* take 115: the mode slider marks its tabs too */
+  const lists66 = await tabLists();
+  await page.evaluate(() => { const t = document.querySelector('#tabPerf'); t.dataset.was = t.getAttribute('aria-selected'); t.setAttribute('aria-selected', 'true'); });
+  const lists66c = await tabLists();
+  await page.evaluate(() => { const t = document.querySelector('#tabPerf'); t.setAttribute('aria-selected', t.dataset.was); delete t.dataset.was; });
+  ok('screen titles are headings, and in each tablist that marks its tabs exactly one is selected -- Home\'s and the mode slider\'s among them',
+     a11y.headings >= 1 && oneEach(lists66), JSON.stringify(lists66));
+  ok('...control: a second selected tab in Home\'s list is caught', !oneEach(lists66c), JSON.stringify(lists66c));
   /* Take 80: keyboard focus is visible; a mouse click's focus is not */
   const ring = await page.evaluate(async () => {
     const b = document.querySelector('nav button[data-go="search"]'); b.focus();
@@ -733,7 +765,7 @@ if (puppeteer) {
     for (const [mode, id] of plan) {
       if (V.MODE.cur !== mode) { V.MODE.set(mode, true); await wait(300); }
       while (V.closeAnyOverlay()) {}
-      if (id === 'checklist') V.openChecklist([...V.CAT.sets.values()][0].id);
+      if (id === 'checklist') V.openChecklist([...V.CAT.sets.values()].find(s => s.n > 0).id);   /* take 115: the first set with cards -- a set of sealed products only, or one whose card list is not out, has none to check off (A3) */
       else if (id === 'detail') V.openDetail(V.CAT.rows[0].id);
       else if (id === 'deck') { V.go('decks'); await wait(100); document.querySelector('#dkNew').click(); }
       else V.go(id);
@@ -795,9 +827,14 @@ if (puppeteer) {
      select and tab on the twenty screens and three sheets is brought on screen and
      the four points 21 px from its centre are read with elementFromPoint: each must
      land on the control or inside it (a box inside its <label>: the label). The take-107
-     build failed 525 of 1,673 this way. The control: a stepper shrunk to 34 px. */
+     build failed 525 of 1,673 this way. The control: a stepper shrunk to 34 px.
+     Take 115 (SPEC-108-39): those four points make a cross 42 px wide, so a 43 px control passed it -- the cross says
+     nothing covers the control; the size is read from the box itself, the control's or the ::after hit area that grows
+     a dense one (a chip, a pill, a range) to 44 px, and each side must be 44. The boundary control: a stepper at 43 px. */
   const t108 = await page.evaluate(async () => {
     const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
+    const size44 = (e, q) => { const af = getComputedStyle(e, '::after'), hit = af.content !== 'none' && af.content !== 'normal' && /^(absolute|fixed)$/.test(af.position) && af.display !== 'none';
+      const w = Math.max(q.width, hit ? parseFloat(af.width) || 0 : 0), h = Math.max(q.height, hit ? parseFloat(af.height) || 0 : 0); return { w, h, ok: w >= 43.99 && h >= 43.99 }; };
     const measure = root => { const out = [];
       const els = new Set([...root.querySelectorAll('button, a[href], select, input:not([type=hidden]), [role="tab"]')].map(e => { const l = e.closest('label'); return l && root.contains(l) ? l : e; }));
       for (const e of els) { const r0 = e.getBoundingClientRect(); if (r0.width < 1 || r0.height < 1 || getComputedStyle(e).visibility === 'hidden') continue;
@@ -805,15 +842,15 @@ if (puppeteer) {
         if (r0.top < barBottom + 30 || r0.bottom > navTop - 30 || r0.left < 0 || r0.right > innerWidth) e.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });   // on screen, clear of the fixed bars
         const q = e.getBoundingClientRect(), cx = q.left + q.width / 2, cy = q.top + q.height / 2;
         const hits = [[cx - 21, cy], [cx + 21, cy], [cx, cy - 21], [cx, cy + 21]].map(([x, y]) => document.elementFromPoint(x, y));
-        const own = hits.every(t => !!t && (t === e || e.contains(t)));
+        const own = hits.every(t => !!t && (t === e || e.contains(t))), sz = size44(e, q);
         const by = own ? '' : ' hits ' + hits.map(t => !t ? 'nothing' : (t === e || e.contains(t)) ? 'itself' : t.tagName.toLowerCase() + '.' + String(t.className).split(' ')[0] + '[' + (t.getAttribute('aria-label') || t.textContent || '').trim().slice(0, 12) + ']').join(',');
-        out.push({ own, what: ((e.id ? '#' + e.id + ' ' : '') + (e.getAttribute('aria-label') || e.textContent || '')).replace(/\s+/g, ' ').trim().slice(0, 30) + by, w: Math.round(q.width), h: Math.round(q.height) }); }
+        out.push({ own, size: sz.ok, what: ((e.id ? '#' + e.id + ' ' : '') + (e.getAttribute('aria-label') || e.textContent || '')).replace(/\s+/g, ' ').trim().slice(0, 30) + by + (sz.ok ? '' : ` hit area ${+sz.w.toFixed(2)}x${+sz.h.toFixed(2)}`), w: Math.round(q.width), h: Math.round(q.height) }); }
       return out; };
     if (!V.OWN.items.length) { const c = V.candidates('OP01-016', null)[0]; if (c) V.OWN.add(c.id, { condition: 'NM' }); }
     const plan = [['collect', 'home'], ['collect', 'search'], ['collect', 'scan'], ['collect', 'collection'], ['collect', 'wants'], ['collect', 'binder'], ['collect', 'trade'],
       ['collect', 'checklist'], ['collect', 'detail'], ['collect', 'settings'], ['collect', 'diag'], ['play', 'decks'], ['play', 'deck'], ['play', 'cards'], ['play', 'play'], ['play', 'sim'],
       ['hunt', 'sealed'], ['hunt', 'releases'], ['hunt', 'local'], ['hunt', 'events'], ['collect', '#filters'], ['collect', '#picker'], ['play', '#leaderPick']];
-    let all = []; let control = null;
+    let all = []; let control = null, control43 = null;
     for (const [mode, id] of plan) {
       if (V.MODE.cur !== mode) { V.MODE.set(mode, true); await wait(300); }
       while (V.closeAnyOverlay()) {}
@@ -824,7 +861,7 @@ if (puppeteer) {
         if (id === '#leaderPick') { V.go('decks'); await wait(100); document.querySelector('#dkNew').click(); await wait(150); document.querySelector('#dkLead').click(); }
         await wait(250); root = document.querySelector(id + ' .sheetbody');
       } else {
-        if (id === 'checklist') V.openChecklist([...V.CAT.sets.values()][0].id);
+        if (id === 'checklist') V.openChecklist([...V.CAT.sets.values()].find(s => s.n > 0).id);   /* take 115: the first set with cards -- a set of sealed products only, or one whose card list is not out, has none to check off (A3) */
         else if (id === 'detail') V.openDetail(V.OWN.items[0] ? V.OWN.items[0].id : V.CAT.rows[0].id);
         else if (id === 'deck') { V.go('decks'); await wait(100); document.querySelector('#dkNew').click(); }
         else V.go(id);
@@ -832,7 +869,9 @@ if (puppeteer) {
       }
       all = all.concat(measure(root).map(r => ({ ...r, where: id })));
       if (id === 'detail') { const b = document.querySelector('#dPlus'); b.style.width = b.style.height = '34px';   // the control: a 34 px stepper
-        control = measure(root).filter(r => !r.own).map(r => r.what); b.style.width = b.style.height = ''; }
+        control = measure(root).filter(r => !r.own || !r.size).map(r => r.what);
+        b.style.width = b.style.height = '43px';   // take 115: the boundary -- 43 px, which the cross alone passed
+        control43 = measure(root).filter(r => /^#dPlus /.test(r.what)).map(r => ({ own: r.own, size: r.size, what: r.what })); b.style.width = b.style.height = ''; }
       if (id[0] === '#') document.querySelector(id).classList.remove('on');
     }
     /* the scanner's bottom row sits above the nav (it sat 52 px under it until this take) */
@@ -840,10 +879,11 @@ if (puppeteer) {
     const sb = document.querySelector('.shutterbar').getBoundingClientRect(), nav = document.querySelector('#navCollect').getBoundingClientRect();
     const scanner = { shutterbarBottom: Math.round(sb.bottom), navTop: Math.round(nav.top) };
     V.go('home'); await wait(200); window.scrollTo(0, 0);
-    return { total: all.length, bad: all.filter(r => !r.own).map(r => `${r.where} ${r.what} ${r.w}x${r.h}`), control, scanner };
+    return { total: all.length, bad: all.filter(r => !r.own || !r.size).map(r => `${r.where} ${r.what} ${r.w}x${r.h}`), control, control43, scanner };
   });
-  ok('take 108: every control on the twenty screens and three sheets has a 44 px square of its own', t108.total > 1000 && t108.bad.length === 0, `${t108.bad.length} of ${t108.total}: ${t108.bad.slice(0, 4).join(' | ')}`);
+  ok('take 108: every control on the twenty screens and three sheets has a 44 px square of its own -- nothing covers the cross 21 px out from its centre, and (take 115) its box or its ::after hit area is 44 px each way', t108.total > 1000 && t108.bad.length === 0, `${t108.bad.length} of ${t108.total}: ${t108.bad.slice(0, 4).join(' | ')}`);
   ok('take 108: ...control: a stepper shrunk to 34 px is caught', Array.isArray(t108.control) && t108.control.some(w => /#dPlus/.test(w)), JSON.stringify(t108.control));
+  ok('take 115 (SPEC-108-39): ...control: a stepper at 43 px, which the cross alone passes, is caught by its size', Array.isArray(t108.control43) && t108.control43.length === 1 && t108.control43[0].own === true && t108.control43[0].size === false, JSON.stringify(t108.control43));
   ok('take 108: the scanner\'s bottom row sits above the nav (52 px under it before this take)', t108.scanner.shutterbarBottom <= t108.scanner.navTop, JSON.stringify(t108.scanner));
   /* ...and the dense case the runner met first (take 108's first check run): where-to-buy strips with
      two sellers that wrap. The fixture feed -- the saved distributor page, as smoke builds it -- gives
@@ -853,11 +893,13 @@ if (puppeteer) {
   execSync(`python3 tools/hunt.py --from-fixtures --out ${fxFeed}`, { cwd: ROOT, stdio: 'pipe' });
   const wrap108 = await page.evaluate(async feed => {
     const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)), prev = V.HUNT.feed;
+    const size44 = (e, q) => { const af = getComputedStyle(e, '::after'), hit = af.content !== 'none' && af.content !== 'normal' && /^(absolute|fixed)$/.test(af.position) && af.display !== 'none';   // take 115: the size itself, as above
+      return Math.max(q.width, hit ? parseFloat(af.width) || 0 : 0) >= 43.99 && Math.max(q.height, hit ? parseFloat(af.height) || 0 : 0) >= 43.99; };
     const sweep = () => { const strips = [...document.querySelectorAll('#sealedList .chips.buy')].filter(s => s.querySelectorAll('a.chip').length > 1); let bad = 0, n = 0;
       for (const s of strips) { s.style.flexBasis = '150px'; s.style.maxWidth = '150px'; }
       for (const s of strips) for (const e of s.querySelectorAll('a.chip')) { e.scrollIntoView({ block: 'center', behavior: 'instant' });
         const q = e.getBoundingClientRect(), cx = q.left + q.width / 2, cy = q.top + q.height / 2; n++;
-        if (![[cx - 21, cy], [cx + 21, cy], [cx, cy - 21], [cx, cy + 21]].every(([x, y]) => { const t = document.elementFromPoint(x, y); return !!t && (t === e || e.contains(t)); })) bad++; }
+        if (![[cx - 21, cy], [cx + 21, cy], [cx, cy - 21], [cx, cy + 21]].every(([x, y]) => { const t = document.elementFromPoint(x, y); return !!t && (t === e || e.contains(t)); }) || !size44(e, q)) bad++; }
       for (const s of strips) { s.style.flexBasis = ''; s.style.maxWidth = ''; }
       return { strips: strips.length, chips: n, bad }; };
     V.HUNT.feed = feed; V.MODE.set('hunt', true); await wait(300); V.go('sealed'); V.paintSealed(); await wait(300); while (V.closeAnyOverlay()) {}
@@ -924,17 +966,17 @@ if (puppeteer) {
   ok('take 109: ...control: scrolled, the fade is back over whatever passes under the slider', !t109.scrolled.atTop && /gradient/.test(t109.scrolled.slider), t109.scrolled.slider.slice(0, 60));
   ok('take 109: a card\'s own page: its two colours under its blurred art, cut above the stamp, the card centred at 196 px', has(t109.detail.bg, t109.detail.want) && /58%/.test(t109.detail.view) && t109.detail.marked && t109.detail.artW === 196 && Math.abs(t109.detail.artMid - t109.detail.mid) <= 1 && !t109.detail.sideways,
      JSON.stringify(t109.detail));
-  /* no sideways scroll on the two screens that changed, at a narrow phone, this phone and the unfolded Fold */
+  /* no sideways scroll on the two screens that changed, at a narrow phone, the Fold's two sizes (take 115: MEASURED) and a tablet */
   const wide109 = [];
-  for (const w of [360, 412, 820]) {
-    await page.setViewport({ width: w, height: 915, deviceScaleFactor: 2 });
+  for (const vp of [PHONE(360), FOLD.cover, FOLD.inner, PHONE(820)]) {
+    const w = vp.width; await page.setViewport(vp);
     wide109.push(await page.evaluate(async w => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)), out = { w };
       V.MODE.set('play', true); await wait(250); V.go('decks'); await wait(200); out.decks = document.documentElement.scrollWidth <= innerWidth + 0.5;
       V.MODE.set('collect', true); await wait(250); V.openDetail(V.CAT.rows.find(p => !p.sealed && p.img).id); await wait(200); out.detail = document.documentElement.scrollWidth <= innerWidth + 0.5;
       V.go('home'); return out; }, w));
   }
   await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
-  ok('take 109: Decks and a card\'s own page never scroll sideways at 360, 412 or 820 px', wide109.every(r => r.decks && r.detail), JSON.stringify(wide109));
+  ok('take 109: Decks and a card\'s own page never scroll sideways at 360 px, on the Fold\'s cover (411) and open (749), or at 820 px', wide109.length === 4 && wide109.every(r => r.decks && r.detail), JSON.stringify(wide109));
 
   /* ---- take 110 (A42): the art layer, part 2 -- Sealed's banner, the strips, the Play counter ----
      Sealed opens under the newest set's top card, crisp (A, the owner's pick for Hunt); each set's
@@ -1005,10 +1047,10 @@ if (puppeteer) {
      !!frame110.decks && frame110.decks.fit === 'contain' && frame110.decks.pos === '50% 50%' && frame110.decks.w === frame110.decks.bw && /58%/.test(frame110.decks.view || '')
      && !!frame110.page && frame110.page.fit === 'contain' && /^50% 0(px|%)?$/.test(frame110.page.pos) && frame110.page.w === frame110.page.bw && /58%/.test(frame110.page.view || ''), JSON.stringify(frame110));
   ok('take 110: ...control: take 109\'s blur, cut to cover the box past its edges, is caught', !!frame110.control && (frame110.control.fit !== 'contain' || frame110.control.w !== frame110.control.bw), JSON.stringify(frame110.control));
-  /* no sideways scroll on the two screens that changed, at a narrow phone, this phone and the unfolded Fold */
+  /* no sideways scroll on the two screens that changed, at a narrow phone, the Fold's two sizes (take 115: MEASURED) and a tablet */
   const wide110 = [];
-  for (const w of [360, 390, 412, 820]) {
-    await page.setViewport({ width: w, height: 915, deviceScaleFactor: 2 });
+  for (const vp of [PHONE(360), PHONE(390), FOLD.cover, FOLD.inner, PHONE(820)]) {
+    const w = vp.width; await page.setViewport(vp);
     wide110.push(await page.evaluate(async w => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)), out = { w };
       V.MODE.set('hunt', true); await wait(250); V.go('sealed'); await wait(200); out.sealed = document.documentElement.scrollWidth <= innerWidth + 0.5;
       const keep = V.PLAY.p.map(p => p.leader), L = V.CAT.stock[0].leader;
@@ -1019,7 +1061,7 @@ if (puppeteer) {
       V.MODE.set('collect', true); await wait(250); V.go('home'); return out; }, w));
   }
   await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
-  ok('take 110: Sealed and the Play counter never scroll sideways at 360, 390, 412 or 820 px, and no button of the counter is cut by its panel (take 108\'s 44 px steppers did not fit below 400 px)', wide110.length === 4 && wide110.every(r => r.sealed && r.play && r.clip.length === 0), JSON.stringify(wide110));
+  ok('take 110: Sealed and the Play counter never scroll sideways at 360 and 390 px, on the Fold\'s cover (411) and open (749), or at 820 px, and no button of the counter is cut by its panel (take 108\'s 44 px steppers did not fit below 400 px)', wide110.length === 5 && wide110.every(r => r.sealed && r.play && r.clip.length === 0), JSON.stringify(wide110));
   /* ---- take 110, polish (A42 layer 6): motion from the tokens, measured in Chrome ----
      a sheet rises on --dur-sheet and not at all under reduced motion; a real tap on the slider
      crossfades and the class comes off; the thumbnails are the three sizes; figures are tabular */
@@ -1064,8 +1106,9 @@ if (puppeteer) {
   });
   ok('take 110 (the review): a picture that has loaded is drawn at once when its screen repaints, not faded in from nothing again', blink.loaded === '1' && blink.again === '1', JSON.stringify(blink));
   ok('take 110 (the review): ...control: a picture not loaded before starts from nothing', blink.cold === '0' && blink.forgot === '0', JSON.stringify(blink));
-  /* ---- take 110 (A42): the Fold's inner screen, measured at 840 px -- two panes where two fit ---- */
-  await page.setViewport({ width: 840, height: 757, deviceScaleFactor: 2 });
+  /* ---- take 110 (A42): the Fold's inner screen -- two panes where two fit. Take 115: at its MEASURED size, 749 x 832
+     @2.625 (take 110 measured at 840 x 757 @2, an inference) ---- */
+  await page.setViewport(FOLD.inner);
   const inner = await page.evaluate(async () => {
     const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)), R = e => e ? e.getBoundingClientRect() : null, out = {};
     V.MODE.set('collect', true); await wait(250);
@@ -1102,7 +1145,7 @@ if (puppeteer) {
   });
   ok('take 110 (the review): ...Market movers\' heading and Decks\' empty state span both columns', spans.clean.h3 > 0.8 * spans.clean.panel && spans.clean.empty > 0 && spans.clean.empty >= spans.clean.list - 1, JSON.stringify(spans.clean));
   ok('take 110 (the review): ...control: without the span each takes one column', spans.control.h3 > 0 && spans.control.h3 < 0.6 * spans.control.panel && spans.control.empty < 0.6 * spans.control.list, JSON.stringify(spans.control));
-  /* take 110's review: what the first push got wrong on the open Fold, measured at 840 px */
+  /* take 110's review: what the first push got wrong on the open Fold, measured on it (749 px since take 115; 840 before) */
   const fold2 = await page.evaluate(async () => {
     const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)), W = e => e ? Math.round(e.getBoundingClientRect().width) : 0, o = {};
     const run = async () => { const r = {};
@@ -1157,11 +1200,49 @@ if (puppeteer) {
       const pn = document.querySelector('#plBoard .plpanel'); pn.querySelector('.plcols .note').id = 'ink110life'; pn.querySelector(':scope > div .note').id = 'ink110lead'; }, yellowL);
     await new Promise(r => setTimeout(r, 1200));
     o.life = await groundContrast('#ink110life'); o.lead = await groundContrast('#ink110lead');
-    await page.evaluate(() => { const V = window.VAULT; V.PLAY.p.forEach(p => { p.leader = null; }); V.PLAY.hotseat = false; V.paintPlay(); V.MODE.set('collect', true); V.go('home'); const s = document.getElementById('ink110'); if (s) s.remove(); });
+    await page.evaluate(() => { const V = window.VAULT; V.PLAY.p.forEach(p => { p.leader = null; }); V.PLAY.hotseat = false; V.paintPlay(); });
+    /* take 115 (STAN-110-12, landmine 158): Sealed's strips -- a set's name and its date over the set's top card, sharp,
+       which take 110 measured once and kept only in a comment. The worst ground: the yellow Leader in the art's place and
+       the name lengthened until its date sits as far right as it goes, where the scrim is lightest. Read as drawn (its art
+       where the host serves it, its ground where it is refused), with the picture gone (offline: the card's own colours),
+       and under a white picture -- no art is brighter */
+    const pos = await page.evaluate(async id => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
+      V.NAV.zipAsked = true; V.MODE.set('hunt', true); await wait(250); while (V.closeAnyOverlay()) {} V.go('sealed'); await wait(250); while (V.closeAnyOverlay()) {}
+      const s = [...document.querySelectorAll('#sealedList .setstrip:not([data-setfold="decks"])')].find(x => x.querySelector(':scope > span > .note'));
+      const nm = s && s.querySelector(':scope > span'), dt = nm && nm.querySelector(':scope > .note');
+      if (!dt || !nm.firstChild || nm.firstChild.nodeType !== 3) return { found: false };
+      const old = s.querySelector(':scope > .artbg'); if (old) old.remove(); s.insertAdjacentHTML('afterbegin', V.artBack(V.CAT.byId.get(id), { crisp: true }));
+      s.id = 'ink115strip'; nm.id = 'ink115name'; dt.id = 'ink115date';
+      const t0 = nm.firstChild.data, more = ' Extra Booster Memorial Collection Premium Anniversary Set'.repeat(3); let best = { r: dt.getBoundingClientRect().right, t: t0 };
+      for (let k = 1; k <= more.length; k++) { nm.firstChild.data = t0 + more.slice(0, k); const r = dt.getBoundingClientRect().right; if (r > best.r + 0.01) best = { r, t: nm.firstChild.data }; }
+      nm.firstChild.data = best.t; s.scrollIntoView({ block: 'center', behavior: 'instant' });
+      const b = s.getBoundingClientRect(); return { found: true, at: +((best.r - b.left) / b.width).toFixed(3) }; }, yellowL);
+    await new Promise(r => setTimeout(r, 1200));   /* its art, where the host serves it */
+    o.strip = { ...pos, art: await page.evaluate(() => { const i = document.querySelector('#ink115strip > .artbg img'); return !!i && i.complete && i.naturalWidth > 0; }) };
+    if (pos.found) {
+      const both = async () => [await groundContrast('#ink115name'), await groundContrast('#ink115date')];
+      o.strip.drawn = await both();
+      await page.evaluate(() => document.querySelectorAll('#ink115strip > .artbg img').forEach(i => i.remove()));   /* what a refusal leaves */
+      await new Promise(r => setTimeout(r, 60)); o.strip.off = await both();
+      await page.evaluate(async () => { const c = document.createElement('canvas'); c.width = c.height = 8; const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, 8, 8);
+        const i = new Image(); i.className = 'above ok'; i.alt = ''; i.src = c.toDataURL(); await i.decode(); document.querySelector('#ink115strip > .artbg').prepend(i); });
+      await new Promise(r => setTimeout(r, 60)); o.strip.white = await both();
+      if (!css) {   /* the control in the same place: take 114's strip -- the scrim .45 at its end, the date 82% white */
+        await page.evaluate(() => { const t = document.createElement('style'); t.id = 'ink114strip'; t.textContent = '.setstrip > .artbg::after{background:linear-gradient(90deg,rgba(0,0,0,.8),rgba(0,0,0,.55) 70%,rgba(0,0,0,.45))!important}.setstrip .note{color:rgba(255,255,255,.82)!important}'; document.head.appendChild(t); });
+        await new Promise(r => setTimeout(r, 60)); o.strip.t114 = await both();
+        await page.evaluate(() => document.getElementById('ink114strip').remove()); }
+    }
+    await page.evaluate(() => { const V = window.VAULT; V.paintSealed(); V.MODE.set('collect', true); V.go('home'); const s = document.getElementById('ink110'); if (s) s.remove(); });
     return o; };
-  const inkNow = await ink(''), inkThen = await ink('.plpanel > .artbg::after{background:linear-gradient(to bottom,rgba(0,0,0,.35),transparent 34%)!important}.plpanel .note{color:var(--dim2)!important}#detail .artbg.dback{right:0!important;width:auto!important;-webkit-mask-image:linear-gradient(#000 55%,transparent)!important;mask-image:linear-gradient(#000 55%,transparent)!important}');
-  ok('take 110 (the review): words over a yellow card read at 4.5:1 or better -- a card\'s line beside it on the open Fold, the Play counter\'s labels over its Leader', !!yellowL && inkNow.sub >= 4.5 && inkNow.life >= 4.5 && inkNow.lead >= 4.5, JSON.stringify(inkNow));
-  ok('take 110 (the review): ...control: the first push\'s ground measures under it', inkThen.sub < 4.5 && inkThen.life < 4.5, JSON.stringify(inkThen));
+  const inkNow = await ink(''), inkThen = await ink('.plpanel > .artbg::after{background:linear-gradient(to bottom,rgba(0,0,0,.35),transparent 34%)!important}.plpanel .note{color:var(--dim2)!important}#detail .artbg.dback{right:0!important;width:auto!important;-webkit-mask-image:linear-gradient(#000 55%,transparent)!important;mask-image:linear-gradient(#000 55%,transparent)!important}'
+    + '.setstrip > .artbg::after{background:linear-gradient(90deg,rgba(0,0,0,.8),rgba(0,0,0,.25) 70%,rgba(0,0,0,.15))!important}.setstrip .note{color:rgba(255,255,255,.82)!important}');   /* take 115: and the strip's first push */
+  ok('take 110 (the review): words over a yellow card read at 4.5:1 or better -- a card\'s line beside it on the open Fold, the Play counter\'s labels over its Leader', !!yellowL && inkNow.sub >= 4.5 && inkNow.life >= 4.5 && inkNow.lead >= 4.5, JSON.stringify({ sub: inkNow.sub, life: inkNow.life, lead: inkNow.lead }));
+  ok('take 110 (the review): ...control: the first push\'s ground measures under it', inkThen.sub < 4.5 && inkThen.life < 4.5, JSON.stringify({ sub: inkThen.sub, life: inkThen.life }));
+  const s115 = inkNow.strip || {}, pair = x => Array.isArray(x) && x.length === 2 && x.every(v => typeof v === 'number');
+  ok('take 115 (STAN-110-12, landmine 158): a Sealed strip\'s name and date read at 4.5:1 or better at their worst -- the yellow Leader in the art\'s place, the date at the strip\'s right end: as drawn, offline (the card\'s own colours) and under a white picture (no art is brighter)',
+     !!yellowL && s115.found === true && s115.at >= 0.85 && [s115.drawn, s115.off, s115.white].every(x => pair(x) && x.every(v => v >= 4.5)), JSON.stringify(s115));
+  ok('take 115: ...control: take 114\'s strip (the scrim .45 at its end, the date 82% white) measures under it over the white picture, in the same place', pair(s115.t114) && s115.t114[1] < 4.5, JSON.stringify(s115.t114));
+  ok('take 115: ...control: take 110\'s first push (the scrim .25 and .15) measures under it too', pair((inkThen.strip || {}).white) && inkThen.strip.white[1] < 4.5, JSON.stringify(inkThen.strip));
   /* a double tap on a sheet's button: the second tap lands on the scrim while the sheet rises */
   await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
   const dbl = await page.evaluate(async () => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)); V.MODE.set('collect', true); await wait(200); V.go('search'); await wait(150);
@@ -1170,10 +1251,10 @@ if (puppeteer) {
     while (V.closeAnyOverlay()) {} V.go('home'); return { early, late }; });
   ok('take 110 (the review): a tap on the scrim while a sheet rises leaves it open (a double tap had closed what it opened)', dbl.early, JSON.stringify(dbl));
   ok('take 110 (the review): ...control: the same tap once the sheet is up closes it', dbl.late, JSON.stringify(dbl));
-  await page.setViewport({ width: 840, height: 757, deviceScaleFactor: 2 });
+  /* the two-pane range's ends (700 and 899) and the open Fold itself, MEASURED (take 115; take 110 read 840 x 757 @2) */
   const wideFold = [];
-  for (const w of [700, 840, 899]) {
-    await page.setViewport({ width: w, height: 757, deviceScaleFactor: 2 });
+  for (const w of [700, FOLD.inner.width, 899]) {
+    await page.setViewport({ ...FOLD.inner, width: w });
     wideFold.push(await page.evaluate(async w => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)), o = { w }, side = () => document.documentElement.scrollWidth <= innerWidth + 0.5;
       V.MODE.set('collect', true); await wait(200); V.go('home'); await wait(150); o.home = side(); V.openDetail(V.CAT.rows.find(p => !p.sealed && p.img).id); await wait(200); o.detail = side();
       V.MODE.set('hunt', true); await wait(200); V.go('sealed'); await wait(200); while (V.closeAnyOverlay()) {} o.sealed = side(); V.go('releases'); await wait(150); o.releases = side();
@@ -1181,15 +1262,15 @@ if (puppeteer) {
       V.MODE.set('collect', true); await wait(200); V.go('home'); return o; }, w));
   }
   await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
-  ok('take 110: the open Fold never scrolls sideways at 700, 840 or 899 px (Home, a card, Sealed, Releases, Decks)', wideFold.every(r => r.home && r.detail && r.sealed && r.releases && r.decks), JSON.stringify(wideFold));
+  ok('take 110: the open Fold never scrolls sideways at 700, 749 (the open Fold, MEASURED) or 899 px (Home, a card, Sealed, Releases, Decks)', wideFold.length === 3 && wideFold.every(r => r.home && r.detail && r.sealed && r.releases && r.decks), JSON.stringify(wideFold));
   const phone = await page.evaluate(async () => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)); V.openDetail(V.CAT.rows.find(p => !p.sealed && p.img).id); await wait(250);
     const a = document.querySelector('#dArt').getBoundingClientRect(); const o = { w: Math.round(a.width), mid: Math.round(a.left + a.width / 2), vw: innerWidth }; V.go('home'); return o; });
   ok('take 110: ...and on the phone a card\'s page is as it was: the card centred at 196 px', phone.w === 196 && Math.abs(phone.mid - phone.vw / 2) <= 1, JSON.stringify(phone));
 
   /* ---- take 111 (A42): the last look, measured -- what the tour found, at the widths it found it ---- */
   const bulk111 = [];
-  for (const w of [360, 411, 840]) {
-    await page.setViewport({ width: w, height: w === 840 ? 757 : 915, deviceScaleFactor: 2 });
+  for (const vp of [PHONE(360), FOLD.cover, FOLD.inner]) {   /* take 115: the Fold's MEASURED sizes (the open one was 840 x 757 @2) */
+    const w = vp.width; await page.setViewport(vp);
     bulk111.push(await page.evaluate(async w => {
       const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)), R = e => e.getBoundingClientRect();
       const read = () => {
@@ -1211,7 +1292,7 @@ if (puppeteer) {
   const bulkOk = r => r.n === 4 && r.side && r.inside && r.clear && r.whole;
   ok('take 111: the bulk bar fits a 360 and a 411 px phone -- the count and Done, then the three actions, every button whole and none over the count',
      bulk111.slice(0, 2).every(x => bulkOk(x.clean) && x.clean.lines === 2), JSON.stringify(bulk111.map(x => x.clean)));
-  ok('take 111: ...and on the open Fold (840 px) it is one line', bulkOk(bulk111[2].clean) && bulk111[2].clean.lines === 1, JSON.stringify(bulk111[2].clean));
+  ok('take 111: ...and on the open Fold (749 px) it is one line', bulkOk(bulk111[2].clean) && bulk111[2].clean.lines === 1, JSON.stringify(bulk111[2].clean));
   ok('take 111: ...control: take 110\'s bar, four buttons in the row, runs off or covers the count on a phone', bulk111.slice(0, 2).every(x => !(x.control.inside && x.control.clear && x.control.whole)), JSON.stringify(bulk111.slice(0, 2).map(x => x.control)));
   const mid111 = await page.evaluate(async () => {
     const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
@@ -1237,8 +1318,8 @@ if (puppeteer) {
   ok('take 111: an alert\'s line wraps on a 360 px phone, all of it read, where it was cut at "fired Sep 23 at …"', !al111.cut && al111.h > 1.5 * al111.lh, JSON.stringify(al111));
   ok('take 111: ...control: on one line, as it was, it is cut', al111.controlCut, JSON.stringify(al111));
   const ph111 = [];
-  for (const w of [360, 411]) {
-    await page.setViewport({ width: w, height: 915, deviceScaleFactor: 2 });
+  for (const vp of [PHONE(360), FOLD.cover]) {
+    const w = vp.width; await page.setViewport(vp);
     ph111.push(await page.evaluate(async w => {
       const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
       V.MODE.set('play', true); await wait(200);
@@ -1264,8 +1345,8 @@ if (puppeteer) {
   ok('take 111: ...control: without the rule it touches both edges', sc111.cLeft === 0 && sc111.cRight === 0, JSON.stringify(sc111));
   /* the second pass of the look: a printing's badge is never cut, and the Sealed bell sits on its row */
   const badge111 = [];
-  for (const w of [360, 411]) {
-    await page.setViewport({ width: w, height: 915, deviceScaleFactor: 2 });
+  for (const vp of [PHONE(360), FOLD.cover]) {
+    const w = vp.width; await page.setViewport(vp);
     badge111.push(await page.evaluate(async w => {
       const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
       const read = () => [...document.querySelectorAll('#allRes .row .nm > b')].filter(b => b.querySelector(':scope > .badge')).map(b => {
@@ -1366,7 +1447,7 @@ if (puppeteer) {
      /gradient/.test(noPic.empty.img) && noPic.empty.bg !== 'rgb(255, 255, 255)' && noPic.empty.shown && noPic.empty.label === noPic.code && noPic.code.length > 0, JSON.stringify(noPic));
   ok('take 112: ...and a photo that arrived still sits on white (the take-109 look) -- the probe sees white when it is there', noPic.photo.bg === 'rgb(255, 255, 255)' && noPic.photo.img === 'none', JSON.stringify(noPic.photo));
   /* take 112: the Diagnostics report at the cover width -- the feed's address ran past the panel's edge (the look, 411 px) */
-  await page.setViewport({ width: 411, height: 960, deviceScaleFactor: 2 });
+  await page.setViewport(FOLD.cover);   /* take 115: at its MEASURED pixel ratio, 2.625 (it read 2 here) */
   const diag112 = await page.evaluate(async () => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)); while (V.closeAnyOverlay()) {}
     const probe = V.DIAG.probe; V.DIAG.probe = async () => 'not probed here'; V.go('diag'); await wait(150); await V.DIAG.report().then(t => { document.getElementById('diagOut').textContent = t; });
     const pre = document.getElementById('diagOut'), clean = { sw: pre.scrollWidth, cw: pre.clientWidth, url: /feed url: https:\/\//.test(pre.textContent) };
@@ -1377,8 +1458,11 @@ if (puppeteer) {
   ok('take 112: ...control: without the break, the address runs past the panel', diag112.control.sw > diag112.control.cw + 1, JSON.stringify(diag112.control));
 
   /* ---- take 114 (A32): each distributor's history on file, under its row inside the open Distributor info -- at
-     360 px, in the owner's zone (America/Detroit), in Chrome. The longest case: the fixture feed's own dates, which do
+     360 px, in the owner's zone, in Chrome. The longest case: the fixture feed's own dates, which do
      not explain the calendar change, so both changes show their two checks and the fold carries its note ---- */
+  /* take 115: the owner's zone is America/New_York, MEASURED on his Diagnostics (the take-114 install); take 114 ran in
+     America/Detroit, INFERRED from the zip 48329 -- the same offsets and the same daylight-saving days in 2026 */
+  const OWNER_TZ = 'America/New_York';
   { const dir114 = fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-114-')), fx114 = path.join(dir114, 'feed-fixture.json');
     execSync(`python3 tools/hunt.py --from-fixtures --out ${fx114}`, { cwd: ROOT, stdio: 'pipe' });
     const F = JSON.parse(fs.readFileSync(fx114, 'utf8')), R0 = JSON.parse(fs.readFileSync(path.join(dir114, 'history-fixture.json'), 'utf8')).runs[0];
@@ -1393,7 +1477,7 @@ if (puppeteer) {
     const H = { runs, since: runs[0].t, stores: {}, titles: {} }, PID = F.sources.gts.items.find(i => i.sku === 'BJP2873812').catalog_id;
     const AFTER = runs[I2 - 2].t;   /* the site change's earlier check: the last run that read GTS before the hole */
     await page.setViewport({ width: 360, height: 915, deviceScaleFactor: 2 });
-    await page.emulateTimezone('America/Detroit');
+    await page.emulateTimezone(OWNER_TZ);
     /* what a check reads: the history blocks, the take-112 words above them, and every day and moment in either on
        one line -- a Range over each, its client rects' distinct tops (the take-112 probe, taken to the long words) */
     await page.evaluate(() => { window.__tl114 = () => {
@@ -1440,13 +1524,13 @@ if (puppeteer) {
        ctl114.landed && ctl114.narrow.days[0] > 0 && ctl114.narrow.days[1] > 0 && ctl114.narrow.breaks[0] === 1 && ctl114.narrow.breaks[1] === 1, JSON.stringify(ctl114));
     ok('take 114: ...control: held on one line (nowrap, which landed), the history runs past its block and the page scrolls sideways; spaced like any words, a day in that column splits, in both',
        ctl114.nowrap && ctl114.box && ctl114.page && ctl114.landed && ctl114.spaced.breaks[0] >= 2 && ctl114.spaced.breaks[1] >= 2, JSON.stringify(ctl114));
-    ok('take 114: the history reads in this phone\'s time (the zone America/Detroit, which landed): the site change\'s earlier check in local time, not in the runner\'s UTC',
-       tz114.zone === 'America/Detroit' && tz114.has && !tz114.hasUtc, JSON.stringify(tz114));
+    ok(`take 114: the history reads in this phone's time (the zone ${OWNER_TZ}, which landed): the site change's earlier check in local time, not in the runner's UTC`,
+       tz114.zone === OWNER_TZ && tz114.has && !tz114.hasUtc, JSON.stringify(tz114));
     ok('take 114: ...control: that instant in UTC reads otherwise, so the check can tell them apart', !!tz114.local && tz114.local.replace(/[\u00a0\u202f]/g, ' ') !== tz114.utc.replace(/[\u00a0\u202f]/g, ' '), JSON.stringify(tz114));
     /* the review's finding: momentText predates this take -- the timeline's OWN local-time code (localDay for the header's
        days, tlClock for a window's second end on the same local day) is read here against strings the page builds for the
        same instants in this zone, and never their UTC forms. The same history moved back to end at 2:30 AM UTC, whatever
-       the hour this runs: its last check is the evening before in Detroit, and the site change's two checks, 2:30 and
+       the hour this runs: its last check is the evening before in New York, and the site change's two checks, 2:30 and
        10:30 PM UTC, fall on one day in both zones, so its second end is a bare clock that UTC writes hours later */
     const iso114 = ms => new Date(ms).toISOString().replace(/\.\d{3}Z$/, 'Z'), SH114 = (END - 2.5 * 3600e3) % 864e5;
     const H2 = { ...H, runs: runs.map(r => ({ ...r, t: iso114(Date.parse(r.t) - SH114) })) }; H2.since = H2.runs[0].t;
@@ -1467,8 +1551,8 @@ if (puppeteer) {
       return { zone: Intl.DateTimeFormat().resolvedOptions().timeZone, head, site, span: m ? m[1] : '', win: w ? w[1] : '', bare: key(AFTER, false) === key(BY, false), last: [key(LAST, false), key(LAST, true)],
         local: { span: sp(span(false)), win: sp(win(false)) }, utc: { span: sp(span(true)), win: sp(win(true)) } }; },
       { F: { ...F, fetched_at: iso114(END - SH114) }, H: H2, PID, FIRST: H2.runs[G0].t, LAST: H2.runs[N - 1].t, AFTER: H2.runs[I2 - 2].t, BY: H2.runs[I2].t });
-    ok('take 114: the history\'s own days and clock are this phone\'s (America/Detroit): the GTS header\'s day span and the site change\'s two checks -- its second end a bare clock on the one local day -- are the page\'s own strings for those instants in this zone, not in UTC',
-       own114.zone === 'America/Detroit' && own114.bare && !!own114.span && own114.span === own114.local.span && own114.span !== own114.utc.span
+    ok(`take 114: the history's own days and clock are this phone's (${OWNER_TZ}): the GTS header's day span and the site change's two checks -- its second end a bare clock on the one local day -- are the page's own strings for those instants in this zone, not in UTC`,
+       own114.zone === OWNER_TZ && own114.bare && !!own114.span && own114.span === own114.local.span && own114.span !== own114.utc.span
        && !!own114.win && own114.win === own114.local.win && own114.win !== own114.utc.win, JSON.stringify(own114));
     ok('take 114: ...control: for these instants (the last check 2:30 AM UTC, the site change 2:30 and 10:30 PM UTC) the UTC day span and window read otherwise -- the last check a day later in UTC -- so the check can tell them apart',
        own114.last[0] !== own114.last[1] && own114.local.span !== own114.utc.span && own114.local.win !== own114.utc.win, JSON.stringify(own114));
@@ -1504,6 +1588,172 @@ if (puppeteer) {
     await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.HUNT.feed = null; V.HUNT.hist = null; V.DISTF.open.clear(); V.MODE.set('collect', true); V.go('home'); delete window.__tl114; });
     await new Promise(r => setTimeout(r, 200));
     fs.rmSync(dir114, { recursive: true, force: true });
+    await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 }); }
+
+  /* ---- take 115, the production baseline: what the app lane's fixes need and smoke's DOM stub cannot see, in Chrome --
+     every text on a tint and the nav's labels from the colours Chrome computes (SPEC-106-29, -30); a badged name that
+     wraps in a deck, trade, want and alert row (SPEC-111-50); a history header with nothing to open shows no pointer
+     (STAN-114-26); a deck's Leader box keeps the card's colours with the pictures blocked (SPEC-109-41); a distributor kept
+     after a failed fetch reads "not reached" (SPEC-112-54). Each was read on take 114's build, where it fails ---- */
+  { const dir115 = fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-115-')), fx115 = path.join(dir115, 'feed-fixture.json');
+    execSync(`python3 tools/hunt.py --from-fixtures --out ${fx115}`, { cwd: ROOT, stdio: 'pipe' });
+    const F115 = JSON.parse(fs.readFileSync(fx115, 'utf8')), R115 = JSON.parse(fs.readFileSync(path.join(dir115, 'history-fixture.json'), 'utf8')).runs[0];
+    await page.setViewport(PHONE(412));
+
+    /* (SPEC-106-29, -30) each text read on the ground it is drawn on: its own background, then every translucent layer under
+       it down to the first opaque one -- the nav's pill, over the bar, over the page. The tokens on each tint in each palette,
+       and the places they are drawn: the nav's labels, a deck that is not legal, and in Collect the picker's best match (the
+       collections sheet's, and the scanner's row as openPicker writes it) and a bulk-selected tile */
+    const tint115 = css => page.evaluate(async css => {
+      const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
+      const parse = c => { let m = /^rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)$/.exec(c); if (m) return [+m[1], +m[2], +m[3], m[4] == null ? 1 : +m[4]];
+        m = /^color\(srgb ([-\d.e]+) ([-\d.e]+) ([-\d.e]+)(?: \/ ([\d.]+))?\)$/.exec(c); if (m) return [255 * m[1], 255 * m[2], 255 * m[3], m[4] == null ? 1 : +m[4]]; return null; };
+      const over = (f, b) => [0, 1, 2].map(i => f[i] * f[3] + b[i] * (1 - f[3])).concat(1);
+      const ground = el => { const layers = []; for (let e = el; e; e = e.parentElement) { const c = parse(getComputedStyle(e).backgroundColor); if (!c) return null; if (c[3] > 0) { layers.push(c); if (c[3] >= 1) break; } }
+        if (!layers.length || layers[layers.length - 1][3] < 1) return null; let g = layers.pop(); while (layers.length) g = over(layers.pop(), g); return g; };
+      const lum = c => { const f = v => { v = Math.round(v) / 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); };
+      const ratio = el => { const g = ground(el), t = parse(getComputedStyle(el).color); if (!g || !t) return 0; const a = lum(over(t, g)), b = lum(g); return +((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)).toFixed(2); };
+      const texts = els => els.filter(e => [...e.childNodes].some(n => n.nodeType === 3 && n.data.trim()) && e.getBoundingClientRect().width > 0);
+      const says = e => [...e.childNodes].filter(n => n.nodeType === 3).map(n => n.data).join('').trim().slice(0, 18);
+      let st = null; if (css) { st = document.createElement('style'); st.textContent = css; document.head.appendChild(st); }
+      const rows = [], add = (mode, part, els) => els.forEach(e => rows.push({ mode, part, what: says(e), r: ratio(e) }));
+      const L = V.CAT.rows.find(p => p.type === 'Leader' && p.img), c1 = V.CAT.rows.find(p => p.type === 'Character' && V.colourLegal(p, L));
+      const dk = V.DECKS.blank(); dk.name = 'render 115 tints'; dk.leader = L.id; dk.cards.push({ id: c1.id, n: 1 }); V.DECKS.list.push(dk);   /* one card: not legal */
+      if (!V.OWN.items.length) V.CAT.rows.filter(p => !p.sealed && p.market > 1).slice(0, 2).forEach(p => V.OWN.add(p.id, { condition: 'NM' }));
+      for (const mode of ['collect', 'play', 'hunt']) {
+        V.MODE.set(mode, true); await wait(300); while (V.closeAnyOverlay()) {} window.scrollTo(0, 0);
+        const nav = [...document.querySelectorAll('nav')].find(n => getComputedStyle(n).display !== 'none'), on = nav && nav.querySelector('button.on'), off = nav && nav.querySelector('button:not(.on)');
+        add(mode, 'the nav\'s active label', on ? [on] : []); add(mode, 'the nav\'s other labels', off ? [off] : []);
+        const box = document.createElement('div');
+        box.innerHTML = ['--fg', '--dim', '--dim2', '--accent-ink', '--up', '--down', '--gold'].map(k => `<div style="background:var(--accent-bg)"><span style="color:var(${k})">${k.slice(2)} on the selected tint</span></div>`).join('')
+          + '<div style="background:var(--bad-bg)"><span style="color:var(--down)">down on the bad tint</span></div><div style="background:var(--ok-bg)"><span style="color:var(--up)">up on the good tint</span></div><div style="background:var(--warn-bg)"><span style="color:var(--gold)">gold on the warning tint</span></div>';
+        document.querySelector('.screen.on').appendChild(box); box.querySelectorAll('span').forEach(e => rows.push({ mode, part: 'token', what: e.textContent, r: ratio(e) })); box.remove();
+        V.openDeck(dk.id); await wait(250); const lg = document.querySelector('#dkLegal'); add(mode, 'a deck that is not legal', lg && lg.classList.contains('bad') ? [lg] : []);
+        if (mode === 'collect') {
+          V.go('home'); await wait(150); document.querySelector('#pfSwitch').click(); await wait(250);
+          const best = document.querySelector('#pkOpts .opt.best'); add(mode, 'the picker\'s best match', best ? texts([...best.querySelectorAll('*')]) : []);
+          document.querySelector('#pkOpts').insertAdjacentHTML('beforeend', '<button class="opt best" id="opt115"><div class="oa"></div><div class="oi"><b>Alternate Art</b><span>OP01 \u00b7 SP badge on the card</span></div><div class="op mono">$12.00<span>Normal</span></div></button>');
+          add(mode, 'the scanner\'s best match', texts([...document.querySelectorAll('#opt115 *')])); document.querySelector('#opt115').remove();
+          while (V.closeAnyOverlay()) {}
+          V.go('collection'); await wait(200); document.querySelector('[data-act="bulk"]').click(); await wait(150); document.querySelector('#colGrid [data-open]').click(); await wait(150);
+          const tile = [...document.querySelectorAll('#colGrid .tile')].find(t => /accent-bg/.test(t.getAttribute('style') || ''));
+          add(mode, 'a bulk-selected tile', tile ? texts([...tile.querySelectorAll('*')].filter(e => !e.closest('.art'))) : []);
+          const x = document.getElementById('bulkX'); if (x) x.click(); await wait(100);
+        }
+      }
+      V.DECKS.list = V.DECKS.list.filter(d => d !== dk); if (st) st.remove(); V.MODE.set('collect', true); await wait(300); V.go('home');
+      return rows; }, css);
+    const tNow = await tint115(''), tThen = await tint115(':root{--accent-bg:color-mix(in srgb,var(--brass) 12%,var(--card));--bad-bg:color-mix(in srgb,var(--down) 14%,var(--card))}nav button.on{background:color-mix(in srgb,var(--card2) 70%,var(--brass) 12%)}');
+    const low115 = rows => rows.filter(r => !(r.r >= 4.5)).map(r => `${r.mode} ${r.part} "${r.what}" ${r.r}`);
+    const parts115 = rows => ['collect', 'play', 'hunt'].map(m => { const rs = rows.filter(r => r.mode === m); return `${m}:${rs.filter(r => r.part === 'token').length}/${new Set(rs.map(r => r.part)).size}`; }).join(' ');
+    ok('take 115 (SPEC-106-29, -30): every text on a tint clears 4.5:1 from the colours Chrome computes, in each palette -- the selected, bad, good and warning tints, the nav\'s labels (the active one on its pill over the bar), a deck that is not legal, and in Collect the picker\'s best match and a bulk-selected tile',
+       parts115(tNow) === 'collect:10/7 play:10/4 hunt:10/4' && low115(tNow).length === 0, low115(tNow).join(' | ') || `${parts115(tNow)} min ${Math.min(...tNow.map(r => r.r))}`);
+    ok('take 115: ...control: take 114\'s rules planted back -- Collect\'s 12% tint and 14% bad tint, the translucent pill -- put Collect\'s dim, dim2 and down text and Prep & Play\'s active label under it, and nothing in Hunt',
+       ['dim on the selected tint', 'dim2 on the selected tint', 'down on the bad tint'].every(w => low115(tThen).some(x => x.startsWith(`collect token "${w}"`))) && low115(tThen).some(x => x.startsWith('play the nav\'s active label')) && !low115(tThen).some(x => x.startsWith('hunt')),
+       low115(tThen).join(' | '));
+
+    /* (SPEC-111-50) landmine 164's wrap reached the search rows only: a deck's, a trade's, a want's and an alert's row kept the
+       ellipsis over the badge -- the one word that tells two printings apart. The six badged printings with the longest names */
+    const badge115 = [];
+    for (const vp of [PHONE(360), FOLD.cover]) {
+      await page.setViewport(vp);
+      badge115.push(await page.evaluate(async w => {
+        const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
+        const keep = { give: V.TRADE.give, get: V.TRADE.get, want: V.WANT.list, alerts: V.ALERTS.list, decks: V.DECKS.list.slice() };
+        const P = V.CAT.rows.filter(p => !p.sealed && p.num && p.treat && p.treat !== 'base' && p.market > 0).sort((a, b) => b.name.length - a.name.length || a.id - b.id).slice(0, 6);
+        const d = V.DECKS.blank(); d.name = 'render 115 badges'; d.leader = V.CAT.rows.find(p => p.type === 'Leader' && p.img).id; P.forEach(p => d.cards.push({ id: p.id, n: 1 })); V.DECKS.list.push(d);
+        V.TRADE.give = P.map(p => ({ id: p.id, n: 1 })); V.TRADE.get = []; V.WANT.list = P.map(p => ({ num: p.num, id: p.id, added: new Date().toISOString() }));
+        V.ALERTS.list = []; P.forEach(p => V.ALERTS.add(p.id, 'below', 1));
+        const read = sel => [...document.querySelectorAll(sel)].filter(b => b.querySelector(':scope > .badge')).map(b => { const r = b.getBoundingClientRect(), g = b.querySelector(':scope > .badge').getBoundingClientRect();
+          return g.right <= r.right + 0.5 && g.bottom <= r.bottom + 0.5 && b.scrollWidth <= b.clientWidth + 1; });
+        const all = () => ({ deck: read('#dkRows .dkrow .n > b'), trade: read('#trGive .dkrow .n > b'), want: read('#wtRows .dkrow .n > b'), alert: read('#alRows .dkrow .n > b') });
+        const each = async () => { const o = {}; V.MODE.set('play', true); await wait(250); V.openDeck(d.id); await wait(200); o.deck = read('#dkRows .dkrow .n > b');
+          V.MODE.set('collect', true); await wait(250); V.go('trade'); await wait(150); o.trade = read('#trGive .dkrow .n > b');
+          V.go('wants'); await wait(150); o.want = read('#wtRows .dkrow .n > b'); o.alert = read('#alRows .dkrow .n > b'); return o; };
+        const clean = await each(); const st = document.createElement('style'); st.textContent = '.dkrow .n b:has(> .badge){white-space:nowrap!important}'; document.head.appendChild(st);
+        const control = await each(); st.remove();
+        V.TRADE.give = keep.give; V.TRADE.get = keep.get; V.WANT.list = keep.want; V.ALERTS.list = keep.alerts; V.DECKS.list.length = 0; V.DECKS.list.push(...keep.decks);
+        V.go('home'); return { w, clean, control }; }, vp.width));
+    }
+    await page.setViewport(PHONE(412));
+    const whole = o => Object.entries(o).map(([k, v]) => `${k} ${v.filter(Boolean).length}/${v.length}`).join(', ');
+    ok('take 115 (SPEC-111-50): at 360 px and on the Fold\'s cover (411) a name that carries its printing\'s badge wraps in a deck row, a trade row, a want row and an alert row -- every badge whole (the six badged printings with the longest names)',
+       badge115.every(x => ['deck', 'trade', 'want', 'alert'].every(k => x.clean[k].length === 6 && x.clean[k].every(Boolean))), badge115.map(x => `${x.w}: ${whole(x.clean)}`).join(' | '));
+    ok('take 115: ...control: held on one line, as take 114 drew them, the ellipsis cuts the badges in all four at 360 px', ['deck', 'trade', 'want', 'alert'].every(k => badge115[0].control[k].length === 6 && badge115[0].control[k].some(x => !x)), whole(badge115[0].control));
+
+    /* (STAN-114-26, landmine 118) a distributor with no check on file draws its history header as a line, not a button:
+       it must not show the pointer a control shows (a desktop browser, where the owner looks at Pages); the button keeps it */
+    const runs115 = []; for (let k = 11; k >= 0; k--) runs115.push({ t: new Date(Date.parse(F115.fetched_at) - k * 4 * 3600e3).toISOString().replace(/\.\d{3}Z$/, 'Z'), online: {}, shelf: {}, gts: { ...R115.gts } });   /* GTS read at every run, Southern Hobby at none */
+    const H115 = { runs: runs115, since: runs115[0].t, stores: {}, titles: {} }, PID115 = F115.sources.gts.items.find(i => i.sku === 'BJP2873812').catalog_id;
+    const cur115 = await page.evaluate(async ({ F, H, PID }) => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
+      V.NAV.zipAsked = true; V.MODE.set('hunt', true); await wait(250); while (V.closeAnyOverlay()) {}
+      V.HUNT.feed = F; V.HUNT.hist = H; V.DISTF.open.clear(); V.openDetail(PID, { dist: true }); await wait(150);
+      const read = () => { const span = document.querySelector('#dDist .dtl[data-tl="southern"] span.dtl-h'), btns = [...document.querySelectorAll('#dDist button.dtl-h')];
+        return { span: span ? getComputedStyle(span).cursor : 'missing', says: span ? span.textContent.trim() : '', btns: btns.map(b => getComputedStyle(b).cursor) }; };
+      const clean = read(), st = document.createElement('style'); st.textContent = '#dDist .dtl-h{cursor:pointer}'; document.head.appendChild(st); const control = read(); st.remove();
+      V.HUNT.feed = null; V.HUNT.hist = null; V.DISTF.open.clear(); while (V.closeAnyOverlay()) {} V.MODE.set('collect', true); await wait(250); V.go('home'); return { clean, control }; }, { F: F115, H: H115, PID: PID115 });
+    ok('take 115 (STAN-114-26): a history with no check on file is a header line with no pointer; the history that opens is a button with one',
+       cur115.clean.span !== 'missing' && cur115.clean.span !== 'pointer' && /no check of it on file yet/.test(cur115.clean.says) && cur115.clean.btns.length >= 1 && cur115.clean.btns.every(c => c === 'pointer'), JSON.stringify(cur115.clean));
+    ok('take 115: ...control: take 114\'s rule (a pointer on every .dtl-h) is caught on the line', cur115.control.span === 'pointer', JSON.stringify(cur115.control));
+
+    /* (SPEC-109-41) a deck's Leader large, with the picture hosts blocked: the box shows the card's own colours, both of a
+       two-colour card, where take 114 left an empty grey box. The last two-colour Leader: a picture nothing earlier asked for */
+    const cdp115 = await page.createCDPSession(); await cdp115.send('Network.enable');
+    await cdp115.send('Network.setBlockedURLs', { urls: ['*://tcgplayer-cdn.tcgplayer.com/*', '*://product-images.tcgplayer.com/*'] });
+    await page.setViewport(FOLD.cover);
+    const lead115 = await page.evaluate(async () => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
+      const rgb = v => { const e = document.createElement('i'); e.style.color = v; document.body.appendChild(e); const c = getComputedStyle(e).color; e.remove(); return c; };
+      const two = V.CAT.rows.filter(p => p.type === 'Leader' && p.img && !p.sealed && /^[A-Z][a-z]+;[A-Z][a-z]+$/.test(p.color || '')), L = two[two.length - 1];
+      const d = V.DECKS.blank(); d.name = 'render 115 leader'; d.leader = L.id; V.DECKS.list.push(d);
+      V.MODE.set('play', true); await wait(250); V.openDeck(d.id); await wait(1500);   /* the large picture refused, then its thumbnail */
+      /* a copy the page already holds is not asked of the network (the Leader sheet may have shown this one earlier in the
+         run where the host serves it): what a refusal leaves is the box with no picture, so any picture left is taken out */
+      const box = document.getElementById('dkLead'), refused = !box.querySelector('img'); box.querySelectorAll('img').forEach(i => i.remove());
+      const read = () => ({ bg: getComputedStyle(box).backgroundImage, img: !!box.querySelector('img') });
+      const want = typeof V.artColours === 'function' ? V.artColours(L).map(rgb) : [], clean = { ...read(), refused };
+      const st = document.createElement('style'); st.textContent = '.dkhead .lead{background:var(--card2)!important}'; document.head.appendChild(st); const control = read(); st.remove();
+      V.DECKS.list = V.DECKS.list.filter(x => x !== d); V.MODE.set('collect', true); await wait(250); V.go('home');
+      return { L: `${L.num} ${L.color}`, want, clean, control }; });
+    await cdp115.send('Network.setBlockedURLs', { urls: [] }); await cdp115.detach();
+    await page.setViewport(PHONE(412));
+    ok('take 115 (SPEC-109-41): with the picture hosts blocked, a deck\'s Leader box shows the card\'s own colours -- both of a two-colour Leader -- not an empty grey box',
+       !lead115.clean.img && lead115.want.length === 2 && lead115.want[0] !== lead115.want[1] && has(lead115.clean.bg, lead115.want), JSON.stringify(lead115));
+    ok('take 115: ...control: take 114\'s flat box (--card2) shows neither', !has(lead115.control.bg, lead115.want.slice(0, 1)), JSON.stringify(lead115.control));
+
+    /* (SPEC-112-54) the feed hunt.py writes when a fetch fails after a good one -- ok still true, the last good copy kept,
+       with kept and stale_since -- built by tools/hunt.py's own build() with GTS answering as it did live on 25 Sept, over
+       the fixture feed as the previous one. Read as drawn at 360 px: the closed Distributor info's line, GTS's own panel
+       opened, and Releases'. Southern Hobby answered two hours before */
+    const keptFeed = fails => JSON.parse(execSync('python3 -', { cwd: ROOT, input: `
+import copy, importlib.util, json, sys
+spec = importlib.util.spec_from_file_location("hunt_file", "tools/hunt.py"); H = importlib.util.module_from_spec(spec); spec.loader.exec_module(H)
+F = json.load(open(${JSON.stringify(fx115)})); fails = ${JSON.stringify(fails)}
+err = {"target": "HTTP 503", "gts": "TimeoutError: The read operation timed out", "southern": "HTTP 503"}
+def answer(k):
+    return (lambda *a, **kw: {"ok": False, "error": err[k]}) if k in fails else (lambda *a, **kw: copy.deepcopy(F["sources"][k]))
+H.target.fetch, H.gts.fetch, H.southern.fetch = answer("target"), answer("gts"), answer("southern")
+json.dump(H.build(F["zips"], F["radius"], previous=copy.deepcopy(F)), sys.stdout)
+`, stdio: ['pipe', 'pipe', 'pipe'] }).toString());
+    const K115 = keptFeed(['gts']), W115 = keptFeed([]); K115.sources.southern.fetched_at = new Date(Date.now() - 2 * 3600e3).toISOString();
+    await page.setViewport(PHONE(360));
+    const dist115 = F => page.evaluate(async F => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)), o = {};
+      V.NAV.zipAsked = true; V.HUNT.setZip(''); V.MODE.set('hunt', true); await wait(250); while (V.closeAnyOverlay()) {}
+      V.SEALED.kind = 'all'; V.SEALED.q = ''; V.DISTF.open.clear(); V.go('sealed'); V.HUNT.feed = F; V.paintSealed(); await wait(100);   /* the feed set in the same tick as each paint (landmine 166) */
+      const line = sel => { const f = document.querySelector(sel), n = f && f.querySelector('.note'); return n ? n.innerText.trim() : 'missing'; };
+      o.sealed = line('#sealedList [data-distfold="sealed"]');
+      V.HUNT.feed = F; V.distFoldTap('sealed'); await wait(100);
+      const sec = [...document.querySelectorAll('#sealedList .dsec')].find(s => /GTS Distribution/.test((s.querySelector('b') || {}).textContent || '')), note = sec && sec.querySelector('.note');
+      const pb = sec && sec.closest('.panel').getBoundingClientRect(), nb = note && note.getBoundingClientRect();
+      o.gts = note ? note.innerText.trim().slice(0, 120) : 'missing'; o.inside = !!nb && nb.height > 0 && nb.left >= pb.left - 0.5 && nb.right <= pb.right + 0.5; o.side = document.documentElement.scrollWidth <= innerWidth + 0.5;
+      V.DISTF.open.clear(); V.go('releases'); V.HUNT.feed = F; V.paintReleases(); await wait(100); o.releases = line('#relList [data-distfold="releases"]');
+      V.HUNT.feed = null; V.DISTF.open.clear(); V.paintSealed(); V.paintReleases(); V.MODE.set('collect', true); await wait(250); V.go('home'); return o; }, F);
+    const kept115 = await dist115(K115), fine115 = await dist115(W115);
+    await page.setViewport(PHONE(412));
+    ok('take 115 (SPEC-112-54): a distributor kept after a failed fetch (ok still true, kept) reads "not reached since" on Sealed and Releases, its "checked" is the one that answered, and its own panel says it could not be reached while showing its last check -- drawn inside the panel at 360 px, no sideways scroll',
+       K115.sources.gts.ok === true && K115.sources.gts.kept === true && /\u00b7 1 not reached since /.test(kept115.sealed) && /checked 2 h ago/.test(kept115.sealed) && !/checked just now/.test(kept115.sealed)
+       && /^Could not reach GTS Distribution since .+; its last check, .+, is shown/.test(kept115.gts) && kept115.inside && kept115.side && /\u00b7 1 not reached since /.test(kept115.releases), JSON.stringify(kept115));
+    ok('take 115: ...control: when every fetch answers, nothing reads "not reached" and GTS\'s panel says when it was checked', W115.sources.gts.kept === undefined && !/not reached/.test(fine115.sealed + fine115.releases) && /^Checked /.test(fine115.gts), JSON.stringify(fine115));
+    fs.rmSync(dir115, { recursive: true, force: true });
     await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 }); }
 
   await browser.close();

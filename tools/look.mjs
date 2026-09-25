@@ -29,7 +29,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { STEPS, VIEWPORTS, CONTROLS } from './look/steps.mjs';
+import { STEPS, VIEWPORTS, CONTROLS, PROBES, OWNER_TZ } from './look/steps.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const WWW = path.join(ROOT, 'www');
@@ -106,11 +106,12 @@ async function main() {
   const browser = await pw.chromium.launch({ args: ['--no-sandbox', '--disable-dev-shm-usage'] });
   const report = [];
   const names = which === 'both' ? Object.keys(VIEWPORTS) : [which];
-  const steps = selftest ? CONTROLS : STEPS[take];
+  const steps = selftest ? [...CONTROLS, ...PROBES] : STEPS[take];
   try {
     for (const vp of names) {
       const v = VIEWPORTS[vp]; if (!v) { console.log(`look: no viewport '${vp}' (have: ${Object.keys(VIEWPORTS).join(', ')})`); process.exit(2); }
-      const page = await browser.newPage({ viewport: { width: v.width, height: v.height }, deviceScaleFactor: v.dpr });
+      /* take 115: every page in the owner's zone, MEASURED (steps.mjs) -- a day or a clock in a picture is the one his phone shows */
+      const page = await browser.newPage({ viewport: { width: v.width, height: v.height }, deviceScaleFactor: v.dpr, timezoneId: OWNER_TZ });
       if (PROXY) await page.route(PICTURES, async route => {
         try {
           const r = await fetch(route.request().url(), { headers: { 'User-Agent': 'Mozilla/5.0 optcghub-look' } });
@@ -127,7 +128,7 @@ async function main() {
         shot: async (label) => { ctx.shots += 1; const p = path.join(dir, `${label}.png`); await page.screenshot({ path: p }); return path.relative(ROOT, p); },
         /* a page load that waits for the catalogue */
         open: async () => { await page.goto(url, { waitUntil: 'networkidle' }); await page.waitForFunction(() => window.VAULT && window.VAULT.CAT && window.VAULT.CAT.ready, null, { timeout: 30000 }); await page.waitForFunction(() => !document.querySelector('#splash'), null, { timeout: 15000 }).catch(() => {}); /* the splash lingers a moment (take 86); a step's picture is what is under it */ await page.evaluate(() => { const s = [...document.querySelectorAll('#tour button')].find(b => /skip/i.test(b.textContent)); if (s) s.click(); }); } };
-      console.log(`\n── look ${selftest ? 'selftest' : 'take ' + take} · ${vp} ${v.width}×${v.height} @${v.dpr}${v.note ? '  (' + v.note + ')' : ''}`);
+      console.log(`\n── look ${selftest ? 'selftest' : 'take ' + take} · ${vp} ${v.width}×${v.height} @${v.dpr}${v.note ? '  (' + v.note + ')' : ''} \u00b7 ${OWNER_TZ}`);
       let n = 0;
       for (const step of steps) await runStep(page, ctx, step, ++n);
       if (errors.length) console.log(`  page errors: ${errors.slice(0, 3).join(' | ')}`);
@@ -137,10 +138,13 @@ async function main() {
   fs.writeFileSync(path.join(OUT, 'report.json'), JSON.stringify(report, null, 1));
   const bad = report.filter(r => !r.ok);
   if (selftest) {
-    /* the harness watched to fail: every control must be reported NOT ok */
-    const fired = CONTROLS.every(c => report.filter(r => r.step === c.name).every(r => !r.ok));
-    console.log(`\nlook selftest: ${fired ? 'every control fired (the harness reports a wrong expectation and a blank page as failures)' : 'A CONTROL DID NOT FIRE'}`);
-    process.exit(fired ? 0 : 1);
+    /* the harness watched to fail: every control must be reported NOT ok, and every probe ok -- each at every size it
+       was asked for (take 115: a control with no line of its own, one that never ran, passed as fired -- landmine 185) */
+    const ran = s => { const rs = report.filter(r => r.step === s.name); return rs.length === names.length ? rs : null; };
+    const fired = CONTROLS.every(c => { const rs = ran(c); return !!rs && rs.every(r => !r.ok); });
+    const held = PROBES.every(p => { const rs = ran(p); return !!rs && rs.every(r => r.ok); });
+    console.log(`\nlook selftest: ${fired ? 'every control fired (the harness reports a wrong expectation, a blank page and a knob read mid-slide as failures)' : 'A CONTROL DID NOT FIRE'}; ${held ? 'every probe held (the knob read at rest under a slow slide)' : 'A PROBE DID NOT HOLD'}`);
+    process.exit(fired && held ? 0 : 1);
   }
   if (PROXY) console.log(`\npictures through Node behind the proxy: ${pictures.fetched} fetched, ${pictures.refused} refused by the host`);
   console.log(`\nlook take ${take}: ${report.length} steps, ${report.length - bad.length} ok, ${bad.length} not ok — ${path.relative(ROOT, OUT)}/`);
