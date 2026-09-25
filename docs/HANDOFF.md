@@ -379,6 +379,15 @@ scratch tree:
     watched card past about $1,137 would have read red. The reviewer's
     control on take 114's build still fails it.
 
+Two of the review's findings were the record's, put right here with no code
+change: V1-STATE and AGENDA said a distributor's short line on Releases
+opens the product's page -- on Releases the lines are text on the set's row,
+whose tap opens the set, since a button cannot hold another (SPEC-112-55);
+and, a note on take 111 (its entry stands as written): since take 111 the
+card page's Graded panel lists the slabs of the collection on screen, as the
+rest of the page does, and All lists every collection's -- take 110 listed
+every collection's under any collection (SPEC-111-52).
+
 
 ### Tests
 

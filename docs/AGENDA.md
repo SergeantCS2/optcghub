@@ -1146,8 +1146,10 @@ row per product across the two distributors in "not in the catalogue
 yet" (only a set code joins them).
 
 **The owner's word on the pictures:** "I don't want them flooding the
-screen." A distributor on a row is now one short line (its name and its
-state) that opens the product's page at its Distributor info. The panels
+screen." A distributor on a sealed row is now one short line (its name and
+its state) that opens the product's page at its Distributor info; on
+Releases the same lines are text on the set's row, which opens the set
+(take 115's review). The panels
 and the not-in-the-catalogue list sit under closed "Distributor info"
 drop-downs, and Where to buy lists sellers to collectors only (UI-AUDIT §8).
 
