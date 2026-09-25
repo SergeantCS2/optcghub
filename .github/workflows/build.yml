@@ -5,8 +5,12 @@ name: build
 #
 #   seed   -> unpack a seed zip at the root and commit it (the RECOVERY route)
 #   bundle -> build the catalogue, the app, run smoke + gate, commit the prices
-#   pages  -> browser build + privacy policy (Play requires a live URL)
-#   apk    -> signed APK for sideload, AAB for Play, Release take-N
+#   pages  -> browser build + privacy policy (Play requires a live URL), with
+#             the hourly's hunt/ files read again inside the `pages` group
+#   apk    -> signed APK for sideload, AAB for Play, Release take-N (and the
+#             Play icon)
+#   report -> A9: one issue for any job that went red, closed only when every
+#             job ran green
 #
 # Since take 89 this file lives in git like everything else: changed on a
 # branch, reviewed in the PR, kept BYTE-IDENTICAL to ci/build.yml (the gate
@@ -120,33 +124,7 @@ jobs:
         id: build
         run: bash ci/bundle.sh
 
-      # A9. A failed nightly is silent by default: the app keeps its last
-      # catalogue and nobody is told. This opens ONE issue, labelled, and
-      # appends to it on each further failure, so three bad nights are three
-      # comments on one thread rather than nothing. GitHub also emails the
-      # owner on workflow failure; the issue is what survives the email.
-      # Landmine 125: the label must exist before anything is filed under it,
-      # or every night opens a fresh unlabelled issue (#8-#11).
-      - name: Report a failed night
-        if: failure()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh label create nightly-failure --color B60205 --description "A9: the nightly catalogue build went red" --force >/dev/null
-          n=$(gh issue list --label nightly-failure --state open --json number -q '.[0].number')
-          body="Nightly build failed — run ${{ github.run_id }} on $(date -u +%Y-%m-%d). See the Actions log. The app keeps running on its last catalogue; the Home screen will show a stale banner after three days (A9)."
-          if [ -n "$n" ]; then gh issue comment "$n" --body "$body"
-          else gh issue create --title "Nightly catalogue build is failing" --label nightly-failure --body "$body"; fi
-
-      - name: Close the failure thread on a green night
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          n=$(gh issue list --label nightly-failure --state open --json number -q '.[0].number' 2>/dev/null || true)
-          if [ -n "$n" ]; then
-            gh issue close "$n" --comment "Green again: run ${{ github.run_id }} on $(date -u +%Y-%m-%d)."
-          fi
-
+      # A9's report is the report job at the end: it covers every job (take 115)
       - uses: actions/upload-artifact@v6
         with:
           name: www
@@ -162,16 +140,39 @@ jobs:
     # needs bundle alone: the APK and the Release go ahead.
     if: needs.bundle.outputs.pages != 'skip'
     runs-on: ubuntu-latest
-    continue-on-error: true      # un-enabled Pages must not block the APK
+    timeout-minutes: 15
+    # Take 115: the nightly race. Pages is one site with two deployers, and the
+    # bundle job's carry-over reads hunt/ before this job starts: an hourly
+    # that deployed in between lost its row. So this job reads hunt/ again,
+    # then deploys, inside the `pages` group -- hunt.yml's whole run holds the
+    # same group -- and no hourly lands between the read and the deploy. While
+    # an hourly runs this job waits; GitHub keeps one waiting run per group, so
+    # a newer hourly queued meanwhile cancels it (rare: two hourlies inside two
+    # minutes) and the report job says so. No continue-on-error (it stood here
+    # for an un-enabled Pages): it would show a failed deploy to the report
+    # job as a success, and the apk job never waits on this one.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
+    outputs:
+      pages: ${{ steps.carry.outputs.pages }}
     steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.ref_name }}          # tools/hunt.py for the carry-over; APEX landmine 85
       - uses: actions/download-artifact@v7
         with: { name: www, path: www }
+      - name: Read the hourly's files again, inside the pages group
+        id: carry
+        run: bash ci/bundle.sh --carry-over
       - uses: actions/upload-pages-artifact@v5
+        if: steps.carry.outputs.pages != 'skip'
         with: { path: www }
       - id: deploy
+        if: steps.carry.outputs.pages != 'skip'
         uses: actions/deploy-pages@v5
 
   # ── package ─────────────────────────────────────────────────────────────
@@ -215,6 +216,9 @@ jobs:
       - uses: actions/upload-artifact@v6
         with: { name: mapping, path: "${{ steps.pkg.outputs.mapping }}" }
 
+      # Take 115: the Play icon rides the Release. ci/apk.sh's icon step
+      # (ci/icon.py) draws play-assets/icon-512.png from assets/icon*.svg and
+      # checks it on every build; the owner uploads it to the listing by hand.
       # Release notes come from ci/RELEASE.md, in the REPO. Inline here they
       # would freeze at whatever take was last pasted (APEX landmine 96).
       # The nightly cron builds the SAME take with fresh prices; a second
@@ -225,13 +229,76 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           tag="take-${{ steps.pkg.outputs.take }}"
+          icon="play-assets/icon-512.png#Play icon, 512x512"
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" "${{ steps.pkg.outputs.apk }}" "${{ steps.pkg.outputs.aab }}" "${{ steps.pkg.outputs.mapping }}" --clobber
+            gh release upload "$tag" "${{ steps.pkg.outputs.apk }}" "${{ steps.pkg.outputs.aab }}" "${{ steps.pkg.outputs.mapping }}" "$icon" --clobber
             gh release edit "$tag" --notes-file ci/RELEASE.md
             echo "updated $tag with tonight's build"
           else
             gh release create "$tag" \
-              "${{ steps.pkg.outputs.apk }}" "${{ steps.pkg.outputs.aab }}" "${{ steps.pkg.outputs.mapping }}" \
+              "${{ steps.pkg.outputs.apk }}" "${{ steps.pkg.outputs.aab }}" "${{ steps.pkg.outputs.mapping }}" "$icon" \
               --title "OP TCG Hub — take ${{ steps.pkg.outputs.take }}" \
               --notes-file ci/RELEASE.md
           fi
+
+  # ── A9: the failure report, for every job ───────────────────────────────
+  # A failed nightly is silent by default: the app keeps its last catalogue
+  # and nobody is told. This opens ONE issue, labelled, and appends to it on
+  # each further failure, so three bad nights are three comments on one
+  # thread rather than nothing. GitHub also emails the owner on workflow
+  # failure; the issue is what survives the email. Landmine 125: the label
+  # must exist before anything is filed under it, or every night opens a
+  # fresh unlabelled issue (#8-#11).
+  # Take 115: through take 114 only the bundle job reported, and its green
+  # closed the thread while the apk or the pages job could still fail. This
+  # job needs every other one: any red job opens or comments; the thread
+  # closes only when every job ran green -- a deploy skipped on pages=skip
+  # leaves it as it is. A run cancelled by a newer one reports nothing. It
+  # needs no checkout, so it reports a tree too broken to build.
+  # hunt.yml's report job runs the same lines under its own label.
+  report:
+    needs: [seed, bundle, pages, apk]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Report a failed job, or close the thread when every job ran green
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          NEEDS: ${{ toJSON(needs) }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          LABEL: nightly-failure
+          TITLE: The nightly build is failing
+          KEEPS: The app keeps running on its last catalogue; the Home screen will show a stale banner after three days (A9).
+        run: |
+          set -euo pipefail
+          # Every job this one needs, and how it ended. A job that failed, or
+          # was cancelled in a run that was not (a waiting pages job a newer
+          # hourly replaced), is red. Every job a success is green. Anything
+          # else -- a Pages deploy skipped on pages=skip -- is neither:
+          # nothing is opened and nothing is closed.
+          v=$(python3 -c '
+          import json, os
+          needs = json.loads(os.environ["NEEDS"])
+          res = {job: n.get("result") for job, n in needs.items()}
+          red = [job for job, r in res.items() if r in ("failure", "cancelled")]
+          off = [job + " " + str(r) for job, r in res.items() if r != "success"]
+          off += [job + " pages=skip" for job, n in needs.items() if (n.get("outputs") or {}).get("pages") == "skip"]
+          print("red " + ", ".join(red) if red else "partial " + "; ".join(off) if off or not res else "green " + ", ".join(res))
+          ')
+          verdict=${v%% *}; what=${v#* }; day=$(date -u +%Y-%m-%d)
+          case "$verdict" in
+            red)
+              gh label create "$LABEL" --color B60205 --description "$TITLE" --force >/dev/null
+              n=$(gh issue list --label "$LABEL" --state open --json number -q '.[0].number')
+              body="Failed: $what -- run $RUN on $day. See its log. $KEEPS"
+              if [ -n "$n" ]; then gh issue comment "$n" --body "$body"
+              else gh issue create --title "$TITLE" --label "$LABEL" --body "$body"; fi ;;
+            green)
+              n=$(gh issue list --label "$LABEL" --state open --json number -q '.[0].number' 2>/dev/null || true)
+              if [ -n "$n" ]; then gh issue close "$n" --comment "Green again, every job ($what): run $RUN on $day."; fi
+              echo "every job ran green: $what" ;;
+            *)
+              echo "::notice::no job failed, but not every job ran green ($what): the failure thread is left as it is" ;;
+          esac

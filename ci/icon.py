@@ -236,7 +236,7 @@ def template(res):
 
 
 def selftest():
-    import shutil, tempfile
+    import re, shutil, tempfile
     from PIL import Image
     ok = True
     def verdict(name, good):
@@ -247,7 +247,10 @@ def selftest():
             r2, p2 = os.path.join(d, "res"), os.path.join(d, "play")
             shutil.copytree(res, r2); shutil.copytree(play, p2)
             mutate(r2, p2)
-            probs = check(r2, p2)
+            try:
+                probs = check(r2, p2)
+            except Exception as e:                        # noqa: BLE001   a check that crashes on the fault has not refused it
+                probs = [f"check() raised {type(e).__name__}: {e}"]
             verdict(f"control: {label} is refused", any(expect in p for p in probs))
     with tempfile.TemporaryDirectory() as d:
         sources = [("the fixture", "fixture", fixture)]
@@ -278,6 +281,11 @@ def selftest():
         verdict("src/app.html's reminders ask for the drawable this step writes (ic_stat_don)", asked(app) == [])
         verdict("control: a reminder asking for ic_launcher, a mipmap the plugin cannot see, is refused",
                 asked(app.replace("smallIcon: 'ic_stat_don'", "smallIcon: 'ic_launcher'", 1)) == ["ic_launcher"])
+        # take 115: reminders that name no smallIcon at all get the plugin's default -- the sabotage proved to land (landmine 55)
+        named = re.compile(r"smallIcon:\s*'[^']*',?\s*")
+        bare = named.sub("", app)
+        verdict(f"control: reminders that name no smallIcon at all (the plugin's default, the system's info icon) are refused ({len(named.findall(app))} stripped)",
+                named.findall(app) and not named.findall(bare) and asked(bare)[:1] != [] and asked(bare)[0].startswith("(no smallIcon"))
         # the controls, each on a copy of the fixture's passing output
         res, play = os.path.join(d, "fixture", "res"), os.path.join(d, "fixture", "play")
         old = os.path.join(ASSETS, "icon-placeholder.old.svg")
@@ -317,6 +325,24 @@ def selftest():
                 lambda r2, p2: Image.open(os.path.join(r2, "mipmap-xhdpi", "ic_launcher_background.png")).resize((96, 96)).save(os.path.join(r2, "mipmap-xhdpi", "ic_launcher_round.png")), "not masked")
         refused("a Play icon with rounded corners baked in", res, play,
                 lambda r2, p2: masked(Image.open(os.path.join(p2, "icon-512.png")).convert("RGBA"), "square").save(os.path.join(p2, "icon-512.png")), "not full-bleed")
+        # take 115: the two empty-layer refusals, each fed the fault itself (the right size, nothing drawn)
+        refused("an empty foreground (an SVG that rendered to nothing: a clear 108 px layer)", res, play,
+                lambda r2, p2: Image.new("RGBA", (px(ADAPTIVE_DP, "mdpi"),) * 2, (0, 0, 0, 0)).save(os.path.join(r2, "mipmap-mdpi", "ic_launcher_foreground.png")), "ic_launcher_foreground.png: empty")
+        refused("an empty status-bar glyph (a clear 24 px square)", res, play,
+                lambda r2, p2: Image.new("RGBA", (px(STAT_DP, "mdpi"),) * 2, (0, 0, 0, 0)).save(os.path.join(r2, "drawable-mdpi", "ic_stat_don.png")), "ic_stat_don.png: empty")
+        # ...and write() refuses an assets dir short of one of the four files, before it renders anything
+        with tempfile.TemporaryDirectory() as d3:
+            short, res3 = os.path.join(d3, "assets"), os.path.join(d3, "res")
+            os.makedirs(short); fixture(res3)
+            for k in ("", "-bg", "-stat"):
+                shutil.copy(os.path.join(ASSETS, f"icon{k}.svg"), short)
+            try:
+                write(res3, assets=short); why = ""
+            except Exception as e:                        # noqa: BLE001   the refusal is the assert; anything else is the render failing on the gap
+                why = f"{type(e).__name__}: {e}"
+            drew = sorted(f for _, _, fs in os.walk(res3) for f in fs if f.startswith("ic_") and f.endswith(".png"))   # the fixture's own XMLs are not drawn
+            verdict(f"control: an assets dir without icon-fg.svg is refused before anything is drawn ({drew or 'nothing drawn'})",
+                    "icon-fg.svg is missing: the icon has four files" in why and not drew)
     return ok
 
 

@@ -42,9 +42,14 @@ def catalogue_json(db):
         if "deck" in n:
             return "deck"
         return "main"
+    # Take 115 (loose-diagnostics 1): a set is kept when it has ANY product. card_count counts cards only, so
+    # the sealed-only group 23304 "One Piece Collection Sets" (OP-CS) was dropped while its 14 products shipped,
+    # and Sealed listed them under "Other" with no set. A group with no product at all (an unreleased one like
+    # 24834) stays out: there is nothing in the catalogue to file under it.
     sets = [dict(id=r[0], abbr=r[1], name=r[2], pub=r[3], n=r[4], kind=kind(r[2]))
-            for r in db.execute("SELECT group_id,abbr,name,published_on,card_count "
-                                "FROM card_set WHERE card_count>0 ORDER BY published_on DESC")]
+            for r in db.execute("SELECT group_id,abbr,name,published_on,card_count FROM card_set "
+                                "WHERE EXISTS (SELECT 1 FROM printing p WHERE p.group_id = card_set.group_id) "
+                                "ORDER BY published_on DESC")]
     cols = ["sealed", "id", "set", "num", "name", "full", "treat", "sameart", "face", "prov",
             "award", "rarity", "type", "color", "cost", "power", "life", "counter",
             "attr", "subtypes", "kw", "text", "img",
@@ -301,6 +306,9 @@ def build(verbose=True):
         raw_side = {}
     man["images"] = {"missing_cards": len(raw_side.get("missing", [])),
                      "missing_sealed": len(raw_side.get("missing_sealed", [])),
+                     # take 115 (loose-diagnostics 1): hashes.py probes every row without a number, DON!! cards
+                     # too; the ids let the app name them apart with its own predicate (SEALED.isDon)
+                     "missing_sealed_ids": sorted(int(x) for x in raw_side.get("missing_sealed", [])),
                      "alt_served": len(raw_side.get("alt", [])),
                      "exported": cat.get("alt_images", 0),
                      "measured": "missing_sealed" in raw_side,

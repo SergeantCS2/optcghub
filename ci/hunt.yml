@@ -6,21 +6,30 @@ name: hunt
 # .github/workflows is refused (RUNBOOK §5b). Everything it runs lives in the
 # tree, so a merged take updates the behaviour without touching this file.
 #
-# What it does, every hour: rebuild www/ from the committed tree (no smoke, no
+# What it does, every hour: rebuild www/ from the committed tree and a fresh
+# TCGCSV ingest, validate the catalogue it is about to ship (no smoke, no
 # render, no commit), fetch the retailer feed for the configured zip with
 # tools/hunt.py, and deploy www/ to Pages. The app reads hunt/feed.json from
-# Pages; the Play build never scrapes a retailer itself (A32).
+# Pages; the Play build never scrapes a retailer itself (A32). Every installed
+# app adopts the catalogue this deploys at its next sync, so it passes the
+# nightly's validate first (take 115).
 #
-# Cost: ~2 min of a free public-repo runner per run, 24 runs a day. Pages has
-# a soft limit of ten deploys an hour; this is one.
+# Cost: ~2 min of a free public-repo runner per run (MEASURED: 1-2 min), plus
+# a few seconds for the report job. 24 runs a day are scheduled; GitHub fired
+# about six (landmine 173). Pages has a soft limit of ten deploys an hour;
+# this is one.
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: '17 * * * *'      # hourly, off the hour so it never races the 21:30 nightly
+    - cron: '17 * * * *'      # hourly, off the hour; GitHub fires it late and skips some (landmine 173)
 
+# One deployer at a time. build.yml's pages job holds this group too, while it
+# reads hunt/ again and deploys, so neither deploys between the other's read
+# of hunt/history.json and its deploy (take 115: the nightly race). The
+# minute above is not what keeps them apart; this is.
 concurrency:
-  group: pages                # never deploy over the nightly's Pages job
+  group: pages
   cancel-in-progress: false
 
 permissions:
@@ -45,14 +54,34 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: '22'
-      - name: Rebuild www/ from the committed tree, then fetch the feed
+      # Take 115: the nightly's catalogue cache, read and never saved -- its
+      # tcgcsv_cache holds last build's product count per group, which the
+      # ingest's landmine-5 check reads (a group that had products and now has
+      # none refuses the build). Without it that check had nothing to compare.
+      - name: Restore the nightly's catalogue cache (read only)
+        uses: actions/cache/restore@v5
+        with:
+          path: |
+            tcgcsv_cache
+            catalog/catalog.sqlite
+          key: catalog-hourly-reads-only
+          restore-keys: catalog-
+      - name: Rebuild www/ from the committed tree, validate it, then fetch the feed
         run: |
           set -euo pipefail
           pip install --quiet pillow
           # the app build strips comments through acorn (tools/scrub.py --strip);
           # take 84: this workflow forgot to install it and would have gone red
           npm install --silent --no-save acorn
-          python3 tools/pipeline.py ingest history catalog app
+          # Take 115: `validate` (validate.py --strict) before `app`. Through take
+          # 114 this built and deployed a fresh ingest that no check had read:
+          # the card-count floor, the source's age, a set with no prices, a
+          # printing with no number, a >10x overnight move, the confidence
+          # tables, and hash coverage from the committed sidecar (the nightly
+          # hashes; this does not). A refused catalogue stops the run before
+          # anything is deployed: Pages keeps its last deploy, the feed with
+          # it, and the report job opens the thread. Cost: under a second.
+          python3 tools/pipeline.py ingest history catalog validate app
           python3 tools/hunt.py --zips "${HUNT_ZIPS:-48329}" --radius "${HUNT_RADIUS:-50}"
         env:
           HUNT_ZIPS: ${{ vars.HUNT_ZIPS }}
@@ -61,3 +90,58 @@ jobs:
         with: { path: www }
       - id: deploy
         uses: actions/deploy-pages@v5
+
+  # ── the failure report (take 115) ───────────────────────────────────────
+  # Through take 114 a red hourly told nobody but GitHub's email. The same
+  # lines as build.yml's report job, under their own label: one issue, a
+  # comment on each further failure, closed by the next run that goes green.
+  # A job of its own so the token that writes issues never reaches the feed
+  # job, which reads retailer pages.
+  report:
+    needs: feed
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Report a failed job, or close the thread when every job ran green
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          NEEDS: ${{ toJSON(needs) }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          LABEL: hourly-failure
+          TITLE: The hourly feed is failing
+          KEEPS: Nothing was deployed, so Pages keeps its last deploy and the app shows the feed and the catalogue that deploy carried. The next hourly tries again.
+        run: |
+          set -euo pipefail
+          # Every job this one needs, and how it ended. A job that failed, or
+          # was cancelled in a run that was not (a waiting pages job a newer
+          # hourly replaced), is red. Every job a success is green. Anything
+          # else -- a Pages deploy skipped on pages=skip -- is neither:
+          # nothing is opened and nothing is closed.
+          v=$(python3 -c '
+          import json, os
+          needs = json.loads(os.environ["NEEDS"])
+          res = {job: n.get("result") for job, n in needs.items()}
+          red = [job for job, r in res.items() if r in ("failure", "cancelled")]
+          off = [job + " " + str(r) for job, r in res.items() if r != "success"]
+          off += [job + " pages=skip" for job, n in needs.items() if (n.get("outputs") or {}).get("pages") == "skip"]
+          print("red " + ", ".join(red) if red else "partial " + "; ".join(off) if off or not res else "green " + ", ".join(res))
+          ')
+          verdict=${v%% *}; what=${v#* }; day=$(date -u +%Y-%m-%d)
+          case "$verdict" in
+            red)
+              gh label create "$LABEL" --color B60205 --description "$TITLE" --force >/dev/null
+              n=$(gh issue list --label "$LABEL" --state open --json number -q '.[0].number')
+              body="Failed: $what -- run $RUN on $day. See its log. $KEEPS"
+              if [ -n "$n" ]; then gh issue comment "$n" --body "$body"
+              else gh issue create --title "$TITLE" --label "$LABEL" --body "$body"; fi ;;
+            green)
+              n=$(gh issue list --label "$LABEL" --state open --json number -q '.[0].number' 2>/dev/null || true)
+              if [ -n "$n" ]; then gh issue close "$n" --comment "Green again, every job ($what): run $RUN on $day."; fi
+              echo "every job ran green: $what" ;;
+            *)
+              echo "::notice::no job failed, but not every job ran green ($what): the failure thread is left as it is" ;;
+          esac

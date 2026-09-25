@@ -220,20 +220,31 @@ def check_icon_characters():
     used as icons, in src/app.html -- written literally, as &#NNNN; or as
     \\uXXXX. Typography stays: the minus of money, the times of a count,
     arrows inside a label, the price triangles, the DON!! pips, dots, dashes.
-    Comments are the record's, not the app's, and are not read."""
+    Comments are the record's, not the app's, and are not read. Take 115: an
+    emoji written as a JS escape is two code units or one \\u{...}, and each
+    is decoded to its code point first (the check read a surrogate pair as two
+    halves, neither an emoji: the take-108 icons it removed, as escapes, passed)."""
     src = read("src", "app.html")
     if not src:
         return
-    body = re.sub(r"<!--.*?-->", "", src, flags=re.S)
-    body = re.sub(r"/\*.*?\*/", "", body, flags=re.S)
+    keep_lines = lambda m: "\n" * m.group(0).count("\n")   # noqa: E731   a comment goes, its lines stay: "near line N" is the source's N
+    body = re.sub(r"<!--.*?-->", keep_lines, src, flags=re.S)
+    body = re.sub(r"/\*.*?\*/", keep_lines, body, flags=re.S)
     ICONS = set("\u21b6\u21c4\u21bb\u2197\u22ef\u25be\u25b8")   # undo, swap, refresh, external, more, the carets
     found = {}
     def see(ch, at):
         cp = ord(ch)
         if ch in ICONS or 0x2600 <= cp <= 0x27BF or 0x1F000 <= cp <= 0x1FAFF:
             found.setdefault(ch, body.count("\n", 0, at) + 1)
-    for m in re.finditer(r"&#(\d+);|&#x([0-9a-fA-F]+);|\\u([0-9a-fA-F]{4})", body):
-        see(chr(int(m.group(1)) if m.group(1) else int(m.group(2) or m.group(3), 16)), m.start())
+    ESC = (r"&#(\d+);|&#x([0-9a-fA-F]+);"                                     # an entity, decimal or hex
+           r"|\\u([dD][89abAB][0-9a-fA-F]{2})\\u([dD][c-fC-F][0-9a-fA-F]{2})"   # a surrogate pair: one astral character
+           r"|\\u\{([0-9a-fA-F]{1,6})\}|\\u([0-9a-fA-F]{4})")                 # a code point escape; one code unit
+    for m in re.finditer(ESC, body):
+        dec, hx, hi, lo, cp, unit = m.groups()
+        c = (int(dec) if dec else int(hx, 16) if hx else 0x10000 + ((int(hi, 16) - 0xD800) << 10) + (int(lo, 16) - 0xDC00) if hi
+             else int(cp or unit, 16))
+        if c <= 0x10FFFF:
+            see(chr(c), m.start())
     for i, ch in enumerate(body):
         if ord(ch) > 0x2000:
             see(ch, i)
@@ -557,6 +568,10 @@ def check_selftests():
                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=ROOT)
     if r.returncode:
         fail("selftest", "check.sh runner-owned-files guard controls did not all fire (landmine 116):\n" + r.stdout)
+    r = subprocess.run(["bash", os.path.join(ROOT, "ci", "apk.sh"), "--selftest"],
+                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=ROOT)
+    if r.returncode:
+        fail("selftest", "apk.sh controls did not all pass (take 115: a failed Gradle build stops the script with its own message):\n" + r.stdout)
 
 
 # --------------------------------------------------------------------------
@@ -633,6 +648,15 @@ def selftest():
           .write("\n<span>\U0001F50D</span>\n"), "icons")
     probe("an icon drawn as a JS escape (take 108)", lambda t: open(os.path.join(t, "src", "app.html"), "a")
           .write("\n<script>const x = '\\u2699';</script>\n"), "icons")
+    # take 115: an emoji as a JS escape is a surrogate pair or a code point escape -- take 108's check read the pair as two halves
+    probe("an emoji drawn as a JS surrogate pair (take 115)", lambda t: open(os.path.join(t, "src", "app.html"), "a")
+          .write("\n<script>const x = '\\uD83D\\uDD0D';</script>\n"), "icons")
+    probe("an emoji drawn as a \\u{...} escape (take 115)", lambda t: open(os.path.join(t, "src", "app.html"), "a")
+          .write("\n<script>const x = '\\u{1F4F7}';</script>\n"), "icons")
+    probe("control: the DON!! pips and an astral escape outside the emoji blocks pass (take 115)",
+          lambda t: open(os.path.join(t, "src", "app.html"), "a")
+          .write("\n<script>const c = `<span>\\u00d73</span><b>7\u00d7 apart</b><button>Qty \u00d72</button>` + '\u25cf\u25cb' + '\\u{2014}\\uD835\\uDC00';</script>\n"),
+          expect=False)
     # take 109 (landmine 88): a sentence the design made false, back in the record -- the
     # check's first negative control since take 8, and one in a file the list grew to
     probe("a sentence the design made false, back in V1-STATE (take 109)", lambda t: open(os.path.join(t, "docs", "V1-STATE.md"), "a")
