@@ -1,4 +1,4 @@
-# OP TCG Hub — take 117
+# OP TCG Hub — take 118
 
 ## Installing — read this first
 
@@ -17,6 +17,12 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 118:** Collect wears a new face: a deep indigo ground with a bright
+gold, and Home is redrawn -- your collection's value on a card over your
+dearest printing's own art, the panels lifted off the page, and Most valuable
+as a shelf of your top cards. Hunt is the treasure map now: kraft and gold
+instead of green. Prep & Play stays as it is. Nothing you have saved changes.
 
 **New at take 117:** Sealed lists each starter deck once, in the Starter decks
 section, and every set strip is taller, with the set's release date in words.

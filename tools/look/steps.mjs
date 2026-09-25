@@ -299,7 +299,7 @@ const take106 = [
         window.scrollTo(0, 0);
         const chip = document.querySelector('#sealedKinds .chip.on'); const st = chip ? getComputedStyle(chip) : null;
         const kr = k.getBoundingClientRect(), b = document.querySelector('#modeSlider [data-mode="hunt"]').getBoundingClientRect(); const off = Math.round((kr.left + kr.width / 2) - (b.left + b.width / 2));
-        return { ok: !!st && st.color === 'rgb(214, 176, 76)' && Math.abs(off) <= 2, chipText: st && st.color, chipBg: st && st.backgroundColor, knobOffset: off };
+        return { ok: !!st && st.color === 'rgb(226, 182, 90)' && Math.abs(off) <= 2, chipText: st && st.color, chipBg: st && st.backgroundColor, knobOffset: off };
       });
     } },
   { name: 'collect-empty-collection-has-its-picture', run: async (page) => {
@@ -338,7 +338,7 @@ const take106 = [
         const V = window.VAULT; V.go('home'); await new Promise(r => setTimeout(r, 250)); window.scrollTo(0, 0);
         const nav = [...document.querySelectorAll('#navCollect button')].map(b => getComputedStyle(b).fontSize);
         const cap = document.querySelector('.hero .who .cap'); const cs = cap ? getComputedStyle(cap) : null;
-        return { ok: nav.length === 5 && nav.every(f => f === '12px') && !!cs && cs.fontSize === '12px' && cs.color === 'rgb(160, 142, 112)', nav: nav[0], caption: cs && `${cs.fontSize} ${cs.color}` };
+        return { ok: nav.length === 5 && nav.every(f => f === '12px') && !!cs && cs.fontSize === '12px' && cs.color === 'rgb(179, 172, 207)', nav: nav[0], caption: cs && `${cs.fontSize} ${cs.color}` };
       });
     } }
 ];
@@ -390,7 +390,7 @@ const take107 = [
       await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('hunt', true); V.go('sealed'); await ${pause}; while (V.closeAnyOverlay()) {} window.scrollTo(0, 0); })()`);
       const m = await hdr(page, 'sealed');
       const extra = await page.evaluate(() => ({ swords: !!document.querySelector('#sealed header .swords'), sub: (document.querySelector('#sealedAsOf') || {}).textContent || '' }));
-      return { ok: clean(m) && likeRef(ctx, m) && gearAtRef(ctx, m) && m.colour === 'rgb(214, 176, 76)' && !extra.swords && /prices/.test(extra.sub), ...extra, ...m };
+      return { ok: clean(m) && likeRef(ctx, m) && gearAtRef(ctx, m) && m.colour === 'rgb(226, 182, 90)' && !extra.swords && /prices/.test(extra.sub), ...extra, ...m };
     } },
   { name: 'hunt-local-distance-and-gear', run: async (page, ctx) => {
       await page.evaluate(`(async () => { const V = window.VAULT; V.go('local'); await ${pause}; while (V.closeAnyOverlay()) {} window.scrollTo(0, 0); })()`);
@@ -410,7 +410,7 @@ const take107 = [
                  note: wn && !wn.hidden ? { rule: getComputedStyle(wn).borderTopWidth, gotIt: Math.round(ok.getBoundingClientRect().height) } : null }; });
       /* with the release note showing: no second rule under the tabs, and "Got it" on one line (it wrapped at take 106) */
       const noteOk = !tabs.note || (tabs.note.rule === '0px' && tabs.note.gotIt <= 48);
-      return { ok: clean(m) && likeRef(ctx, m) && gearAtRef(ctx, m) && m.colour === 'rgb(201, 162, 74)' && perf.sel === 'true' && perf.panel === 'block' && tabs.over === 'true' && tabs.h >= 44 && noteOk, perf, tabs, shot, ...m };
+      return { ok: clean(m) && likeRef(ctx, m) && gearAtRef(ctx, m) && m.colour === 'rgb(245, 203, 92)' && perf.sel === 'true' && perf.panel === 'block' && tabs.over === 'true' && tabs.h >= 44 && noteOk, perf, tabs, shot, ...m };
     } },
   { name: 'collect-search-and-scan-open-with-a-title', run: async (page, ctx) => {
       /* the two screens that opened with a search box and a set chip now open with their titles, in the same place */
@@ -1518,4 +1518,28 @@ const take117 = [
   view('collection-tile-without-a-picture', `if (!V.OWN.items.length) { const c = V.CAT.rows.find(p => !p.sealed && p.img && p.market > 20); V.OWN.add(c.id, { qty: 1 }); } V.go('collection'); await ${pause}; const t = document.querySelector('#colGrid .art'); if (t) { const i = t.querySelector('img'); if (i) i.remove(); const q = t.querySelector('.ph'); if (q) q.style.display = ''; }`)
 ];
 
-export const STEPS = { 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
+/* ---- take 118 — Collect on indigo and gold, Hunt in kraft, Home's premium pass ------------------------------------ */
+const take118 = [
+  { name: 'open', run: async (page, ctx) => { await ctx.open(); return { ok: true }; } },
+  { name: 'collect-home-premium', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {}
+        V.OWN.items = []; const cards = V.CAT.rows.filter(p => !p.sealed && p.market > 20 && p.hash && p.img).sort((a, b) => b.market - a.market).slice(0, 9);
+        cards.forEach((p, i) => V.OWN.add(p.id, { qty: 1 + (i % 3), condition: ['NM', 'LP', 'NM', 'MP'][i % 4] })); V.OWN.save(); V.OWN.snapshot();
+        const tot = V.OWN.total(); const snaps = []; for (let d = 30; d >= 0; d--) { const t = new Date(Date.now() - d * 864e5).toISOString().slice(0, 10); const k = 1 - d / 30; snaps.push([t, Math.round(tot * (0.86 + 0.14 * k + 0.02 * Math.sin(d * 1.3)) * 100) / 100]); }
+        snaps[snaps.length - 1][1] = tot; V.OWN.snaps = snaps; V.OWN.save();
+        V.MODE.set('collect', true); await ${pause}; V.go('home'); V.setHomeTab(false); V.paintHome(); window.scrollTo(0, 0);
+        return { shelf: document.querySelectorAll('#topList .st').length }; })()`);
+      await waitArt(page, '#topList img'); await wait(500);
+      return { ok: m.shelf >= 6, ...m };
+    } },
+  view('collect-home-shelf-and-sets', `V.go('home'); V.setHomeTab(false); await ${pause}; document.getElementById('topList').scrollIntoView({ block: 'start' }); window.scrollBy(0, -140)`, { art: '#topList img', y: -1 }),
+  view('collect-home-performance', `V.go('home'); V.setHomeTab(true)`),
+  view('collect-collection-grid', `V.setHomeTab(false); document.querySelector('#allq').value = ''; V.go('collection')`, { art: '#colGrid img' }),
+  view('collect-card-page', `V.openDetail(V.OWN.items[0].id)`, { art: '#dArt img' }),
+  view('collect-search', `document.querySelector('#allq').value = ''; V.go('search'); V.paintSearch()`, { art: '#setList img' }),
+  view('hunt-sealed-kraft', `V.NAV.zipAsked = true; V.MODE.set('hunt', true); await ${pause}; V.SEALED.q = ''; V.SEALED.kind = 'all'; V.go('sealed'); V.paintSealed()`, { art: '#sealed img' }),
+  view('hunt-releases-kraft', `V.go('releases')`),
+  view('play-decks-unchanged', `V.MODE.set('play', true); await ${pause}; V.go('decks')`, { art: '#dkHero img' })
+];
+
+export const STEPS = { 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };

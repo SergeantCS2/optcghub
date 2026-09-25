@@ -1,6 +1,6 @@
 # UI-AUDIT — the UI series' checklist (A42)
 
-*Current as of take 117.*
+*Current as of take 118.*
 
 The audit behind the UI series, taken on the take-104 source by four
 independent read-throughs (headings and copy; components, icons and
@@ -176,6 +176,17 @@ take 117 unless it says otherwise.
 - [x] The nav's label colour set by two rules; the placeholder rule twice; the distributor line in the fill colour: one rule, once, the ink token.
 - [ ] The literal radii onto `--r-*` and the script's inline sizes onto the tokens (take 119's riders).
 - [ ] Captions under the scan row's icon buttons, if the owner wants them.
+
+
+## 11. Take 118 -- Collect on indigo and gold, Home's premium pass, Hunt in kraft
+
+The owner's picks from drawn schemes (real screenshots, contrast measured first). Each box is closed by take 118.
+
+- [x] Collect and Hunt shared a family (gold on dark, green on dark) and the mode switch barely read: indigo against kraft, Play's charcoal untouched.
+- [x] Home's flat panels: surfaces with caps labels and a fading rule; the hero on the dearest printing's art; the total in a gold gradient; a pill switch and one pill group.
+- [x] Most valuable as rows: a shelf of the six dearest cards, each a 100 px tap target with the printing's word on the picture's corner (AGENTS rule 3).
+- [x] The card page's three cells on the same surface.
+- [x] The literals that assumed the old brass (the reminders' tint, the charts' fallbacks): on the new gold; the share page stays dark by design.
 
 ## Found in passing, routed elsewhere
 
