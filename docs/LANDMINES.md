@@ -187,6 +187,18 @@ Start here. Do not read top to bottom.
 | A cap on rows is recorded as a span of time | **173** |
 | A scratch copy writes the repo's own files | **174** |
 | A test's ratio of two prices goes red when one price moves | **175** |
+| A reload doubles an index that a loader fills in place | **176** |
+| A fallback to empty is backed up over the collector's file | **177** |
+| A prompt answers twice after its sheet closed another way | **178** |
+| Most of the ways to change the collection never back it up | **179** |
+| A kept copy that still says ok reads as fresh | **180** |
+| A set is dropped while its products ship | **181** |
+| The scrubber cannot see a file it does not list | **182** |
+| A failed command in the middle of an && list goes on | **183** |
+| A failure reported inside one job misses the others | **184** |
+| A control that cannot run passes | **185** |
+| A size nobody measured is every harness's viewport | **186** |
+| A box is ticked for the part of its line that shipped | **187** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -2343,6 +2355,11 @@ case for the single deck. KINDS finds "box" before "case", and landmine
 no case; reading all twenty live pages found it. Rule: a case matches only a
 catalogue case, and nothing else matches one. A fixture set chosen by hand is
 compared once against the full live set before the matcher is trusted.
+*Take 115: the rule now holds while a page is unread. An unread Illustration
+Box, or an unread name that says Case, matches nothing until its page says
+what it is sold as; a name's own Case word is not taken as the unit. Take
+114's matcher took "IB-08 Illustration Box 08", "IB-08 … Case" and "OP-12
+Booster Box Case", unread, for the single box (MEASURED).*
 
 **168. A style that assumes the picture arrives shows nothing when it does
 not.** Since take 109 the product sheet's frame was white for every product,
@@ -2429,6 +2446,105 @@ put this ratio in their place. The ratio encoded one market too.
 Rule: a data assertion states what the code guarantees (each printing carries
 its own price; a value keyed off the number gives one price, 1x), with room
 for the market. Give it a control built from the fault it guards against.
+
+**176. A reload doubled an index that its loader filled in place.**
+`loadCatalogue` pushed every printing into `CAT.byNum` and never emptied it.
+It runs at launch and again after every sync, and the quiet sync runs most
+days. After one sync the scanner's index held 13,974 entries for 6,987 cards
+(20,961 after two), a unique artwork asked instead of auto-accepting (100 of
+100), and the picker listed each printing twice (take 115, MEASURED on take
+114's build through the real sync path). Every test loaded once. Rule: a
+loader that can run twice builds fresh maps and swaps them in whole, and its
+test runs it twice.
+
+**177. A fallback to empty would have been backed up over the collector's
+file.** Take 115 made an unreadable stored collection fall back to an empty
+one instead of stopping the app at the splash. The first version held the
+automatic backup for that launch only, so the next launch's quiet sync would
+have written the empty collection over `backup-latest.json`, the file Restore
+reads. Rule: when the collector's own data could not be read, every backup
+waits (`vault.backupHold`) until a restore or the collector's own "Back up",
+and the unreadable text is kept aside first.
+
+**178. A prompt answered twice after its sheet closed another way.** The
+picker served four prompts (currency, the MAX ad, an alert's direction, a
+grade), each a promise with a document listener. The sheet's cross, Cancel
+and Back only hid the sheet, so the promise and its listener stayed live, and
+the next pick answered every stale prompt: one grade pick after three closed
+prompts opened four grade prompts (take 115, MEASURED on take 114). Rule: a
+promise opened on a shared sheet has one settle path, and every way the sheet
+closes takes it.
+
+**179. Seven of the ten ways to change the collection never backed it up.**
+The steps after a change were written out at each site and drifted: CSV
+import, bulk delete, move and condition, removing a collection, a cost basis
+and a graded copy saved without scheduling the backup, while PLAY-LISTING
+promised "an automatic backup on every save" (take 115). Rule: one function
+commits a change to the collection (`commitOwn`), and a test changes it every
+way and sees the backup scheduled each time.
+
+**180. A kept copy that still said ok read as fresh.** When a distributor's
+fetch fails, `hunt.py` keeps the last good copy with `ok: true, kept,
+stale_since`. The app tested only `ok`, so on 25 Sept at 01:28 UTC GTS's
+timeout read "2 distributors · checked just now". The smoke control had
+planted `ok: false`, a shape the feed never writes after a good read (take
+115). Rule: one predicate says "not reached" (`HUNT.unreached`), and a
+control is built from the shape the writer really writes, through its own
+code.
+
+**181. A set was dropped while its products shipped.** `build_app.py` kept
+the sets `WHERE card_count > 0`, a count of cards only. One Piece Collection
+Sets (group 23304) has fourteen sealed products and no cards, so the set was
+dropped and its products, still shipped, sat on Sealed under "Other" with no
+set (take 115, from the owner's Diagnostics: "85 sets" against the build's
+87). Rule: filter a parent by what ships under it (`EXISTS`), not by a count
+of one kind of child, and a count's label says what it counts.
+
+**182. The scrubber could not see a file it did not list.** `scrub.py` read
+six extensions at the top level of `tools/` and `ci/`. Take 4's
+`tools/phase0.html` carried the owner's first name in a comment for 110
+takes; it is public, and in git history (take 115). Rule: a scanner reads
+every text file at every level, so a new folder or extension is covered
+without anyone adding it.
+
+**183. `set -e` did not stop a failed command in the middle of an && list.**
+`cd android && ./gradlew … && cd ..`: a Gradle failure was ignored, the
+script stayed in `android/` and died a line later at `cp`, with the wrong
+message and before `shred` on the upload key (take 115, watched on take
+114's three lines). Rule: a directory change goes in a subshell `( … )`, and
+the step names its own failure.
+
+**184. A failure reported inside one job missed the others.** The nightly's
+issue steps lived in the bundle job: a failed apk or pages job filed nothing,
+the thread closed as soon as bundle was green, and the pages job's
+`continue-on-error` hid a failed deploy. The hourly reported nothing at all
+(take 115). Rule: a report job needs every job and runs `if: !cancelled()`;
+a job that must not block another is kept out of that job's `needs`, never
+given `continue-on-error`.
+
+**185. A control that could not run passed.** Take 115's first control for
+the new report wiring read take 114's `build.yml` with `git show take-114:…`
+and caught the error as a pass. The runner's `check` clones one commit with no
+tags, so there the control would have passed without reading anything. Rule:
+build a control from the fault, on data the check has everywhere it runs; a
+control whose setup fails has failed.
+
+**186. A size nobody measured was every harness's viewport.** The Fold's open
+screen was INFERRED at 840 x 757 at 2 from take 110, and the look and render
+laid out and measured every inner-screen check there. Render's "Fold inner"
+width was 673, below the 700 px where the two panes begin, so those checks
+never reached the layout they named. The owner's Diagnostics measured 749 x
+832 at 2.625 (take 115). Rule: an INFERRED harness constant says INFERRED
+where it is used and is replaced the day the measurement arrives; a check
+names the range it tests, and a size outside that range fails it.
+
+**187. A box was ticked for the part of its line that shipped.** Take 115's
+review found UI-AUDIT boxes ticked where only part of the line was done: the
+scrims (one of four became a token), the remove buttons (two still drew ×),
+the external links (two lacked the glyph), `aria-pressed` (three toggles of
+eleven), the thumbnails, the days in words, the keywords, the Sim's labels.
+Rule: tick a box only when every item its line names is done, or edit the
+line to say what shipped and open a box for the rest.
 
 ## §2 — Inherited from APEX ORV
 

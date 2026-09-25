@@ -1146,7 +1146,7 @@ state) that opens the product's page at its Distributor info. The panels
 and the not-in-the-catalogue list sit under closed "Distributor info"
 drop-downs, and Where to buy lists sellers to collectors only (UI-AUDIT §8).
 
-**Next:** the state timeline from the history rows.
+**Next:** the state timeline from the history rows. *(Done, take 114.)*
 
 ### Take 114 — the distributor state timeline, and GTS's date read off its own page
 
@@ -1186,6 +1186,44 @@ drop-downs, and Where to buy lists sellers to collectors only (UI-AUDIT §8).
 - The timeline on a row, a short line, Sealed's panels or Releases (the
   owner's take-112 word).
 - Changing the GTS stock alert without the owner.
+
+**After the merge (take 115):** PROVEN live on 25 Sept at 01:28 UTC -- GTS
+timed out, the feed kept its last copy, and the new row has no `gts` key: a
+failed read is a hole, not "nothing listed".
+
+### Take 115 — what the production review closed in A32
+
+- **A kept copy reads "not reached".** The app took a kept distributor
+  (`ok` still true, `kept`, `stale_since`) for a fresh one; the live timeout
+  above read "2 distributors · checked just now". Now one predicate says
+  not reached, on Sealed, a product's page, Releases and Diagnostics, and the
+  kept copy is still shown (landmine 180).
+- **Target's history line counts days** from the rows' own times, not
+  "hourly checks", and hides once the rows span a fortnight (landmine 173).
+- **The nightly race is closed.** The nightly's Pages deploy reads the
+  hourly's files again inside the `pages` group the hourly holds (landmine
+  184's take).
+- **The hourly validates** the catalogue it deploys, and a red hourly opens
+  its own issue.
+- **Southern Hobby:** an unread Illustration Box, or an unread name that
+  says Case, matches nothing until its page is read (landmine 167's
+  addendum).
+
+**Next** (in order):
+- Date moves ("release moved Nov 20 → Dec 4"): the runner must record each
+  change's dates; the rows keep states only, and about 55 days of them.
+- A delisted item: the rows carry no map from an id to its product.
+- The history on Releases' not-in-the-catalogue list; the first real change
+  is INFERRED for PEB-01 on 15 Oct UTC.
+- Southern Hobby's paging: if its One Piece category grows past one page,
+  the fetch fails on its count, by design, and keeps the last good copy. How
+  the site pages is UNKNOWN (the page-2 probe returned the same 20).
+- The hourly's feed is still tied to TCGCSV and to validate: an outage or a
+  refused catalogue stops the feed's deploy too. Separating them means
+  deploying the feed over the live catalogue (take 115's runner lane).
+- GameStop, Walmart, Meijer and eBay need a residential IP: they wait for
+  the sideload build.
+- UNKNOWN: whether stores can still order on GTS's due day itself.
 
 ## A42 — The UI series: uniform headers, card art used boldly, one voice · OPENED take 106 · CLOSED take 111 (PR #35, merged 16:31 UTC 24 Sept)
 

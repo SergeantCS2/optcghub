@@ -1589,7 +1589,9 @@ the run if it stops.
   neither the Fold's query nor the desktop column's (no device is known to
   report one); a bulk tap still selects a printing, and the action takes
   that printing's lines on screen; an alert's "fired" day is the day in UTC
-  (as it was before this take), a day early on a US evening.
+  (as it was before this take), a day early on a US evening. [Take 115: a
+  day late -- the UTC date is already tomorrow on a US evening; and fixed:
+  the fired day is the phone's own day.]
 - **What I got wrong:** the first push measured the stamp under the art and
   not the words over it; the Fold's grid was written per container without
   going through what each holds; landmine 155's rule stopped at the

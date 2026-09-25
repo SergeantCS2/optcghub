@@ -103,7 +103,7 @@ for s in "" -bg -fg -stat; do cp design/d7-icons/v4/svg/own-purple$s.svg assets/
 python3 ci/icon.py --selftest     # the same checks hold
 ```
 
-Then upload the new `play-assets/icon-512.png` to Play. Nothing else changes.
+Then, after the merge, download `icon-512.png` from the Release (every Release carries it since take 115) and upload it to Play. The listing's feature graphic changes too: re-render it with `python3 design/play-listing/frames.py` and `node design/play-listing/render.mjs`, and upload it by hand.
 
 ## Verified here
 
