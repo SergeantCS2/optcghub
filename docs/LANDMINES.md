@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 114.*
+*Current as of take 115.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -205,6 +205,13 @@ Start here. Do not read top to bottom.
 | One card's art is not the worst art | **191** |
 | A check races a refusal it depends on | **192** |
 | A flex row shrinks a button to its longest word | **193** |
+| A full storage lets the shorter write through: cards lost between the batch and the collection | **194** |
+| A check's expected false is also what a throw returns | **195** |
+| A read of what changed skips what an earlier section painted the same | **196** |
+| Several changes before one wait prove only one of them | **197** |
+| A fixed bound on a size that grows each night | **198** |
+| A fixture's facts checked against the live catalogue | **199** |
+| A job refuses what only another job can repair | **200** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -2433,6 +2440,9 @@ times).
 
 Rule: name a horizon in days, from the timestamps. Never derive it from a
 row count and an assumed cadence.
+*Take 115's self-review: and a run is not a check of every product. Target's
+line said "50 checks over 8 days" of a product no run had read (Target
+answered 435 on every run); only the runs that read the product count now.*
 
 **174. A scratch copy that links `catalog/` writes the repo.** During take
 114's design, a prototype ran `pipeline.py app` in a scratch tree whose
@@ -2471,6 +2481,10 @@ have written the empty collection over `backup-latest.json`, the file Restore
 reads. Rule: when the collector's own data could not be read, every backup
 waits (`vault.backupHold`) until a restore or the collector's own "Back up",
 and the unreadable text is kept aside first.
+*Take 115's self-review: the hold was set for `vault.items` alone, so an
+unreadable decks list (or any list the backup carries) started empty and the
+first commit wrote that over the backup's copy. Every list the backup carries
+holds it now (`HELD`), and the words name the list that could not be read.*
 
 **178. A prompt answered twice after its sheet closed another way.** The
 picker served four prompts (currency, the MAX ad, an alert's direction, a
@@ -2497,6 +2511,10 @@ planted `ok: false`, a shape the feed never writes after a good read (take
 115). Rule: one predicate says "not reached" (`HUNT.unreached`), and a
 control is built from the shape the writer really writes, through its own
 code.
+*Take 115's self-review: its own control for a source never read planted a
+shape the writer never writes (no time), and the app said "not reached since"
+the failed run's own time, which moves each run. "Since" comes only from a
+kept copy's `stale_since`; a source never read says when it was last tried.*
 
 **181. A set was dropped while its products shipped.** `build_app.py` kept
 the sets `WHERE card_count > 0`, a count of cards only. One Piece Collection
@@ -2538,6 +2556,9 @@ control whose setup fails has failed.
 result as fired. It now needs one result per viewport for every control and
 probe; with one control left out, take 114's harness exited 0 and take
 115's exits 1.*
+*The self-review: the deadline check sized the Hunt files from `www/hunt/`,
+which on the runner holds only `zcta.json` when smoke runs, so a deadline
+too short for `stores.json` passed there. The floor is the measured size.*
 
 **186. A size nobody measured was every harness's viewport.** The Fold's open
 screen was INFERRED at 840 x 757 at 2 from take 110, and the look and render
@@ -2593,6 +2614,63 @@ beside "Hand back" names a deck, and at 411 px it squeezed the button onto
 two lines (110 x 65). The look caught it. Rule: a button beside text that can
 grow is `flex:none`, its row wraps, and the look checks each label is on one
 line.
+
+**194. A shorter write got through a full storage.** Take 115 made a failed
+write return false instead of throwing, and the batch commit went on after
+the collection's own write failed: adding cards makes `vault.items` longer, so
+it was refused, and clearing the batch makes `vault.batch` shorter, so it went
+through -- Chromium refuses only a write that takes the total past the quota.
+The next launch had the cards in neither (take 115's self-review, reproduced
+on its own build; the pending tray the same). Smoke's full-storage stub
+refused every write, the clear included, so it never reached that state. The
+same path counted a restore's file copy as kept, though Restore offers only
+the copy in storage. Rule: a thing leaves where it waited only after the write
+that stores it elsewhere returned true; a storage stub refuses by size.
+
+**195. A throw read as the Cancel a check expected.** The check that Back up
+asks before it replaces a held backup wanted `false`, the Cancel's value, and
+its helper returned `false` for a throw too. A Back up that crashed, or that
+refused without asking, passed (take 115's self-review, by mutation). Rule: a
+check whose pass value is false or empty tells a throw apart, and records that
+the question was asked.
+
+**196. A read of what changed skipped what was already painted.** Take 115's
+check that no Prep & Play text is the accent's colour read only the elements
+a block changed. An earlier section had painted the Play counter with the
+same markup, so its paint was no change and it was never read: brass planted
+in its Life label passed. Rule: a check reads its screens' roots whether or not
+it changed them, and names each root it needs.
+
+**197. Several changes before one wait proved one of them.** The backup keeps
+only the last call's timer and carries every list, so a want, a trade row and
+a stock alert changed before one wait passed while any one save still
+scheduled it: with five of six lists' backups removed, it passed. Rule: when
+effects share one outcome, one change per wait, and every list on its own.
+
+**198. A fixed bound on a size that grows by design.** Take 115's deadline
+check compared the catalogue's raw size, 37.8 KB larger with each night's
+history day, against a fixed 7.68 MB: near the 80th day (about 30 Nov 2026)
+every nightly and PR check would have gone red with nothing changed, and the
+sidecars stopped. It measured the wrong bytes too: Pages sends the file
+gzipped (MEASURED 739,429 of 5,147,553). Rule: size a check on what crosses the
+link, and ask of every fixed bound what grows toward it.
+
+**199. A fixture's facts were checked against the live catalogue.** Smoke's
+"17 products not in the catalogue yet", the ST39-ST44 fold, and "every
+upcoming set is a row with Remind me" read the catalogue TCGCSV changes each
+night. Since take 115 a group is listed as soon as it lists one product, so
+the next new set or two starter decks on one day would have turned the
+nightly red with nothing wrong (reproduced with three planted groups). Rule: a
+check of a fixture reads the fixture's own world; a check of live data counts
+what is drawn, rows, not what it expects, sets.
+
+**200. A job refused what only another job can repair.** Take 115 gave the
+hourly `validate --strict`, whose hash coverage measures the committed
+sidecar against a fresh ingest -- and the hourly never hashes. A new set's
+139th unhashed printing (MEASURED: 138 pass) would have refused every hourly,
+and paused the feed, until the nightly committed its hashes. Rule: a job
+refuses what it produced or can repair; the rest is the refusal of the job
+that can.
 
 ## §2 — Inherited from APEX ORV
 

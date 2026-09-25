@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 114.* Ranked by blocking-ness, not by interest.
+*Current as of take 115.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -54,7 +54,8 @@ what take 115 changed on screen.
 **Mine, in order**
 1. **A43's small items**, when wanted: the gate checks (the catalogue's
    shape; "Say take N" = BUILD + 1), the Restore file picker, the waiting
-   batch in the backup, the cost basis in the currency on screen.
+   batch in the backup, the cost basis in the currency on screen, CSV
+   import's one write.
 2. **A32's Next** (its take-115 section): date moves, a delisted item, the
    history on Releases, Southern Hobby's paging, the retailers that need a
    residential IP.
@@ -1376,7 +1377,9 @@ UI-AUDIT's open boxes; they are listed here once so nothing is lost.
 
 **Only a phone can prove** (BUILT and checked in smoke and render):
 - a commit on a full storage, the restore toast and the backup hold, a
-  stalled sync recovering (take 115, A1);
+  stalled sync recovering (take 115, A1); since the self-review, a commit
+  and a drained tray with the storage at its quota, the hold's words for a
+  list other than the collection, and the restore's second question;
 - the "Restore from" sheet, the `backup-before-restore.json` write, the
   re-armed release notifications (A2);
 - the next distributor timeout read as "not reached" (A3).
@@ -1402,9 +1405,19 @@ UI-AUDIT's open boxes; they are listed here once so nothing is lost.
 - An unread booster box whose name carries a count ("12CT") still matches
   the single box; no live listing does. Refusing every unread unit needs
   saved OP-18 and SD-01 pages first (B1; the owner's).
-- A new-set day with more than about 140 unhashed printings pauses the
-  hourlies until the nightly's hashes commit (INFERRED); how GitHub classes a
-  timed-out job for the report job is UNKNOWN (B2).
+- How GitHub classes a timed-out job for the report job is UNKNOWN (B2).
+  (The new-set pause of the hourlies is fixed: the hourly's validate is not
+  `--strict`, landmine 200.)
+- CSV import saves the whole collection once per row (each `OWN.add`), so a
+  file of thousands of lines writes it thousands of times. Sketch:
+  `OWN.add(..., { save: false })` in the loop and the one `commitOwn('import')`
+  after it, the self-review's `moveIn` pattern (take 115's self-review).
+- The storage-full toast says "export your collection" whichever write
+  failed; Export CSV carries the collection only, not the decks or the
+  alerts. The backup carries everything (take 115's self-review).
+- The restore's second question, when storage cannot keep what it replaces,
+  could say that on the phone a copy was written to Documents › OPTCGHub ›
+  backup-before-restore.json (take 115's self-review, optional).
 - A gate check that the session prompt's "Say take N" equals BUILD + 1: the
   miss happened at takes 113 and 114.
 - The Cards list's cost dot: 16 of 2,712 playable numbers have no cost in
@@ -1446,7 +1459,13 @@ showing the "Restore from" sheet (the straight path stays when nothing is
 kept); stripping every comma from a typed amount ("11,36" in euros would
 become 1136); working out the DON!! split in `build_app.py` (a second copy
 of the app's predicate); taking a kept copy out of Releases' "Checked"
-footer (that time is the copy shown).
+footer (that time is the copy shown). From the self-review: counting the
+fixture's unlisted products with a second copy of the app's rule (it would
+pass whatever the app did; the fixture's own catalogue is read instead);
+the Hunt files' deadline in gzip (it would let the default fall to 7 s);
+`hashes` in the hourly (every image probed every hour); removing the older
+undo copy before "Restore anyway" is answered (a Cancel would lose the last
+restore's undo).
 
 ## A41 — Missing images elsewhere in the app, sourced from somewhere other than TCGplayer · OPENED take 100
 

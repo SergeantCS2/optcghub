@@ -119,7 +119,8 @@ disk and green, and it was committed (8f7f75e) before the rest ran again.
   the top of the script, before the first read. When the collection itself
   could not be read, every backup waits (`vault.backupHold`) until a
   restore, so an empty collection is never written over the file Restore
-  reads (landmine 177).
+  reads (landmine 177); since the self-review, any list the backup carries
+  (item 2 below).
 - **Every write goes through one writer** (`saveJson`): a failed write is
   recorded once per key and shows one toast telling the collector to export.
   Diagnostics lists `vault.items` (it named a key, `vault.collection`, that
@@ -165,7 +166,8 @@ disk and green, and it was committed (8f7f75e) before the rest ran again.
   code from the live 25 Sept timeout's shape (landmine 180).
 - **Target's history line counts days** from the rows' own times ("N checks
   over D days so far"); take 114 said "20 hourly checks" for 20 checks over
-  16 days and nothing at all for 48 runs over 7.7 days.
+  16 days and nothing at all for 48 runs over 7.7 days. The self-review
+  found it counted runs that never read the product: item 8 below.
 - **The sealed-only set One Piece Collection Sets (23304) is back**
   (`EXISTS` in `build_app.py`): its ten priced products move from "Other" to
   their own set; an empty group like 24834 stays out (landmine 181).
@@ -210,8 +212,9 @@ disk and green, and it was committed (8f7f75e) before the rest ran again.
   lost `continue-on-error` (landmine 184).
 - **The nightly race is closed**: the Pages job reads the hourly's files
   again inside the `pages` group the hourly holds, then deploys.
-- **The hourly validates** the catalogue it deploys (`validate --strict`,
-  with the nightly's cache for the per-group counts).
+- **The hourly validates** the catalogue it deploys (`validate.py`, with
+  the nightly's cache for the per-group counts; the self-review took out
+  `--strict`, whose hash coverage only the nightly can meet: item 10 below).
 - **Every Release carries the Play icon** (`icon-512.png`).
 - Seven new hunt selftest checks, each with a control, fail on take 114's
   workflows (124 ok / 11 FAIL there); 135 ok on this tree.
@@ -293,6 +296,162 @@ selftest needs a result per viewport from every control and probe (landmine
   A5's per-tablist check made room; render now requires the Mode tablist to
   mark its tabs (watched: 214 passed, 1 failed with it taken out).
 - The look: 36 of 36.
+
+### The self-review: take 115's own diff
+
+Before the PR the take's own diff (8f5034b against take-114) was reviewed the
+same way: six finders by area (data safety, Hunt and data, the CSS, the
+runner, the tests' honesty, runner parity), and every finding given to two
+reviewers told to refute it at 8f5034b -- 36 agents. 8 confirmed, 6 split
+between the two, 1 refuted (a copy of a split one). All fourteen were real
+(one split finding is the seventh's other half); each is fixed here with a
+check watched to fail on 8f5034b's build, or on a planted fault, in a
+scratch tree:
+1. **A full storage lost a scanned batch** (high; landmine 194). Take 115's
+   `saveJson` returned false where take 114 threw, so a commit went on: the
+   collection's longer write was refused and the batch's shorter clear went
+   through. At 16 bytes under a quota, 8f5034b stored 0 batch rows and the 2
+   old lines, and the next launch had the three cards nowhere (take 114
+   threw and kept the batch); the pending tray the same. `OWN.moveIn` now
+   adds the rows in memory and writes the collection once, and the batch or
+   the tray lets them go only when that write returned true; `CREDITS.defer`
+   takes back rows it could not store. Smoke's storage stub refuses by size,
+   as Chromium does: three new checks (the commit, the tray drained, the tray
+   deferred) fail on 8f5034b.
+2. **The backup hold covered the collection alone** (177's addendum): an
+   unreadable decks list started empty and the next commit wrote it over the
+   backup's decks (1 -> 0). Every list the backup carries holds it now
+   (`HELD`), and the launch toast, Back up's question and Diagnostics name
+   what could not be read ("Your saved decks could not be read — use
+   Restore from backup, under More"; "Your saved collection and 10 other
+   lists …"). An unreadable batch, in no backup, holds nothing.
+3. **A restore counted its file copy as kept.** On the phone
+   `keepBeforeRestore` returned true when only
+   `backup-before-restore.json` was written, but Restore offers only the copy
+   in storage: a full storage restored with no second question, and an older
+   copy passed for what the restore replaced. Kept means the copy in storage
+   now, and on "Restore anyway" the older copy goes. A phone-path check (a
+   disk, a quota that refuses only the copy) fails on 8f5034b: one question,
+   the older copy still there.
+4. **The Play counter was never read** by take 115's "no text in the fill's
+   colour" check (landmine 196). It reads the four Play roots, changed or
+   not, and needs the counter's panel: brass planted in its Life label
+   passed 8f5034b's smoke and fails now.
+5. **Back up's check read a throw as the Cancel** (landmine 195). It records
+   the question and tells a throw apart, and a new check answers OK and sees
+   the hold end: a planted throw and a planted refusal that never asks both
+   passed 8f5034b's check and fail now.
+6. **One wait for three lists** (landmine 197): one change per wait for six
+   lists -- a want, a trade row, a stock alert, a price alert, a Hunt note, a
+   release reminder. With five of the six lists' backups removed, 8f5034b's
+   check passed; this one names the five.
+7. **The deadline check** (landmine 198; 185's addendum). The catalogue is
+   measured as sent -- gzip at its fastest level, 906,802 B, a bound on the
+   739,429 B Pages sends (MEASURED, content-encoding gzip) -- and the Hunt
+   files have a floor at Pages' `stores.json`, 1,099,659 B (MEASURED 25 Sept).
+   A copy with 67 more history days (7.69 MB raw) turned 8f5034b's check red
+   and passes this one, which still fails a 20 s long deadline; a 30 s default
+   passed 8f5034b's check on a runner's `www/hunt` and fails now.
+8. **Target's line counted the feed's runs as checks** (173's addendum): on
+   the live history, "48 checks over 8 days so far" of a product no run had
+   read. `restocks()` counts the runs that read the product (its online
+   status, or its shelf at the served zip), and the shelf's words come from
+   the shelf's own checks: "9 checks of it over 8 days" for one read in 9 of
+   50 runs, nothing for one never read, as take 114.
+9. **A source never read said "not reached since" the failed run's time**
+   (180's addendum). A "since" comes only from a kept copy's `stale_since`;
+   a panel says "Could not reach Southern Hobby when last tried, ...". The
+   control is `hunt.py`'s own `build()` with the real fetch failing and no
+   previous feed.
+10. **The hourly's `--strict`** (landmine 200). The hourly runs
+    `validate.py` between the catalogue and the app, without `--strict`;
+    hash coverage is the nightly's refusal (MEASURED in the review: 138 new
+    unhashed printings pass, the 139th refuses). `hunt.py`'s check needs
+    that order and refuses take 115's first list, take 114's, `--strict` by
+    hand, validate after the app, and a cache that saves.
+11. **Checks the next listing would have turned red** (landmine 199).
+    Sealed's collapse check takes the first set drawn with rows; Releases'
+    checks count rows, not sets; the fixture's 17 read the fixture's own
+    catalogue (its later sets set aside for that read, then put back). With
+    two starter decks planted on one future day and an EB06 listed,
+    8f5034b's smoke failed all four; this one passes them.
+12. **The EUR alert's echo** is read without its thousands separator: a
+    watched card past about $1,137 would have read red. The reviewer's
+    control on take 114's build still fails it.
+
+
+### Tests
+
+- **smoke** 1248 passed, 0 failed (1240 before the self-review); **render**
+  215 passed, 0 failed, `(mode: chrome)`; **the look** for take 115, 36 of 36.
+- **Selftests:** hunt 135 ok, hashes 23, icon 28, scrub 11, apk 7, check 6,
+  shipped 8, signer 10, shrink 14; the gate's 21 probes, each guard fired;
+  `scrub --check --docs` clean at 85 files; `ci/*.yml` equal to
+  `.github/workflows/*.yml`; `seal.sh --gate-only`: GATE PASSED.
+- **On take 114's build**, each batch's new checks: A1's section 46 of 51
+  failed (smoke 1043 passed, 47 failed); A2 43 of 59 failed across seven
+  areas; A3 32 of its checks failed (1066 passed, 123 failed in all); A4
+  1078 passed, 156 failed; A5 render 208 passed, 7 failed; B1 every new
+  selftest check failed on take 114's code (hunt 1, hashes 2, icon 1 per
+  guard, gate 2, scrub 1, apk 3, check 1); B2 124 ok, 11 FAIL on take 114's
+  workflows; the look's take-115 list 9 ok, 27 not ok.
+- **The self-review's checks** failed on 8f5034b's build as listed above
+  (its smoke there: 1233 passed, 15 failed).
+- The runner's `check` on the PR is the seal: the whole pipeline from a
+  clean clone, render in Chrome, the gate.
+
+### What I got wrong
+
+- **Take 115's first versions shipped the defects its self-review found**:
+  a write that no longer throws needed every caller to act on false, and I
+  changed the writer without reading its callers; the hold covered the one
+  list I was thinking of; and five of my new checks could not fail. The
+  self-review found them before the PR, not after.
+- My A9 control read take 114's `build.yml` with `git show take-114:` and
+  caught its error as a pass; the runner clones one commit with no tags
+  (landmine 185).
+- The mode slider's check asked the DOM stub for buttons it cannot select,
+  and got an empty list; it reads the source now. A4's regexes pinned exact
+  markup and broke on a harmless attribute.
+- The editors turned typed `\u` escapes into literal characters three
+  times; a non-ASCII grep of the diff caught each before a run.
+- After the container restarted, the resume re-ran two finished batches
+  because a parallel call's order changed; I stopped it before it changed a
+  file.
+- The first gzip figure was Node's default level, 710,403 B, under what
+  Pages sends; the check uses the fastest level as a bound.
+- The first commit of the self-review's fixes carried an attribution trailer
+  this public repo's rules keep out; it was refused and made without it.
+
+### Ruled out
+
+- Counting the fixture's unlisted products with a second copy of the app's
+  rule (the reviewer's sketch): it would pass whatever the app did. The
+  fixture's own catalogue is read instead.
+- The Hunt half of the deadline check in gzip too: `stores.json` is 210 KB
+  sent, which lets the default fall to 7 s. The uncompressed size is the
+  stricter measure, and it fits (34 s of 60).
+- Removing the older undo copy before the "Restore anyway" answer: a Cancel
+  would lose the previous restore's undo.
+- Adding `hashes` to the hourly: it probes every image and the second host
+  every hour.
+- The CSV import's write per row (each `OWN.add` saves): slow only for a
+  file of thousands of lines, not a finding; left in A43.
+
+### DEFERRED
+
+- **AGENDA A43** holds what the review and the self-review handed on: the
+  large items and the owner's (ad consent, D11, reproducible builds,
+  Android's automatic backup, the backup file after the sideload-to-Play
+  switch, which takes reached production, the feed tied to TCGCSV), what
+  only a phone can prove, the small items left on purpose, and the UI/UX
+  session's list.
+- **Only a phone can prove:** a commit and a drained tray on a full storage,
+  the hold's words at launch, the restore's second question on a full
+  storage, `backup-before-restore.json`, re-armed reminders, a real
+  distributor timeout.
+- **The UI/UX session's**, from take 116 on this baseline: UI-AUDIT's open
+  boxes and A43's UI part.
 
 ## Take 114 — 2026-09-24 — A32's distributor state timeline, from the history rows
 

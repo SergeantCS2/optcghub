@@ -88,7 +88,7 @@ python3 tools/gate.py        # the contract
 [APEX ORV](../../../apex-orv) and inherits its governance wholesale.
 `docs/HANDOFF.md` is an append-only record of every take. `docs/LANDMINES.md`
 numbers known failure modes so they are stepped around instead of rediscovered —
-this project's own (193 by take 115) plus the transferable findings from APEX
+this project's own (200 by take 115) plus the transferable findings from APEX
 ORV's 200+.
 `docs/AGENDA.md` carries every decision with what was *ruled out* and why. The
 build gates on all of it.

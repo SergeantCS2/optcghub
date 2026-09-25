@@ -13,7 +13,7 @@ in-flight state — before touching anything.
 |---|---|
 | `bash ci/deps.sh` | puppeteer, acorn, pillow, cairosvg (needs `registry.npmjs.org` and `pypi.org`; cairosvg needs the system libcairo) |
 | `python3 tools/pipeline.py` | the whole pipeline; `python3 tools/pipeline.py app smoke render` runs only those steps |
-| `node tools/smoke.mjs` | executes the shipped `www/app.js` in a DOM stub (~690 assertions) |
+| `node tools/smoke.mjs` | executes the shipped `www/app.js` in a DOM stub (1,248 assertions at take 115) |
 | `node tools/render.mjs` | real Chrome via puppeteer; falls back to a DOM check and says `(mode: dom)` |
 | `node tools/look.mjs N` | the look (A40): clicks through take N's changes in a real Chromium and writes a PNG per step under `look/` — read every PNG, send them to the owner, mark the PR ready only after his input |
 | `python3 tools/gate.py` | the contract; `--selftest` runs its own probes |

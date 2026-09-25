@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 114.* Paste the block between the rules into a new session
+*Current as of take 115.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -28,7 +28,7 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
 4. Read `docs/HANDOFF.md`, newest entry first, back to take 80 at least. Every
    take ends with a DEFERRED list; the union of those lists is the work.
 5. Read `docs/LANDMINES.md` §0 (the index) and skim §1. When you are about to
-   do something, grep the index first. 193 of them; each is a real failure.
+   do something, grep the index first. 200 of them; each is a real failure.
 6. Read `docs/AGENDA.md`: the Priorities block at the top is the live order.
 
 **The discipline, which the gate enforces:**
@@ -100,7 +100,14 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   stored as dollars, a picker that answered twice, the binder's page turns,
   a failed distributor that looked fresh (landmine 180), and backups that
   skipped seven of the ten ways to change the collection (landmine 179).
-  Code written from here builds on it.
+  Before its PR the take's own diff was reviewed the same way (36 agents):
+  fourteen more, all fixed -- a full storage that lost a scanned batch
+  (landmine 194), a backup hold that covered only the collection, a restore
+  that counted a copy Restore never offers, Target's line counting runs as
+  checks, the hourly refusing a hash coverage only the nightly can meet
+  (landmine 200), and checks that could not fail or would have gone red as
+  TCGCSV lists new sets (landmines 195-199). Code written from here builds
+  on it.
 
 - **For the UI/UX session (the owner, take 115).** It has been drafting
   while take 115's review ran and waits for take 115 to merge; it starts
@@ -110,8 +117,10 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   mostly UI changes".
   - **What take 115 changed on screen** (each in HANDOFF take 115):
     - toasts that say a save failed ("export your collection now"), that
-      the saved collection could not be read ("use Restore from backup"),
-      and "Nothing restored -- <reason>"; clearer Sync failures;
+      a saved list could not be read ("Your saved decks could not be read
+      -- use Restore from backup, under More"; the collection first, then
+      "and N other lists"), and "Nothing restored -- <reason>"; clearer
+      Sync failures;
     - Restore's "Restore from" sheet (the latest backup, "What the last
       restore replaced", or a file), shown only when a replaced copy is
       kept;
@@ -119,8 +128,10 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
       its note names that currency;
     - the binder's page turns, the featured Leader on Decks;
     - Distributor info's "N not reached since …", and a kept source's panel
-      opening "Could not reach X since …; its last check, …, is shown";
-    - Target's history line in days ("N checks over D days so far");
+      opening "Could not reach X since …; its last check, …, is shown"; a
+      source never read "Could not reach X when last tried, …";
+    - Target's history line in days, from the runs that read the product
+      ("N checks of it over D days so far"; nothing when none did);
     - One Piece Collection Sets under its own name on Sealed, "sealed
       products only" on Search, and More's "85 sets";
     - Diagnostics' lines (pictures, sealed products, the catalogue, storage);

@@ -1,6 +1,6 @@
 # UI-AUDIT — the UI series' checklist (A42)
 
-*Current as of take 114.*
+*Current as of take 115.*
 
 The audit behind the UI series, taken on the take-104 source by four
 independent read-throughs (headings and copy; components, icons and
