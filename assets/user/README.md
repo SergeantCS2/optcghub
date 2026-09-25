@@ -7,7 +7,6 @@ app draws it. Nothing here is required.
 | file | used where | size | notes |
 |---|---|---|---|
 | `home-bg.jpg` | faint, behind the Home hero | 1080×800 | under the page colour at 88 %, fading to solid |
-| `empty-collection.png` | nothing, since take 63 | — | the skull it replaced is gone and the empty Collection draws its own scan-card glyph; the file is copied but not read |
 | `hero-play.jpg` | behind Decks' title, in place of the featured Leader's blurred art (take 110) | 1080×640, landscape | shown sharp and uncut, filling the band behind the mode slider; the slider and the status bar read over its top, so keep the top third quiet |
 | `hero-hunt.jpg` | Sealed's banner, in place of the newest set's top card (take 110) | 1080×640, landscape | shown sharp and uncut, as above |
 

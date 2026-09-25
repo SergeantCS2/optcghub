@@ -73,6 +73,7 @@ function makeDom(html) {
 /* ---- run --------------------------------------------------------------- */
 const html = fs.readFileSync(W('index.html'), 'utf8');
 const js = fs.readFileSync(W('app.js'), 'utf8');
+const pkg = fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8');   /* take 120: the plugin list the status bar needs */
 const catalog = JSON.parse(fs.readFileSync(W('bundle/catalog.json'), 'utf8'));
 const manifest = JSON.parse(fs.readFileSync(W('bundle/manifest.json'), 'utf8'));
 
@@ -871,7 +872,7 @@ const eb = V.CAT.sets.get(V.candidates('EB03-024', null)[0].set);
 V.CAT.rows.filter(x => x.set === eb.id && x.num).slice(0, 12).forEach(x => V.OWN.add(x.id, { condition: 'NM' }));
 const bs = V.binderSets();
 ok('the binder lists the sets the collector holds, most cards first', bs.length >= 1 && bs[0].s.id === eb.id && bs[0].n === 12, JSON.stringify(bs.map(x => [x.s.abbr, x.n])));
-ok('a page is nine pockets with gaps for numbers not held', /nums\.slice\(BN\.page \* 9, BN\.page \* 9 \+ 9\)/.test(js) && /while \(slice\.length < 9\) slice\.push\(null\)/.test(js));
+ok('a page is nine pockets with gaps for numbers not held; on the open Fold a spread of two, eighteen (take 120)', /nums\.slice\(first \* 9, first \* 9 \+ per\)/.test(js) && /while \(slice\.length < per\) slice\.push\(null\)/.test(js) && /per = spread \? 18 : 9/.test(js));
 ok('a held pocket prefers the scanned photo, then the dearer printing', /\(i\.photo && !cur\.i\.photo\)/.test(js));
 ok('an empty pocket is a want-toggle, like the checklist', /class="pocket empty" data-ck=/.test(js));
 ok('the page is remembered per set', /BN\.pageOf\[BN\.set\]/.test(js));
@@ -4140,9 +4141,11 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
       return out; };
     const declOf = (body, prop) => { let v = null; for (const m of body.matchAll(/(?:^|;)\s*([\w-]+)\s*:\s*([^;]*)/g)) if (m[1] === prop) v = m[2].trim(); return v; };
     const ruleVal = (c, sel, prop) => { let v = null; for (const r of topRules(c)) if (r.sels.includes(sel)) { const x = declOf(r.body, prop); if (x != null) v = x; } return v; };
-    const tokens = (c, mode) => { const rs = topRules(c), t = {};
+    const tokens = (c, mode, theme = 'dark') => { const rs = topRules(c), t = {};
       const take = sel => { for (const r of rs) if (r.sels.includes(sel)) for (const m of r.body.matchAll(/(--[\w-]+)\s*:\s*([^;]*)/g)) t[m[1]] = m[2].trim(); };
-      take(':root'); if (mode !== 'collect') take(`:root[data-mode="${mode}"]`); return t; };
+      take(':root'); if (mode !== 'collect') take(`:root[data-mode="${mode}"]`);
+      if (theme === 'light') { take(':root[data-theme="light"]'); if (mode !== 'collect') take(`:root[data-theme="light"][data-mode="${mode}"]`); }   /* take 120: the light blocks lie over the dark ones, in the cascade's order */
+      return t; };
     const argsOf = s => { const r = []; let d = 0, cur = ''; for (const ch of s) { if (ch === '(') d++; else if (ch === ')') d--; if (ch === ',' && !d) { r.push(cur.trim()); cur = ''; } else cur += ch; } r.push(cur.trim()); return r; };
     const colOf = (v, T, depth = 0) => { v = String(v == null ? '' : v).trim(); let m; if (depth > 12) return null;
       if ((m = /^var\((--[\w-]+)\s*(?:,\s*(.+))?\)$/.exec(v))) return T[m[1]] != null ? colOf(T[m[1]], T, depth + 1) : (m[2] ? colOf(m[2], T, depth + 1) : null);
@@ -4176,19 +4179,20 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
        a bulk-selected tile: --dim lines, a rise and a fall; a selected chip or tab: --accent-ink; a checklist cell: --fg), the
        bad, good and warning tints, a chip's count at the count's own opacity, and the nav's active label on its own ground
        laid over the bar, laid over the page */
-    const pairs = (c, mode) => { const T = tokens(c, mode), C = k => colOf(`var(${k})`, T), R = [];
+    const pairs = (c, mode, theme = 'dark') => { const T = tokens(c, mode, theme), C = k => colOf(`var(${k})`, T), R = [],
+      rv = (sel, prop) => (theme === 'light' ? ruleVal(c, `:root[data-theme="light"] ${sel}`, prop) : null) ?? ruleVal(c, sel, prop);   /* take 120: a light rule over a component's own */
       const tint = C('--accent-bg');
       for (const k of ['--fg', '--dim', '--dim2', '--accent-ink', '--up', '--down', '--gold']) R.push([`${k.slice(2)} on the selected tint`, C(k), tint]);
       R.push(['down on the bad tint', C('--down'), C('--bad-bg')], ['up on the good tint', C('--up'), C('--ok-bg')], ['gold on the warning tint', C('--gold'), over(C('--warn-bg'), C('--bg'))]);
-      const op = parseFloat(ruleVal(c, '.chip small', 'opacity') ?? '1'), chipFg = colOf(ruleVal(c, '.chip', 'color'), T), chipBg = colOf(ruleVal(c, '.chip', 'background'), T);
-      const onFg = colOf(ruleVal(c, '.chip.on', 'color'), T), onBg = colOf(ruleVal(c, '.chip.on', 'background'), T);
+      const op = parseFloat(rv('.chip small', 'opacity') ?? '1'), chipFg = colOf(rv('.chip', 'color'), T), chipBg = colOf(rv('.chip', 'background'), T);
+      const onFg = colOf(rv('.chip.on', 'color'), T), onBg = colOf(rv('.chip.on', 'background'), T);
       R.push(['a chip\'s count', chipFg && chipBg && over([...chipFg.slice(0, 3), op], chipBg), chipBg], ['a selected chip\'s count', onFg && onBg && over([...onFg.slice(0, 3), op], onBg), onBg]);
-      const bar = over(colOf(ruleVal(c, 'nav', 'background'), T) || [0, 0, 0, 0], C('--bg')), pill = colOf(ruleVal(c, 'nav button.on', 'background'), T);
-      R.push(['the nav\'s active label', colOf(ruleVal(c, 'nav button.on', 'color'), T), pill ? over(pill, bar) : bar], ['the nav\'s other labels', colOf(ruleVal(c, 'nav button', 'color'), T), bar]);
+      const bar = over(colOf(rv('nav', 'background'), T) || [0, 0, 0, 0], C('--bg')), pill = colOf(rv('nav button.on', 'background'), T);
+      R.push(['the nav\'s active label', colOf(rv('nav button.on', 'color'), T), pill ? over(pill, bar) : bar], ['the nav\'s other labels', colOf(rv('nav button', 'color'), T), bar]);
       return R.map(([n, f, b]) => [n, f && b ? cr(f, b) : 0]); };
-    const lowPairs = (c, mode) => pairs(c, mode).filter(([, r]) => !(r >= 4.5));
-    for (const mode of MODES) ok(`(SPEC-106-29, SPEC-106-30) ${mode}: every text on a tint clears 4.5:1, computed from the shipped rules -- the selected tint, the bad, good and warning tints, a chip\'s count, the nav\'s labels`,
-       pairs(css, mode).length === 14 && lowPairs(css, mode).length === 0, lowPairs(css, mode).map(([n, r]) => `${n} ${r.toFixed(2)}`).join(', ') || pairs(css, mode).map(([n, r]) => `${n.split(' ')[0]} ${r.toFixed(2)}`).join(' '));
+    const lowPairs = (c, mode, theme = 'dark') => pairs(c, mode, theme).filter(([, r]) => !(r >= 4.5));
+    for (const theme of ['dark', 'light']) for (const mode of MODES) ok(`(SPEC-106-29, SPEC-106-30) ${theme} ${mode}: every text on a tint clears 4.5:1, computed from the shipped rules -- the selected tint, the bad, good and warning tints, a chip\'s count, the nav\'s labels (six palettes since take 120)`,
+       pairs(css, mode, theme).length === 14 && lowPairs(css, mode, theme).length === 0, lowPairs(css, mode, theme).map(([n, r]) => `${n} ${r.toFixed(2)}`).join(', ') || pairs(css, mode, theme).map(([n, r]) => `${n.split(' ')[0]} ${r.toFixed(2)}`).join(' '));
     { /* take 114's rules, planted back one by one -- each plant checked to have landed */
       const plant = (c, a, b) => (c.split(a).length === 2 ? c.replace(a, b) : null);
       const t12 = (m => m ? css.replace(m[0], m[0].replace('var(--brass) 8%', 'var(--brass) 12%')) : null)(css.match(/--accent-bg:color-mix\(in srgb,var\(--brass\) 8%,var\(--card\)\);\s+--warn-bg:/));   // take 118: Hunt's tint reads 8% too; Collect's is the one its warning tint follows (the shipped css carries no comment to find it by)
@@ -4402,10 +4406,11 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
     /* (SPEC-108-36) every toggle says whether it is on: a template that lights a button carries aria-pressed from the same test,
        a chip the filter sheet flips in place says it too, and the mode slider's tabs say which one is selected */
     const onTpl = t => [...t.matchAll(/<button\b((?:[^>$]|\$\{[^}]*\})*)>/g)].map(m => m[1]).filter(a => /class="[^"]*\$\{[^}]*\?\s*' ?on'\s*:\s*''\}/.test(a));
-    const unpressed = t => onTpl(t).filter(a => !/aria-pressed="\$\{/.test(a)).map(a => a.slice(0, 50));
+    const unpressed = t => onTpl(t).filter(a => !/aria-pressed="\$\{/.test(a) && !(/role="radio"/.test(a) && /aria-checked="\$\{/.test(a))).map(a => a.slice(0, 50));   /* take 120: a radio (Appearance's) says aria-checked */
     ok('(SPEC-108-36) every toggle template carries aria-pressed from the test that lights it: Cards\' chips, the binder\'s sets, the checklist, Home\'s ranges, the filter sheet, the condition buttons',
        onTpl(js).length >= 13 && unpressed(js).length === 0 && !/classList\.toggle\('on'\)/.test(js), unpressed(js).join(' | ') || String(onTpl(js).length));
     ok('...control: a lit chip with no aria-pressed is caught', unpressed('<button class="chip$' + '{x ? \' on\' : \'\'}" data-q="1">').length === 1);
+    ok('...control: a lit radio with no aria-checked is caught, and one with it passes (take 120)', unpressed('<button role="radio" class="$' + '{x ? \'on\' : \'\'}">').length === 1 && unpressed('<button role="radio" class="$' + '{x ? \'on\' : \'\'}" aria-checked="$' + '{x}">').length === 0);
     const keepItems4 = V.OWN.items, keepFA = JSON.parse(JSON.stringify(V.FILT.all));
     V.OWN.items = [{ id: card4.id, qty: 1, condition: 'NM', pf: V.PF.active === 'all' ? 'main' : V.PF.active }];
     const shown4 = {};
@@ -4577,6 +4582,95 @@ section('take 119 — the surface beyond Home, the mode swipe, the last literal 
   ok('...a sideways swipe on the mode bar -- only there -- moves one mode over; the bar claims sideways touches and leaves up and down to the page; a short or a mostly vertical move does nothing', /\.modebar\{[^}]*touch-action:pan-y;user-select:none\}/.test(css) && /const bar = \$\('\.modebar'\), knob = \$\('#modeSlider \.knob'\);/.test(js) && /bar\.addEventListener\('pointerdown'/.test(js) && /bar\.addEventListener\('pointermove'/.test(js) && /bar\.addEventListener\('pointerup', end\); bar\.addEventListener\('pointercancel', end\);/.test(js) && /if \(!held \|\| Math\.abs\(dx\) < 40\) return;/.test(js) && /if \(Math\.hypot\(sw\.dx, dy\) < 8\) return;/.test(js) && /if \(Math\.abs\(dy\) > Math\.abs\(sw\.dx\)\) \{ sw = null; return; \}/.test(js) && /MODE\._swiped = true; setTimeout\(\(\) => \{ MODE\._swiped = false; \}, 350\); slideMode\(MODE_ORDER\[j\]\);/.test(js) && /bar\.setPointerCapture\(e\.pointerId\)/.test(js));
   ok('...the tokens copied onto the leaving screen are the palette\'s own -- every one the contrast check reads, the tints included', /const MODE_TOKENS = \['--bg', '--card', '--card2', '--line', '--fg', '--dim', '--dim2', '--brass', '--brass2', '--gold', '--accent-ink', '--line-strong', '--up', '--down', '--accent-bg', '--warn-bg', '--ok-bg', '--bad-bg', '--on-accent', '--teal'\];/.test(js));
   ok('...control: take 110\'s crossfade planted back is seen by the slide\'s guard (its keyframe name)', /@keyframes modeIn\{/.test(css + '\n@keyframes modeIn{from{opacity:0}}'));
+}
+section('take 120 — the light theme: dark by default, a switch under More, three light grounds');
+{ const css = (html.match(/<style>([\s\S]*?)<\/style>/) || ['', ''])[1];
+  /* own helpers (landmine 77) */
+  const lum = hx => { const [r, g, b] = [1, 3, 5].map(i => parseInt(hx.slice(i, i + 2), 16) / 255).map(c => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+  const mix = (a, b, t) => '#' + [1, 3, 5].map(i => Math.round(parseInt(a.slice(i, i + 2), 16) * (1 - t) + parseInt(b.slice(i, i + 2), 16) * t).toString(16).padStart(2, '0')).join('');
+  const blockOf = sel => { const i = css.indexOf(sel + '{'); return i < 0 ? null : css.slice(i + sel.length + 1, css.indexOf('}', i)); };
+  const hexes = b => { const t = {}; for (const m of (b || '').matchAll(/--([\w-]+):(#[0-9A-Fa-f]{6})/g)) t[m[1]] = m[2]; return t; };
+  const dark = hexes(css.slice(css.indexOf(':root{'), css.indexOf(':root[data-mode=')));
+  const SEL = { collect: ':root[data-theme="light"]', play: ':root[data-theme="light"][data-mode="play"]', hunt: ':root[data-theme="light"][data-mode="hunt"]' };
+  const light = {}; for (const m of Object.keys(SEL)) light[m] = { block: blockOf(SEL[m]), t: hexes(blockOf(SEL[m])) };
+  const need = Object.keys(dark).filter(k => !/^c-/.test(k));   /* the game's six colours are data, never a palette's */
+  const whole = l => !!l.block && need.every(k => !!l.t[k]) && /--scrim:rgba\(/.test(l.block) && !/--accent-bg:|--warn-bg:|--ok-bg:|--bad-bg:|--c-red:/.test(l.block);
+  ok('the three light blocks exist, after the dark ones (a light block ties a mode block on specificity, so order decides), each redefining every colour token the dark root defines and the scrim -- never the tints, which mix from the tokens by the dark formulas, nor the game\'s six colours, which are data', Object.values(light).every(whole) && css.indexOf(SEL.collect + '{') > css.indexOf(':root[data-mode="hunt"]{') && css.indexOf(SEL.play + '{') > css.indexOf(SEL.collect + '{'),
+     Object.entries(light).map(([m, l]) => `${m}: ${l.block ? need.filter(k => !l.t[k]).join('/') || (whole(l) ? 'whole' : 'a tint or a game colour redefined') : 'no block'}`).join('; '));
+  ok('...control: a light block missing --dim2 is caught', !whole({ block: (light.collect.block || '').replace(/--dim2:#[0-9A-Fa-f]{6};/, ''), t: hexes((light.collect.block || '').replace(/--dim2:#[0-9A-Fa-f]{6};/, '')) }));
+  for (const m of ['collect', 'play', 'hunt']) { const t = light[m].t, has = ['fg', 'dim', 'dim2', 'accent-ink', 'on-accent', 'brass', 'line-strong', 'up', 'down', 'gold', 'card', 'card2'].every(k => !!t[k]);
+    ok(`light ${m}: the text tokens clear 4.5:1 on card and card2`, has && ['fg', 'dim', 'dim2'].every(k => ratio(t[k], t.card) >= 4.5 && ratio(t[k], t.card2) >= 4.5), has ? ['fg', 'dim', 'dim2'].map(k => `${k} ${ratio(t[k], t.card).toFixed(2)}/${ratio(t[k], t.card2).toFixed(2)}`).join(', ') : 'tokens missing');
+    ok(`light ${m}: the accent as text 4.5:1 on card, card2 and the 12% tint; the label on the fill 4.5:1; the fill itself 3:1 on card and card2 (a knob\'s edge, a button\'s boundary, the focus ring -- WCAG 1.4.11); the edge 3:1`,
+       has && ratio(t['accent-ink'], t.card) >= 4.5 && ratio(t['accent-ink'], t.card2) >= 4.5 && ratio(t['accent-ink'], mix(t.card, t.brass, .12)) >= 4.5 && ratio(t['on-accent'], t.brass) >= 4.5 && ratio(t.brass, t.card) >= 3 && ratio(t.brass, t.card2) >= 3 && ratio(t['line-strong'], t.card) >= 3 && ratio(t['line-strong'], t.card2) >= 3,
+       has ? `ink ${ratio(t['accent-ink'], t.card).toFixed(2)}/${ratio(t['accent-ink'], t.card2).toFixed(2)}, label ${ratio(t['on-accent'], t.brass).toFixed(2)}, fill ${ratio(t.brass, t.card).toFixed(2)}/${ratio(t.brass, t.card2).toFixed(2)}, edge ${ratio(t['line-strong'], t.card).toFixed(2)}/${ratio(t['line-strong'], t.card2).toFixed(2)}` : 'tokens missing');
+    ok(`light ${m}: a rise, a fall and the gold as text clear 4.5:1 on card and card2`, has && ['up', 'down', 'gold'].every(k => ratio(t[k], t.card) >= 4.5 && ratio(t[k], t.card2) >= 4.5), has ? ['up', 'down', 'gold'].map(k => `${k} ${ratio(t[k], t.card).toFixed(2)}/${ratio(t[k], t.card2).toFixed(2)}`).join(', ') : 'tokens missing'); }
+  ok('...control: the drafted bright gold (#D9A62B) as the light fill reads 2.0:1 on the parchment and is caught', !!light.collect.t.card && ratio('#D9A62B', light.collect.t.card) < 3);
+  ok('three light grounds, each its own: no two share a hex, and all three are light (a luminance over .7)', new Set(Object.values(light).map(l => l.t.bg)).size === 3 && Object.values(light).every(l => l.t.bg && lum(l.t.bg) > 0.7));
+  ok('the theme rules: color-scheme dark on the root and light in the light block; the nav on the card in light, its edge the control edge; lighter shadows on panels, tiles and pictures; the total in dark golds by background-image (the shorthand reset the clip -- the drafts painted a block); a press that dims; the pill over a missing picture heavier; a glow per light mode',
+     /--scrim:rgba\(0,0,0,\.82\);\n  color-scheme:dark;/.test(css) && /color-scheme:light;/.test(light.collect.block || '') && /:root\[data-theme="light"\] nav\{background:color-mix\(in srgb,var\(--card\) 94%,transparent\);border-color:var\(--line-strong\);box-shadow:0 6px 24px rgba\(0,0,0,\.14\)\}/.test(css) && /:root\[data-theme="light"\] \.panel,:root\[data-theme="light"\] \.tile\{box-shadow:inset 0 1px 0 rgba\(255,255,255,\.7\),0 8px 20px rgba\(0,0,0,\.10\)\}/.test(css) && /:root\[data-theme="light"\] \.tile \.art,:root\[data-theme="light"\] #home \.shelf \.pic\{box-shadow:0 6px 14px rgba\(0,0,0,\.18\)\}/.test(css) && /:root\[data-theme="light"\] #home \.total\{background-image:linear-gradient\(180deg,var\(--accent-ink\) 0%,var\(--brass2\) 100%\)\}/.test(css) && /:root\[data-theme="light"\] button:not\(:disabled\):active,:root\[data-theme="light"\] a\.chip:active,:root\[data-theme="light"\] a\.ghost:active\{filter:brightness\(\.92\)\}/.test(css) && /:root\[data-theme="light"\] \.ph \.phl\{background:rgba\(0,0,0,\.65\)\}/.test(css) && /:root\[data-theme="light"\] body::before\{background:radial-gradient/.test(css) && /:root\[data-theme="light"\]\[data-mode="play"\] body::before\{background:radial-gradient/.test(css) && /:root\[data-theme="light"\]\[data-mode="hunt"\] body::before\{background:radial-gradient/.test(css));
+  ok('...control: the total\'s light gradient written as the shorthand is caught', !/:root\[data-theme="light"\] #home \.total\{background-image:/.test(css.replace(':root[data-theme="light"] #home .total{background-image:', ':root[data-theme="light"] #home .total{background:')));
+  /* the switch */
+  ok('THEME in the script: vault.theme read with dark the default (the owner: off by default), light or Auto -- the phone through matchMedia, live; the root\'s data-theme set before the first paint and the bars at boot; the status bar told LIGHT or DARK through the plugin; the seg\'s handler a named function (landmine 136)',
+     /const THEME = \{/.test(js) && /cur: \(v => v === 'light' \|\| v === 'system' \? v : 'dark'\)\(localStorage\.getItem\('vault\.theme'\)\)/.test(js) && /matchMedia\('\(prefers-color-scheme: dark\)'\)/.test(js) && /if \(root && root\.dataset\) root\.dataset\.theme = t;/.test(js) && /\nTHEME\.apply\(false\);\n/.test(js) && /\n  THEME\.apply\(\);/.test(js) && /function themeSegClick\(e\) \{ const b = e\.target\.closest\('#themeSeg \[data-theme\]'\); if \(!b\) return; THEME\.set\(b\.dataset\.theme\); \}/.test(js) && /document\.addEventListener\('click', themeSegClick\);/.test(js) && /statusBar\(theme\) \{ const SB = this\.plugin\('StatusBar'\);/.test(js) && /style: theme === 'light' \? 'LIGHT' : 'DARK'/.test(js) && /"@capacitor\/status-bar": "\^8\.0\.0"/.test(pkg));
+  if (!V.THEME) ok('THEME on the harness surface (the live checks below need it)', false); else {
+  const stored = () => { try { return ctx.localStorage.getItem('vault.theme'); } catch (e) { return undefined; } };
+  const rootEl = ctx.document.documentElement, rootTheme = () => (rootEl && rootEl.dataset ? rootEl.dataset.theme : '(no root dataset in the stub)');
+  ok('the default is dark: nothing stored, the theme dark, the root dark', V.THEME.cur === 'dark' && stored() == null && V.THEME.applied() === 'dark' && (rootTheme() === 'dark' || /stub/.test(rootTheme())), `${V.THEME.cur} ${stored()} ${rootTheme()}`);
+  const calls = []; ctx.window.Capacitor = { Plugins: { StatusBar: { setStyle: o => { calls.push(o.style); } } } };
+  const t1 = V.THEME.set('light');
+  ok('a switch to light: the root says light, the value stored, the status bar told LIGHT', t1 === 'light' && V.THEME.cur === 'light' && stored() === 'light' && (rootTheme() === 'light' || /stub/.test(rootTheme())) && calls[calls.length - 1] === 'LIGHT', `${t1} ${stored()} ${rootTheme()} ${calls.join(',')}`);
+  V.go('settings'); const more = ctx.document.querySelector('#setBody').innerHTML;
+  ok('More\'s Appearance panel, after How it works: a radio group of three -- Dark, Light, Auto -- the current one on and checked, a note that says what each is',
+     /<\/div>\n    <div class="panel"><h3>Appearance<\/h3>/.test(more) && more.indexOf('<h3>How it works</h3>') < more.indexOf('<h3>Appearance</h3>') && more.indexOf('<h3>Appearance</h3>') < more.indexOf('<h3>Sync</h3>') && /<div class="seg" id="themeSeg" role="radiogroup" aria-label="Appearance">/.test(more) && /<button role="radio" data-theme="dark" class="" aria-checked="false">Dark<\/button>/.test(more) && /<button role="radio" data-theme="light" class="on" aria-checked="true">Light<\/button>/.test(more) && /<button role="radio" data-theme="system" class="" aria-checked="false">Auto<\/button>/.test(more) && /Auto follows the phone/.test(more) && /Dark is the app/.test(more));
+  ok('...control: the panel painted with no radio checked is caught', !/<button role="radio" data-theme="light" class="on" aria-checked="true">Light<\/button>/.test(more.replace(' class="on" aria-checked="true"', ' class="" aria-checked="false"')));
+  const fake = { matches: true, q: null, fns: [], addEventListener(t, f) { this.fns.push(f); } }; ctx.matchMedia = q => { fake.q = q; return fake; }; V.THEME._mq = null;
+  const t2 = V.THEME.set('system'); const askedDark = /prefers-color-scheme: dark/.test(String(fake.q)); const storedAuto = stored();
+  fake.matches = false; fake.fns.forEach(f => f()); const turned = V.THEME.applied();
+  ok('Auto asks the phone: a dark phone gives dark, and when the phone turns light the app turns with it, live, the stored value staying Auto', t2 === 'dark' && askedDark && storedAuto === 'system' && fake.fns.length >= 1 && turned === 'light' && (rootTheme() === 'light' || /stub/.test(rootTheme())) && calls[calls.length - 1] === 'LIGHT', `${t2} asked=${askedDark} stored=${storedAuto} listeners=${fake.fns.length} turned=${turned} ${calls.join(',')}`);
+  delete ctx.matchMedia; V.THEME._mq = null;
+  ok('...without a way to ask the phone, Auto is dark (the default), never a guess at light', V.THEME.applied() === 'dark');
+  const t3 = V.THEME.set('dark'); delete ctx.window.Capacitor;
+  ok('back to dark: the root, the store, the status bar told DARK; and a value that is none of the three reads as dark', t3 === 'dark' && stored() === 'dark' && calls[calls.length - 1] === 'DARK' && (rootTheme() === 'dark' || /stub/.test(rootTheme())) && V.THEME.set('sepia') === 'dark' && V.THEME.cur === 'dark', `${t3} ${stored()} ${rootTheme()} ${calls.join(',')}`);
+  try { ctx.localStorage.removeItem('vault.theme'); } catch (e) {}
+  }
+}
+section('take 120 — the UI series wrapped up: the binder on the open Fold, the audit\'s small boxes');
+{ const css = (html.match(/<style>([\s\S]*?)<\/style>/) || ['', ''])[1];
+  ok('the binder on the open Fold is a spread: two pages side by side from 700 px (Home\'s own breakpoint), the pager by two, a repaint when the Fold opens; one page below it',
+     /const bnSpread = \(\) => typeof innerWidth === 'number' && innerWidth >= 700;/.test(js) && /#bnGrid\.spread\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\);gap:14px\}/.test(css) && /<div id="bnGrid"><\/div>/.test(html) && !/class="bnpage" id="bnGrid"/.test(html) && /function bnTurn\(d\) \{ const step = bnSpread\(\) \? 2 : 1, at = bnSpread\(\) \? BN\.page - \(BN\.page % 2\) : BN\.page;/.test(js) && /addEventListener\('resize', \(\) => \{ const b = \$\('#binder'\);/.test(js));
+  { /* live, in the stub, the window told it is the open Fold: the largest set, one card held on its third page */
+    const keep = { items: V.OWN.items, set: V.BN.set, pageOf: { ...V.BN.pageOf }, active: V.PF.active };
+    const numKey = n => { const m = n.match(/(\d+)$/); return m ? parseInt(m[1], 10) : 9999; };
+    const bySet = new Map(); for (const p of V.CAT.rows) if (p.num) { const m = bySet.get(p.set) || new Map(); if (!m.has(p.num)) m.set(p.num, p); bySet.set(p.set, m); }
+    const [sid, m] = [...bySet.entries()].sort((a, b) => b[1].size - a[1].size)[0];
+    const nums = [...m.keys()].sort((a, b) => numKey(a) - numKey(b) || a.localeCompare(b)), pages = Math.ceil(nums.length / 9);
+    V.PF.active = 'main'; V.OWN.items = [{ id: m.get(nums[20]).id, qty: 1, condition: 'NM', pf: 'main' }];
+    const grid = () => ctx.document.getElementById('bnGrid').innerHTML, label = () => ctx.document.getElementById('bnPage').textContent, count = (h, re) => (h.match(re) || []).length;
+    ctx.innerWidth = 749; V.BN.set = sid; delete V.BN.pageOf[sid]; V.go('binder');
+    const wide = { pages: count(grid(), /<div class="bnpage">/g), pockets: count(grid(), /class="pocket/g), label: label(), page: V.BN.page };
+    V.bnTurn(1); const next = { label: label(), page: V.BN.page }; V.bnTurn(-1); const back = { label: label(), page: V.BN.page };
+    delete ctx.innerWidth; V.go('binder'); const narrow = { pages: count(grid(), /<div class="bnpage">/g), pockets: count(grid(), /class="pocket/g), label: label(), page: V.BN.page };
+    ok(`the open Fold: the set opens on the spread that holds its first held card (pages 3\u20134 of ${pages}), two pages of nine pockets each`, wide.pages === 2 && wide.pockets === 18 && wide.page === 2 && new RegExp(` pages 3\u20134 of ${pages}$`).test(wide.label), JSON.stringify(wide));
+    ok('...Next turns the spread over (pages 5\u20136), Prev turns it back', next.page === 4 && / pages 5\u20136 of /.test(next.label) && back.page === 2 && / pages 3\u20134 of /.test(back.label), JSON.stringify({ next, back }));
+    ok('...and at the cover width the same set is one page of nine again, the third', narrow.pages === 1 && narrow.pockets === 9 && narrow.page === 2 && new RegExp(` page 3 of ${pages}$`).test(narrow.label), JSON.stringify(narrow));
+    V.OWN.items = keep.items; V.BN.set = keep.set; V.BN.pageOf = keep.pageOf; V.PF.active = keep.active; V.go('home'); }
+  ok('the binder reads in light too: the number pill in the card\'s own colour under the accent ink, the name over the art white in both themes, a lighter page in light with the empty pockets\' dashed edges at the control\'s strength',
+     /\n\.pocket \.n\{[^}]*color:var\(--accent-ink\);\n  background:color-mix\(in srgb,var\(--card\) 85%,transparent\);/.test(css) && /\n\.pocket \.tag\{[^}]*color:#fff;\n/.test(css) && /:root\[data-theme="light"\] \.bnpage\{background:color-mix\(in srgb,var\(--card\) 90%,#000 10%\)\}/.test(css) && /:root\[data-theme="light"\] \.pocket\.empty\{border-color:var\(--line-strong\);opacity:\.7\}/.test(css));
+  ok('a product with no market price says so instead of "— \u00b7 market", and skips the low\u2013high line it has no numbers for', /\$\{p\.market != null \? `\$\{money\(p\.market\)\} \\u00b7 market` : 'No market price yet'\}/.test(js) && /\$\{p\.low != null \|\| p\.high != null \? `Low \$\{money\(p\.low\)\}/.test(js));
+  { const np = V.CAT.rows.find(p => p.market == null && p.name && !p.sealed) || V.CAT.rows.find(p => p.market == null && p.name);
+    if (np) { V.openDetail(np.id); const prov = ctx.document.getElementById('dProv').innerHTML; V.closeAnyOverlay();
+      ok(`...live: ${np.num || np.name} has no market price and its page says so, with no low\u2013high line`, /^No market price yet \u00b7 TCGplayer/.test(prov) && !/Low /.test(prov), prov.slice(0, 80)); }
+    else ok('...live: every product in this catalogue has a market price (nothing to open)', true); }
+  ok('a day in a mixed distributor line never breaks (no-break spaces, as every day since take 112)', /\\u00b7 mixed \\u00b7 release \$\{esc\(nbsp\(dayText\(rel\)\)\)\}/.test(js));
+  ok('the Sim\'s battle lines: the card without its power, then "attacks with 5000" on a line of its own in a strong, not a block <b> (it read "5000attacks with")', /\$\{simCard\(att\.id, '', true\)\}<span style="display:block">attacks with <strong>\$\{pw\.a\}<\/strong><\/span>/.test(js) && /\$\{simCard\(tgt\.id, '', true\)\}<span style="display:block">defends with <strong>\$\{pw\.d\}<\/strong>/.test(js) && !/<span>attacks with <b>/.test(js));
+  ok('a deck row\'s second line wraps (at 411 px the ellipsis cut the keyword tags), and a set\'s name wraps in Home\'s half-width panel on the open Fold', /\n\.dkrow \.n > span\{font-size:var\(--fs-cap\);color:var\(--dim\);display:block;white-space:normal\}/.test(css) && /\n#setDone \.row \.nm b\{white-space:normal\}/.test(css));
+  ok('...control: the nowrap line planted back is caught', !/\n\.dkrow \.n > span\{font-size:var\(--fs-cap\);color:var\(--dim\);display:block;white-space:normal\}/.test(css.replace('display:block;white-space:normal}', 'display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}')));
+  ok('a Sealed row names its kind in the singular ("Box", not "Boxes"; "Sealed product" for the rest)', /out\.push\(sealedRow\(p, esc\(sealedWord\(p\)\), tl, byDist\)\);/.test(js) && !/sealedKind\(p\)\[1\]/.test(js) && /\['other', 'Other', 'Sealed product'\]/.test(js));
+  ok('a Leader in the Leader sheet and a printing in the printing sheet show their number where the picture host refuses the picture (an empty grey box before): the placeholder refArt hides on load',
+     /<div class="oa">\$\{refArt\(p\)\}<div class="ph">\$\{esc\(\(p\.num \|\| ''\)\.split\('-'\)\.pop\(\) \|\| ''\)\}<\/div><\/div>\n\s*<div class="oi"><b>\$\{esc\(p\.name\)\}<\/b>/.test(js) && /<div class="oa">\$\{refArt\(p\)\}<div class="ph">\$\{esc\(\(p\.num \|\| ''\)\.split\('-'\)\.pop\(\) \|\| ''\)\}<\/div><\/div>\n\s*<div class="oi"><b>\$\{esc\(TREAT\[p\.treat\] \|\| p\.treat\)\}/.test(js) && /q=p&&p\.querySelector\('\.ph'\);if\(q\)q\.style\.display='none'/.test(js));
+  { const readme = fs.readFileSync(path.join(ROOT, 'assets', 'user', 'README.md'), 'utf8');
+    ok('the owner\'s README keeps only the slots the build reads -- home-bg, hero-play, hero-hunt and the fonts; the retired empty-collection slot is gone', !/empty-collection/.test(readme) && ['home-bg.jpg', 'hero-play.jpg', 'hero-hunt.jpg', 'display.woff2'].every(k => readme.includes(k))); }
 }
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -1,4 +1,181 @@
-# HANDOFF — through Take 119
+# HANDOFF — through Take 120
+
+## Take 120 — 2026-09-25 — the light theme, and the UI series wrapped up
+
+Opened before any code (PROTOCOL §6) by the UI/UX session, after take 119
+merged (PR #44, the owner: "119 looks good") and Release take-119 built its
+APK and AAB. The owner, on the take-120 sheets: "The light mode looks great
+just from the previews, continue on! … Wrap everything up for the new UI
+overhaul into this build and ensure we're ready for production", then "let's
+do a single big push. Wrap everything up in 120." So this take carries the
+light theme and every rider the UI series left on its list, each small and
+each seen, and the series closes with it.
+
+The owner's word on light mode, from the take-118 and take-119 sheets'
+question: "Do what you recommend for light mode, make it off by default, but add a switcher somewhere, like under settings". The recommendation, drawn first as real screenshots
+(six light tints, two per mode, beside today's dark, at both Fold sizes): a
+tint per mode, so the three modes stay three grounds -- parchment for
+Collect, chalk for Prep & Play, cream for Hunt -- dark the default,
+the switch under More.
+
+### What this take changes
+
+- **A second axis on the root.** `data-theme` beside `data-mode`, `dark`
+  unless More > Appearance says otherwise; stored as `vault.theme` beside
+  the mode. Three settings: **Dark** (the app's own look, and the default --
+  nothing changes for anyone who does not switch), **Light**, and **Auto**,
+  which follows the phone's dark mode through `matchMedia` and turns with
+  it live. A value that is none of the three reads as dark; without a way to
+  ask the phone, Auto is dark, never a guess at light. The root is set
+  before the first paint; the status bar's icons are told at boot and on
+  every switch. `color-scheme` follows, so native controls and the
+  scrollbar do too.
+- **Three light palettes,** `:root[data-theme="light"]` and the two mode
+  blocks with both attributes, placed after the dark blocks (a light block
+  ties a mode block on specificity, so order decides). Every colour token is
+  redefined; the tints are not -- the dark formulas are `var()`-based and
+  mix from the new tokens at the dark percentages. Every pair measured
+  before writing and by smoke on every build (six palettes now): fg 12+,
+  dim 7+, dim2 4.5+ on card and card2; the inks 4.5+ on every tint, the
+  good and bad and warning tints included; the edge 3+. The fill
+  (`--brass`) is a deeper gold than the drafts' -- the bright gold read
+  2.0:1 on the parchment, under WCAG 1.4.11's 3:1 for a knob's edge, a
+  button's boundary and the focus ring; the label on it stays the dark ink
+  (5.4). A rise, a fall and the gold as text were darkened a step to clear
+  their tints (up on the good tint read 4.06, gold on the warning tint 3.83
+  as drafted).
+- **What assumed a dark ground,** overridden under the light root: the
+  nav's near-black (on the card, its edge the control edge, a lighter
+  shadow); the weight of every shadow (panels, tiles, pictures, the hero's
+  art, the pill switch); the total's bright-gold gradient (dark golds, by
+  `background-image` -- the shorthand resets the clip to the text and
+  paints a block); a press that brightened (dims); the pill over a missing
+  picture (heavier); the scrim; a glow per light mode.
+- **The status bar.** `@capacitor/status-bar` joins `package.json`;
+  `PLATFORM.statusBar()` tells it LIGHT (dark icons) or DARK on boot and on
+  every switch. The icons followed the phone's night mode alone, and a
+  light app on a dark phone would have drawn a white clock on parchment.
+  On the web there is no plugin and nothing happens.
+- **The switch,** a panel under More after How it works: a radio group of
+  three (`role="radiogroup"`, `aria-checked` on each), a note that says
+  what each is. The slide needs nothing: the screen leaving carries its
+  computed tokens, which are the theme's.
+- **The UI series' riders** (UI-AUDIT §9's open boxes, the owner's "do what
+  you recommend" on the binder): on the open Fold (700 px and up, Home's own
+  breakpoint) the **binder is a spread** -- two pages side by side, eighteen
+  pockets at about 105 px, the pager turning by two ("pages 3-4 of 14"), a
+  repaint when the Fold opens or closes -- so a page needs no scroll there
+  (226 x 316 px pockets ran 1151 px on an 832 px screen); the cover keeps one
+  page of nine and every page-turn rule (SPEC-111-49). A product with **no
+  market price** says so ("No market price yet") instead of "-- · market" and
+  skips the low-high line it has no numbers for. A day in a **mixed
+  distributor line** carries no-break spaces like every other day. The Sim's
+  **battle lines** read "attacks with 5000" on a line of their own, the card
+  above without its power (it read "5000attacks with": the power glued to the
+  words, the number a block). A **deck row's second line wraps** (at 411 px the
+  ellipsis cut the keyword tags, the useful end of it) and a **set's name
+  wraps** in Home's half-width panel on the open Fold. A Sealed row names its
+  kind in the **singular** ("Box"). A Leader in the Leader sheet and a printing
+  in the printing sheet show their **number where the picture host refuses
+  the picture** (an empty grey box before; refArt's placeholder, hidden on
+  load). The owner's README keeps only the slots the build reads.
+
+### How it was built
+
+Drafted first as CSS injected over the take-119 build (`drafts120.mjs`), six
+candidates measured before they were drawn (`palettes120.py`), sheets to the
+owner; then a pre-build in a clone of the branch with the candidates as
+switches (`T120_COLLECT` L1/L2, `T120_PLAY` L3/L4, `T120_HUNT` L5/L6), the
+inks finished so every tint pair clears (`inks120.py`) and the fill chosen
+on a ramp as the brightest gold that clears 3:1 on both cards
+(`fills120.py`). Two scripts port to the branch: `patch-120-app.py` (the
+blocks, the rules, `THEME`, the panel, the plugin call; it measures the
+picks and refuses a palette that would fail the gate) and
+`patch-120-tools.py` (BUILD, the release paragraph, the plugin, smoke's
+contrast machinery over six palettes, the take-120 section, render's
+checks, the look's steps) and `patch-120-riders.py` (the riders, their smoke
+section with the binder spread live in the stub -- the window told it is
+749 px wide -- and the look's steps: the binder at both sizes in light and
+dark, a deck's rows). Every new guard watched red on the take-119 build
+first.
+
+### Measured
+
+- On the pre-build: smoke 1356/1356; render 242/242 (mode: chrome); the look
+  44/44 at both Fold sizes (every picture read; the sheets sent, the
+  binder's light pages touched up after the first reading -- the number pill
+  in the card's colour, the name white, a lighter page).
+- Contrast, the picks: the lowest 4.5-pair parchment 4.55, chalk 4.63,
+  cream 4.68; the lowest 3-pair 3.07, 3.35, 3.10 (the fill on the card).
+- In Chrome: nothing stored and the root dark at first paint; the tap on
+  Light turns the root, the store, the ground, `color-scheme`, the nav and
+  tells the bar LIGHT; the total's gradient still clips to the text; the
+  two other grounds; Auto turning with an emulated phone both ways, the
+  store staying Auto; back to dark with the bar told DARK.
+- The binder on the open Fold in the look: a spread of two pages, eighteen
+  pockets, the grid's foot above the nav with nothing to scroll; one page of
+  nine at the cover; a deck's rows with no second line clipped at either size.
+- Controls on the take-119 build: the new smoke red on 29 lines (the
+  blocks, the six palettes' checks, the rules, `THEME`, the live block, the
+  riders' pins) plus the ignore artefact of a control tree that is not a
+  repository; render red on 7, all the take's own, none crashed.
+
+### What I got wrong
+
+- The blocks' token-set guard counted the game's six colours, which are
+  data and must never be a palette's: excluded.
+- The light Collect block repeated Collect's tint line, and the take-114
+  control that plants that exact line missed it (landmine 207): the light
+  blocks leave the tints to the dark formulas.
+- Render read the body's ground straight after Auto flipped the root and
+  got the fade (landmine 208): the ground is polled settled.
+- The toggle guard (SPEC-108-36) flagged the radios, which say
+  `aria-checked`, not `aria-pressed`: the guard learned a `role="radio"`,
+  with a control for a radio that says nothing.
+- The riders' script was first written with the source's middle-dot escapes
+  decoded to the character by the session's own tool layer, so its anchors
+  found nothing; the escapes were put back, and a regex over the source
+  text doubles its backslash. Every anchor is asserted (AGENTS rule 6),
+  which is what caught it.
+
+### Ruled out
+
+- `<meta name="theme-color">` for the bar: an Android WebView ignores it.
+- One light palette for all three modes: the modes are three grounds (the
+  owner, take 106), and light keeps that.
+- The phone's setting as the default: the owner said off by default.
+- The drafts' bright gold as the light fill (2.0:1 on the parchment).
+- The `background` shorthand for the total's light gradient: it resets the
+  clip and painted a solid block in the drafts.
+- "Follow the phone" as the third label: three words in a third of the row
+  at 411 px; "Auto", and the note carries the words.
+- Redefining the tints per light block: the formulas follow the tokens, and
+  a repeated line breaks a plant (landmine 207).
+
+### Tests
+
+- This branch's run (25 Sept, 20:50-20:57Z), from origin/main at the merge
+  of PR #44 plus the nightly of 25 Sept: `ci/deps.sh`, then the whole
+  pipeline in 6 min (87 groups, 7,665 products ingested fresh, hash
+  coverage 100 %): smoke 1356/1356, render 242/242 (mode: chrome), the look
+  44/44 at both Fold sizes (every picture read, three sheets sent); then
+  `seal.sh --gate-only`, and the runner-owned files restored.
+
+### DEFERRED
+
+- The other three candidates (lavender, warm grey, light kraft) stay in
+  the scripts as switches, unbuilt.
+- The gesture bar's icons: the plugin styles the status bar; the navigation
+  bar's follow the phone still. Unverified on the phone, as is the plugin's
+  first install, which runs on the Release build (`check.yml` does not run
+  `ci/apk.sh`); the call is guarded, so a missing plugin costs nothing.
+- The audit's data-side boxes are not this take's: the distributors' names
+  verbatim and a product listed by both (the feed's naming, a Hunt data pass),
+  the GTS counts that overlap (the groups are not exclusive by design; a
+  wording pass), an upcoming group whose only listing is sealed (no case
+  today), the tokens nothing reads (the scale is the record; dropping them
+  is churn). The layer-list launch drawable is an `apk.sh` change no VM can
+  test and stays its own take.
 
 ## Take 119 — 2026-09-25 — the surface beyond Home, the mode swipe, the last literal sizes onto the tokens
 

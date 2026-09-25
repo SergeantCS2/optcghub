@@ -1,6 +1,6 @@
 # OPEN DECISIONS — needed from the owner
 
-*Current as of take 119.* Everything else is decided and recorded in AGENDA.
+*Current as of take 120.* Everything else is decided and recorded in AGENDA.
 
 **D1 — App id and name. ANSWERED: registered with Play at the take-35 upload as `com.optcghub.app` / "OP TCG Hub", permanent.** *(original)* Proposed `com.optcghub.app` / "OP TCG Hub". Permanent
 once registered under developer verification and fixed from first Play upload
@@ -148,7 +148,7 @@ the record so the sim's transport is a decision and not a surprise.
 
 *Added take 28.*
 
-**D15 — Colour direction (A24). ANSWERED take 106: the three mode palettes stay — the owner, 24 Sept: "I like the different themes for different modes." The photo slot behind the hero (`assets/user/home-bg.jpg`) stays available.** *(original)* Parchment-light, straw-and-sky, ink-and-
+**D15 — Colour direction (A24). ANSWERED take 106: the three mode palettes stay — the owner, 24 Sept: "I like the different themes for different modes." The photo slot behind the hero (`assets/user/home-bg.jpg`) stays available. Take 120 adds a light theme, a tint per mode, off by default, under More → Appearance.** *(original)* Parchment-light, straw-and-sky, ink-and-
 paper, or a photo of your own behind the hero (drop `home-bg.jpg` into
 `assets/user/` and it is done). One word, or a picture of a thing whose colours
 you like, and I do the pass. Not urgent.

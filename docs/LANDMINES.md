@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 119.*
+*Current as of take 120.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -219,6 +219,8 @@ Start here. Do not read top to bottom.
 | A shelf card is wider than its neighbours | 204 |
 | The page scrolls sideways during the mode slide | 205 |
 | A drag on the mode bar highlights a label | 206 |
+| A control's planted line is repeated by a second block | 207 |
+| The body's colour is read mid-fade after a theme flip | 208 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -2731,6 +2733,21 @@ so the look reads the viewport's). Both for the slide's 400 ms only.
 first real swipe on the mode bar (render, with the mouse) left the knob's
 label highlighted in the look's picture: to the browser a pointer drag is a
 text selection. `user-select:none` on the gesture surface (take 119).
+
+**207. A planted control line must be the only one of its kind, or the plant misses.**
+The take-114 tint control plants Collect's exact `--bad-bg` line and refuses
+when it is not found once. The light Collect block repeated the formula, the
+plant missed, and the control read red for a reason that was not the
+control's (take 120). Before repeating a shipped line in a second block, grep
+the harness for it as a plant anchor; here the light blocks leave the tints
+to the dark formulas, which follow the tokens anyway.
+
+**208. The ground fades for 220 ms after a palette or theme flip: a colour read
+straight after it is the fade's.** Render's first take-120 run read the body
+between the parchment and the indigo (`rgb(162, 157, 156)`) after Auto
+flipped the root: the root flips at once, `body{transition:background-color
+var(--dur-ui)}` does not. Landmine 143's rule, on a colour: poll for the
+expected value up to a second, never a sleep sized to the fade.
 
 ## §2 — Inherited from APEX ORV
 
