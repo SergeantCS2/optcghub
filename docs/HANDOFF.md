@@ -1,4 +1,468 @@
-# HANDOFF — through Take 114
+# HANDOFF — through Take 115
+
+## Take 115 — 2026-09-25 — the production baseline: a two-axis review of takes 106-114, every confirmed finding fixed or handed on, the record made whole for the next sessions
+
+Opened before any code (PROTOCOL §6). Take 114 merged as PR #39 at 00:14
+UTC; its after-merge note is under take 114.
+
+The owner, word for word (the scrubber's one word in brackets):
+- "Run `npx skills use "https://github.com/mattpocock/skills" --skill
+  "code-review"` and follow the generated skill instructions now. ... wrap
+  everything up remaining, tidy up your documentation and ensure there was
+  no missing/split ends. I'd like to start a new [session] after we're all
+  set, maybe in another take - where we'll do more fixes, UI adjustments
+  and more. I want to harden this as production, update any open
+  questions, issues etc."
+- Asked where the review measures from and what to do with its findings:
+  "take-105 (Recommended)" and "Fix small ones in take 115 (Recommended)".
+- Then: "bundle all of your findings and fixes/optimizations based on your
+  findings all within 115, 114 is already in production, but I want 115 to
+  be the real prod baseline on the code side so any future
+  changes/additions will be on a clean slate and picking up from the apps
+  most optimal rendition and ensuring that the new UI/UX new [session] is
+  aware, currently its awaiting your changes all bundled into 115 but we
+  have been drafting in preparation, so it knows to wait and that you're
+  doing code review. Publish your unfinished changes somewhere to tackle
+  later, and if it's a massive change also note it here to likely tackle
+  later. The new [session] will be improving collect, the loading screen,
+  tutorial, hunt and much more, mostly UI changes."
+- With it, the owner's Diagnostics and self-test from the Fold on take 114:
+  17 pass, 0 fail; the cover screen `viewport: 411x960 @2.625`, the open
+  screen `viewport: 749x832 @2.625`, `tz: America/New_York`.
+
+### The review
+
+The skill (`code-review`) reviews the diff since a fixed point on two axes,
+kept apart on purpose: **Standards** (the repo's documented rules, plus a
+fixed list of code smells as judgement calls) and **Spec** (what the take
+was asked to do). The fixed point is tag take-105: 61 commits, 91 files.
+The skill expects an issue-tracker file (`docs/agents/issue-tracker.md`)
+that this repo does not have; the specs here are the record itself (each
+take's HANDOFF plan and the owner's words, AGENDA, UI-AUDIT).
+
+It ran one shard per take, 106 to 114, each with its own Standards and Spec
+reviewer, and every finding was then given to independent reviewers told
+to refute it at HEAD (two for a claimed defect, one for a smell). Three
+more sweeps looked past the diff: the record's split ends, the owner's
+Diagnostics, and production readiness. 175 agents in all.
+
+- **Standards:** 66 findings; 26 confirmed, 39 refuted, 1 already recorded.
+- **Spec:** 36 findings; 29 confirmed, 5 refuted, 2 split between the
+  reviewers.
+- **The sweeps** added about forty more, the worst of them in production
+  code that no take's diff had touched.
+
+### What this take changes (the plan)
+
+Every confirmed finding is fixed here, each with a check watched to fail on
+take 114's build, or handed on in the record with its reason. The worst
+first:
+- **A sync in a running app doubled every printing in the scanner's
+  lookup** (`loadCatalogue` never reset `CAT.byNum`). After one sync, a
+  unique artwork asked instead of auto-accepting and the picker listed
+  every printing twice. The quiet sync runs most days.
+- **A stored value that could not be read stopped the app at the splash**,
+  and a full storage lost a collection save without a word.
+- **A synced catalogue of the wrong shape locked the app at every launch.**
+- **A price alert typed in a converted currency was stored as dollars.**
+- **The picker's prompts leaked when closed**: the next pick answered twice
+  (two graded slabs, two ads).
+- **The binder's page turns counted from the wrong page.**
+- **A distributor that failed after a good read looked fresh**: the feed
+  keeps the last good copy with `ok` still true, and the app never said
+  "not reached". It happened live at 01:28 UTC.
+- **A backup did not run on every save**, and it left out the stock
+  alerts, the release reminders, the Hunt notes and the trade lists.
+- The rest: contrast under 4.5:1 in three places, a splash that took the
+  mode's colour, text under 12 px, days still in ISO, keywords three ways,
+  toggles without `aria-pressed`, a sealed-only set filed under "Other",
+  guards whose controls could not fail, and the runner's hourly deploying
+  a catalogue no validation had read.
+- **The Fold's open screen is MEASURED**: 749 x 832 at 2.625, not the 840 x
+  757 at 2 the look and render assumed. The 700-899 px two-pane rules
+  hold at 749 (measured in Chrome); the harnesses move to the measured size.
+
+What is too large for one take, or is the owner's, goes to AGENDA A43 with
+its fix sketch, and the UI/UX session is told in the session prompt that
+take 115 is the baseline it waits for.
+
+### How it was built
+
+Two lanes on files that never overlap, run by agents, each batch reading
+the review's findings and fix sketches, verifying each claim at the current
+code, fixing it the smallest way, and watching every new check fail on take
+114's build in a scratch tree first. The app lane ran one batch after
+another (A1 to A5) on `src/app.html`, `tools/build_app.py`, `tools/smoke.mjs`
+and `tools/render.mjs`; the runner lane (B1, B2) ran beside it on the tools,
+the scripts and the workflows. The container restarted during A4; the five
+finished batches' reports were in the workflow's journal, their work was on
+disk and green, and it was committed (8f7f75e) before the rest ran again.
+
+### Built
+
+**Production safety (A1):**
+- **The scanner's index is rebuilt, not appended to.** `indexCatalogue`
+  builds fresh maps and `loadCatalogue` swaps them in whole. MEASURED on
+  take 114 through the real sync path: 6,987 entries became 13,974 after
+  one sync and 20,961 after two; 100 of 100 artwork auto-accepts became
+  asks; the picker for one number went from 3 printings to 6 (landmine 176).
+- **A synced catalogue is checked before it is written.** Its shape is read
+  against the bundled catalogue the build shipped (the lists, the columns,
+  the row widths); additions from a newer take are accepted. Sync checks
+  both files' HTTP status and never says "Prices updated" for a copy it set
+  aside. At launch, a synced copy that fails falls back to the bundled one,
+  and the reason goes to Diagnostics.
+- **Every stored value is read through one reader** (`readJson`): a value
+  that does not parse, or is the wrong kind, falls back and is recorded; for
+  the collector's own data the unreadable text is kept aside first
+  (`<key>.unreadable`). The error buffer and the splash fallback moved to
+  the top of the script, before the first read. When the collection itself
+  could not be read, every backup waits (`vault.backupHold`) until a
+  restore, so an empty collection is never written over the file Restore
+  reads (landmine 177); since the self-review, any list the backup carries
+  (item 2 below).
+- **Every write goes through one writer** (`saveJson`): a failed write is
+  recorded once per key and shows one toast telling the collector to export.
+  Diagnostics lists `vault.items` (it named a key, `vault.collection`, that
+  never existed), any unreadable copies, the writes that failed and whether
+  backups are held.
+- **Every request has a deadline** (60 s; the catalogue 240 s, sized from
+  the files' measured sizes at a slow phone link), and the five refresh
+  buttons recover.
+
+**The collection and money (A2):**
+- **One function commits a change to the collection** (`commitOwn`): CSV
+  import, bulk delete, move and condition, removing a collection, a cost
+  basis, a graded copy, a restore, Save on a card's page and the pending
+  tray now all save, take today's reading when the value can have moved,
+  and schedule the backup. Seven of the ten ways never scheduled it
+  (landmine 179). A change to the trade, want, alert, stock-alert, note or
+  reminder lists schedules it too.
+- **The backup carries the stock alerts, the release reminders, the Hunt
+  notes and the trade lists**, and restore puts them back and re-arms the
+  reminders. Restore checks the file first (this app's, every list a list,
+  every line a printing) and refuses with a reason; it keeps what it
+  replaces (`vault.beforeRestore`, and on the phone
+  `Documents/OPTCGHub/backup-before-restore.json`), and Restore then offers
+  "What the last restore replaced".
+- **The picker's prompts settle every way the sheet closes** (landmine 178):
+  on take 114 one grade pick after three closed prompts opened four grade
+  prompts.
+- **The binder turns from the page on screen** (take 114: from page 3,
+  Next went to page 2 of 66). **The featured Leader is the newest deck's**
+  (take 114 compared ISO strings as numbers and featured the oldest).
+- **A price alert keeps the collector's currency**: the box shows the market
+  in the currency on screen and the typed figure is stored in dollars
+  through the same rate (take 114 stored 264 typed in euros as $264; "1,200"
+  became $1). **An alert's fired day is the phone's day** (it was UTC).
+- **One place decides which line a copy counts into** (`OWN.target`,
+  `OWN.line`); on the way, CSV import's cost basis went to the printing's
+  first line anywhere, a slab included, and now goes on the line it adds.
+
+**Hunt, honestly (A3):**
+- **A kept distributor reads "not reached since …"** on Sealed, a product's
+  page, Releases and Diagnostics, and its kept copy is still shown; one
+  predicate (`HUNT.unreached`), and a control built through `hunt.py`'s own
+  code from the live 25 Sept timeout's shape (landmine 180).
+- **Target's history line counts days** from the rows' own times ("N checks
+  over D days so far"); take 114 said "20 hourly checks" for 20 checks over
+  16 days and nothing at all for 48 runs over 7.7 days. The self-review
+  found it counted runs that never read the product: item 8 below.
+- **The sealed-only set One Piece Collection Sets (23304) is back**
+  (`EXISTS` in `build_app.py`): its ten priced products move from "Other" to
+  their own set; an empty group like 24834 stays out (landmine 181).
+- **Diagnostics' counts say what they count**: "221 cards, 5 DON!! cards and
+  19 sealed products have no picture …", "350 priced (675 rows filed as
+  sealed: 254 DON!! cards, 71 unpriced)", "7662 printings (6987 cards, 675
+  without a number), 86 sets (85 with cards)"; More says 85 sets, the sets
+  the cards are in.
+- One Southern Hobby state-to-date map; the Diagnostics distributor line
+  built from the list of distributors; the local `G` that shadowed the glyph
+  helper renamed; one sealed-product predicate, one sealed row template, one
+  colour split; the card page's backdrop loads lazily (PROVISION's claim is
+  now true); the test-credit label read from the credits it adds; the
+  OP01-016 ratio and the no-flood guard's control made real (landmine 175's
+  rule).
+
+**The tools (B1):**
+- `hunt.py`: one request function and one retry loop for the history and the
+  carry-over; the `--out` refusal (landmine 166) tested, with its positive
+  half. Hunt selftest 119 → 123 ok.
+- `southern.py`: an unread Illustration Box, or an unread name that says
+  Case, matches nothing (landmine 167's addendum); the fixture's four
+  matches are unchanged.
+- `hashes.py`: one list of the sidecar's carried keys, and a check that every
+  key the build writes is carried (22 → 23 ok).
+- `ci/icon.py`: controls for an empty foreground, an empty status glyph,
+  reminders with no small icon, and an assets folder without the foreground
+  (24 → 28 checks).
+- `tools/gate.py`: the icon-character check decodes surrogate pairs and
+  `\u{…}` escapes (17 → 20 probes).
+- `tools/scrub.py` reads every text file at every level of `tools/` and
+  `ci/` (64 → 85 files), and found the owner's first name in a take-4
+  comment in `tools/phase0.html`, now "the owner" (landmine 182).
+- `ci/apk.sh` runs Gradle in a subshell and stops with its own message,
+  shredding the upload key on a failure (landmine 183; a new selftest, run
+  by the gate); `ci/check.sh` fails when it cannot fetch main.
+
+**The workflows (B2):**
+- A **report** job needs every job of the nightly and files one
+  `nightly-failure` thread for any failed job, closing it only when every
+  job ran green; the hourly has its own under `hourly-failure`; the Pages job
+  lost `continue-on-error` (landmine 184).
+- **The nightly race is closed**: the Pages job reads the hourly's files
+  again inside the `pages` group the hourly holds, then deploys.
+- **The hourly validates** the catalogue it deploys (`validate.py`, with
+  the nightly's cache for the per-group counts; the self-review took out
+  `--strict`, whose hash coverage only the nightly can meet: item 10 below).
+- **Every Release carries the Play icon** (`icon-512.png`).
+- Seven new hunt selftest checks, each with a control, fail on take 114's
+  workflows (124 ok / 11 FAIL there); 135 ok on this tree.
+
+**The spec's own words, on screen (A4):** each of these was ticked done in
+UI-AUDIT or claimed in a HANDOFF and was not, or not everywhere (landmine
+187). MEASURED on take 114 in Chrome and smoke, then fixed:
+- **Contrast.** Collect's secondary text on the selected tint read 4.24,
+  and "not legal" 4.30: Collect's tints are now 8 % and 10 % (Prep & Play and
+  Hunt keep 12 % and 14 %), and every text on a tint is computed per palette
+  from the shipped rules (landmine 189). Prep & Play's active nav label read
+  4.42 over a translucent mix: it sits on the opaque tint now (4.61). The
+  Sim's "choose a target" and its given-DON pips read the accent as text.
+- **The splash's mark** took the mode's colour (red in Prep & Play); it is
+  Collect's brass in every mode.
+- **Nothing under 12 px, as drawn:** the chip counts drew at 10 and 10.8 px
+  through the browser's own `smaller` (landmine 188); they are 12 px at full
+  strength.
+- **One glyph, one meaning:** a trash glyph (Lucide's trash-2, ISC, byte for
+  byte) for remove and discard -- the want list, a price alert, a stock
+  watch, a note, the Sim's trash -- so `g-minus` is only "one fewer" and
+  `g-close` only closes; the two remove buttons that drew the × character use
+  it, and the gate now refuses a remove button drawn as ×.
+- Local's Open and Events' Register carry the external-link glyph and a name;
+  `aria-pressed` on the eleven toggles that lacked it, and `aria-selected` on
+  the mode slider's tabs (render now counts the selected tab per tablist).
+- A deck's Leader box in the card's own colours when its picture fails; the
+  trade and want rows and the picker read the thumbnail sizes; days in words
+  on Local's events and the release reminders (the .ics stays ISO); keywords
+  one way ("Blockers", "no Rush", "an active Blocker", "a Trigger"); the Sim's
+  buttons at three words, with what happens in a note beside them; four
+  straight apostrophes curled; set completion through the one percentage
+  rule (1 of 592 reads 0.2 %, it read 0 %; 590 of 592 reads 99.7 %, it read
+  100 %); a badged name wraps in deck, trade, want and alert rows (6 of 6
+  whole at 360 and 412 px; it was 0 of 6); a pointer only on a history
+  header that opens something; the dead thumbnail tokens gone and `--fs-total`
+  the size `.total` draws.
+
+**Render at the Fold's measured sizes (A5):**
+- Every Fold size in render is the MEASURED 411 x 960 and 749 x 832 at 2.625
+  (landmine 186: its "Fold inner" 673 never reached the two panes), and the
+  harness zone is America/New_York, MEASURED; no result changed (the same
+  offsets as Detroit in 2026).
+- **A real 44 px floor** (landmine 190): the probe reads the box, or the
+  `::after` hit area, with a 43 px boundary control. It found the deck-name
+  field at 338 x 43.6, now 44.
+- **Sealed's strips measured over a white picture** (landmine 191): over the
+  33 yellow Leaders' art, take 114's strip put the date under 4.5 for 14 of
+  them (worst 3.12). The scrim holds 0.55 to the strip's right end and the
+  date is white: 4.74 under white.
+- Chrome checks for what smoke reads from the rules: the tints and the nav
+  in all three palettes (minimums 4.53, 4.61, 4.64), the badged rows, the
+  history header's cursor, the Leader box offline, a kept distributor "not
+  reached"; the tab check per tablist; the Decks thumbnail check brings its
+  own stand-in instead of racing the host's refusal (landmine 192). Render
+  198 → 215 checks; take 114's build: 208 passed, 7 failed.
+
+**The look (A40), take 115's list:** 18 steps at both sizes, 36 in all,
+each with a measured ok: the four sheets take 111's tour never opened (the
+Leader sheet, a deck's printing sheet, the ask sheet, the scanner's "Which
+EB03-024?"), set completion, the binder's page turns, the "Restore from"
+sheet through the app's own browser path, the badged deck rows, the Leader
+box offline, the Sim's buttons, One Piece Collection Sets under its own name,
+and a distributor that could not be reached on Sealed and on a product's
+page. `VIEWPORTS` and the zone are MEASURED; take 106's three knob steps wait
+for the knob at rest (one helper); the unused `DLINES` is gone; the look's
+selftest needs a result per viewport from every control and probe (landmine
+185's addendum). On take 114's build the list read 9 ok, 27 not ok.
+
+**What the look found, fixed by the session:**
+- **"Hand back" broke onto two lines at 411 px** (110 x 65), squeezed by the
+  note A4 put beside it (landmine 193): Hand back, Apply and Skip are
+  `flex:none` in rows that wrap.
+- **A product's own Distributor info did not say GTS was not reached**, the
+  one place A3's fix had missed: its summary now says "1 not reached since
+  …", and the kept distributor's line "could not reach it since …; its last
+  check, …, is shown".
+- The mode slider's `aria-selected`, which A4 had to back out, went in once
+  A5's per-tablist check made room; render now requires the Mode tablist to
+  mark its tabs (watched: 214 passed, 1 failed with it taken out).
+- The look: 36 of 36.
+
+### The self-review: take 115's own diff
+
+Before the PR the take's own diff (8f5034b against take-114) was reviewed the
+same way: six finders by area (data safety, Hunt and data, the CSS, the
+runner, the tests' honesty, runner parity), and every finding given to two
+reviewers told to refute it at 8f5034b -- 36 agents. 8 confirmed, 6 split
+between the two, 1 refuted (a copy of a split one). All fourteen were real
+(one split finding is the seventh's other half); each is fixed here with a
+check watched to fail on 8f5034b's build, or on a planted fault, in a
+scratch tree:
+1. **A full storage lost a scanned batch** (high; landmine 194). Take 115's
+   `saveJson` returned false where take 114 threw, so a commit went on: the
+   collection's longer write was refused and the batch's shorter clear went
+   through. At 16 bytes under a quota, 8f5034b stored 0 batch rows and the 2
+   old lines, and the next launch had the three cards nowhere (take 114
+   threw and kept the batch); the pending tray the same. `OWN.moveIn` now
+   adds the rows in memory and writes the collection once, and the batch or
+   the tray lets them go only when that write returned true; `CREDITS.defer`
+   takes back rows it could not store. Smoke's storage stub refuses by size,
+   as Chromium does: three new checks (the commit, the tray drained, the tray
+   deferred) fail on 8f5034b.
+2. **The backup hold covered the collection alone** (177's addendum): an
+   unreadable decks list started empty and the next commit wrote it over the
+   backup's decks (1 -> 0). Every list the backup carries holds it now
+   (`HELD`), and the launch toast, Back up's question and Diagnostics name
+   what could not be read ("Your saved decks could not be read — use
+   Restore from backup, under More"; "Your saved collection and 10 other
+   lists …"). An unreadable batch, in no backup, holds nothing.
+3. **A restore counted its file copy as kept.** On the phone
+   `keepBeforeRestore` returned true when only
+   `backup-before-restore.json` was written, but Restore offers only the copy
+   in storage: a full storage restored with no second question, and an older
+   copy passed for what the restore replaced. Kept means the copy in storage
+   now, and on "Restore anyway" the older copy goes. A phone-path check (a
+   disk, a quota that refuses only the copy) fails on 8f5034b: one question,
+   the older copy still there.
+4. **The Play counter was never read** by take 115's "no text in the fill's
+   colour" check (landmine 196). It reads the four Play roots, changed or
+   not, and needs the counter's panel: brass planted in its Life label
+   passed 8f5034b's smoke and fails now.
+5. **Back up's check read a throw as the Cancel** (landmine 195). It records
+   the question and tells a throw apart, and a new check answers OK and sees
+   the hold end: a planted throw and a planted refusal that never asks both
+   passed 8f5034b's check and fail now.
+6. **One wait for three lists** (landmine 197): one change per wait for six
+   lists -- a want, a trade row, a stock alert, a price alert, a Hunt note, a
+   release reminder. With five of the six lists' backups removed, 8f5034b's
+   check passed; this one names the five.
+7. **The deadline check** (landmine 198; 185's addendum). The catalogue is
+   measured as sent -- gzip at its fastest level, 906,802 B, a bound on the
+   739,429 B Pages sends (MEASURED, content-encoding gzip) -- and the Hunt
+   files have a floor at Pages' `stores.json`, 1,099,659 B (MEASURED 25 Sept).
+   A copy with 67 more history days (7.69 MB raw) turned 8f5034b's check red
+   and passes this one, which still fails a 20 s long deadline; a 30 s default
+   passed 8f5034b's check on a runner's `www/hunt` and fails now.
+8. **Target's line counted the feed's runs as checks** (173's addendum): on
+   the live history, "48 checks over 8 days so far" of a product no run had
+   read. `restocks()` counts the runs that read the product (its online
+   status, or its shelf at the served zip), and the shelf's words come from
+   the shelf's own checks: "9 checks of it over 8 days" for one read in 9 of
+   50 runs, nothing for one never read, as take 114.
+9. **A source never read said "not reached since" the failed run's time**
+   (180's addendum). A "since" comes only from a kept copy's `stale_since`;
+   a panel says "Could not reach Southern Hobby when last tried, ...". The
+   control is `hunt.py`'s own `build()` with the real fetch failing and no
+   previous feed.
+10. **The hourly's `--strict`** (landmine 200). The hourly runs
+    `validate.py` between the catalogue and the app, without `--strict`;
+    hash coverage is the nightly's refusal (MEASURED in the review: 138 new
+    unhashed printings pass, the 139th refuses). `hunt.py`'s check needs
+    that order and refuses take 115's first list, take 114's, `--strict` by
+    hand, validate after the app, and a cache that saves.
+11. **Checks the next listing would have turned red** (landmine 199).
+    Sealed's collapse check takes the first set drawn with rows; Releases'
+    checks count rows, not sets; the fixture's 17 read the fixture's own
+    catalogue (its later sets set aside for that read, then put back). With
+    two starter decks planted on one future day and an EB06 listed,
+    8f5034b's smoke failed all four; this one passes them.
+12. **The EUR alert's echo** is read without its thousands separator: a
+    watched card past about $1,137 would have read red. The reviewer's
+    control on take 114's build still fails it.
+
+Two of the review's findings were the record's, put right here with no code
+change: V1-STATE and AGENDA said a distributor's short line on Releases
+opens the product's page -- on Releases the lines are text on the set's row,
+whose tap opens the set, since a button cannot hold another (SPEC-112-55);
+and, a note on take 111 (its entry stands as written): since take 111 the
+card page's Graded panel lists the slabs of the collection on screen, as the
+rest of the page does, and All lists every collection's -- take 110 listed
+every collection's under any collection (SPEC-111-52).
+
+
+### Tests
+
+- **smoke** 1248 passed, 0 failed (1240 before the self-review); **render**
+  215 passed, 0 failed, `(mode: chrome)`; **the look** for take 115, 36 of 36.
+- **Selftests:** hunt 135 ok, hashes 23, icon 28, scrub 11, apk 7, check 6,
+  shipped 8, signer 10, shrink 14; the gate's 21 probes, each guard fired;
+  `scrub --check --docs` clean at 85 files; `ci/*.yml` equal to
+  `.github/workflows/*.yml`; `seal.sh --gate-only`: GATE PASSED.
+- **On take 114's build**, each batch's new checks: A1's section 46 of 51
+  failed (smoke 1043 passed, 47 failed); A2 43 of 59 failed across seven
+  areas; A3 32 of its checks failed (1066 passed, 123 failed in all); A4
+  1078 passed, 156 failed; A5 render 208 passed, 7 failed; B1 every new
+  selftest check failed on take 114's code (hunt 1, hashes 2, icon 1 per
+  guard, gate 2, scrub 1, apk 3, check 1); B2 124 ok, 11 FAIL on take 114's
+  workflows; the look's take-115 list 9 ok, 27 not ok.
+- **The self-review's checks** failed on 8f5034b's build as listed above
+  (its smoke there: 1233 passed, 15 failed -- fourteen of them the new
+  checks, the fifteenth the ignore check, which needs the `.git` a scratch
+  copy has not got); the rest failed on their planted faults.
+- The runner's `check` on the PR is the seal: the whole pipeline from a
+  clean clone, render in Chrome, the gate.
+
+### What I got wrong
+
+- **Take 115's first versions shipped the defects its self-review found**:
+  a write that no longer throws needed every caller to act on false, and I
+  changed the writer without reading its callers; the hold covered the one
+  list I was thinking of; and five of my new checks could not fail. The
+  self-review found them before the PR, not after.
+- My A9 control read take 114's `build.yml` with `git show take-114:` and
+  caught its error as a pass; the runner clones one commit with no tags
+  (landmine 185).
+- The mode slider's check asked the DOM stub for buttons it cannot select,
+  and got an empty list; it reads the source now. A4's regexes pinned exact
+  markup and broke on a harmless attribute.
+- The editors turned typed `\u` escapes into literal characters three
+  times; a non-ASCII grep of the diff caught each before a run.
+- After the container restarted, the resume re-ran two finished batches
+  because a parallel call's order changed; I stopped it before it changed a
+  file.
+- The first gzip figure was Node's default level, 710,403 B, under what
+  Pages sends; the check uses the fastest level as a bound.
+- The first commit of the self-review's fixes carried an attribution trailer
+  this public repo's rules keep out; it was refused and made without it.
+
+### Ruled out
+
+- Counting the fixture's unlisted products with a second copy of the app's
+  rule (the reviewer's sketch): it would pass whatever the app did. The
+  fixture's own catalogue is read instead.
+- The Hunt half of the deadline check in gzip too: `stores.json` is 210 KB
+  sent, which lets the default fall to 7 s. The uncompressed size is the
+  stricter measure, and it fits (34 s of 60).
+- Removing the older undo copy before the "Restore anyway" answer: a Cancel
+  would lose the previous restore's undo.
+- Adding `hashes` to the hourly: it probes every image and the second host
+  every hour.
+- The CSV import's write per row (each `OWN.add` saves): slow only for a
+  file of thousands of lines, not a finding; left in A43.
+
+### DEFERRED
+
+- **AGENDA A43** holds what the review and the self-review handed on: the
+  large items and the owner's (ad consent, D11, reproducible builds,
+  Android's automatic backup, the backup file after the sideload-to-Play
+  switch, which takes reached production, the feed tied to TCGCSV), what
+  only a phone can prove, the small items left on purpose, and the UI/UX
+  session's list.
+- **Only a phone can prove:** a commit and a drained tray on a full storage,
+  the hold's words at launch, the restore's second question on a full
+  storage, `backup-before-restore.json`, re-armed reminders, a real
+  distributor timeout.
+- **The UI/UX session's**, from take 116 on this baseline: UI-AUDIT's open
+  boxes and A43's UI part.
 
 ## Take 114 — 2026-09-24 — A32's distributor state timeline, from the history rows
 
@@ -350,6 +814,25 @@ The PR's first `check` failed on one smoke line that is not this take's:
   with its "gts in / southern in" counts, and the first change seen in the
   rows.
 - **Still the owner's:** the Fold check of take 113's icon.
+
+### After the merge (written at take 115)
+
+- **PR #39 merged at 00:14 UTC on 25 Sept.** Build run 64 on main
+  (d7d152b) was green in all four jobs: smoke 1039/1039, render 198/198 in
+  Chrome, the gate passed. The nightly's carry-over, take 114's own code,
+  carried 5 of 5 files from Pages, history.json among them, and the pages
+  job deployed at 00:18:55 UTC.
+- **Issue #38** (the red nightly of 24 Sept, landmine 175) was closed by the
+  workflow itself at 00:18:32: "Green again".
+- **Release take-114** was published at 00:24:48 UTC: the APK 26,972,466
+  bytes, the AAB 20,155,074, the mapping 51,817,124.
+- **The first hourly on take 114's runner** (hunt run 50, 01:28 UTC) was
+  green. The deployed history went from 49 rows to 50, read and appended,
+  not reset (MEASURED from Pages). GTS timed out on that run: the feed kept
+  the 22:23 copy with `stale_since`, and the new row carries no `gts` key --
+  a failed read is a hole, not "nothing listed" (PROVEN live). The app did
+  not say so; take 115 fixes that.
+- **The owner's self-test on take 114:** 17 pass, 0 fail, on the Fold.
 
 ## Take 113 — 2026-09-24 — the owner's icon (D7), folded in from the graphic design session's branch
 
@@ -1484,7 +1967,9 @@ the run if it stops.
   neither the Fold's query nor the desktop column's (no device is known to
   report one); a bulk tap still selects a printing, and the action takes
   that printing's lines on screen; an alert's "fired" day is the day in UTC
-  (as it was before this take), a day early on a US evening.
+  (as it was before this take), a day early on a US evening. [Take 115: a
+  day late -- the UTC date is already tomorrow on a US evening; and fixed:
+  the fired day is the phone's own day.]
 - **What I got wrong:** the first push measured the stamp under the art and
   not the words over it; the Fold's grid was written per container without
   going through what each holds; landmine 155's rule stopped at the

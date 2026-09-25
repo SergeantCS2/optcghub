@@ -1,6 +1,6 @@
 # RUNBOOK — Google Play, from the repo to a running 14-day clock
 
-*Current as of take 114.* The whole procedure, in the order it must happen,
+*Current as of take 115.* The whole procedure, in the order it must happen,
 with who does each step. Everything on the repo side is already built; what
 follows is the owner's, and none of it is hard. The gate at the end is calendar
 time: **12 testers opted in for 14 continuous days** (landmine 35; re-checked
@@ -176,7 +176,7 @@ collects nothing, but AdMob does. Declare exactly this:
 
 | asset | where from |
 |---|---|
-| App icon 512×512 | `play-assets-t33/icon-512.png` in this take's outputs (the take-16 compass placeholder, as asked). *Take 113: `play-assets/icon-512.png` from the build -- the owner's pick, the full-bleed master Play masks* |
+| App icon 512×512 | `play-assets-t33/icon-512.png` in this take's outputs (the take-16 compass placeholder, as asked). *Take 113: `play-assets/icon-512.png` from the build -- the owner's pick, the full-bleed master Play masks. Since take 115 every Release carries it as `icon-512.png` ("Play icon, 512x512")* |
 | Feature graphic 1024×500 | `play-assets-t33/feature-1024x500.png`. *Take 113: no longer built; the listing's feature graphic and screenshots come from `design/play-listing`, uploaded by hand* |
 | Phone screenshots, at least 2 | the Fold, cover screen: Home, Collection, a card detail, Scan, a deck. The first one leads with the collection, not a character: the listing does not foreground a franchise (landmine 30). The app itself shows card art from take 109 (A42) |
 | Category | **App → Tools** (or Entertainment) — never **Game**; it is a collection tracker |
@@ -222,7 +222,9 @@ track.
 `optcghub-take-N.aab`** (take 101's is the first; it is already on the
 closed track, which is fine — a bundle can go to both) → release notes: the
 "New at take N" paragraphs from `ci/RELEASE.md` → *Next → Save → Review
-release* → **Start rollout**. A staged rollout (10% → 50% → 100%) costs
+release* → **Start rollout**. Play's release notes take at most 500
+characters per language (take 115: take 114's paragraph was 692), so paste
+the newest paragraph, or trim it, not the list. A staged rollout (10% → 50% → 100%) costs
 nothing and can be halted; a full rollout is also fine for an app this
 size. Google reviews a production release too (hours to a day).
 
@@ -250,12 +252,16 @@ The AdMob account exists (take 33): publisher `pub-6243777967151950`.
    `https://sergeantcs2.github.io/optcghub/`, AdMob → the app → *app-ads.txt
    → Check for updates*; verified within about a day.
 2. **The IDs** (D11): the **app ID is in** (`~1538944343`, take 41). Left: **two rewarded ad units** (`…/…`) — *Apps → OP TCG Hub → App settings*
-   and *Ad units → Rewarded*. Paste them into `tools/config.py` **when the
-   closed test is real users**, not before: Google's test units are what a
-   closed test runs on, because tapping a real unit repeatedly on your own
-   phone is invalid traffic and the ban is permanent (A17).
+   and *Ad units → Rewarded*. *Take 115: needed now -- the app is live on
+   production since 24 Sept, and test units earn nothing.* Register the
+   owner's own phones as AdMob **test devices** first: tapping a real unit
+   repeatedly on your own phone is invalid traffic and the ban is permanent
+   (A17). The ad settings ride the Pages manifest, so the take that carries
+   the IDs switches every install at its next sync.
 3. **Link the AdMob app to the Play listing** once it is live in a track, so
-   AdMob's store verification and app-ads.txt status can complete.
+   AdMob's store verification and app-ads.txt status can complete. *Take
+   115: the listing is live; whether this link was made is not recorded --
+   the owner's.*
 4. **Families:** this app is not directed at children. Never a Families
    category; `tagForChildDirectedTreatment` stays unset.
 

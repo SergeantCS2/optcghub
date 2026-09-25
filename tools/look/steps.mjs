@@ -16,15 +16,42 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-/* The Fold 7: the cover screen is the harness's phone -- MEASURED at take 105 from the
-   owner's Diagnostics (`viewport: 411x960 @2.625`, the take-104 install); the inner screen is
-   INFERRED until he pastes the same line from the open phone (More → About ×5 → ## device). */
+/* The Fold 7, both screens MEASURED on the owner's Diagnostics from the take-114 install (More → About ×5 →
+   ## device), portrait, its natural orientation: the cover screen `viewport: 411x960 @2.625` (first measured at
+   take 105) and the open screen `viewport: 749x832 @2.625`. The open screen was INFERRED at 840 x 757 @2 from
+   take 110 to take 114, and every inner picture of those takes was taken there (landmine 186). */
 export const VIEWPORTS = {
-  cover: { width: 411, height: 960, dpr: 2.625 },
-  inner: { width: 840, height: 757, dpr: 2, note: 'INFERRED until the owner pastes the viewport line' }
+  cover: { width: 411, height: 960, dpr: 2.625, note: 'MEASURED, the owner\'s Diagnostics' },
+  inner: { width: 749, height: 832, dpr: 2.625, note: 'MEASURED, the owner\'s Diagnostics' }
 };
+/* The owner's zone, MEASURED on the same Diagnostics (`tz: America/New_York`); take 114's look ran America/Detroit,
+   INFERRED from the zip 48329 -- the same offsets and the same daylight-saving days in 2026. look.mjs opens every
+   page in it. */
+export const OWNER_TZ = 'America/New_York';
 
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+/* Landmine 143 (STAN-106-1): the mode knob is read at rest, never after a sleep sized to its slide. The listener
+   is on before the switch that moves it; a switch to the mode already on moves nothing and waits for nothing; the
+   cap answers a slide whose end never comes; then the knob's place is read each frame until two frames agree.
+   `act` is the switch: JS run in the page (V is window.VAULT), or a function run here (a real tap). */
+const knobAtRest = async (page, act) => {
+  await page.evaluate(() => { const s = document.querySelector('#modeSlider'), k = s.querySelector('.knob');
+    window.__knob = { from: s.className, end: new Promise(res => { k.addEventListener('transitionend', () => res(), { once: true }); setTimeout(res, 2000); }) }; });
+  if (typeof act === 'function') await act(); else await page.evaluate(`(async () => { const V = window.VAULT; ${act}; })()`);
+  await page.evaluate(async () => { const s = document.querySelector('#modeSlider'), k = s.querySelector('.knob'), w = window.__knob; delete window.__knob;
+    if (w && s.className !== w.from) await w.end;
+    const frame = () => new Promise(r => requestAnimationFrame(r));
+    for (let i = 0, x = NaN; i < 90; i++) { await frame(); const now = k.getBoundingClientRect().left; if (now === x) break; x = now; } });
+};
+/* the knob's centre from the centre of a mode's label, in CSS px */
+const knobOffset = (page, mode) => page.evaluate(m => { const k = document.querySelector('#modeSlider .knob').getBoundingClientRect(), b = document.querySelector(`#modeSlider [data-mode="${m}"]`).getBoundingClientRect();
+  return Math.round((k.left + k.width / 2) - (b.left + b.width / 2)); }, mode);
+/* the slide slowed to 1.5 s, as a busy machine draws it late (the UI/UX session's VM failed take 70's knob check on
+   untouched take-104 code at 350 ms) -- the selftest's control and probe */
+const slowKnob = (page, on) => page.evaluate(on => { let st = document.getElementById('look-slow-knob');
+  if (on && !st) { st = document.createElement('style'); st.id = 'look-slow-knob'; st.textContent = '#modeSlider .knob{transition-duration:1500ms!important}'; document.head.appendChild(st); }
+  if (!on && st) st.remove(); }, on);
 const screens = `[...document.querySelectorAll('.screen.on')].map(e => e.id).join(',')`;
 
 /* ---- take 98 — the take-97 look, reviewed --------------------------------- */
@@ -132,10 +159,29 @@ const take98 = [
     } }
 ];
 
-/* ---- the harness's own controls (--selftest): both must be reported NOT ok */
+/* ---- the harness's own controls (--selftest): each must be reported NOT ok */
 export const CONTROLS = [
   { name: 'control-wrong-expectation', run: async (page, ctx) => { await ctx.open(); const title = await page.title(); return { ok: title === 'not this title', title }; } },
-  { name: 'control-blank-page', run: async (page) => { await page.goto('about:blank'); return { ok: true }; } }
+  { name: 'control-blank-page', run: async (page) => { await page.goto('about:blank'); return { ok: true }; } },
+  /* take 115 (STAN-106-1): take 106's first step read the knob 450 ms after the switch -- under the slow slide, the
+     middle of it, which the knob's measure must report as off centre */
+  { name: 'control-knob-read-450-ms-after-the-switch', run: async (page, ctx) => {
+      await ctx.open(); await slowKnob(page, true);
+      const to = await page.evaluate(async () => { const V = window.VAULT, to = V.MODE.cur === 'play' ? 'hunt' : 'play'; V.MODE.set(to, false); await new Promise(r => setTimeout(r, 450)); return to; });
+      const off = await knobOffset(page, to); await slowKnob(page, false);
+      return { ok: Math.abs(off) <= 2, to, knobOffset: off };
+    } }
+];
+/* ---- and what must hold (--selftest): each must be reported ok */
+export const PROBES = [
+  /* the same slow slide, read through knobAtRest: it waits the slide out, and the knob sits centred */
+  { name: 'probe-knob-at-rest-under-the-slow-slide', run: async (page, ctx) => {
+      await ctx.open(); await slowKnob(page, true);
+      const to = await page.evaluate(() => window.VAULT.MODE.cur === 'play' ? 'hunt' : 'play'), t0 = Date.now();
+      await knobAtRest(page, `V.MODE.set('${to}', false)`);
+      const waited = Date.now() - t0, off = await knobOffset(page, to); await slowKnob(page, false);
+      return { ok: Math.abs(off) <= 2 && waited >= 1400, to, knobOffset: off, waited };
+    } }
 ];
 
 /* ---- take 100 — the pictures, measured on the runner ------------------------ */
@@ -225,8 +271,9 @@ const take106 = [
       /* Prep & Play's red as text is --accent-ink #E5705C (5.22:1 on the card; #E0553D was 4.25); the knob's label
          is #1A1408 on the red (4.82; #F1EFE6 was 3.29); the knob sits centred under Prep & Play (equal thirds) */
       await ctx.open();
+      await knobAtRest(page, `V.MODE.set('play', true); V.go('decks')`);   /* STAN-106-1: it slept 450 ms here, the one knob step take 106 left on a sleep */
       return page.evaluate(async () => {
-        const V = window.VAULT; V.MODE.set('play', true); V.go('decks'); await new Promise(r => setTimeout(r, 450)); window.scrollTo(0, 0);
+        window.scrollTo(0, 0);
         const h3 = document.querySelector('#decks .panel h3'); const title = h3 ? getComputedStyle(h3).color : '';
         const k = document.querySelector('#modeSlider .knob').getBoundingClientRect(), b = document.querySelector('#modeSlider [data-mode="play"]').getBoundingClientRect();
         const label = getComputedStyle(document.querySelector('#modeSlider [data-mode="play"]')).color; const off = Math.round((k.left + k.width / 2) - (b.left + b.width / 2));
@@ -245,10 +292,10 @@ const take106 = [
     } },
   { name: 'hunt-sealed-selected-chip-and-knob', run: async (page) => {
       /* the selected chip's text is the gold on a tint of Hunt's own palette; the knob sits centred under Hunt */
+      await page.evaluate(() => { const V = window.VAULT; V.DECKS.list = V.DECKS.list.filter(x => x.id !== 'look106'); V.NAV.zipAsked = true; });
+      await knobAtRest(page, `V.MODE.set('hunt', true); V.go('sealed'); while (V.closeAnyOverlay()) {}`);
       return page.evaluate(async () => {
-        const V = window.VAULT; V.DECKS.list = V.DECKS.list.filter(x => x.id !== 'look106'); V.NAV.zipAsked = true;
         const k = document.querySelector('#modeSlider .knob');
-        await new Promise(res => { let done = false; const fin = () => { if (!done) { done = true; setTimeout(res, 40); } }; k.addEventListener('transitionend', fin, { once: true }); setTimeout(fin, 1500); V.MODE.set('hunt', true); V.go('sealed'); while (V.closeAnyOverlay()) {} });
         window.scrollTo(0, 0);
         const chip = document.querySelector('#sealedKinds .chip.on'); const st = chip ? getComputedStyle(chip) : null;
         const kr = k.getBoundingClientRect(), b = document.querySelector('#modeSlider [data-mode="hunt"]').getBoundingClientRect(); const off = Math.round((kr.left + kr.width / 2) - (b.left + b.width / 2));
@@ -257,10 +304,10 @@ const take106 = [
     } },
   { name: 'collect-empty-collection-has-its-picture', run: async (page) => {
       /* landmine 142: the empty collection named the skull (removed take 63) and drew nothing; it draws the scan card */
+      await knobAtRest(page, `V.MODE.set('collect', true)`);   /* a picture mid-slide is not the screen (landmine 143) */
       return page.evaluate(async () => {
-        const V = window.VAULT; const k = document.querySelector('#modeSlider .knob');
-        await new Promise(res => { let done = false; const fin = () => { if (!done) { done = true; setTimeout(res, 40); } }; k.addEventListener('transitionend', fin, { once: true }); setTimeout(fin, 1500); V.MODE.set('collect', true); });
-        V.go('collection'); window.scrollTo(0, 0);   /* a picture mid-slide is not the screen (landmine 143) */
+        const V = window.VAULT;
+        V.go('collection'); window.scrollTo(0, 0);
         const u = document.querySelector('#colEmpty svg use'); const href = u ? u.getAttribute('href') : null; const sym = href ? document.querySelector(href) : null;
         const shown = getComputedStyle(document.querySelector('#colEmpty')).display !== 'none';
         return { ok: shown && href === '#g-scancard' && !!sym, href, symbol: !!sym, owned: V.OWN.items.length };
@@ -866,7 +913,6 @@ const feed112 = () => {
 const HUNT112 = `V.HUNT.sync = async () => false; V.HUNT.syncHistory = async () => false; V.HUNT.feed = window.__F112; V.NAV.zipAsked = true;
   for (const id of Object.keys(V.HUNT.distByCatalogId())) { const p = V.CAT.byId.get(+id); if (p) { V.SEALED.closed.delete(p.set); V.SEALED.open.add(p.set); } }
   V.MODE.set('hunt', true); await ${pause}; V.HUNT.feed = window.__F112`;
-const DLINES = `(box) => [...box.querySelectorAll('.nm > span')].filter(s => /^(GTS Distribution|Southern Hobby) · /.test(s.textContent))`;
 const take112 = [
   /* the owner's word, after the first pictures: "I don't want them flooding the screen" -- a row carries each
      distributor as one short line under its chips, which opens the product's page at Distributor info; the long
@@ -972,9 +1018,9 @@ const take112 = [
    run (4-hourly, GTS from run 6, the OP-18 box coming until the first UTC day turn at or after run 20, preorder until
    run 40, then sold out; the run before that could not reach GTS; Southern Hobby in the last two), and the saved real
    one of 24 Sept with a feed of its own last run (what the owner's phone shows today). F2 moves the box's order due
-   date to the UTC day before the calendar change, so its dates explain it. The zone is the owner's (America/Detroit,
-   INFERRED from 48329), set through CDP: Playwright has no emulateTimezone on a page. The syncs are stubbed, and a
-   fixture is set in the same tick as its paint (landmine 166). */
+   date to the UTC day before the calendar change, so its dates explain it. The zone is the owner's: OWNER_TZ, which
+   look.mjs sets on every page (take 115: America/New_York, MEASURED; this take ran America/Detroit, INFERRED from
+   48329, through CDP). The syncs are stubbed, and a fixture is set in the same tick as its paint (landmine 166). */
 let X114 = null;
 const fixture114 = () => {
   if (!X114) { const d = fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-look-114-')), f = path.join(d, 'feed-fixture.json');
@@ -1016,7 +1062,6 @@ const DAYS114 = `(sel) => { const RE = /[A-Z][a-z]{2}[ \\u00a0\\u202f]\\d{1,2}(,
 const take114 = [
   /* the owner's take-112 word stands: nothing new on a row; the history is under the closed Distributor info */
   { name: 'hunt-sheet-history-closed', run: async (page, ctx) => {
-      ctx.cdp114 = await page.context().newCDPSession(page); await ctx.cdp114.send('Emulation.setTimezoneOverride', { timezoneId: 'America/Detroit' });
       await ctx.open(); await page.evaluate(X => { window.__X114 = X; }, fixture114());
       await page.evaluate(`(async () => { const V = window.VAULT, X = window.__X114; while (V.closeAnyOverlay()) {} ${HUNT114}; V.HUNT.feed = X.F2; V.HUNT.hist = X.H; V.DISTF.open.clear();
         const p = V.CAT.byId.get(X.PID); V.SEALED.kind = 'all'; V.SEALED.q = ''; V.SEALED.closed.delete(p.set); V.SEALED.open.add(p.set); V.go('sealed'); await ${pause};
@@ -1024,7 +1069,7 @@ const take114 = [
       await page.click('#sealedList button.row[data-look="row114"]'); await wait(700);
       const m = await page.evaluate(`(() => { const d = document.getElementById('dDist'); d.scrollIntoView({ block: 'start' }); window.scrollBy(0, -80); return { ...${DTL114}, zone: Intl.DateTimeFormat().resolvedOptions().timeZone }; })()`);
       await wait(300);
-      return { ok: m.on === 'detail' && m.open === 'false' && m.n === 0 && m.zone === 'America/Detroit', ...m };
+      return { ok: m.on === 'detail' && m.open === 'false' && m.n === 0 && m.zone === OWNER_TZ, ...m };
     } },
   /* the owner's answer: "it should be tucked away" -- a real tap opens Distributor info, and each history is one header
      line, a closed button, until it is tapped */
@@ -1125,9 +1170,301 @@ const take114 = [
           const e = n.data.indexOf('\n', i); return { line: n.data.slice(i, e < 0 ? undefined : e), want }; }
         return { line: null, want }; });
       await wait(300);
-      if (ctx.cdp114) { await ctx.cdp114.send('Emulation.setTimezoneOverride', { timezoneId: '' }).catch(() => {}); await ctx.cdp114.detach().catch(() => {}); ctx.cdp114 = null; }   /* the zone back to the host's */
       return { ok: /\d+ runs, gts in \d+, southern in \d+, ends /.test(m.line || '') && m.line === m.want, ...m, zone: await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone) };
     } }
 ];
 
-export const STEPS = { 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114 };
+/* ---- take 115 — the production baseline: the sheets take 111's tour never opened, and what this take changed ----
+   The review (SPEC-111-51) found take 111's last look opened two of the sheets: the Leader sheet, a deck's printing
+   sheet, the ask sheet and the scanner's picker are here, each asserted by its id. Then what the app lane changed
+   that a picture shows, over take 111's seed: Home's set completion beside Most valuable at the open Fold, the
+   binder's page turns, the Restore from sheet, a badged name in a deck row, a Leader whose picture is refused, the
+   Sim's buttons, the sealed-only set under its own name, and a distributor the hourly run could not reach. Each
+   step's ok is what it read off the page; the harness adds the sideways scroll and a picture that is not blank. */
+const P115 = `const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)), words = e => e ? e.textContent.replace(/\\s+/g, ' ').trim() : null,
+  sheets = () => [...document.querySelectorAll('.sheet.on')].map(e => e.id).join(','), on = () => [...document.querySelectorAll('.screen.on')].map(e => e.id).join(','),
+  inside = e => { if (!e) return false; const r = e.getBoundingClientRect(); return r.width > 0 && r.left >= -0.5 && r.right <= innerWidth + 0.5 && e.scrollWidth <= e.clientWidth + 1; };`;
+const tap = (page, sel) => page.click(sel, { timeout: 5000 });   // a real tap; a control that is not there fails in 5 s, not 30
+/* the Sim's buttons as drawn: each one's words, the note beside it, whether it sits inside its panel, and on how many lines its label is set */
+const SIM115 = `(() => { const q = s => document.querySelector(s), g = window.VAULT.SIM.g;
+  const b = s => { const e = q(s); if (!e) return null; const n = e.nextElementSibling, r = e.getBoundingClientRect(), p = (e.closest('.panel') || q('#simBoard')).getBoundingClientRect(), g = document.createRange(); g.selectNodeContents(e);
+    return { says: e.textContent.trim(), note: n && n.matches('.note') ? n.textContent.trim() : null, inside: r.left >= p.left - 0.5 && r.right <= p.right + 0.5, lines: new Set([...g.getClientRects()].map(x => Math.round(x.top))).size }; };
+  return { phase: g && g.phase, turn: g && g.turn, end: b('[data-sim="end"]'), noblock: b('[data-sim="noblock"]'), resolve: b('[data-sim="resolve"]'), post: b('[data-sim="post"]'), skip: b('[data-sim="fxskip"]'), log: b('[data-sim="sharelog"]') }; })()`;
+const curtain = async page => { if (await page.evaluate(() => document.getElementById('simCurtain').classList.contains('on'))) { await tap(page, '#simCurtain'); await wait(150); } };
+const into = (page, sel) => page.evaluate(s => { const e = document.querySelector(s); if (e) e.scrollIntoView({ block: 'center' }); }, sel);
+/* a distributor the hourly run could not reach: tools/hunt.py's own build(), GTS answering as it did live on 25 Sept,
+   over the fixture feed as the run before -- ok still true, the last good read kept, with kept and stale_since */
+let K115 = null;
+const kept115 = () => {
+  if (!K115) { const d = fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-look-115-')), f = path.join(d, 'feed-fixture.json');
+    execSync(`python3 tools/hunt.py --from-fixtures --out ${f}`, { cwd: ROOT, stdio: 'pipe' });
+    K115 = JSON.parse(execSync('python3 -', { cwd: ROOT, stdio: ['pipe', 'pipe', 'pipe'], input: `
+import copy, importlib.util, json, sys
+spec = importlib.util.spec_from_file_location("hunt_file", "tools/hunt.py"); H = importlib.util.module_from_spec(spec); spec.loader.exec_module(H)
+F = json.load(open(${JSON.stringify(f)}))
+def answer(k):
+    return (lambda *a, **kw: {"ok": False, "error": "TimeoutError: The read operation timed out"}) if k == "gts" else (lambda *a, **kw: copy.deepcopy(F["sources"][k]))
+H.target.fetch, H.gts.fetch, H.southern.fetch = answer("target"), answer("gts"), answer("southern")
+json.dump(H.build(F["zips"], F["radius"], previous=copy.deepcopy(F)), sys.stdout)
+` }).toString());
+    fs.rmSync(d, { recursive: true, force: true }); }
+  return K115;
+};
+const take115 = [
+  /* ---- Collect ---- */
+  { name: 'collect-home-set-completion', run: async (page, ctx) => {
+      /* take 111's seed, and one card of the promotions, the set with the most numbers (592). Set completion goes
+         through pctNum (SPEC-110-48): that line reads 0.2%, where take 114 rounded it to 0%. At the open Fold it sits
+         beside Most valuable -- the two panes are 700 to 899 px, and an open screen outside that fails (landmine 186) */
+      await ctx.open();
+      const seed = await page.evaluate(`(async () => { ${P115} while (V.closeAnyOverlay()) {}
+        V.OWN.items = []; V.DECKS.list.length = 0; V.DECKS.save();
+        const cards = V.CAT.rows.filter(p => !p.sealed && p.market > 20 && p.hash).sort((a, b) => b.market - a.market).slice(0, 9);
+        cards.forEach((p, i) => V.OWN.add(p.id, { qty: 1 + (i % 3), condition: ['NM', 'LP', 'NM', 'MP'][i % 4] }));
+        const size = new Map(); for (const p of V.CAT.rows) if (p.num) { const s = size.get(p.set) || new Set(); s.add(p.num); size.set(p.set, s); }
+        const big = [...size.entries()].sort((a, b) => b[1].size - a[1].size)[0][0];
+        const promo = V.CAT.rows.filter(p => p.set === big && p.num && p.market > 0).sort((a, b) => b.market - a.market)[0]; V.OWN.add(promo.id, { qty: 1 });
+        V.OWN.save(); V.OWN.snapshot();
+        return { lines: V.OWN.items.length, big: (V.CAT.sets.get(big) || {}).abbr + ' (' + size.get(big).size + ' numbers)', promo: promo.num + ' ' + promo.name }; })()`);
+      await knobAtRest(page, `V.MODE.set('collect', true)`);
+      const m = await page.evaluate(`(async () => { ${P115} V.go('home'); V.setHomeTab(false); V.paintHome(); await wait(300);
+        const comp = document.getElementById('setComp'), top = document.getElementById('topList').closest('.panel'), c = comp.getBoundingClientRect(), t = top.getBoundingClientRect();
+        window.scrollTo(0, Math.max(0, c.top + scrollY - 110));
+        const pct = (have, all) => { const a = 100 * have / all, r = Math.round(a * 10) / 10; return (r >= 100 ? Math.round(a) : r.toFixed(1)) + '%'; };
+        const lines = [...document.querySelectorAll('#setDone .row')].map(r => { const s = words(r.querySelector('.nm span')), x = /^(\\d+) of (\\d+) numbers \\u00b7 (.+)$/.exec(s || '');
+          return { set: words(r.querySelector('.nm b')), says: x ? x[3] : s, want: x ? pct(+x[1], +x[2]) : '?' }; });
+        return { w: innerWidth, side: c.left >= t.right - 1 && Math.abs(c.top - t.top) <= 2, under: c.top >= t.bottom - 1, cols: Math.round(t.width) + ' + ' + Math.round(c.width), lines }; })()`);
+      await waitArt(page, '#topList img, #setDone img'); await wait(300);
+      const layout = ctx.viewport === 'inner' ? m.w >= 700 && m.w <= 899 && m.side : m.w < 700 && m.under;
+      return { ok: layout && m.lines.length > 0 && m.lines.every(l => l.says === l.want) && m.lines.some(l => /^0\.\d%$/.test(l.says)), ...seed, ...m, lines: m.lines.map(l => `${l.set}: ${l.says}${l.says === l.want ? '' : ' (want ' + l.want + ')'}`) };
+    } },
+  { name: 'collect-binder-turns-from-its-opening-page', run: async (page) => {
+      /* SPEC-111-49: a set not paged yet opens at its first held card's page, and a turn counts from the page on
+         screen -- take 114's Next went from page 3 back to page 2. One card, the 21st number of the largest set
+         nothing else is in, then real taps: the set's chip, Next, Prev, Prev, Next */
+      const s = await page.evaluate(`(async () => { ${P115} while (V.closeAnyOverlay()) {}
+        const held = new Set(V.OWN.items.map(i => (V.CAT.byId.get(i.id) || {}).set)), size = new Map();
+        for (const p of V.CAT.rows) if (p.num && !held.has(p.set)) { const s = size.get(p.set) || new Set(); s.add(p.num); size.set(p.set, s); }
+        const [set, nums] = [...size.entries()].sort((a, b) => b[1].size - a[1].size)[0];
+        const key = n => { const m = n.match(/(\\d+)$/); return m ? parseInt(m[1], 10) : 9999; }, order = [...nums].sort((a, b) => key(a) - key(b) || a.localeCompare(b));
+        const p = V.CAT.rows.filter(x => x.set === set && x.num === order[20]).sort((a, b) => (a.treat === 'base' ? 0 : 1) - (b.treat === 'base' ? 0 : 1))[0];
+        V.OWN.add(p.id, { qty: 1 }); V.OWN.save(); delete V.BN.pageOf[set]; V.go('binder'); await wait(300); window.scrollTo(0, 0);
+        return { set, card: p.num + ' ' + p.name, pages: Math.ceil(order.length / 9) }; })()`);
+      const pageNo = () => page.evaluate(() => { const m = /page (\d+) of (\d+)/.exec(document.getElementById('bnPage').textContent); return m ? +m[1] : null; });
+      await tap(page, `#bnSets [data-bnset="${s.set}"]`); await wait(250);
+      const seen = [await pageNo()];
+      for (const b of ['#bnNext', '#bnPrev', '#bnPrev', '#bnNext']) {
+        if (await page.$eval(b, e => e.disabled)) { seen.push('no turn'); continue; }   /* take 114 was back on page 1 by the second Prev */
+        await tap(page, b); await wait(200); seen.push(await pageNo()); }
+      await page.evaluate(() => window.scrollTo(0, 0)); await waitArt(page, '#bnGrid img'); await wait(300);
+      const m = await page.evaluate(() => ({ sub: document.getElementById('bnPage').textContent, filled: document.getElementById('bnOf').textContent, pockets: document.querySelectorAll('#bnGrid .pocket').length }));
+      return { ok: seen.join() === '3,4,3,2,3' && m.pockets === 9, seen: seen.join(' > '), ...s, ...m };
+    } },
+  { name: 'collect-restore-from-sheet', run: async (page) => {
+      /* A2 (loose-production 4): a restore keeps what it replaces, and Restore then offers it. The app's own path in a
+         browser, every tap real: Back up now; a card added; Restore from backup (with no kept copy it asks at once --
+         accepted); Restore from backup again, which opens the sheet: the latest backup, what the last restore replaced
+         (one line more: the card the restore took away), a file */
+      await page.evaluate(`(async () => { ${P115} while (V.closeAnyOverlay()) {} localStorage.removeItem('vault.beforeRestore'); V.go('settings'); await wait(300); })()`);
+      await into(page, '#setBody [data-act="backup"]'); await tap(page, '#setBody [data-act="backup"]');
+      await page.waitForFunction(() => !!localStorage.getItem('vault.backup'), null, { timeout: 5000 }).catch(() => {});
+      const added = await page.evaluate(() => { const V = window.VAULT, held = new Set(V.OWN.items.map(i => i.id));
+        const p = V.CAT.rows.filter(x => !x.sealed && x.num && x.market > 20 && !held.has(x.id)).sort((a, b) => b.market - a.market)[0]; V.OWN.add(p.id, { qty: 1 }); return p.num + ' ' + p.name; });
+      const asked = []; page.once('dialog', d => { asked.push(d.message().replace(/\s+/g, ' ').slice(0, 150)); d.accept().catch(() => {}); });
+      await into(page, '#setBody [data-act="restore"]'); await tap(page, '#setBody [data-act="restore"]'); await wait(1200);   /* the restore, and the backup it schedules 400 ms after */
+      await page.waitForFunction(() => !document.getElementById('toast').classList.contains('on'), null, { timeout: 8000 }).catch(() => {});   /* "Restored ..." gone, or it lies over the sheet in the picture */
+      await page.evaluate(`(async () => { ${P115} V.go('settings'); await wait(300); })()`);
+      await into(page, '#setBody [data-act="restore"]'); await tap(page, '#setBody [data-act="restore"]'); await wait(400);
+      const s = await page.evaluate(`(async () => { ${P115} const opts = [...document.querySelectorAll('#pkOpts .opt')], n = k => { const o = opts.find(x => x.dataset.rsrc === k), m = o && /(\\d+) lines?/.exec(words(o)); return m ? +m[1] : null; };
+        return { sheet: sheets(), title: words(document.getElementById('pkTitle')), opts: opts.map(o => o.dataset.rsrc + ': ' + words(o)), latest: n('latest'), kept: n('kept'),
+          fits: inside(document.querySelector('#picker .sheetbody')) && opts.length > 0 && opts.every(inside) }; })()`);
+      return { ok: asked.length === 1 && s.sheet === 'picker' && s.title === 'Restore from' && s.opts.map(o => o.split(':')[0]).join() === 'latest,kept,file' && s.kept === s.latest + 1 && s.fits, added, asked, ...s };
+    } },
+  { name: 'collect-restore-from-cross-restores-nothing', run: async (page) => {
+      /* the sheet's cross settles the choice with no (SPEC-107-33): nothing restored, no confirm asked, no prompt left
+         pending */
+      if (!(await page.evaluate(() => document.getElementById('picker').classList.contains('on')))) return { ok: false, sheet: 'none open, nothing to close' };
+      const before = await page.evaluate(() => window.VAULT.OWN.items.length), asked = [], h = d => { asked.push(d.message().slice(0, 60)); d.dismiss().catch(() => {}); }; page.on('dialog', h);
+      await tap(page, '#picker [data-close="picker"]'); await wait(400); page.off('dialog', h);
+      const m = await page.evaluate(`(async () => { ${P115} window.scrollTo(0, 0); return { sheet: sheets(), on: on(), pending: V.PICKER ? !!V.PICKER.settle : 'no PICKER', lines: V.OWN.items.length,
+        last: words(document.querySelector('#setBody [data-act="backup"]') && document.querySelector('#setBody [data-act="backup"]').closest('.row')) }; })()`);
+      return { ok: m.sheet === '' && m.on === 'settings' && m.pending === false && m.lines === before && asked.length === 0, before, asked, ...m };
+    } },
+  { name: 'collect-scan-which-eb03-024', run: async (page) => {
+      /* SPEC-111-51: the scanner's picker, for the number the rules were written for -- EB03-024's three printings.
+         In a browser the shutter scans a printing at random through the real gate (simulateScan); the draw is held
+         on EB03-024's base printing for one real tap, then given back */
+      const i = await page.evaluate(`(async () => { ${P115} while (V.closeAnyOverlay()) {} if (V.BATCH) V.BATCH.setId = null; V.go('scan'); await wait(300);
+        const withNum = V.CAT.rows.filter(p => p.num), i = withNum.findIndex(p => p.num === 'EB03-024' && p.face === 'plain');
+        window.__rnd = Math.random; const r = (i + 0.5) / withNum.length; Math.random = () => r; return i; })()`);
+      await tap(page, '#btnShutter'); await page.waitForFunction(() => document.getElementById('picker').classList.contains('on'), null, { timeout: 3000 }).catch(() => {});
+      const m = await page.evaluate(`(async () => { ${P115} if (window.__rnd) { Math.random = window.__rnd; delete window.__rnd; }
+        const opts = [...document.querySelectorAll('#pkOpts .opt[data-pick]')], want = V.candidates('EB03-024', null).map(p => p.id).sort().join();
+        return { sheet: sheets(), title: words(document.getElementById('pkTitle')), why: words(document.getElementById('pkWhy')), opts: opts.map(words), same: opts.map(o => +o.dataset.pick).sort().join() === want,
+          best: !!opts[0] && opts[0].classList.contains('best'), fits: inside(document.querySelector('#picker .sheetbody')) && opts.length > 0 && opts.every(inside) }; })()`);
+      await waitArt(page, '#pkOpts img'); await wait(300);
+      return { ok: i >= 0 && m.sheet === 'picker' && m.title === 'Which EB03-024?' && m.opts.length === 3 && m.same && m.best && /^3 printings share EB03-024/.test(m.why || '') && m.fits, ...m };
+    } },
+  /* ---- Prep & Play ---- */
+  { name: 'play-leader-sheet', run: async (page) => {
+      /* SPEC-111-51: a deck's Leader sheet, from a real tap on its Leader */
+      await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} });
+      await knobAtRest(page, `V.MODE.set('play', true)`);
+      const d = await page.evaluate(`(async () => { ${P115} const L = V.CAT.byId.get(V.CAT.stock[0].leader), d = V.DECKS.blank(); d.name = 'Look 115'; d.leader = L.id; d.created = Date.now();
+        V.DECKS.list.push(d); V.DECKS.save(); V.openDeck(d.id); await wait(300); window.scrollTo(0, 0); return L.num + ' ' + L.name; })()`);
+      await tap(page, '#dkLead'); await wait(400); await waitArt(page, '#lpList img'); await wait(300);
+      const m = await page.evaluate(`(async () => { ${P115} const rows = [...document.querySelectorAll('#lpList [data-lp]')];
+        return { sheet: sheets(), title: words(document.querySelector('#leaderPick .sheethead h2')), rows: rows.length, first: rows.slice(0, 2).map(words), colours: document.querySelectorAll('#lpColours [data-lpc]').length,
+          fits: inside(document.querySelector('#leaderPick .sheetbody')) && rows.length > 0 && rows.every(inside) }; })()`);
+      return { ok: m.sheet === 'leaderPick' && m.title === 'Choose a Leader' && m.rows > 10 && m.colours >= 6 && m.fits, deckLeader: d, ...m };
+    } },
+  { name: 'play-printing-sheet', run: async (page, ctx) => {
+      /* SPEC-111-51: a deck row's printing sheet, from a real tap on the row's name. The card: of the Leader's colours,
+         the number whose printings are furthest apart in price */
+      await tap(page, '#leaderPick [data-close="leaderPick"]'); await wait(300);
+      const c = await page.evaluate(`(async () => { ${P115} const d = V.DECKS.list.find(x => x.name === 'Look 115'), L = V.CAT.byId.get(d.leader); let best = null;
+        for (const [, ps] of V.CAT.byNum) { if (ps.length < 2) continue; const p = ps.find(x => x.treat === 'base') || ps[0];
+          if (p.type !== 'Character' || !V.colourLegal(p, L)) continue; const v = ps.map(x => x.market || 0).filter(Boolean); if (v.length < 2) continue;
+          const spread = Math.max(...v) / Math.min(...v); if (!best || spread > best.spread) best = { p, spread }; }
+        d.cards.push({ id: best.p.id, n: 2 }); V.DECKS.save(); V.openDeck(d.id); await wait(300);
+        const n = document.querySelector('#dkRows .dkrow[data-dk="' + best.p.id + '"] .n'); if (n) { n.setAttribute('data-look', 'pp'); n.scrollIntoView({ block: 'center' }); }
+        return { card: best.p.num + ' ' + best.p.name, num: best.p.num, id: best.p.id, printings: V.CAT.byNum.get(best.p.num).length }; })()`);
+      await tap(page, '[data-look="pp"]'); await wait(400); await waitArt(page, '#ppList img'); await wait(300);
+      const shot = await ctx.shot('07a-printing-sheet-its-title');   /* the step's own picture is scrolled to the printing in the deck now */
+      const m = await page.evaluate(`(async () => { ${P115} const opts = [...document.querySelectorAll('#ppList [data-pp]')], cur = opts.find(o => +o.dataset.pp === ${c.id}); if (cur) cur.scrollIntoView({ block: 'center' });
+        return { sheet: sheets(), title: words(document.getElementById('ppTitle')), opts: opts.length, now: cur ? words(cur) : null, best: !!cur && cur.classList.contains('best'),
+          fits: inside(document.querySelector('#printPick .sheetbody')) && opts.length > 0 && opts.every(inside) }; })()`);
+      return { ok: m.sheet === 'printPick' && m.title === `Which ${c.num} is in the deck?` && m.opts === c.printings && m.best && /in the deck now/.test(m.now || '') && m.fits, ...c, ...m, shot };
+    } },
+  { name: 'play-deck-badged-names-wrap', run: async (page) => {
+      /* SPEC-111-50: a badged name wraps in a deck row as in a search row (landmine 164) -- the badge is the word that
+         tells two printings apart, and take 114 cut it with the ellipsis. The six badged printings of the Leader's
+         colours with the longest names */
+      await tap(page, '#printPick [data-close="printPick"]'); await wait(300);
+      const m = await page.evaluate(`(async () => { ${P115} const d = V.DECKS.list.find(x => x.name === 'Look 115'), L = V.CAT.byId.get(d.leader);
+        const P = V.CAT.rows.filter(p => !p.sealed && p.num && p.treat && p.treat !== 'base' && p.market > 0 && p.type === 'Character' && V.colourLegal(p, L)).sort((a, b) => b.name.length - a.name.length || a.id - b.id).slice(0, 6);
+        P.forEach(p => d.cards.push({ id: p.id, n: 1 })); V.DECKS.save(); V.openDeck(d.id); await wait(300);
+        const bs = [...document.querySelectorAll('#dkRows .dkrow .n > b')].filter(b => b.querySelector(':scope > .badge'));
+        const whole = bs.filter(b => { const r = b.getBoundingClientRect(), g = b.querySelector(':scope > .badge').getBoundingClientRect(); return g.right <= r.right + 0.5 && g.bottom <= r.bottom + 0.5 && b.scrollWidth <= b.clientWidth + 1; });
+        const first = bs.find(b => P.some(p => b.closest('[data-dk="' + p.id + '"]'))); if (first) { first.closest('.dkrow').scrollIntoView({ block: 'start' }); window.scrollBy(0, -130); }
+        return { badged: bs.length, whole: whole.length, twoLines: bs.filter(b => b.getBoundingClientRect().height > 1.5 * parseFloat(getComputedStyle(b).lineHeight)).length, longest: P[0] ? P[0].name : null }; })()`);
+      await waitArt(page, '#dkRows img'); await wait(300);
+      return { ok: m.badged >= 6 && m.whole === m.badged, ...m };
+    } },
+  { name: 'play-deck-leader-picture-refused-its-colours', run: async (page) => {
+      /* SPEC-109-41: the picture hosts refused, a deck's Leader box keeps the card's own colours, where take 114 left an
+         empty grey box. The oldest two-colour Leader: a picture nothing earlier asked for (the Leader sheet lists the
+         newest forty) */
+      await page.route(/tcgplayer\.com\//, r => r.abort());
+      const m = await page.evaluate(`(async () => { ${P115} const two = V.CAT.rows.filter(p => p.type === 'Leader' && p.img && !p.sealed && /^[A-Z][a-z]+;[A-Z][a-z]+$/.test(p.color || ''))
+          .sort((a, b) => ((V.CAT.sets.get(a.set) || {}).pub || '').localeCompare((V.CAT.sets.get(b.set) || {}).pub || '') || a.id - b.id), L = two[0];
+        const d = V.DECKS.blank(); d.name = 'Look 115 offline'; d.leader = L.id; d.created = Date.now(); V.DECKS.list.push(d); V.DECKS.save(); V.openDeck(d.id); await wait(1500); window.scrollTo(0, 0);
+        const rgb = v => { const e = document.createElement('i'); e.style.color = v; document.body.appendChild(e); const c = getComputedStyle(e).color; e.remove(); return c; };
+        const box = document.getElementById('dkLead'), bg = getComputedStyle(box).backgroundImage, want = V.artColours(L).map(rgb);
+        return { leader: L.num + ' ' + L.name + ' (' + L.color + ')', picture: !!box.querySelector('img.ok'), want, ground: bg.slice(0, 110), both: want.length === 2 && want[0] !== want[1] && want.every(c => bg.includes(c)) }; })()`);
+      await page.unroute(/tcgplayer\.com\//);
+      return { ok: !m.picture && m.both, ...m };
+    } },
+  /* the Sim, a hot-seat game (a friend, pass the phone) dealt and played with real taps: SPEC-110-46, each button
+     the act and what follows said beside it -- take 114's read "End turn — pass the phone", "No block → counter
+     step", "Resolve — 5000 vs 5000: hit", "Done — hand back to …", "Skip (play it by hand)", "Share the game log" */
+  { name: 'play-sim-end-turn', run: async (page) => {
+      await page.evaluate(`(async () => { ${P115} while (V.closeAnyOverlay()) {} V.SIM.g = null; Object.assign(V.SIMUI, { sel: null, result: null, menu: null, offer: null, post: null, afterOffer: null, pre: null });
+        V.go('sim'); await wait(300); window.scrollTo(0, 0); })()`);
+      await tap(page, '[data-sim="start"]'); await wait(200); await curtain(page);
+      for (let k = 0; k < 2; k++) { await tap(page, '[data-sim^="keep:"]'); await wait(150); await curtain(page); }
+      for (let k = 0; k < 2; k++) { await tap(page, '[data-sim="end"]'); await wait(150); await curtain(page); }   /* to the first player's second turn, when a Leader may attack */
+      await into(page, '[data-sim="end"]'); await wait(300);
+      const m = await page.evaluate(SIM115);
+      return { ok: m.phase === 'main' && m.turn === 3 && !!m.end && m.end.says === 'End turn' && m.end.note === 'then pass the phone' && m.end.inside && m.end.lines === 1 && !!m.log && m.log.says === 'Share the log', ...m };
+    } },
+  { name: 'play-sim-no-block', run: async (page, ctx) => {
+      await tap(page, '[data-sim="attack:leader"]'); await wait(150); await tap(page, '[data-sim="target:leader"]'); await wait(200);
+      let first = null; if (await page.$('[data-sim="fxskip"]')) { first = (await page.evaluate(SIM115)).skip; await ctx.shot('11a-sim-when-attacking'); await tap(page, '[data-sim="fxskip"]'); await wait(200); }   /* a [When Attacking] the app scripts comes first */
+      await curtain(page); await into(page, '[data-sim="noblock"]'); await wait(300);
+      const m = await page.evaluate(SIM115);
+      return { ok: m.phase === 'battle' && !!m.noblock && m.noblock.says === 'No block' && m.noblock.note === 'then the counter step' && m.noblock.inside && m.noblock.lines === 1, whenAttacking: first, ...m };
+    } },
+  { name: 'play-sim-resolve', run: async (page) => {
+      await tap(page, '[data-sim="noblock"]'); await wait(200); await into(page, '[data-sim="resolve"]'); await wait(300);
+      const m = await page.evaluate(SIM115);
+      return { ok: m.phase === 'battle' && !!m.resolve && m.resolve.says === 'Resolve' && /^\d+ vs \d+: (hit|held)$/.test(m.resolve.note || '') && m.resolve.inside && m.resolve.lines === 1, ...m };
+    } },
+  { name: 'play-sim-hand-back', run: async (page, ctx) => {
+      await tap(page, '[data-sim="resolve"]'); await wait(200);
+      let skips = 0; while (skips < 4 && await page.$('[data-sim="fxskip"]')) { if (!skips) await ctx.shot('13a-sim-trigger'); await tap(page, '[data-sim="fxskip"]'); await wait(200); skips++; }   /* a Life card's [Trigger] the app scripts */
+      await into(page, '[data-sim="post"]'); await wait(300);
+      const m = await page.evaluate(SIM115);
+      return { ok: !!m.post && m.post.says === 'Hand back' && /^to You \u2014 /.test(m.post.note || '') && m.post.inside && m.post.lines === 1, skips, ...m };
+    } },
+  { name: 'play-sim-effect-skip', run: async (page) => {
+      /* an effect's own panel: "Skip", then "play it by hand". The [On Play] of the first card in either deck the app
+         scripts, offered as playing the card offers it (SIM.offers) -- nothing on the board changes */
+      const c = await page.evaluate(`(async () => { ${P115} const g = V.SIM.g, i = g.active; let list = null, card = null;
+        for (const id of [...new Set(g.players.flatMap(P => [...P.hand, ...P.deck]))]) { const l = V.SIM.offers(i, 'onplay', null, id); if (l && l.length) { list = l; card = V.CAT.byId.get(id); break; } }
+        if (!list) return null; V.SIMUI.post = null; V.SIMUI.result = null; V.SIMUI.offer = { i, list }; V.paintSim(); await wait(200); return card.num + ' ' + card.name; })()`);
+      await into(page, '[data-sim="fxskip"]'); await wait(300);
+      const m = await page.evaluate(SIM115);
+      return { ok: !!c && !!m.skip && m.skip.says === 'Skip' && m.skip.note === 'play it by hand' && m.skip.inside && m.skip.lines === 1, card: c, skip: m.skip };
+    } },
+  /* ---- Hunt ---- */
+  { name: 'hunt-ask-sheet-your-zip', run: async (page) => {
+      /* SPEC-111-51: the ask sheet as the collector first meets it -- Hunt's first visit asks for a zip, from a real
+         tap on the knob's Hunt. The page's own syncs are stubbed: the look's Chromium has no route to Pages */
+      await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.HUNT.sync = async () => false; V.HUNT.syncHistory = async () => false; V.NAV.zipAsked = false; if (V.HUNT.zip) V.HUNT.setZip(''); });
+      await knobAtRest(page, () => tap(page, '#modeSlider [data-mode="hunt"]')); await wait(300);
+      const m = await page.evaluate(`(async () => { ${P115} const i = document.getElementById('askIn');
+        return { sheet: sheets(), on: on(), title: words(document.getElementById('askTitle')), button: words(document.getElementById('askOk')), field: i ? i.inputMode + ' ' + i.placeholder : null, focused: document.activeElement === i,
+          fits: inside(document.querySelector('#askSheet .sheetbody')) }; })()`);
+      return { ok: m.sheet === 'askSheet' && m.on === 'sealed' && m.title === 'Your zip code' && m.button === 'Use this zip' && m.field === 'decimal 37203' && m.fits, ...m };
+    } },
+  { name: 'hunt-sealed-collection-sets-under-its-name', run: async (page) => {
+      /* loose-diagnostics (1): One Piece Collection Sets sells sealed product only; take 114 dropped the set while its
+         products shipped, and ten priced products sat under "Other". A real tap on Cancel answers the zip; a real
+         tap opens the set's strip */
+      await tap(page, '#askCancel'); await wait(300);
+      const g = await page.evaluate(`(async () => { ${P115} V.SEALED.kind = 'all'; V.SEALED.q = ''; V.paintSealed(); await wait(100);
+        const ps = V.CAT.rows.filter(p => V.SEALED.isProduct(p) && /Devil Fruits Collection|Anniversary Set|Heroines Special Set/.test(p.name)), n = new Map();
+        ps.forEach(p => n.set(p.set, (n.get(p.set) || 0) + 1)); const set = [...n.entries()].sort((a, b) => b[1] - a[1])[0][0];
+        const st = document.querySelector('#sealedList [data-setfold="' + set + '"]'); if (st) st.scrollIntoView({ block: 'center' });
+        return { set, name: (V.CAT.sets.get(set) || {}).name || null, products: ps.filter(p => p.set === set).length, was: st ? st.getAttribute('aria-expanded') : null }; })()`);
+      if (g.was === 'false') { await tap(page, `#sealedList [data-setfold="${g.set}"]`); await wait(300); }
+      const m = await page.evaluate(`(async () => { ${P115} const st = document.querySelector('#sealedList [data-setfold="${g.set}"]'); if (!st) return { strip: null };
+        st.scrollIntoView({ block: 'start' }); window.scrollBy(0, -100);
+        const rows = []; for (let e = st.nextElementSibling; e && !e.matches('.setstrip'); e = e.nextElementSibling) if (e.matches('.row')) rows.push(words(e.querySelector('.nm b')));
+        const other = [...document.querySelectorAll('#sealedList .setstrip')].filter(s => /^Other\\b/.test(words(s.querySelector(':scope > span')) || '')).length;
+        return { strip: words(st.querySelector(':scope > span')), open: st.getAttribute('aria-expanded'), rows: rows.length, first: rows.slice(0, 2), other }; })()`);
+      await waitArt(page, '#sealedList img'); await wait(300);
+      return { ok: !!g.name && (m.strip || '').startsWith(g.name) && m.open === 'true' && m.rows === g.products && m.other === 0, ...g, ...m };
+    } },
+  { name: 'hunt-sealed-distributor-not-reached', run: async (page) => {
+      /* SPEC-112-54: a distributor the hourly run could not reach keeps its last good read, ok still true. Its times
+         moved here so the kept read is four hours old and has failed for three; Southern Hobby answered ten minutes
+         ago. The closed Distributor info's line, then a real tap opens it at GTS's own words */
+      await page.evaluate(X => { window.__K115 = X; }, kept115());
+      const m = await page.evaluate(`(async () => { ${P115} const K = JSON.parse(JSON.stringify(window.__K115)), at = n => new Date(Date.now() - n * 60e3).toISOString().replace(/\\.\\d{3}Z$/, 'Z');
+        K.fetched_at = at(10); K.sources.target.fetched_at = at(10); K.sources.southern.fetched_at = at(10); K.sources.gts.fetched_at = at(250); K.sources.gts.stale_since = at(190); window.__K115 = K;
+        V.DISTF.open.clear(); V.go('sealed'); V.HUNT.feed = K; V.paintSealed(); await wait(100);
+        const f = document.querySelector('#sealedList [data-distfold="sealed"]'); if (f) { f.setAttribute('data-look', 'dist'); f.scrollIntoView({ block: 'center' }); }
+        return { kept: K.sources.gts.ok === true && K.sources.gts.kept === true, closed: f ? words(f.querySelector('.note')) : null }; })()`);
+      await tap(page, '[data-look="dist"]'); await wait(300);
+      const o = await page.evaluate(`(async () => { ${P115} const f = document.querySelector('#sealedList [data-distfold="sealed"]'), sec = [...document.querySelectorAll('#sealedList .dsec')].find(s => words(s.querySelector('b')) === 'GTS Distribution'), n = sec && sec.querySelector('.note');
+        if (sec) { sec.scrollIntoView({ block: 'start' }); window.scrollBy(0, -150); } return { open: f ? f.getAttribute('aria-expanded') : null, gts: n ? words(n).slice(0, 170) : null, inside: inside(n) }; })()`);
+      await wait(300);
+      return { ok: m.kept && /\u00b7 checked \d+ min ago \u00b7 1 not reached since /.test(m.closed || '') && o.open === 'true' && /^Could not reach GTS Distribution since .+; its last check, 4 h ago, is shown/.test(o.gts || '') && o.inside, ...m, ...o };
+    } },
+  { name: 'hunt-product-distributor-not-reached', run: async (page) => {
+      /* the same kept read on the product's own page, at its Distributor info, opened as a row's distributor line
+         opens it: the OP-18 box, which both distributors list */
+      const m = await page.evaluate(`(async () => { ${P115} const K = window.__K115, S = K.sources.southern.items;
+        const it = K.sources.gts.items.find(i => i.catalog_id && S.some(s => s.catalog_id === i.catalog_id)) || K.sources.gts.items.find(i => i.catalog_id);
+        V.HUNT.feed = K; V.openDetail(it.catalog_id, { dist: true }); await wait(300); V.HUNT.feed = K;
+        const d = document.getElementById('dDist'), fb = d && d.querySelector('[data-distfold="detail"]'), sec = d ? [...d.querySelectorAll('.dsec')].find(s => words(s.querySelector('.nm b')) === 'GTS Distribution') : null;
+        if (d) { d.scrollIntoView({ block: 'start' }); window.scrollBy(0, -90); }
+        return { product: (V.CAT.byId.get(it.catalog_id) || {}).name || null, open: fb ? fb.getAttribute('aria-expanded') : null, fold: fb ? words(fb.querySelector('.note')) : null, gts: sec ? words(sec).slice(0, 170) : null, inside: inside(sec) }; })()`);
+      await waitArt(page, '#dArt img'); await wait(300);
+      return { ok: m.open === 'true' && /not reached|Could not reach/.test(`${m.fold} ${m.gts}`) && m.inside, ...m };
+    } }
+];
+
+export const STEPS = { 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };

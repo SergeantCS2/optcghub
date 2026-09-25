@@ -5,7 +5,12 @@ writes, the owner said: "I'm confused by the dark and light themes, nor do I rea
 want the one standard icon."*
 - *`assets/icon-mono.svg` is not shipped, and `ci/icon.py` refuses a themed layer.*
 - *The fallback swap below copies four files.*
-- *The rest of this hand-off stands as written.*
+- *Superseded by the owner's word, and not to be followed (take 115's review): every monochrome or
+  themed-icon line below -- the `-mono` row and the res tree at the table and "what the build writes",
+  the selftest's two monochrome controls and its count, the `<monochrome>` aapt2 note, "themed icons
+  switched on", and the ledger drafts at the end. The APK check to follow is HANDOFF take 113,
+  "After the merge": `drawable/ic_stat_don` listed, no `ic_launcher_monochrome`, the glyph white on
+  transparent.*
 - *The record is `docs/HANDOFF.md`, take 113.*
 
 The owner's D7 pick is live on Play: its icon, feature graphic and eight screenshots are uploaded and
@@ -98,7 +103,7 @@ for s in "" -bg -fg -stat; do cp design/d7-icons/v4/svg/own-purple$s.svg assets/
 python3 ci/icon.py --selftest     # the same checks hold
 ```
 
-Then upload the new `play-assets/icon-512.png` to Play. Nothing else changes.
+Then, after the merge, download `icon-512.png` from the Release (every Release carries it since take 115) and upload it to Play. The listing's feature graphic changes too: re-render it with `python3 design/play-listing/frames.py` and `node design/play-listing/render.mjs`, and upload it by hand.
 
 ## Verified here
 
@@ -167,13 +172,12 @@ The runner-owned `catalog/*.json` files were restored before commit.
 - the release APK's contents
 
 **On the Release APK: decode, don't name (landmine 78).**
-- `aapt2 dump resources` must list `drawable/ic_stat_don` and `mipmap/ic_launcher_monochrome`.
-- Pull the files they point to and read the pixels. The glyph must be white on transparent, and the
-  monochrome layer one colour.
+- `aapt2 dump resources` must list `drawable/ic_stat_don`, and no `mipmap/ic_launcher_monochrome`
+  (take 113: one standard icon).
+- Pull the files it points to and read the pixels. The glyph must be white on transparent.
 
 **On the Fold:**
 - the launcher, on both screens
-- themed icons switched on
 - the splash
 - a release reminder's status-bar glyph, which should be ドン!!, not the system's ⓘ
 

@@ -1,6 +1,6 @@
 # UI-AUDIT — the UI series' checklist (A42)
 
-*Current as of take 114.*
+*Current as of take 115.*
 
 The audit behind the UI series, taken on the take-104 source by four
 independent read-throughs (headings and copy; components, icons and
@@ -22,13 +22,13 @@ compact bar one level down, no banner on Collect's Home.
 ## 1. Foundation — take 106
 
 **Tokens**
-- [x] One set of tokens in `:root`: type roles `--fs-*` (12 13 14 15 16 18 26 34 44), spacing `--sp-*` (4 8 12 16 24 32), radii `--r-sm/md/lg/pill`, icon `--ic-*`, thumbnails `--thumb-*` (36 52 112), motion `--dur-*`, z scale `--z-*`. *(take 106)*
+- [x] One set of tokens in `:root`: type roles `--fs-*` (12 13 14 15 16 18 26 34 44), spacing `--sp-*` (4 8 12 16 24 32), radii `--r-sm/md/lg/pill`, icon `--ic-*`, thumbnails `--thumb-*` (36 52 112), motion `--dur-*`, z scale `--z-*`. *(take 106)* *Take 115: the take-106 thumbnails `--thumb-sm/md/lg` (36 52 112) were never read and are gone; take 110's `--thumb-s/m/l` (32 44 56) are the sizes. `--fs-total` names `.total`'s 46 px.*
 - [x] Semantic colours per palette: `--on-accent`, `--accent-ink`, `--line-strong`, `--accent-bg`, `--warn-bg`, `--ok-bg`, `--bad-bg`, `--scrim`. *(take 106)*
 
 **Contrast (WCAG, computed per palette on take 104)**
 - [x] Prep & Play accent as text: `#E0553D` is 4.25:1 on card (#1E2128) and 3.79 on card2 (#262A33) — panel h3 (161), `.linkish` (172), `.chip.on`, `.tile .c` 12 px (219), the steppers. Text moves to `--accent-ink` `#E5705C` (5.22 / 4.66); the fill stays. *(take 106)*
 - [x] The Prep & Play knob label `#F1EFE6` on `#E0553D` is 3.29 (423); `#1A1408` gives 4.82. *(take 106)*
-- [x] Nav active label in Prep & Play: 3.25 (447). *(take 106)*
+- [x] Nav active label in Prep & Play: 3.25 (447). *(take 106)* *Take 115's review: 4.42 still, over a translucent mix; the active item sits on the opaque selected tint now, 4.61 as painted.*
 - [x] `--brass2` as text fails in every mode: the "PORTFOLIO" caption (147), 11 px, 2.68 to 4.40. *(take 106)*
 - [x] Collect `--dim2` on card2 4.07: placeholders (68, 185), `.art .ph` (212), `.opt .op span` (293), the `setPic` fallback (3450), the Sealed chip counts (3456). *(take 106)*
 - [x] Brass on `#2A2414` in Prep & Play 4.07: `.badge`, `.chip.on`, `.seg.on`. *(take 106)*
@@ -48,7 +48,7 @@ compact bar one level down, no banner on Collect's Home.
 - [x] `#1E2A1C` / `#2E1C18` (391) → `--ok-bg` / `--bad-bg`. *(take 106)*
 - [x] `#1d2426` (411, 456), `#1a1e20` (281), `#151a1c` (351), `#182A3A` (1883, 2032) → `--card2`. *(take 106)*
 - [x] `#1d2a2e` (393), `#1c2225` (305), `#333c40` (272), `#39424766` (237) → `--line`. *(take 106)*
-- [x] Scrims `rgba(0,0,0,.82/.72/.5/.45)` (266, 366, 368, 438) → `--scrim`. *(take 106)*
+- [x] Scrims `rgba(0,0,0,.82/.72/.5/.45)` (266, 366, 368, 438) → `--scrim`. *(take 106: the sheet's .82 is `--scrim`. Take 115's review: the pocket label's fade (.72), the count pill (.5) and the nav's shadow (.45) stayed black literals. They sit over art or the near-black nav and need not follow the mode, like take 110's measured strip scrims; this line said more than shipped.)*
 - [x] Legacy `--teal` (156, 297, 3022) → `--brass`. *(take 106)*
 - [x] Canvas: `#26394B`, `#C9A24A`, `#A08E70` and the brass rgba (2724-2754) and `sparkOn` (4365, 4369) → read the palette with `getComputedStyle`; the deck chart is brass in red mode today. *(take 106)*
 
@@ -58,7 +58,7 @@ compact bar one level down, no banner on Collect's Home.
 - [x] `.mode button` defined twice (420-428: min-width 118 then 96, the comic face then the heavy); the buttons are 96/106/96 px under a knob of one third. *(take 106)*
 - [x] `.empty::before` (452) stacks an invisible 64 px block over every empty state. *(take 106)*
 - [x] The toast (z 50) sits under the tour and the curtains (z 60). *(take 106)*
-- [x] The splash: its ground is Collect's `#0B1622` (take 98) but its glow and text follow the mode. *(take 106)*
+- [x] The splash: its ground is Collect's `#0B1622` (take 98) but its glow and text follow the mode. *(take 106)* *Take 115's review: its mark (the swords) still took the mode's colour; it is Collect's brass in every mode now.*
 - [x] Reduced motion covers only the knob (430): not the tour's smooth scroll (2008) nor the splash fade (97). *(take 106)*
 - [x] The render knob check measures mid-slide on a busy machine (landmine 143). *(take 106)*
 
@@ -75,11 +75,11 @@ compact bar one level down, no banner on Collect's Home.
 
 ## 3. Controls and icons — take 108
 
-- [x] Emoji and symbols as icons: 🔍 (550, 951), 📷 (608), ⚙ for filter (553, 610), settings (727) and nothing (624), ☆★ (552), ☐☑ (757), ↶ (645), ⇄ (2119), ↻ (2373), ⋯ (5180), ▾▸, ↗ on some external links and not others, − × ✕ for remove. *(take 108: every one a sprite symbol; the gate refuses an icon drawn as a character -- literally, as an entity or as an escape)*
-- [x] One glyph, several meanings: `g-life` Play/Events/Want list; `g-stage` Sealed/Collection/Binder/scan-from-photo; `g-counter` Releases/Backup; `g-blocker` Scan/Bulk; `g-trigger` Movers/Torch; `g-compass` Home/Local; `g-spyglass` Search/Cards/Export. *(take 108: new symbols for Scan, Collection, Sealed, Releases, Events, the actions, the torch and scan-from-a-photo; Local takes the pin; the game's glyphs keep the game's meanings; smoke holds the map as a table)*
+- [x] Emoji and symbols as icons: 🔍 (550, 951), 📷 (608), ⚙ for filter (553, 610), settings (727) and nothing (624), ☆★ (552), ☐☑ (757), ↶ (645), ⇄ (2119), ↻ (2373), ⋯ (5180), ▾▸, ↗ on some external links and not others, − × ✕ for remove. *(take 108: every one a sprite symbol; the gate refuses an icon drawn as a character -- literally, as an entity or as an escape)* *Take 115's review: two remove buttons still drew ×, and Local's Open and Events' Register had no external glyph; the removes draw a trash glyph and the gate refuses a remove drawn as ×; every link that leaves carries the glyph.*
+- [x] One glyph, several meanings: `g-life` Play/Events/Want list; `g-stage` Sealed/Collection/Binder/scan-from-photo; `g-counter` Releases/Backup; `g-blocker` Scan/Bulk; `g-trigger` Movers/Torch; `g-compass` Home/Local; `g-spyglass` Search/Cards/Export. *(take 108: new symbols for Scan, Collection, Sealed, Releases, Events, the actions, the torch and scan-from-a-photo; Local takes the pin; the game's glyphs keep the game's meanings; smoke holds the map as a table)* *Take 115's review: g-minus also meant remove and g-close the Sim's trash; a trash glyph (Lucide's trash-2) now means remove or discard, g-minus one fewer and g-close close.*
 - [x] Touch under 44 px: steppers 34 (301), deck +/- 28 (405), the search-bar icon buttons about 15 x 22, chips 35, `.linkish` 36, the slider 36, the currency pill 29, Releases buttons 33, "+20 for a short ad" 27, `#dkName` 34. *(take 108: 520 of 1,673 controls to none -- a real 44 where growing costs nothing, a 44 px hit area round the drawn chip where a row would grow; render reads every control's square in Chrome)*
 - [x] No pressed state (`-webkit-tap-highlight-color:transparent`, 59) and no disabled style (25 `disabled` buttons look live). *(take 108: every control lightens when pressed, the compact ones give a little; a disabled button is at 0.45 and says not-allowed)*
-- [x] Icon buttons with no name: the gear (727), the "−" steppers (1886, 2102, 2107, 2112), "⋯" (5180), "✕" (5213); toggles with no `aria-pressed` (552, 757). *(take 108: every icon button named; aria-pressed on the favourites star, "Owned only" and "for this deck")*
+- [x] Icon buttons with no name: the gear (727), the "−" steppers (1886, 2102, 2107, 2112), "⋯" (5180), "✕" (5213); toggles with no `aria-pressed` (552, 757). *(take 108: every icon button named; aria-pressed on the favourites star, "Owned only" and "for this deck")* *Take 115's review: eleven more toggles had no `aria-pressed` (the filter chips, sort, ranges, the binder's sets, the checklist's mode, the condition) and the mode slider's tabs no `aria-selected`; every one has it now.*
 - [x] Found by the 44 px sweep: the scanner's shutter row sat 52 px under the nav at every size -- its height never took the sticky mode slider off. *(take 108, landmine 146)*
 
 ## 4. The art layer
@@ -90,7 +90,7 @@ compact bar one level down, no banner on Collect's Home.
 - [x] Leader-art deck covers (user decks show the Leader at 44 px, ready-made decks a drawn SVG: one idea, two treatments). *(take 109: the Leader's picture over the drawn cover)*
 - [x] Set headers in Sealed and Releases with an art strip; the Play board's Leader art; art empty states. *(take 110: every heading in Sealed a strip, the Play counter's Leaders; Releases' rows and art in empty states ruled out with reasons in the HANDOFF)*
 - [x] The runner's look: `check` runs the look and keeps the PNGs, since this session's VM reaches no image host. *(take 109: not needed -- the VM reaches the image hosts, and the look fetches its pictures in Node behind the proxy, landmine 152)*
-- [x] Thumbnails: seven widths (30 34 36 44 48 52 56), five radii, three ratios → the three `--thumb-*`. *(take 110: THUMB / --thumb-s, -m, -l -- 32 a dense deck-building list, 44 a list row, 56 a sealed product; two radii stay, a card's 6 and a box's 8)*
+- [x] Thumbnails: seven widths (30 34 36 44 48 52 56), five radii, three ratios → the three `--thumb-*`. *(take 110: THUMB / --thumb-s, -m, -l -- 32 a dense deck-building list, 44 a list row, 56 a sealed product; two radii stay, a card's 6 and a box's 8)* *Take 115's review: the trade and want rows (34 px) and the picker (52 px) did not read them; they do now (32 and 56).*
 - [x] The ready-made decks drawn at the bottom of the deck editor since take 66 at the latest, though take 61 put them on Decks, and a smoke line named for the place that never checked it (landmine 149). *(take 109: back on Decks; smoke reads the section)*
 - [x] The picture retry to `<id>.jpg` never served (403 for 241 of 241, landmine 150). *(take 109: gone)*
 - [x] Whole-card pictures (thumbnails, a deck's Leader, a card's own page) show the SAMPLE stamp wherever the publisher's picture has it -- the owner's call whether they show the card above the stamp instead. *(asked at take 109)* *(take 110, the owner: "It should show the whole card")*
@@ -99,11 +99,11 @@ compact bar one level down, no banner on Collect's Home.
 
 - [x] Casing: sentence case for every heading, button and chip (outliers: "Most Valuable" 512, "View All" 514, "Market Movers" 540, "Trade Analyzer" 541, "Bulk Actions" 542, "+ Add a Graded Card" 702, "Starter Decks" 3767/3774); literal caps ("YOUR SCAN" 3024, "GRADED" 2902, "FAILED" 4752, "REPLACES" 3206, "MEASURED" 3894); lowercase states ("offline ok" 498, "☐ own" 757, "for this deck: off" 809, "given" 2110, "+cal" 3724). *(take 110: every one, and a sweep of the shipped labels found no others)*
 - [x] Duplicate panel titles: "Performance" under Home's own Performance tab, and an "Events" panel on Events (moved here from the header section at take 107). *(take 110: "Against what you paid", "Store events")*
-- [x] One word per thing: collection (D17: Collection for Portfolio — 504, 2506, 2508, 2519); card vs printing ("Search all N cards" 5435 vs "N printings" 2915); Refresh (#huntSync says Refresh at 3482 and Fetch at 3484; Sync now 4777); Remove (Delete, Clear, − × ✕); Sim (simulator, hot-seat, pass the phone); Export (Export CSV); Back up; Want list (wants, wanted); keywords one way (blockers, Blocker, [Blocker]). *(take 110: Collection (D17; the CSV column and the backup keep "portfolio"), Refresh, Export CSV, Back up, pass the phone, the want list, Blocker; Delete stays for what is destroyed and Clear for a list or a filter emptied -- two things, two words)*
-- [x] Formats: one date formatter (eight styles today, ISO with a literal T at 3206, 3474); one percentage rule (0, 1 and 2 decimals); × not x (3155, 4811, 5347); curly quotes and apostrophes. *(take 110: dayText and momentText -- "Sep 23", "Sep 24, 6:23 AM" -- ISO only in the diagnostics and self-test reports; one decimal for a percentage, none from 100 %; x as ×; 186 apostrophes curled in the markup and the script's strings)*
+- [x] One word per thing: collection (D17: Collection for Portfolio — 504, 2506, 2508, 2519); card vs printing ("Search all N cards" 5435 vs "N printings" 2915); Refresh (#huntSync says Refresh at 3482 and Fetch at 3484; Sync now 4777); Remove (Delete, Clear, − × ✕); Sim (simulator, hot-seat, pass the phone); Export (Export CSV); Back up; Want list (wants, wanted); keywords one way (blockers, Blocker, [Blocker]). *(take 110: Collection (D17; the CSV column and the backup keep "portfolio"), Refresh, Export CSV, Back up, pass the phone, the want list, Blocker; Delete stays for what is destroyed and Clear for a list or a filter emptied -- two things, two words)* *Take 115's review: the deck's stats chips, the Sim's toasts and the tour still wrote keywords three ways; one way now (Blockers, no Rush, an active Blocker, a Trigger), and the checklist's toast names the want list.*
+- [x] Formats: one date formatter (eight styles today, ISO with a literal T at 3206, 3474); one percentage rule (0, 1 and 2 decimals); × not x (3155, 4811, 5347); curly quotes and apostrophes. *(take 110: dayText and momentText -- "Sep 23", "Sep 24, 6:23 AM" -- ISO only in the diagnostics and self-test reports; one decimal for a percentage, none from 100 %; x as ×; 186 apostrophes curled in the markup and the script's strings)* *Take 115's review: four straight apostrophes, set completion's whole percent, and the ISO day on Local's events and in the release reminders remained; each is fixed (the .ics stays ISO).*
 - [x] Money: `money(Math.abs(d)).slice(1)` (1621, 1904, 2574, 2665, 2670, 4684) drops the "$" in dollars and the "≈" in a converted currency; "in the last all time" (2574); the min/max placeholders say "$" in every currency (898, 900). *(take 110: signedMoney keeps "$" and "≈"; "since the first day on file"; the price filter typed and shown in the currency on screen, kept in dollars)*
 - [x] The developer's voice out of the UI: `<title>` "take __TAKE__" (6); "(R6)" (963); "(PROTOCOL §10)" (2993); "MEASURED:" (3894); "(landmine 25)" (4721); "Credits (A17 — ads not wired; gate OFF)" and "+20 (dev)" (4789-4795); the tour's "Two faces" and "A simulator is on the roadmap" (1981-1983); "Store stock and local shops come to this mode next" (578); "store events come with the local view" (3782); "Sealed product is manual." (4812); "the field is offline by design" (4800). *(take 110: every one; the test credits moved to Diagnostics; smoke refuses the list in the shipped app)*
-- [x] Button labels of three words at most (the Play Start/Next/End buttons 2120, the Sim buttons 5163-5214); labels for the inputs that have only a placeholder (551, 609, 741, 756, 811, 848, 855, 898, 900, 952, 2521; the Sim selects 5161-5164). *(take 110: the Play counter's Start / Next turn / End turn with what happens beside it; every field named; the Sim's setup "New game"; More's link rows stay sentences)*
+- [x] Button labels of three words at most (the Play Start/Next/End buttons 2120, the Sim buttons 5163-5214); labels for the inputs that have only a placeholder (551, 609, 741, 756, 811, 848, 855, 898, 900, 952, 2521; the Sim selects 5161-5164). *(take 110: the Play counter's Start / Next turn / End turn with what happens beside it; every field named; the Sim's setup "New game"; More's link rows stay sentences)* *Take 115's review: the Sim's in-game buttons still ran past three words; each is three at most now, with what happens in a note beside it, and a button beside a note keeps its width (landmine 193).*
 
 ## 6. Polish
 
@@ -115,11 +115,12 @@ compact bar one level down, no banner on Collect's Home.
 
 Every screen and sheet at both of the Fold's sizes (`node tools/look.mjs 111`, 34 views each), read twice. The HANDOFF's take-111 entry has each finding with its before and after.
 
-- [x] Lines and words: a leading "·" on a printing with no number (search, movers, trade, wants, alerts, the scan result); the filter's "printings" and "cards" (now results and lines); "· tap for the checklist"; "CHF CHF"; About's ISO day; "From Bandai TCG+, ."; the deck prompt cut at 411 px; a badged name cut by the ellipsis on the phone (landmine 164).
+- [x] Lines and words: a leading "·" on a printing with no number (search, movers, trade, wants, alerts, the scan result); the filter's "printings" and "cards" (now results and lines); "· tap for the checklist"; "CHF CHF"; About's ISO day; "From Bandai TCG+, ."; the deck prompt cut at 411 px; a badged name cut by the ellipsis on the phone (landmine 164). *Take 115's review: the badge still cut in deck, trade, want and alert rows (`.dkrow`); it wraps there too.*
 - [x] Layout: the bulk bar off a 411 px phone; Scan's note edge to edge; the Performance tab's panel under Most valuable; rows askew on a textless picture, then the Sealed bell (landmine 161); the ready-made deck's badge beside its name.
 - [x] A card's page: Want and the alerts out of Graded (a Watch panel); a sealed product's page (its kind, one triangle, no Graded, Want or list of printings); a DON!! card's page a card's (landmine 162); Save and the cost basis on the collection the page names, and a slab its own line (landmine 163).
 - [x] Figures: Set completion counting products and every collection's value; a deck's value without its Leader; the binder opening on empty pockets; a cost basis added without the day's reading.
-- [ ] A binder page on the open Fold: three pockets of about 400 px across, so a page of nine needs a scroll there -- pockets near 110 px wide would fit it. A design choice, left to the UI/UX session.
+- [ ] A binder page on the open Fold: a page of nine needs a scroll there. *Take 115, at the MEASURED 749 x 832: pockets of 226 x 316 px, the page ending at 1151 px on an 832 px screen (at the old INFERRED 840 x 757 it was 257 x 358, ending at 1278).* A design choice, left to the UI/UX session.
+- [ ] Sealed's banner on the open Fold: the top card cut to the screen's width with its face filling the band (take 111's look, at the INFERRED 840). Its crop at the MEASURED 749 has not been looked at. The UI/UX session's.
 
 ## 8. Distributor info — take 112, the owner's word
 
@@ -139,7 +140,23 @@ Take 114, the owner's answers to its pictures (HANDOFF take 114):
 - [x] A day in a distributor's long words never breaks ("release Nov" / "20", found by take 114's look), fixed because it was broken.
 - [ ] A day in Releases' "mixed · release" group line has no no-break spaces. Found in passing; the UI session's.
 - [ ] The history's own look (`.dtl`): size, colour, the spacing of a one-line header. The UI session's.
+- [ ] Sealed's GTS counts overlap ("7 sold out, 8 allocated, 1 with an order due date ahead, 3 unreleased without one" adds up to more than its 11 products) and read as separate groups (take 114's look). The UI session's.
+
+## 9. Take 115's look and review -- for the UI/UX session
+
+Take 115 (the production baseline) fixed what was broken or off its own spec and left design to this session. Its look (`node tools/look.mjs 115`, 36 views at the Fold's MEASURED sizes) and its review found these, each there before take 115:
+
+- [ ] The Sim's battle panel reads "5000attacks with": the power is glued to the words, and `.row .nm b{display:block}` catches the `<b>` inside the sentence.
+- [ ] The Leader sheet and a deck's printing sheet draw an empty grey box when the picture host refuses a picture (the four unreleased OP18 Leaders; Nami's OP-DD and LT-01 printings); the scanner's picker puts the printing's name in the same box.
+- [ ] At 411 px a deck row's second line is cut before its keyword tags ("ST01-006 · Red · 1,000…" hides "Blocker").
+- [ ] At 749 px set completion's set names are cut short ("Extra Booster: Anime 25t…").
+- [ ] A Sealed row names its kind in the plural for one product ("Boxes", "Collections").
+- [ ] Releases now lists an upcoming group whose only listing is its sealed product ("card list not published yet"); none today.
+- [ ] Text on Sealed's strips must clear 4.5:1 over a white picture (landmine 191): a lighter scrim needs a heavier text treatment.
+- [ ] The tokens nothing reads (take 115, A43): `--teal --fs-label --fs-row --sp-1 --sp-4 --sp-5 --sp-6 --r-sm --r-md --r-lg --ic-sm --ic-md --ic-lg --thumb-s --thumb-m --z-screen` -- use them or remove them.
 
 ## Found in passing, routed elsewhere
+
+- A favicon and a web-manifest icon for Pages, from `assets/icon.svg` (take 113). The UI session's call.
 
 - Bulk delete removes a card's lines in every portfolio and condition, and its confirm values the selection without quantity (2966-2972). A data-loss risk (AGENTS rule 5), outside the UI series: offered to the owner as its own task. *(Fixed at take 110, landmine 155: Delete, Move and Condition take the lines on screen -- the collection, the star, the filter, the search -- and the bar and the confirm count them with their quantities.)*

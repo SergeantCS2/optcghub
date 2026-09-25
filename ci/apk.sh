@@ -3,6 +3,39 @@
 # update .github/workflows (APEX landmines 46, 84).
 set -euo pipefail
 
+# Take 115: Gradle runs in a subshell. `cd android && ./gradlew ... && cd ..` let a failed build
+# through -- errexit skips a command inside an && list -- so the script stayed in android/ and died
+# a line later at cp, "cannot stat", before the upload key was shredded. It stops here, and says so.
+gradle() { (cd android && ./gradlew --no-daemon "$@") || { echo "::error::gradle $* failed -- its own output is above; nothing was packaged"; return 1; }; }
+
+if [ "${1:-}" = "--selftest" ]; then
+  # every line below that runs Gradle, run as written against a stand-in gradlew: one that fails
+  # must stop the script with gradle's own message, one that passes must leave it where it began
+  echo "apk.sh controls:"
+  ok=1; d=$(mktemp -d); trap 'rm -rf "$d"' EXIT; mkdir "$d/android"
+  printf '#!/bin/sh\nexit "${STANDIN_RC:-0}"\n' > "$d/android/gradlew"; chmod +x "$d/android/gradlew"
+  n=0
+  while IFS= read -r line; do
+    n=$((n + 1))
+    run() { (cd "$d" && STANDIN_RC=$1 bash -c "set -euo pipefail
+$(declare -f gradle)
+shred() { :; }
+$line
+[ \"\$(pwd)\" = '$d' ] && echo PAST-GRADLE-AT-ROOT || echo PAST-GRADLE-ELSEWHERE" 2>&1); }
+    out=$(run 1) && rc=0 || rc=$?
+    case "$rc:$out" in
+      0:*|*PAST-GRADLE*) echo "  FAIL  a failed build went on past: $line"; ok=0;;
+      *"::error::gradle"*) echo "  ok    a failed build stops the script with gradle's message: $line";;
+      *) echo "  FAIL  a failed build stopped without gradle's message: $line"; ok=0;;
+    esac
+    out=$(run 0) && rc=0 || rc=$?
+    [ "$rc" = 0 ] && [ "${out##*$'\n'}" = PAST-GRADLE-AT-ROOT ] && echo "  ok    ...control: a build that passes goes on, from the tree's root" \
+      || { echo "  FAIL  a passing build did not go on from the tree's root ($rc: ${out##*$'\n'}): $line"; ok=0; }
+  done < <(grep -E '^[^#]*(gradlew|^[[:space:]]*gradle )' "$0" | grep -v '^gradle()')
+  [ "$n" -ge 3 ] && echo "  ok    three Gradle runs found, as the build has (sideload APK, Play AAB, dev AAB): $n" || { echo "  FAIL  $n Gradle runs found, not the build's three"; ok=0; }
+  [ "$ok" = 1 ] && exit 0 || exit 1
+fi
+
 TAKE=$(grep -oP 'VAULT_TAKE=\K[0-9]+' BUILD)
 echo "take=$TAKE" >> "$GITHUB_OUTPUT"
 
@@ -225,7 +258,7 @@ PYSIGN
 echo "::endgroup::"
 
 echo "::group::sideload APK"
-cd android && ./gradlew --no-daemon assembleRelease && cd ..
+gradle assembleRelease
 APK="optcghub-take-$TAKE.apk"
 cp android/app/build/outputs/apk/release/*.apk "$APK"
 # Read the signer BACK off the artifact (APEX landmine 211). Every take must be
@@ -261,7 +294,7 @@ AAB="optcghub-take-$TAKE.aab"
 if [ -n "${PLAY_UPLOAD_KEYSTORE_B64:-}" ]; then
   echo "$PLAY_UPLOAD_KEYSTORE_B64" | base64 -d > /tmp/upload.jks
   export PLAY_UPLOAD_KS=/tmp/upload.jks
-  cd android && ./gradlew --no-daemon bundleRelease -Pupload=1 && cd ..
+  gradle bundleRelease -Pupload=1 || { shred -u /tmp/upload.jks; exit 1; }   # the key never outlives a failed build
   cp android/app/build/outputs/bundle/release/*.aab "$AAB"
   shred -u /tmp/upload.jks
   # APEX landmine 211's companion: read the signer back off the artifact Play
@@ -285,7 +318,7 @@ if [ -n "${PLAY_UPLOAD_KEYSTORE_B64:-}" ]; then
 else
   # No secrets set: still build, but NAME it unfit so nobody uploads a
   # dev-signed bundle and burns a versionCode on a rejection (landmine 33).
-  cd android && ./gradlew --no-daemon bundleRelease && cd ..
+  gradle bundleRelease
   AAB="optcghub-take-$TAKE-DEVKEY-DO-NOT-UPLOAD.aab"
   cp android/app/build/outputs/bundle/release/*.aab "$AAB"
   echo "::warning::No Play secrets set — AAB is dev-signed and named unfit to upload."

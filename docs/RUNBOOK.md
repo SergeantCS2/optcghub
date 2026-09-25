@@ -1,6 +1,6 @@
 # RUNBOOK — from nothing to a repo that builds every night
 
-*Current as of take 114.* **Since take 89 the repo is the record:** a session
+*Current as of take 115.* **Since take 89 the repo is the record:** a session
 works on a branch and opens a pull request; you merge; the merge builds. §6
 is every take. §1–§5 are how the repo was first stood up from a seed zip and
 remain the recovery procedure; you need them again only for a new repo or a
@@ -115,10 +115,26 @@ the PR like the others (§5b). It runs at :17 every hour, rebuilds `www/`
 from the committed tree, fetches Target's product and shelf stock for the
 configured zip with `tools/hunt.py`, and deploys `www/` to Pages — the app
 reads `hunt/feed.json` from there. Change the zip or radius without a paste:
-repository **Variables** `HUNT_ZIP` and `HUNT_RADIUS` (Settings → Secrets and
-variables → Actions → Variables). It shares the `pages` concurrency group
-with the nightly so the two never deploy over each other. A run costs about
-two minutes of a public repo's free runner time.
+repository **Variables** `HUNT_ZIPS` (one or more zips, comma-separated) and `HUNT_RADIUS` (Settings → Secrets and
+variables → Actions → Variables). A run costs about two minutes of a
+public repo's free runner time.
+
+**Since take 115:**
+- The hourly holds the `pages` concurrency group for its whole run, and the
+  nightly's **pages** job deploys inside the same group after reading the
+  hourly's files again (`bash ci/bundle.sh --carry-over`). So no hourly lands
+  between the nightly's read and its deploy (landmine 184's take; take 114's
+  deferred race).
+- The hourly restores the nightly's catalogue cache and runs
+  `tools/validate.py` before it deploys a catalogue it ingested itself. A
+  catalogue the validator refuses stops that hourly, so the feed pauses for
+  that run too. It is not `--strict`: the hourly never hashes, so hash
+  coverage (a new set's unhashed printings) is the nightly's refusal alone
+  (take 115's self-review; 139 unhashed printings refused every hourly).
+- A red hourly opens (or comments on) one issue labelled `hourly-failure`, and
+  the next green hourly closes it. The nightly's **report** job does the same
+  under `nightly-failure` for any failed job -- seed, bundle, pages or apk --
+  and closes its thread only when every job ran green.
 
 **A red hunt run that logs `::error::history: unread …` (take 114).**
 - It means Pages could not be read three times, ten seconds apart. The run
@@ -205,9 +221,12 @@ The morning after the first build:
   date and yesterday's deltas on the tiles.
 
 If the run went red, there is **one** open issue labelled `nightly-failure`,
-with a comment per red night; a green night closes it (A9; landmine 125 is
-the four separate issues that came before the label existed). The reason is
-in the run's last group; the table below maps the common ones.
+with a comment per red night naming the failed jobs; a night on which every
+job ran green closes it (A9; landmine 125 is the four separate issues that
+came before the label existed). Since take 115 the **report** job files it for
+any job -- seed, bundle, pages or apk -- and a night whose Pages deploy was
+skipped (pages=skip) neither opens nor closes it. The reason is in the failed
+job's log; the table below maps the common ones.
 
 ---
 

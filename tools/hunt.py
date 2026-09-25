@@ -35,12 +35,8 @@ def pages_base():
 
 
 def fetch_json(url, timeout=20):
-    import urllib.request
-    try:
-        with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "optcghub-hunt/1"}), timeout=timeout) as r:
-            return json.loads(r.read().decode("utf8"))
-    except Exception:                                        # noqa: BLE001
-        return None
+    """The json, or None however it failed (take 115: the one request is fetch_json_why's)."""
+    return fetch_json_why(url, timeout)[0]
 
 
 def fetch_json_why(url, timeout=20):
@@ -58,11 +54,27 @@ def fetch_json_why(url, timeout=20):
         return None, f"{type(e).__name__}: {str(e)[:80]}"
 
 
+FETCH_TRIES, FETCH_PAUSE_S = 3, 10   # take 114: a read of our own site -- the hourly's history, the nightly's carry-over
+
+
+def fetch_tries(url, fetch, tries=FETCH_TRIES, pause=FETCH_PAUSE_S, sleep=time.sleep):
+    """Take 115: the one retry loop read_history and carry_over share -- `tries` attempts, `pause` seconds
+    apart; the first read or a 404 ends it. (json, None) | (None, 404) | (None, the last try's why)."""
+    j, why = None, None
+    for k in range(tries):
+        j, why = fetch(url)
+        if j is not None or why == 404:
+            break
+        if k < tries - 1:
+            sleep(pause)
+    return j, why
+
+
 def is_history(h):
     return isinstance(h, dict) and isinstance(h.get("runs"), list)
 
 
-def read_history(local_path, base=None, fetch=None, tries=3, pause=10, sleep=time.sleep):
+def read_history(local_path, base=None, fetch=None, tries=FETCH_TRIES, pause=FETCH_PAUSE_S, sleep=time.sleep):
     """Take 114: the history this run appends to, and how it was had -- (history, "local" | "pages"); (None,
     "none") when Pages answers 404 (there is none: a new one starts); (None, "unread: <why>") when it could not be
     read in `tries` attempts, `pause` seconds apart, or is not a history. Read at its plain address: Pages' CDN
@@ -80,15 +92,11 @@ def read_history(local_path, base=None, fetch=None, tries=3, pause=10, sleep=tim
     base = pages_base() if base is None else base
     if not base:
         return None, "none: no site address (UPDATE_URL) to read it from"
-    fetch = fetch or fetch_json_why; why = None
-    for k in range(tries):
-        h, why = fetch(base + "hunt/history.json")
-        if h is not None:
-            return (h, "pages") if is_history(h) else (None, "unread: the deployed history is not a history (no runs list)")
-        if why == 404:
-            return None, "none"
-        if k < tries - 1:
-            sleep(pause)
+    h, why = fetch_tries(base + "hunt/history.json", fetch or fetch_json_why, tries, pause, sleep)
+    if h is not None:
+        return (h, "pages") if is_history(h) else (None, "unread: the deployed history is not a history (no runs list)")
+    if why == 404:
+        return None, "none"
     return None, f"unread: {why} ({tries} tries)"
 
 
@@ -245,7 +253,8 @@ def match(title, sealed):
 
 def southern_match(name, codes, sold_as, sealed):
     """Take 112: a Southern Hobby name through its own normaliser -- or no match
-    while the unit it is sold as is unread and the name cannot say it. The unit
+    while the unit it is sold as is unread and the name cannot say it (take 115:
+    an illustration box, and a name that says Case -- southern.unit_unknown). The unit
     is part of the identity: a CASE matches only a catalogue case, and anything
     else never matches one (the live pages sell IB-09 and IB-10 as cases, and
     the tie-break of landmine 134 took the single box for a case)."""
@@ -382,6 +391,14 @@ def selftest():
               str(sm("Bandai - One Piece Card Game: IB-04 Illustration Box 04", ["IB04"], "CASE")))
         check("...control: a box or a display never matches the case beside it", sm(ib8, ["IB08"], "BOX") == "One Piece Card Game Illustration Box Vol. 8"
               and sm("Bandai - One Piece Card Game: ST-19 Starter Deck 19", ["ST19"], "DISPLAY") == "Starter Deck 19: BLACK Smoker Display", str([sm(ib8, ["IB08"], "BOX"), sm("Bandai - One Piece Card Game: ST-19 Starter Deck 19", ["ST19"], "DISPLAY")]))
+        # take 115: the unit unread -- an illustration box may be the case (IB-09, IB-10), and a name that says Case is matched as a case only by its page
+        unread = {"IB-08": sm(ib8, ["IB08"], None), "IB-08 ... Case": sm(ib8 + " Case", ["IB08"], None), "OP-12 Booster Box Case": sm("Bandai - One Piece Card Game: OP-12 Booster Box Case", ["OP12"], None)}
+        check("with its unit unread an illustration box matches nothing, nor does a name that says Case -- each took the single box at take 114 (rule 4, landmine 167)",
+              all(v is None for v in unread.values()), json.dumps(unread))
+        check("...control: an unread booster box, pack or deck set whose name says its unit still matches (the fixture's OP-18 box and SD-01 set)",
+              sm("Bandai - One Piece Card Game: OP-18 Booster Box", ["OP18"], None) == "The Dominance of God Booster Box" and sm("Bandai - One Piece Card Game: SD-01 Set Sail Deck Set", ["SD01"], None) == "Set Sail Deck Set"
+              and sm("Bandai - One Piece Card Game: EB-05 Extra Booster Pack 05", ["EB05"], None) == "Extra Booster: One Piece Heroines Edition Vol.2 - Booster Pack",
+              str([sm("Bandai - One Piece Card Game: OP-18 Booster Box", ["OP18"], None), sm("Bandai - One Piece Card Game: SD-01 Set Sail Deck Set", ["SD01"], None)]))
     ev = json.load(open(os.path.join(fx, "events_us.json")))["events"]
     ok &= roster.selftest(ev, roster.zcta())
     # take 92, landmine 130: a failed rebuild keeps the roster AND the events table
@@ -516,14 +533,137 @@ def selftest():
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30)
             wrote[rc] = open(gho).read().strip()
     yml = open(os.path.join(ROOT, "ci", "build.yml"), encoding="utf8").read()
-    jobs = {k: "\n" + v for k, v in re.findall(r"(?m)^  ([a-z]+):\n((?:(?:    .*)?\n)*)", yml)}   # each job's lines, as a block that starts on a newline
+    hyml = open(os.path.join(ROOT, "ci", "hunt.yml"), encoding="utf8").read()
+    blocks = lambda text: {k: "\n" + v for k, v in re.findall(r"(?m)^  ([a-z]+):\n((?:(?:    .*)?\n)*)", text.split("\njobs:\n", 1)[-1])}   # noqa: E731  each job's lines, as a block that starts on a newline
+    jobs = blocks(yml)
     sid = re.search(r"(?m)^    outputs:\n      pages: \$\{\{ steps\.(\w+)\.outputs\.pages \}\}$", jobs.get("bundle", ""))
-    runs = [s for s in jobs.get("bundle", "").split("\n      - ") if "\n        run: bash ci/bundle.sh" in s]
+    runs = [s for s in jobs.get("bundle", "").split("\n      - ") if "\n        run: bash ci/bundle.sh\n" in s + "\n"]
     wired = bool(sid and runs and f"\n        id: {sid.group(1)}\n" in runs[0]) and "\n    if: needs.bundle.outputs.pages != 'skip'\n" in jobs.get("pages", "") \
-        and "\n    continue-on-error: true" in jobs.get("pages", "") and "\n    needs: bundle\n" in jobs.get("apk", "")
+        and "\n    needs: bundle\n" in jobs.get("apk", "")
     check("...and the nightly does not deploy on it: ci/bundle.sh writes pages=skip on a failed carry-over (3, or any failure) and nothing on 0; the bundle job exposes it, "
           "the pages job is skipped on it, and the apk job waits on bundle alone (the APK and the Release go ahead)",
           wrote == {"3": "pages=skip", "1": "pages=skip", "0": ""} and wired, f"{wrote}; build.yml wired: {wired}")
+    # take 115: the nightly race (take 114 DEFERRED) -- the bundle job's carry-over read hunt/ minutes before the pages job deployed, and an hourly
+    # deploy in between lost its row; build.yml's pages job was not in the `pages` group hunt.yml's comment said it shared. Read as text: the
+    # runner's check has no YAML parser.
+    def pages_wired(b_text, h_text):
+        p = blocks(b_text).get("pages", ""); st = p.split("\n      - ")
+        at = lambda pred: [i for i, x in enumerate(st) if pred(x)]   # noqa: E731
+        carry = at(lambda x: "\n        run: bash ci/bundle.sh --carry-over\n" in x + "\n")
+        cid = re.search(r"\n        id: (\w+)", st[carry[0]]) if carry else None
+        if not cid:
+            return False
+        gate = f"\n        if: steps.{cid.group(1)}.outputs.pages != 'skip'"
+        co, dl = at(lambda x: x.startswith("uses: actions/checkout@")), at(lambda x: x.startswith("uses: actions/download-artifact@"))
+        up, dep = at(lambda x: "uses: actions/upload-pages-artifact@" in x), at(lambda x: "uses: actions/deploy-pages@" in x)
+        return bool(co and dl and up and dep) and co[0] < carry[0] and dl[0] < carry[0] < up[0] < dep[0] and all(gate in st[i] for i in up + dep) \
+            and "\n    concurrency:\n      group: pages\n      cancel-in-progress: false\n" in p \
+            and f"\n    outputs:\n      pages: ${{{{ steps.{cid.group(1)}.outputs.pages }}}}\n" in p \
+            and "\nconcurrency:\n  group: pages\n  cancel-in-progress: false\n" in h_text
+    no_group = yml.replace("\n    concurrency:\n      group: pages\n", "\n    concurrency:\n      group: build-pages\n")
+    ungated = yml.replace("\n        if: steps.carry.outputs.pages != 'skip'\n        uses: actions/deploy-pages@", "\n        uses: actions/deploy-pages@")
+    outside = hyml.replace("\nconcurrency:\n  group: pages\n", "\nconcurrency:\n  group: hunt\n")
+    check("the nightly's pages job reads hunt/ again (ci/bundle.sh --carry-over) after the download and before the upload, and deploys, inside the `pages` "
+          "group hunt.yml's run holds -- no hourly between the read and the deploy; its upload and deploy wait on that read's pages=skip, which the job exposes",
+          pages_wired(yml, hyml), f"wired: {pages_wired(yml, hyml)}")
+    check("...control: the same lines in another group, a deploy that does not wait on the read, or an hourly outside the group are not wired",
+          yml not in (no_group, ungated) and outside != hyml and not pages_wired(no_group, hyml) and not pages_wired(ungated, hyml) and not pages_wired(yml, outside),
+          f"{pages_wired(no_group, hyml)}, {pages_wired(ungated, hyml)}")
+    # ...and `bash ci/bundle.sh --carry-over` runs the carry-over and nothing else: a stand-in python3 logs what it is asked and exits as told
+    alone = {}
+    with tempfile.TemporaryDirectory() as td:
+        open(os.path.join(td, "python3"), "w").write('#!/bin/sh\necho "$*" >> "$STANDIN_LOG"\nexit $STANDIN_RC\n'); os.chmod(os.path.join(td, "python3"), 0o755)
+        for rc in ("3", "1", "0", "full"):
+            gho, lg = os.path.join(td, "output-" + rc), os.path.join(td, "log-" + rc); open(gho, "w").close()
+            r = subprocess.run(["bash", os.path.join(ROOT, "ci", "bundle.sh")] + ([] if rc == "full" else ["--carry-over"]), cwd=td,
+                               env=dict(os.environ, PATH=td + os.pathsep + os.environ.get("PATH", ""), STANDIN_RC="0" if rc == "full" else rc, STANDIN_LOG=lg, GITHUB_OUTPUT=gho),
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30)
+            alone[rc] = (r.returncode, open(gho).read().strip(), open(lg).read().splitlines() if os.path.exists(lg) else [])
+    one = ["tools/hunt.py --carry-over"]
+    check("...and `bash ci/bundle.sh --carry-over` runs the carry-over alone: pages=skip on 3 or any failure, nothing on 0, exit 0 each time, and no other step",
+          {k: alone[k] for k in ("3", "1", "0")} == {"3": (0, "pages=skip", one), "1": (0, "pages=skip", one), "0": (0, "", one)}, json.dumps(alone)[:200])
+    check("...control: the same script without the flag goes on past it and stops at its first step (ci/deps.sh is not in the scratch folder) -- a fall-through shows",
+          alone["full"][0] != 0, str(alone["full"]))
+    # take 115: A9's report covers every job, in build.yml and in the hourly; through take 114 only the bundle job reported, its green closed the
+    # thread while the apk or the pages job could still fail, and a red hourly told nobody. The step's own lines, run with a stand-in gh.
+    def report_step(text):
+        r = blocks(text).get("report", "")
+        run = re.search(r"\n        run: \|\n((?:(?:          .*)?\n)*)", r)
+        env_ = dict(re.findall(r"\n          ([A-Z_]+): (.*)", r.split("\n        run: |")[0]))
+        return r, env_, ("\n".join(x[10:] for x in run.group(1).split("\n")) if run else "exit 9")
+    def report(text, needs, open_issue):
+        _, env_, body = report_step(text)
+        with tempfile.TemporaryDirectory() as td:
+            lg = os.path.join(td, "gh.log")
+            open(os.path.join(td, "gh"), "w").write('#!/bin/sh\necho "$*" >> "$GH_LOG"\n[ "$1 $2" = "issue list" ] && echo "$OPEN_ISSUE"\nexit 0\n'); os.chmod(os.path.join(td, "gh"), 0o755)
+            r = subprocess.run(["bash", "-c", body], env=dict(os.environ, PATH=td + os.pathsep + os.environ.get("PATH", ""), GH_LOG=lg, OPEN_ISSUE=open_issue,
+                               NEEDS=json.dumps(needs), RUN="https://x/runs/1", LABEL=env_.get("LABEL", ""), TITLE=env_.get("TITLE", ""), KEEPS=env_.get("KEEPS", "")),
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30)
+            calls = open(lg).read().splitlines() if os.path.exists(lg) else []
+        return r.returncode, sorted({c.split()[1] for c in calls if c.split()[:1] == ["issue"] and c.split()[1] in ("close", "comment", "create")}), calls
+    def nd(skip=(), **res):
+        return {j: {"result": res.get(j, "success"), "outputs": {"pages": "skip"} if j in skip else {}} for j in ("seed", "bundle", "pages", "apk")}
+    nightly = {"every job green, a thread open: closed": (nd(), "7", ["close"]),
+               "every job green, no thread: nothing": (nd(), "", []),
+               "apk red, bundle green: a comment, never closed": (nd(apk="failure"), "7", ["comment"]),
+               "pages red, no thread: one opened": (nd(pages="failure"), "", ["create"]),
+               "bundle red, the rest skipped: a comment": (nd(bundle="failure", pages="skipped", apk="skipped"), "7", ["comment"]),
+               "pages skipped on the bundle's pages=skip: left as it is": (nd(skip=("bundle",), pages="skipped"), "7", []),
+               "pages green, its own read said pages=skip: left as it is": (nd(skip=("pages",)), "7", []),
+               "pages cancelled (a waiting deploy a newer hourly replaced): red": (nd(pages="cancelled"), "", ["create"])}
+    got = {k: report(yml, n_, o) for k, (n_, o, _) in nightly.items()}
+    bad = {k: got[k][:2] for k, (_, _, want) in nightly.items() if got[k][:2] != (0, want)}
+    named = next((c for c in got["apk red, bundle green: a comment, never closed"][2] if c.startswith("issue comment 7")), "")
+    opened = got["pages red, no thread: one opened"][2]
+    check("build.yml's report job opens or comments on any red job, closes only when every job ran green, and leaves a pages=skip night as it is (8 cases)",
+          not bad and "Failed: apk" in named and opened[:1] and opened[0].startswith("label create nightly-failure") and any(c.startswith("issue create") and "--label nightly-failure" in c for c in opened),
+          json.dumps(bad)[:220])
+    hourly = {"green: closed": ({"feed": {"result": "success", "outputs": {}}}, "3", ["close"]), "red: opened": ({"feed": {"result": "failure", "outputs": {}}}, "", ["create"])}
+    hgot = {k: report(hyml, n_, o) for k, (n_, o, _) in hourly.items()}
+    check("hunt.yml's report job does the same under its own label: a red hourly opens the thread, a green one closes it",
+          all(hgot[k][:2] == (0, w) for k, (_, _, w) in hourly.items()) and any("--label hourly-failure" in c for c in hgot["red: opened"][2]), json.dumps({k: v[:2] for k, v in hgot.items()}))
+    def report_wired(text, per_job):
+        r, env_, body = report_step(text); js = blocks(text)
+        need = re.search(r"\n    needs: \[?([a-z, ]+)\]?\n", r)
+        others = [j for j in js if j != "report"]
+        hides = [j for j in others if re.search(r"\n    continue-on-error: *true", js[j])]
+        perm = "\n    permissions:\n      issues: write\n" in r if per_job else bool(re.search(r"(?m)^permissions:\n(?:  .*\n)*  issues: write", text))
+        return bool(need) and sorted(x.strip() for x in need.group(1).split(",")) == sorted(others) and "\n    if: ${{ !cancelled() }}\n" in r and perm and not hides \
+            and bool(env_.get("LABEL")) and "NEEDS" in env_
+    check("...and each report job needs every other job of its workflow, runs unless the run was cancelled, may write issues (the hourly's alone: never its feed job), "
+          "and no job it reads carries continue-on-error (a failed job would read as a success); the two report steps are the same lines",
+          report_wired(yml, False) and report_wired(hyml, True) and report_step(yml)[2] == report_step(hyml)[2], f"{report_wired(yml, False)}, {report_wired(hyml, True)}")
+    muts = [yml.replace("needs: [seed, bundle, pages, apk]", "needs: [seed, bundle, pages]"), yml.replace("    if: ${{ !cancelled() }}\n", "    if: success()\n"),
+            yml.replace("\n    timeout-minutes: 15\n", "\n    timeout-minutes: 15\n    continue-on-error: true\n", 1)]
+    check("...control: a report job that misses the apk job, one that runs only on success, or a pages job with continue-on-error is not wired",
+          yml not in muts and not any(report_wired(m, False) for m in muts))
+    # take 115: the hourly validates the catalogue it deploys (every installed app adopts it at its next sync), and reads the nightly's cache for landmine 5.
+    # Its self-review: every refusal but hash coverage -- the hourly never hashes, so --strict read the committed sidecar against a
+    # fresh ingest, and a new set's 139th unhashed printing refused every hourly until the nightly's hashes committed (MEASURED)
+    def validates(text):
+        lines = [x.strip() for x in text.splitlines()]
+        at = lambda rx: next((i for i, x in enumerate(lines) if re.match(rx, x)), -1)
+        cat, val, app = at(r"python3 tools/pipeline\.py( [a-z]+)* catalog( |$)"), at(r"python3 tools/validate\.py( |$)"), at(r"python3 tools/pipeline\.py( [a-z]+)* app( |$)")
+        return 0 <= cat < val < app and "--strict" not in lines[val] and not re.search(r"python3 tools/pipeline\.py( [a-z]+)* (validate|hashes)( |$)", text, re.M) \
+            and "uses: actions/cache/restore@" in text and "uses: actions/cache@" not in text
+    check("the hourly runs validate.py between the catalogue and the app it deploys -- every refusal but the hash coverage only the nightly can meet -- and reads the nightly's cache without saving one",
+          validates(hyml), " | ".join(re.findall(r"python3 tools/(?:pipeline|validate)\.py[a-z -]*", hyml)) or "no pipeline line")
+    t115 = hyml.replace("python3 tools/pipeline.py ingest history catalog\n          python3 tools/validate.py\n          python3 tools/pipeline.py app", "python3 tools/pipeline.py ingest history catalog validate app")
+    muts = [t115, t115.replace(" catalog validate app", " catalog app"), hyml.replace("python3 tools/validate.py", "python3 tools/validate.py --strict"),
+            hyml.replace("python3 tools/validate.py\n          python3 tools/pipeline.py app", "python3 tools/pipeline.py app\n          python3 tools/validate.py"), hyml.replace("actions/cache/restore@", "actions/cache@")]
+    check("...control: take 115's first list (validate --strict), take 114's (none), --strict by hand, validate after the app, or a cache step that saves every hour, does not pass",
+          len(set(muts)) == len(muts) and hyml not in muts and not any(validates(m) for m in muts))
+    # take 115 (SPEC-113-56): the Play icon ci/apk.sh draws rides the Release, on the first publish and on every nightly's
+    apk_sh = open(os.path.join(ROOT, "ci", "apk.sh"), encoding="utf8").read()
+    def icon_rides(text):
+        rel = [x for x in blocks(text).get("apk", "").split("\n      - ") if "\n        run: |" in x and "gh release create" in x]
+        return bool(rel) and bool(re.search(r'\n\s+icon="play-assets/icon-512\.png(#[^"\n]*)?"\n', rel[0])) \
+            and bool(re.search(r'gh release upload "\$tag" [^\n]*"\$icon"', rel[0])) and bool(re.search(r'gh release create "\$tag" \\\n\s+[^\n]*"\$icon"', rel[0])) \
+            and "\npython3 ci/icon.py android/app/src/main/res play-assets\n" in apk_sh
+    check("the Release carries play-assets/icon-512.png, which ci/apk.sh's icon step draws and checks, on the first publish and each nightly's replace",
+          icon_rides(yml))
+    left_out = re.sub(r'(gh release create "\$tag" \\\n\s+[^\n]*?) "\$icon"', r"\1", yml)
+    check("...control: a create that leaves it out does not", left_out != yml and not icon_rides(left_out))
     # the due day: GTS keeps it open as Southern Hobby does (take 113's GTS closed it a day early)
     gh = open(os.path.join(fx, "gts_listing.html"), encoding="utf8").read()
     peb = lambda day: next(i["status"] for i in gts.parse_listing(gh, day)["items"] if i["sku"] == "BJP2897699")   # noqa: E731
@@ -544,9 +684,21 @@ def selftest():
         pr = subprocess.run([sys.executable, os.path.abspath(__file__), "--from-fixtures", "--out", os.path.join(td, "feed-fixture.json")], env=env,
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=120)
         line = next((x.strip() for x in pr.stdout.splitlines() if x.startswith("   gts: ")), "no gts line")
-        g = json.load(open(os.path.join(td, "feed-fixture.json")))["sources"]["gts"] if pr.returncode == 0 else {}
+        fed = json.load(open(os.path.join(td, "feed-fixture.json"))) if pr.returncode == 0 else {}
+        g = fed.get("sources", {}).get("gts", {})
         says = "{} with an order due date ahead, {} unreleased without one".format(*gts_due(g.get("items", []), g.get("fetched_at")))
+        beside = sorted(os.listdir(td))
+        hist_beside = is_history(json.load(open(os.path.join(td, "history-fixture.json")))) if "history-fixture.json" in beside else False
     check("...and the hourly's gts line says those counts", pr.returncode == 0 and says in line, line[:170])
+    # take 115: the --out refusal (landmine 166) -- the sidecars are named by replacing "feed" in --out, so a name without it wrote each over the feed
+    check("an --out that names a feed writes its history, stores, events and shops beside it, each under its own name (feed-fixture.json -> history-fixture.json)",
+          pr.returncode == 0 and "sources" in fed and hist_beside and {"feed-fixture.json", "history-fixture.json", "stores-fixture.json", "events-fixture.json", "shops-fixture.json"} <= set(beside), str(beside))
+    with tempfile.TemporaryDirectory() as td:
+        pr2 = subprocess.run([sys.executable, os.path.abspath(__file__), "--from-fixtures", "--out", os.path.join(td, "fixture.json")], env=env,
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=120)
+        left = sorted(os.listdir(td))
+    check("...control: an --out without \"feed\" is refused with exit 2 and nothing written -- take 111 wrote the history over the feed (landmine 166)",
+          pr2.returncode == 2 and "--out must name a feed file" in pr2.stdout and left == [], f"exit {pr2.returncode}, wrote {', '.join(left) or 'nothing'}")
     check("control: take 113's path on a failed read -- append_history(None, ...) -- is one row: the whole record replaced by the next deploy", len(append_history(None, fd)["runs"]) == 1)
     # controls: a changed shape is a failure, not a quiet empty
     for name, fn, bad in (("stores", target.parse_stores, {"data": {}}), ("search", target.parse_search, {"data": {"search": {}}}), ("fulfillment", target.parse_fulfillment, {"data": {"product": {}}})):
@@ -631,12 +783,7 @@ def carry_over(out_dir, base=None, fetch=None, sleep=time.sleep, out=print):
     fetch = fetch or fetch_json_why
     os.makedirs(out_dir, exist_ok=True); n = 0; unread = False
     for name in HUNT_FILES:
-        for k in range(3):                                   # take 114: a missed history.json here is the next hourly's reset
-            j, why = fetch(base + "hunt/" + name)
-            if j is not None or why == 404:
-                break
-            if k < 2:
-                sleep(10)
+        j, why = fetch_tries(base + "hunt/" + name, fetch, sleep=sleep)   # take 114: a missed history.json here is the next hourly's reset
         if name == "history.json" and j is not None and not is_history(j):
             j, why = None, "not a history: no runs list"
         elif name == "history.json" and j is None and why != 404:

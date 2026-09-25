@@ -1,23 +1,30 @@
-# OP TCG Hub — take 114
+# OP TCG Hub — take 115
 
-## If you are testing from Google Play — read this first
+## Installing — read this first
 
-You got an **opt-in link**. Open it on your phone, tap *Become a tester*, then
-install from the Play Store page it takes you to. Two things matter:
+OP TCG Hub is on Google Play (since 24 September 2026). Install it from its
+Play Store page; updates arrive through Play like any app, and your data
+stays across updates. This Release also carries the APK, for installing by
+hand, and the AAB that goes to Play.
 
 - **If you ever installed the app from an APK file** (not from Play): the Play
   version cannot install over it. In the APK app, **More → Export CSV** and
   send the file to yourself, then uninstall it, then install from Play and
   **More → Import** the CSV. Your collection comes back.
-- **Stay installed for two weeks.** Google counts testers who keep the app;
-  opting out or uninstalling resets that count for everyone.
 
-Then, once: **More → Self-test → Run → Share the report** and send it to
-the developer. It takes ten seconds and tells us your phone runs everything.
-
-Updates arrive through Play like any app. Your data stays across updates.
+Once, on a new phone: **More → Self-test → Run → Share the report** and send
+it to the developer. It takes ten seconds and tells us your phone runs
+everything.
 
 ---
+
+**New at take 115:** a clean-up for everyday use. A price update no longer
+makes the scanner ask about cards it knows. A price alert typed in another
+currency keeps your figure. The binder turns to the right page. A
+distributor the app could not reach says so. A backup now runs on every
+save and keeps your stock alerts, reminders and notes, and a restore can be
+undone. Remove buttons show a trash can. Some text is easier to read.
+Nothing you have saved changes.
 
 **New at take 114:** A sealed product's Distributor info now has, under
 each distributor, a "History" line you can tap. It opens what the app's

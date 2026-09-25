@@ -399,7 +399,7 @@ $('#loadocr').addEventListener('click', async () => {
 /* NO \b. Landmine 63: the badge digits concatenate onto the number, so
    "EB04-024008" has no word boundary after 024 and the anchored form matched
    nothing. This rig SHIPPED the anchored form at take 4 -- it would have told
-   Jacob the camera reads nothing while the crop was perfectly legible. */
+   the owner the camera reads nothing while the crop was perfectly legible. */
 const CODE_RE = /(OP|ST|EB|PRB|LT|P)\d{0,2}-\d{3}/;
 function normalise(s) {
   return s.toUpperCase().replace(/[^A-Z0-9-]/g, '')

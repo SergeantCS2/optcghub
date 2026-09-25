@@ -48,13 +48,22 @@ SHIPPED = ["www/index.html", "www/app.js", "www/privacy.html", "www/bundle/manif
 PUBLIC_TEXT = ["README.md", "ci/RELEASE.md", "src/privacy.html", "docs/PLAY-LISTING.md", "AGENTS.md", "CLAUDE.md",
                "assets/user/README.md"]   # take 109: its first line named the owner, outside every list
 # The source is public too. Comments are stripped from the ARTIFACT; the tree
-# still has them, so the tree is scanned as well.
-def files_code():
+# still has them, so the tree is scanned as well. Take 115: every level of
+# tools/ and ci/ (tools/hunt/, tools/look/, tools/fixtures/ were never read),
+# and the page and data files beside the code -- tools/phase0.html, a take-4
+# instrument, carried the owner's first name past the extension list.
+CODE_TEXT = (".py", ".mjs", ".js", ".sh", ".yml", ".ps1", ".md", ".html", ".json", ".css", ".txt")
+FIXTURES = "tools/fixtures/"   # saved third-party responses: scanned, never rewritten by --apply (they are the evidence)
+
+
+def files_code(root=ROOT):
     out = ["src/app.html"]
     for d in ("tools", "ci"):
-        for f in sorted(os.listdir(os.path.join(ROOT, d))):
-            if f.endswith((".py", ".mjs", ".sh", ".yml", ".ps1", ".md")):
-                out.append(f"{d}/{f}")
+        for dp, dirs, fs in os.walk(os.path.join(root, d)):
+            dirs[:] = sorted(x for x in dirs if x not in ("__pycache__", "node_modules"))
+            for f in sorted(fs):
+                if f.endswith(CODE_TEXT):
+                    out.append(os.path.relpath(os.path.join(dp, f), root).replace(os.sep, "/"))
     return out
 
 
@@ -125,7 +134,7 @@ def check(with_docs):
 def apply_docs():
     """One deliberate pass over the ledgers. Reported per line, never silent."""
     total = 0
-    for rel in files_docs() + ["AGENTS.md", "README.md", "ci/RELEASE.md"] + [f for f in files_code() if f != "tools/scrub.py"]:
+    for rel in files_docs() + ["AGENTS.md", "README.md", "ci/RELEASE.md"] + [f for f in files_code() if f != "tools/scrub.py" and not f.startswith(FIXTURES)]:
         p = os.path.join(ROOT, rel)
         if not os.path.exists(p):
             continue
@@ -182,6 +191,23 @@ def selftest():
             fired = any(h[2] == "AI vendor" for h in scan(SHIPPED, root=tmp))
             print(f"  {'ok  ' if fired == want else 'FAIL'}  {label}")
             ok &= fired == want
+        # take 115: the tree scan reads every level of tools/ and ci/, and the files beside the code
+        planted = {"tools/hunt/planted.py": "# TO" + "DO later\n", "tools/fixtures/page.html": "<p>" + FIRST_NAME + "</p>\n",
+                   "ci/deeper/step.sh": "# see /home/" + "claude/x\n", "tools/phase9.html": "<!-- written by Cl" + "aude -->\n"}
+        for rel, body in planted.items():
+            os.makedirs(os.path.dirname(os.path.join(tmp, rel)), exist_ok=True)
+            open(os.path.join(tmp, rel), "w").write(body)
+        os.makedirs(os.path.join(tmp, "tools", "hunt", "__pycache__")); open(os.path.join(tmp, "tools", "hunt", "__pycache__", "x.py"), "w").write("# TO" + "DO\n")
+        seen = {h[0] for h in scan(files_code(tmp), root=tmp)}
+        fired = sorted(set(planted) - seen)
+        print(f"  {'ok  ' if not fired else 'FAIL'}  a marker nested in tools/ or ci/, in a fixture or in a page beside the code, fires"
+              + ("" if not fired else f": GUARD DID NOT FIRE on {', '.join(fired)}"))
+        ok &= not fired
+        for rel in planted:
+            open(os.path.join(tmp, rel), "w").write("clean\n")
+        still = sorted({h[0] for h in scan(files_code(tmp), root=tmp)})
+        print(f"  {'ok  ' if not still else 'FAIL'}  control: the same files, clean, pass (and __pycache__ is not read)" + (f": {still}" if still else ""))
+        ok &= not still
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
     return ok

@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 114.*
+*Current as of take 115.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -187,6 +187,31 @@ Start here. Do not read top to bottom.
 | A cap on rows is recorded as a span of time | **173** |
 | A scratch copy writes the repo's own files | **174** |
 | A test's ratio of two prices goes red when one price moves | **175** |
+| A reload doubles an index that a loader fills in place | **176** |
+| A fallback to empty is backed up over the collector's file | **177** |
+| A prompt answers twice after its sheet closed another way | **178** |
+| Most of the ways to change the collection never back it up | **179** |
+| A kept copy that still says ok reads as fresh | **180** |
+| A set is dropped while its products ship | **181** |
+| The scrubber cannot see a file it does not list | **182** |
+| A failed command in the middle of an && list goes on | **183** |
+| A failure reported inside one job misses the others | **184** |
+| A control that cannot run passes | **185** |
+| A size nobody measured is every harness's viewport | **186** |
+| A box is ticked for the part of its line that shipped | **187** |
+| A size read from the source is not the size drawn | **188** |
+| One tint percentage for three palettes | **189** |
+| A tolerance is read as the threshold | **190** |
+| One card's art is not the worst art | **191** |
+| A check races a refusal it depends on | **192** |
+| A flex row shrinks a button to its longest word | **193** |
+| A full storage lets the shorter write through: cards lost between the batch and the collection | **194** |
+| A check's expected false is also what a throw returns | **195** |
+| A read of what changed skips what an earlier section painted the same | **196** |
+| Several changes before one wait prove only one of them | **197** |
+| A fixed bound on a size that grows each night | **198** |
+| A fixture's facts checked against the live catalogue | **199** |
+| A job refuses what only another job can repair | **200** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -2343,6 +2368,11 @@ case for the single deck. KINDS finds "box" before "case", and landmine
 no case; reading all twenty live pages found it. Rule: a case matches only a
 catalogue case, and nothing else matches one. A fixture set chosen by hand is
 compared once against the full live set before the matcher is trusted.
+*Take 115: the rule now holds while a page is unread. An unread Illustration
+Box, or an unread name that says Case, matches nothing until its page says
+what it is sold as; a name's own Case word is not taken as the unit. Take
+114's matcher took "IB-08 Illustration Box 08", "IB-08 … Case" and "OP-12
+Booster Box Case", unread, for the single box (MEASURED).*
 
 **168. A style that assumes the picture arrives shows nothing when it does
 not.** Since take 109 the product sheet's frame was white for every product,
@@ -2410,6 +2440,9 @@ times).
 
 Rule: name a horizon in days, from the timestamps. Never derive it from a
 row count and an assumed cadence.
+*Take 115's self-review: and a run is not a check of every product. Target's
+line said "50 checks over 8 days" of a product no run had read (Target
+answered 435 on every run); only the runs that read the product count now.*
 
 **174. A scratch copy that links `catalog/` writes the repo.** During take
 114's design, a prototype ran `pipeline.py app` in a scratch tree whose
@@ -2429,6 +2462,215 @@ put this ratio in their place. The ratio encoded one market too.
 Rule: a data assertion states what the code guarantees (each printing carries
 its own price; a value keyed off the number gives one price, 1x), with room
 for the market. Give it a control built from the fault it guards against.
+
+**176. A reload doubled an index that its loader filled in place.**
+`loadCatalogue` pushed every printing into `CAT.byNum` and never emptied it.
+It runs at launch and again after every sync, and the quiet sync runs most
+days. After one sync the scanner's index held 13,974 entries for 6,987 cards
+(20,961 after two), a unique artwork asked instead of auto-accepting (100 of
+100), and the picker listed each printing twice (take 115, MEASURED on take
+114's build through the real sync path). Every test loaded once. Rule: a
+loader that can run twice builds fresh maps and swaps them in whole, and its
+test runs it twice.
+
+**177. A fallback to empty would have been backed up over the collector's
+file.** Take 115 made an unreadable stored collection fall back to an empty
+one instead of stopping the app at the splash. The first version held the
+automatic backup for that launch only, so the next launch's quiet sync would
+have written the empty collection over `backup-latest.json`, the file Restore
+reads. Rule: when the collector's own data could not be read, every backup
+waits (`vault.backupHold`) until a restore or the collector's own "Back up",
+and the unreadable text is kept aside first.
+*Take 115's self-review: the hold was set for `vault.items` alone, so an
+unreadable decks list (or any list the backup carries) started empty and the
+first commit wrote that over the backup's copy. Every list the backup carries
+holds it now (`HELD`), and the words name the list that could not be read.*
+
+**178. A prompt answered twice after its sheet closed another way.** The
+picker served four prompts (currency, the MAX ad, an alert's direction, a
+grade), each a promise with a document listener. The sheet's cross, Cancel
+and Back only hid the sheet, so the promise and its listener stayed live, and
+the next pick answered every stale prompt: one grade pick after three closed
+prompts opened four grade prompts (take 115, MEASURED on take 114). Rule: a
+promise opened on a shared sheet has one settle path, and every way the sheet
+closes takes it.
+
+**179. Seven of the ten ways to change the collection never backed it up.**
+The steps after a change were written out at each site and drifted: CSV
+import, bulk delete, move and condition, removing a collection, a cost basis
+and a graded copy saved without scheduling the backup, while PLAY-LISTING
+promised "an automatic backup on every save" (take 115). Rule: one function
+commits a change to the collection (`commitOwn`), and a test changes it every
+way and sees the backup scheduled each time.
+
+**180. A kept copy that still said ok read as fresh.** When a distributor's
+fetch fails, `hunt.py` keeps the last good copy with `ok: true, kept,
+stale_since`. The app tested only `ok`, so on 25 Sept at 01:28 UTC GTS's
+timeout read "2 distributors · checked just now". The smoke control had
+planted `ok: false`, a shape the feed never writes after a good read (take
+115). Rule: one predicate says "not reached" (`HUNT.unreached`), and a
+control is built from the shape the writer really writes, through its own
+code.
+*Take 115's self-review: its own control for a source never read planted a
+shape the writer never writes (no time), and the app said "not reached since"
+the failed run's own time, which moves each run. "Since" comes only from a
+kept copy's `stale_since`; a source never read says when it was last tried.*
+
+**181. A set was dropped while its products shipped.** `build_app.py` kept
+the sets `WHERE card_count > 0`, a count of cards only. One Piece Collection
+Sets (group 23304) has fourteen sealed products and no cards, so the set was
+dropped and its products, still shipped, sat on Sealed under "Other" with no
+set (take 115, from the owner's Diagnostics: "85 sets" against the build's
+87). Rule: filter a parent by what ships under it (`EXISTS`), not by a count
+of one kind of child, and a count's label says what it counts.
+
+**182. The scrubber could not see a file it did not list.** `scrub.py` read
+six extensions at the top level of `tools/` and `ci/`. Take 4's
+`tools/phase0.html` carried the owner's first name in a comment for 110
+takes; it is public, and in git history (take 115). Rule: a scanner reads
+every text file at every level, so a new folder or extension is covered
+without anyone adding it.
+
+**183. `set -e` did not stop a failed command in the middle of an && list.**
+`cd android && ./gradlew … && cd ..`: a Gradle failure was ignored, the
+script stayed in `android/` and died a line later at `cp`, with the wrong
+message and before `shred` on the upload key (take 115, watched on take
+114's three lines). Rule: a directory change goes in a subshell `( … )`, and
+the step names its own failure.
+
+**184. A failure reported inside one job missed the others.** The nightly's
+issue steps lived in the bundle job: a failed apk or pages job filed nothing,
+the thread closed as soon as bundle was green, and the pages job's
+`continue-on-error` hid a failed deploy. The hourly reported nothing at all
+(take 115). Rule: a report job needs every job and runs `if: !cancelled()`;
+a job that must not block another is kept out of that job's `needs`, never
+given `continue-on-error`.
+
+**185. A control that could not run passed.** Take 115's first control for
+the new report wiring read take 114's `build.yml` with `git show take-114:…`
+and caught the error as a pass. The runner's `check` clones one commit with no
+tags, so there the control would have passed without reading anything. Rule:
+build a control from the fault, on data the check has everywhere it runs; a
+control whose setup fails has failed.
+*The same take, the look: its selftest counted a control that produced no
+result as fired. It now needs one result per viewport for every control and
+probe; with one control left out, take 114's harness exited 0 and take
+115's exits 1.*
+*The self-review: the deadline check sized the Hunt files from `www/hunt/`,
+which on the runner holds only `zcta.json` when smoke runs, so a deadline
+too short for `stores.json` passed there. The floor is the measured size.*
+
+**186. A size nobody measured was every harness's viewport.** The Fold's open
+screen was INFERRED at 840 x 757 at 2 from take 110, and the look and render
+laid out and measured every inner-screen check there. Render's "Fold inner"
+width was 673, below the 700 px where the two panes begin, so those checks
+never reached the layout they named. The owner's Diagnostics measured 749 x
+832 at 2.625 (take 115). Rule: an INFERRED harness constant says INFERRED
+where it is used and is replaced the day the measurement arrives; a check
+names the range it tests, and a size outside that range fails it.
+
+**187. A box was ticked for the part of its line that shipped.** Take 115's
+review found UI-AUDIT boxes ticked where only part of the line was done: the
+scrims (one of four became a token), the remove buttons (two still drew ×),
+the external links (two lacked the glyph), `aria-pressed` (three toggles of
+eleven), the thumbnails, the days in words, the keywords, the Sim's labels.
+Rule: tick a box only when every item its line names is done, or edit the
+line to say what shipped and open a box for the rest.
+
+**188. A size read from the source was not the size drawn.** Take 106's
+guard refused a literal `font-size` under 12 px and passed for eight takes,
+while `.chip small` set no size and the browser's own `smaller` drew the
+counts at 10 and 10.8 px, at 60 % opacity (2.56:1 in Collect). Rule: read the
+rule that reaches the element -- the browser's defaults for `small`, `sub`
+and `sup`, relative units -- not only the literals (take 115).
+
+**189. One tint percentage for three palettes.** Take 106 made the selected
+tint 12 % of the accent in every mode and checked the accent on it. The
+secondary text on the same tint read 4.24 in Collect, and a "not legal" tint
+4.30 (take 115, MEASURED). Rule: compute every text that sits on a tint, per
+palette, from the shipped rules; Collect's tints are now 8 % and 10 %.
+
+**190. A tolerance was read as the threshold.** Take 108's "44 px square"
+read four points 21 px from a control's centre: a cross about 42 px wide, so
+the deck-name field shipped at 338 x 43.6 for seven takes (take 115). Rule:
+read the size from the box model (or the `::after` hit area), and put the
+boundary control one pixel under the line.
+
+**191. One card's art was not the worst art.** Take 110 measured the white
+name and date on Sealed's strips over one card's art and recorded 5.4:1.
+Over the art of all 33 yellow Leaders, 14 put the date under 4.5 (worst
+3.12, ST29-001 at 749 px) (take 115). Rule: check text over art with a white
+picture in the art's place, wherever the text can land; the strip's scrim now
+holds 0.55 to its right end and the date is white.
+
+**192. A check raced a refusal it depended on.** Render's check of the Decks
+list's thumbnail (landmine 132) needed the image host to refuse a picture in
+time, and failed one run in five here (take 115). Rule: a check that needs a
+picture, or its absence, brings its own when the real one is missing.
+
+**193. A flex row shrank a button to its longest word.** Take 115 shortened
+the Sim's buttons and put what happens in a note beside them; the note
+beside "Hand back" names a deck, and at 411 px it squeezed the button onto
+two lines (110 x 65). The look caught it. Rule: a button beside text that can
+grow is `flex:none`, its row wraps, and the look checks each label is on one
+line.
+
+**194. A shorter write got through a full storage.** Take 115 made a failed
+write return false instead of throwing, and the batch commit went on after
+the collection's own write failed: adding cards makes `vault.items` longer, so
+it was refused, and clearing the batch makes `vault.batch` shorter, so it went
+through -- Chromium refuses only a write that takes the total past the quota.
+The next launch had the cards in neither (take 115's self-review, reproduced
+on its own build; the pending tray the same). Smoke's full-storage stub
+refused every write, the clear included, so it never reached that state. The
+same path counted a restore's file copy as kept, though Restore offers only
+the copy in storage. Rule: a thing leaves where it waited only after the write
+that stores it elsewhere returned true; a storage stub refuses by size.
+
+**195. A throw read as the Cancel a check expected.** The check that Back up
+asks before it replaces a held backup wanted `false`, the Cancel's value, and
+its helper returned `false` for a throw too. A Back up that crashed, or that
+refused without asking, passed (take 115's self-review, by mutation). Rule: a
+check whose pass value is false or empty tells a throw apart, and records that
+the question was asked.
+
+**196. A read of what changed skipped what was already painted.** Take 115's
+check that no Prep & Play text is the accent's colour read only the elements
+a block changed. An earlier section had painted the Play counter with the
+same markup, so its paint was no change and it was never read: brass planted
+in its Life label passed. Rule: a check reads its screens' roots whether or not
+it changed them, and names each root it needs.
+
+**197. Several changes before one wait proved one of them.** The backup keeps
+only the last call's timer and carries every list, so a want, a trade row and
+a stock alert changed before one wait passed while any one save still
+scheduled it: with five of six lists' backups removed, it passed. Rule: when
+effects share one outcome, one change per wait, and every list on its own.
+
+**198. A fixed bound on a size that grows by design.** Take 115's deadline
+check compared the catalogue's raw size, 37.8 KB larger with each night's
+history day, against a fixed 7.68 MB: near the 80th day (about 30 Nov 2026)
+every nightly and PR check would have gone red with nothing changed, and the
+sidecars stopped. It measured the wrong bytes too: Pages sends the file
+gzipped (MEASURED 739,429 of 5,147,553). Rule: size a check on what crosses the
+link, and ask of every fixed bound what grows toward it.
+
+**199. A fixture's facts were checked against the live catalogue.** Smoke's
+"17 products not in the catalogue yet", the ST39-ST44 fold, and "every
+upcoming set is a row with Remind me" read the catalogue TCGCSV changes each
+night. Since take 115 a group is listed as soon as it lists one product, so
+the next new set or two starter decks on one day would have turned the
+nightly red with nothing wrong (reproduced with three planted groups). Rule: a
+check of a fixture reads the fixture's own world; a check of live data counts
+what is drawn, rows, not what it expects, sets.
+
+**200. A job refused what only another job can repair.** Take 115 gave the
+hourly `validate --strict`, whose hash coverage measures the committed
+sidecar against a fresh ingest -- and the hourly never hashes. A new set's
+139th unhashed printing (MEASURED: 138 pass) would have refused every hourly,
+and paused the feed, until the nightly committed its hashes. Rule: a job
+refuses what it produced or can repair; the rest is the refusal of the job
+that can.
 
 ## §2 — Inherited from APEX ORV
 

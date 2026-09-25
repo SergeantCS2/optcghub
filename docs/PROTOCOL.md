@@ -1,6 +1,6 @@
 # PROTOCOL
 
-*Current as of take 114.*
+*Current as of take 115.*
 
 The working rules for this project. The gate enforces the ones it can.
 
@@ -26,7 +26,7 @@ tab, not a folder a previous session remembers filling.
    red nights went unread once because the take's brief said one.
 2. **Read** `V1-STATE.md`, then `HANDOFF.md` newest-first, then `LANDMINES.md`
    §0, then `AGENDA.md`. In that order; the state document is the map.
-3. **Rebuild once, in full:** `bash ci/deps.sh` (pillow, puppeteer, acorn)
+3. **Rebuild once, in full:** `bash ci/deps.sh` (its header names each install: pillow, cairosvg, puppeteer, acorn)
    then `python3 tools/pipeline.py`. A fresh checkout has no TCGCSV cache, so
    ingest must run; the gate wants Chrome's render receipt, so render must
    run in Chrome — `mode: chrome` in its last line, landmine 112. Green
@@ -253,7 +253,11 @@ This app displays dollar figures a person may act on. Three rules:
 3. **Never invent a condition adjustment.** TCGCSV publishes no per-condition
    pricing (landmine 4). The app shows the price it has and labels the condition
    as the collector's own assertion. A made-up "×0.85 for Lightly Played" would
-   be a confident wrong answer about someone's money.
+   be a confident wrong answer about someone's money. *Where the label lives
+   (take 115): More's "What this app does not know", the trade screen's note,
+   the bulk condition picker and the share page. Since take 110 a card's page
+   names the condition without a note, at the owner's word (HANDOFF take 110);
+   no price on it changes with the condition.*
 
 ---
 

@@ -1,61 +1,64 @@
 # AGENDA
 
-*Current as of take 114.* Ranked by blocking-ness, not by interest.
+*Current as of take 115.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
 
 ---
 
-## Priorities — as of take 114
+## Priorities — as of take 115
 
 The live order, top first. Everything below this block is the record of how
 each item got where it is; this block is what to do next. (Rewritten at take
-111: it had stood since the take-88 audit, with take 105 still "in flight".)
+115, the production baseline: its review of takes 106-114 is in HANDOFF, and
+what it handed on is A43.)
 
 **The owner's, gating everything else**
-1. **LIVE on Google Play since 24 Sept 2026** —
-   `play.google.com/store/apps/details?id=com.optcghub.app`, take 101's
-   bundle first. Every merged take's AAB is one upload to the production
-   track, once (landmine 33); the newest Release is the one to upload
-   (take-111, 16:40 UTC on 24 Sept). The sideload APK does not install
+1. **Merge take 115, then upload Release take-115's AAB** to the production
+   track. The app is LIVE on Google Play since 24 Sept 2026
+   (`play.google.com/store/apps/details?id=com.optcghub.app`); every merged
+   take's AAB is one upload, once (landmine 33), and only take 101's upload
+   is recorded -- say which you upload. The sideload APK does not install
    over the Play build (landmine 34): a sideload proof means export →
-   uninstall → sideload → import. Send the two real AdMob rewarded unit
-   IDs (D11) and the next take carries them -- test units earn nothing,
-   and the app is live.
-2. **Answers still open:** the Diagnostics `viewport` line with the Fold
-   open (the inner screen's two panes are laid out for an INFERRED 840 px
-   until it comes, take 110) and the `pictures` line; A41's parts and the
-   source; the take-100 look's "tiny bit of work" (which picture, what).
-3. **D22** background stock checks; **D21** local stock for unserved zips;
+   uninstall → sideload → import.
+2. **D11, needed now:** the two real AdMob rewarded unit IDs. Register your
+   phones as AdMob test devices first; the take that carries the IDs
+   switches every install at its next sync.
+3. **Take 113's Fold check:** the launcher on both screens, the splash, a
+   reminder's ドン!! glyph (landmine 170).
+4. **Answers still open:** A43's large items -- ad consent for EEA and UK
+   users, reproducible builds (a lockfile or pinned versions, and the
+   nightly's AAB), a measurement of the app's data folder before any
+   automatic-backup rule, and More's "Last backup" line after the
+   sideload-to-Play switch; A41's parts and the source; the take-100 look's
+   "tiny bit of work" (which picture, what).
+5. **D22** background stock checks; **D21** local stock for unserved zips;
    **D20** a crowd-report inbox. Each caps a Hunt feature until answered.
-4. Shop URLs for stores the owner knows (A32's storefront list, one entry
-   today).
-5. D7 the icon; D16 the faces.
+6. Shop URLs for stores you know (A32's storefront list, one entry today).
+7. D16 the faces.
+8. If your want list shows a sealed product or a DON!! card saved before
+   take 111, remove it by hand (take 111 stopped new ones).
 
-**UI design and refinement belong to the UI/UX session (the owner, 24
-Sept, take 104).** Its series is A42: foundation, one header, controls and
-icons, the art layer, the voice, polish and the Fold's inner screen
-shipped at takes 106-110, and take 111 is its last look -- the fourth of
-the "about four more" takes named overnight. Refinement after it is the
-owner's call, take by take.
+*Answered at take 115 by the owner's Diagnostics on take 114:* the
+`viewport` line (the Fold's open screen is 749 x 832 at 2.625, the cover
+411 x 960) and the `pictures` line (221 cards, 5 DON!! cards and 19 sealed
+products without a picture at the first host).
+
+**The UI/UX session's, the owner's call take by take:** from take 116, on
+take 115's baseline -- Collect, the loading screen, the tutorial, Hunt and
+more, mostly UI changes (the owner, take 115). Its open list is UI-AUDIT's
+unticked boxes and A43's UI part; the session prompt's section for it says
+what take 115 changed on screen.
 
 **Mine, in order**
-1. **A32** -- take 114 in flight: the distributor state timeline on a
-   product's page, tucked away until tapped; GTS's date read as its Order
-   Due Date; the GTS alert on stock only; an hourly that stops rather than
-   lose the history. Next:
-   - date moves ("release moved Nov 20 → Dec 4"), which need the runner to
-     record each change's dates -- the rows keep states only;
-   - the history on Releases' not-in-the-catalogue list, and a name for a
-     delisted item;
-   - the restock pattern sentence, once a fortnight of history exists on
-     Pages (the runs are about four-hourly, so a fortnight is about 84
-     rows, not 336);
-   - GameStop, Walmart, Meijer and eBay need a residential IP, so they
-     wait for the sideload build.
-2. **Take 113's Fold check** -- the owner's: the launcher, the splash and a
-   reminder's status-bar icon (the APK was decoded after the merge).
+1. **A43's small items**, when wanted: the gate checks (the catalogue's
+   shape; "Say take N" = BUILD + 1), the Restore file picker, the waiting
+   batch in the backup, the cost basis in the currency on screen, CSV
+   import's one write.
+2. **A32's Next** (its take-115 section): date moves, a delisted item, the
+   history on Releases, Southern Hobby's paging, the retailers that need a
+   residential IP.
 3. **A41** -- waits on the owner's list of the parts and the source; then
    one take per source, measured on the runner first.
 4. **A23** the sim's tail -- modal effects, ordering, protection, the
@@ -66,12 +69,14 @@ owner's call, take by take.
 **Closed since the take-88 audit:** A36 the set chips (take 90), A37 More
 unreachable (take 91), A38 (takes 95-97), A39 (takes 98 and 100), A40 the
 look (take 99), A14 PROVEN on the Fold (take 105), A42 (its seven layers
-at takes 106-110 and the last look at take 111, closed at that merge). Before it (takes
-57-94): A26 colour/contrast/desktop, A29 stock decks, A30 the tester
-report in full, A33 all six, A34 currency and splash, A35 all thirteen,
-the first paste's three items (take 92); A32 steps 1-3 and Local, Events,
-storefronts, stock alerts, the calendar tap, exact distances, the first
-distributor (take 94).
+at takes 106-110 and the last look at take 111, closed at that merge), D7
+the icon (take 113, the owner's pick; the Fold check is item 3 above), A24
+(answered with D15 at take 106), A32's state timeline (take 114) and the
+nightly race (take 115). Before it (takes 57-94): A26 colour/contrast/
+desktop, A29 stock decks, A30 the tester report in full, A33 all six, A34
+currency and splash, A35 all thirteen, the first paste's three items (take
+92); A32 steps 1-3 and Local, Events, storefronts, stock alerts, the
+calendar tap, exact distances, the first distributor (take 94).
 
 **Stale and marked so:** A19 other games and A11 Japanese printings stay
 ruled out; A20's backlog is where ideas wait, not a queue.
@@ -1141,12 +1146,14 @@ row per product across the two distributors in "not in the catalogue
 yet" (only a set code joins them).
 
 **The owner's word on the pictures:** "I don't want them flooding the
-screen." A distributor on a row is now one short line (its name and its
-state) that opens the product's page at its Distributor info. The panels
+screen." A distributor on a sealed row is now one short line (its name and
+its state) that opens the product's page at its Distributor info; on
+Releases the same lines are text on the set's row, which opens the set
+(take 115's review). The panels
 and the not-in-the-catalogue list sit under closed "Distributor info"
 drop-downs, and Where to buy lists sellers to collectors only (UI-AUDIT §8).
 
-**Next:** the state timeline from the history rows.
+**Next:** the state timeline from the history rows. *(Done, take 114.)*
 
 ### Take 114 — the distributor state timeline, and GTS's date read off its own page
 
@@ -1187,7 +1194,45 @@ drop-downs, and Where to buy lists sellers to collectors only (UI-AUDIT §8).
   owner's take-112 word).
 - Changing the GTS stock alert without the owner.
 
-## A42 — The UI series: uniform headers, card art used boldly, one voice · OPENED take 106
+**After the merge (take 115):** PROVEN live on 25 Sept at 01:28 UTC -- GTS
+timed out, the feed kept its last copy, and the new row has no `gts` key: a
+failed read is a hole, not "nothing listed".
+
+### Take 115 — what the production review closed in A32
+
+- **A kept copy reads "not reached".** The app took a kept distributor
+  (`ok` still true, `kept`, `stale_since`) for a fresh one; the live timeout
+  above read "2 distributors · checked just now". Now one predicate says
+  not reached, on Sealed, a product's page, Releases and Diagnostics, and the
+  kept copy is still shown (landmine 180).
+- **Target's history line counts days** from the rows' own times, not
+  "hourly checks", and hides once the rows span a fortnight (landmine 173).
+- **The nightly race is closed.** The nightly's Pages deploy reads the
+  hourly's files again inside the `pages` group the hourly holds (landmine
+  184's take).
+- **The hourly validates** the catalogue it deploys, and a red hourly opens
+  its own issue.
+- **Southern Hobby:** an unread Illustration Box, or an unread name that
+  says Case, matches nothing until its page is read (landmine 167's
+  addendum).
+
+**Next** (in order):
+- Date moves ("release moved Nov 20 → Dec 4"): the runner must record each
+  change's dates; the rows keep states only, and about 55 days of them.
+- A delisted item: the rows carry no map from an id to its product.
+- The history on Releases' not-in-the-catalogue list; the first real change
+  is INFERRED for PEB-01 on 15 Oct UTC.
+- Southern Hobby's paging: if its One Piece category grows past one page,
+  the fetch fails on its count, by design, and keeps the last good copy. How
+  the site pages is UNKNOWN (the page-2 probe returned the same 20).
+- The hourly's feed is still tied to TCGCSV and to validate: an outage or a
+  refused catalogue stops the feed's deploy too. Separating them means
+  deploying the feed over the live catalogue (take 115's runner lane).
+- GameStop, Walmart, Meijer and eBay need a residential IP: they wait for
+  the sideload build.
+- UNKNOWN: whether stores can still order on GTS's due day itself.
+
+## A42 — The UI series: uniform headers, card art used boldly, one voice · OPENED take 106 · CLOSED take 111 (PR #35, merged 16:31 UTC 24 Sept)
 
 The owner, 24 Sept, to the UI/UX session: the app "needs refinement,
 some text isn't consistent, some title/headers shift/don't line up or
@@ -1240,8 +1285,10 @@ mode by mode leaves the app less uniform in between):
    *Take 110*, with the thumbnail tokens and a readable fallback label.
 7. **The Fold's inner screen:** two panes where two fit, between a phone
    and the desktop column. *Take 110*, brought forward at the owner's word
-   ("Ensure 110 has as many planned changes in it as possible"); its width
-   is INFERRED until Diagnostics' viewport line comes from the open phone.
+   ("Ensure 110 has as many planned changes in it as possible"). Its width
+   was INFERRED (840 px) until the owner's Diagnostics measured it at take
+   115: 749 x 832 CSS px at 2.625, where the 700-899 px rules hold
+   (MEASURED in Chrome).
 
 Take 110 carried layers 4 (second half) to 7 in one take, overnight, at
 the owner's word: "You will check your work along the way then we will
@@ -1249,7 +1296,7 @@ push to github as one massive take." What is left is the owner's review.
 *Take 111:* the owner merged take 110 at 14:07 UTC on 24 Sept without a
 note on the look ("Merged, continue - monitor and continue with 111"); take
 111 is the last look -- every screen at both sizes -- and what it turns up.
-The item closes when take 111 merges. What it turned up (the HANDOFF has
+The item closed when take 111 merged (PR #35, 16:31 UTC, 24 Sept). What it turned up (the HANDOFF has
 each): a dot opening a line for a printing with no number; the filter's
 words; a printing's badge cut by the ellipsis on the phone (landmine 164);
 the bulk bar off a 411 px phone; a sealed product's page and the 253 DON!!
@@ -1276,7 +1323,151 @@ retouching the stamp (drawing on the publisher's card); the whole card
 in a blurred backdrop (take 110: the stamp comes through a blur as a light
 band, up to 80 levels of 255, MEASURED on ST02-001's clean and stamped
 pictures); strips on Releases and art in empty states (take 110: the
-reasons are in its HANDOFF).
+reasons are in its HANDOFF); a back arrow on Market Movers (take 107: it
+is a state of Search, a screen in the nav); a header that stays on screen
+as the page scrolls (take 107: the mode slider already does, and a second
+fixed band costs every screen about 64 px on the cover display); Save in
+the deck's header (take 107: it stays where a deck is finished); Lucide's
+icons wholesale (take 107: the sprite takes a symbol only where the app
+needs one).
+
+## A43 — What take 115's production review handed on · OPENED take 115
+
+The two-axis review of takes 106-114 and its three sweeps (HANDOFF take 115,
+"The review") confirmed about a hundred findings. Take 115 fixed every one
+that was real and small, each with a check watched to fail on take 114's
+build. This item is the rest: what is too large for one take, what is the
+owner's to decide, what only a phone can prove, and the small things left
+on purpose, each with why and a fix sketch. The UI/UX session's items are
+UI-AUDIT's open boxes; they are listed here once so nothing is lost.
+
+**Large, or the owner's decision:**
+1. **Ad consent.** There is no consent (UMP) flow. If rewarded ads do not
+   fill for a user in the EEA or the UK there is no fallback, and that
+   user's pending cards never commit. The owner decides whether the app
+   serves those users and how; a consent flow is a new plugin, a Play form
+   and a take of its own.
+2. **D11, the two real rewarded unit IDs** (the owner's). Register the
+   owner's phones as AdMob test devices first; the IDs ride the Pages
+   manifest, so the take that carries them switches every install.
+3. **Reproducible builds.** There is no `package-lock.json` (`seal.sh`
+   deletes it, so `npm ci` in `apk.sh` always falls back to `npm install`);
+   `ci/deps.sh` installs unpinned; and the nightly replaces take N's AAB
+   under the same versionCode, so a plugin update can reach a production
+   upload through a nightly with no PR. Sketch: commit a lockfile and stop
+   `seal.sh` deleting it, or pin exact versions; give the nightly's AAB its
+   own versionCode, or stop the nightly replacing it. The owner's call: it
+   changes what a nightly can ship.
+4. **Android's automatic backup** (INFERRED from Android's 25 MB per-app
+   limit). No rule keeps the rebuildable synced catalogue (5.1 MB) out of it;
+   the scan photos are the collector's own pictures and must stay. After
+   roughly 300-400 scans the whole automatic backup could stop -- the one
+   that brought the owner's 71 lines back at take 105. Measure the app's
+   data folder on the Fold before writing any rule.
+5. **The backup file after the sideload-to-Play switch** (INFERRED, landmine
+   110's family): whether the Play install may overwrite
+   `Documents/OPTCGHub/backup-latest.json` (and take 115's
+   `backup-before-restore.json`) written by the sideload install. The proof
+   is More's "Last backup" line on the owner's phone.
+6. **Which takes reached production** is not recorded after take 101. The
+   owner uploads take-115's AAB after the merge (one upload per take,
+   landmine 33).
+7. **The hourly's feed is tied to TCGCSV and to validate**: an outage, or a
+   catalogue the validator refuses, stops the feed's deploy too. Separating
+   them means deploying the feed over the live catalogue (take 115's runner
+   lane).
+
+**Only a phone can prove** (BUILT and checked in smoke and render):
+- a commit on a full storage, the restore toast and the backup hold, a
+  stalled sync recovering (take 115, A1); since the self-review, a commit
+  and a drained tray with the storage at its quota, the hold's words for a
+  list other than the collection, and the restore's second question;
+- the "Restore from" sheet, the `backup-before-restore.json` write, the
+  re-armed release notifications (A2);
+- the next distributor timeout read as "not reached" (A3).
+
+**Small, left on purpose:**
+- A gate check that freezes the catalogue's top-level keys and columns, so
+  a take that renames one knows older installs will refuse its syncs (A1).
+- Restore goes straight to `backup-latest.json` when no kept copy exists, so
+  an older dated backup is reachable only through "Choose a file" on the
+  "Restore from" sheet, which shows only when a kept copy exists (A1, A2).
+- The waiting scan batch is in no backup; a new or renamed collection is
+  backed up only at the next commit (A2).
+- A cost basis and a Hunt note's price are typed in dollars and say so:
+  candidates for the price alert's treatment (A2).
+- `build_catalog.py` still prints and ships `manifest.sets` = 87, every
+  group; the app no longer reads it (A3).
+- Render opens the first set's checklist; a future upcoming sealed-only
+  group would sort first and show "0 of 0" there (A3).
+- `gtsWord`'s `DIST_WORDS[s] || s` has the prototype-key hazard `shWord`
+  had; GTS's states are the runner's own words (A3).
+- `hunt.py`'s SQL `NOT LIKE '%DON!! Card%'` is the runner's copy of the app's
+  DON!! predicate (A3).
+- An unread booster box whose name carries a count ("12CT") still matches
+  the single box; no live listing does. Refusing every unread unit needs
+  saved OP-18 and SD-01 pages first (B1; the owner's).
+- How GitHub classes a timed-out job for the report job is UNKNOWN (B2).
+  (The new-set pause of the hourlies is fixed: the hourly's validate is not
+  `--strict`, landmine 200.)
+- CSV import saves the whole collection once per row (each `OWN.add`), so a
+  file of thousands of lines writes it thousands of times. Sketch:
+  `OWN.add(..., { save: false })` in the loop and the one `commitOwn('import')`
+  after it, the self-review's `moveIn` pattern (take 115's self-review).
+- The storage-full toast says "export your collection" whichever write
+  failed; Export CSV carries the collection only, not the decks or the
+  alerts. The backup carries everything (take 115's self-review).
+- The restore's second question, when storage cannot keep what it replaces,
+  could say that on the phone a copy was written to Documents › OPTCGHub ›
+  backup-before-restore.json (take 115's self-review, optional).
+- A gate check that the session prompt's "Say take N" equals BUILD + 1: the
+  miss happened at takes 113 and 114.
+- The Cards list's cost dot: 16 of 2,712 playable numbers have no cost in
+  the feed (take 111); a data gap, not a code one.
+- The card page's 300 px art on the open Fold needs 788 device pixels at
+  2.625, and TCGplayer's largest is 600 wide: it is stretched 1.31 times.
+  There is no larger source (A41).
+- Take 110's question, whether any other long note should go, closes unless
+  the owner names a note.
+- Render's default phone is still 412 x 915 at 2; moving it to the cover's
+  MEASURED 411 x 960 at 2.625 is untested (A5).
+- Smoke's pin on Sealed's strip reads only the scrim's first stop; render
+  measures the text over a white picture (A5, landmine 191).
+- The look lists of takes 98-112 now run at 749 px in New York time and have
+  not been rerun there (takes 106 and 114 have).
+- The distributor Open's aria-label has a straight apostrophe after a name
+  (an attribute, which take 110's apostrophe rule leaves alone) (A4).
+
+**For the UI/UX session** (UI-AUDIT's open boxes -- §7, §8, §9 and "Found in
+passing" -- and what take 115 found): the binder on the open Fold; Sealed's
+banner crop at 749 px; the distributors' names verbatim in the
+not-in-the-catalogue list; one product in two rows there; "— · market" on an
+unpriced product; the day in Releases' group line; the history's `.dtl` look;
+Sealed's GTS counts overlapping; a Pages favicon; a Sealed row's kind in the
+plural for one product; Releases listing an upcoming group by its sealed
+product alone; the Sim's "5000attacks with"; the empty grey box on the
+Leader and printing sheets when a picture is refused; a deck row's second
+line cut at 411 px; set completion's names cut at 749 px; text on Sealed's
+strips held to 4.5:1 over a white picture; the sixteen tokens nothing reads
+(`--teal --fs-label --fs-row --sp-1 --sp-4 --sp-5 --sp-6 --r-sm --r-md --r-lg
+--ic-sm --ic-md --ic-lg --thumb-s --thumb-m --z-screen`).
+
+**Ruled out:** putting a condition note back on a card's page (the owner
+removed it at take 110; PROTOCOL §10.3 now says where the label lives); a
+try/finally on the refresh buttons (every inner call already catches; a
+stall was the only way to stick, and the deadline answers it); clearing the
+deadline once headers arrive (a stalled body would still hang); always
+showing the "Restore from" sheet (the straight path stays when nothing is
+kept); stripping every comma from a typed amount ("11,36" in euros would
+become 1136); working out the DON!! split in `build_app.py` (a second copy
+of the app's predicate); taking a kept copy out of Releases' "Checked"
+footer (that time is the copy shown). From the self-review: counting the
+fixture's unlisted products with a second copy of the app's rule (it would
+pass whatever the app did; the fixture's own catalogue is read instead);
+the Hunt files' deadline in gzip (it would let the default fall to 7 s);
+`hashes` in the hourly (every image probed every hour); removing the older
+undo copy before "Restore anyway" is answered (a Cancel would lose the last
+restore's undo).
 
 ## A41 — Missing images elsewhere in the app, sourced from somewhere other than TCGplayer · OPENED take 100
 
@@ -1300,7 +1491,12 @@ which parts, and from where, is still this item. Measured at take 109:
 Bandai's card site serves every card looked at (600x838) but stamped
 SAMPLE on 20 of 20 -- not a cleaner source -- and names a card by its
 number, not its printing (AGENTS rule 3). The 221 ids TCGplayer refuses
-are refused at every size it serves (`_in_1000x1000` included).
+are refused at every size it serves (`_in_1000x1000` included). *Take
+115, the owner's Diagnostics on take 114:* 221 cards and 24 rows without a
+number have no picture at the first host, and the second host serves 1
+(599838). Of the 24, 5 are DON!! cards (677570, 677571, 710745, 710746 and
+719824, new since take 100's 23) and 19 are sealed products; the sidecar
+counts every row without a number as "sealed" (landmine 162's family).
 
 **Ruled out:** hosting or caching any image; a source without terms
 the app can cite; shipping a URL the runner has not seen serve; a
@@ -1820,7 +2016,7 @@ tapping every feature.
   Fold PASSED: camera, Filesystem round-trip, share sheet, notifications
   prompt, test ad units, the sim probe, the sync URL.
 
-## A24 — The colour scheme, again · OPENED take 28 · NOT A PRIORITY
+## A24 — The colour scheme, again · OPENED take 28 · ANSWERED take 106 (D15: the three mode palettes stay)
 
 The owner, take 28: it still reads as Collectr; something One Piece; a transparent
 background would be fine at some point; green up, red down stay.
