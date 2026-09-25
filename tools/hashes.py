@@ -293,7 +293,7 @@ def run(limit=None, verbose=True, workers=8, retry_missing=True):
     missing = set(str(x) for x in raw.get("missing", []))
     # take 100: the sidecar's other keys ride through every save (the mid-pass
     # one included) or last night's `alt` is erased before the probe rewrites it
-    extra = {k: raw[k] for k in ("missing_sealed", "alt", "alt_host", "large") if k in raw}
+    extra = _carried(raw)
     db = sqlite3.connect(CATALOG_DB)
     printed = db.execute(
         "SELECT product_id, image_url FROM printing "
@@ -384,10 +384,19 @@ def run(limit=None, verbose=True, workers=8, retry_missing=True):
     return c["ok"], c["unpublished"] + c["failed"]
 
 
+SIDECAR_EXTRA = ("missing_sealed", "alt", "alt_host", "large")   # take 115: the one list run() carries and the selftest checks
+
+
+def _carried(raw):
+    """The sidecar's keys besides the hashes and the misses -- what _measure_extras writes -- as run() carries them."""
+    return {k: raw[k] for k in SIDECAR_EXTRA if k in raw}
+
+
 def _save(have, missing, extra=None):
     """Landmine 46: the hashes live outside the disposable catalogue. Take 100:
-    the sidecar's other keys (`missing_sealed`, `alt`, `alt_host`) ride through
-    every save -- a saver that knew two keys would erase them mid-pass."""
+    the sidecar's other keys (SIDECAR_EXTRA: `missing_sealed`, `alt`,
+    `alt_host`, and since take 109 `large`) ride through every save -- a saver
+    that knew two keys would erase them mid-pass."""
     import json
     d = {"hashes": have, "missing": sorted(missing)}
     d.update(extra or {})
@@ -453,6 +462,8 @@ def selftest():
          lambda: (lambda: (alt_url("x"), False))() if False else _refused(lambda: alt_url("x")), True),
         ("the sidecar round-trip keeps the new keys through a second save, and read_alt() reads them",
          _sidecar_roundtrip, True),
+        ("every key _measure_extras writes is one run() carries through its next save (SIDECAR_EXTRA, take 115)",
+         _extras_written, []),
         # take 109 (A42): the large size
         ("large_url: a first-host thumbnail becomes its 1000x1000 picture, from its own URL",
          lambda: large_url("https://tcgplayer-cdn.tcgplayer.com/product/42_200w.jpg"),
@@ -500,13 +511,31 @@ def _sidecar_roundtrip():
     try:
         _save({"1": 5}, {"2"}, {"alt": ["3"], "missing_sealed": ["4"], "alt_host": "h", "large": {"served": 1}})
         raw = json.load(open(SIDECAR))
-        extra = {k: raw[k] for k in ("missing_sealed", "alt", "alt_host", "large") if k in raw}
-        _save({"1": 5}, {"2"}, extra)                     # a second save, as the mid-pass save is
+        _save({"1": 5}, {"2"}, _carried(raw))             # a second save, carried as run() carries it (take 115: the one list)
         raw2 = json.load(open(SIDECAR))
         return (raw2.get("alt") == ["3"] and raw2.get("missing_sealed") == ["4"] and raw2.get("alt_host") == "h"
                 and raw2.get("large") == {"served": 1} and read_alt() == {"3"})
     finally:
         SIDECAR = old
+
+
+def _extras_written():
+    """Take 115: the keys _measure_extras writes, its hosts stubbed (no network) -- each one run() must carry.
+    -> the written keys run() would drop on its next save (none, when SIDECAR_EXTRA names them all)."""
+    import json, tempfile
+    global SIDECAR, _fetch, _is_image
+    saved = SIDECAR, _fetch, _is_image
+    SIDECAR = os.path.join(tempfile.mkdtemp(), "hashes.json")
+    try:
+        _fetch = lambda url, tries=2: (None, 404) if "/9_" in url else (b"IMG", 200)   # noqa: E731   the sealed 9 refused, the rest served
+        _is_image = lambda raw: (600, 838)                                              # noqa: E731
+        u = "https://tcgplayer-cdn.tcgplayer.com/product/{}_200w.jpg"
+        _measure_extras([(9, u.format(9))], {"2"}, {"1": 5}, {}, verbose=False, workers=1, printed=[(1, u.format(1))])
+        raw = json.load(open(SIDECAR))
+        written = set(raw) - {"hashes", "missing"}
+        return sorted(written - set(_carried(raw))) if "large" in written else f"the stubs did not reach the large probe: wrote only {sorted(written)}"
+    finally:
+        SIDECAR, _fetch, _is_image = saved
 
 
 if __name__ == "__main__":

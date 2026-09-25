@@ -164,8 +164,20 @@ def unit_unknown(name, sold_as=None):
     """A starter deck and a double pack set are sold singly and by the display.
     Until the product page says which (or the name carries 'Display' or a
     count), the listing cannot tell them apart, and a match to the wrong one
-    is worse than none (AGENTS rule 4)."""
-    return not sold_as and bool(re.search(r"\b(STARTER DECK|DOUBLE PACK SET)\b", name or "", re.I)) and not re.search(r"\bDISPLAY\b|\b\d+\s*CT\b", name or "", re.I)
+    is worse than none (AGENTS rule 4). Take 115: an illustration box too,
+    whatever its name says -- take 112 MEASURED IB-09 and IB-10 sold as CASE
+    under names that do not say it, so until the page is read the listing
+    cannot tell the single box from the case; and any name that says Case:
+    the matcher reads the unit from the page alone, and without it such a
+    name scored against the single boxes (MEASURED at take 114: 'IB-08
+    Illustration Box 08' and '... Case', and 'OP-12 Booster Box Case', each
+    took the single box)."""
+    n = name or ""
+    if sold_as:
+        return False
+    if re.search(r"\b(ILLUSTRATION BOX|CASE)\b", n, re.I):
+        return True
+    return bool(re.search(r"\b(STARTER DECK|DOUBLE PACK SET)\b", n, re.I)) and not re.search(r"\bDISPLAY\b|\b\d+\s*CT\b", n, re.I)
 
 
 def _age_days(iso, now):

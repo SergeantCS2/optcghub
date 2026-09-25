@@ -35,12 +35,8 @@ def pages_base():
 
 
 def fetch_json(url, timeout=20):
-    import urllib.request
-    try:
-        with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "optcghub-hunt/1"}), timeout=timeout) as r:
-            return json.loads(r.read().decode("utf8"))
-    except Exception:                                        # noqa: BLE001
-        return None
+    """The json, or None however it failed (take 115: the one request is fetch_json_why's)."""
+    return fetch_json_why(url, timeout)[0]
 
 
 def fetch_json_why(url, timeout=20):
@@ -58,11 +54,27 @@ def fetch_json_why(url, timeout=20):
         return None, f"{type(e).__name__}: {str(e)[:80]}"
 
 
+FETCH_TRIES, FETCH_PAUSE_S = 3, 10   # take 114: a read of our own site -- the hourly's history, the nightly's carry-over
+
+
+def fetch_tries(url, fetch, tries=FETCH_TRIES, pause=FETCH_PAUSE_S, sleep=time.sleep):
+    """Take 115: the one retry loop read_history and carry_over share -- `tries` attempts, `pause` seconds
+    apart; the first read or a 404 ends it. (json, None) | (None, 404) | (None, the last try's why)."""
+    j, why = None, None
+    for k in range(tries):
+        j, why = fetch(url)
+        if j is not None or why == 404:
+            break
+        if k < tries - 1:
+            sleep(pause)
+    return j, why
+
+
 def is_history(h):
     return isinstance(h, dict) and isinstance(h.get("runs"), list)
 
 
-def read_history(local_path, base=None, fetch=None, tries=3, pause=10, sleep=time.sleep):
+def read_history(local_path, base=None, fetch=None, tries=FETCH_TRIES, pause=FETCH_PAUSE_S, sleep=time.sleep):
     """Take 114: the history this run appends to, and how it was had -- (history, "local" | "pages"); (None,
     "none") when Pages answers 404 (there is none: a new one starts); (None, "unread: <why>") when it could not be
     read in `tries` attempts, `pause` seconds apart, or is not a history. Read at its plain address: Pages' CDN
@@ -80,15 +92,11 @@ def read_history(local_path, base=None, fetch=None, tries=3, pause=10, sleep=tim
     base = pages_base() if base is None else base
     if not base:
         return None, "none: no site address (UPDATE_URL) to read it from"
-    fetch = fetch or fetch_json_why; why = None
-    for k in range(tries):
-        h, why = fetch(base + "hunt/history.json")
-        if h is not None:
-            return (h, "pages") if is_history(h) else (None, "unread: the deployed history is not a history (no runs list)")
-        if why == 404:
-            return None, "none"
-        if k < tries - 1:
-            sleep(pause)
+    h, why = fetch_tries(base + "hunt/history.json", fetch or fetch_json_why, tries, pause, sleep)
+    if h is not None:
+        return (h, "pages") if is_history(h) else (None, "unread: the deployed history is not a history (no runs list)")
+    if why == 404:
+        return None, "none"
     return None, f"unread: {why} ({tries} tries)"
 
 
@@ -382,6 +390,14 @@ def selftest():
               str(sm("Bandai - One Piece Card Game: IB-04 Illustration Box 04", ["IB04"], "CASE")))
         check("...control: a box or a display never matches the case beside it", sm(ib8, ["IB08"], "BOX") == "One Piece Card Game Illustration Box Vol. 8"
               and sm("Bandai - One Piece Card Game: ST-19 Starter Deck 19", ["ST19"], "DISPLAY") == "Starter Deck 19: BLACK Smoker Display", str([sm(ib8, ["IB08"], "BOX"), sm("Bandai - One Piece Card Game: ST-19 Starter Deck 19", ["ST19"], "DISPLAY")]))
+        # take 115: the unit unread -- an illustration box may be the case (IB-09, IB-10), and a name that says Case is matched as a case only by its page
+        unread = {"IB-08": sm(ib8, ["IB08"], None), "IB-08 ... Case": sm(ib8 + " Case", ["IB08"], None), "OP-12 Booster Box Case": sm("Bandai - One Piece Card Game: OP-12 Booster Box Case", ["OP12"], None)}
+        check("with its unit unread an illustration box matches nothing, nor does a name that says Case -- each took the single box at take 114 (rule 4, landmine 167)",
+              all(v is None for v in unread.values()), json.dumps(unread))
+        check("...control: an unread booster box, pack or deck set whose name says its unit still matches (the fixture's OP-18 box and SD-01 set)",
+              sm("Bandai - One Piece Card Game: OP-18 Booster Box", ["OP18"], None) == "The Dominance of God Booster Box" and sm("Bandai - One Piece Card Game: SD-01 Set Sail Deck Set", ["SD01"], None) == "Set Sail Deck Set"
+              and sm("Bandai - One Piece Card Game: EB-05 Extra Booster Pack 05", ["EB05"], None) == "Extra Booster: One Piece Heroines Edition Vol.2 - Booster Pack",
+              str([sm("Bandai - One Piece Card Game: OP-18 Booster Box", ["OP18"], None), sm("Bandai - One Piece Card Game: SD-01 Set Sail Deck Set", ["SD01"], None)]))
     ev = json.load(open(os.path.join(fx, "events_us.json")))["events"]
     ok &= roster.selftest(ev, roster.zcta())
     # take 92, landmine 130: a failed rebuild keeps the roster AND the events table
@@ -544,9 +560,21 @@ def selftest():
         pr = subprocess.run([sys.executable, os.path.abspath(__file__), "--from-fixtures", "--out", os.path.join(td, "feed-fixture.json")], env=env,
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=120)
         line = next((x.strip() for x in pr.stdout.splitlines() if x.startswith("   gts: ")), "no gts line")
-        g = json.load(open(os.path.join(td, "feed-fixture.json")))["sources"]["gts"] if pr.returncode == 0 else {}
+        fed = json.load(open(os.path.join(td, "feed-fixture.json"))) if pr.returncode == 0 else {}
+        g = fed.get("sources", {}).get("gts", {})
         says = "{} with an order due date ahead, {} unreleased without one".format(*gts_due(g.get("items", []), g.get("fetched_at")))
+        beside = sorted(os.listdir(td))
+        hist_beside = is_history(json.load(open(os.path.join(td, "history-fixture.json")))) if "history-fixture.json" in beside else False
     check("...and the hourly's gts line says those counts", pr.returncode == 0 and says in line, line[:170])
+    # take 115: the --out refusal (landmine 166) -- the sidecars are named by replacing "feed" in --out, so a name without it wrote each over the feed
+    check("an --out that names a feed writes its history, stores, events and shops beside it, each under its own name (feed-fixture.json -> history-fixture.json)",
+          pr.returncode == 0 and "sources" in fed and hist_beside and {"feed-fixture.json", "history-fixture.json", "stores-fixture.json", "events-fixture.json", "shops-fixture.json"} <= set(beside), str(beside))
+    with tempfile.TemporaryDirectory() as td:
+        pr2 = subprocess.run([sys.executable, os.path.abspath(__file__), "--from-fixtures", "--out", os.path.join(td, "fixture.json")], env=env,
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=120)
+        left = sorted(os.listdir(td))
+    check("...control: an --out without \"feed\" is refused with exit 2 and nothing written -- take 111 wrote the history over the feed (landmine 166)",
+          pr2.returncode == 2 and "--out must name a feed file" in pr2.stdout and left == [], f"exit {pr2.returncode}, wrote {', '.join(left) or 'nothing'}")
     check("control: take 113's path on a failed read -- append_history(None, ...) -- is one row: the whole record replaced by the next deploy", len(append_history(None, fd)["runs"]) == 1)
     # controls: a changed shape is a failure, not a quiet empty
     for name, fn, bad in (("stores", target.parse_stores, {"data": {}}), ("search", target.parse_search, {"data": {"search": {}}}), ("fulfillment", target.parse_fulfillment, {"data": {"product": {}}})):
@@ -631,12 +659,7 @@ def carry_over(out_dir, base=None, fetch=None, sleep=time.sleep, out=print):
     fetch = fetch or fetch_json_why
     os.makedirs(out_dir, exist_ok=True); n = 0; unread = False
     for name in HUNT_FILES:
-        for k in range(3):                                   # take 114: a missed history.json here is the next hourly's reset
-            j, why = fetch(base + "hunt/" + name)
-            if j is not None or why == 404:
-                break
-            if k < 2:
-                sleep(10)
+        j, why = fetch_tries(base + "hunt/" + name, fetch, sleep=sleep)   # take 114: a missed history.json here is the next hourly's reset
         if name == "history.json" and j is not None and not is_history(j):
             j, why = None, "not a history: no runs list"
         elif name == "history.json" and j is None and why != 404:
