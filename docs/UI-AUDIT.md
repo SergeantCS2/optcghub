@@ -1,6 +1,6 @@
 # UI-AUDIT — the UI series' checklist (A42)
 
-*Current as of take 118.*
+*Current as of take 119.*
 
 The audit behind the UI series, taken on the take-104 source by four
 independent read-throughs (headings and copy; components, icons and
@@ -174,7 +174,7 @@ take 117 unless it says otherwise.
 - [x] The deck editor's bottom row scrolled the page sideways under 380 px: it wraps.
 - [x] Off-scale font sizes in the stylesheet (25 at take 114): on the token scale; the three input rules keep 16px (Android zooms under it).
 - [x] The nav's label colour set by two rules; the placeholder rule twice; the distributor line in the fill colour: one rule, once, the ink token.
-- [ ] The literal radii onto `--r-*` and the script's inline sizes onto the tokens (take 119's riders).
+- [x] The literal radii onto `--r-*` and the script's inline sizes onto the tokens. *(take 119: every radius in the sheet and the templates reads a token but the 2 to 4 px hairlines, the sheet's 22 px top and a circle's 50 %; every inline size a role but the one computed from a picture's width)*
 - [ ] Captions under the scan row's icon buttons, if the owner wants them.
 
 
@@ -187,6 +187,17 @@ The owner's picks from drawn schemes (real screenshots, contrast measured first)
 - [x] Most valuable as rows: a shelf of the six dearest cards, each a 100 px tap target with the printing's word on the picture's corner (AGENTS rule 3).
 - [x] The card page's three cells on the same surface.
 - [x] The literals that assumed the old brass (the reminders' tint, the charts' fallbacks): on the new gold; the share page stays dark by design.
+
+
+## 12. Take 119 -- the surface beyond Home, the mode swipe, the tokens
+
+The owner's picks from the six take-119 sheets (real screenshots at both Fold sizes). Each box is closed by take 119.
+
+- [x] The surface with the caps label and the fading rule on every panel of Collect and Hunt (S1); a count beside a caps label wraps under the rule where the two do not fit.
+- [x] The collection tile as a surface card (T1).
+- [x] The surface on Prep & Play's panels too (P1).
+- [x] The mode swipe as drafted: a slide from a tap or a sideways swipe on the bar, the knob under the finger, the leaving screen kept under in its own palette, reduced motion honoured.
+- [x] Every radius and every inline size onto the tokens (the §9 box above).
 
 ## Found in passing, routed elsewhere
 

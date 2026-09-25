@@ -795,6 +795,63 @@ if (puppeteer) {
   ok('take 118: Most valuable is a shelf of cards, each a tap target of 100 px by more than 44', t118.shelf >= 3 && t118.widths.every(w => w === 100) && t118.heights.every(h => h > 44), JSON.stringify(t118));
   ok('take 118: the total is drawn in the gold gradient and the hero carries the dearest printing\'s art', t118.totalColor === 'rgba(0, 0, 0, 0)' && /text/.test(t118.clip) && /^url\("https:\/\//.test(t118.heroArt) && t118.bg === 'rgb(16, 13, 34)', JSON.stringify(t118));
 
+
+  /* Take 119: the surface beyond Home in real Chrome -- a panel of Collect (Wants) and of Hunt (Sealed) draws the gradient at the
+     surface's radius, Prep & Play's per the pick; the collection tile per its pick; every caps title one line tall at 412 px. */
+  const t119 = await page.evaluate(async () => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)); while (V.closeAnyOverlay()) {}
+    const panel = () => { const p = [...document.querySelectorAll('.screen.on .panel')].find(e => e.getBoundingClientRect().height > 0); if (!p) return null; const c = getComputedStyle(p), h = [...document.querySelectorAll('.screen.on .panel h3')].find(e => e.getBoundingClientRect().height > 0);
+      return { bg: c.backgroundImage.slice(0, 15), r: c.borderRadius, shadow: c.boxShadow !== 'none', h3: h ? { caps: getComputedStyle(h).textTransform, size: getComputedStyle(h).fontSize, height: Math.round(h.getBoundingClientRect().height), rule: getComputedStyle(h, '::after').content } : null }; };
+    const heads = () => [...document.querySelectorAll('.screen.on .panel h3')].filter(h => h.getBoundingClientRect().height > 0).map(h => ({ caps: getComputedStyle(h).textTransform, height: Math.round(h.getBoundingClientRect().height), text: h.textContent.trim().slice(0, 40) }));
+    const out = {};
+    V.MODE.set('collect', true); await wait(250); V.go('wants'); await wait(200); out.wants = panel();
+    V.go('collection'); await wait(250); const t = document.querySelector('#colGrid .tile'), a = t && t.querySelector('.art'); const tc = t && getComputedStyle(t), ac = a && getComputedStyle(a);
+    out.tile = t ? { bg: tc.backgroundImage.slice(0, 15), border: tc.borderTopWidth, r: tc.borderRadius, pad: tc.paddingLeft } : null; out.art = a ? { shadow: ac.boxShadow !== 'none', border: ac.borderTopWidth, r: ac.borderRadius } : null;
+    V.NAV.zipAsked = true; V.MODE.set('hunt', true); await wait(250); V.go('sealed'); await wait(300); out.sealed = panel(); out.sealedHeads = heads();
+    V.MODE.set('play', true); await wait(250); V.go('decks'); await wait(300); out.decks = panel();
+    V.MODE.set('collect', true); await wait(250); V.go('home'); return out; });
+  ok('take 119: a panel of Collect and one of Hunt draw the surface -- the gradient, the 18 px corner, the shadow', !!t119.wants && !!t119.sealed && [t119.wants, t119.sealed].every(p => p.bg === 'linear-gradient' && p.r === '18px' && p.shadow), JSON.stringify({ wants: t119.wants, sealed: t119.sealed }));
+  ok('take 119: the panel titles per the pick (S1), each one line tall', !!t119.wants.h3 && t119.wants.h3.caps === 'uppercase' && t119.wants.h3.size === '12px' && t119.wants.h3.rule === '""' && t119.sealedHeads.every(h => h.caps === 'uppercase' && h.height < 26), JSON.stringify({ wants: t119.wants.h3, sealedHeads: t119.sealedHeads }));
+  ok('take 119: Prep & Play\'s panels per the pick (P1)', !!t119.decks && t119.decks.bg !== 'none' && t119.decks.r === '18px', JSON.stringify(t119.decks));
+  ok('take 119: the collection tile per the pick (T1)', !!t119.tile && !!t119.art && t119.art.r === '10px' && t119.tile.bg !== 'none' && t119.tile.border === '1px' && t119.tile.r === '18px' && t119.art.shadow, JSON.stringify({ tile: t119.tile, art: t119.art }));
+  /* the mode swipe: a real drag on the bar with the mouse (Chrome sends pointer events for it), the knob read at rest (landmine 143) */
+  const swipeAt = async (x0, x1, dy = 0) => { const y = await page.evaluate(() => { const b = document.querySelector('#modeSlider').getBoundingClientRect(); return b.top + b.height / 2; }); await page.mouse.move(x0, y); await page.mouse.down(); await page.mouse.move(x1, y + dy, { steps: 10 }); await page.mouse.up(); };
+  const armKnob = () => page.evaluate(() => { const k = document.querySelector('#modeSlider .knob'); window.__t119 = new Promise(res => { k.addEventListener('transitionend', () => res('end'), { once: true }); setTimeout(() => res('timeout'), 2000); }); });
+  const readKnob = (mode) => page.evaluate(async m => { const how = await window.__t119; delete window.__t119; await new Promise(r => setTimeout(r, 450));
+    const k = document.querySelector('#modeSlider .knob'), kb = k.getBoundingClientRect(), b = document.querySelector(`#modeSlider [data-mode="${m}"]`).getBoundingClientRect();
+    return { how, mode: window.VAULT.MODE.cur, off: Math.round((kb.left + kb.width / 2) - (b.left + b.width / 2)), out: !!document.querySelector('.screen.out'), swap: document.documentElement.classList.contains('mode-swap'), on: document.querySelector('.screen.on').id, bg: getComputedStyle(document.body).backgroundColor, knobInline: k.getAttribute('style') || '' }; }, mode);
+  await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('collect', true); }); await new Promise(r => setTimeout(r, 300));
+  await armKnob(); await swipeAt(300, 180); const swL = await readKnob('play');
+  ok('take 119: a swipe to the left on the mode bar moves one mode over -- Collect to Prep & Play -- the knob at rest under it, the screen that left taken out, the class off, the knob\'s inline drag gone', swL.mode === 'play' && Math.abs(swL.off) <= 2 && !swL.out && !swL.swap && swL.on === 'decks' && swL.bg === 'rgb(21, 23, 28)' && swL.knobInline === '', JSON.stringify(swL));
+  await armKnob(); await swipeAt(300, 280); const swShort = await readKnob('play');
+  await armKnob(); await swipeAt(300, 240, 90); const swDown = await readKnob('play');
+  ok('take 119: a short move (20 px) and a mostly vertical one leave the mode alone, the knob back under it', swShort.mode === 'play' && Math.abs(swShort.off) <= 2 && swDown.mode === 'play' && Math.abs(swDown.off) <= 2 && swShort.knobInline === '' && swDown.knobInline === '', JSON.stringify({ swShort, swDown }));
+  await armKnob(); await swipeAt(180, 320); const swR = await readKnob('collect');
+  ok('take 119: a swipe to the right brings Collect back, the knob at rest under it', swR.mode === 'collect' && Math.abs(swR.off) <= 2 && !swR.out && swR.on === 'home' && swR.bg === 'rgb(16, 13, 34)', JSON.stringify(swR));
+  /* the slide itself, paused half-way: the screen that left is fixed under, still in its own palette, a way out and dimming; the arriving one part-way in */
+  const mid = await page.evaluate(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('collect', true); await new Promise(r => setTimeout(r, 300)); V.go('home'); window.scrollTo(0, 0);
+    const oldBg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+    document.querySelector('#modeSlider [data-mode="hunt"]').click();
+    const anims = document.getAnimations(); anims.forEach(a => { a.pause(); a.currentTime = 110; }); clearTimeout(V.MODE._swap);
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const out = document.querySelector('.screen.out'), on = document.querySelector('.screen.on');
+    const m = e => { const t = getComputedStyle(e).transform, x = /matrix\(([^)]+)\)/.exec(t); return x ? Math.round(+x[1].split(',')[4]) : (t === 'none' ? 0 : NaN); };
+    const res = { anims: anims.length, oldBg, newBg: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim(), swapL: document.documentElement.classList.contains('swap-l'),
+      out: out ? { id: out.id, pos: getComputedStyle(out).position, bg: getComputedStyle(out).getPropertyValue('--bg').trim(), x: m(out), opacity: getComputedStyle(out).opacity, top: Math.round(out.getBoundingClientRect().top) } : null,
+      on: { id: on.id, x: m(on), w: Math.round(on.getBoundingClientRect().width), bg: getComputedStyle(on).backgroundColor } };
+    anims.forEach(a => a.finish());
+    /* the end event reaches the leaving screen on a later frame -- read it when it has, or after a second (the app's own 400 ms timer is cleared above, so this is the event alone) */
+    let waited = 0; while (document.querySelector('.screen.out') && waited < 1000) { await new Promise(r => setTimeout(r, 20)); waited += 20; }
+    document.documentElement.classList.remove('mode-swap', 'swap-l');
+    res.after = { out: !!document.querySelector('.screen.out'), waited, onX: m(document.querySelector('.screen.on')), inline: out ? out.getAttribute('style') || '' : '', onBg: getComputedStyle(document.querySelector('.screen.on')).backgroundColor };
+    V.MODE.set('collect', true); await new Promise(r => setTimeout(r, 300)); V.go('home'); return res; });
+  ok('take 119: paused at 110 ms of the 220, the screen that left (Home) is fixed under in Collect\'s indigo while the root is kraft, part-way out to the left and dimming; Sealed is part-way in from the right on an opaque ground', !!mid.out && mid.out.id === 'home' && mid.out.pos === 'fixed' && mid.out.bg === mid.oldBg && mid.oldBg !== mid.newBg && mid.out.x < 0 && +mid.out.opacity < 1 && mid.on.id === 'sealed' && mid.on.x > 0 && mid.on.x < mid.on.w && mid.on.bg !== 'rgba(0, 0, 0, 0)' && !mid.swapL, JSON.stringify(mid));
+  ok('take 119: ...and when the animations end the screen that left is gone, its inline palette with it; the one arriving sits at rest on the page\'s own ground', !mid.after.out && mid.after.onX === 0 && mid.after.inline === '' && mid.after.onBg === 'rgba(0, 0, 0, 0)', JSON.stringify(mid.after));
+  await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+  const rm = await page.evaluate(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('collect', true); await new Promise(r => setTimeout(r, 200)); document.querySelector('#modeSlider [data-mode="play"]').click();
+    const out = !!document.querySelector('.screen.out'), dur = getComputedStyle(document.querySelector('.screen.on')).animationDuration; await new Promise(r => setTimeout(r, 450));
+    const res = { out, dur, mode: V.MODE.cur, on: document.querySelector('.screen.on').id, swap: document.documentElement.classList.contains('mode-swap') }; V.MODE.set('collect', true); await new Promise(r => setTimeout(r, 200)); V.go('home'); return res; });
+  await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
+  ok('take 119: under reduced motion a tap switches at once -- no screen is kept under, and the animation takes no time', !rm.out && rm.dur === '0s' && rm.mode === 'play' && rm.on === 'decks' && !rm.swap, JSON.stringify(rm));
   /* Take 24: switching mode changes the palette and the nav, in Chrome. */
   await page.evaluate(() => { localStorage.setItem('optcghub.guide.v1', '1'); document.querySelector('#tour').hidden = true; document.querySelector('#tour').classList.remove('on');
                               document.querySelector('#modeSlider [data-mode="play"]').click(); });
@@ -1153,7 +1210,7 @@ if (puppeteer) {
     return { sheet, swapOn, fade, swapOff, sealedPic: spb ? `${Math.round(spb.width)}x${Math.round(spb.height)}` : 'none', num };
   });
   ok('take 110: a sheet rises from the bottom on --dur-sheet (320 ms)', pol.sheet.name === 'sheetUp' && pol.sheet.dur === '0.32s', JSON.stringify(pol.sheet));
-  ok('take 110: a tap on the mode slider crossfades the new screen, and the class comes off after', pol.swapOn && pol.fade === 'modeIn' && pol.swapOff, JSON.stringify(pol));
+  ok('take 110 (a slide since take 119): a real tap on the mode slider animates the new screen in, and the class comes off after', pol.swapOn && /^modeIn[RL]$/.test(pol.fade) && pol.swapOff, JSON.stringify(pol));
   ok('take 110: a sealed product\'s picture is the large thumbnail (56x70) and every figure is tabular', pol.sealedPic === '56x70' && /tabular-nums/.test(pol.num), JSON.stringify(pol));
   await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
   const still = await page.evaluate(async () => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)); V.go('search'); await wait(200); document.querySelector('#sortBtnAll').click(); await wait(30);

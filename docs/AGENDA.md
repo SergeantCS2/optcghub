@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 118.* Ranked by blocking-ness, not by interest.
+*Current as of take 119.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -1233,6 +1233,18 @@ failed read is a hole, not "nothing listed".
 - UNKNOWN: whether stores can still order on GTS's due day itself.
 
 ## A42 — The UI series: uniform headers, card art used boldly, one voice · OPENED take 106 · CLOSED take 111 (PR #35, merged 16:31 UTC 24 Sept)
+
+**Take 119 (the UI/UX session), the owner's picks from the six take-119
+sheets:** the surface with the caps label and the fading rule on every panel
+of Collect and Hunt (S1); the collection tile as a surface card (T1); the
+surface on Prep & Play's panels too (P1); the mode swipe as drafted; the last
+literal radii and inline sizes onto the tokens. Measured in Chrome: the
+surface's gradient, corner and shadow per mode, a real drag on the bar, the
+slide paused half-way, reduced motion. **Ruled out (take 119):** a slide on
+every switch (the guide, Back and the harness need `MODE.set` instant); a
+cloned screen under the slide (its canvases go blank); the swipe on the page
+body; `contain:paint` on the body for the slide's overflow; the count always
+on a line of its own.
 
 **Take 118 (the UI/UX session), the owner's picks from drawn schemes:**
 Collect is Wano indigo with the bright gold G1 and Home wears the premium

@@ -1542,4 +1542,93 @@ const take118 = [
   view('play-decks-unchanged', `V.MODE.set('play', true); await ${pause}; V.go('decks')`, { art: '#dkHero img' })
 ];
 
-export const STEPS = { 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
+/* ---- take 119 — the surface beyond Home, the mode swipe, the tokens (the owner's picks: S1 T1 P1 swipe on) ---- */
+const take119 = [
+  { name: 'open', run: async (page, ctx) => { await ctx.open(); return { ok: true }; } },
+  { name: 'collect-seed', run: async (page) => {
+      /* take 118's seed (nine dear cards, a box, a month of readings) plus a want, an alert and a trade, so Wants and Trade have panels to surface; the zip for Hunt */
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {}
+        V.OWN.items = []; const cards = V.CAT.rows.filter(p => !p.sealed && p.market > 20 && p.hash && p.img).sort((a, b) => b.market - a.market).slice(0, 9);
+        cards.forEach((p, i) => V.OWN.add(p.id, { qty: 1 + (i % 3), condition: ['NM', 'LP', 'NM', 'MP'][i % 4] }));
+        const box = V.CAT.rows.find(p => V.SEALED.isProduct(p) && p.market > 50 && p.img); if (box) V.OWN.add(box.id, { qty: 1 });
+        V.OWN.save(); V.OWN.snapshot();
+        const tot = V.OWN.total(); const snaps = []; for (let d = 30; d >= 0; d--) { const t = new Date(Date.now() - d * 864e5).toISOString().slice(0, 10); const k = 1 - d / 30; snaps.push([t, Math.round(tot * (0.86 + 0.14 * k + 0.02 * Math.sin(d * 1.3)) * 100) / 100]); }
+        snaps[snaps.length - 1][1] = tot; V.OWN.snaps = snaps; V.OWN.save();
+        const w = V.CAT.rows.find(p => !p.sealed && p.num && p.market > 5 && !V.OWN.items.some(i => i.id === p.id)); if (w && !V.WANT.has(w.num)) V.WANT.toggle(w.num, w.id);
+        if (!V.ALERTS.list.length) V.ALERTS.add(cards[0].id, 'below', Math.round(cards[0].market * 0.9));
+        if (!V.TRADE.give.length) { V.TRADE.add('give', cards[1].id, 1); V.TRADE.add('get', cards[2].id, 1); }
+        V.NAV.zipAsked = true; V.HUNT.setZip('48329');
+        V.MODE.set('collect', true); await ${pause}; V.go('home'); V.setHomeTab(false); V.paintHome(); window.scrollTo(0, 0);
+        return { lines: V.OWN.items.length, wants: V.WANT.list.length, alerts: V.ALERTS.list.length }; })()`);
+      await waitArt(page, '#topList img'); await wait(400);
+      return { ok: m.lines >= 9 && m.wants >= 1 && m.alerts >= 1, ...m };
+    } },
+  view('collect-wants-surface', `V.go('wants')`),
+  view('collect-trade-surface', `V.go('trade')`),
+  view('collect-collection-tiles', `document.querySelector('#allq').value = ''; V.go('collection')`, { art: '#colGrid img' }),
+  { name: 'collect-tile-bulk-selected', run: async (page) => {
+      /* a bulk-selected tile keeps its inline tint and brass edge on the picked tile shape (T1: the tint replaces the gradient) */
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} document.querySelector('#allq').value = ''; V.go('collection'); await ${pause};
+        document.querySelector('[data-act="bulk"]').click(); await new Promise(r => setTimeout(r, 200)); document.querySelector('#colGrid [data-open]').click(); await new Promise(r => setTimeout(r, 200)); window.scrollTo(0, 0);
+        const t = [...document.querySelectorAll('#colGrid .tile')].find(t => /accent-bg/.test(t.getAttribute('style') || '')), c = t && getComputedStyle(t);
+        return { selected: !!t, bg: t ? c.backgroundImage.slice(0, 15) : null, edge: t ? c.borderTopColor : null, bar: !!document.getElementById('bulkX') }; })()`);
+      await waitArt(page, '#colGrid img'); await wait(400);
+      return { ok: m.selected && m.bar, ...m };
+    } },
+  { name: 'collect-tile-bulk-off', run: async (page) => { const m = await page.evaluate(() => { const x = document.getElementById('bulkX'); if (x) x.click(); return { off: !!x }; }); await wait(300); return { ok: m.off, ...m }; } },
+  view('collect-card-page-surface', `V.openDetail(V.OWN.items[0].id)`, { art: '#dArt img' }),
+  view('collect-search-surface', `document.querySelector('#allq').value = ''; V.go('search'); V.paintSearch()`, { art: '#setList img' }),
+  view('hunt-sealed-surface', `V.MODE.set('hunt', true); await ${pause}; V.SEALED.q = ''; V.SEALED.kind = 'all'; V.go('sealed'); V.paintSealed()`, { art: '#sealed img' }),
+  view('hunt-releases-surface', `V.go('releases')`),
+  { name: 'hunt-local-surface-one-line-titles', run: async (page) => {
+      /* the feed synced for the zip (Pages, when the VM reaches it); every panel title on Local and Events one line tall at this size --
+         the long caps label wrapped inside itself in the take-119 drafts */
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {}
+        await V.HUNT.sync({ quiet: true }).catch(() => false); await V.LOCAL.syncStores().catch(() => false); await V.LOCAL.syncShops().catch(() => false); await V.LOCAL.syncZcta().catch(() => false); await V.EVENTS.sync().catch(() => false);
+        V.go('local'); V.paintLocal(); await ${pause}; window.scrollTo(0, 0);
+        const heads = [...document.querySelectorAll('#local .panel h3')].filter(h => h.getBoundingClientRect().height > 0).map(h => ({ text: h.textContent.trim().replace(/\\s+/g, ' ').slice(0, 60), height: Math.round(h.getBoundingClientRect().height), lineHeight: parseFloat(getComputedStyle(h).lineHeight) || 0 }));
+        return { on: document.querySelector('.screen.on').id, heads, shops: document.querySelectorAll('#local .row').length }; })()`);
+      await wait(400);
+      return { ok: m.on === 'local' && m.heads.length >= 1 && m.heads.every(h => h.height < 2 * Math.max(14, h.lineHeight)), ...m };
+    } },
+  view('hunt-events-surface', `V.go('events')`),
+  view('play-decks-panels', `V.MODE.set('play', true); await ${pause}; V.go('decks')`, { art: '#dkHero img' }),
+  { name: 'play-deck-editor-panels', run: async (page) => {
+      /* P1: the surface on the deck editor's panels -- a deck built here when the list is empty (render's take-115 badge seed is the pattern) */
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {}
+        if (!V.DECKS.list.length) { const d = V.DECKS.blank(); d.name = 'look 119'; d.leader = V.CAT.rows.find(p => p.type === 'Leader' && p.img).id; V.CAT.rows.filter(p => !p.sealed && p.type === 'Character' && p.market > 0 && p.img).slice(0, 12).forEach(p => d.cards.push({ id: p.id, n: 4 })); V.DECKS.list.push(d); V.DECKS.save(); }
+        V.openDeck(V.DECKS.list[0].id); await ${pause}; window.scrollTo(0, 0); return { on: document.querySelector('.screen.on').id, panels: document.querySelectorAll('#deck .panel').length }; })()`);
+      await waitArt(page, '#deck img'); await wait(400);
+      return { ok: m.on === 'deck' && m.panels >= 2, ...m };
+    } },
+  view('play-counter-panels', `V.go('play')`),
+  view('play-sim-panels', `V.go('sim')`),
+  { name: 'mode-slide-paused-half-way', run: async (page) => {
+      /* a real tap, the animations paused at 110 ms of 220 and the 400 ms timer cleared, so the picture holds the middle of the slide:
+         Home leaving to the left in its indigo, Decks part-way in from the right, the knob between the two labels */
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('collect', true); await ${pause}; V.go('home'); V.setHomeTab(false); V.paintHome(); window.scrollTo(0, 0); await ${pause};
+        document.querySelector('#modeSlider [data-mode="play"]').click();
+        const anims = document.getAnimations(); anims.forEach(a => { a.pause(); a.currentTime = 110; }); clearTimeout(V.MODE._swap);
+        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const out = document.querySelector('.screen.out'), on = document.querySelector('.screen.on');
+        return { anims: anims.length, out: out ? out.id : null, on: on.id, outBg: out ? getComputedStyle(out).getPropertyValue('--bg').trim() : null, rootBg: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() }; })()`);
+      await wait(200);
+      return { ok: m.out === 'home' && m.on === 'decks' && m.anims >= 2 && m.outBg !== m.rootBg, ...m };
+    } },
+  { name: 'mode-slide-finished', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; document.getAnimations().forEach(a => a.finish()); await new Promise(r => setTimeout(r, 80)); document.documentElement.classList.remove('mode-swap', 'swap-l');
+        await ${pause}; return { out: !!document.querySelector('.screen.out'), on: document.querySelector('.screen.on').id, mode: V.MODE.cur, swap: document.documentElement.classList.contains('mode-swap') }; })()`);
+      await waitArt(page, '#dkHero img'); await wait(300);
+      return { ok: !m.out && m.on === 'decks' && m.mode === 'play' && !m.swap, ...m };
+    } },
+  { name: 'mode-swipe-right-to-collect', run: async (page) => {
+      /* a real drag on the bar (Playwright's mouse sends pointer events): the finger goes right, Collect comes back, the knob read at rest */
+      const y = await page.evaluate(() => { const b = document.querySelector('#modeSlider').getBoundingClientRect(); return b.top + b.height / 2; });
+      await knobAtRest(page, async () => { await page.mouse.move(150, y); await page.mouse.down(); await page.mouse.move(300, y, { steps: 10 }); await page.mouse.up(); });
+      await waitArt(page, '#topList img'); await wait(400);
+      const off = await knobOffset(page, 'collect');
+      const m = await page.evaluate(() => ({ mode: window.VAULT.MODE.cur, on: document.querySelector('.screen.on').id, out: !!document.querySelector('.screen.out'), knobInline: document.querySelector('#modeSlider .knob').getAttribute('style') || '' }));
+      return { ok: m.mode === 'collect' && m.on === 'home' && !m.out && Math.abs(off) <= 2 && m.knobInline === '', knobOffset: off, ...m };
+    } },
+];
+export const STEPS = { 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };

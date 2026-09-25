@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 118.*
+*Current as of take 119.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -217,6 +217,8 @@ Start here. Do not read top to bottom.
 | The phone's Back leaves the screen with the guide still up, or closes it for good | 201 |
 | The shutter sits off centre and Review wraps: a grid column swallowed the space | 203 |
 | A shelf card is wider than its neighbours | 204 |
+| The page scrolls sideways during the mode slide | 205 |
+| A drag on the mode bar highlights a label | 206 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -2714,6 +2716,21 @@ auto`) unless the rule says `min-width:0`, and the value's line refused to
 shrink. `width:100px;min-width:0` on the card and an ellipsis on the value
 (take 118); render measures every shelf card at 100 px. The grid's cousin is
 landmine 203.
+
+**205. A transformed box still widens the page.** The mode slide (take 119)
+starts the arriving screen a viewport to the right with `translateX(100%)`;
+a transform moves the paint, not the layout, but the transformed box still
+counts in the scrollable overflow, and the page grew to 617 px at 411
+mid-slide (the look's own sideways check). `overflow-x:hidden` on the root
+refuses the scroll but leaves the width; `overflow-x:clip` on the body takes
+the overflow out of the viewport (MEASURED on a bare page: the root hidden
+alone 617, with the body's clip 411; `body.scrollWidth` says 617 either way,
+so the look reads the viewport's). Both for the slide's 400 ms only.
+
+**206. A drag selects the text under it unless the surface says not to.** The
+first real swipe on the mode bar (render, with the mouse) left the knob's
+label highlighted in the look's picture: to the browser a pointer drag is a
+text selection. `user-select:none` on the gesture surface (take 119).
 
 ## §2 — Inherited from APEX ORV
 
