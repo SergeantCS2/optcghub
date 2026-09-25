@@ -1,6 +1,6 @@
 # UI-AUDIT — the UI series' checklist (A42)
 
-*Current as of take 119.*
+*Current as of take 120.*
 
 The audit behind the UI series, taken on the take-104 source by four
 independent read-throughs (headings and copy; components, icons and
@@ -119,8 +119,8 @@ Every screen and sheet at both of the Fold's sizes (`node tools/look.mjs 111`, 3
 - [x] Layout: the bulk bar off a 411 px phone; Scan's note edge to edge; the Performance tab's panel under Most valuable; rows askew on a textless picture, then the Sealed bell (landmine 161); the ready-made deck's badge beside its name.
 - [x] A card's page: Want and the alerts out of Graded (a Watch panel); a sealed product's page (its kind, one triangle, no Graded, Want or list of printings); a DON!! card's page a card's (landmine 162); Save and the cost basis on the collection the page names, and a slab its own line (landmine 163).
 - [x] Figures: Set completion counting products and every collection's value; a deck's value without its Leader; the binder opening on empty pockets; a cost basis added without the day's reading.
-- [ ] A binder page on the open Fold: a page of nine needs a scroll there. *Take 115, at the MEASURED 749 x 832: pockets of 226 x 316 px, the page ending at 1151 px on an 832 px screen (at the old INFERRED 840 x 757 it was 257 x 358, ending at 1278).* A design choice, left to the UI/UX session.
-- [ ] Sealed's banner on the open Fold: the top card cut to the screen's width with its face filling the band (take 111's look, at the INFERRED 840). Its crop at the MEASURED 749 has not been looked at. The UI/UX session's.
+- [x] A binder page on the open Fold: a page of nine needs a scroll there. *Take 115, at the MEASURED 749 x 832: pockets of 226 x 316 px, the page ending at 1151 px on an 832 px screen (at the old INFERRED 840 x 757 it was 257 x 358, ending at 1278).* A design choice, left to the UI/UX session. *(take 120: a spread of two pages on the open Fold.)*
+- [x] Sealed's banner on the open Fold: the top card cut to the screen's width with its face filling the band (take 111's look, at the INFERRED 840). Its crop at the MEASURED 749 has not been looked at. The UI/UX session's. *(take 120: looked at in the look at 749.)*
 
 ## 8. Distributor info — take 112, the owner's word
 
@@ -132,13 +132,13 @@ After the first pictures of Southern Hobby beside GTS: "I don't want them floodi
 - [x] A day on a short line never breaks ("May" / "17" on Releases, the second look).
 - [ ] The distributors' names verbatim in the not-in-the-catalogue list ("Bandai - One Piece Card Game: …").
 - [ ] One product listed by both distributors shows as two rows in that list.
-- [ ] A product with no market price reads "— · market" on its page.
+- [x] A product with no market price reads "— · market" on its page. *(take 120.)*
 
 Take 114, the owner's answers to its pictures (HANDOFF take 114):
 - [x] GTS's words for its Order Due Date. They are Southern Hobby's words for the same fact: "stores order by Oct 14", "orders close Oct 14" on a row, and "orders were due Oct 14" once passed. The owner: "exactly exactly right, that's fine".
 - [x] Each distributor's history on a product's page is tucked behind one "History · …" line, a 44 px button with its arrow at the right edge, closed whenever a page opens. The owner: "it should be tucked away".
 - [x] A day in a distributor's long words never breaks ("release Nov" / "20", found by take 114's look), fixed because it was broken.
-- [ ] A day in Releases' "mixed · release" group line has no no-break spaces. Found in passing; the UI session's.
+- [x] A day in Releases' "mixed · release" group line has no no-break spaces. Found in passing; the UI session's. *(take 120.)*
 - [ ] The history's own look (`.dtl`): size, colour, the spacing of a one-line header. The UI session's.
 - [ ] Sealed's GTS counts overlap ("7 sold out, 8 allocated, 1 with an order due date ahead, 3 unreleased without one" adds up to more than its 11 products) and read as separate groups (take 114's look). The UI session's.
 
@@ -146,11 +146,11 @@ Take 114, the owner's answers to its pictures (HANDOFF take 114):
 
 Take 115 (the production baseline) fixed what was broken or off its own spec and left design to this session. Its look (`node tools/look.mjs 115`, 36 views at the Fold's MEASURED sizes) and its review found these, each there before take 115:
 
-- [ ] The Sim's battle panel reads "5000attacks with": the power is glued to the words, and `.row .nm b{display:block}` catches the `<b>` inside the sentence.
-- [ ] The Leader sheet and a deck's printing sheet draw an empty grey box when the picture host refuses a picture (the four unreleased OP18 Leaders; Nami's OP-DD and LT-01 printings); the scanner's picker puts the printing's name in the same box.
-- [ ] At 411 px a deck row's second line is cut before its keyword tags ("ST01-006 · Red · 1,000…" hides "Blocker").
-- [ ] At 749 px set completion's set names are cut short ("Extra Booster: Anime 25t…").
-- [ ] A Sealed row names its kind in the plural for one product ("Boxes", "Collections").
+- [x] The Sim's battle panel reads "5000attacks with": the power is glued to the words, and `.row .nm b{display:block}` catches the `<b>` inside the sentence. *(take 120.)*
+- [x] The Leader sheet and a deck's printing sheet draw an empty grey box when the picture host refuses a picture (the four unreleased OP18 Leaders; Nami's OP-DD and LT-01 printings); the scanner's picker puts the printing's name in the same box. *(take 120: the number shows.)*
+- [x] At 411 px a deck row's second line is cut before its keyword tags ("ST01-006 · Red · 1,000…" hides "Blocker"). *(take 120: it wraps.)*
+- [x] At 749 px set completion's set names are cut short ("Extra Booster: Anime 25t…"). *(take 120: they wrap.)*
+- [x] A Sealed row names its kind in the plural for one product ("Boxes", "Collections"). *(take 120: the singular.)*
 - [ ] Releases now lists an upcoming group whose only listing is its sealed product ("card list not published yet"); none today.
 - [ ] Text on Sealed's strips must clear 4.5:1 over a white picture (landmine 191): a lighter scrim needs a heavier text treatment.
 - [ ] The tokens nothing reads (take 115, A43): `--teal --fs-label --fs-row --sp-1 --sp-4 --sp-5 --sp-6 --r-sm --r-md --r-lg --ic-sm --ic-md --ic-lg --thumb-s --thumb-m --z-screen` -- use them or remove them.
@@ -175,7 +175,7 @@ take 117 unless it says otherwise.
 - [x] Off-scale font sizes in the stylesheet (25 at take 114): on the token scale; the three input rules keep 16px (Android zooms under it).
 - [x] The nav's label colour set by two rules; the placeholder rule twice; the distributor line in the fill colour: one rule, once, the ink token.
 - [x] The literal radii onto `--r-*` and the script's inline sizes onto the tokens. *(take 119: every radius in the sheet and the templates reads a token but the 2 to 4 px hairlines, the sheet's 22 px top and a circle's 50 %; every inline size a role but the one computed from a picture's width)*
-- [ ] Captions under the scan row's icon buttons, if the owner wants them.
+- [x] Captions under the scan row's icon buttons, if the owner wants them. *(the owner: no captions.)*
 
 
 ## 11. Take 118 -- Collect on indigo and gold, Home's premium pass, Hunt in kraft
@@ -198,6 +198,29 @@ The owner's picks from the six take-119 sheets (real screenshots at both Fold si
 - [x] The surface on Prep & Play's panels too (P1).
 - [x] The mode swipe as drafted: a slide from a tap or a sideways swipe on the bar, the knob under the finger, the leaving screen kept under in its own palette, reduced motion honoured.
 - [x] Every radius and every inline size onto the tokens (the §9 box above).
+
+## 13. Take 120 -- the light theme
+
+The owner's word ("do what you recommend for light mode, make it off by default, but add a switcher somewhere, like under settings"), the recommendation drawn first as six candidate tints beside today's dark at both Fold sizes. Each box is closed by take 120.
+
+- [x] Dark stays the default: nothing stored, nothing changes for anyone who does not switch.
+- [x] The switch under More (Appearance): Dark / Light / Auto, a radio group that says which is checked; Auto follows the phone's dark mode live.
+- [x] A tint per mode in light -- parchment for Collect, chalk for Prep & Play, cream for Hunt -- every colour token redefined, every pair measured (six palettes in smoke).
+- [x] What assumed a dark ground put right under the light root: the nav, the shadows, the total's gradient, a press, the pill over a missing picture, the scrim, the glows.
+- [x] The status bar's icons told for the theme (the plugin); a light app on a dark phone no longer draws a white clock on paper.
+
+The UI series wrapped up (the owner: "wrap everything up for the new UI overhaul into this build"), §9's boxes closed by this take:
+- [x] A binder page on the open Fold: a spread of two pages, eighteen pockets at about 105 px, nothing to scroll (the pager by two; one page of nine at the cover).
+- [x] Sealed's banner on the open Fold: looked at in the take-120 look at the MEASURED 749 -- the newest set's top card cut to the band on its face, as at the cover.
+- [x] "— · market" on a product with no market price: "No market price yet", and no low-high line.
+- [x] The "mixed · release" day's no-break spaces.
+- [x] The Sim's battle panel "5000attacks with": the power on its own line in a strong, the card above without it.
+- [x] A deck row's second line cut before its keyword tags at 411 px: it wraps.
+- [x] Set completion's set names cut short at 749 px: they wrap.
+- [x] A Sealed row's kind in the plural for one product: the singular.
+- [x] The Leader sheet and a deck's printing sheet drew an empty grey box when the picture host refused a picture: the number shows instead.
+- [x] Captions under the scan row's icon buttons: the owner's word, "Fine as shipped, no text for camera controls" -- closed without them.
+- [ ] Left open, data-side (DEFERRED in the HANDOFF): the distributors' names verbatim, a product listed by both distributors, the GTS counts that overlap, an upcoming group whose only listing is sealed, the tokens nothing reads.
 
 ## Found in passing, routed elsewhere
 

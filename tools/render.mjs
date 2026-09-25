@@ -852,6 +852,42 @@ if (puppeteer) {
     const res = { out, dur, mode: V.MODE.cur, on: document.querySelector('.screen.on').id, swap: document.documentElement.classList.contains('mode-swap') }; V.MODE.set('collect', true); await new Promise(r => setTimeout(r, 200)); V.go('home'); return res; });
   await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
   ok('take 119: under reduced motion a tap switches at once -- no screen is kept under, and the animation takes no time', !rm.out && rm.dur === '0s' && rm.mode === 'play' && rm.on === 'decks' && !rm.swap, JSON.stringify(rm));
+  /* Take 120: the light theme in real Chrome -- dark by default with nothing stored; More's Appearance switch; a tap on Light: the
+     root, the store, the parchment, color-scheme, the nav on the card, the status bar told; the total's dark-gold gradient still
+     clipped to the text; each mode's own light ground; Auto following the phone live, both ways; back to dark for the rest. */
+  const t120 = await page.evaluate(async () => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)); while (V.closeAnyOverlay()) {}
+    const bg = () => getComputedStyle(document.body).backgroundColor, scheme = () => getComputedStyle(document.documentElement).colorScheme, root = document.documentElement;
+    const navBg = () => getComputedStyle(document.querySelector('#navCollect')).backgroundColor;
+    const segRead = () => { const seg = document.querySelector('#themeSeg'); if (!seg) return null; const bs = [...seg.querySelectorAll('button')];
+      return { role: seg.getAttribute('role'), n: bs.length, on: bs.filter(b => b.classList.contains('on')).map(b => b.dataset.theme).join(), checked: bs.map(b => b.getAttribute('aria-checked')).join(), tall: Math.max(...bs.map(b => Math.round(b.getBoundingClientRect().height))), words: bs.map(b => b.textContent.trim()).join('|') }; };
+    const out = { def: { theme: root.dataset.theme, stored: localStorage.getItem('vault.theme'), bg: bg(), scheme: scheme(), navBg: navBg() } };
+    V.MODE.set('collect', true); await wait(250); V.go('settings'); await wait(250); out.seg = segRead();
+    window.__sb = []; window.Capacitor = { Plugins: { StatusBar: { setStyle: o => { window.__sb.push(o.style); } } } };
+    const lb = document.querySelector('#themeSeg [data-theme="light"]'); if (lb) lb.click(); await wait(400);   /* the body fades over 220 ms */
+    out.light = { theme: root.dataset.theme, stored: localStorage.getItem('vault.theme'), bg: bg(), scheme: scheme(), seg: segRead(), navBg: navBg(), sb: window.__sb.slice() };
+    V.go('home'); await wait(400); const tot = document.querySelector('#home .total'), panel = [...document.querySelectorAll('#home .panel')].find(p => p.getBoundingClientRect().height > 0);
+    out.home = { total: tot ? getComputedStyle(tot).backgroundImage.slice(0, 15) : null, clip: tot ? getComputedStyle(tot).webkitBackgroundClip : null, color: tot ? getComputedStyle(tot).color : null, shadow: panel ? getComputedStyle(panel).boxShadow : null };
+    V.MODE.set('play', true); await wait(300); out.play = bg(); V.MODE.set('hunt', true); await wait(300); out.hunt = bg(); V.MODE.set('collect', true); await wait(300);
+    if (V.THEME) V.THEME.set('system'); await wait(100); out.auto = { stored: localStorage.getItem('vault.theme'), theme: root.dataset.theme };
+    return out; });
+  ok('take 120: dark by default -- nothing stored, the root says dark, the indigo, color-scheme dark', t120.def.theme === 'dark' && t120.def.stored === null && t120.def.bg === 'rgb(16, 13, 34)' && t120.def.scheme === 'dark', JSON.stringify(t120.def));
+  ok('take 120: More\'s Appearance switch -- a radio group of three, Dark on and checked, each one line tall', !!t120.seg && t120.seg.role === 'radiogroup' && t120.seg.n === 3 && t120.seg.on === 'dark' && t120.seg.checked === 'true,false,false' && t120.seg.tall <= 46 && t120.seg.words === 'Dark|Light|Auto', JSON.stringify(t120.seg));
+  ok('take 120: a tap on Light -- the root says light, the value stored, the parchment, color-scheme light, the nav on the card, the status bar told LIGHT', t120.light.theme === 'light' && t120.light.stored === 'light' && t120.light.bg === 'rgb(239, 233, 220)' && t120.light.scheme === 'light' && !!t120.light.seg && t120.light.seg.on === 'light' && t120.light.seg.checked === 'false,true,false' && t120.light.navBg !== t120.def.navBg && t120.light.sb.includes('LIGHT'), JSON.stringify(t120.light));
+  ok('take 120: Home in light -- the total a dark-gold gradient still clipped to the text, the panels\' shadow the lighter one', t120.home.total === 'linear-gradient' && t120.home.clip === 'text' && t120.home.color === 'rgba(0, 0, 0, 0)' && /0\.1\)/.test(t120.home.shadow || ''), JSON.stringify(t120.home));
+  ok('take 120: each mode keeps its own ground in light -- chalk for Prep & Play, cream for Hunt', t120.play === 'rgb(233, 235, 239)' && t120.hunt === 'rgb(242, 232, 213)', JSON.stringify({ play: t120.play, hunt: t120.hunt }));
+  await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'dark' }]);
+  const settled = (theme, bg) => page.evaluate(async (theme, bg) => { const wait = ms => new Promise(r => setTimeout(r, ms));   /* the root flips at once; the ground fades over 220 ms -- polled up to a second, never a sleep sized to it */
+    for (let i = 0; i < 25 && !(document.documentElement.dataset.theme === theme && getComputedStyle(document.body).backgroundColor === bg); i++) await wait(40);
+    return { theme: document.documentElement.dataset.theme, bg: getComputedStyle(document.body).backgroundColor, stored: localStorage.getItem('vault.theme') }; }, theme, bg);
+  const autoDark = await settled('dark', 'rgb(16, 13, 34)');
+  await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'light' }]);
+  const autoLight = await settled('light', 'rgb(239, 233, 220)');
+  ok('take 120: Auto follows the phone, live -- a dark phone gives the indigo, then a light one the parchment, the stored value staying Auto', t120.auto.stored === 'system' && autoDark.theme === 'dark' && autoDark.bg === 'rgb(16, 13, 34)' && autoLight.theme === 'light' && autoLight.bg === 'rgb(239, 233, 220)' && autoLight.stored === 'system', JSON.stringify({ auto: t120.auto, autoDark, autoLight }));
+  await page.emulateMediaFeatures([]);
+  const t120back = await page.evaluate(async () => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)); const t = V.THEME ? V.THEME.set('dark') : null; const sb = (window.__sb || []).slice(); delete window.Capacitor; delete window.__sb; localStorage.removeItem('vault.theme');
+    for (let i = 0; i < 25 && getComputedStyle(document.body).backgroundColor !== 'rgb(16, 13, 34)'; i++) await wait(40);
+    return { t, theme: document.documentElement.dataset.theme, bg: getComputedStyle(document.body).backgroundColor, sb, stored: localStorage.getItem('vault.theme'), on: document.querySelector('.screen.on').id }; });
+  ok('take 120: back to dark -- the indigo, the status bar told DARK, nothing stored for the rest of the run', t120back.t === 'dark' && t120back.theme === 'dark' && t120back.bg === 'rgb(16, 13, 34)' && t120back.sb[t120back.sb.length - 1] === 'DARK' && t120back.stored === null && t120back.on === 'home', JSON.stringify(t120back));
   /* Take 24: switching mode changes the palette and the nav, in Chrome. */
   await page.evaluate(() => { localStorage.setItem('optcghub.guide.v1', '1'); document.querySelector('#tour').hidden = true; document.querySelector('#tour').classList.remove('on');
                               document.querySelector('#modeSlider [data-mode="play"]').click(); });

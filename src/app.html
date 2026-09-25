@@ -55,6 +55,7 @@
   --ok-bg:color-mix(in srgb,var(--up) 14%,var(--card));
   --bad-bg:color-mix(in srgb,var(--down) 10%,var(--card));   /* take 115: 10% in Collect -- --down read 4.30 on 14% ("not legal" on a deck); the other two keep 14% */
   --scrim:rgba(0,0,0,.82);
+  color-scheme:dark;   /* take 120: native controls and the scrollbar follow the theme; the light block says light */
   /* Typography (take 33). Four ROLES, resolved by build_app.py from
      assets/fonts (OFL/Apache defaults) or assets/user/fonts (a licensed face
      the owner drops in). The names are roles on purpose: the file behind
@@ -119,6 +120,56 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
   --accent-bg:color-mix(in srgb,var(--brass) 8%,var(--card)); --bad-bg:color-mix(in srgb,var(--down) 14%,var(--card));   /* take 118: 8% on the kraft -- at take 106's 12% the gold lightens the card until --dim2 reads 4.43 on it; 4.78 at 8% (smoke measures every pair) */
 }
 :root[data-mode="hunt"] body::before{background:radial-gradient(60% 40% at 50% 0%,#3A2C1E 0%,transparent 70%)}
+/* Take 120: the light theme (the owner: "do what you recommend for light mode, make it off by default, but add a
+   switcher somewhere, like under settings"). A second axis on the root beside data-mode -- data-theme, dark unless
+   More > Appearance says otherwise -- and each mode keeps its own ground in light: parchment for Collect,
+   chalk for Prep & Play, cream for Hunt (the owner's picks from the take-120 sheets). The blocks come
+   AFTER the three dark ones: a light block ties a mode block on specificity, so order decides, and the light mode
+   blocks carry both attributes. Every colour token is redefined -- an inherited dark one would be a wrong number
+   (smoke checks the set) -- and every pair smoke measures clears: fg 12+, dim 7+, dim2 4.5+ on card and card2, the
+   inks 4.5 on the tints, the fill 3:1 on the card. The fill (--brass) is a deeper gold than the dark one: the bright
+   gold read 2.0:1 on the parchment, under WCAG 1.4.11's 3:1 for a knob's edge, a button's boundary and the focus
+   ring; the label on it stays the dark ink (5.4). The tints (--accent-bg and the rest) are not written here: the dark
+   blocks' formulas are var-based and mix from these tokens at the dark percentages (every pair measured). */
+:root[data-theme="light"]{
+  --bg:#EFE9DC; --card:#F8F4EA; --card2:#FFFDF7; --line:#DCD3C2;
+  --fg:#1C1838; --dim:#4E4870; --dim2:#6B6590;
+  --brass:#B0851F; --brass2:#956F18; --teal:#B0851F; --gold:#6E4F0C;
+  --up:#186633; --down:#A82D24;
+  --on-accent:#1A1408; --accent-ink:#7B5A0A; --line-strong:#8E86AC;
+  --scrim:rgba(20,16,10,.45);
+  color-scheme:light;
+}
+:root[data-theme="light"][data-mode="play"]{
+  --bg:#E9EBEF; --card:#F5F6F8; --card2:#FFFFFF; --line:#CDD1D8;
+  --fg:#15171C; --dim:#454A55; --dim2:#5F6673;
+  --brass:#E0553D; --brass2:#B64731; --teal:#E0553D; --gold:#7A4715;
+  --up:#186633; --down:#A63A26;
+  --on-accent:#1A1408; --accent-ink:#B03A22; --line-strong:#81878F;
+  --scrim:rgba(20,16,10,.45);
+}
+:root[data-theme="light"][data-mode="hunt"]{
+  --bg:#F2E8D5; --card:#FAF3E4; --card2:#FFFBF0; --line:#DCCFB6;
+  --fg:#2A2014; --dim:#5B4A33; --dim2:#78654A;
+  --brass:#B18322; --brass2:#946D1A; --teal:#B18322; --gold:#6E4F0C;
+  --up:#186633; --down:#A82D24;
+  --on-accent:#1A1408; --accent-ink:#7A5A16; --line-strong:#91836D;
+  --scrim:rgba(20,16,10,.45);
+}
+:root[data-theme="light"] body::before{background:radial-gradient(60% 40% at 50% 0%,rgba(217,166,43,.16) 0%,transparent 70%)}
+:root[data-theme="light"][data-mode="play"] body::before{background:radial-gradient(60% 40% at 50% 0%,rgba(224,85,61,.08) 0%,transparent 70%)}
+:root[data-theme="light"][data-mode="hunt"] body::before{background:radial-gradient(60% 40% at 50% 0%,#E6D6B8 0%,transparent 70%)}
+/* what assumed a dark ground: the nav's near-black, the weight of every shadow, the total's bright-gold gradient (by
+   background-image -- the shorthand resets the clip to the text and paints a block), a press that brightened, the pill
+   over a missing picture */
+:root[data-theme="light"] nav{background:color-mix(in srgb,var(--card) 94%,transparent);border-color:var(--line-strong);box-shadow:0 6px 24px rgba(0,0,0,.14)}
+:root[data-theme="light"] .panel,:root[data-theme="light"] .tile{box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 8px 20px rgba(0,0,0,.10)}
+:root[data-theme="light"] .tile .art,:root[data-theme="light"] #home .shelf .pic{box-shadow:0 6px 14px rgba(0,0,0,.18)}
+:root[data-theme="light"] #home .total{background-image:linear-gradient(180deg,var(--accent-ink) 0%,var(--brass2) 100%)}
+:root[data-theme="light"] #home .segtabs button.on{box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 1px 2px rgba(0,0,0,.12)}
+:root[data-theme="light"] button:not(:disabled):active,:root[data-theme="light"] a.chip:active,:root[data-theme="light"] a.ghost:active{filter:brightness(.92)}
+:root[data-theme="light"] .dhero .art{box-shadow:0 12px 30px rgba(0,0,0,.25)}
+:root[data-theme="light"] .ph .phl{background:rgba(0,0,0,.65)}
 .swords{display:inline-block;width:18px;height:18px;vertical-align:-3px;margin-right:6px;color:var(--accent-ink)}
 .rel{border-bottom:1px solid var(--line)}
 .rel .cd1{color:var(--up);font-weight:700} .rel .cd2{color:var(--accent-ink)} .rel .cd3{color:var(--fg)} .rel .cd4{color:var(--dim2)}   /* take 97: the countdown by nearness */
@@ -359,6 +410,7 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .row .nm{flex:1;min-width:0}
 .row .nm b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .row .nm b:has(> .badge){white-space:normal}   /* take 111: a name that carries its printing's badge wraps -- the ellipsis cut the badge, the one word that tells two printings apart (AGENTS rule 3) */
+#setDone .row .nm b{white-space:normal}   /* take 120: a set's name wraps in Home's half-width panel on the open Fold ("Extra Booster: Anime 25t…") */
 .row .nm > span{font-size:var(--fs-sm);color:var(--dim)}
 .row .v{text-align:right;font-weight:650}
 .row .v > span{display:block;font-size:var(--fs-sm);font-weight:600}
@@ -641,10 +693,17 @@ img.above{object-view-box:inset(0 0 58% 0)}
   overflow:hidden;display:flex;align-items:center;justify-content:center}
 .pocket.empty{background:transparent;border-style:dashed;opacity:.5}
 .pocket img{width:100%;height:100%;object-fit:cover}
-.pocket .tag{position:absolute;left:0;right:0;bottom:0;padding:3px 5px;font-size:var(--fs-cap);color:var(--fg);
+.pocket .tag{position:absolute;left:0;right:0;bottom:0;padding:3px 5px;font-size:var(--fs-cap);color:#fff;
   background:linear-gradient(transparent,rgba(0,0,0,.72));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pocket .n{position:absolute;top:3px;right:5px;font-size:var(--fs-cap);font-weight:800;color:var(--accent-ink);
-  background:rgba(0,0,0,.5);padding:1px 4px;border-radius:4px}
+  background:color-mix(in srgb,var(--card) 85%,transparent);padding:1px 4px;border-radius:4px}   /* take 120: the card's own colour under the accent ink -- a black pill was dark on dark in light */
+:root[data-theme="light"] .bnpage{background:color-mix(in srgb,var(--card) 90%,#000 10%)}   /* take 120: a lighter page in light; 20% black read as a grey slab */
+:root[data-theme="light"] .pocket.empty{border-color:var(--line-strong);opacity:.7}   /* the dashed edge at the control's strength: --line at half opacity vanished on the page */
+/* take 120: on the open Fold (700 px and up, Home's own breakpoint) the binder is a spread -- two pages side by side, six
+   pockets across at about 105 px -- so a page needs no scroll there (the audit's box: 226 x 316 px pockets ran 1151 px on
+   an 832 px screen). One page at the cover width, as before. */
+#bnGrid.spread{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+#bnGrid.spread .bnpage{padding:8px;gap:6px}
 
 /* ---- set checklist ------------------------------------------------------ */
 .ckgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
@@ -680,7 +739,7 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .dkrow .n b:has(> .badge){white-space:normal}   /* take 115: the deck, trade, want and alert rows too -- the badge is the word that tells two printings apart (landmine 164) */
 /* Direct child only. `.dkrow .n span` caught the .badge inside <b> and drew
    it as a full-width bar — landmine 86's third instance. */
-.dkrow .n > span{font-size:var(--fs-cap);color:var(--dim);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dkrow .n > span{font-size:var(--fs-cap);color:var(--dim);display:block;white-space:normal}   /* take 120: the line wraps -- at 411 px the ellipsis cut the keyword tags, the useful end of it */
 .dkrow .cnt{display:flex;align-items:center;gap:8px}
 .dkrow .cnt button{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line);font-size:var(--fs-row);color:var(--dim)}
 .dkrow .cnt b{min-width:14px;text-align:center}
@@ -1128,7 +1187,7 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
     <div class="ab-text"><h1 class="ab-title">Binder</h1><p class="ab-sub" id="bnPage"></p></div>
   </header>
   <div class="chips" id="bnSets" style="margin:2px 0 10px"></div>
-  <div class="bnpage" id="bnGrid"></div>
+  <div id="bnGrid"></div>
   <div class="row" style="justify-content:space-between;margin-top:12px">
     <button class="ghost" id="bnPrev">&#8592; Page</button>
     <span class="note" id="bnOf"></span>
@@ -2411,7 +2470,7 @@ function paintLeaderPick() {
     ((CAT.sets.get(b.set) || {}).pub || '').localeCompare((CAT.sets.get(a.set) || {}).pub || ''));
   $('#lpList').innerHTML = list.slice(0, 40).map(p => `
     <button class="opt" data-lp="${p.id}">
-      <div class="oa">${refArt(p)}</div>
+      <div class="oa">${refArt(p)}<div class="ph">${esc((p.num || '').split('-').pop() || '')}</div></div>
       <div class="oi"><b>${esc(p.name)}</b>
         <span>${esc(p.num)} · ${p.life || '?'} life · ${esc((CAT.sets.get(p.set) || {}).abbr || '')}${
           ownedIds.has(p.id) ? ' · <span class="up">you own this</span>' : ''}</span></div>
@@ -2442,7 +2501,7 @@ document.addEventListener('click', e => {
   $('#ppTitle').textContent = `Which ${cur.num} is in the deck?`;
   $('#ppList').innerHTML = sibs.slice().sort((a, b) => (b.market || 0) - (a.market || 0)).map(p => `
     <button class="opt${p.id === cur.id ? ' best' : ''}" data-pp="${p.id}">
-      <div class="oa">${refArt(p)}</div>
+      <div class="oa">${refArt(p)}<div class="ph">${esc((p.num || '').split('-').pop() || '')}</div></div>
       <div class="oi"><b>${esc(TREAT[p.treat] || p.treat)}${p.prov ? ' · ' + esc(p.prov) : ''}</b>
         <span>${esc((CAT.sets.get(p.set) || {}).abbr || '')}${ownedQ(p.id) ? ` · <span class="up">you own ${ownedQ(p.id)}</span>` : ''}${
           p.id === cur.id ? ' · in the deck now' : ''}</span></div>
@@ -2761,6 +2820,33 @@ const MODE = {
     if (navigate) go(this.home[m]);
   }
 };
+/* Take 120: the theme (the owner: "do what you recommend for light mode, make it off by default, but add a switcher
+   somewhere, like under settings"). A second axis on the root beside data-mode: data-theme is dark unless More >
+   Appearance says light, or Auto, which follows the phone's dark mode through matchMedia and turns with it. Stored
+   beside the mode. Dark is the default and the app's own look; light keeps three grounds. The status bar's icons are
+   told through the StatusBar plugin at boot and on every switch: they followed the phone's night mode alone, and a
+   light app on a dark phone would draw a white clock on parchment. The root is set here, before the first paint;
+   the bars wait for boot (PLATFORM is declared below this line). */
+const THEME = {
+  cur: (v => v === 'light' || v === 'system' ? v : 'dark')(localStorage.getItem('vault.theme')),
+  _mq: null,
+  mq() {
+    if (!this._mq) { try { if (typeof matchMedia === 'function') { this._mq = matchMedia('(prefers-color-scheme: dark)'); const on = () => { if (THEME.cur === 'system') THEME.apply(); };
+      if (this._mq.addEventListener) this._mq.addEventListener('change', on); else if (this._mq.addListener) this._mq.addListener(on); } } catch (e) { this._mq = null; } }
+    return this._mq;
+  },
+  applied() { if (this.cur !== 'system') return this.cur; const m = this.mq(); return m && !m.matches ? 'light' : 'dark'; },   /* no way to ask the phone: dark, the default, never a guess at light */
+  apply(bars = true) {
+    const t = this.applied(), root = document.documentElement; if (root && root.dataset) root.dataset.theme = t;
+    $$('#themeSeg button').forEach(b => { const on = b.dataset.theme === this.cur; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
+    if (bars) PLATFORM.statusBar(t);
+    return t;
+  },
+  set(v) { this.cur = v === 'light' || v === 'system' ? v : 'dark'; saveJson('vault.theme', this.cur); return this.apply(); }
+};
+THEME.apply(false);
+function themeSegClick(e) { const b = e.target.closest('#themeSeg [data-theme]'); if (!b) return; THEME.set(b.dataset.theme); }
+document.addEventListener('click', themeSegClick);
 /* Take 119: the slide (the owner: "animations between modes like a swipe"; take 110's crossfade before it). On a tap or a
    swipe only -- MODE.set itself stays instant for the guide, Back and the harness. The screen leaving is kept painted
    under the one arriving: fixed where it was (its top read before the switch), its palette's tokens copied onto it so the
@@ -3021,6 +3107,8 @@ $('#wtClear').addEventListener('click', () => { if (WANT.list.length && confirm(
  * gaps and all. Pages flip; the page is remembered per set.
  * ===================================================================== */
 const BN = { set: null, page: 0, pageOf: {} };
+const bnSpread = () => typeof innerWidth === 'number' && innerWidth >= 700;   /* take 120: the open Fold shows a spread */
+if (typeof addEventListener === 'function') addEventListener('resize', () => { const b = $('#binder'); if (b && b.classList && typeof b.classList.contains === 'function' && b.classList.contains('on')) paintBinder(); });   /* the Fold opening or closing on the binder */
 /* A number’s label inside a set: the suffix when the prefix is the set’s own,
    the full number when it is a reprint carrying another set’s number
    (landmine 101). Two pockets both reading "002" were EB03-002 and EB02-002. */
@@ -3051,9 +3139,11 @@ function paintBinder() {
   /* take 111: a set not yet paged opens at its first held pocket -- it opened on nine empty ones */
   const firstHeld = nums.findIndex(n => heldBy.has(n));
   BN.page = Math.min(BN.pageOf[BN.set] != null ? BN.pageOf[BN.set] : Math.max(0, Math.floor(firstHeld / 9)), pages - 1);
-  const slice = nums.slice(BN.page * 9, BN.page * 9 + 9);
-  while (slice.length < 9) slice.push(null);
-  $('#bnGrid').innerHTML = slice.map(num => {
+  /* take 120: on the open Fold a spread -- the page and the one facing it, eighteen pockets; a spread starts on an even page */
+  const spread = bnSpread(), per = spread ? 18 : 9, first = spread ? BN.page - (BN.page % 2) : BN.page;
+  const slice = nums.slice(first * 9, first * 9 + per);
+  while (slice.length < per) slice.push(null);
+  const pocket = num => {
     if (!num) return '<div class="pocket empty"></div>';
     const h = heldBy.get(num);
     if (!h) return `<button class="pocket empty" data-ck="${esc(num)}" data-ckid="${byNum.get(num).id}"><span class="n">${esc(numLabel(num, BN.set))}</span></button>`;
@@ -3061,15 +3151,17 @@ function paintBinder() {
       ${h.i.photo ? `<img src="${esc(h.i.photo)}">` : refArt(h.p)}
       <span class="n">${esc(numLabel(num, BN.set))}${h.i.qty > 1 ? ' \u00d7' + h.i.qty : ''}</span>
       <span class="tag">${esc(h.p.name)}${h.p.treat !== 'base' ? ' \u00b7 ' + esc(TREAT[h.p.treat] || h.p.treat) : ''}</span></button>`;
-  }).join('');
-  const s = CAT.sets.get(BN.set);
-  $('#bnPage').textContent = `${esc(s.abbr || '')} \u00b7 page ${BN.page + 1} of ${pages}`;
+  };
+  const grid = $('#bnGrid'); if (grid.classList) grid.classList.toggle('spread', spread);
+  grid.innerHTML = Array.from({ length: per / 9 }, (_, i) => `<div class="bnpage">${slice.slice(i * 9, i * 9 + 9).map(pocket).join('')}</div>`).join('');
+  const s = CAT.sets.get(BN.set), last = Math.min(first + per / 9, pages);
+  $('#bnPage').textContent = `${esc(s.abbr || '')} \u00b7 ${last - first > 1 ? `pages ${first + 1}\u2013${last}` : `page ${first + 1}`} of ${pages}`;
   $('#bnOf').textContent = `${heldBy.size} of ${nums.length} pockets filled`;
-  $('#bnPrev').disabled = BN.page === 0; $('#bnNext').disabled = BN.page >= pages - 1;
+  $('#bnPrev').disabled = first === 0; $('#bnNext').disabled = last >= pages;
 }
 /* take 115 (SPEC-111-49): a page turn counts from the page on screen -- a set opened at its first held card's
    page had no page stored, and Next from page 5 of 14 went to page 2. paintBinder keeps it inside the set. */
-function bnTurn(d) { BN.pageOf[BN.set] = Math.max(0, BN.page + d); return paintBinder(); }
+function bnTurn(d) { const step = bnSpread() ? 2 : 1, at = bnSpread() ? BN.page - (BN.page % 2) : BN.page; BN.pageOf[BN.set] = Math.max(0, at + d * step); return paintBinder(); }   /* take 120: a spread turns by two */
 document.addEventListener('click', e => {
   const st = e.target.closest('[data-bnset]'); if (st) { BN.set = +st.dataset.bnset; return paintBinder(); }
   if (e.target.id === 'bnPrev') return bnTurn(-1);
@@ -4644,7 +4736,7 @@ function paintSealed() {
     if (!open) continue;
     for (const p of ps) {
     const tl = (byCat[p.id] || []).map(i => targetLine(i, T)).join('') + LOCAL.shopLines(p.id).map(l => `<span style="display:block;color:var(--brass)">${esc(l.shop)}${l.mi != null ? ' ~' + l.mi + ' mi' : ''} ${money(l.price)} \u00b7 ${l.available ? 'in stock online' : 'sold out online'} \u00b7 ${esc(HUNT.ageLabel(LOCAL.shops.fetched_at))}</span>`).join('');
-    out.push(sealedRow(p, esc(sealedKind(p)[1]), tl, byDist));
+    out.push(sealedRow(p, esc(sealedWord(p)), tl, byDist));   /* take 120: the singular -- one product read "Boxes" */
     }
   }
   /* take 110: the stock panels always fill the list, so an empty search said nothing at all (the fallback below never ran) */
@@ -4925,7 +5017,7 @@ ${foot(s, s.name)}</div>`;
   const isDeckItem = it => (it.codes || []).some(c => /^ST\d+$/.test(c)) && /STARTER DECK/i.test(it.name || '');
   const ditem = it => `<div class="row"><div class="nm" style="min-width:0"><b style="white-space:normal">${esc(it.name)}</b><span>${esc((it.codes || []).join(', '))}</span>${distLine(it)}</div></div>`;
   const dgroup = (rel, items) => { const key = 'd:' + items[0]._d + ':' + rel; const codes = items.map(it => (it.codes || [])[0]).filter(Boolean); const same = items.every(it => distWords(it).join() === distWords(items[0]).join());
-    return `<div class="row" style="flex-wrap:wrap"><div class="nm" style="min-width:0;flex:1"><b style="white-space:normal">Starter decks ${esc(codes[0] || '')}\u2013${esc(codes[codes.length - 1] || '')}</b><span>${items.length} starter deck displays, one release day \u00b7 ${esc(codes.join(', '))}</span>${same ? distLine(items[0]) : `<span style="display:block;color:var(--brass)">${esc(HUNT.distName(items[0]._d))} \u00b7 mixed \u00b7 release ${esc(dayText(rel))}</span>`}</div>
+    return `<div class="row" style="flex-wrap:wrap"><div class="nm" style="min-width:0;flex:1"><b style="white-space:normal">Starter decks ${esc(codes[0] || '')}\u2013${esc(codes[codes.length - 1] || '')}</b><span>${items.length} starter deck displays, one release day \u00b7 ${esc(codes.join(', '))}</span>${same ? distLine(items[0]) : `<span style="display:block;color:var(--brass)">${esc(HUNT.distName(items[0]._d))} \u00b7 mixed \u00b7 release ${esc(nbsp(dayText(rel)))}</span>`}</div>
       <button class="ghost" data-relfold="${esc(key)}" aria-expanded="${RELF.open.has(key)}" style="flex:0 0 auto;padding:6px 12px;font-size:var(--fs-sm)">${RELF.open.has(key) ? 'Hide ' + chev(true, 14) : `Show ${items.length} ${chev(false, 14)}`}</button>${RELF.open.has(key) ? `<div style="flex-basis:100%;padding-left:12px;border-left:2px solid var(--line)">${items.map(ditem).join('')}</div>` : ''}</div>`; };
   const drender = list => { const out = []; for (let i = 0; i < list.length; i++) { const it = list[i]; if (!isDeckItem(it)) { out.push(ditem(it)); continue; }
       const run = [it]; while (i + 1 < list.length && isDeckItem(list[i + 1]) && list[i + 1].release === it.release && list[i + 1]._d === it._d) run.push(list[++i]);
@@ -5116,6 +5208,9 @@ const PLATFORM = {
     if (C.Plugins && C.Plugins[name]) return C.Plugins[name];
     try { return C.registerPlugin ? C.registerPlugin(name) : null; } catch (e) { return null; }
   },
+  /* take 120: the status bar's icons for the theme -- LIGHT (dark icons for a light bar) or DARK (light icons). The plugin is
+     @capacitor/status-bar, in package.json; on the web there is none and nothing happens. */
+  statusBar(theme) { const SB = this.plugin('StatusBar'); if (!SB || typeof SB.setStyle !== 'function') return false; try { const p = SB.setStyle({ style: theme === 'light' ? 'LIGHT' : 'DARK' }); if (p && p.catch) p.catch(() => {}); } catch (e) {} return true; },
   hasOcr() { return !!this.plugin('TextRecognition'); },
   /* Crop canvas -> file -> ML Kit. The plugin takes a PATH (read from its
      definitions.d.ts at take 10, not from memory), so the crop goes through
@@ -5843,9 +5938,9 @@ function openDetail(id, { dist = false } = {}) {
   } else $('#dSpread').innerHTML = '';
 
   $('#dProv').innerHTML =
-    `${money(p.market)} \u00b7 market \u00b7 TCGplayer via TCGCSV \u00b7 as of ` +
+    `${p.market != null ? `${money(p.market)} \u00b7 market` : 'No market price yet'} \u00b7 TCGplayer via TCGCSV \u00b7 as of ` +   /* take 120: it read "— \u00b7 market" */
     `<span style="white-space:nowrap">${esc(dayText(CAT.man.source_updated_at))}</span>.<br>` +
-    `Low ${money(p.low)} \u2013 high ${money(p.high)} on the same day. The market ` +
+    `${p.low != null || p.high != null ? `Low ${money(p.low)} \u2013 high ${money(p.high)} on the same day. ` : ''}The market ` +
     `price is a model, not a sale.` +
     (p.d7p != null || p.d30p != null
       ? `<br>${p.d7p != null ? `7d ${signedPct(p.d7p, true)}` : ''}` +
@@ -5994,6 +6089,9 @@ function paintSettings() {
       <button class="linkish" data-act="currency">Show prices in\u2026 ${esc(CUR.active())}${CUR.active() !== 'USD' ? ' (converted)' : ''}</button>
       <button class="linkish" data-act="rate">Rate this app on Google Play</button>
       <button class="linkish" data-act="shareapp">Tell someone about the app</button></div>
+    <div class="panel"><h3>Appearance</h3>
+      <div class="seg" id="themeSeg" role="radiogroup" aria-label="Appearance">${['dark', 'light', 'system'].map(t => `<button role="radio" data-theme="${t}" class="${THEME.cur === t ? 'on' : ''}" aria-checked="${THEME.cur === t}">${{ dark: 'Dark', light: 'Light', system: 'Auto' }[t]}</button>`).join('')}</div>
+      <div class="note">Dark is the app\u2019s own look. Light gives each mode a paper ground \u2014 parchment for Collect, chalk for Prep &amp; Play, cream for Hunt. Auto follows the phone\u2019s dark mode.</div></div>
     <div class="panel"><h3>Sync</h3>
       <div class="row"><div class="nm"><b>Prices from ${esc(dayText(CAT.man.source_updated_at))}</b>
         <span>${CAT.man.fromDisk ? 'synced copy on this phone' : 'the copy that came with the app'}${CAT.man.updateUrl ? '' : ' \u00b7 sync not configured'}</span></div>
@@ -6417,8 +6515,8 @@ function paintSim() {
     const b = g.battle; const pw = SIM.battlePowers(); const A = SIM.P(b.att); const att = CAT.byId.get((b.aref === 'leader' ? A.leader : A.chars[b.aref]).id);
     const tgt = b.dref === 'leader' ? CAT.byId.get(P.leader.id) : CAT.byId.get(P.chars[b.dref].id);
     box.innerHTML = `${simOfferPanel()}<div class="panel"><h3>${esc(P.name)} is attacked</h3>
-      <div class="row"><div class="nm">${simCard(att.id)}<span>attacks with <b>${pw.a}</b></span></div></div>
-      <div class="row"><div class="nm">${simCard(tgt.id)}<span>defends with <b>${pw.d}</b>${b.counter ? ' (counters +' + b.counter + ')' : ''}${b.blocked ? ' \u00b7 blocking' : ''}</span></div></div>
+      <div class="row"><div class="nm">${simCard(att.id, '', true)}<span style="display:block">attacks with <strong>${pw.a}</strong></span></div></div>
+      <div class="row"><div class="nm">${simCard(tgt.id, '', true)}<span style="display:block">defends with <strong>${pw.d}</strong>${b.counter ? ' (counters +' + b.counter + ')' : ''}${b.blocked ? ' \u00b7 blocking' : ''}</span></div></div>
       ${b.step === 'block' ? `<div class="fgrp">Block step (\u00a77-1-2)</div>${SIM.blockers().map(x => `<button class="linkish" data-sim="block:${x.ref}">Block with ${esc(x.name)}</button>`).join('') || '<div class="note">No active Blocker</div>'}<button class="ghost" data-sim="noblock" style="margin-top:8px">No block</button><span class="note" style="margin-left:8px">then the counter step</span>`
       : `<div class="fgrp">Counter step (\u00a77-1-3)</div>${SIM.counters().map(x => `<button class="linkish" data-sim="counter:${x.h}">Counter with ${esc(x.name)} (+${x.plus})</button>`).join('') || '<div class="note">No Counter cards in hand</div>'}${SIM.counterEvents().map(x => `<button class="linkish" data-sim="cev:${x.h}">Play ${esc(x.name)} (${x.cost} DON!!)</button>`).join('')}<div class="note" style="margin-top:6px">[Counter] Events and other effects: play them by hand, then adjust with ${G('more', 14)} if needed.</div><button class="ghost go" data-sim="resolve" style="margin-top:8px">Resolve</button><span class="note" style="margin-left:8px">${pw.a} vs ${pw.d}${pw.a >= pw.d ? ': hit' : ': held'}</span>`}
     </div>${simLog()}`;
@@ -6628,6 +6726,7 @@ async function runSelfTest() {
   }
   OWN.snapshot(); paintBatchBadge();
   MODE.set(MODE.cur, false); go(MODE.home[MODE.cur] || 'home');   // take 81: the mode’s OWN home (Hunt used to reopen on Collect’s); take 105: pushed for Collect too — an empty stack made the first Back minimize the app (landmine 140)
+  THEME.apply();   /* take 120: the status bar's icons for the theme */
   NAV.bootStack = NAV.stack.slice();
   splashDone();
   ALERTS.check().then(f => { if (f.length) toast(`${f.length} price alert${f.length === 1 ? '' : 's'} fired`); });
@@ -6663,7 +6762,7 @@ async function runSelfTest() {
   window.VAULT = { get guidePage() { return guidePage; }, guideOpen, guideClose, guideGo, guideStart, guidePaint, GUIDE, topCard, dotJoin, curLabel, paintBinder, sealedKind, sealedWord, sealedRow, gameColours, distWords, feedLine, sourceLead, picturesLine, sealedCountLine, catalogueNote, setsWithCards, setCards, paintDevEarn, backArrow, closeSheet, setHomeTab, bulkLines, bulkSum, shownLines, signedMoney, pctNum, signedPct, dayText, momentText, fromShown, toShown, setTop, newestTop, paintSealedHero, ownBack, artBack, artUrl, artColours, largeOk, heroLeader, paintDeckHero, paintBack, stockPic, CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, setCond, toast, cameraVerdict, effectsLine, HUNT, targetLine, distLine, distShort, distRowLines, distFold, distFoldTap, distSummary, DISTF, paintDetailDist, distHistory, distHistTap, tlDay, tlWindow, gtsDue, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
                    cardPic, setPic, picBox, deckRow, paintHome, paintDecks, paintSearch, openDeck,
                    FILT, loadFilter, applyFilter, sortRows, blankFilter, activeCount,
-                   DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,
+                   DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, THEME, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,
                    backupJson, scheduleBackup, backupHeld, restoreFromBackup, loadCatalogue, catalogueProblem, STORE, readJson, saveJson, BATCH,
                    PICKER, pickCurrency, MAXLOCK, bnTurn, commitOwn, importCsv, backupProblem, typedAmount, paintAlerts, localDay,
                    scan: { PLATFORM, detectQuad, parseRead, normaliseRead, starScore,

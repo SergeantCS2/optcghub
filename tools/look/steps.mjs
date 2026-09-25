@@ -1631,4 +1631,91 @@ const take119 = [
       return { ok: m.mode === 'collect' && m.on === 'home' && !m.out && Math.abs(off) <= 2 && m.knobInline === '', knobOffset: off, ...m };
     } },
 ];
-export const STEPS = { 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
+const binderStep = name => ({ name, run: async (page) => {
+  /* take 120: the open Fold shows a spread of two pages, eighteen pockets, the grid above the nav with nothing to scroll for it; the cover one page of nine */
+  const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('collect', true); await ${pause}; V.go('binder'); await ${pause}; window.scrollTo(0, 0); await new Promise(r => setTimeout(r, 200));
+    const g = document.getElementById('bnGrid'), r = g.getBoundingClientRect(), nav = document.querySelector('nav:not([hidden])').getBoundingClientRect(), pk = document.querySelector('.pocket'), pr = pk ? pk.getBoundingClientRect() : null;
+    return { wide: innerWidth >= 700, spread: g.classList.contains('spread'), pages: g.querySelectorAll('.bnpage').length, pockets: g.querySelectorAll('.pocket').length, pocket: pr ? Math.round(pr.width) + 'x' + Math.round(pr.height) : null, gridBottom: Math.round(r.bottom), navTop: Math.round(nav.top), label: document.getElementById('bnPage').textContent, theme: document.documentElement.dataset.theme }; })()`);
+  await waitArt(page, '#bnGrid img'); await wait(400);
+  return { ok: m.spread === m.wide && m.pages === (m.wide ? 2 : 1) && m.pockets === (m.wide ? 18 : 9) && (!m.wide || m.gridBottom <= m.navTop), ...m };
+} });
+const take120 = [
+  { name: 'open', run: async (page, ctx) => { await ctx.open(); return { ok: true }; } },
+  take119.find(st => st.name === 'collect-seed'),
+  { name: 'more-appearance-dark', run: async (page) => {
+      /* More > Appearance as the app opens: Dark on; the panel scrolled into view */
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.go('settings'); await ${pause};
+        const seg = document.querySelector('#themeSeg'); seg.scrollIntoView({ block: 'center' }); await new Promise(r => setTimeout(r, 200));
+        const bs = [...seg.querySelectorAll('button')]; return { on: bs.filter(b => b.classList.contains('on')).map(b => b.dataset.theme).join(), words: bs.map(b => b.textContent.trim()).join('|'), tall: Math.max(...bs.map(b => Math.round(b.getBoundingClientRect().height))), theme: document.documentElement.dataset.theme, stored: localStorage.getItem('vault.theme') }; })()`);
+      await wait(300);
+      return { ok: m.on === 'dark' && m.theme === 'dark' && m.stored === null && m.words === 'Dark|Light|Auto' && m.tall <= 46, ...m };
+    } },
+  { name: 'light-switch-tap', run: async (page) => {
+      /* a real tap on Light: the whole page turns, the panel stays where it is */
+      await page.click('#themeSeg [data-theme="light"]'); await wait(500);
+      const m = await page.evaluate(() => { const bs = [...document.querySelectorAll('#themeSeg button')]; return { on: bs.filter(b => b.classList.contains('on')).map(b => b.dataset.theme).join(), theme: document.documentElement.dataset.theme, stored: localStorage.getItem('vault.theme'), bg: getComputedStyle(document.body).backgroundColor, scheme: getComputedStyle(document.documentElement).colorScheme }; });
+      return { ok: m.on === 'light' && m.theme === 'light' && m.stored === 'light' && m.bg === 'rgb(239, 233, 220)' && m.scheme === 'light', ...m };
+    } },
+  view('light-collect-home', `V.go('home'); V.setHomeTab(false); V.paintHome()`, { art: '#topList img' }),
+  view('light-collect-card-page', `V.openDetail(V.OWN.items[0].id)`, { art: '#dArt img' }),
+  view('light-collect-collection', `document.querySelector('#allq').value = ''; V.go('collection')`, { art: '#colGrid img' }),
+  view('light-collect-wants', `V.go('wants')`),
+  binderStep('light-binder-on-the-fold'),
+  { name: 'light-sheet-on-the-scrim', run: async (page) => {
+      /* the currency picker's sheet over the light page: the scrim is the light one */
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.go('settings'); await ${pause}; V.pickCurrency(); await new Promise(r => setTimeout(r, 600));
+        const sh = document.querySelector('.sheet.on'); return { sheet: sh ? sh.id : null, scrim: sh ? getComputedStyle(sh).backgroundColor : null }; })()`);
+      await wait(300);
+      return { ok: !!m.sheet && /^rgba\(20, 16, 10/.test(m.scrim || ''), ...m };
+    } },
+  view('light-play-decks', `V.MODE.set('play', true); await ${pause}; V.go('decks')`, { art: '#dkHero img' }),
+  view('light-play-counter', `V.go('play')`),
+  take119.find(st => st.name === 'play-deck-editor-panels'),
+  { name: 'light-deck-rows-second-line-wraps', run: async (page) => {
+      /* take 120: a deck row's second line wraps instead of cutting its end (the keyword tags) -- no span wider than its box, at either size */
+      const m = await page.evaluate(() => { const r0 = document.querySelector('#deck .dkrow'); if (r0) r0.scrollIntoView({ block: 'start' }); const spans = [...document.querySelectorAll('#deck .dkrow .n > span')]; return { on: document.querySelector('.screen.on').id, rows: spans.length, tags: spans.filter(s => s.querySelector('.kwtag')).length, clipped: spans.filter(s => s.scrollWidth > s.clientWidth + 1).length, twoLines: spans.filter(s => s.getBoundingClientRect().height > 20).length }; });
+      await wait(200);
+      return { ok: m.on === 'deck' && m.rows >= 3 && m.clipped === 0, ...m };
+    } },
+  view('light-hunt-sealed', `V.MODE.set('hunt', true); await ${pause}; V.SEALED.q = ''; V.SEALED.kind = 'all'; V.go('sealed'); V.paintSealed()`, { art: '#sealed img' }),
+  view('light-hunt-releases', `V.go('releases')`),
+  { name: 'light-slide-paused-half-way', run: async (page) => {
+      /* the slide in light, paused at 110 ms: Sealed leaving to the right in its cream, Home part-way in from the left in the parchment */
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.go('sealed'); await ${pause}; window.scrollTo(0, 0); await ${pause};
+        document.querySelector('#modeSlider [data-mode="collect"]').click();
+        const anims = document.getAnimations(); anims.forEach(a => { a.pause(); a.currentTime = 110; }); clearTimeout(V.MODE._swap);
+        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const out = document.querySelector('.screen.out'), on = document.querySelector('.screen.on');
+        return { anims: anims.length, out: out ? out.id : null, on: on.id, outBg: out ? getComputedStyle(out).getPropertyValue('--bg').trim() : null, rootBg: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() }; })()`);
+      await wait(200);
+      return { ok: m.out === 'sealed' && m.on === 'home' && m.anims >= 2 && m.outBg !== m.rootBg && m.rootBg.toUpperCase() === '#EFE9DC', ...m };
+    } },
+  { name: 'light-slide-finished', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; document.getAnimations().forEach(a => a.finish()); await new Promise(r => setTimeout(r, 80)); document.documentElement.classList.remove('mode-swap', 'swap-l');
+        await ${pause}; return { out: !!document.querySelector('.screen.out'), on: document.querySelector('.screen.on').id, mode: V.MODE.cur, swap: document.documentElement.classList.contains('mode-swap') }; })()`);
+      await waitArt(page, '#topList img'); await wait(300);
+      return { ok: !m.out && m.on === 'home' && m.mode === 'collect' && !m.swap, ...m };
+    } },
+  { name: 'auto-follows-a-dark-phone', run: async (page) => {
+      await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.THEME.set('system'); })()`);
+      await page.emulateMedia({ colorScheme: 'dark' }); await wait(500);
+      const m = await page.evaluate(() => ({ theme: document.documentElement.dataset.theme, stored: localStorage.getItem('vault.theme'), bg: getComputedStyle(document.body).backgroundColor }));
+      return { ok: m.theme === 'dark' && m.stored === 'system' && m.bg === 'rgb(16, 13, 34)', ...m };
+    } },
+  { name: 'auto-follows-a-light-phone', run: async (page) => {
+      await page.emulateMedia({ colorScheme: 'light' }); await wait(500);
+      const m = await page.evaluate(() => ({ theme: document.documentElement.dataset.theme, stored: localStorage.getItem('vault.theme'), bg: getComputedStyle(document.body).backgroundColor }));
+      return { ok: m.theme === 'light' && m.stored === 'system' && m.bg === 'rgb(239, 233, 220)', ...m };
+    } },
+  { name: 'more-appearance-back-to-dark', run: async (page) => {
+      await page.emulateMedia({ colorScheme: null });
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.go('settings'); await ${pause}; V.THEME.set('dark'); await new Promise(r => setTimeout(r, 300));
+        const seg = document.querySelector('#themeSeg'); seg.scrollIntoView({ block: 'center' }); await new Promise(r => setTimeout(r, 200));
+        const m = { on: [...seg.querySelectorAll('button.on')].map(b => b.dataset.theme).join(), theme: document.documentElement.dataset.theme, stored: localStorage.getItem('vault.theme'), bg: getComputedStyle(document.body).backgroundColor };
+        localStorage.removeItem('vault.theme'); return m; })()`);
+      await wait(300);
+      return { ok: m.on === 'dark' && m.theme === 'dark' && m.stored === 'dark' && m.bg === 'rgb(16, 13, 34)', ...m };
+    } },
+  binderStep('dark-binder-on-the-fold'),
+];
+export const STEPS = { 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };

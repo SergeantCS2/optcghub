@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 119.* Ranked by blocking-ness, not by interest.
+*Current as of take 120.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -1234,6 +1234,23 @@ failed read is a hole, not "nothing listed".
 
 ## A42 — The UI series: uniform headers, card art used boldly, one voice · OPENED take 106 · CLOSED take 111 (PR #35, merged 16:31 UTC 24 Sept)
 
+**Take 120 (the UI/UX session), the owner's word on light mode -- "do what
+you recommend for light mode, make it off by default, but add a switcher
+somewhere, like under settings":** a light theme beside the three palettes,
+dark the default, More > Appearance (Dark / Light / Auto, the phone followed
+live), each mode its own light ground -- parchment, chalk, cream -- every
+pair measured in smoke on every build (six palettes now), the fill a deeper
+gold that clears 3:1 on the card, the status bar told through the plugin;
+and the UI series wrapped up (the owner's word): the binder a spread of two
+pages on the open Fold, the audit's small boxes closed (a product with no
+market price, the mixed distributor line's day, the Sim's battle lines, a deck
+row's second line, a set's name on the Fold, a Sealed row's kind, the two
+sheets' refused pictures). **Ruled out (take 120):** one light palette for the three modes; the phone's
+setting as the default; the drafts' bright gold as the fill (2.0:1); the
+`background` shorthand for the total's gradient; "Follow the phone" as the
+third label; the tints redefined per light block (landmine 207);
+`<meta name="theme-color">` for the bar (a WebView ignores it).
+
 **Take 119 (the UI/UX session), the owner's picks from the six take-119
 sheets:** the surface with the caps label and the fading rule on every panel
 of Collect and Hunt (S1); the collection tile as a surface card (T1); the
@@ -2067,7 +2084,8 @@ take-16 pass chose one of them (a sea chart). Other honest directions, none
 chosen yet:
 
 - **Parchment-light.** A light mode: aged paper `#EFE4C8`, ink `#1E1A14`,
-  wax-seal red, brass. Wanted posters and a ship's log are light objects; every
+  wax-seal red, brass. *(Take 120 ships a light theme, per mode and off by
+  default -- see A42.)* Wanted posters and a ship's log are light objects; every
   card-collection app is dark, so light is the distinctive move. Costs
   contrast work on the six game colours and on the SAMPLE art, which is
   designed for dark tiles.

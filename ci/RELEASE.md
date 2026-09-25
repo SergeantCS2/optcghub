@@ -1,4 +1,4 @@
-# OP TCG Hub — take 119
+# OP TCG Hub — take 120
 
 ## Installing — read this first
 
@@ -17,6 +17,17 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 120:** A light look, under More → Appearance: Dark (as before, and
+the default), Light, or Auto to follow the phone. In light each mode keeps its
+own ground — parchment for Collect, chalk for Prep & Play, cream for Hunt — with
+the same layout, and every colour was measured for contrast before it shipped.
+Nothing changes unless you switch it. Also in this update, the last of the UI
+series: on the open Fold the binder shows two pages side by side, so a page needs
+no scrolling; a deck row's keyword tags and a set's name are no longer cut short;
+a product with no market price says so instead of showing a dash; the Sim's
+battle lines read cleanly; a Leader whose picture cannot be fetched shows its
+number instead of a grey box.
 
 **New at take 119:** The lifted, edged panels Home got at take 118 are on
 every screen of Collect and Hunt now, with the same small capital labels, and
