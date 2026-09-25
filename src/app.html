@@ -42,7 +42,7 @@
   --fs-cap:12px; --fs-sm:13px; --fs-label:14px; --fs-body:15px; --fs-row:16px;
   --fs-title:18px; --fs-head:26px; --fs-hero:34px; --fs-total:46px;   /* take 115: .total's size, which it reads (the token said 44 beside a 46 px rule) */
   --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px;
-  --r-sm:6px; --r-md:10px; --r-lg:14px; --r-pill:999px;
+  --r-sm:6px; --r-md:10px; --r-lg:14px; --r-xl:18px; --r-pill:999px;   /* take 119: every radius in the sheet reads one of these (the 2 to 4 px hairlines, the sheet's 22 px top and a circle's 50% aside); xl is the premium surface's */
   --ic-sm:16px; --ic-md:20px; --ic-lg:24px;
   --dur-press:120ms; --dur-ui:220ms; --dur-sheet:320ms;
   --modebar-h:53px;   /* take 108: the sticky mode slider's height (52.3 px MEASURED in Chrome); render checks the scanner against it */
@@ -88,7 +88,7 @@
    field takes the card, the line and the accent on focus, everywhere. */
 select,input[type="text"],input[type="search"],input[type="number"],input:not([type]),textarea{
   min-height:44px;   /* take 108: a 44 px target */
-  background:var(--card2);color:var(--fg);border:1px solid var(--line-strong);border-radius:10px;padding:8px 12px;font:inherit;font-size:16px;
+  background:var(--card2);color:var(--fg);border:1px solid var(--line-strong);border-radius:var(--r-md);padding:8px 12px;font:inherit;font-size:16px;
   -webkit-appearance:none;appearance:none}
 select{max-width:100%;padding-right:30px;background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);
   background-position:calc(100% - 16px) 55%,calc(100% - 11px) 55%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
@@ -97,7 +97,7 @@ input::placeholder,textarea::placeholder{color:var(--dim2)}
 /* Take 80. A keyboard user on the Pages build had no focus ring in places:
    the reset above and several buttons' own outlines removed it. :focus-visible
    fires only for keyboard focus, so a tap never shows it. */
-:focus-visible{outline:2px solid var(--brass);outline-offset:2px;border-radius:8px}
+:focus-visible{outline:2px solid var(--brass);outline-offset:2px;border-radius:var(--r-md)}
 button:focus:not(:focus-visible){outline:none}
 svg.g{display:inline-block;vertical-align:-3px;color:var(--accent-ink);flex:0 0 auto;fill:none}   /* take 108: a symbol that leaves its fill open (the star, the bell) is hollow unless its control fills it */
 html,body{margin:0;height:100%}
@@ -257,7 +257,7 @@ img.above{object-view-box:inset(0 0 58% 0)}
 /* Sealed's set headings as strips: the set's own top card behind the name, a scrim from the
    left so the name reads; a set with no card pictures yet keeps the plain ground. */
 .setstrip{position:relative;display:flex;width:100%;min-height:104px;justify-content:space-between;align-items:center;gap:10px;text-align:left;
-  padding:0 14px;margin:12px 0 6px;border-radius:12px;overflow:hidden;background:linear-gradient(160deg,var(--brass2),var(--card2))}
+  padding:0 14px;margin:12px 0 6px;border-radius:var(--r-md);overflow:hidden;background:linear-gradient(160deg,var(--brass2),var(--card2))}
 .setstrip > .artbg{position:absolute;inset:0;-webkit-mask-image:none;mask-image:none}
 .setstrip > .artbg::after{background:linear-gradient(90deg,rgba(0,0,0,.8),rgba(0,0,0,.55) 70%)}   /* take 110's review: a date at the end of a long name measured 2.3:1 over bright art at .25; 5.4 at .55. Take 115 (landmine 158): .55 to the right end -- at .45, with the date 82% white, a date at the strip's end read 3.1 to 3.4:1 over 14 of the 33 yellow Leaders' art and a name 4.4 over 2 (measured in Chrome); render reads both over a white picture, the brightest any art can be: 4.74 */
 .setstrip > span{position:relative;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85)}
@@ -293,7 +293,7 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .dklead b{display:block;font-family:var(--display);font-weight:400;font-size:var(--fs-title);line-height:1.15;letter-spacing:.01em;color:var(--accent-ink)}
 .dklead .meta{display:block;margin:2px 0 6px;font-size:var(--fs-sm);color:var(--dim)}   /* not every span: the colour chip is one */
 .pill{display:flex;align-items:center;gap:6px;font-size:var(--fs-sm);white-space:nowrap;
-  color:var(--dim);background:var(--card2);border-radius:999px;padding:5px 11px}
+  color:var(--dim);background:var(--card2);border-radius:var(--r-pill);padding:5px 11px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--up)}
 .dot.warn{background:var(--gold)}
 
@@ -302,7 +302,7 @@ img.above{object-view-box:inset(0 0 58% 0)}
 /* A9: the app runs on its last catalogue when a nightly build fails, and
    until take 20 nothing said so. Three days of staleness is a banner; it
    names the date so the collector knows what the numbers are numbers OF. */
-.stale{background:var(--warn-bg);border:1px solid var(--brass2);border-radius:12px;padding:10px 14px;
+.stale{background:var(--warn-bg);border:1px solid var(--brass2);border-radius:var(--r-md);padding:10px 14px;
   font-size:var(--fs-sm);color:var(--gold);margin:8px 0 6px}
 .stale[hidden]{display:none}
 .hero .who{font-size:var(--fs-body);color:var(--dim)}
@@ -314,7 +314,7 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--dim)}
 #spark{width:100%;height:118px;display:block;margin:4px 0 0}
 .ranges{display:flex;justify-content:center;gap:6px;margin:6px 0 18px}
-.range{padding:8px 15px;border-radius:999px;font-size:var(--fs-label);font-weight:650;color:var(--dim)}
+.range{padding:8px 15px;border-radius:var(--r-pill);font-size:var(--fs-label);font-weight:650;color:var(--dim)}
 .range.on{background:var(--brass);color:var(--on-accent)}
 .free{font-size:var(--fs-cap);font-weight:800;color:var(--accent-ink);vertical-align:super;letter-spacing:.02em}
 
@@ -326,26 +326,28 @@ img.above{object-view-box:inset(0 0 58% 0)}
    drafted). Home's panels are surfaces again -- a card2-to-card gradient, an inner highlight, a soft shadow -- with a caps
    label and a fading rule; the hero is a card on the dearest printing's own art, scrimmed to the card; the total wears a
    gold gradient; the two tabs are a pill switch and the ranges one pill group; Most valuable is a shelf of cards. */
-#home .panel{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:18px;
-  padding:16px;margin-bottom:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 10px 26px rgba(0,0,0,.28)}
-#home .panel h3{display:flex;align-items:center;gap:10px;font-family:var(--heavy);font-weight:800;font-size:var(--fs-cap);letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:12px}
-#home .panel h3::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line-strong),transparent)}
-#home .hero{position:relative;padding:16px 16px 12px;margin:6px 0 0;border-radius:18px;overflow:hidden;border:1px solid var(--line);background:var(--card)}
+/* Take 119 (the owner's picks from the take-119 sheets): the same surface on every panel of Collect and Hunt, with the caps label and the fading rule (S1), Prep & Play's too (P1). */
+.panel{background:linear-gradient(180deg,var(--card2),var(--card));border-radius:var(--r-xl);margin-bottom:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 10px 26px rgba(0,0,0,.28)}
+.panel h3{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-family:var(--heavy);font-weight:800;font-size:var(--fs-cap);letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:12px}
+.panel h3::after{content:"";flex:1 1 24px;order:1;height:1px;background:linear-gradient(90deg,var(--line-strong),transparent)}
+.panel h3 .note{order:2;margin:0;letter-spacing:0;text-transform:none;font-family:var(--body);font-weight:600;white-space:nowrap}   /* a count beside the label stays in the body face (its own 10 px top margin off, or it sits low on the line), and wraps under the rule when the two do not fit (Local's shops) */
+.dfold .ttl{font-family:var(--heavy);font-weight:800;font-size:var(--fs-cap);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}   /* the distributor folds' titles wear the same label */
+#home .hero{position:relative;padding:16px 16px 12px;margin:6px 0 0;border-radius:var(--r-xl);overflow:hidden;border:1px solid var(--line);background:var(--card)}
 #home .hero::before{content:"";position:absolute;inset:-24px;background:var(--hero-art,none) center 22%/cover;filter:blur(26px) saturate(1.15);opacity:.5;z-index:0}
 #home .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.10),color-mix(in srgb,var(--card) 88%,transparent) 55%,var(--card) 100%);z-index:0}
 #home .hero>*{position:relative;z-index:1}
 #home .total{letter-spacing:-.01em;background:linear-gradient(180deg,var(--gold) 0%,var(--brass) 72%,var(--brass2) 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-#home .segtabs{margin:4px 0 8px;padding:4px;gap:4px;border-bottom:0;background:var(--card);border:1px solid var(--line);border-radius:999px}
-#home .segtabs button{border-radius:999px;border-bottom:0;margin-bottom:0;padding:9px 0;font-size:var(--fs-label)}
+#home .segtabs{margin:4px 0 8px;padding:4px;gap:4px;border-bottom:0;background:var(--card);border:1px solid var(--line);border-radius:var(--r-pill)}
+#home .segtabs button{border-radius:var(--r-pill);border-bottom:0;margin-bottom:0;padding:9px 0;font-size:var(--fs-label)}
 #home .segtabs button.on{background:var(--card2);color:var(--fg);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 1px 2px rgba(0,0,0,.35)}
-#home .ranges{display:inline-flex;margin:8px auto 14px;padding:4px;gap:0;background:var(--card);border:1px solid var(--line);border-radius:999px;position:relative;left:50%;transform:translateX(-50%)}
+#home .ranges{display:inline-flex;margin:8px auto 14px;padding:4px;gap:0;background:var(--card);border:1px solid var(--line);border-radius:var(--r-pill);position:relative;left:50%;transform:translateX(-50%)}
 #home .range{padding:8px 14px;min-width:44px;font-size:var(--fs-sm)}   /* each pill keeps its own 44 px square inside the group (take 108) */
 #home .shelf{display:flex;gap:12px;overflow-x:auto;padding:2px 0 6px;margin:0 -4px;scrollbar-width:none}
 #home .shelf::-webkit-scrollbar{display:none}
 #home .shelf .st{flex:0 0 100px;width:100px;min-width:0;text-align:left;padding:0;background:none;border:0;color:var(--fg)}
 #home .shelf .badge.tag{position:absolute;left:6px;top:6px;z-index:1}   /* the printing's word on the picture's corner: two printings of one card never look alike (AGENTS rule 3) */
 #home .shelf .v{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#home .shelf .pic{position:relative;width:100%;aspect-ratio:.716;border-radius:9px;overflow:hidden;background:var(--card2);margin-bottom:8px;border:1px solid var(--line);box-shadow:0 6px 14px rgba(0,0,0,.35)}
+#home .shelf .pic{position:relative;width:100%;aspect-ratio:.716;border-radius:var(--r-md);overflow:hidden;background:var(--card2);margin-bottom:8px;border:1px solid var(--line);box-shadow:0 6px 14px rgba(0,0,0,.35)}
 #home .shelf .pic .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:8px;text-align:center}
 #home .shelf .v{font-family:var(--heavy);font-weight:800;font-size:var(--fs-label);color:var(--fg)}
 #home .shelf .nm{font-size:var(--fs-cap);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -380,7 +382,7 @@ img.above{object-view-box:inset(0 0 58% 0)}
   white-space:nowrap;color:var(--accent-ink)}
 .actions .ic{font-size:var(--fs-title)}
 .search{display:flex;align-items:center;gap:10px;background:var(--card2);
-  border:1px solid var(--line-strong);border-radius:999px;padding:7px 8px 7px 16px;margin-bottom:14px}   /* take 106: a field's edge at 3:1; take 108: 7 px round a 44 px field and 44 px buttons */
+  border:1px solid var(--line-strong);border-radius:var(--r-pill);padding:7px 8px 7px 16px;margin-bottom:14px}   /* take 106: a field's edge at 3:1; take 108: 7 px round a 44 px field and 44 px buttons */
 .search input::placeholder{color:var(--dim2)}
 .search input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--fg);font-size:16px;padding-left:4px;padding-right:4px}   /* 16px: under it Android zooms the page on focus (take 81) */
 .search:focus-within{border-color:var(--brass)}
@@ -392,16 +394,17 @@ img.above{object-view-box:inset(0 0 58% 0)}
    at take 5; landmine 54. Neither smoke.mjs nor the DOM render fallback can see
    this, because both of them are right about the markup. */
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.tile{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
-  padding:12px;text-align:left;display:flex;flex-direction:column;min-width:0}
-.art{aspect-ratio:.716;border-radius:9px;background:var(--card2);overflow:hidden;
+.tile{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:var(--r-xl);
+  padding:12px;text-align:left;display:flex;flex-direction:column;min-width:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 10px 26px rgba(0,0,0,.28)}   /* take 119, T1: the tile is a surface card */
+.tile .art{border:1px solid var(--line);box-shadow:0 6px 14px rgba(0,0,0,.35)}
+.art{aspect-ratio:.716;border-radius:var(--r-md);background:var(--card2);overflow:hidden;
   display:flex;align-items:center;justify-content:center;margin-bottom:10px;position:relative}
 /* Reference art, hot-linked from the TCGplayer CDN and never written to disk
    (landmines 26, 28; PROVISION runtime hosts). Fades in when it arrives, and
    the text placeholder underneath stays in case it does not. */
 /* take 110: a picture that failed says what it is in white on a dark pill -- black at 65 % on the card's own
    gradient measured 1.64 to 3.23:1 (UI-AUDIT §1); over any ground the pill keeps it above 4.5:1 */
-.ph .phl{color:#fff;background:rgba(0,0,0,.55);padding:1px 6px;border-radius:6px;line-height:1.3}
+.ph .phl{color:#fff;background:rgba(0,0,0,.55);padding:1px 6px;border-radius:var(--r-sm);line-height:1.3}
 .pic img.ref{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity var(--dur-ui)}
 .pic img.ref.ok{opacity:1}
 .art img.ref{opacity:0;transition:opacity var(--dur-ui)}
@@ -414,7 +417,7 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .art img{width:100%;height:100%;object-fit:cover}
 .art .ph{color:var(--dim2);font-size:var(--fs-cap);text-align:center;padding:8px;line-height:1.3}
 .art .own{position:absolute;top:6px;left:6px;background:color-mix(in srgb,var(--bg) 88%,transparent);
-  color:var(--accent-ink);font-size:var(--fs-cap);font-weight:800;padding:2px 6px;border-radius:5px;
+  color:var(--accent-ink);font-size:var(--fs-cap);font-weight:800;padding:2px 6px;border-radius:var(--r-sm);
   letter-spacing:.03em}
 .tile .t{font-weight:650;font-size:var(--fs-body);line-height:1.25;margin-bottom:3px}
 .tile .s{font-size:var(--fs-cap);color:var(--dim);line-height:1.35;
@@ -435,7 +438,7 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .statbar b.word{font-size:var(--fs-row)}   /* a word (Character) at the row size, so it fits a third of a 360 px phone */
 .statbar span{display:block;margin-bottom:3px;font-size:var(--fs-cap);font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}   /* the label above its value (the owner's word) */
 .badge{display:inline-block;font-size:var(--fs-cap);font-weight:800;letter-spacing:.03em;
-  padding:2px 6px;border-radius:5px;background:var(--accent-bg);color:var(--accent-ink);margin-left:5px}
+  padding:2px 6px;border-radius:var(--r-sm);background:var(--accent-bg);color:var(--accent-ink);margin-left:5px}
 
 /* ---- scanner ------------------------------------------------------------ */
 #scan{padding:0}
@@ -444,10 +447,10 @@ img.above{object-view-box:inset(0 0 58% 0)}
 #scan .appbar{align-self:stretch;padding-left:var(--pad);padding-right:var(--pad)}   /* the camera surface has no side padding; the header brings its own */
 #scan .unlim{margin-left:var(--pad);margin-right:var(--pad)}   /* take 111: nor does the note under the camera, which ran edge to edge */
 .setchip{display:flex;align-items:center;gap:7px;background:var(--card2);
-  border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:var(--fs-label);font-weight:600}
+  border:1px solid var(--line);border-radius:var(--r-pill);padding:8px 14px;font-size:var(--fs-label);font-weight:600}
 .setchip b{color:var(--accent-ink)}
 .guide{flex:1;width:min(74vw,300px);margin:6px 0;border:2px solid var(--line-strong);
-  border-radius:14px;position:relative;transition:border-color var(--dur-press)}
+  border-radius:var(--r-lg);position:relative;transition:border-color var(--dur-press)}
 .guide.seen{border-color:var(--gold)}
 .guide.hit{border-color:var(--up)}
 .scanwrap > .hint{flex:0 0 auto;margin:8px 0 0;padding:0 16px;text-align:center;font-size:var(--fs-sm);color:var(--dim2)}   /* take 117: in the column's flow under the well, so a two-line hint ("Camera unavailable: ...") takes its height from the well and never runs into the frame or the note (the look at the owner's sizes) */
@@ -459,7 +462,7 @@ img.above{object-view-box:inset(0 0 58% 0)}
   background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--brass) 10%,transparent),transparent 55%)}
 .guide .idle span{font-size:var(--fs-sm);color:var(--dim)}
 .guide.live .idle{display:none}
-.unlim{background:var(--accent-bg);border:1px solid var(--brass2);border-radius:12px;
+.unlim{background:var(--accent-bg);border:1px solid var(--brass2);border-radius:var(--r-md);
   padding:11px 16px;font-size:var(--fs-label);color:var(--accent-ink);font-weight:650;margin:26px 0 6px}
 .lastscan{min-height:44px;text-align:center;padding:8px 0}
 .lastscan b{font-weight:650}
@@ -479,7 +482,7 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .shutterbar .shr .ghost{white-space:nowrap;padding:11px 16px}
 .shutter{width:74px;height:74px;border-radius:50%;background:#fff;
   border:5px solid #000;box-shadow:0 0 0 3px #fff}
-.ghost{border:1px solid var(--line);border-radius:999px;padding:11px 18px;
+.ghost{border:1px solid var(--line);border-radius:var(--r-pill);padding:11px 18px;
   font-size:var(--fs-label);font-weight:650;color:var(--dim)}
 .ghost.go{color:var(--on-accent);background:var(--brass);border-color:var(--brass)}
 
@@ -493,8 +496,20 @@ img.above{object-view-box:inset(0 0 58% 0)}
 @keyframes scrimIn{from{background-color:transparent}}
 @keyframes sheetUp{from{transform:translateY(100%)}}
 /* a mode switch crossfades: the new mode's screen comes up as the palette turns */
-:root.mode-swap .screen.on{animation:modeIn var(--dur-ui) ease-out}
-@keyframes modeIn{from{opacity:0}}
+/* take 119 (the owner: "animations between modes like a swipe"): a switch from a tap or a swipe on the bar slides the
+   screens -- the one leaving keeps its palette (its tokens are copied onto it) and slides a third of the way out under the
+   one arriving, which comes in from the side the finger went; the knob slides with them on its own transition. A switch
+   made by the code (the guide, Back, the harness) stays instant as the crossfade did; reduced motion zeroes every duration. */
+:root.mode-swap{overflow-x:hidden}   /* the screen arriving starts a viewport to the side, and a transformed box still widens the page (landmine 205): for the slide's 400 ms the viewport refuses a sideways scroll and the body clips the overflow out of it (MEASURED: hidden on the root alone leaves the document 617 px wide at 411; with the body's clip it is 411) */
+:root.mode-swap body{overflow-x:clip}
+:root.mode-swap .screen.on{animation:modeInR var(--dur-ui) cubic-bezier(.4,0,.2,1);position:relative;z-index:2;min-height:100vh}
+:root.mode-swap.swap-l .screen.on{animation-name:modeInL}
+.screen.out{display:block;position:fixed;left:0;right:0;top:0;z-index:var(--z-screen);pointer-events:none;overflow:hidden;animation:modeOutR var(--dur-ui) cubic-bezier(.4,0,.2,1) forwards}
+:root.swap-l .screen.out{animation-name:modeOutL}
+@keyframes modeInR{from{transform:translateX(100%);background:var(--bg);box-shadow:-12px 0 28px rgba(0,0,0,.35)}to{transform:none;background:var(--bg);box-shadow:-12px 0 28px rgba(0,0,0,.35)}}
+@keyframes modeInL{from{transform:translateX(-100%);background:var(--bg);box-shadow:12px 0 28px rgba(0,0,0,.35)}to{transform:none;background:var(--bg);box-shadow:12px 0 28px rgba(0,0,0,.35)}}
+@keyframes modeOutR{from{transform:translate(0,var(--out-top,0px));opacity:1}to{transform:translate(-30%,var(--out-top,0px));opacity:.5}}
+@keyframes modeOutL{from{transform:translate(0,var(--out-top,0px));opacity:1}to{transform:translate(30%,var(--out-top,0px));opacity:.5}}
 .sheetbody{background:var(--card);width:100%;max-height:88vh;overflow:auto;
   border-radius:22px 22px 0 0;border-top:1px solid var(--line);
   padding:20px var(--pad) calc(28px + var(--sab))}
@@ -503,14 +518,14 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .sheethead{display:flex;align-items:flex-start;gap:var(--sp-2);margin:0 0 var(--sp-3)}
 .sheethead h2{flex:1;min-width:0;margin:10px 0 0;font-size:var(--fs-title);line-height:1.25}
 .sheethead .icb{margin:0 -10px 0 0}
-.why{background:var(--warn-bg);border:1px solid var(--brass2);color:var(--gold);border-radius:12px;
+.why{background:var(--warn-bg);border:1px solid var(--brass2);color:var(--gold);border-radius:var(--r-md);
   padding:11px 14px;font-size:var(--fs-sm);line-height:1.45;margin-bottom:14px}
 .why b{color:var(--gold)}
 .opt{display:flex;gap:12px;align-items:center;width:100%;text-align:left;
-  border:1px solid var(--line);border-radius:14px;padding:11px;margin-bottom:10px;
+  border:1px solid var(--line);border-radius:var(--r-lg);padding:11px;margin-bottom:10px;
   background:var(--card2)}
 .opt.best{border-color:var(--brass2);background:var(--accent-bg)}
-.opt .oa{width:var(--thumb-l);flex:0 0 var(--thumb-l);aspect-ratio:.716;border-radius:6px;
+.opt .oa{width:var(--thumb-l);flex:0 0 var(--thumb-l);aspect-ratio:.716;border-radius:var(--r-sm);
   background:var(--card2);overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;text-align:center}   /* take 115: the largest of the three sizes and a card's radius (take 110 left it at 52 and 7) */
 /* 203 of the catalogue's images answer 403 (landmine 51) -- release-event and
    demo-deck promos among them, which is exactly what the picker shows for a
@@ -535,7 +550,7 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .spreadbar{flex:1;height:5px;border-radius:3px;background:var(--line);position:relative}
 .spreadbar i{position:absolute;top:-3px;width:3px;height:11px;border-radius:2px;background:var(--brass)}
 .seg{display:flex;gap:8px;margin:10px 0 4px}
-.seg button{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 0;
+.seg button{flex:1;border:1px solid var(--line);border-radius:var(--r-md);padding:9px 0;
   font-size:var(--fs-sm);font-weight:650;color:var(--dim);min-height:44px}
 .seg button.on{background:var(--accent-bg);border-color:var(--brass2);color:var(--accent-ink)}
 .note{font-size:var(--fs-cap);color:var(--dim2);line-height:1.5;margin-top:10px}
@@ -586,7 +601,7 @@ img.above{object-view-box:inset(0 0 58% 0)}
 /* ---- filter / sort sheet -------------------------------------------------- */
 .fgrp{margin:16px 0 6px;font-size:var(--fs-sm);color:var(--dim)}
 .chips{display:flex;flex-wrap:wrap;gap:10px 7px}   /* take 108: a 34 px chip and a 10 px gap -- rows 44 px apart, so each chip's 44 px square is its own */
-.chip{border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:var(--fs-sm);
+.chip{border:1px solid var(--line);border-radius:var(--r-pill);padding:7px 12px;font-size:var(--fs-sm);
   font-weight:600;color:var(--dim);background:var(--card2);min-height:34px}   /* take 108: at least 34 px, so a 10 px row gap puts wrapped rows 44 px apart (the where-to-buy chips were 31) */
 .chip.on{background:var(--accent-bg);border-color:var(--brass2);color:var(--accent-ink)}
 .chip.buy{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:var(--accent-ink);padding:5px 10px}   /* take 96: an anchor as a chip */
@@ -613,16 +628,16 @@ img.above{object-view-box:inset(0 0 58% 0)}
 /* take 106: the filter's price row was a second .range rule; the hero's range pills
    leaked into it and its inputs fell to 14px (landmine 119) */
 .frange{display:flex;gap:8px;align-items:center}
-.frange input{width:100px;border-radius:8px;padding:8px 10px}   /* take 115: the one field rule gives the rest -- the card, the edge, 16 px, the brass on focus; a copy of it here had outranked the focus rule */
-.fcount{display:inline-block;min-width:18px;height:18px;line-height:18px;border-radius:9px;
+.frange input{width:100px;border-radius:var(--r-md);padding:8px 10px}   /* take 115: the one field rule gives the rest -- the card, the edge, 16 px, the brass on focus; a copy of it here had outranked the focus rule */
+.fcount{display:inline-block;min-width:18px;height:18px;line-height:18px;border-radius:var(--r-pill);
   background:var(--brass);color:var(--on-accent);font-size:var(--fs-cap);font-weight:800;text-align:center;
   vertical-align:top;margin-left:2px}
 
 /* ---- binder: nine pockets, the way the object is laid out ---------------- */
-.bnpage{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px;border-radius:14px;
+.bnpage{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px;border-radius:var(--r-lg);
   background:color-mix(in srgb,var(--card) 80%,#000 20%);border:1px solid var(--line);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)}
-.pocket{aspect-ratio:.716;border-radius:6px;background:var(--card2);border:1px solid var(--line);position:relative;
+.pocket{aspect-ratio:.716;border-radius:var(--r-sm);background:var(--card2);border:1px solid var(--line);position:relative;
   overflow:hidden;display:flex;align-items:center;justify-content:center}
 .pocket.empty{background:transparent;border-style:dashed;opacity:.5}
 .pocket img{width:100%;height:100%;object-fit:cover}
@@ -633,7 +648,7 @@ img.above{object-view-box:inset(0 0 58% 0)}
 
 /* ---- set checklist ------------------------------------------------------ */
 .ckgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
-.ck{aspect-ratio:.716;border-radius:6px;border:1px solid var(--line);background:var(--card2);
+.ck{aspect-ratio:.716;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--card2);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;position:relative;
   font-size:var(--fs-cap);color:var(--dim);overflow:hidden}
 .ck b{font-size:var(--fs-cap);color:var(--fg);font-variant-numeric:tabular-nums}
@@ -647,11 +662,11 @@ img.above{object-view-box:inset(0 0 58% 0)}
 
 /* ---- deck builder --------------------------------------------------------- */
 .dkhead{display:flex;gap:12px;align-items:center;padding:12px 0 6px}
-.dkhead .lead{width:96px;flex:0 0 96px;aspect-ratio:.716;border-radius:7px;background:linear-gradient(160deg,var(--a1,var(--card2)),var(--a2,var(--card2)));overflow:hidden;position:relative}   /* take 115: the Leader's own colours under its picture (paintDeck sets them) -- offline, or a picture that failed, was an empty grey box */
+.dkhead .lead{width:96px;flex:0 0 96px;aspect-ratio:.716;border-radius:var(--r-sm);background:linear-gradient(160deg,var(--a1,var(--card2)),var(--a2,var(--card2)));overflow:hidden;position:relative}   /* take 115: the Leader's own colours under its picture (paintDeck sets them) -- offline, or a picture that failed, was an empty grey box */
 .dkhead .lead img{width:100%;height:100%;object-fit:cover}
 .dkcount{font-size:var(--fs-head);font-weight:750;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .dkcount.ok{color:var(--up)} .dkcount.over{color:var(--down)}
-.legal{font-size:var(--fs-sm);padding:8px 12px;border-radius:10px;margin:8px 0}
+.legal{font-size:var(--fs-sm);padding:8px 12px;border-radius:var(--r-md);margin:8px 0}
 .legal.ok{background:var(--ok-bg);color:var(--up)} .legal.bad{background:var(--bad-bg);color:var(--down)}
 .curve{display:flex;align-items:flex-end;gap:4px;height:64px;margin:6px 0 2px}
 .curve div{flex:1;background:color-mix(in srgb,var(--brass) 35%,var(--card2));border-radius:3px 3px 0 0;position:relative;min-height:3px}   /* take 106: #1d2a2e was 1.1:1 on the card */
@@ -680,21 +695,21 @@ img.above{object-view-box:inset(0 0 58% 0)}
    status-bar inset as its own padding, so its ground covers the inset band at every inset (0 on a phone without an edge-to-edge WebView,
    24 to 48 on the others -- measured at each); at the top of a screen with a hero the art still shows through behind the pill. */
 .modebar{position:sticky;top:0;z-index:var(--z-modebar);display:flex;justify-content:center;padding:calc(var(--sat) + 6px) 0 2px;
-  background:linear-gradient(var(--bg) 70%,transparent)}
+  background:linear-gradient(var(--bg) 70%,transparent);touch-action:pan-y;user-select:none}   /* take 119: a sideways swipe on the bar is the app's (the mode switch); up and down stay the page's; a drag never selects a label */
 :root:not(.at-top) .modebar{background:linear-gradient(var(--bg) 78%,transparent)}
 .curtain{display:none;position:fixed;inset:0;z-index:var(--z-overlay);background:var(--bg);align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px}
 .curtain.on{display:flex}
 .mode{display:inline-grid;grid-template-columns:repeat(3,1fr);position:relative;background:var(--card2);border:1px solid var(--line);
-  border-radius:999px;padding:3px;gap:2px}
+  border-radius:var(--r-pill);padding:3px;gap:2px}
 /* take 106: one rule (there were two, and a third in the font rule). The
    slider is a grid of three equal columns, each as wide as the widest label,
    so the knob -- a third -- sits under each one (at 96/106/96 px it sat
    off-centre under Prep & Play) and no label wraps. The label on the knob
    is --on-accent in every mode (#F1EFE6 on the red was 3.29:1). */
-.mode button{position:relative;z-index:1;min-width:96px;white-space:nowrap;padding:8px 14px;border-radius:999px;font-size:var(--fs-label);font-weight:700;font-family:var(--heavy);
+.mode button{position:relative;z-index:1;min-width:96px;white-space:nowrap;padding:8px 14px;border-radius:var(--r-pill);font-size:var(--fs-label);font-weight:700;font-family:var(--heavy);
   color:var(--dim);letter-spacing:.01em;transition:color var(--dur-ui)}
 .mode button.on{color:var(--on-accent)}
-.mode .knob{position:absolute;top:3px;bottom:3px;left:3px;width:calc(33.333% - 3px);border-radius:999px;
+.mode .knob{position:absolute;top:3px;bottom:3px;left:3px;width:calc(33.333% - 3px);border-radius:var(--r-pill);
   background:var(--brass);transition:transform var(--dur-ui) cubic-bezier(.4,0,.2,1)}
 .mode.play .knob{transform:translateX(calc(100% + 2px))}
 .mode.hunt .knob{transform:translateX(calc(200% + 4px))}
@@ -706,12 +721,12 @@ img.above{object-view-box:inset(0 0 58% 0)}
    on the active item. Items stretch equally, so four or five look the same. */
 nav{position:fixed;left:calc(12px + var(--sal));right:calc(12px + var(--sar));bottom:calc(10px + var(--sab));height:66px;z-index:var(--z-nav);
   background:color-mix(in srgb,#0B0D10 92%,transparent);backdrop-filter:blur(16px);border:1px solid color-mix(in srgb,var(--brass) 45%,#2A2E36);
-  box-shadow:0 6px 24px rgba(0,0,0,.45);border-radius:999px;display:flex;justify-content:space-around;align-items:center;padding:0 6px}
+  box-shadow:0 6px 24px rgba(0,0,0,.45);border-radius:var(--r-pill);display:flex;justify-content:space-around;align-items:center;padding:0 6px}
 /* `hidden` loses to any author `display` -- both navs drew and the wrong one
    sat on top (take 24). Landmine 98. */
 nav[hidden]{display:none}
 nav button{flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:3px;
-  font-size:var(--fs-cap);color:var(--dim2);font-weight:600;padding:4px 10px;border-radius:999px}
+  font-size:var(--fs-cap);color:var(--dim2);font-weight:600;padding:4px 10px;border-radius:var(--r-pill)}
 nav button svg.g{color:var(--dim2)}
 nav button.on svg.g{color:var(--accent-ink)}
 nav button .ic{font-size:var(--ic-md);line-height:1;color:inherit}
@@ -727,7 +742,7 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
 .dqrow > .stepper{grid-area:st}   /* take 110: a name, a date or an amount that must not break */
 .empty .empty-line{display:inline-block;color:var(--fg);font-weight:700;margin-bottom:2px}   /* take 110: what is missing, then what to do */
 .toast{position:fixed;left:50%;bottom:calc(96px + var(--sab));transform:translateX(-50%);z-index:var(--z-toast);
-  background:var(--card2);border:1px solid var(--line);border-radius:999px;
+  background:var(--card2);border:1px solid var(--line);border-radius:var(--r-pill);
   padding:10px 18px;font-size:var(--fs-label);font-weight:600;opacity:0;transition:opacity var(--dur-ui);
   pointer-events:none;white-space:normal;max-width:min(92vw,520px);text-align:center;box-sizing:border-box;width:max-content}   /* take 99, the look: left:50% halves the available width, so without width:max-content a long toast wrapped into a tall half-width pill */
 .toast.on{opacity:1}
@@ -915,7 +930,7 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
   </header>
   <div class="note" style="margin:6px 0 10px">Everything needed to read this phone from a report: endpoints and their live status, what is stored, the last errors, the self-test. No collection contents. Copy it and send it.</div>
   <div class="row" style="gap:8px;margin-bottom:10px;flex-wrap:wrap"><button class="ghost go" id="diagRun">Run</button><button class="ghost" id="diagCopy" disabled>Copy report</button><button class="ghost" id="diagShare" disabled>Share</button><button class="ghost" id="devEarn">Test credits</button></div>
-  <pre id="diagOut" style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:var(--fs-cap);line-height:1.45;color:var(--dim);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;min-height:80px"></pre>
+  <pre id="diagOut" style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:var(--fs-cap);line-height:1.45;color:var(--dim);background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);padding:12px;min-height:80px"></pre>
 </section>
 <!-- take 91: More is markup like every screen; built on demand it was refused by go() (landmine 128) -->
 <section id="settings" class="screen">
@@ -960,7 +975,7 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
     </header>
     <div class="guide" id="guide">
       <video id="cam" playsinline muted autoplay
-             style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:12px;background:#000"></video>
+             style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:var(--r-md);background:#000"></video>
       <canvas id="camOv" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas>
       <div class="idle" id="camIdle">
         <svg width="120" height="165"><use href="#g-scancard"/></svg>
@@ -1928,7 +1943,7 @@ const gameColours = p => colsOf(p).filter(x => CCLASS[x]);
 function colourDots(p) {
   const cs = gameColours(p);
   if (!cs.length) return '';
-  return `<span class="chip" style="padding:4px 9px;font-size:12px">${cs.map(c =>
+  return `<span class="chip" style="padding:4px 9px;font-size:var(--fs-cap)">${cs.map(c =>
     `<i style="display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;
        vertical-align:-1px;background:var(--c-${CCLASS[c]})"></i>${esc(c)}`).join(' ')}</span>`;
 }
@@ -2183,7 +2198,7 @@ function paintDecks() {
   $('#dkList').innerHTML = list.length ? list.map(d => {
     const A = analysis(d); const L = A.leader;
     return `<button class="panel" style="width:100%;text-align:left;display:flex;gap:12px;align-items:center" data-deck="${d.id}">
-      <div class="lead pic" style="width:${THUMB.m}px;flex:0 0 ${THUMB.m}px;aspect-ratio:.716;border-radius:6px;background:var(--card2);overflow:hidden;position:relative">${L ? refArt(L) : ''}</div>
+      <div class="lead pic" style="width:${THUMB.m}px;flex:0 0 ${THUMB.m}px;aspect-ratio:.716;border-radius:var(--r-sm);background:var(--card2);overflow:hidden;position:relative">${L ? refArt(L) : ''}</div>
       <div style="flex:1;min-width:0"><b>${esc(d.name || 'Untitled deck')}</b>
         <div class="note" style="margin:2px 0 0">${L ? esc(L.name) + ' · ' + colsOf(L).join('/') : 'No Leader'} ·
           ${A.total}/50 · ${A.legal ? '<span class="up">legal</span>' : `<span class="down">${A.problems.length} issue${A.problems.length === 1 ? '' : 's'}</span>`}</div></div>
@@ -2205,7 +2220,7 @@ function deckCover(d, { w = 56 } = {}) {
   const b = cs[1] ? `var(--c-${CCLASS[cs[1]]})` : a;
   const code = (d.set || (L.num || '').split('-')[0] || '').toUpperCase();
   const gid = 'cov' + (d.id || code).replace(/[^a-z0-9]/gi, '');
-  return `<svg width="${w}" height="${Math.round(w * 1.4)}" viewBox="0 0 56 78" aria-label="${esc(code)} deck cover" role="img" style="flex:0 0 auto;border-radius:6px;display:block">
+  return `<svg width="${w}" height="${Math.round(w * 1.4)}" viewBox="0 0 56 78" aria-label="${esc(code)} deck cover" role="img" style="flex:0 0 auto;border-radius:var(--r-sm);display:block">
     <defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>
     <rect width="56" height="78" rx="6" fill="url(#${gid})"/>
@@ -2219,7 +2234,7 @@ function deckCover(d, { w = 56 } = {}) {
    own decks do -- one treatment for one idea -- with the drawn cover under it */
 function stockPic(d) {
   const L = CAT.byId.get(d.leader);
-  return `<div class="pic" style="width:${THUMB.m}px;height:${Math.round(THUMB.m / 0.716)}px;flex:0 0 auto;position:relative;border-radius:6px;overflow:hidden"><div class="ph" style="position:absolute;inset:0">${deckCover(d, { w: THUMB.m })}</div>${L ? refArt(L) : ''}</div>`;
+  return `<div class="pic" style="width:${THUMB.m}px;height:${Math.round(THUMB.m / 0.716)}px;flex:0 0 auto;position:relative;border-radius:var(--r-sm);overflow:hidden"><div class="ph" style="position:absolute;inset:0">${deckCover(d, { w: THUMB.m })}</div>${L ? refArt(L) : ''}</div>`;
 }
 /* Stock decks: browsable, playable in the sim, copyable into your own decks.
    Never owned cards: the heading and each row’s badge name them ready-made (take 110:
@@ -2257,11 +2272,11 @@ function paintDeck() {
   $('#dkName').value = dkCur.name || '';
   const lead = $('#dkLead'), [la1, la2] = L ? artColours(L) : [];
   lead.style.cssText = L ? `--a1:${la1};--a2:${la2}` : '';   /* take 115: the Leader's own colours under its picture -- offline, or a picture that failed, left an empty grey box (take 109's plan) */
-  lead.innerHTML = L ? refArt(L, { size: 'large' }) : '<div class="ph" style="font-size:12px">Leader</div>';
+  lead.innerHTML = L ? refArt(L, { size: 'large' }) : '<div class="ph" style="font-size:var(--fs-cap)">Leader</div>';
   $('#dkLeadLine').innerHTML = L   /* take 109 (A42): the Leader large, its name in the display face */
     ? `<b>${esc(L.name)}</b><span class="meta">${esc(L.num)} \u00b7 Leader \u00b7 ${G('life', 13)} ${L.life || '?'} Life</span>${colourDots(L)}`
     : '<span class="meta">Tap the card to choose a Leader</span>';
-  const n = $('#dkN'); n.innerHTML = `${A.total}<span style="font-size:13px;color:var(--dim2)">/50</span>`;
+  const n = $('#dkN'); n.innerHTML = `${A.total}<span style="font-size:var(--fs-sm);color:var(--dim2)">/50</span>`;
   n.className = 'dkcount' + (A.total === 50 ? ' ok' : A.total > 50 ? ' over' : '');
   const sr = simReadiness(dkCur); const simBox = $('#dkSim');
   if (simBox) simBox.innerHTML = `<h3>In the Sim</h3><div class="note">Of ${sr.total} cards: <b>${sr.full}</b> run themselves, <b>${sr.part}</b> partly, <b>${sr.hand}</b> by hand, ${sr.none} have no effect text.${sr.handNames.length ? ' By hand: ' + esc(sr.handNames.join(', ')) + (sr.hand > sr.handNames.length ? '\u2026' : '') + '.' : ''}</div>
@@ -2275,7 +2290,7 @@ function paintDeck() {
   $('#dkCurve').innerHTML = A.curve.map((c, i) =>
     `<div class="${c === mx && c ? 'hi' : ''}" style="height:${Math.max(3, 60 * c / mx)}px">${c ? `<b>${c}</b>` : ''}<span>${i}</span></div>`).join('');
   $('#dkAvg').textContent = A.total ? `avg cost ${A.avgCost.toFixed(1)} · 2 DON!! a turn (§6-4)` : '';
-  const chip = (v, k) => `<span class="chip" style="padding:4px 9px;font-size:12px">${v}<small>${k}</small></span>`;
+  const chip = (v, k) => `<span class="chip" style="padding:4px 9px;font-size:var(--fs-cap)">${v}<small>${k}</small></span>`;
   $('#dkStats').innerHTML = [
     [A.counters, 'Counter cards'], [A.counterEvents, '[Counter] Events'], [A.blockers, 'Blockers'],
     [A.triggers, 'Triggers'], [A.rush, 'Rush'], [money(A.value), 'value']].map(([v, k]) => chip(v, k)).join('');
@@ -2585,7 +2600,7 @@ function tradeSearch(side) {
     pool = OWN.items.map(i => CAT.byId.get(i.id)).filter(p => p && !seen.has(p.id) && seen.add(p.id));
   } else pool = CAT.rows.filter(p => p.num);
   const hits = pool.filter(p => (p.full + ' ' + p.num).toLowerCase().includes(q)).slice(0, 12);
-  out.innerHTML = hits.length ? `<div style="border:1px solid var(--line);border-radius:10px;margin-bottom:8px">${hits.map(p =>
+  out.innerHTML = hits.length ? `<div style="border:1px solid var(--line);border-radius:var(--r-md);margin-bottom:8px">${hits.map(p =>
     `<button class="row" style="width:100%;text-align:left;padding:8px 10px;align-items:center" data-tradd="${side}:${p.id}">
       ${cardPic(p)}<div class="nm"><b>${esc(p.name)}${p.treat !== 'base' ? ` <span class="badge">${esc(TREAT[p.treat] || p.treat)}</span>` : ''}</b>
       <span>${dotJoin(esc(p.num), esc((CAT.sets.get(p.set) || {}).abbr || ''))}</span></div>
@@ -2746,13 +2761,60 @@ const MODE = {
     if (navigate) go(this.home[m]);
   }
 };
+/* Take 119: the slide (the owner: "animations between modes like a swipe"; take 110's crossfade before it). On a tap or a
+   swipe only -- MODE.set itself stays instant for the guide, Back and the harness. The screen leaving is kept painted
+   under the one arriving: fixed where it was (its top read before the switch), its palette's tokens copied onto it so the
+   new palette does not repaint it mid-slide, and taken out when its animation ends (a timer catches a stub without one). */
+const MODE_ORDER = ['collect', 'play', 'hunt'];
+const MODE_TOKENS = ['--bg', '--card', '--card2', '--line', '--fg', '--dim', '--dim2', '--brass', '--brass2', '--gold', '--accent-ink', '--line-strong', '--up', '--down', '--accent-bg', '--warn-bg', '--ok-bg', '--bad-bg', '--on-accent', '--teal'];
+function finishSlide() { const o = MODE._out; if (!o) return; MODE._out = null; if (o.classList) o.classList.remove('out'); if (o.style) o.style.cssText = ''; }
+function slideMode(to) {
+  const root = document.documentElement, from = MODE.cur;
+  if (!root || !root.classList || to === from) { MODE.set(to); return; }
+  const leaving = $('.screen.on'), toLeft = MODE_ORDER.indexOf(to) < MODE_ORDER.indexOf(from);
+  let outTop = 0, toks = '';
+  if (leaving && leaving.getBoundingClientRect && typeof getComputedStyle === 'function') {
+    outTop = Math.round(leaving.getBoundingClientRect().top); const cs = getComputedStyle(root);
+    toks = MODE_TOKENS.map(t => `${t}:${cs.getPropertyValue(t).trim()}`).join(';');
+  }
+  finishSlide();
+  root.classList.remove('mode-swap', 'swap-l'); void root.offsetWidth; root.classList.add('mode-swap'); root.classList.toggle('swap-l', toLeft);
+  MODE.set(to);
+  if (leaving && leaving.style && leaving.classList && !leaving.classList.contains('on') && !reducedMotion()) {
+    leaving.style.cssText = `--out-top:${outTop}px;background:var(--bg);${toks}`; leaving.classList.add('out'); MODE._out = leaving;
+    if (leaving.addEventListener) leaving.addEventListener('animationend', finishSlide, { once: true });
+  }
+  clearTimeout(MODE._swap); MODE._swap = setTimeout(() => { root.classList.remove('mode-swap', 'swap-l'); finishSlide(); }, 400);
+}
 $('#modeSlider').addEventListener('click', e => {
+  if (MODE._swiped) return;   /* the click a swipe leaves behind */
   const b = e.target.closest('[data-mode]'); if (!b || b.dataset.mode === MODE.cur) return;
-  /* take 110 (polish): the crossfade -- on a tap only, and taken off again so a later screen change does not fade */
-  const root = document.documentElement;
-  if (root && root.classList) { root.classList.remove('mode-swap'); void root.offsetWidth; root.classList.add('mode-swap'); clearTimeout(MODE._swap); MODE._swap = setTimeout(() => root.classList.remove('mode-swap'), 400); }
-  MODE.set(b.dataset.mode);
+  slideMode(b.dataset.mode);
 });
+/* a sideways swipe on the mode bar -- only there; the actions row, the chips and the guide's strip scroll sideways --
+   moves one mode over in the finger's direction, the knob under the finger meanwhile, and the slide follows */
+(() => {
+  const bar = $('.modebar'), knob = $('#modeSlider .knob'); if (!bar || !bar.addEventListener || !knob || !knob.style) return;
+  let sw = null;
+  bar.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && e.button !== 0) return; sw = { id: e.pointerId, x: e.clientX, y: e.clientY, dx: 0, w: knob.getBoundingClientRect ? knob.getBoundingClientRect().width : 0, held: false }; });
+  bar.addEventListener('pointermove', e => {
+    if (!sw || e.pointerId !== sw.id) return; sw.dx = e.clientX - sw.x; const dy = e.clientY - sw.y;
+    if (!sw.held) {   /* the first 8 px say which way the finger goes: up or down is the page's scroll, not a swipe */
+      if (Math.hypot(sw.dx, dy) < 8) return;
+      if (Math.abs(dy) > Math.abs(sw.dx)) { sw = null; return; }
+      sw.held = true; try { bar.setPointerCapture(e.pointerId); } catch (x) {}
+    }
+    const i = MODE_ORDER.indexOf(MODE.cur), lim = sw.w + 2, d = Math.max(i === 0 ? 0 : -lim, Math.min(i === 2 ? 0 : lim, sw.dx));
+    knob.style.transition = 'none'; knob.style.transform = `translateX(calc(${i * 100}% + ${i * 2 + Math.round(d)}px))`;
+  });
+  const end = e => {
+    if (!sw || e.pointerId !== sw.id) return; const dx = sw.dx, held = sw.held; sw = null; knob.style.transition = ''; knob.style.transform = '';
+    if (!held || Math.abs(dx) < 40) return;
+    const i = MODE_ORDER.indexOf(MODE.cur), j = i + (dx < 0 ? 1 : -1); if (j < 0 || j >= MODE_ORDER.length) return;
+    MODE._swiped = true; setTimeout(() => { MODE._swiped = false; }, 350); slideMode(MODE_ORDER[j]);
+  };
+  bar.addEventListener('pointerup', end); bar.addEventListener('pointercancel', end);
+})();
 
 /* =====================================================================
  * PLAY — the Life / DON!! counter (A20 #7, ROADMAP 8.1). Two players, one
@@ -2776,24 +2838,24 @@ function paintPlay() {
     const L = pl.leader ? CAT.byId.get(pl.leader) : null;
     return `<div class="panel plpanel" style="${(!PLAY.hotseat && i === 0) ? 'transform:rotate(180deg)' : ''}">${L ? artBack(L) : ''}
       <div style="display:flex;gap:12px;align-items:center">
-        <button class="lead pic" data-plleader="${i}" aria-label="Choose this player’s Leader" style="width:${THUMB.m}px;flex:0 0 ${THUMB.m}px;aspect-ratio:.716;border-radius:6px;background:var(--card2);overflow:hidden;position:relative">${L ? refArt(L) : ''}</button>
-        <div style="flex:1;min-width:0"><b style="font-family:var(--display);font-weight:400;font-size:17px">${L ? esc(L.name) : pl.name}</b>
+        <button class="lead pic" data-plleader="${i}" aria-label="Choose this player’s Leader" style="width:${THUMB.m}px;flex:0 0 ${THUMB.m}px;aspect-ratio:.716;border-radius:var(--r-sm);background:var(--card2);overflow:hidden;position:relative">${L ? refArt(L) : ''}</button>
+        <div style="flex:1;min-width:0"><b style="font-family:var(--display);font-weight:400;font-size:var(--fs-title)">${L ? esc(L.name) : pl.name}</b>
           <div class="note" style="margin:2px 0 0">${L ? colsOf(L).join('/') + ' \u00b7 starts at ' + (L.life || 5) + ' life' : 'tap the card to choose a Leader'}</div></div>
       </div>
       <div class="plcols">
         <div style="flex:1;text-align:center">
           <div class="note">${G('life', 13)} Life</div>
-          <div class="big" style="font-size:44px;line-height:1;margin:4px 0">${pl.life}</div>
+          <div class="big" style="font-size:var(--fs-total);line-height:1;margin:4px 0">${pl.life}</div>
           <div class="stepper" style="justify-content:center"><button data-pl="${i}:life:-1" aria-label="Life down">${G('minus', 20)}</button><button data-pl="${i}:life:1" aria-label="Life up">${G('plus', 20)}</button></div>
         </div>
         <div style="flex:1;text-align:center">
           <div class="note">${G('don', 13)} DON!! active</div>
-          <div class="big" style="font-size:44px;line-height:1;margin:4px 0">${pl.don - pl.given}<span style="font-size:16px;color:var(--dim)">/${pl.don}</span></div>
+          <div class="big" style="font-size:var(--fs-total);line-height:1;margin:4px 0">${pl.don - pl.given}<span style="font-size:var(--fs-row);color:var(--dim)">/${pl.don}</span></div>
           <div class="stepper" style="justify-content:center"><button data-pl="${i}:don:-1" aria-label="DON!! down">${G('minus', 20)}</button><button data-pl="${i}:don:1" aria-label="DON!! up">${G('plus', 20)}</button></div>
         </div>
         <div style="flex:1;text-align:center">
           <div class="note">DON!! given</div>
-          <div class="big" style="font-size:44px;line-height:1;margin:4px 0">${pl.given}</div>
+          <div class="big" style="font-size:var(--fs-total);line-height:1;margin:4px 0">${pl.given}</div>
           <div class="stepper" style="justify-content:center"><button data-pl="${i}:given:-1" aria-label="Given DON!! down">${G('minus', 20)}</button><button data-pl="${i}:given:1" aria-label="Given DON!! up">${G('plus', 20)}</button></div>
         </div>
       </div>
@@ -2811,8 +2873,8 @@ function paintPlay() {
    this is what keeps a hand a hand; in the counter it is the habit. */
 function plCurtain(nextIdx) {
   const c = $('#plCurtain');
-  c.innerHTML = `<div class="big" style="font-size:22px;margin-bottom:8px">Hand the phone to</div>
-    <h2 style="font-size:34px;margin:0 0 18px">${esc(PLAY.label(nextIdx))}</h2>
+  c.innerHTML = `<div class="big" style="font-size:var(--fs-head);margin-bottom:8px">Hand the phone to</div>
+    <h2 style="font-size:var(--fs-hero);margin:0 0 18px">${esc(PLAY.label(nextIdx))}</h2>
     <div class="note">Turn ${PLAY.turn} \u00b7 tap when you have it</div>`;
   c.classList.add('on');
 }
@@ -2896,7 +2958,7 @@ function paintCards() {
       <div class="n" data-open="${p.id}"><b>${esc(p.name)}</b>
         <span>${esc(p.num)} \u00b7 ${colsOf(p).join('/')}${p.power ? ' \u00b7 ' + Number(p.power).toLocaleString() : ''}${
           p.counter ? ' \u00b7 +' + Number(p.counter).toLocaleString() : ''}${kws.map(k => `<i class="kwtag">${KW_GLYPH[k] ? G(KW_GLYPH[k], 11) + ' ' : ''}${k}</i>`).join('')}</span>
-        <span style="white-space:normal;color:var(--dim2);font-size:12px;-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden">${esc((p.text || '').replace(/\n+/g, ' ').slice(0, 160))}</span></div>
+        <span style="white-space:normal;color:var(--dim2);font-size:var(--fs-cap);-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden">${esc((p.text || '').replace(/\n+/g, ' ').slice(0, 160))}</span></div>
       <div class="cnt">${deck ? `<button data-cdadd="${p.id}" aria-label="One more">+</button>${inDeck ? `<b>${inDeck}</b>` : ''}` : ''}</div>
     </div>`;
   }).join('') || emptyHtml('filter', 'Nothing matches', 'Loosen a chip, or clear them.');
@@ -2940,7 +3002,7 @@ function paintWants() {
     ? `<div class="row"><div class="nm"><b>${rows.length} card${rows.length === 1 ? '' : 's'} wanted</b>
         <span>at each one’s likeliest printing, today’s market</span></div><div class="v mono">${money(WANT.total())}</div></div>` +
       [...bySet.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([sid, v]) =>
-        `<div class="row"><div class="nm"><span>${esc((CAT.sets.get(sid) || {}).name || '')}</span></div><div class="v mono" style="font-size:13px;color:var(--dim)">${money(v)}</div></div>`).join('')
+        `<div class="row"><div class="nm"><span>${esc((CAT.sets.get(sid) || {}).name || '')}</span></div><div class="v mono" style="font-size:var(--fs-sm);color:var(--dim)">${money(v)}</div></div>`).join('')
     : emptyHtml('bookmark', 'Nothing on your want list yet', 'Open a set from Home and tap the cards you are missing.');
   $('#wtRows').innerHTML = rows.map(({ w, p }) => `<div class="dkrow">
       ${cardPic(p, THUMB.s)}
@@ -3280,7 +3342,7 @@ function paintHome() {
   dl.innerHTML = series.length > 1
     ? `${signedMoney(d)} ${RANGE_WORDS[range] || 'in the last ' + range}` +
       (S.kind === 'estimate'
-        ? ` <span class="flat" style="font-weight:500;font-size:12.5px">\u00b7 estimated from today\u2019s cards at each day\u2019s prices</span>`
+        ? ` <span class="flat" style="font-weight:500;font-size:var(--fs-sm)">\u00b7 estimated from today\u2019s cards at each day\u2019s prices</span>`
         : '')
     : 'Not enough history yet — a snapshot is taken each day.';
 
@@ -4217,7 +4279,7 @@ function targetLine(it, T) {
     /* the shelf's words from its own checks at this zip; the count from the runs that read this product (take 115, self-review) */
     histTxt = [ship, rs.events.length ? `restocked ${rs.events.length}\u00d7 in ${days} d: ${ev}` : (sv2.how !== 'none' && rs.shelfRuns >= 2 && rs.shelfDays >= 1 ? `no shelf restock seen in ${days} d` : '')].filter(Boolean).join(' \u00b7 ');
     if (rs.checks && Math.round(rs.checkDays) < 14) histTxt += `${histTxt ? ' \u00b7 ' : ''}${rs.checks} check${rs.checks === 1 ? '' : 's'} of it ${rs.checkDays < 1 ? 'in less than a day' : `over ${cd} day${cd === 1 ? '' : 's'}`} so far \u2014 a pattern needs a fortnight`; }
-  return `<span style="display:block;color:var(--brass)">Target ${money(it.price)} \u00b7 ${esc(online)}${shelfTxt ? ' \u00b7 ' + esc(shelfTxt) : ''}</span>${histTxt ? `<span style="display:block;color:var(--dim2);font-size:12.5px">${esc(histTxt)}</span>` : ''}`;
+  return `<span style="display:block;color:var(--brass)">Target ${money(it.price)} \u00b7 ${esc(online)}${shelfTxt ? ' \u00b7 ' + esc(shelfTxt) : ''}</span>${histTxt ? `<span style="display:block;color:var(--dim2);font-size:var(--fs-sm)">${esc(histTxt)}</span>` : ''}`;
 }
 /* take 114: GTS's preorder_date is its "Order Due Date" -- the last day a store orders by, read off GTS's own product
    page (HANDOFF take 114). Take 94 called it the opening day of preorders, inferred from the field's name: wrong.
@@ -4475,10 +4537,10 @@ const sealedWord = p => sealedKind(p)[2];
    lazy, never stored). Under it, and in its place when there is none, a
    drawn tile in the card’s colour with a label -- so a row never has a hole
    (landmine 85). The .pic rules size the image; nothing else is needed. */
-function picBox(p, w, h, label, radius = 8) {
+function picBox(p, w, h, label, radius = 'var(--r-md)') {
   const cs = gameColours(p);
   const a = cs[0] ? `var(--c-${CCLASS[cs[0]]})` : 'var(--brass2)';
-  return `<div class="pic" style="width:${w}px;height:${h}px;flex:0 0 auto;position:relative;border-radius:${radius}px;overflow:hidden;background:linear-gradient(160deg,${a},var(--card2));">
+  return `<div class="pic" style="width:${w}px;height:${h}px;flex:0 0 auto;position:relative;border-radius:${radius};overflow:hidden;background:linear-gradient(160deg,${a},var(--card2));">
     <div class="ph" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:${Math.max(12, Math.round(w / 4))}px"><span class="phl">${label}</span></div>${refArt(p)}</div>`;
 }
 /* Take 110 (polish): three thumbnail sizes, one per kind of list, where there were seven (30 to 56 px):
@@ -4491,13 +4553,13 @@ function productPic(p, size = THUMB.l) {
 }
 /* a card at the card’s ratio, its number as the label */
 function cardPic(p, w = THUMB.m) {
-  return picBox(p, w, Math.round(w / 0.716), esc((p.num || '').split('-').pop() || ''), 6);
+  return picBox(p, w, Math.round(w / 0.716), esc((p.num || '').split('-').pop() || ''), 'var(--r-sm)');
 }
 /* a set’s booster box (Releases had this as a local since take 83) */
 function setPic(s, w = THUMB.m) {
   const ps = CAT.rows.filter(p => p.set === s.id && SEALED.isProduct(p));
   const box = ps.find(p => /booster box/i.test(p.name)) || ps[0];
-  return box ? productPic(box, w) : `<div class="pic" style="width:${w}px;height:${Math.round(w * 1.25)}px;flex:0 0 auto;border-radius:8px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:12px;color:var(--dim2)">${esc((s.abbr || '').replace(/-/g, '').slice(0, 5))}</div>`;
+  return box ? productPic(box, w) : `<div class="pic" style="width:${w}px;height:${Math.round(w * 1.25)}px;flex:0 0 auto;border-radius:var(--r-md);background:var(--card2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:var(--fs-cap);color:var(--dim2)">${esc((s.abbr || '').replace(/-/g, '').slice(0, 5))}</div>`;
 }
 /* Take 110 (A42, A -- the owner’s pick for Hunt): Sealed opens under the newest booster set’s top
    card, crisp at the large size and cut above the stamp (landmine 151); the owner’s hero-hunt.jpg
@@ -4508,7 +4570,7 @@ function setPic(s, w = THUMB.m) {
 function sealedRow(p, sub, lines, byDist) {
   const on = STOCK.has(p.id);
   return `<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><button class="row" style="flex:1;min-width:0;text-align:left;padding:0;gap:10px" data-open="${p.id}">${productPic(p)}<div class="nm" style="min-width:0"><b>${esc(p.name)}</b><span>${sub} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}</span>${lines}</div><div class="v"><b>${money(p.market)}</b>${deltaHtml(p, { pctOnly: true })}</div></button>`
-    + `<button class="ghost" data-stock="${p.id}" aria-label="${on ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${on}" style="flex:0 0 auto;padding:8px 10px;${on ? 'color:var(--brass);border-color:var(--brass)' : ''}">${bell(on)}<span style="display:block;font-size:12px;line-height:1.1;margin-top:2px">${on ? 'watching' : 'alert'}</span></button>${buyChips(p)}${distRowLines(p, (byDist || {})[p.id])}</div>`;
+    + `<button class="ghost" data-stock="${p.id}" aria-label="${on ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${on}" style="flex:0 0 auto;padding:8px 10px;${on ? 'color:var(--brass);border-color:var(--brass)' : ''}">${bell(on)}<span style="display:block;font-size:var(--fs-cap);line-height:1.1;margin-top:2px">${on ? 'watching' : 'alert'}</span></button>${buyChips(p)}${distRowLines(p, (byDist || {})[p.id])}</div>`;
 }
 function paintSealedHero() {
   const h = $('#sealedHero'); if (!h) return;
@@ -4672,7 +4734,7 @@ function paintLocal() {
   else out.push(`<div class="note" style="margin:6px 0 10px">Zip ${esc(HUNT.zip)}${here ? '' : ' \u2014 not a zip the app can place, so no distances'} \u00b7 ${LOCAL.exact() ? 'distances are from your zip\u2019s centre, within a mile or two' : 'distances are from the centre of your zip area, about \u00b110 mi <button class="linkish" id="localExact" style="display:inline;padding:0 0 0 6px">make them exact</button>'} <button class="linkish" id="localZip" style="display:inline;padding:0 0 0 6px">change</button></div>`);
   /* the roster */
   const R = LOCAL.stores; const shops = (R && R.stores) ? R.stores.map(s => ({ ...s, mi: LOCAL.miles(s.ll) })).filter(s => LOCAL.within(s.mi)).sort((a, b) => (a.mi ?? 9e9) - (b.mi ?? 9e9)) : [];
-  out.push(`<div class="panel"><h3>Shops that run One Piece events${R ? ` <span class="note">\u00b7 ${shops.length}${LOCAL.radius ? ` within ${LOCAL.radius} mi` : ''}</span>` : ''}</h3>
+  out.push(`<div class="panel"><h3>Shops that run events${R ? ` <span class="note">\u00b7 ${shops.length}${LOCAL.radius ? ` within ${LOCAL.radius} mi` : ''}</span>` : ''}</h3>
     ${!R ? `<div class="note">Not fetched yet on this phone. Refresh when you are online.</div><div class="row" style="margin-top:8px"><button class="ghost" id="localSync">Refresh</button></div>` :
       !HUNT.zip ? '<div class="note">Enter your zip above.</div>' :
       !shops.length ? `<div class="note">None within ${LOCAL.radius} mi of your zip area. Widen the distance.</div>` :
@@ -4682,7 +4744,7 @@ function paintLocal() {
     <div class="note" style="margin-top:8px">From ${esc((R && R.source) || 'Bandai TCG+')}${R ? ', ' + esc(HUNT.ageLabel(R.fetched_at)) : ''}. A store on this list registered to run events; whether it has product on the shelf is what your notes and the stock feed are for.</div></div>`);
   /* Target stores the feed checked */
   const T = HUNT.feed && HUNT.feed.sources && HUNT.feed.sources.target; const sv = HUNT.served(); const zz = T && sv.how !== 'none' ? T.zips[sv.zip] : null;
-  if (zz && zz.stores && zz.stores.length) out.push(`<div class="panel"><h3>Target stores the feed checks <span class="note">\u00b7 for ${esc(sv.zip)}</span></h3>${zz.stores.filter(s => LOCAL.within(s.miles)).map(s => `<div class="row"><div class="nm"><b>Target ${esc(s.name)}</b><span>${s.miles} mi from ${esc(sv.zip)}</span></div></div>`).join('') || `<div class="note">None within ${LOCAL.radius} mi.</div>`}</div>`);
+  if (zz && zz.stores && zz.stores.length) out.push(`<div class="panel"><h3>Target stores checked <span class="note">\u00b7 for ${esc(sv.zip)}</span></h3>${zz.stores.filter(s => LOCAL.within(s.miles)).map(s => `<div class="row"><div class="nm"><b>Target ${esc(s.name)}</b><span>${s.miles} mi from ${esc(sv.zip)}</span></div></div>`).join('') || `<div class="note">None within ${LOCAL.radius} mi.</div>`}</div>`);
   /* local shops with an online store */
   const SH = LOCAL.shops;
   out.push(`<div class="panel"><h3>Shops with an online store</h3>
@@ -4806,7 +4868,7 @@ function paintEvents() {
       out.push(`<div class="panel" style="padding:12px 14px"><div class="row" style="padding:0 0 6px;border:0"><div class="nm" style="min-width:0"><b>${esc(st.name)}</b><span>${esc([st.addr, st.city].filter(Boolean).join(', '))}${g.mi != null ? ` \u00b7 ${st.exact ? '' : '~'}${g.mi} mi` : ''}</span></div>
         <div class="v" style="flex:0 0 auto;display:flex;gap:6px">${st.phone ? `<a class="ghost" href="tel:${esc(st.phone)}" style="padding:8px 12px" aria-label="Call ${esc(st.name)}">Call</a>` : ''}<button class="ghost" data-localnote="${esc(st.name)}" aria-label="Add a note for ${esc(st.name)}" style="padding:8px 10px">Note</button></div></div>
         ${g.evs.slice(0, 6).map(e => { const dt = new Date(e.d + 'T12:00:00'); return `<div class="row" style="padding:6px 0"><div class="nm" style="min-width:0"><b style="font-weight:600;white-space:normal">${esc(dt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }))} \u00b7 ${esc(e.title.replace(/^\[[^\]]*\]\s*/, ''))}${e.release ? ' <span class="badge">release</span>' : ''}</b><span>${e.fee > 0 ? money(e.fee) : 'free'}${e.cap ? ` \u00b7 ${e.cap} seats` : ''}</span></div>
-          <div class="v" style="flex:0 0 auto;display:flex;gap:6px">${e.url ? `<a class="ghost" href="${esc(e.url)}" target="_blank" rel="noopener" style="padding:6px 10px;font-size:13px" aria-label="Register for ${esc(e.title.replace(/^\[[^\]]*\]\s*/, ''))} at ${esc(st.name)} on Bandai TCG+">Register ${ext()}</a>` : ''}<button class="ghost" data-evcal="${all.indexOf(e)}" aria-label="Add ${esc(e.title)} at ${esc(st.name)} to your calendar" style="padding:6px 8px;font-size:13px">Calendar</button></div></div>`; }).join('')}${g.evs.length > 6 ? `<div class="note">and ${g.evs.length - 6} more at this store</div>` : ''}</div>`);
+          <div class="v" style="flex:0 0 auto;display:flex;gap:6px">${e.url ? `<a class="ghost" href="${esc(e.url)}" target="_blank" rel="noopener" style="padding:6px 10px;font-size:var(--fs-sm)" aria-label="Register for ${esc(e.title.replace(/^\[[^\]]*\]\s*/, ''))} at ${esc(st.name)} on Bandai TCG+">Register ${ext()}</a>` : ''}<button class="ghost" data-evcal="${all.indexOf(e)}" aria-label="Add ${esc(e.title)} at ${esc(st.name)} to your calendar" style="padding:6px 8px;font-size:var(--fs-sm)">Calendar</button></div></div>`; }).join('')}${g.evs.length > 6 ? `<div class="note">and ${g.evs.length - 6} more at this store</div>` : ''}</div>`);
     }
     out.push(`<div class="note" style="margin-top:10px">Registration is on Bandai TCG+, in their app or site; this only points there. Fees and seats are as the store listed them. From onepieceevents.com, from TCG+.</div>`);
   }
@@ -4846,8 +4908,8 @@ function paintReleases() {
      Take 97: the countdown carries its band; an upcoming row carries Remind me
      and Calendar beside Details. */
   const cdown = pub => `<span class="note ${relBand(days(pub))}">${pub >= today ? (days(pub) === 0 ? 'today' : `in ${days(pub)} day${days(pub) === 1 ? '' : 's'}`) : `${-days(pub)} days ago`}</span>`;
-  const btn = (attrs, text, aria) => `<button class="ghost" ${attrs} style="display:inline-block;padding:6px 12px;font-size:13px" aria-label="${esc(aria)}">${text}</button>`;
-  const foot = (s, label, extra = '') => `<div style="display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;padding:0 0 8px">${extra}${s.pub >= today ? btn(`data-relalert="${esc(s.id)}" data-relname="${esc(label)}" data-relpub="${esc(s.pub)}" aria-pressed="${RELALERTS.has(s.id)}"`, RELALERTS.has(s.id) ? 'Reminder set ' + tick() : 'Remind me', (RELALERTS.has(s.id) ? 'Remove the reminder for ' : 'Remind me the day before ') + label) + btn(`data-relcal="${esc(s.id)}" data-relname="${esc(label)}"`, 'Calendar', 'Add the release of ' + label + ' to your calendar') : ''}<a class="ghost" href="${esc(detailsUrl({ name: label }))}" target="_blank" rel="noopener" style="padding:6px 12px;font-size:13px" aria-label="Full details for ${esc(label)} on TCGplayer">Details ${ext()}</a></div>`;
+  const btn = (attrs, text, aria) => `<button class="ghost" ${attrs} style="display:inline-block;padding:6px 12px;font-size:var(--fs-sm)" aria-label="${esc(aria)}">${text}</button>`;
+  const foot = (s, label, extra = '') => `<div style="display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;padding:0 0 8px">${extra}${s.pub >= today ? btn(`data-relalert="${esc(s.id)}" data-relname="${esc(label)}" data-relpub="${esc(s.pub)}" aria-pressed="${RELALERTS.has(s.id)}"`, RELALERTS.has(s.id) ? 'Reminder set ' + tick() : 'Remind me', (RELALERTS.has(s.id) ? 'Remove the reminder for ' : 'Remind me the day before ') + label) + btn(`data-relcal="${esc(s.id)}" data-relname="${esc(label)}"`, 'Calendar', 'Add the release of ' + label + ' to your calendar') : ''}<a class="ghost" href="${esc(detailsUrl({ name: label }))}" target="_blank" rel="noopener" style="padding:6px 12px;font-size:var(--fs-sm)" aria-label="Full details for ${esc(label)} on TCGplayer">Details ${ext()}</a></div>`;
   const line = s => `<div class="rel"><button class="row" style="width:100%;text-align:left;padding:0;gap:10px;min-width:0" data-browse-set="${esc(s.id)}">${picFor(s)}<div class="nm" style="min-width:0"><b style="white-space:normal">${esc(s.name)}</b><span>${esc(s.abbr || '')} \u00b7 ${setCards(s, today)}</span>${onePer(s, forSet(s)).map(it => `<span style="display:block;color:var(--brass)">${distShort(it)}</span>`).join('')}</div><div class="v" style="flex:0 0 auto"><b>${esc(dayText(s.pub))}</b>${cdown(s.pub)}</div></button>
 ${foot(s, s.name)}</div>`;
   /* take 97 (A38 item 1): a run of two or more starter decks on one day is ONE
@@ -4857,14 +4919,14 @@ ${foot(s, s.name)}</div>`;
   const grouped = list => { const out = []; for (let i = 0; i < list.length; i++) { const s = list[i]; if (!isDeck(s)) { out.push(s); continue; }
       const run = [s]; while (i + 1 < list.length && isDeck(list[i + 1]) && list[i + 1].pub === s.pub) run.push(list[++i]);
       out.push(run.length > 1 ? { group: true, pub: s.pub, sets: run, id: s.id, name: `Starter decks ${run[0].abbr || ''}\u2013${run[run.length - 1].abbr || ''}` } : s); } return out; };
-  const gline = g => `<div class="rel"><button class="row" style="width:100%;text-align:left;padding:0;gap:10px;min-width:0" data-browse-set="${esc(g.id)}" data-browse-q="Starter Deck">${picFor(g.sets[0])}<div class="nm" style="min-width:0"><b style="white-space:normal">${esc(g.name)}</b><span>${g.sets.length} starter decks, one release day</span>${onePer(null, g.sets.flatMap(s => forSet(s))).map(it => `<span style="display:block;color:var(--brass)">${distShort(it)}</span>`).join('')}</div><div class="v" style="flex:0 0 auto"><b>${esc(dayText(g.pub))}</b>${cdown(g.pub)}</div></button>${foot(g, g.name, `<button class="ghost" data-relfold="${esc(g.pub)}" aria-expanded="${RELF.open.has(g.pub)}" style="display:inline-block;padding:6px 12px;font-size:13px">${RELF.open.has(g.pub) ? 'Hide the decks ' + chev(true, 14) : `Show the ${g.sets.length} decks ${chev(false, 14)}`}</button>`)}${RELF.open.has(g.pub) ? `<div style="padding-left:12px;border-left:2px solid var(--line)">${g.sets.map(line).join('')}</div>` : ''}</div>`;
+  const gline = g => `<div class="rel"><button class="row" style="width:100%;text-align:left;padding:0;gap:10px;min-width:0" data-browse-set="${esc(g.id)}" data-browse-q="Starter Deck">${picFor(g.sets[0])}<div class="nm" style="min-width:0"><b style="white-space:normal">${esc(g.name)}</b><span>${g.sets.length} starter decks, one release day</span>${onePer(null, g.sets.flatMap(s => forSet(s))).map(it => `<span style="display:block;color:var(--brass)">${distShort(it)}</span>`).join('')}</div><div class="v" style="flex:0 0 auto"><b>${esc(dayText(g.pub))}</b>${cdown(g.pub)}</div></button>${foot(g, g.name, `<button class="ghost" data-relfold="${esc(g.pub)}" aria-expanded="${RELF.open.has(g.pub)}" style="display:inline-block;padding:6px 12px;font-size:var(--fs-sm)">${RELF.open.has(g.pub) ? 'Hide the decks ' + chev(true, 14) : `Show the ${g.sets.length} decks ${chev(false, 14)}`}</button>`)}${RELF.open.has(g.pub) ? `<div style="padding-left:12px;border-left:2px solid var(--line)">${g.sets.map(line).join('')}</div>` : ''}</div>`;
   const render = list => grouped(list).map(x => x.group ? gline(x) : line(x)).join('');
   /* the distributor’s unlisted starter-deck displays fold the same way, by release day */
   const isDeckItem = it => (it.codes || []).some(c => /^ST\d+$/.test(c)) && /STARTER DECK/i.test(it.name || '');
   const ditem = it => `<div class="row"><div class="nm" style="min-width:0"><b style="white-space:normal">${esc(it.name)}</b><span>${esc((it.codes || []).join(', '))}</span>${distLine(it)}</div></div>`;
   const dgroup = (rel, items) => { const key = 'd:' + items[0]._d + ':' + rel; const codes = items.map(it => (it.codes || [])[0]).filter(Boolean); const same = items.every(it => distWords(it).join() === distWords(items[0]).join());
     return `<div class="row" style="flex-wrap:wrap"><div class="nm" style="min-width:0;flex:1"><b style="white-space:normal">Starter decks ${esc(codes[0] || '')}\u2013${esc(codes[codes.length - 1] || '')}</b><span>${items.length} starter deck displays, one release day \u00b7 ${esc(codes.join(', '))}</span>${same ? distLine(items[0]) : `<span style="display:block;color:var(--brass)">${esc(HUNT.distName(items[0]._d))} \u00b7 mixed \u00b7 release ${esc(dayText(rel))}</span>`}</div>
-      <button class="ghost" data-relfold="${esc(key)}" aria-expanded="${RELF.open.has(key)}" style="flex:0 0 auto;padding:6px 12px;font-size:13px">${RELF.open.has(key) ? 'Hide ' + chev(true, 14) : `Show ${items.length} ${chev(false, 14)}`}</button>${RELF.open.has(key) ? `<div style="flex-basis:100%;padding-left:12px;border-left:2px solid var(--line)">${items.map(ditem).join('')}</div>` : ''}</div>`; };
+      <button class="ghost" data-relfold="${esc(key)}" aria-expanded="${RELF.open.has(key)}" style="flex:0 0 auto;padding:6px 12px;font-size:var(--fs-sm)">${RELF.open.has(key) ? 'Hide ' + chev(true, 14) : `Show ${items.length} ${chev(false, 14)}`}</button>${RELF.open.has(key) ? `<div style="flex-basis:100%;padding-left:12px;border-left:2px solid var(--line)">${items.map(ditem).join('')}</div>` : ''}</div>`; };
   const drender = list => { const out = []; for (let i = 0; i < list.length; i++) { const it = list[i]; if (!isDeckItem(it)) { out.push(ditem(it)); continue; }
       const run = [it]; while (i + 1 < list.length && isDeckItem(list[i + 1]) && list[i + 1].release === it.release && list[i + 1]._d === it._d) run.push(list[++i]);
       out.push(run.length > 1 ? dgroup(it.release || '?', run) : ditem(it)); } return out.join(''); };
@@ -4970,7 +5032,7 @@ function paintScan() {
     const st = CREDITS.state;
     c.innerHTML = `Scanning is unlimited. <b>${st.scan}</b> save credit${st.scan === 1 ? '' : 's'}` +
       (st.pending.length ? ` · <b>${st.pending.length}</b> waiting` : '') +
-      ` · <button class="ghost" id="earnBtn" style="padding:4px 10px;font-size:12px">+${CREDITS.PER_AD} for a short ad</button>`;
+      ` · <button class="ghost" id="earnBtn" style="padding:4px 10px;font-size:var(--fs-cap)">+${CREDITS.PER_AD} for a short ad</button>`;
   } else c.innerHTML = 'Scanning is free and unlimited. Saving to the collection is too, for now.';
   $('#scCount').textContent = BATCH.rows.length;
   $('#scTotal').textContent = money(BATCH.rows.reduce((s, r) => s + (price(r.id) || 0), 0));
@@ -4990,7 +5052,7 @@ $('#setChip').addEventListener('click', () => {
       <div class="oi"><b>Any set</b><span>ask when a number is ambiguous</span></div></button>` +
     list.map(s => `<button class="opt${BATCH.setId === s.id ? ' best' : ''}" data-setpick="${s.id}">
       <div class="oi"><b>${esc(s.abbr || '')}</b><span>${esc(s.name)} \u00b7 ${s.n} cards</span></div>
-      <div class="op" style="font-size:12px;color:var(--dim2)">${esc((s.pub || '').slice(0, 4))}</div></button>`).join('');
+      <div class="op" style="font-size:var(--fs-cap);color:var(--dim2)">${esc((s.pub || '').slice(0, 4))}</div></button>`).join('');
   $('#picker').classList.add('on');
 });
 document.addEventListener('click', e => {
@@ -5648,7 +5710,7 @@ function openPicker(number, r, photo) {
     if (p.prov) bits.push(p.prov);
     if (p.award) bits.push(p.award);
     return `<button class="opt${i === 0 ? ' best' : ''}" data-pick="${p.id}">
-      <div class="oa"><div class="ph" style="font-size:12px;color:var(--dim2)">${esc(TREAT[p.treat] === 'Base' ? '' : (TREAT[p.treat] || ''))}<br>${esc((s.abbr || '').slice(0, 8))}</div>${refArt(p)}</div>
+      <div class="oa"><div class="ph" style="font-size:var(--fs-cap);color:var(--dim2)">${esc(TREAT[p.treat] === 'Base' ? '' : (TREAT[p.treat] || ''))}<br>${esc((s.abbr || '').slice(0, 8))}</div>${refArt(p)}</div>
       <div class="oi"><b>${esc(bits.join(' \u00b7 '))}</b>
         <span>${esc(s.abbr || s.name || '')}${faceHint ? ' \u00b7 ' + faceHint : ''}${p.sameart
           ? ' \u00b7 <span style="color:var(--gold)">looks identical to another option</span>'
@@ -5719,7 +5781,7 @@ function openDetail(id, { dist = false } = {}) {
   $('#dQtyH').textContent = sealedP ? 'Sealed' : 'Ungraded';
   $('#dWant').textContent = WANT.has(p.num) ? 'On your want list \u2014 remove' : 'Want this card';
   const setCode = (s.abbr || '').replace(/-/g, '').slice(0, 5);   /* take 112: a product has no number; its set's code, as on its row tile */
-  $('#dArt').innerHTML = (sealedP ? `<div class="ph" style="font-family:var(--display);font-size:28px">${setCode ? `<span class="phl">${esc(setCode)}</span>` : ''}</div>` : `<div class="ph" style="font-size:12px">${esc(p.num)}</div>`) + refArt(p, { size: 'large' });
+  $('#dArt').innerHTML = (sealedP ? `<div class="ph" style="font-family:var(--display);font-size:var(--fs-head)">${setCode ? `<span class="phl">${esc(setCode)}</span>` : ''}</div>` : `<div class="ph" style="font-size:var(--fs-cap)">${esc(p.num)}</div>`) + refArt(p, { size: 'large' });
   paintBack($('#dBack'), p);   /* take 109 (A42, C): the card’s own art and colours behind the top */
   $('#dArt').classList.toggle('product', sealedP);
   /* take 117 (the owner's word): three cells on every card, the same three -- the type, the cost (a Leader's life), the
@@ -6310,7 +6372,7 @@ function simBotRun() { const g = SIM.g; if (!g || g.bot == null) return; let gua
   while (g.phase === 'main' && g.active === g.bot && !SIMUI.offer && guard++ < 40) { const did = BOT.step(); if (did === 'attack') { BOT.defendIfBot(); if (g.phase === 'battle') return; } if (did === 'end' || did == null) break; }
   if (g.phase === 'battle' && g.battle.def === g.bot) { BOT.defend(); } }
 BOT.defendIfBot = () => { const g = SIM.g; if (g.phase === 'battle' && g.battle.def === g.bot) BOT.defend(); };
-function simCurtain(text, sub) { if (SIM.g && SIM.g.bot != null) return; const c = $('#simCurtain'); c.innerHTML = `<div class="big" style="font-size:22px;margin-bottom:8px">Hand the phone to</div><h2 style="font-size:34px;margin:0 0 12px">${esc(text)}</h2><div class="note">${esc(sub || 'tap when you have it')}</div>`; c.classList.add('on'); }
+function simCurtain(text, sub) { if (SIM.g && SIM.g.bot != null) return; const c = $('#simCurtain'); c.innerHTML = `<div class="big" style="font-size:var(--fs-head);margin-bottom:8px">Hand the phone to</div><h2 style="font-size:var(--fs-hero);margin:0 0 12px">${esc(text)}</h2><div class="note">${esc(sub || 'tap when you have it')}</div>`; c.classList.add('on'); }
 function paintSim() {
   const box = $('#simBoard'); const g = SIM.g;
 
@@ -6335,7 +6397,7 @@ function paintSim() {
     const open = mine && SIMUI.menu === String(ref);
     const granted = SIM.kwOf(xi, ref).filter(k => !((CAT.byId.get(o.id) || {}).kw || '').split('|').includes(k));
     const marked = mine && SIMUI.sel && SIMUI.sel.ref === ref;
-    return `<div class="row" style="gap:8px;align-items:center;opacity:${o.rested ? .55 : 1}${marked ? ';outline:1px solid var(--brass);border-radius:8px;padding:2px 6px' : ''}"><div class="nm">${simCard(o.id, `\u2022kw:${granted.join(',')}\u2022 \u00b7 <b>${pw}</b>${o.don ? ' (+' + o.don + ' DON!!)' : ''}${o.rested ? ' \u00b7 rested' : ''}`, true)}</div>
+    return `<div class="row" style="gap:8px;align-items:center;opacity:${o.rested ? .55 : 1}${marked ? ';outline:1px solid var(--brass);border-radius:var(--r-md);padding:2px 6px' : ''}"><div class="nm">${simCard(o.id, `\u2022kw:${granted.join(',')}\u2022 \u00b7 <b>${pw}</b>${o.don ? ' (+' + o.don + ' DON!!)' : ''}${o.rested ? ' \u00b7 rested' : ''}`, true)}</div>
       ${mine && g.phase === 'main' && SIM.offers(xi, 'main', ref).length ? `<button class="ghost go" data-sim="fxmain:${ref}">Main</button>` : ''}
       ${mine && g.phase === 'main' ? `<button class="ghost" data-sim="give:${ref}" title="+1000">+DON</button><button class="ghost" data-sim="attack:${ref}">Attack</button><button class="ghost${open ? ' go' : ''}" data-sim="menu:${ref}" aria-label="Actions" aria-expanded="${!!open}">${G('more', 18)}</button>` : ''}
       ${!mine && SIMUI.sel && g.phase === 'main' && (ref === 'leader' || o.rested) ? `<button class="ghost go" data-sim="target:${ref}">Target</button>` : ''}</div>
@@ -6370,7 +6432,7 @@ function paintSim() {
     <div class="panel"><h3>Opponent</h3>${head(O, false)}<div style="margin-top:8px">${unit(O, 1 - i, 'leader', false)}${O.chars.map((c, k) => unit(O, 1 - i, k, false)).join('')}${O.stage ? `<div class="note">Stage: ${simCard(O.stage)}</div>` : ''}</div></div>
     <div class="panel"><h3>${esc(P.name)} \u2014 turn ${g.turn}${SIMUI.sel ? ' \u00b7 <span style="color:var(--accent-ink)">choose a target</span>' : ''}${g.bot != null && g.active === g.bot ? ' \u00b7 <span class="note">the app is moving</span>' : ''}</h3>${head(P, true)}
       <div style="margin-top:8px">${unit(P, i, 'leader', true)}${P.chars.map((c, k) => unit(P, i, k, true)).join('')}${P.stage ? `<div class="note">Stage: ${simCard(P.stage)}</div>` : ''}</div>
-      <div class="fgrp">Hand</div>${P.hand.map((id, h) => { const v = SIM.canPlay(i, h); return `<div class="row" style="gap:8px"><div class="nm">${simCard(id)}${v.ok ? '' : `<span style="display:block;color:var(--dim2);font-size:12.5px">${esc(v.why)}</span>`}</div><button class="ghost${v.ok ? ' go' : ''}" data-sim="play:${h}" ${v.ok ? '' : 'disabled'}>Play</button><button class="ghost" data-sim="trashhand:${h}" aria-label="Trash this card (an effect)">${G('trash', 18)}</button></div>`; }).join('') || '<div class="note">empty</div>'}
+      <div class="fgrp">Hand</div>${P.hand.map((id, h) => { const v = SIM.canPlay(i, h); return `<div class="row" style="gap:8px"><div class="nm">${simCard(id)}${v.ok ? '' : `<span style="display:block;color:var(--dim2);font-size:var(--fs-sm)">${esc(v.why)}</span>`}</div><button class="ghost${v.ok ? ' go' : ''}" data-sim="play:${h}" ${v.ok ? '' : 'disabled'}>Play</button><button class="ghost" data-sim="trashhand:${h}" aria-label="Trash this card (an effect)">${G('trash', 18)}</button></div>`; }).join('') || '<div class="note">empty</div>'}
       <div class="row" style="gap:10px;margin-top:14px;flex-wrap:wrap"><button class="ghost go" data-sim="end">End turn</button><span class="note" style="margin:0">${g.bot != null ? 'then the app plays its turn' : 'then pass the phone'}</span>
         <button class="ghost" data-sim="m:draw">Draw (effect)</button><button class="ghost" data-sim="m:don">+1 DON!! (effect)</button><button class="ghost" data-sim="m:life-">Life \u2192 hand (effect)</button><button class="ghost" data-sim="m:life+">+1 Life (effect)</button></div>
     </div>${simLog()}`;

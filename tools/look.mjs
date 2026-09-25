@@ -77,7 +77,9 @@ async function runStep(page, ctx, step, n) {
   const png = path.join(ctx.dir, `${String(n).padStart(2, '0')}-${step.name}.png`);
   let bytes = 0;
   try { await page.screenshot({ path: png, fullPage: false }); bytes = fs.statSync(png).size; } catch (e) { err = err || String(e); }
-  const overflow = await page.evaluate(() => ({ sw: document.body ? document.body.scrollWidth : 0, vw: document.documentElement.clientWidth })).catch(() => ({ sw: 0, vw: 0 }));
+  /* take 119 (landmine 205): the viewport's scroll width, as render's sideways checks read it -- body.scrollWidth counts overflow the body clips
+     out of the viewport (617 at 411 px during the mode slide, with nothing to scroll); before the slide the two were equal on every page */
+  const overflow = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, vw: document.documentElement.clientWidth })).catch(() => ({ sw: 0, vw: 0 }));
   if (bytes < MIN_PNG) { ok = false; err = err || `screenshot ${bytes} bytes — a blank page`; }
   if (overflow.sw > overflow.vw + 1) { ok = false; err = err || `sideways scroll: ${overflow.sw} > ${overflow.vw}`; }
   const rec = { viewport: ctx.viewport, step: step.name, ok, measured, err, png: path.relative(ROOT, png), bytes, overflow, ms: Date.now() - t0 };

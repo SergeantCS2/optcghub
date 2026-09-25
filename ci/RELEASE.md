@@ -1,4 +1,4 @@
-# OP TCG Hub — take 118
+# OP TCG Hub — take 119
 
 ## Installing — read this first
 
@@ -17,6 +17,12 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 119:** The lifted, edged panels Home got at take 118 are on
+every screen of Collect and Hunt now, with the same small capital labels, and
+the collection's tiles are lifted the same way. Prep & Play's panels take it
+too. Switching mode slides the screens across, and a sideways swipe on the
+mode bar switches too. Nothing you have saved changes.
 
 **New at take 118:** Collect wears a new face: a deep indigo ground with a bright
 gold, and Home is redrawn -- your collection's value on a card over your

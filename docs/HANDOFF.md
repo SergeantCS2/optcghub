@@ -1,4 +1,172 @@
-# HANDOFF — through Take 118
+# HANDOFF — through Take 119
+
+## Take 119 — 2026-09-25 — the surface beyond Home, the mode swipe, the last literal sizes onto the tokens
+
+Opened before any code (PROTOCOL §6) by the UI/UX session, after take 118
+merged and Release take-118 built its APK and AAB.
+
+The owner's picks from the six take-119 sheets (real screenshots of the
+take-118 port at both Fold sizes, the Hunt feed served from the saved live
+files): the surface with the caps label and the fading rule on every panel of
+Collect and Hunt (S1); the collection tile as a surface card (T1); the surface
+on Prep & Play's panels too (P1); the mode swipe as drafted. The owner's
+words: on the surface, "I like S1, more sleek and professional"; on the tile,
+"It's hard for me to tell the difference between T3 and T1, but I believe we
+want T3 but maybe T1, hard to see for me", then, told the difference (T3 the
+flat box as today, T1 the box lifted like the panels with the picture edged
+and shadowed inside it), "T1, the lifted box"; on Play, "p1 for play"; on the
+swipe, "I like the swipe, we might need to tune this in the future. If you use
+the bottons at the top for mode control, the swipe animation should play"; on
+the scan row's icons, "Fine as shipped, no text for camera controls."
+
+### What this take changes
+
+- - **The surface beyond Home.** Take 118's Home rules become the rule for
+  every panel of Collect and Hunt: the card2 -> card gradient, the 18 px
+  corner (a new token, `--r-xl`), the inner highlight, the soft shadow, 12 px
+  under each; Home's own rule goes. Every panel title is the caps label with
+  the fading rule; a count beside it stays in the body face (its own 10 px top
+  margin off, or it sat low on the line) and wraps under the rule where the
+  two do not fit -- Local's "· 57 within 50 mi" wraps at 411 px and sits on
+  the line at 749 (measured with the feed, 57 shops); Local's two long labels
+  are shorter ("Shops that run events", "Target stores checked"); the
+  distributor folds' titles wear the same label. Prep & Play's panels take the
+  same surface.
+- **The collection tile** is a surface card -- the same gradient, corner and
+  shadow -- with its picture edged and shadowed.
+- **The mode swipe.** A switch from a tap or a sideways swipe on the mode
+  bar slides the screens: the one leaving is kept painted under the one
+  arriving -- fixed where it was (its top read before the switch), its
+  palette's twenty tokens copied onto it so the new palette does not
+  repaint it mid-slide, a third of the way out and dimming to half; the
+  one arriving comes in from the finger's side, with a shadow, on an opaque
+  ground; the knob slides on its own transition, and under a finger it
+  follows the drag one slot either way. The gesture is the bar's alone (the
+  actions row, the chips and the guide's strip scroll sideways): the first
+  8 px say whether the finger goes across or up and down; a move under 40
+  px, or a mostly vertical one, does nothing; the bar claims sideways
+  touches (`touch-action:pan-y`) and refuses to select a label (landmine
+  206). `MODE.set` itself stays instant for the guide, Back and the harness
+  (the knob's rest read, landmine 143); the leaving screen is taken out on
+  its animation's end or at 400 ms; reduced motion zeroes every duration
+  and keeps no screen under. For the slide's 400 ms the viewport refuses a
+  sideways scroll and the body clips the overflow out of it (landmine 205).
+- **The last literal sizes onto the tokens.** Every radius in the sheet
+  reads `--r-sm` / `-md` / `-lg` / `-xl` / `-pill` (5, 6 and 7 -> sm; 8, 9,
+  10 and 12 -> md; 14 -> lg; 18 -> xl; 999 -> pill; the 2 to 4 px hairlines,
+  the sheet's 22 px top and a circle's 50 % stay; the count pill is a pill,
+  its 9 px corner was half its height); the script's templates likewise
+  (the picture helper's radius is a token string, a card's the small one,
+  a product's the mid one), and their inline font sizes read the roles (12
+  -> cap; 12.5 and 13 -> sm; 16 -> row; 17 -> title; 22 and 28 -> head; 34
+  -> hero; 44 -> total; the one size computed from a picture's width
+  stays); the share page, a fixed page of its own, keeps its sheet.
+
+### How it was built
+
+- Pre-built on a clone of the take-118 branch with the picks as switches
+  (S1/S2, T1/T2/T3, P0/P1, the swipe on or off), so the pre-build ran
+  before the picks were in, as two anchored scripts (`patch-119-app.py`,
+  `patch-119-tools.py`), every anchor asserted, the same switches in the
+  ledgers. Five pins met on the way, each re-pinned in its take-119 form,
+  never loosened: the Local heading (its caps label is shorter), take
+  110's crossfade (a slide now, in smoke and in render), SPEC-110-42's card
+  radius (a token), take 118's two Home pins (the surface is the rule; the
+  pills read `--r-pill`).
+- The look's sideways-scroll read moves from `body.scrollWidth` to the
+  viewport's, as render's sideways checks read it: the body's clip keeps
+  the slide's overflow out of the viewport, but `body.scrollWidth` still
+  counts it (617 at 411 px, with nothing to scroll); before this take the
+  two were equal on every page the look has seen.
+
+### Measured
+
+- smoke 1315/1315 (15 new lines: the tokens in the sheet and the
+  templates, the surface per pick, the tile, the slide and the gesture,
+  each with a planted control that passes on either build); render
+  235/235 (mode: chrome): the surface on Wants and Sealed (the gradient,
+  18 px, the shadow), Decks and the tile per the pick, a real drag on the
+  bar with the mouse (Chrome sends pointer events for it) moving one mode
+  over with the knob at rest under it, a 20 px move and a mostly vertical
+  one leaving the mode alone, the slide paused at 110 ms of the 220 (Home
+  fixed under in the indigo while the root is kraft, part-way out and
+  dimming; Sealed part-way in on an opaque ground), the leaving screen
+  gone on the animations' end, reduced motion switching at once with no
+  screen kept under; the look 40 steps at both sizes, 40 ok (Wants, Trade,
+  the tiles, a card's page, Search, Sealed, Releases, Local with one-line
+  titles, Events, Decks, the deck editor, the Play counter and the Sim under
+  P1, a bulk-selected tile under T1, the slide paused half-way, finished, a
+  swipe back), every picture read.
+- Local's heading with the feed (57 shops within 50 mi): the count wraps
+  under the rule at 411 px (41 px tall, the note 23 px down) and sits on
+  the line at 749 (18 px).
+- The overflow, on a bare page with a section translated half a viewport
+  right: no rule 617 px wide at 411 and a sideways scroll of 200; the root
+  hidden 617 and the scroll refused; the root hidden and the body clipped
+  411; the body clipped or hidden alone 617 (the value goes to the
+  viewport); `body.scrollWidth` 617 in every case.
+- Negative controls, this harness on the take-118 build: smoke red on
+  16 lines (the new section and the five re-pins; the ignore line too,
+  which a control tree's linked `.git` always fails), render red on
+  9 lines, all the take's own (the surface per mode, the titles, Play's
+  panels, the tile, the three swipe lines, the paused slide, take 110's
+  re-pinned tap); an earlier run with P0 also caught the take-82 charcoal
+  line once, reading the ground mid-fade after the failed swipe lines had
+  left the mode elsewhere.
+
+### What I got wrong
+
+- The screen arriving widened the page mid-slide: a transformed box still
+  extends the scrollable overflow, and `overflow-x:hidden` on the root
+  alone refuses the scroll but leaves the document 617 px wide (the look's
+  own check); the body's clip takes it out (landmine 205).
+- A count beside a caps label sat 10 px low: the note's own top margin
+  came along into the flex line.
+- A drag with the mouse selected the knob's label (the look's picture):
+  `user-select:none` on the bar (landmine 206).
+- Render's after-slide check waited a fixed 80 ms for the end event, which
+  a loaded machine (three Chromes at once) missed; it polls for up to a
+  second now.
+- The template check's capture stopped at the brace inside `${radius}`,
+  and two planted controls read red on the old build for the old build's
+  own literals until they counted the plant alone.
+
+### Ruled out
+
+- The count on a line of its own always: it stays on the label's line
+  where it fits (Trade's values, the open Fold) and wraps only where it
+  does not.
+- A slide on every switch: the guide, Back and the harness need `MODE.set`
+  instant (landmine 143).
+- Cloning the leaving screen for the slide, as the drafts did: a clone's
+  canvases come out blank; the live section is kept under instead.
+- The swipe on the page body: the actions row, the chips and the guide's
+  strip scroll sideways.
+- `contain:paint` on the body for the overflow: it makes the body the
+  containing block of every fixed element (the nav, the sheets).
+
+### Tests
+
+- On the pre-build: **smoke** 1315 passed, 0 failed; **render** 235 passed, 0
+  failed, `(mode: chrome)`; **the look** 40 of 40 at both sizes; the gate red
+  only on the ledgers this entry writes.
+- This branch's run (25 Sept, 18:48Z): the whole pipeline in 337 s, the
+  catalogue ingested fresh; **smoke** 1315 passed, 0 failed; **render** 235
+  passed, 0 failed, `(mode: chrome)`; **the look** 40 of 40 at both sizes,
+  every picture read and sent; `scrub --check --docs` clean; then the seal.
+
+### DEFERRED
+
+- Take 120: light mode as a tint per mode (parchment Collect, chalk Prep &
+  Play, cream Hunt), dark the default, a switch under More: Dark / Light /
+  Follow the phone (the owner's answers on 25 Sept: "do what you recommend for
+  light mode, make it off by default, but add a switcher somewhere, like under
+  settings"); the tints drawn as real screenshots first.
+- The backlog: the binder's pockets near 110 px so a nine-pocket page fits the
+  open Fold (the owner: "Binder looks good on fold, do what you recommend"); a
+  layer-list launch drawable; UI-AUDIT §9's open boxes; the user README's
+  slots. The scan row's Undo stays an icon (the owner: "Fine as shipped, no
+  text for camera controls.").
 
 ## Take 118 — 2026-09-25 — Collect on Wano indigo and bright gold, Home's premium pass, Hunt in kraft
 

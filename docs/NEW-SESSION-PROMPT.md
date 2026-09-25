@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 118.* Paste the block between the rules into a new session
+*Current as of take 119.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 118 takes by previous sessions. The repo is
+built across 119 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -112,11 +112,12 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
 - **For the UI/UX session (the owner, take 115).** It drafted while
   take 115's review ran and started from `main` the hour take 115 merged:
   take 116 (the opening screen and the guide in the store listing's frame)
-  take 117 (the owner's polish list and the audit's fixes) and take 118
+  take 117 (the owner's polish list and the audit's fixes), take 118
   (Collect on Wano indigo and bright gold, Home's premium pass, Hunt in
-  kraft) are its first three, each in HANDOFF, one take one PR like any
-  other; take 119's previews (the surface beyond Home, the tiles, Play,
-  the mode swipe) are with the owner and are built from the owner's picks. The owner's words for it: it "will be
+  kraft) and take 119 (the surface beyond Home, the mode swipe, the last
+  literal sizes onto the tokens -- the owner's picks from six sheets) are
+  its first four, each in HANDOFF, one take one PR like any other; take
+  120 (light/dark) is next, its one question with the owner. The owner's words for it: it "will be
   improving collect, the loading screen, tutorial, hunt and much more,
   mostly UI changes".
   - **What take 115 changed on screen** (each in HANDOFF take 115):
@@ -254,6 +255,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 119" and begin with PROTOCOL §0.
+Say "take 120" and begin with PROTOCOL §0.
 
 ---
