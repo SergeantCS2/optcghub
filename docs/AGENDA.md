@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 115.* Ranked by blocking-ness, not by interest.
+*Current as of take 116.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -2342,7 +2342,7 @@ honestly:
 - **Ruled out: card art in the sim.** It is the collector's own scans or the
   reference art under landmine 28's rules; nothing new.
 
-## A18 — First-run guide and user pictures · BUILT take 19
+## A18 — First-run guide and user pictures · BUILT take 19 · REDONE take 116
 
 The owner's ask: a tutorial like APEX's, a splash-style tour of every capability,
 a One Piece background, and placeholders for whatever I cannot supply.
@@ -2364,8 +2364,24 @@ a One Piece background, and placeholders for whatever I cannot supply.
 - **Found while building:** the tour's id collided with the scanner's
   viewfinder (landmine 90); a JS escape landed in HTML text; the README still
   said "no counter, no cap" after the stale-copy grep missed it (landmine 88).
-- **Open:** the splash-bg slot is declared but `ci/apk.sh` does not yet use it
-  — it renders the icon on navy. One line, next take.
+- **Redone, take 116 (the UI/UX session, the owner's picks from drawn
+  drafts):** the opening screen and the guide share the store listing's
+  frame -- the Prussian band with the word-mark, the buff sky, the app's own
+  card on a calm sea, the icon's grain under everything -- and the native
+  launch image is the same scene, painted by `ci/icon.py`. Four pages, one
+  per mode and one for what stays on the phone, each with a real printing
+  looked up when the guide opens; Next pages the strip (it never did,
+  landmine 202); Back closes it unseen (it could not see it, landmine 201);
+  a dialog for screen readers; the key is `optcghub.guide.v3`. The
+  `guide-bg`, `guide-1..5` and `splash-bg` slots are retired: the guide and
+  the launch image are the scene, and `check()` refuses any other picture.
+- **Ruled out (take 116):** the mode's palette under each page; a `<dialog>`
+  element (no `showModal` in the stub, a second Back path); `role="tab"`
+  dots; coach marks over the live screens; a guided first scan (a camera on
+  first run).
+- **Open:** the launch image is a bitmap the window stretches (Capacitor's
+  template); a layer-list drawable placed by gravity would end the stretch.
+  Its own small take.
 
 ## A17 — Ads and revenue · SDK WIRED take 22 against Google test units · REAL APP ID take 41 · unit IDs pending (D11)
 

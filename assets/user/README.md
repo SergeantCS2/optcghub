@@ -6,11 +6,8 @@ app draws it. Nothing here is required.
 
 | file | used where | size | notes |
 |---|---|---|---|
-| `guide-bg.jpg` | behind the first-run guide | 1080×1920, portrait | dark-ish, or the text won't read; the app lays the page colour over it, 55 % at the top to 92 % at the bottom |
 | `home-bg.jpg` | faint, behind the Home hero | 1080×800 | under the page colour at 88 %, fading to solid |
-| `splash-bg.jpg` | the launch screen of the Android build | 1080×1920 | `ci/icon.py` (run by `ci/apk.sh`) renders the splash over it instead of the plain background |
 | `empty-collection.png` | nothing, since take 63 | — | the skull it replaced is gone and the empty Collection draws its own scan-card glyph; the file is copied but not read |
-| `guide-1.jpg` … `guide-5.jpg` | one per capability card in the guide | 1080×600 | Scan · Value · Decks · Trade · Offline, in that order |
 | `hero-play.jpg` | behind Decks' title, in place of the featured Leader's blurred art (take 110) | 1080×640, landscape | shown sharp and uncut, filling the band behind the mode slider; the slider and the status bar read over its top, so keep the top third quiet |
 | `hero-hunt.jpg` | Sealed's banner, in place of the newest set's top card (take 110) | 1080×640, landscape | shown sharp and uncut, as above |
 
@@ -21,10 +18,12 @@ itself shows card art hot-linked from TCGplayer from take 109 and bundles
 none (landmines 26, 28). A picture put here is different: it is copied into
 the build and ships inside the APK, so it is the owner's own choice and the
 owner's exposure. Your photographs of your own cards, sleeves, binders and
-playmats are the safest thing to put here. What the icon, the splash
-(`splash-bg.jpg` becomes it) and the Play listing show is where Play acts on a
-complaint first: keep characters and publisher marks out of those three
-(landmines 30, 31).
+playmats are the safest thing to put here. What the icon, the opening
+screen and the Play listing show is where Play acts on a complaint first:
+keep characters and publisher marks out of those three (landmines 30, 31).
+Since take 116 the opening screen and the first-open guide are one painted
+scene -- the listing's frame with the app's own card -- and take no picture
+from here; the guide's pages show card art hot-linked, as the app does.
 
 ## Fonts — `assets/user/fonts/` (take 33, A26)
 

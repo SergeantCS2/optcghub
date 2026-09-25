@@ -256,6 +256,9 @@ def build(verbose=True):
             if fn.lower().endswith((".jpg", ".jpeg", ".png", ".webp")):
                 shutil.copy(os.path.join(udir, fn), os.path.join(BUNDLE, "user", fn))
                 user.append(fn)
+    # take 116: the opening screen and the guide's last page show the app's own icon -- assets/icon.svg, the
+    # committed source ci/icon.py renders -- copied beside the bundle, never inlined (62 KB)
+    shutil.copy(os.path.join(ROOT, "assets", "icon.svg"), os.path.join(BUNDLE, "icon.svg"))
     man = json.load(open(MANIFEST))
     man["user"] = user
     man["fonts"] = fonts_used     # which file served each role, for the About panel and the harness

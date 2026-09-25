@@ -750,9 +750,10 @@ ok('CI opens one deduplicated issue on any failed job and closes it only when ev
   ok('negative controls: without the report job, or with the Pages job hiding its failure (take 114\'s continue-on-error), that fails',
      noReport !== yml && hidden !== yml && !a9ok(noReport) && !a9ok(hidden), `${noReport !== yml} ${hidden !== yml}`);
 }
-ok('the splash honours assets/user/splash-bg.jpg (apk.sh runs ci/icon.py, which draws the splash over it; D7)',
-   /\npython3 ci\/icon\.py android\/app\/src\/main\/res/.test(fs.readFileSync(path.join(ROOT, 'ci', 'apk.sh'), 'utf8'))
-   && /splash_bg=os\.path\.join\(ASSETS, "user", "splash-bg\.jpg"\)/.test(fs.readFileSync(path.join(ROOT, 'ci', 'icon.py'), 'utf8')));
+ok('the launch image is the listing\'s frame (take 116): apk.sh runs ci/icon.py, which paints the page\'s own scene and refuses any other, and the system splash sits on the band\'s colour',
+   (() => { const apk = fs.readFileSync(path.join(ROOT, 'ci', 'apk.sh'), 'utf8'), icon = fs.readFileSync(path.join(ROOT, 'ci', 'icon.py'), 'utf8');
+            return /\npython3 ci\/icon\.py android\/app\/src\/main\/res/.test(apk) && /def splash\(W, H, master, app_src/.test(icon) && /SPLASH_BG = \(31, 61, 114\)/.test(icon)
+              && /not the band's/.test(icon) && /windowSplashScreenBackground">#1f3d72</.test(apk) && !/splash-bg\.jpg/.test(icon); })());
 ok('portfolio move, new and rename are sheets, not prompts',
    /data-pfmove/.test(js) && /data-pfname/.test(js) && !/prompt\('Portfolio name/.test(js) && !/prompt\('Move /.test(js));
 ok('bulk condition is a sheet', /data-bulkcond/.test(js) && !/prompt\('Set condition/.test(js));
@@ -808,7 +809,7 @@ ok('the text is cleaned: no HTML tags, no carriage returns',
 ok('a phrase from a real card\'s text finds that card',
    (() => { const p = withText.find(x => /\[Blocker\]/.test(x.text)); if (!p) return false;
             const q = 'blocker'; return (p.full + ' ' + p.text).toLowerCase().includes(q); })());
-ok('the tour is v2 with a modes card', /optcghub\.guide\.v2/.test(js) && /Three modes/.test(js));   // take 110: three modes, the Sim built
+ok('the tour is v3: four pages in the listing\'s frame, the modes card gone', /optcghub\.guide\.v3/.test(js) && /Yours, offline/.test(js) && !/Three modes/.test(js));   // take 116
 /* who goes first: §6-4-1 */
 const P = V.PLAY; P.turn = 1; P.first = 1; P.p.forEach(x => { x.don = 0; x.given = 0; });
 ok('first player is switchable', P.first === 1);
@@ -1543,7 +1544,7 @@ V.CUR.set('ZZZ'); ok('an unknown or unrated code falls back to USD', V.CUR.activ
 V.CUR.set('CAD'); ok('the choice is kept on the phone', ctx.localStorage.getItem('vault.currency') === 'CAD'); V.CUR.set('USD');
 ok('the picker says what a conversion is: the ECB reference rate of a date, an estimate not a quote', /an estimate, not a quote/.test(js) && /ECB reference rate/.test(js));
 ok('the currency is reachable from Home, from Sealed and from More', /id="curPillHome"/.test(html) && /id="curPillSealed"/.test(html) && /data-act="currency">Show prices in/.test(js));
-ok('the opening screen is in the markup (first paint), a word-mark and a line, no art', /<div id="splash" aria-hidden="true">/.test(html) && /class="wm">OP TCG Hub</.test(html) && !/<img/.test(html.slice(html.indexOf('id="splash"'), html.indexOf('id="splash"') + 900)));
+ok('the opening screen is in the markup (first paint): a word-mark, a line and the app\'s own card -- its icon file, and no other picture (take 116)', /<div id="splash" aria-hidden="true">/.test(html) && /class="wm">OP TCG Hub</.test(html) && (() => { const s = html.slice(html.indexOf('id="splash"'), html.indexOf('id="splash"') + 900); const im = s.match(/<img[^>]*>/g) || []; return im.length === 1 && /src="bundle\/icon\.svg"/.test(im[0]) && !/<image/.test(s); })());
 ok('...and the app hides it after it has painted, no sooner than 1.6 s (a second longer at the owner\'s word), no later than 3.5 s', /Math\.max\(0, 1600 - \(Date\.now\(\) - SPLASH_T0\)\)/.test(js) && /setTimeout\(splashDone, 3500\)/.test(js) && /splashDone\(\);/.test(js));
 /* take 83: the third look -- uniformity, pictures, the blank back */
 ctx.window.scrollTo = () => {}; ctx.scrollTo = () => {};
@@ -1881,8 +1882,8 @@ ctx.Date = RealDate; V.LOCAL.radius = 0;
 ok('negative control (landmine 123): read with the real clock, once the fixture\'s last event day has passed the same fixture yields no rows -- the runner\'s three red nights, asserted live against live', RealDate.now() <= RealDate.parse(fxDays[fxDays.length - 1] + 'T23:59:59Z') || V.EVENTS.rows().length === 0);
 ok('the real clock is back for everything after this block', vm.runInContext('Date.now()', ctx) > pinnedNow + 864e5 && vm.runInContext('Date', ctx) === RealDate);
 V.LOCAL.radius = 50; V.EVENTS.tab = null; V.HUNT.setZip('');
-ok('Hunt is green: the palette is Zoro\'s and it clears AA (checked with the other two above)', /:root\[data-mode="hunt"\]\{\s*--bg:#0B1B12/.test(html) && /\.swords\{/.test(html) && (html.match(/class="swords"/g) || []).length === 1);   // take 107: the swords stay on the splash; Hunt's titles are the header's like every mode's
-ok('the mark is three strokes of original geometry -- no image, no likeness', !/<image/.test(html.slice(html.indexOf('class="swords"'), html.indexOf('class="swords"') + 400)));
+ok('Hunt is green: the palette is Zoro\'s and it clears AA (checked with the other two above)', /:root\[data-mode="hunt"\]\{\s*--bg:#0B1B12/.test(html) && !/class="swords"/.test(html));   // take 116: the three-stroke mark left with the old opening screen
+ok('the opening screen shows the app\'s own icon file and no other image', /bundle\/icon\.svg/.test(html) && !/<image/.test(html.slice(html.indexOf('id="splash"'), html.indexOf('id="splash"') + 1500)));
 /* take 77: stock alerts -- fire on the flip, once, per source */
 {
 V.HUNT.feed = F; V.HUNT.setZip('48329'); V.LOCAL.shops = JSON.parse(fs.readFileSync(shopsFile, 'utf8'));
@@ -2184,6 +2185,7 @@ V.RELF.open = new Set(); V.DISTF.open.clear(); V.HUNT.feed = null; V.RELALERTS.l
 section('take 98 — the take-97 look: Back from a sheet goes back (landmine 137), the most-valuable rows open, one splash colour, a toast that wraps, the decks fold, a condition tap that works');
 /* landmine 137: the card sheet is a screen; it must not be in the overlay list, and the handler's sequence must land on the previous screen */
 ok('closeAnyOverlay() lists overlays only: the sheets, the tour and the curtain — never the card sheet', /for \(const id of \['#picker', '#filters', '#leaderPick', '#printPick', '#tour', '#simCurtain'\]\)/.test(js) && !/for \(const id of \[[^\]]*'#detail'/.test(js));   // take 107 added the three sheets Back skipped
+if (V.guideClose) V.guideClose(false);   // take 116: the boot timer opened the guide inside this stub (its first await is above), and it is an overlay now: Back would close it first
 { const box98 = V.CAT.rows.find(p => V.SEALED.isProduct(p)); V.MODE.set('hunt', false); V.go('sealed'); V.openDetail(box98.id);
   const top0 = V.NAV.stack[V.NAV.stack.length - 1]; const closed = V.closeAnyOverlay(); const back = V.NAV.back(); const top1 = V.NAV.stack[V.NAV.stack.length - 1];
   ok('the back handler\'s sequence from a sheet: closeAnyOverlay() has nothing to close, NAV.back() pops to the screen the sheet came from', top0 === 'detail' && closed === false && back === true && top1 === 'sealed', `${top0} → closed=${closed} back=${back} → ${top1}`);
@@ -2198,7 +2200,7 @@ ok('Home\'s most-valuable rows are buttons that open the card, like every other 
   ok('...and a painted top list carries the tap on its row', new RegExp('<button class="row"[^>]*data-open="' + card98.id + '"').test(ctx.document.getElementById('topList').innerHTML));
   V.OWN.items = keep98; }
 /* one splash colour */
-ok('the splash is one colour in every mode (Collect\'s), not the last mode\'s palette', /#splash\{[^}]*background:#0B1622/.test(html) && !/#splash\{[^}]*background:var\(--bg\)/.test(html));
+ok('the splash is one scene in every mode (the listing\'s frame, take 116), never the mode\'s palette', /#splash\{[^}]*background:linear-gradient\(180deg,#1f3d72/.test(html) && !/#splash\{[^}]*var\(--bg\)/.test(html));
 /* a toast that wraps */
 ok('a toast wraps inside the screen instead of running off both sides (the take-97 reminder toast)', /\.toast\{[^}]*white-space:normal;max-width:min\(92vw,520px\);text-align:center/.test(html) && !/\.toast\{[^}]*nowrap/.test(html));
 /* the Starter decks section starts folded */
@@ -2327,7 +2329,7 @@ section('take 106 — the UI series\' foundation (A42): one set of tokens, the a
   ok('reduced motion stops every transition, and the tour scrolls without smoothing when asked', /@media \(prefers-reduced-motion:reduce\)\{\*,\*::before,\*::after\{transition-duration:0s!important/.test(html) && /behavior: reducedMotion\(\) \? 'auto' : 'smooth'/.test(js));
   ok('the charts read the palette they are drawn in (the deck chart was brass in red mode)', /x\.strokeStyle = acc;/.test(js) && (js.match(/TOK\('--brass'/g) || []).length >= 3 && !/strokeStyle = '#C9A24A'/.test(js));
   ok('...and outside a browser the lookup falls back instead of throwing', V.TOK ? V.TOK('--brass', '#C9A24A') === '#C9A24A' : /catch \(e\) \{ return fallback; \}/.test(js));
-  ok('the splash stays Collect\'s in every mode: ground, glow and text are literals', /#splash\{[^}]*background:#0B1622[^}]*rgba\(201,162,74,\.18\)[^}]*color:#C9A24A\}/.test(html) && /#splash \.wm\{[^}]*color:#EADFC8\}/.test(html));
+  ok('the splash\'s ground and word-mark are literals of the scene, not the palette (take 116)', /#splash\{[^}]*background:linear-gradient\(180deg,#1f3d72[^}]*color:#F6EEDA\}/.test(html) && /#splash \.wm\{[^}]*color:#F6EEDA/.test(html));
   const keep106 = V.OWN.items; V.OWN.items = []; V.go('collection');   // go() paints through the screen map (landmine 135)
   ok('the empty collection draws the scan card it points at, not the removed skull', /#g-scancard/.test(ctx.document.querySelector('#colEmpty').innerHTML) && !/g-roger/.test(ctx.document.querySelector('#colEmpty').innerHTML), ctx.document.querySelector('#colEmpty').innerHTML.slice(0, 120));
   V.OWN.items = keep106; V.go('home'); }
@@ -4160,13 +4162,13 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
     const cr = (a, b) => { const [x, y] = [lum4(a), lum4(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
     const MODES = ['collect', 'play', 'hunt'];
 
-    /* (SPEC-106-28) the splash is wholly Collect's -- the mark too. Two rules reach the splash's svg: .swords (the mode's
-       --accent-ink) and, from take 115, #splash .swords, which outranks it; boot sets the mode while the splash is up. */
+    /* (SPEC-106-28, overtaken by take 116) the splash was wholly Collect's, the mark too, and take 115 pinned the mark's
+       colour over the mode's. The scene has no mark: nothing in the splash reads a token, so nothing can follow the mode. */
     const markCol = (c, mode) => { const T = tokens(c, mode), v = ruleVal(c, '#splash .swords', 'color') ?? ruleVal(c, '.swords', 'color') ?? ruleVal(c, '#splash', 'color'); const k = colOf(v, T); return k ? px(k).join(',') : String(v); };
     const swordsRules = topRules(css).flatMap(r => r.sels).filter(s => /\.swords$/.test(s));
-    ok('(SPEC-106-28) the splash\'s mark is Collect\'s brass in every mode: #splash .swords pins the literal over .swords, which follows the mode (it turned red in Prep & Play while the splash was up)',
-       MODES.every(m => markCol(css, m) === '201,162,74') && swordsRules.join('|') === '.swords|#splash .swords' && !/<svg class="swords"[^>]*style="[^"]*color/.test(html), MODES.map(m => `${m} ${markCol(css, m)}`).join(', '));
-    ok('...control: without that rule the mark follows the mode (take 114: 229,112,92 in Prep & Play)', markCol(css.replace(/#splash \.swords\{[^}]*\}/, ''), 'play') === '229,112,92');
+    ok('(SPEC-106-28, overtaken by take 116) the splash has no mark that could follow the mode: no rule reaches #splash .swords and no swords svg is in the markup (the scene\'s colours are literals, the take-116 lines)',
+       !swordsRules.some(r => /^#splash/.test(r)) && !/class="swords"/.test(html), swordsRules.join('|') || '(no .swords rule)');
+    ok('...control: a planted #splash .swords rule is caught', topRules(css + '\n#splash .swords{color:red}').flatMap(r => r.sels).some(r => /^#splash \.swords$/.test(r)));
 
     /* (SPEC-106-29, SPEC-106-30, STAN-106-2's contrast) every text on a tint, per palette, from the shipped rules: what sits on
        the selected tint (the picker's best match: its lines in --dim and --dim2, an owned line in --up, a look-alike in --gold;
@@ -4445,6 +4447,46 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
   V.CAT.man.updateUrl = url0; while (V.closeAnyOverlay()) {} V.MODE.set('collect', false); V.go('home');
   ok('...and the shared app is back on the catalogue it shipped with', V.CAT.ready && !V.CAT.man.fromDisk && V.CAT.rows.length === manifest.printings && V.candidates('EB03-024').length === 3);
 }
+
+
+section('take 116 — the first-open experience: the opening screen and the guide share the listing\'s frame; four pages; Back closes the guide, Next pages it');
+{ ok('the splash and the guide draw one scene: the listing\'s Prussian band, buff sky, ink and green, as literals on both', /#splash,#tour\{--t-prussian:#1f3d72;/.test(html) && /#splash\{[^}]*linear-gradient\(180deg,#1f3d72/.test(html) && /#tour\{[^}]*linear-gradient\(180deg,var\(--t-prussian\)/.test(html));
+  ok('the opening screen carries the app\'s own icon file and the sea; the guide the same sea and, on its last page, the same icon', (html.match(/bundle\/icon\.svg/g) || []).length === 1 && (html.match(/class="gsea"/g) || []).length === 2 && (js.match(/bundle\/icon\.svg/g) || []).length === 1);
+  ok('the guide is a dialog, not a screen: role, modal, a name, focusable so its name is read out, and still a div (twenty sections stay twenty)', /<div id="tour" hidden role="dialog" aria-modal="true" aria-label="Welcome to OP TCG Hub" tabindex="-1">/.test(html) && !/<section id="tour"/.test(html));
+  ok('the guide is an overlay by class: #tour.on shows it, [hidden] wins after it, and the four buttons hide by attribute', /#tour\.on\{display:flex\}\s*#tour\[hidden\]\{display:none\}\s*#tour \[hidden\]\{display:none\}/.test(html));
+  const tourCss = [...html.matchAll(/#tour[^{]*\{[^}]*\}/g)].map(m => m[0]);
+  ok('every rule of the guide is token-sized: no font-size literal (the old 32, 22, 14.5 and 13.5 px are gone)', tourCss.length >= 20 && tourCss.every(r => !/font-size:\d/.test(r)), tourCss.filter(r => /font-size:\d/.test(r)).join(' | '));
+  ok('a page scrolls inside itself on a short screen instead of clipping (overflow-y:auto, not hidden)', /#tour \.gcard\{[^}]*overflow-y:auto/.test(html) && !/#tour \.gcard\{[^}]*overflow:hidden/.test(html));
+  ok('the dots are indicators (four 44 px targets seven pixels apart would sit on each other) and the page is read out', /#tour \.gdots i\{/.test(html) && /id="tourDots" aria-hidden="true"/.test(html) && /id="tourPage" aria-live="polite"/.test(html) && !/#tour \.gdots button/.test(html));
+  ok('four pages, one per mode and one for what stays on the phone; the pictures are lookups, never pinned ids (AGENTS rule 3)', V.GUIDE.length === 4 && V.GUIDE.every(c => c.g && c.t && c.p && Array.isArray(c.l) && c.l.length >= 3) && /pic: \(\) => topCard\(\)/.test(js) && /pic: \(\) => \(heroLeader\(\) \|\| \{\}\)\.L/.test(js) && /pic: \(\) => \(newestTop\(\) \|\| \{\}\)\.p/.test(js) && !/pic: \(\) => [A-Za-z.]*byId\.get\(\d/.test(js));
+  const pics = V.GUIDE.map(c => c.pic ? c.pic() : null);
+  ok('the three pictures resolve to printings with a picture: the dearest card, a Leader, the newest set\'s top card', !!pics[0] && !!pics[0].img && !!pics[1] && pics[1].type === 'Leader' && !!pics[2] && !!pics[2].img && pics[3] === null, pics.map(p => p ? p.name + ' ' + (p.num || '') : 'none').join(' / '));
+  ok('the dearest card is the top of every set\'s top', !!pics[0] && pics[0].market === Math.max(...V.CAT.rows.filter(p => !p.sealed && p.hash && p.market > 0 && p.img).map(p => p.market)));
+  const tour = ctx.document.getElementById('tour');
+  V.guideOpen();
+  const cardsHtml = ctx.document.getElementById('tourCards').innerHTML;
+  ok('open: the guide is on and not hidden, four pages painted, three with a picture and the fourth with the app\'s own card', tour.classList.contains('on') && tour.hidden === false && (cardsHtml.match(/class="gcard"/g) || []).length === 4 && (cardsHtml.match(/<img class="ref"/g) || []).length >= 3 && /class="pic own"/.test(cardsHtml));
+  ok('the glyph on each page is read through the form the sprite check knows (G(c.g, 64))', (js.match(/G\(c\.g, 64\)/g) || []).length === 2);
+  ok('page 1: Skip and Next shown, the last page\'s two hidden; one dot on; the page announced', ctx.document.getElementById('tourSkip').hidden === false && ctx.document.getElementById('tourNext').hidden === false && ctx.document.getElementById('tourStart').hidden === true && (ctx.document.getElementById('tourDots').innerHTML.match(/class="on"/g) || []).length === 1 && ctx.document.getElementById('tourPage').textContent === 'Page 1 of 4');
+  V.guideGo(3);
+  ok('the last page: Scan a card and Look around first shown, Skip and Next hidden, the fourth dot on', ctx.document.getElementById('tourStart').hidden === false && ctx.document.getElementById('tourLook').hidden === false && ctx.document.getElementById('tourSkip').hidden === true && /<i class=""><\/i><i class=""><\/i><i class=""><\/i><i class="on"><\/i>/.test(ctx.document.getElementById('tourDots').innerHTML) && ctx.document.getElementById('tourPage').textContent === 'Page 4 of 4');
+  V.guideGo(4); V.guideGo(-1);
+  ok('a page past either end is refused', ctx.document.getElementById('tourPage').textContent === 'Page 4 of 4');
+  /* Back (landmine 201): the overlay walk sees the guide now, and closes it unseen */
+  try { ctx.localStorage.removeItem('optcghub.guide.v3'); } catch (e) {}
+  const closed = V.closeAnyOverlay();
+  ok('Back closes the open guide through the overlay walk (it could not see it before: it looked for a class the guide never carried) and leaves it unseen', closed === true && tour.hidden === true && !tour.classList.contains('on') && (ctx.localStorage.getItem('optcghub.guide.v3') || null) === null);
+  ok('...control: with the guide closed the walk has nothing to close', V.closeAnyOverlay() === false);
+  V.guideOpen(); V.guideClose(true);
+  ok('Skip or Start marks the guide seen under the v3 key', ctx.localStorage.getItem('optcghub.guide.v3') === '1' && tour.hidden === true);
+  /* Next cannot be undone by the strip's own scroll (landmine 202): the handler reads, it never scrolls */
+  const handler = (js.match(/#tourCards'\)\.addEventListener\('scroll', \(\) => \{[\s\S]*?\n\}\);/) || [''])[0];
+  ok('the strip\'s scroll handler only reads the page back: it never calls scrollTo, and the one scroller is guidePaint (watched red on take 114, whose handler painted the page back from inside the scroll)', handler.length > 100 && !/scrollTo/.test(handler) && !/guidePaint\(\)/.test(handler) && /behavior: reducedMotion\(\) \? 'auto' : 'smooth'/.test(js) && (js.match(/cards\.scrollTo\(/g) || []).length === 1, handler.slice(0, 80));
+  /* Scan a card: into Collect's scanner with Home under it */
+  V.MODE.set('hunt', false); V.guideOpen();
+  let started = null; try { V.guideStart(); started = true; } catch (e) { started = String(e && e.stack || e); }
+  ok('Scan a card from any mode lands in Collect\'s scanner with Home under it, the guide seen', started === true && V.MODE.cur === 'collect' && V.NAV.stack.slice(-2).join(',') === 'home,scan' && tour.hidden === true, String(started).slice(0, 200) + ' ' + V.NAV.stack.join('>'));
+  while (V.closeAnyOverlay()) {} V.MODE.set('collect', false); V.go('home'); }
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
