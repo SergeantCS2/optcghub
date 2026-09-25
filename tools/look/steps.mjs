@@ -967,4 +967,167 @@ const take112 = [
     } }
 ];
 
-export const STEPS = { 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112 };
+/* ---- take 114 — A32's distributor state timeline, from the history rows; GTS's date is its Order Due Date ----
+   The feed is the fixture smoke and render build. The histories: the smoke's synthetic one ending on the feed's own
+   run (4-hourly, GTS from run 6, the OP-18 box coming until the first UTC day turn at or after run 20, preorder until
+   run 40, then sold out; the run before that could not reach GTS; Southern Hobby in the last two), and the saved real
+   one of 24 Sept with a feed of its own last run (what the owner's phone shows today). F2 moves the box's order due
+   date to the UTC day before the calendar change, so its dates explain it. The zone is the owner's (America/Detroit,
+   INFERRED from 48329), set through CDP: Playwright has no emulateTimezone on a page. The syncs are stubbed, and a
+   fixture is set in the same tick as its paint (landmine 166). */
+let X114 = null;
+const fixture114 = () => {
+  if (!X114) { const d = fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-look-114-')), f = path.join(d, 'feed-fixture.json');
+    execSync(`python3 tools/hunt.py --from-fixtures --out ${f}`, { cwd: ROOT, stdio: 'pipe' });
+    const F = JSON.parse(fs.readFileSync(f, 'utf8')), R0 = JSON.parse(fs.readFileSync(path.join(d, 'history-fixture.json'), 'utf8')).runs[0];   // read before the directory goes
+    fs.rmSync(d, { recursive: true, force: true });
+    const LIVE = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'fixtures', 'hunt_history_2026-09-24.json'), 'utf8'));
+    const utcDay = (iso, add = 0) => new Date(Date.parse(iso) + add * 864e5).toISOString().slice(0, 10);
+    const END = Date.parse(F.fetched_at), N = 60, G0 = 6, I2 = 40, runs = [];
+    for (let k = N - 1; k >= 0; k--) runs.push({ t: new Date(END - k * 4 * 3600e3).toISOString().replace(/\.\d{3}Z$/, 'Z'), online: {}, shelf: {} });
+    let I1 = 20; while (utcDay(runs[I1].t) === utcDay(runs[I1 - 1].t)) I1++;
+    runs.forEach((r, i) => { if (i >= G0) r.gts = { ...R0.gts, BJP2873812: i < I1 ? 'coming' : i < I2 ? 'preorder' : 'sold_out' }; if (i >= N - 2) r.southern = { ...R0.southern }; });
+    delete runs[I2 - 1].gts;
+    const F2 = JSON.parse(JSON.stringify(F)); F2.sources.gts.items.find(i => i.sku === 'BJP2873812').preorder = utcDay(runs[I1].t, -1);
+    X114 = { F, F2, FL: { ...F, fetched_at: LIVE.runs[LIVE.runs.length - 1].t }, H: { runs, since: runs[0].t, stores: {}, titles: {} }, LIVE,
+      PID: F.sources.gts.items.find(i => i.sku === 'BJP2873812').catalog_id };
+  }
+  return X114;
+};
+const HUNT114 = `V.HUNT.sync = async () => false; V.HUNT.syncHistory = async () => false; V.NAV.zipAsked = true; V.MODE.set('hunt', true); await ${pause}`;
+/* TL_* stays out of window.VAULT: the words are stated here */
+const TL_NOTE114 = 'Where a change worked out from its dates gives two checks, not a day, the dates it lists now do not explain it: the history keeps the state, not the date, so a moved date and a passing one look the same.';
+const DTL114 = `(() => { const d = document.getElementById('dDist'), f = d && d.querySelector('[data-distfold="detail"]'), tl = k => d ? [...d.querySelectorAll('.dtl[data-tl="' + k + '"] > span')].map(s => s.textContent) : [];
+  const heads = d ? [...d.querySelectorAll('.dtl-h')].map(h => ({ t: h.textContent, btn: h.tagName === 'BUTTON', exp: h.getAttribute('aria-expanded'), h: Math.round(h.getBoundingClientRect().height) })) : [];
+  return { on: ${screens}, open: f ? f.getAttribute('aria-expanded') : null, n: d ? d.querySelectorAll('.dtl').length : 0, heads, gts: tl('gts'), southern: tl('southern'),
+    note: !!d && [...d.querySelectorAll('.note')].some(e => e.textContent.trim() === ${JSON.stringify(TL_NOTE114)}) }; })()`;
+const lines114 = m => [...m.gts, ...m.southern];
+/* the OP-18 box's page at Distributor info, open, over a feed and a history (expressions over X = window.__X114) */
+const sheet114 = (feed, hist) => `(async () => { const V = window.VAULT, X = window.__X114; while (V.closeAnyOverlay()) {}
+  V.HUNT.feed = ${feed}; V.HUNT.hist = ${hist}; V.openDetail(X.PID, { dist: true }); await ${pause};
+  V.HUNT.feed = ${feed}; V.HUNT.hist = ${hist}; V.DISTF.open.add('detail'); V.paintDetailDist(V.CAT.byId.get(X.PID)); V.distHistTap('gts'); V.distHistTap('southern');
+  const d = document.getElementById('dDist'); d.scrollIntoView({ block: 'start' }); window.scrollBy(0, -80); return ${DTL114}; })()`;
+/* every day in a span on one line: a Range over each, its client rects' distinct tops (render's take-112 probe) */
+const DAYS114 = `(sel) => { const RE = /[A-Z][a-z]{2}[ \\u00a0\\u202f]\\d{1,2}(,[ \\u00a0\\u202f]\\d{4})?/g; let n = 0, worst = 0; const split = [];
+  for (const el of document.querySelectorAll(sel)) { const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let t = w.nextNode(); t; t = w.nextNode()) for (const m of t.data.matchAll(RE)) { const r = document.createRange(); r.setStart(t, m.index); r.setEnd(t, m.index + m[0].length);
+      const tops = new Set([...r.getClientRects()].map(x => Math.round(x.top))).size; n++; worst = Math.max(worst, tops); if (tops > 1) split.push(m[0]); } }
+  return { days: n, worst, split }; }`;
+const take114 = [
+  /* the owner's take-112 word stands: nothing new on a row; the history is under the closed Distributor info */
+  { name: 'hunt-sheet-history-closed', run: async (page, ctx) => {
+      ctx.cdp114 = await page.context().newCDPSession(page); await ctx.cdp114.send('Emulation.setTimezoneOverride', { timezoneId: 'America/Detroit' });
+      await ctx.open(); await page.evaluate(X => { window.__X114 = X; }, fixture114());
+      await page.evaluate(`(async () => { const V = window.VAULT, X = window.__X114; while (V.closeAnyOverlay()) {} ${HUNT114}; V.HUNT.feed = X.F2; V.HUNT.hist = X.H; V.DISTF.open.clear();
+        const p = V.CAT.byId.get(X.PID); V.SEALED.kind = 'all'; V.SEALED.q = ''; V.SEALED.closed.delete(p.set); V.SEALED.open.add(p.set); V.go('sealed'); await ${pause};
+        V.HUNT.feed = X.F2; V.HUNT.hist = X.H; V.paintSealed(); const r = document.querySelector('#sealedList button.row[data-open="' + p.id + '"]'); if (r) { r.setAttribute('data-look', 'row114'); r.scrollIntoView({ block: 'center' }); } })()`);
+      await page.click('#sealedList button.row[data-look="row114"]'); await wait(700);
+      const m = await page.evaluate(`(() => { const d = document.getElementById('dDist'); d.scrollIntoView({ block: 'start' }); window.scrollBy(0, -80); return { ...${DTL114}, zone: Intl.DateTimeFormat().resolvedOptions().timeZone }; })()`);
+      await wait(300);
+      return { ok: m.on === 'detail' && m.open === 'false' && m.n === 0 && m.zone === 'America/Detroit', ...m };
+    } },
+  /* the owner's answer: "it should be tucked away" -- a real tap opens Distributor info, and each history is one header
+     line, a closed button, until it is tapped */
+  { name: 'hunt-sheet-history-tucked', run: async (page) => {
+      await page.evaluate(() => document.querySelector('#dDist [data-distfold="detail"]').scrollIntoView({ block: 'center' }));
+      await page.click('#dDist [data-distfold="detail"]'); await wait(400);
+      const m = await page.evaluate(`(() => { const d = document.getElementById('dDist'); d.scrollIntoView({ block: 'start' }); window.scrollBy(0, -80); return ${DTL114}; })()`);
+      await wait(300);
+      return { ok: m.open === 'true' && m.n === 2 && m.heads.length === 2 && m.heads.every(h => h.btn && h.exp === 'false' && h.h >= 44 && /^History · /.test(h.t)) && !lines114(m).length && !m.note, ...m };
+    } },
+  /* C: real taps on both headers, over F2 -- the calendar change on its own day, the site change between its two checks.
+     The day is F2's own due date in the app's words (V.dayText, no-break spaces), so it carries its year whenever that
+     is not the page's: the pattern it replaces had no year and failed each New Year's first week (the review) */
+  { name: 'hunt-sheet-history-two-changes', run: async (page) => {
+      for (const k of ['gts', 'southern']) { const sel = '#dDist .dtl[data-tl="' + k + '"] .dtl-h';
+        await page.evaluate(q => document.querySelector(q).scrollIntoView({ block: 'center' }), sel); await page.click(sel); await wait(300); }
+      const m = await page.evaluate(`(() => { const d = document.getElementById('dDist'); d.scrollIntoView({ block: 'start' }); window.scrollBy(0, -80);
+        const it = window.__X114.F2.sources.gts.items.find(i => i.sku === 'BJP2873812');
+        return { ...${DTL114}, due: window.VAULT.dayText(it.preorder).replace(/[ \\u202f]/g, '\\u00a0') }; })()`);
+      await wait(300); const l = lines114(m);
+      return { ok: m.open === 'true' && m.n === 2 && l.some(x => x.endsWith(`→ orders were due ${m.due} · worked out from its dates`))
+        && l.some(x => / · between .+ · read off its page$/.test(x)) && !m.note, ...m };
+    } },
+  /* C2: the fixture's own date (May 27) does not explain the change: its two checks stand, and the fold says why */
+  { name: 'hunt-sheet-history-date-moved', run: async (page) => {
+      const m = await page.evaluate(sheet114('X.F', 'X.H'));
+      await wait(300);
+      return { ok: m.open === 'true' && m.n === 2 && lines114(m).some(x => / · between .+ · worked out from its dates$/.test(x)) && m.note, ...m };
+    } },
+  /* B: today, the saved real history and a feed of its own last run -- no change yet */
+  { name: 'hunt-sheet-history-today', run: async (page) => {
+      const m = await page.evaluate(sheet114('X.FL', 'X.LIVE'));
+      await wait(300); const l = lines114(m);
+      return { ok: m.open === 'true' && m.n === 2 && l.some(x => / · no change seen$/.test(x)) && l.some(x => / — a change needs two$/.test(x)) && !m.note && !l.some(x => /copy ends/.test(x)), ...m };
+    } },
+  { name: 'hunt-sheet-no-history', run: async (page) => {
+      const m = await page.evaluate(sheet114('X.F', 'null'));
+      await wait(300);
+      return { ok: m.open === 'true' && m.n === 0 && !m.note, ...m };
+    } },
+  /* D: a row is its name and one short line per distributor, as at take 112 -- no history on Sealed */
+  { name: 'hunt-sealed-row-unchanged', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT, X = window.__X114; while (V.closeAnyOverlay()) {} V.HUNT.feed = X.F; V.HUNT.hist = X.H; V.DISTF.open.clear();
+        const p = V.CAT.byId.get(X.PID); V.SEALED.kind = 'all'; V.SEALED.q = ''; V.SEALED.closed.delete(p.set); V.SEALED.open.add(p.set); V.go('sealed'); V.paintSealed(); await ${pause};
+        V.HUNT.feed = X.F; V.HUNT.hist = X.H; V.paintSealed(); const l = document.querySelector('#sealedList .dline[data-open="' + p.id + '"]'), row = l && l.closest('.row'); if (row) row.scrollIntoView({ block: 'center' });
+        return { row: row ? row.querySelector('.nm b').textContent : null, its: row ? [...row.querySelectorAll('.dline')].map(x => x.textContent.trim()) : [], history: /History ·/.test(document.getElementById('sealedList').textContent) }; })()`);
+      await waitArt(page, '#sealedList img'); await wait(300);
+      return { ok: m.its.length === 2 && !m.history, ...m };
+    } },
+  /* A1: PEB-01 on Releases' not-in-the-catalogue list -- GTS's date in Southern Hobby's words for the same fact. Each
+     line's day is its own source's date in the app's words (GTS's order due date, Southern Hobby's due), with its year
+     whenever that is not the page's: the literal day it replaces stopped matching on New Year's Day (the review) */
+  { name: 'releases-peb01-words', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT, X = window.__X114; while (V.closeAnyOverlay()) {} V.HUNT.feed = X.F; V.HUNT.hist = X.H; V.DISTF.open.clear(); V.DISTF.open.add('releases');
+        V.go('releases'); await ${pause}; V.HUNT.feed = X.F; V.HUNT.hist = X.H; V.paintReleases();
+        const f = document.querySelector('#relList [data-distfold="releases"]'), rows = f ? [...f.closest('.panel').querySelectorAll('.dbody .row')].filter(r => /PEB-?01/.test(r.textContent)) : [];
+        const line = k => { for (const r of rows) for (const s of r.querySelectorAll('.nm > span')) if (s.textContent.startsWith(k + ' · ')) return s.textContent; return null; };
+        if (rows[0]) { rows[0].scrollIntoView({ block: 'start' }); window.scrollBy(0, -100); }
+        const peb = k => X.F.sources[k].items.find(i => (i.codes || []).includes('PEB01')) || {}, by = at => at ? 'stores order by ' + V.dayText(at).replace(/[ \\u202f]/g, '\\u00a0') : null;
+        return { open: f ? f.getAttribute('aria-expanded') : null, rows: rows.length, gts: line('GTS Distribution'), southern: line('Southern Hobby'), want: { gts: by(peb('gts').preorder), southern: by(peb('southern').due) },
+          wrong: /preorders? open/i.test(document.getElementById('relList').textContent) }; })()`);
+      await wait(300);
+      return { ok: m.open === 'true' && ['gts', 'southern'].every(k => m.want[k] && (m[k] || '').includes(m.want[k])) && !m.wrong, ...m };
+    } },
+  /* A2: Sealed's GTS counts, derived from the feed's own dates as gtsDue says, not from its states: of the products whose
+     release is after the UTC day GTS was read, those with an order due date on or after that day, and the rest -- sold
+     out or not. `byState` is this take's first reading (coming / preorder), kept in the record: on the fixture it said
+     "0 unreleased without one" over three unreleased products past their due date (the review) */
+  { name: 'sealed-gts-counts', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT, X = window.__X114; while (V.closeAnyOverlay()) {} V.HUNT.feed = X.F; V.HUNT.hist = X.H; V.DISTF.open.clear(); V.DISTF.open.add('sealed');
+        V.go('sealed'); await ${pause}; V.HUNT.feed = X.F; V.HUNT.hist = X.H; V.paintSealed();
+        const sec = [...document.querySelectorAll('#sealedList .dsec')].find(s => (s.querySelector('b') || {}).textContent === 'GTS Distribution'), note = sec ? sec.querySelector('.note').textContent : '';
+        if (sec) { sec.scrollIntoView({ block: 'start' }); window.scrollBy(0, -140); }
+        const G = X.F.sources.gts, gi = G.items, n = s => gi.filter(i => i.status === s).length, iso = v => typeof v === 'string' && /^\\d{4}-\\d\\d-\\d\\d$/.test(v);
+        const day = new Date(Date.parse(G.fetched_at)).toISOString().slice(0, 10), un = gi.filter(i => iso(i.release) && i.release > day), ahead = un.filter(i => iso(i.preorder) && i.preorder >= day).length;
+        return { note, day, unreleased: un.length, want: ahead + ' with an order due date ahead, ' + (un.length - ahead) + ' unreleased without one, ' + n('in_stock') + ' in stock for stores',
+          byState: n('coming') + ' with an order due date ahead, ' + n('preorder') + ' unreleased without one', wrong: /preorders? open/i.test(document.getElementById('sealedList').textContent) }; })()`);
+      await wait(300);
+      return { ok: m.unreleased > 0 && m.note.includes(m.want) && !m.wrong, ...m };
+    } },
+  /* F, fixed because it was broken: a day in the distributor's long words split across lines ("release Nov" / "20" at
+     411 px); no history here, so the two pictures differ by that alone */
+  { name: 'hunt-sheet-long-words-day', run: async (page) => {
+      const s = await page.evaluate(sheet114('X.F', 'null'));
+      const m = await page.evaluate(`(${DAYS114})('#dDist .dsec .nm > span')`);
+      await wait(300);
+      return { ok: s.open === 'true' && m.days > 0 && m.worst === 1, open: s.open, ...m };
+    } },
+  { name: 'diagnostics-history-line', run: async (page, ctx) => {
+      await page.evaluate(`(async () => { const V = window.VAULT, X = window.__X114; while (V.closeAnyOverlay()) {} V.HUNT.feed = X.FL; V.HUNT.hist = X.LIVE; V.DIAG.probe = async () => 'not probed in the look';
+        V.go('diag'); await ${pause}; V.HUNT.feed = X.FL; V.HUNT.hist = X.LIVE; document.getElementById('diagRun').click(); })()`);
+      await page.waitForFunction(() => /history on phone/.test(document.getElementById('diagOut').textContent), null, { timeout: 30000 }).catch(() => {});
+      const m = await page.evaluate(() => { const V = window.VAULT, r = window.__X114.LIVE.runs, read = k => r.filter(x => x[k] && typeof x[k] === 'object' && !Array.isArray(x[k])).length;
+        const want = `history on phone: ${r.length} runs, gts in ${read('gts')}, southern in ${read('southern')}, ends ${V.momentText(r[r.length - 1].t)}`;   // counts off the saved rows
+        const pre = document.getElementById('diagOut'), w = document.createTreeWalker(pre, NodeFilter.SHOW_TEXT);
+        for (let n = w.nextNode(); n; n = w.nextNode()) { const i = n.data.indexOf('history on phone'); if (i < 0) continue;
+          const g = document.createRange(); g.setStart(n, i); g.setEnd(n, i + 16); window.scrollBy(0, g.getBoundingClientRect().top - innerHeight / 2);
+          const e = n.data.indexOf('\n', i); return { line: n.data.slice(i, e < 0 ? undefined : e), want }; }
+        return { line: null, want }; });
+      await wait(300);
+      if (ctx.cdp114) { await ctx.cdp114.send('Emulation.setTimezoneOverride', { timezoneId: '' }).catch(() => {}); await ctx.cdp114.detach().catch(() => {}); ctx.cdp114 = null; }   /* the zone back to the host's */
+      return { ok: /\d+ runs, gts in \d+, southern in \d+, ends /.test(m.line || '') && m.line === m.want, ...m, zone: await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone) };
+    } }
+];
+
+export const STEPS = { 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114 };

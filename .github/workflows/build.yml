@@ -85,6 +85,10 @@ jobs:
     needs: seed
     runs-on: ubuntu-latest
     timeout-minutes: 45     # hashes are the long pole: MEASURED 8.3/s, ~14 min
+    # take 114 review: 'skip' when the carry-over could not read hunt/history.json
+    # from Pages (ci/bundle.sh says why); the pages job below then does not run
+    outputs:
+      pages: ${{ steps.build.outputs.pages }}
     steps:
       # `ref` is REQUIRED. checkout defaults to the commit that TRIGGERED the
       # run; the seed job pushes a newer one, so a default checkout lands on a
@@ -113,6 +117,7 @@ jobs:
           restore-keys: catalog-
 
       - name: Build the catalogue, the app, and gate it
+        id: build
         run: bash ci/bundle.sh
 
       # A9. A failed nightly is silent by default: the app keeps its last
@@ -151,6 +156,11 @@ jobs:
   # ── Pages: the privacy policy URL Play requires ─────────────────────────
   pages:
     needs: bundle
+    # take 114 review: a deploy without hunt/history.json is the next hourly's
+    # reset of the whole record, so a build whose carry-over could not read it
+    # deploys nothing and Pages keeps the hourly's last deploy. The apk job
+    # needs bundle alone: the APK and the Release go ahead.
+    if: needs.bundle.outputs.pages != 'skip'
     runs-on: ubuntu-latest
     continue-on-error: true      # un-enabled Pages must not block the APK
     environment:

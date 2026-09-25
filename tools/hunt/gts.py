@@ -1,8 +1,10 @@
 """GTS Distribution (A32, take 94): the first distributor source. A
 distributor sells to stores, not to collectors, and its public listing says
-what a shelf will see weeks before the shelf does: the release date, whether
-preorders are open, and whether the print run is already spoken for ("Sold
-Out" months before release, with the allocation flag set).
+what a shelf will see weeks before the shelf does: the release date, the day
+stores must order by (GTS's "Order Due Date", read off a product page at take
+114; take 94 called it the day preorders open), and whether the print run is
+already spoken for ("Sold Out" months before release, with the allocation flag
+set).
 
 MEASURED take 94, read off the real pages: a Website Pipeline storefront on
 classic ASP. One faceted listing, pc_combined_results.asp, filtered to the
@@ -76,7 +78,10 @@ def codes_in(name):
 def status_of(p, today):
     """The six states the site distinguishes, in its own words first: the stock
     message or the quantity label saying Sold Out or Call wins over
-    inventoryStatus, which reads 'in' on six sold-out displays (measured)."""
+    inventoryStatus, which reads 'in' on six sold-out displays (measured).
+    Take 114 -- coming: unreleased, its order due date today or ahead (the due
+    day is kept open, as Southern Hobby's is); preorder: unreleased with no
+    order due date ahead -- passed, or none listed."""
     inv = p["inventory"]
     words = " ".join((_text(inv["stockMessage"]), str(p["qty_great_than_display"] or ""), str(inv.get("stock") or ""))).lower()
     rel, pre = _date(p["release_date"]), _date(p["preorder_date"])
@@ -88,7 +93,7 @@ def status_of(p, today):
         return "in_stock"
     if inv["inventoryStatus"] == "out":
         if rel and rel > today:
-            return "coming" if (pre and pre > today) else "preorder"
+            return "coming" if (pre and pre >= today) else "preorder"
         return "out"
     return "unknown"
 
@@ -139,7 +144,11 @@ def retail_title(name):
 
 def fetch(max_pages=4, pause=1.0, now=None, getter=None, today=None):
     """Never raises. The pages must carry exactly the count the site promised
-    (AGENTS rule 8); short is an error and the last good fetch is kept."""
+    (AGENTS rule 8); short is an error and the last good fetch is kept. So is
+    an empty listing (take 114 review): count 0 with no products carries its
+    own count, and taken as read it would say every product left the list --
+    it is a search that broke (a facet id changed, the index down), and the
+    run's history row gets no GTS key, a hole, not 'not on its list'."""
     now = now or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     getter = getter or get
     out = {"ok": False, "fetched_at": now, "calls": 0}
@@ -157,6 +166,8 @@ def fetch(max_pages=4, pause=1.0, now=None, getter=None, today=None):
             time.sleep(pause)
         if len(items) != count:
             raise ValueError(f"the listing promised {count} products and the pages carried {len(items)}")
+        if not items:
+            raise ValueError("the listing is empty (count 0, no products): a broken search, not nothing listed")
         out.update({"ok": True, "items": items, "count": count})
     except Exception as e:                                   # noqa: BLE001
         out["error"] = f"{type(e).__name__}: {str(e)[:120]}"
@@ -184,11 +195,11 @@ def selftest(html, out=print):
     want = {"BJP2884797": "sold_out", "BJP2873812": "sold_out", "BJP2850164": "sold_out", "BJP2897699": "coming", "BJP2855988": "sold_out",
             "BJP9056341": "in_stock", "BJPBAS69321": "call", "BJP2835333": "out", "BJP2850166": "sold_out", "BJP2904577": "sold_out", "BJP2864562": "sold_out"}
     got = {k: by[k]["status"] for k in want}
-    check("the states read as measured on the page (six sold out including two the site marks 'in', a coming preorder, one in stock, one call, one out)", got == want, json.dumps({k: v for k, v in got.items() if v != want[k]}) if got != want else "")
+    check("the states read as measured on the page (six sold out including two the site marks 'in', one with its order due date ahead, one in stock, one call, one out)", got == want, json.dumps({k: v for k, v in got.items() if v != want[k]}) if got != want else "")
     check("allocation: the OP-19 booster is flagged, the ST44 display is not (the facet agreed on all 49)", by["BJP2884797"]["allocated"] is True and by["BJP2904577"]["allocated"] is False)
     check("the set codes in a name: OP-19, DP-11, PEB01; none on a sleeve display", by["BJP2884797"]["codes"] == ["OP19"] and by["BJP2850166"]["codes"] == ["DP11"] and by["BJP2897699"]["codes"] == ["PEB01"] and by["BJP9056341"]["codes"] == [])
     check("MSRP is the display's suggested retail, and a call-to-order figure at $0 has none", by["BJP2884797"]["msrp"] == 119.76 and by["BJPBAS69321"]["msrp"] is None)
-    check("dates: release and preorder-opened as ISO; a 1924 placeholder is none; the coming preorder opens after the saved day",
+    check("dates: release and the order due date as ISO; a 1924 placeholder is none; PEB-01's order due date is after the saved day",
           by["BJP2884797"]["release"] == "2027-03-05" and by["BJP2884797"]["preorder"] == "2026-08-26" and by["BJP2835333"]["preorder"] is None and by["BJP2897699"]["preorder"] == "2026-10-14")
     check("status_text is the site's own words", by["BJP2884797"]["status_text"] == "Sold Out" and by["BJPBAS69321"]["status_text"] == "Call to Order" and by["BJP2897699"]["status_text"] == "24+")
     check("retail_title: a 24-count booster is the Booster Box, a 6-count starter decks display is the Display, TITLE TBA and the count go",
@@ -211,6 +222,13 @@ def selftest(html, out=print):
     check("control: pages that carry fewer products than the count promised are a failed fetch, not a short list", short["ok"] is False and "promised 49" in short.get("error", ""), short.get("error"))
     whole = fetch(getter=lambda u: html.replace('{"count":49,', '{"count":11,'), pause=0, today=FIXTURE_TODAY)
     check("a fetch whose pages carry the promised count is ok, in one call", whole["ok"] and whole["count"] == 11 and len(whole["items"]) == 11 and whole["calls"] == 1, whole.get("error"))
+    # take 114 review: an empty listing carries its own count (0 == 0), so the count check alone passes it
+    bare = BLOB.sub(lambda m: 'var productResults = {"count":0,"products":[]};\n', html)
+    landed = parse_listing(bare, FIXTURE_TODAY)
+    empty = fetch(getter=lambda u: bare, pause=0, today=FIXTURE_TODAY)
+    check("control: an empty listing (count 0, no products) is a failed fetch, not every product off the list -- the real page still reads",
+          landed == {"count": 0, "items": []} and empty["ok"] is False and "empty" in empty.get("error", "") and whole["ok"],
+          f"emptied page parses to {landed}; fetch: {empty.get('error')}")
     dead = fetch(getter=lambda u: (_ for _ in ()).throw(OSError("HTTP Error 503")), pause=0)
     check("control: a refused host is a failed fetch with the reason, never a raise", dead["ok"] is False and "503" in dead["error"])
     return ok

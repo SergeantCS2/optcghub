@@ -1,6 +1,6 @@
 # UI-AUDIT — the UI series' checklist (A42)
 
-*Current as of take 113.*
+*Current as of take 114.*
 
 The audit behind the UI series, taken on the take-104 source by four
 independent read-throughs (headings and copy; components, icons and
@@ -132,6 +132,13 @@ After the first pictures of Southern Hobby beside GTS: "I don't want them floodi
 - [ ] The distributors' names verbatim in the not-in-the-catalogue list ("Bandai - One Piece Card Game: …").
 - [ ] One product listed by both distributors shows as two rows in that list.
 - [ ] A product with no market price reads "— · market" on its page.
+
+Take 114, the owner's answers to its pictures (HANDOFF take 114):
+- [x] GTS's words for its Order Due Date. They are Southern Hobby's words for the same fact: "stores order by Oct 14", "orders close Oct 14" on a row, and "orders were due Oct 14" once passed. The owner: "exactly exactly right, that's fine".
+- [x] Each distributor's history on a product's page is tucked behind one "History · …" line, a 44 px button with its arrow at the right edge, closed whenever a page opens. The owner: "it should be tucked away".
+- [x] A day in a distributor's long words never breaks ("release Nov" / "20", found by take 114's look), fixed because it was broken.
+- [ ] A day in Releases' "mixed · release" group line has no no-break spaces. Found in passing; the UI session's.
+- [ ] The history's own look (`.dtl`): size, colour, the spacing of a one-line header. The UI session's.
 
 ## Found in passing, routed elsewhere
 

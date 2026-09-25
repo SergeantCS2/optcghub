@@ -1,13 +1,13 @@
 # AGENDA
 
-*Current as of take 113.* Ranked by blocking-ness, not by interest.
+*Current as of take 114.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
 
 ---
 
-## Priorities — as of take 112
+## Priorities — as of take 114
 
 The live order, top first. Everything below this block is the record of how
 each item got where it is; this block is what to do next. (Rewritten at take
@@ -41,27 +41,21 @@ the "about four more" takes named overnight. Refinement after it is the
 owner's call, take by take.
 
 **Mine, in order**
-1. **Take 113 -- the owner's icon (D7)** (in flight): the graphic design
-   session's branch merged (`…/compassionate-mayer-acc24r`, the icon
-   commit `93481b3`, its hand-off `design/d7-icons/SHIP.md`).
-   - The emblem is the owner's reversal of landmines 30 and 31 and A16, for
-     the icon's emblem only, and the own-rose swap is the fallback.
-   - One standard icon, at the owner's word: "I just want the one standard
-     icon". There is no themed (monochrome) layer, and `ci/icon.py`
-     refuses one (landmine 171).
-   - Vetted with the gate, smoke, render and `python3 ci/icon.py
-     --selftest`.
-   - After its Release: decode the APK's icon files (landmine 78). The owner
-     checks the launcher, the splash and a reminder's status-bar icon on the
-     Fold.
-2. **A32** -- take 112 merged (Southern Hobby, and distributor info that
-   never floods a row). Next:
-   - the distributor state timeline from the history rows (GTS's since
-     take 94, Southern Hobby's from take 112);
-   - the restock pattern sentence, once a fortnight of hourly history
-     exists on Pages;
+1. **A32** -- take 114 in flight: the distributor state timeline on a
+   product's page, tucked away until tapped; GTS's date read as its Order
+   Due Date; the GTS alert on stock only; an hourly that stops rather than
+   lose the history. Next:
+   - date moves ("release moved Nov 20 → Dec 4"), which need the runner to
+     record each change's dates -- the rows keep states only;
+   - the history on Releases' not-in-the-catalogue list, and a name for a
+     delisted item;
+   - the restock pattern sentence, once a fortnight of history exists on
+     Pages (the runs are about four-hourly, so a fortnight is about 84
+     rows, not 336);
    - GameStop, Walmart, Meijer and eBay need a residential IP, so they
      wait for the sideload build.
+2. **Take 113's Fold check** -- the owner's: the launcher, the splash and a
+   reminder's status-bar icon (the APK was decoded after the merge).
 3. **A41** -- waits on the owner's list of the parts and the source; then
    one take per source, measured on the runner first.
 4. **A23** the sim's tail -- modal effects, ordering, protection, the
@@ -972,7 +966,7 @@ instead, and D21 asks how far the phone-side fetch should go.
 
 The cursor and the history live on **Pages**: each hourly run fetches its
 own last deploy back, because a fresh checkout has nothing. `history.json`
-keeps a fortnight of hourly rows; the app turns them into dated restocks per
+keeps a fortnight of hourly rows (take 114: 336 rows, about 55 days at the measured four-hourly cadence; landmine 173); the app turns them into dated restocks per
 store and the last time a product shipped, and refuses to call anything a
 pattern under 24 checks. **Ruled out: predicting from thin data** — a list
 of what was seen, with the count it rests on, until a real fortnight exists.
@@ -1153,6 +1147,45 @@ and the not-in-the-catalogue list sit under closed "Distributor info"
 drop-downs, and Where to buy lists sellers to collectors only (UI-AUDIT §8).
 
 **Next:** the state timeline from the history rows.
+
+### Take 114 — the distributor state timeline, and GTS's date read off its own page
+
+**Measured first:**
+- The rows are kept by count, 336, which is about 55 days at the measured
+  four-hourly cadence, not a fortnight (landmine 173).
+- No distributor state has changed yet in 8 GTS reads and 1 Southern Hobby
+  read.
+- Every Southern Hobby state, and GTS's `coming`, `preorder` and `out`, is
+  computed from dates. The rows keep the state word, not the dates.
+- GTS's `preorder_date` is its Order Due Date, read off its own product
+  page. The app called it the day preorders open (landmine 172).
+
+**Built** (the HANDOFF has each part and its checks):
+- The timeline, app-only from the rows, inside each distributor's section
+  of the closed "Distributor info" on a product's page. It gives the checks
+  and their days, the state at the first check, and each change between
+  its two checks, saying whether it was read off the page or worked out
+  from its dates.
+- GTS's words in the Order Due Date's own sense.
+- An hourly that stops rather than deploy a history that lost its past.
+
+**The owner's answers to the pictures:**
+- GTS's words: "exactly exactly right, that's fine".
+- The history: "it should be tucked away". It sits behind one line, tapped
+  open.
+- The GTS stock alert: "your suggestion", stock for stores only.
+
+**Ruled out:**
+- A second record of changes beside the rows: a change log in git would be
+  a third runner-owned file, and two records can disagree.
+- "Since" on any line, since the first check is only the left edge.
+- A pattern or a forecast at any count (take 73).
+- Naming a calendar change's day from dates that do not put it between its
+  two checks.
+- A new GTS state for "no due date".
+- The timeline on a row, a short line, Sealed's panels or Releases (the
+  owner's take-112 word).
+- Changing the GTS stock alert without the owner.
 
 ## A42 — The UI series: uniform headers, card art used boldly, one voice · OPENED take 106
 

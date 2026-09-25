@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 113.* Paste the block between the rules into a new session
+*Current as of take 114.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 113 takes by previous sessions. The repo is
+built across 114 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -27,7 +27,7 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
 4. Read `docs/HANDOFF.md`, newest entry first, back to take 80 at least. Every
    take ends with a DEFERRED list; the union of those lists is the work.
 5. Read `docs/LANDMINES.md` §0 (the index) and skim §1. When you are about to
-   do something, grep the index first. 171 of them; each is a real failure.
+   do something, grep the index first. 175 of them; each is a real failure.
 6. Read `docs/AGENDA.md`: the Priorities block at the top is the live order.
 
 **The discipline, which the gate enforces:**
@@ -129,8 +129,27 @@ merges; the merge to `main` runs `build.yml`, which publishes Release
     (UI-AUDIT §8).
   - A32's next is the distributor state timeline from the history rows.
 
-- **Take 113 (in flight) -- the owner's icon (D7), from the graphic design
-  session:**
+- **Take 114 (in flight) -- A32's distributor state timeline, from the history
+  rows:**
+  - On a sealed product's page, each distributor's history is inside the
+    closed Distributor info, tucked behind one "History · …" line until
+    tapped (the owner's answer).
+    - It gives the checks and their days, and the state at the first check
+      (never "since").
+    - Each change sits between its two checks, read off the page or worked
+      out from its dates.
+  - GTS's `preorder_date` is its Order Due Date (landmine 172): "stores
+    order by", "orders close", "orders were due". The GTS stock alert counts
+    only stock for stores.
+  - The hourly stops (exit 3, nothing deployed) rather than lose the
+    history. The rows are kept by count, about 55 days (landmine 173).
+  - Next for A32: date moves need a runner record of dates.
+
+- **Take 113 (merged as PR #37; Release take-113) -- the owner's icon (D7),
+  from the graphic design session:**
+  - After the merge, the APK was decoded (HANDOFF take 113, "After the
+    merge"). The glyph is in it, and there is no themed layer. The owner's
+    Fold check is still open.
   - Its branch is merged (`…/compassionate-mayer-acc24r`; the icon commit
     `93481b3`). `design/d7-icons/SHIP.md` is the hand-off: what changes, what
     was verified, what only the runner and the Fold can show.

@@ -56,7 +56,18 @@ echo "::endgroup::"
 echo "::group::carry the hourly feed forward (take 82)"
 # Pages is one site with two deployers. The nightly must not wipe what the
 # hourly wrote: copy the live hunt/ files into www/ before this deploy.
-python3 tools/hunt.py --carry-over || echo "carry-over failed (non-fatal)"
+# Take 114 review: Pages holds the only copy of hunt/history.json, and a deploy
+# without it is the next hourly's reset of the whole record. Exit 3 says it
+# could not be read (a timeout or a 5xx after three tries -- not a 404, not a
+# file that is not a history); any other failure may have missed it too. Either
+# way this build does not deploy Pages: pages=skip skips build.yml's pages job,
+# Pages keeps the hourly's last deploy, history whole, and the next hourly
+# deploys again. The APK and the Release go ahead. Still non-fatal.
+rc=0; python3 tools/hunt.py --carry-over || rc=$?
+if [ "$rc" -ne 0 ]; then
+  echo "::warning::hunt carry-over exited $rc -- this build does not deploy Pages (pages=skip); the APK and the Release go ahead"
+  echo "pages=skip" >> "${GITHUB_OUTPUT:-/dev/null}"
+fi
 echo "::endgroup::"
 
 # render.mjs already ran inside the pipeline in Chrome mode (puppeteer was

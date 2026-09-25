@@ -1,6 +1,6 @@
 # RUNBOOK — from nothing to a repo that builds every night
 
-*Current as of take 113.* **Since take 89 the repo is the record:** a session
+*Current as of take 114.* **Since take 89 the repo is the record:** a session
 works on a branch and opens a pull request; you merge; the merge builds. §6
 is every take. §1–§5 are how the repo was first stood up from a seed zip and
 remain the recovery procedure; you need them again only for a new repo or a
@@ -119,6 +119,24 @@ repository **Variables** `HUNT_ZIP` and `HUNT_RADIUS` (Settings → Secrets and
 variables → Actions → Variables). It shares the `pages` concurrency group
 with the nightly so the two never deploy over each other. A run costs about
 two minutes of a public repo's free runner time.
+
+**A red hunt run that logs `::error::history: unread …` (take 114).**
+- It means Pages could not be read three times, ten seconds apart. The run
+  stopped before any fetch and deployed nothing, so the history on Pages is
+  whole. The next run reads it again, and GitHub mails the failure.
+- `none on Pages (404)` is a new history starting, and says so.
+- The nightly's carry-over line `history.json NOT carried (not a history …)`
+  means the deployed file was not a history. The next hourly then starts a
+  new one.
+- `::error::history: this run's history would lose its past` is
+  `keeps_past` refusing a history that is not the one read plus one row.
+  Nothing is deployed; read the numbers it prints.
+- The nightly's line `history.json NOT carried (…) -- this build must not
+  deploy Pages` means it could not read the history three times. The bundle
+  job warns `this build does not deploy Pages (pages=skip)`, and the run's
+  **pages** job shows as skipped. The APK and the Release are still built.
+  Pages keeps the hourly's last deploy, with its history whole, and the
+  next hourly deploys as usual.
 
 **The first run is yours to start:** Actions → hunt → *Run workflow*. A new
 schedule's first cron run can lag by an hour or more; a manual run proves the
