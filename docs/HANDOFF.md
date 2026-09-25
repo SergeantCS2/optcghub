@@ -1,4 +1,90 @@
-# HANDOFF — through Take 114
+# HANDOFF — through Take 115
+
+## Take 115 — 2026-09-25 — the production baseline: a two-axis review of takes 106-114, every confirmed finding fixed or handed on, the record made whole for the next sessions
+
+Opened before any code (PROTOCOL §6). Take 114 merged as PR #39 at 00:14
+UTC; its after-merge note is under take 114.
+
+The owner, word for word (the scrubber's one word in brackets):
+- "Run `npx skills use "https://github.com/mattpocock/skills" --skill
+  "code-review"` and follow the generated skill instructions now. ... wrap
+  everything up remaining, tidy up your documentation and ensure there was
+  no missing/split ends. I'd like to start a new [session] after we're all
+  set, maybe in another take - where we'll do more fixes, UI adjustments
+  and more. I want to harden this as production, update any open
+  questions, issues etc."
+- Asked where the review measures from and what to do with its findings:
+  "take-105 (Recommended)" and "Fix small ones in take 115 (Recommended)".
+- Then: "bundle all of your findings and fixes/optimizations based on your
+  findings all within 115, 114 is already in production, but I want 115 to
+  be the real prod baseline on the code side so any future
+  changes/additions will be on a clean slate and picking up from the apps
+  most optimal rendition and ensuring that the new UI/UX new [session] is
+  aware, currently its awaiting your changes all bundled into 115 but we
+  have been drafting in preparation, so it knows to wait and that you're
+  doing code review. Publish your unfinished changes somewhere to tackle
+  later, and if it's a massive change also note it here to likely tackle
+  later. The new [session] will be improving collect, the loading screen,
+  tutorial, hunt and much more, mostly UI changes."
+- With it, the owner's Diagnostics and self-test from the Fold on take 114:
+  17 pass, 0 fail; the cover screen `viewport: 411x960 @2.625`, the open
+  screen `viewport: 749x832 @2.625`, `tz: America/New_York`.
+
+### The review
+
+The skill (`code-review`) reviews the diff since a fixed point on two axes,
+kept apart on purpose: **Standards** (the repo's documented rules, plus a
+fixed list of code smells as judgement calls) and **Spec** (what the take
+was asked to do). The fixed point is tag take-105: 61 commits, 91 files.
+The skill expects an issue-tracker file (`docs/agents/issue-tracker.md`)
+that this repo does not have; the specs here are the record itself (each
+take's HANDOFF plan and the owner's words, AGENDA, UI-AUDIT).
+
+It ran one shard per take, 106 to 114, each with its own Standards and Spec
+reviewer, and every finding was then given to independent reviewers told
+to refute it at HEAD (two for a claimed defect, one for a smell). Three
+more sweeps looked past the diff: the record's split ends, the owner's
+Diagnostics, and production readiness. 175 agents in all.
+
+- **Standards:** 66 findings; 26 confirmed, 39 refuted, 1 already recorded.
+- **Spec:** 36 findings; 29 confirmed, 5 refuted, 2 split between the
+  reviewers.
+- **The sweeps** added about forty more, the worst of them in production
+  code that no take's diff had touched.
+
+### What this take changes (the plan)
+
+Every confirmed finding is fixed here, each with a check watched to fail on
+take 114's build, or handed on in the record with its reason. The worst
+first:
+- **A sync in a running app doubled every printing in the scanner's
+  lookup** (`loadCatalogue` never reset `CAT.byNum`). After one sync, a
+  unique artwork asked instead of auto-accepting and the picker listed
+  every printing twice. The quiet sync runs most days.
+- **A stored value that could not be read stopped the app at the splash**,
+  and a full storage lost a collection save without a word.
+- **A synced catalogue of the wrong shape locked the app at every launch.**
+- **A price alert typed in a converted currency was stored as dollars.**
+- **The picker's prompts leaked when closed**: the next pick answered twice
+  (two graded slabs, two ads).
+- **The binder's page turns counted from the wrong page.**
+- **A distributor that failed after a good read looked fresh**: the feed
+  keeps the last good copy with `ok` still true, and the app never said
+  "not reached". It happened live at 01:28 UTC.
+- **A backup did not run on every save**, and it left out the stock
+  alerts, the release reminders, the Hunt notes and the trade lists.
+- The rest: contrast under 4.5:1 in three places, a splash that took the
+  mode's colour, text under 12 px, days still in ISO, keywords three ways,
+  toggles without `aria-pressed`, a sealed-only set filed under "Other",
+  guards whose controls could not fail, and the runner's hourly deploying
+  a catalogue no validation had read.
+- **The Fold's open screen is MEASURED**: 749 x 832 at 2.625, not the 840 x
+  757 at 2 the look and render assumed. The 700-899 px two-pane rules
+  hold at 749 (measured in Chrome); the harnesses move to the measured size.
+
+What is too large for one take, or is the owner's, goes to AGENDA A43 with
+its fix sketch, and the UI/UX session is told in the session prompt that
+take 115 is the baseline it waits for.
 
 ## Take 114 — 2026-09-24 — A32's distributor state timeline, from the history rows
 
@@ -350,6 +436,25 @@ The PR's first `check` failed on one smoke line that is not this take's:
   with its "gts in / southern in" counts, and the first change seen in the
   rows.
 - **Still the owner's:** the Fold check of take 113's icon.
+
+### After the merge (written at take 115)
+
+- **PR #39 merged at 00:14 UTC on 25 Sept.** Build run 64 on main
+  (d7d152b) was green in all four jobs: smoke 1039/1039, render 198/198 in
+  Chrome, the gate passed. The nightly's carry-over, take 114's own code,
+  carried 5 of 5 files from Pages, history.json among them, and the pages
+  job deployed at 00:18:55 UTC.
+- **Issue #38** (the red nightly of 24 Sept, landmine 175) was closed by the
+  workflow itself at 00:18:32: "Green again".
+- **Release take-114** was published at 00:24:48 UTC: the APK 26,972,466
+  bytes, the AAB 20,155,074, the mapping 51,817,124.
+- **The first hourly on take 114's runner** (hunt run 50, 01:28 UTC) was
+  green. The deployed history went from 49 rows to 50, read and appended,
+  not reset (MEASURED from Pages). GTS timed out on that run: the feed kept
+  the 22:23 copy with `stale_since`, and the new row carries no `gts` key --
+  a failed read is a hole, not "nothing listed" (PROVEN live). The app did
+  not say so; take 115 fixes that.
+- **The owner's self-test on take 114:** 17 pass, 0 fail, on the Fold.
 
 ## Take 113 — 2026-09-24 — the owner's icon (D7), folded in from the graphic design session's branch
 

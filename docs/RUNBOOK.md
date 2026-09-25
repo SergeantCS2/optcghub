@@ -115,7 +115,7 @@ the PR like the others (§5b). It runs at :17 every hour, rebuilds `www/`
 from the committed tree, fetches Target's product and shelf stock for the
 configured zip with `tools/hunt.py`, and deploys `www/` to Pages — the app
 reads `hunt/feed.json` from there. Change the zip or radius without a paste:
-repository **Variables** `HUNT_ZIP` and `HUNT_RADIUS` (Settings → Secrets and
+repository **Variables** `HUNT_ZIPS` (one or more zips, comma-separated) and `HUNT_RADIUS` (Settings → Secrets and
 variables → Actions → Variables). It shares the `pages` concurrency group
 with the nightly so the two never deploy over each other. A run costs about
 two minutes of a public repo's free runner time.

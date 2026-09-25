@@ -48,7 +48,7 @@ compact bar one level down, no banner on Collect's Home.
 - [x] `#1E2A1C` / `#2E1C18` (391) → `--ok-bg` / `--bad-bg`. *(take 106)*
 - [x] `#1d2426` (411, 456), `#1a1e20` (281), `#151a1c` (351), `#182A3A` (1883, 2032) → `--card2`. *(take 106)*
 - [x] `#1d2a2e` (393), `#1c2225` (305), `#333c40` (272), `#39424766` (237) → `--line`. *(take 106)*
-- [x] Scrims `rgba(0,0,0,.82/.72/.5/.45)` (266, 366, 368, 438) → `--scrim`. *(take 106)*
+- [x] Scrims `rgba(0,0,0,.82/.72/.5/.45)` (266, 366, 368, 438) → `--scrim`. *(take 106: the sheet's .82 is `--scrim`. Take 115's review: the pocket label's fade (.72), the count pill (.5) and the nav's shadow (.45) stayed black literals. They sit over art or the near-black nav and need not follow the mode, like take 110's measured strip scrims; this line said more than shipped.)*
 - [x] Legacy `--teal` (156, 297, 3022) → `--brass`. *(take 106)*
 - [x] Canvas: `#26394B`, `#C9A24A`, `#A08E70` and the brass rgba (2724-2754) and `sparkOn` (4365, 4369) → read the palette with `getComputedStyle`; the deck chart is brass in red mode today. *(take 106)*
 
@@ -119,7 +119,8 @@ Every screen and sheet at both of the Fold's sizes (`node tools/look.mjs 111`, 3
 - [x] Layout: the bulk bar off a 411 px phone; Scan's note edge to edge; the Performance tab's panel under Most valuable; rows askew on a textless picture, then the Sealed bell (landmine 161); the ready-made deck's badge beside its name.
 - [x] A card's page: Want and the alerts out of Graded (a Watch panel); a sealed product's page (its kind, one triangle, no Graded, Want or list of printings); a DON!! card's page a card's (landmine 162); Save and the cost basis on the collection the page names, and a slab its own line (landmine 163).
 - [x] Figures: Set completion counting products and every collection's value; a deck's value without its Leader; the binder opening on empty pockets; a cost basis added without the day's reading.
-- [ ] A binder page on the open Fold: three pockets of about 400 px across, so a page of nine needs a scroll there -- pockets near 110 px wide would fit it. A design choice, left to the UI/UX session.
+- [ ] A binder page on the open Fold: a page of nine needs a scroll there. *Take 115, at the MEASURED 749 x 832: pockets of 226 x 316 px, the page ending at 1151 px on an 832 px screen (at the old INFERRED 840 x 757 it was 257 x 358, ending at 1278).* A design choice, left to the UI/UX session.
+- [ ] Sealed's banner on the open Fold: the top card cut to the screen's width with its face filling the band (take 111's look, at the INFERRED 840). Its crop at the MEASURED 749 has not been looked at. The UI/UX session's.
 
 ## 8. Distributor info — take 112, the owner's word
 
@@ -139,7 +140,10 @@ Take 114, the owner's answers to its pictures (HANDOFF take 114):
 - [x] A day in a distributor's long words never breaks ("release Nov" / "20", found by take 114's look), fixed because it was broken.
 - [ ] A day in Releases' "mixed · release" group line has no no-break spaces. Found in passing; the UI session's.
 - [ ] The history's own look (`.dtl`): size, colour, the spacing of a one-line header. The UI session's.
+- [ ] Sealed's GTS counts overlap ("7 sold out, 8 allocated, 1 with an order due date ahead, 3 unreleased without one" adds up to more than its 11 products) and read as separate groups (take 114's look). The UI session's.
 
 ## Found in passing, routed elsewhere
+
+- A favicon and a web-manifest icon for Pages, from `assets/icon.svg` (take 113). The UI session's call.
 
 - Bulk delete removes a card's lines in every portfolio and condition, and its confirm values the selection without quantity (2966-2972). A data-loss risk (AGENTS rule 5), outside the UI series: offered to the owner as its own task. *(Fixed at take 110, landmine 155: Delete, Move and Condition take the lines on screen -- the collection, the star, the filter, the search -- and the bar and the confirm count them with their quantities.)*

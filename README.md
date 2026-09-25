@@ -2,13 +2,13 @@
 
 **Your One Piece collection, scanned without a cap, valued honestly, and yours to keep.**
 
-Unlimited card scanning, a portfolio that works with no signal, and a collection
-that lives in a file on your phone with a one-tap CSV export. No account, no
+Unlimited card scanning, a collection value that works with no signal, and a
+collection that lives on your phone with a one-tap CSV export. No account, no
 subscription. Supported by short rewarded ads that unlock new saves — scanning
 itself is never gated, and nothing already in your collection ever is.
 
-**Install:** the signed APK is on the latest [Release](../../releases/latest).
-Android 8+.
+**Install:** from Google Play (live since 24 September 2026), or the signed APK
+on the latest [Release](../../releases/latest). Android 8+.
 
 > [!IMPORTANT]
 > **A price is an estimate, not an offer.** All catalogue and price data comes
@@ -34,8 +34,8 @@ Android 8+.
 
 **Scan as many cards as you want.** Scanning is free and unlimited — the app it
 replaces stops at 25, and a Constructed deck is 51 cards. Saving to the
-collection is supported by short rewarded ads, once they are wired in; nothing
-already in your collection is ever gated.
+collection is supported by short rewarded ads; nothing already in your
+collection is ever gated.
 
 **Know which printing you actually own.** `EB03-024` is three different cards:
 a $1.48 base, a $23.36 Alternate Art, and a $467.33 SP. Same number, same set,
@@ -52,8 +52,8 @@ network badge green throughout.
 own photograph of it — your foiling, your sleeves, your copy. Not a publisher
 sample image.
 
-**Your collection is a file you own.** SQLite on the phone, CSV export from the
-first release, automatic backup on every batch you commit. No account to lose
+**Your collection is yours.** It is kept on the phone, with a CSV export and a
+backup file written on every save to your phone's Documents folder. No account to lose
 access to, nothing to cancel.
 
 ## What it doesn't do
@@ -62,8 +62,8 @@ No social feed, no shop, no affiliate links, no subscription, no analytics, no
 account. Ads are rewarded-only and gate new saves, never the camera, never
 your existing collection, never export. Sealed product and graded slabs are manual entry — the
 scanner would guess and guessing is worse than asking. Japanese printings are out
-of scope for v1; the scanner detects them and says so rather than matching them to
-the English card that shares their number.
+of scope for v1, and the app says so (More → What this app does not know); the
+catalogue is the English one.
 
 Per-condition valuation is a **gap**, and the app says so where it matters. The
 free data source doesn't publish it.
@@ -88,12 +88,13 @@ python3 tools/gate.py        # the contract
 [APEX ORV](../../../apex-orv) and inherits its governance wholesale.
 `docs/HANDOFF.md` is an append-only record of every take. `docs/LANDMINES.md`
 numbers known failure modes so they are stepped around instead of rediscovered —
-40 of this project's own plus the transferable findings from APEX ORV's 200+.
+this project's own (175 by take 115) plus the transferable findings from APEX
+ORV's 200+.
 `docs/AGENDA.md` carries every decision with what was *ruled out* and why. The
 build gates on all of it.
 
-The whole One Piece catalogue — 87 sets, 7,518 products, every price — rebuilds
-in 11 seconds. There is nothing here worth optimising, so the complexity budget
+The whole One Piece catalogue — 87 groups, 7,662 products, every price —
+ingests in about ten seconds (take 115). There is nothing here worth optimising, so the complexity budget
 goes to the scanner instead.
 
 ## Credit

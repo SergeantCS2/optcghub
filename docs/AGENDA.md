@@ -1187,7 +1187,7 @@ drop-downs, and Where to buy lists sellers to collectors only (UI-AUDIT §8).
   owner's take-112 word).
 - Changing the GTS stock alert without the owner.
 
-## A42 — The UI series: uniform headers, card art used boldly, one voice · OPENED take 106
+## A42 — The UI series: uniform headers, card art used boldly, one voice · OPENED take 106 · CLOSED take 111 (PR #35, merged 16:31 UTC 24 Sept)
 
 The owner, 24 Sept, to the UI/UX session: the app "needs refinement,
 some text isn't consistent, some title/headers shift/don't line up or
@@ -1240,8 +1240,10 @@ mode by mode leaves the app less uniform in between):
    *Take 110*, with the thumbnail tokens and a readable fallback label.
 7. **The Fold's inner screen:** two panes where two fit, between a phone
    and the desktop column. *Take 110*, brought forward at the owner's word
-   ("Ensure 110 has as many planned changes in it as possible"); its width
-   is INFERRED until Diagnostics' viewport line comes from the open phone.
+   ("Ensure 110 has as many planned changes in it as possible"). Its width
+   was INFERRED (840 px) until the owner's Diagnostics measured it at take
+   115: 749 x 832 CSS px at 2.625, where the 700-899 px rules hold
+   (MEASURED in Chrome).
 
 Take 110 carried layers 4 (second half) to 7 in one take, overnight, at
 the owner's word: "You will check your work along the way then we will
@@ -1249,7 +1251,7 @@ push to github as one massive take." What is left is the owner's review.
 *Take 111:* the owner merged take 110 at 14:07 UTC on 24 Sept without a
 note on the look ("Merged, continue - monitor and continue with 111"); take
 111 is the last look -- every screen at both sizes -- and what it turns up.
-The item closes when take 111 merges. What it turned up (the HANDOFF has
+The item closed when take 111 merged (PR #35, 16:31 UTC, 24 Sept). What it turned up (the HANDOFF has
 each): a dot opening a line for a printing with no number; the filter's
 words; a printing's badge cut by the ellipsis on the phone (landmine 164);
 the bulk bar off a 411 px phone; a sealed product's page and the 253 DON!!
@@ -1276,7 +1278,13 @@ retouching the stamp (drawing on the publisher's card); the whole card
 in a blurred backdrop (take 110: the stamp comes through a blur as a light
 band, up to 80 levels of 255, MEASURED on ST02-001's clean and stamped
 pictures); strips on Releases and art in empty states (take 110: the
-reasons are in its HANDOFF).
+reasons are in its HANDOFF); a back arrow on Market Movers (take 107: it
+is a state of Search, a screen in the nav); a header that stays on screen
+as the page scrolls (take 107: the mode slider already does, and a second
+fixed band costs every screen about 64 px on the cover display); Save in
+the deck's header (take 107: it stays where a deck is finished); Lucide's
+icons wholesale (take 107: the sprite takes a symbol only where the app
+needs one).
 
 ## A41 — Missing images elsewhere in the app, sourced from somewhere other than TCGplayer · OPENED take 100
 
@@ -1300,7 +1308,12 @@ which parts, and from where, is still this item. Measured at take 109:
 Bandai's card site serves every card looked at (600x838) but stamped
 SAMPLE on 20 of 20 -- not a cleaner source -- and names a card by its
 number, not its printing (AGENTS rule 3). The 221 ids TCGplayer refuses
-are refused at every size it serves (`_in_1000x1000` included).
+are refused at every size it serves (`_in_1000x1000` included). *Take
+115, the owner's Diagnostics on take 114:* 221 cards and 24 rows without a
+number have no picture at the first host, and the second host serves 1
+(599838). Of the 24, 5 are DON!! cards (677570, 677571, 710745, 710746 and
+719824, new since take 100's 23) and 19 are sealed products; the sidecar
+counts every row without a number as "sealed" (landmine 162's family).
 
 **Ruled out:** hosting or caching any image; a source without terms
 the app can cite; shipping a URL the runner has not seen serve; a
@@ -1820,7 +1833,7 @@ tapping every feature.
   Fold PASSED: camera, Filesystem round-trip, share sheet, notifications
   prompt, test ad units, the sim probe, the sync URL.
 
-## A24 — The colour scheme, again · OPENED take 28 · NOT A PRIORITY
+## A24 — The colour scheme, again · OPENED take 28 · ANSWERED take 106 (D15: the three mode palettes stay)
 
 The owner, take 28: it still reads as Collectr; something One Piece; a transparent
 background would be fine at some point; green up, red down stay.

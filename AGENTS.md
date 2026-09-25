@@ -82,7 +82,7 @@ and one pull request**, titled `take N — …`. The owner merges; the merge to
 `main` runs `build.yml`, which publishes Release `take-N` and deploys Pages.
 In order:
 
-1. Bump `VAULT_TAKE` in `BUILD` (the title in `src/app.html` takes it at build)
+1. Bump `VAULT_TAKE` in `BUILD` (the build puts it in the app's `TAKE` -- More's About row, Diagnostics -- and in the heading of Release `take-N`; since take 110 the page `<title>` carries no take)
 2. Write the `docs/HANDOFF.md` entry **before** any code — what changed, what
    was measured, what was ruled out, and what you got wrong — and the take's
    **New at take N** paragraph in `ci/RELEASE.md` (the build refuses without it)

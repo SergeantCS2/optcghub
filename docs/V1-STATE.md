@@ -11,12 +11,15 @@ OP TCG Hub scans One Piece Card Game cards by reading the printed number,
 disambiguates the printing (base / alt-art / SP — the same number spans up to
 4,292× in price, landmine 41), values the collection at TCGplayer market via
 TCGCSV, and keeps everything on the phone with a backup that survives
-uninstall. Two modes: **Collect** (home, search, scan, collection, trade,
-wants, binder, checklists) and **Prep & Play** (decks built against the
+uninstall. Three modes: **Collect** (home, search, scan, collection, trade,
+wants, binder, checklists), **Prep & Play** (decks built against the
 official Comprehensive Rules, a deck-building card browse, a Life/DON!!
-counter). Rewarded ads gate *saving*, never scanning (A17). No account, no
-server; the only load-bearing network call is the opt-in nightly catalogue
-refresh from Pages (take 27).
+counter, the hot-seat Sim) and **Hunt** (sealed products and their prices,
+Releases, stock from Target, local shops and two distributors, Local,
+Events; take 70 on). Rewarded ads gate *saving*, never scanning (A17). No
+account, no server; the network calls are the catalogue refresh from Pages
+(take 27) and Hunt's feed files from Pages (take 71). Live on Google Play
+since 24 Sept 2026.
 
 ## PROVEN on a device (the Fold, take 16), on a runner (take 32), and in the Play Console (take 39)
 
@@ -77,7 +80,7 @@ refresh from Pages (take 27).
 | Onboarding | first-run tour v2 (6 cards), versioned; picture slots in assets/user; **New in this update** on Home once per take, from the release note (take 53) | render; smoke 3 |
 | Packaging | signed APK (committed sideload key), AAB branch for Play (needs 4 secrets), one standard icon: the adaptive icon (background and foreground; no themed layer, at the owner's word), legacy and round icons, the reminders' glyph, the splash and the Play icon from four SVGs (`ci/icon.py`, checked, its controls in the gate; take 113, the owner's pick), CAMERA + POST_NOTIFICATIONS + AD_ID in the manifest | built every take since 9; signer verified by aapt2/apksigner |
 | CI | build.yml on `main` only (seed → bundle → pages + apk), nightly 21:30 UTC with sidecar commit-back and one labelled failure thread; **check.yml runs the whole pipeline on every PR with a read-only token (take 89)**; hunt.yml hourly; bootstrap.yml as recovery. Since take 89 the workflows live in git, byte-identical to their `ci/` copies, and a take is a PR the owner squash-merges | **ran green on a runner at take 32; APK installed by the owner.** Four red nights 09-18..21 read at take 89: the Events fixture's clock and the hashes guard's treatment of unpublished images (landmines 123, 124); both fixed with controls |
-| Self-test | More → Self-test: 17 on-device checks (catalogue, gate, search, fonts, storage, Filesystem, share, camera, ML Kit on a drawn code, notifications, ads, sim, sync), shareable report | smoke 9; **run on the Fold at take 91: 16 pass, and the one FAIL was the check's own (`m.num`, landmine 131) — fixed take 92** |
+| Self-test | More → Self-test: 17 on-device checks (catalogue, gate, search, fonts, storage, Filesystem, share, camera, ML Kit on a drawn code, notifications, ads, sim, sync), shareable report | smoke 9; **run on the Fold at take 91: 16 pass, and the one FAIL was the check's own (`m.num`, landmine 131) — fixed take 92. On take 114 (the owner, 25 Sept): 17 pass, 0 fail, on the Play build** |
 | Scrubber | comments stripped from the shipped app on every build; the gate refuses a first name, an AI-vendor name, the conversational word, a credential, a container path or a leftover to-do marker anywhere public | scrub.py --selftest 9 controls (take 102: the two literal file names pass as whole tokens, the vendor word beside them still fires); smoke 5 (take 35) |
 | Typography | four roles (display / comic / body / heavy), OFL/Apache faces bundled, 232 KB, licensed faces as a file drop in `assets/user/fonts/` | render.mjs: Chrome reports all four LOADED and h2 resolves to the display face, with a missing-file control; smoke 7 |
 | Design tokens (take 106, A42) | one scale for the whole app: type roles 12 to 44 px (nothing under 12), spacing, radii, thumbnail sizes, motion and a z scale; semantic colours per palette — the accent as text (`--accent-ink`, Prep & Play `#E5705C`), the label on the accent (`--on-accent`), a control edge at 3:1 (`--line-strong`), tints mixed from each palette; the charts read the palette they are drawn in | smoke take-106 section (contrast per palette on card and card2, no font size under 12 px, every glyph a call names in the sprite); the look, take 106, 7 of 7 at both viewports |
@@ -98,8 +101,11 @@ per step under `look/` (gitignored), read by the session and sent to the
 owner before a PR is marked ready. Its first run, on take 98's changes,
 found the toast wrapping into a tall half-width pill and a sealed sheet's
 subtitle ending in two stray dots — both fixed the same take. Limits:
-no camera, notifications, share sheet or native Back; no CDN pictures
-from the VM. An emulator was measured impossible here (no KVM, no SDK,
+no camera, notifications, share sheet or native Back. Since take 109 the
+VM reaches the picture hosts and the look fetches its pictures through
+Node (landmine 152). Its two sizes are the Fold's, MEASURED from the
+owner's Diagnostics on take 114: the cover 411 x 960 and the open screen
+749 x 832, both at 2.625 (take 115). An emulator was measured impossible here (no KVM, no SDK,
 no network).
 
 **Pictures (take 100, A39 item 3):** every printing's `img` is TCGCSV's
@@ -194,19 +200,16 @@ reproductions, outside the harness).
 | Scanner field half — foils, sleeves, toploaders, the star region | needs the owner's cards under a phone camera | A2, RELEASE.md |
 | First test-ad impression | needs a phone | A17 |
 | First notification | needs a phone | 8.5 |
-| The Play clock | approved; 12 of 16–18 testers opted in, then 14 days | RUNBOOK-play §7 |
-| Which key signed the first upload | UNKNOWN until the owner says which `.aab` he uploaded | RUNBOOK-play §2 |
 | Export and restore on the Fold | share sheet and file picker are INFERRED from the plugin definitions until seen | landmine 110 |
 | First Sync on the Fold | `UPDATE_URL` is set; the first *Sync now* that shows a date proves Pages and the URL | RUNBOOK §5 |
-| Real AdMob unit IDs | D11; the account exists and app-ads.txt is live; test units are correct for a closed test | A17, RUNBOOK-play §9 |
+| Real AdMob unit IDs | D11, needed now: the app is live on Google Play since 24 Sept and every install shows test ads; the account exists and app-ads.txt is live | A17, RUNBOOK-play §9 |
 | The named fonts as files | D16; the roles ship with free faces, the slot takes licensed ones | A26 |
 | Whether the faces themselves fit | the colour and contrast are fixed (take 60); whether Luckiest Guy and Bangers are the right faces is D16 | A26 |
 | A TalkBack session on a phone | every control has a name and the roles are right (take 66); whether the order and wording make sense needs a person | A30 |
 | Focus order | the ring exists (take 80); tab order across screens is unreviewed | A30 |
-| Hunt mode — local shops, reprints, the preorder watch, per-user zips | Sealed, Releases (take 70) and the hourly Target feed — online stock for all of the US, shelf stock per served zip with a zip pop-up, a fortnight of hourly history turned into dated restocks per store, and Local — 2,967 event-running shops with distances from your zip, the distance dropdown, your own notes, verified local shops' online sealed stock hourly, and Events — every event near you for a month with fee, seats and a TCG+ Register link (the source became a chunked index on 2026-09-22 and the roster froze for six days under a green hourly; read both shapes since take 92, landmine 130) — in a Zoro-green palette, with stock alerts that fire on the flip at any tracked source, any event onto the calendar as an .ics, exact distances on request (takes 71–79), and the first distributor — GTS Distribution's One Piece list with release and preorder dates, sold out and allocated in its own words under each product it lists, the products it has before the catalogue does on Releases, and a distributor restock as an alert source (take 94; proven live on the runner and on the Fold), a tapped release opening the set's products and a stock alert on the sealed sheet (take 95), and where to buy — a chip per seller under each sealed row and a panel on its sheet, the seller's own page, a shop's address and Call, no logo and no referral (take 96), and Releases with starter decks folded per release day, the countdown coloured by nearness, Remind me (a notification the day before, scheduled and checked on open) and Calendar (an all-day event through the take-78 path) (take 97), and Southern Hobby, the second distributor, in its own words -- its dates and "in-store only" (take 112) BUILT; the distributor state timeline and the rest follow in A32 order | A32 |
+| Hunt mode — local shops, reprints, the preorder watch, per-user zips | Sealed, Releases (take 70) and the hourly Target feed — online stock for all of the US, shelf stock per served zip with a zip pop-up, a fortnight of hourly history turned into dated restocks per store, and Local — 2,967 event-running shops with distances from your zip, the distance dropdown, your own notes, verified local shops' online sealed stock hourly, and Events — every event near you for a month with fee, seats and a TCG+ Register link (the source became a chunked index on 2026-09-22 and the roster froze for six days under a green hourly; read both shapes since take 92, landmine 130) — in a Zoro-green palette, with stock alerts that fire on the flip at any tracked source, any event onto the calendar as an .ics, exact distances on request (takes 71–79), and the first distributor — GTS Distribution's One Piece list with release and order-due dates (landmine 172), sold out and allocated in its own words under each product it lists, the products it has before the catalogue does on Releases, and a distributor restock as an alert source (take 94; proven live on the runner and on the Fold), a tapped release opening the set's products and a stock alert on the sealed sheet (take 95), and where to buy — a chip per seller under each sealed row and a panel on its sheet, the seller's own page, a shop's address and Call, no logo and no referral (take 96), and Releases with starter decks folded per release day, the countdown coloured by nearness, Remind me (a notification the day before, scheduled and checked on open) and Calendar (an all-day event through the take-78 path) (take 97), and Southern Hobby, the second distributor, in its own words -- its dates and "in-store only" (take 112), and the distributor state timeline on a product's page (take 114) BUILT; date moves, delisted items, the Releases list's history and the retailers that need a residential IP follow in A32 order | A32 |
 | Importing from other apps (Collectr) | needs one real exported file; guessing the format would mis-key printings | A31 |
-| Colour direction | D15; parked, not a priority | A24 |
-| Icon motif | D7; the take-16 placeholder is back by request | A16 |
+| The icon on the Fold | the owner's check: the launcher on both screens, the splash, a reminder's ドン!! glyph (landmine 170); the APK was decoded after take 113's merge | A16 |
 | A14 ML Kit language trim (3.8 MB raw of models, plus R8 on 23 MB of dex) | **PROVEN take 104 on the Fold** (the self-test's OCR read "OP01-016" on the shrunk build); the same run found R8 had dropped the notifications plugin's permission annotation (landmine 141), fixed at take 105 | A14 |
 | Backlog 8.9–8.11, 8.13–8.16 | not scheduled; 8.12 done take 42 | ROADMAP Phase 8 |
 | Other games | measured, one-app-per-game or packs; not before Play | A19 |

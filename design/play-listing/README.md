@@ -86,7 +86,7 @@ an invented line.
 ## Not here
 
 - **Rendered PNGs and HTML.** They are generated, and they stay outside the tree.
-- **The owner's icon pick** (the printed back's emblem). It stays out of this public repository until he
-  says to ship it, as `design/d7-icons/README.md` says. `frames.py` takes it as an argument; by default
-  it uses the public `own-purple`.
+- **The owner's icon pick** (the printed back's emblem). *Take 113: it ships, at the owner's word -- it is
+  `assets/icon.svg` and its three layers.* `frames.py` takes an icon as an argument; by default it uses
+  the public `own-purple`, the fallback's.
 - **The listing text** (`docs/PLAY-LISTING.md`). That belongs to a take.

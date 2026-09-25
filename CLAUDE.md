@@ -11,7 +11,7 @@ in-flight state — before touching anything.
 
 | Command | What it is |
 |---|---|
-| `bash ci/deps.sh` | puppeteer, acorn, pillow (needs `registry.npmjs.org` and `pypi.org`) |
+| `bash ci/deps.sh` | puppeteer, acorn, pillow, cairosvg (needs `registry.npmjs.org` and `pypi.org`; cairosvg needs the system libcairo) |
 | `python3 tools/pipeline.py` | the whole pipeline; `python3 tools/pipeline.py app smoke render` runs only those steps |
 | `node tools/smoke.mjs` | executes the shipped `www/app.js` in a DOM stub (~690 assertions) |
 | `node tools/render.mjs` | real Chrome via puppeteer; falls back to a DOM check and says `(mode: dom)` |
@@ -39,7 +39,7 @@ in-flight state — before touching anything.
 
 ## What bites here
 
-- The runner is the seal: the session VM usually has no Chrome receipt and no CDN access, so `render.png` and the image hashes come from the runner's `check`; a red gate on the receipt alone is expected here, anything else is not.
+- The runner is the seal. Since take 109 the session VM has reached TCGCSV, the picture hosts and the package registries, and renders in Chrome; if an environment refuses them again, `render.png` and the image hashes come from the runner's `check`, and a red gate on the receipt alone is expected, anything else is not.
 - After `git checkout -B … origin/main`, the sidecar `catalog/prices_daily.json` carries the nightly's newest day while the VM's catalogue is whatever ingest is cached when TCGCSV is refused here (it was until take 109; `curl -sI https://tcgcsv.com/` says which): `smoke.mjs` then fails its two history assertions (the days end on the source date; the last point equals today's deck value). That is the mismatch, not a defect; the runner ingests fresh. Everything else in smoke must pass locally.
 - The DOM stub in `smoke.mjs` answers class selectors with a dummy element and cannot see `[hidden]` or a document-level click handler: assert through `window.VAULT` (screens by `V.NAV.stack`), and lift a handler into a named function to test it (landmines 135, 136).
 - `.gitignore` patterns are anchored (`/look/`), or a same-named directory anywhere vanishes from the commit and `git add` fails the chain silently (landmine 138).
