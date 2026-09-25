@@ -1,4 +1,150 @@
-# HANDOFF — through Take 117
+# HANDOFF — through Take 118
+
+## Take 118 — 2026-09-25 — Collect on Wano indigo and bright gold, Home's premium pass, Hunt in kraft
+
+Opened before any code (PROTOCOL §6) by the UI/UX session, after take 117
+merged and Release take-117 built its APK and AAB.
+
+The owner, word for word, over three schemes for Collect and three for Hunt
+drawn as real screenshots of the pre-built copy (every scheme measured for
+contrast before it was drawn): "I'm leaning towards a wano indigo actually,
+with a bright gold instead of the washed bronze. I also really like the
+premium and the most valuable being a scroll of your top 5ish cards, nice
+work there"; Hunt "H2 treasure map, kraft"; the premium pass "take it as
+drafted"; then, between two golds on the indigo, "I like G1"; and earlier,
+"make other parts more premium feeling".
+
+### What this take changes
+
+- **Collect is Wano indigo with the bright gold G1.** The token block:
+  bg / card / card2 / line `#100D22 / #1A1633 / #231E43 / #37305C`; fg /
+  dim / dim2 `#EFECF7 / #B3ACCF / #928AB0`; the fill `#F2C14E`, its shade
+  `#C4962A`, the gold `#FFDF8C`; the ink `#F5CB5C`; the control's edge
+  `#766D96`; up / down `#8FD19E / #F0806E`; the glow `rgba(242,193,78,.12)`
+  at 50 % 18 %. Measured before drawing, in smoke on every build: fg 14.9 on
+  the card, dim 8.1, dim2 5.4, the ink 11.3; the edge 3.6 on the card and 3.3
+  on card2 (smoke reads both).
+- **Hunt is the treasure map, kraft.** bg / card / card2 / line `#1A1410 /
+  #26201A / #322A22 / #4A3E33`; fg / dim / dim2 `#F3E7D2 / #C9B79B /
+  #A79579`; the fill `#D6A544`, its shade `#9A7628`, the gold `#EDCB78`; the
+  ink `#E2B65A`; the edge `#857665` (3.7 / 3.2); the glow `#3A2C1E` in the
+  Hunt shape. Hunt's selected tint is 8 % of the fill, like Collect's since
+  take 115: at take 106's 12 % the gold lightens the kraft card until dim2
+  reads 4.43 on it; 4.78 at 8 %. Zoro's green (take 76) is the record.
+  Prep & Play's block is untouched: three modes, three grounds.
+- **Home's premium pass.** The hero is a card on the dearest printing's own
+  large art, blurred and scrimmed to the card (the owner's `home-bg.jpg`,
+  when it exists, instead); the total wears a gold gradient (`--gold` ->
+  `--brass` -> `--brass2`, `background-clip:text`); Overview / Performance
+  is a pill switch; the range pills are one pill group, each pill 44 px
+  wide; Home's panels are surfaces (the card2 -> card gradient, an inner
+  top highlight, a soft drop shadow, 18 px) with caps labels and a fading
+  rule; **Most valuable is a shelf** of the six dearest cards -- the
+  picture with the printing's word as a badge on its corner, the value, the
+  name with its count, and a second line (a product's kind and set, a
+  card's condition and number), each a 100 px tap target that opens the
+  card as the rows did (take 98); the card page's three cells wear the same
+  surface. The reminders' tint and the charts' fallbacks follow the new
+  gold; the old brass is nowhere in the page but the share page, a fixed
+  page, dark by design.
+- The harness pins today's hexes in twenty-four places (render, the look's
+  steps, smoke): every pin re-measured for the new hexes, never loosened;
+  smoke's per-palette contrast check parses the token blocks and is the
+  guard; the words over art keep landmine 158's pixel probe.
+
+### How it was built
+
+- Pre-built on the take-117 copy while take 115 was reviewed, the schemes
+  drawn first (`C1-C4` for Collect, `H1-H3` for Hunt, then two golds on the
+  indigo) and measured, the owner's picks built as anchored scripts and
+  proven with every new guard watched red on 117's build; ported as one
+  diff over the take-117 port with `git apply --reject`; the five hunks
+  take 115 had touched (the release title, Collect's ink line and the Hunt
+  block, which carry take 115's tints; Home's top list, which reads a product
+  with take 115's `SEALED.isGoods`; the look's step list) re-applied by
+  hand, each anchored and asserted.
+- Two of take 115's controls met on the way, re-planted rather than
+  loosened: its Collect-tint control planted take 114's 12 % selected tint
+  and 14 % bad tint and expected `--dim`, `--dim2` and `--down` under 4.5
+  on the first and `--down` under it on the second -- on the indigo with
+  the brighter gold only `--dim2` falls under at 12 % (4.20) and `--down`
+  clears a 14 % bad tint (5.36), so the bad plant is 30 % (3.91), in smoke
+  and in render alike; smoke's plant finds Collect's line by the warning
+  tint that follows it, since the shipped stylesheet carries no comments
+  and Hunt's tint reads 8 % too. The pin on the tint strengths knows Hunt's
+  8 %.
+
+### Measured
+
+- The palettes, in smoke on every build (every pair on the card and on
+  card2): Collect fg 14.9 / 13.5, dim 8.1 / 7.3, dim2 5.4 / 4.8, the ink
+  11.3 / 10.1, the edge 3.6 / 3.3; Hunt fg 13.2 / 11.5, dim 8.2 / 7.2, dim2
+  5.5 / 4.8, the ink 8.5 / 7.4, the edge 3.7 / 3.2; the selected tint's
+  texts in every palette, the nav's labels, a chip's count: all at 4.5 or
+  more; a count at .6 opacity caught in every palette (the control).
+- In real Chrome: Collect's ground `rgb(16, 13, 34)`, Hunt's `rgb(26, 20,
+  16)`, the headings' gold `rgb(245, 203, 92)`; the shelf's cards 100 px
+  wide and more than 44 px tall, each a button; the total drawn in the
+  gradient and the hero carrying the dearest printing's large art.
+- The look for take 118 at the owner's MEASURED sizes: 20 steps, 20 ok at
+  both -- Home seeded with nine dear cards and a month of readings, the
+  shelf and the sets, Performance, the Collection grid, a card's page,
+  Search, Sealed and Releases on the kraft, Decks untouched.
+- Negative controls, this harness on the take-117 build: smoke red on 10
+  lines (the two token blocks, kraft's AA, the old brass gone, the
+  surfaces, the hero and the gradient, the pill switch and the cells, the
+  shelf and its two button pins, the tint pin), then it stops at the
+  hero-art line, which reads a style the old build's hero has not got;
+  render red on 5 (Hunt's kraft ground, Collect's indigo, the headings'
+  gold, the shelf, the gradient and hero art).
+
+### What I got wrong
+
+- A shelf card widened to its value: a flex item keeps its content's width
+  until `min-width:0` (landmine 204).
+- The control's edge was measured on the card alone; smoke reads card2 too,
+  and both palettes needed a step lighter (`#766D96`, `#857665`). The
+  pre-build's comment then called the indigo's edge 3.8 and 3.5; the WCAG
+  formula gives 3.6 and 3.3 (both clear 3), and the comment says so now.
+- The range pills lost their 44 px squares inside the pill group until each
+  kept `min-width:44px`.
+- The DOM stub gives the hero no `style.cssText`: the hero's art is set
+  through a guarded assignment.
+- The shelf's picture box first took the collection's `art` class, then
+  `pic`, which the take-93 pin counts; the printing's word first rode the
+  name and now sits on the picture's corner, where the take-19 check
+  reads it.
+
+### Ruled out
+
+- Collect's other schemes as drawn: C1 the washed bronze on charcoal, C2 a
+  navy with a paler gold, C3 a plum, C4 a green-black; and Hunt's H1 (a
+  darker green) and H3 (a slate) -- the pair must not share a family, or
+  the mode switch stops reading as a switch (Collect and Hunt were both
+  gold on dark at take 114; kraft against indigo keeps them apart).
+- The second gold G2 (a warmer sun gold): the owner chose G1.
+- Most valuable as rows: the owner chose the shelf.
+- A light skin or a tint per mode: take 120's question, not this take's.
+
+### Tests
+
+- On this branch (the take-117 merge plus the port, rehearsed first on a
+  copy of the merged tree and then equal to it byte for byte), the whole
+  pipeline in 368 s -- the catalogue ingested fresh, 6,766 artwork hashes
+  restored from the sidecar, coverage 100 % -- then **smoke** 1300 passed,
+  0 failed; **render** 225 passed, 0 failed, `(mode: chrome)`; **the look**
+  20 of 20 at both sizes, the same figures as the port. `ci/icon.py
+  --selftest` 33 ok; `scrub --check --docs` clean; `seal.sh --gate-only`
+  as its last line says below the pull request.
+
+### DEFERRED
+
+- Take 119: the surface beyond Home (Search, the Collection grid's tiles,
+  the card page's panels, Wants and Trade; Sealed's panels, Releases, Local,
+  Events), the tiles' shape, whether Play's panels take it, and the mode
+  swipe -- drawn as sheets for the owner, built only from the owner's
+  picks; the literal radii and inline sizes onto the tokens.
+- Take 120: light/dark.
 
 ## Take 117 — 2026-09-25 — the owner's polish list and the audit's fixes: strips, cells, the badge, the shutter row, the top bar, the note to More
 

@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 117.*
+*Current as of take 118.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -216,6 +216,7 @@ Start here. Do not read top to bottom.
 | The guide's Next does nothing and the dots never move | 202 |
 | The phone's Back leaves the screen with the guide still up, or closes it for good | 201 |
 | The shutter sits off centre and Review wraps: a grid column swallowed the space | 203 |
+| A shelf card is wider than its neighbours | 204 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -2705,6 +2706,14 @@ lets the two outer columns share the space evenly and the shutter sits
 centred within 2 px at 360, 411 and 749 px (take 117). Rule: a grid column
 meant to share space is `minmax(0,1fr)`, never `1fr` alone; render measures
 the shutter's centre at 360 and 411 with the torch shown.
+
+**204. A flex item keeps its content's width too.** Home's shelf gave each
+card `flex:0 0 100px`, and a card whose value ran long ($20,909.07) grew past
+100 px anyway: a flex item's minimum width is its content's (`min-width:
+auto`) unless the rule says `min-width:0`, and the value's line refused to
+shrink. `width:100px;min-width:0` on the card and an ellipsis on the value
+(take 118); render measures every shelf card at 100 px. The grid's cousin is
+landmine 203.
 
 ## §2 — Inherited from APEX ORV
 

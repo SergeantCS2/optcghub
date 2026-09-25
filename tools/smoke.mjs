@@ -1883,7 +1883,7 @@ ctx.Date = RealDate; V.LOCAL.radius = 0;
 ok('negative control (landmine 123): read with the real clock, once the fixture\'s last event day has passed the same fixture yields no rows -- the runner\'s three red nights, asserted live against live', RealDate.now() <= RealDate.parse(fxDays[fxDays.length - 1] + 'T23:59:59Z') || V.EVENTS.rows().length === 0);
 ok('the real clock is back for everything after this block', vm.runInContext('Date.now()', ctx) > pinnedNow + 864e5 && vm.runInContext('Date', ctx) === RealDate);
 V.LOCAL.radius = 50; V.EVENTS.tab = null; V.HUNT.setZip('');
-ok('Hunt is green: the palette is Zoro\'s and it clears AA (checked with the other two above)', /:root\[data-mode="hunt"\]\{\s*--bg:#0B1B12/.test(html) && !/class="swords"/.test(html));   // take 116: the three-stroke mark left with the old opening screen
+ok('Hunt is the treasure map (take 118): a kraft ground, and it clears AA (checked with the other two above)', /:root\[data-mode="hunt"\]\{\s*--bg:#1A1410/.test(html) && !/class="swords"/.test(html));   // take 116: the three-stroke mark left with the old opening screen
 ok('the opening screen shows the app\'s own icon file and no other image', /bundle\/icon\.svg/.test(html) && !/<image/.test(html.slice(html.indexOf('id="splash"'), html.indexOf('id="splash"') + 1500)));
 /* take 77: stock alerts -- fire on the flip, once, per source */
 {
@@ -2196,9 +2196,9 @@ if (V.guideClose) V.guideClose(false);   // take 116: the boot timer opened the 
   ok('...control: an open picker IS closed by it, and Back stops there', closedPicker === true && !pk.classList.contains('on'));
   V.MODE.set('collect', false); V.go('home'); }
 /* Home's most-valuable rows open the card */
-ok('Home\'s most-valuable rows are buttons that open the card, like every other list\'s', /<button class="row" style="width:100%;text-align:left;align-items:center" data-open="\$\{p\.id\}">\$\{cardPic\(p\)\}<div class="nm">/.test(js) && !/<div class="row" style="align-items:center">\$\{cardPic\(p\)\}<div class="nm">/.test(js));
+ok('Home\'s most-valuable cards are buttons that open the card, like every other list\'s (a shelf since take 118)', /<button class="st" data-open="\$\{p\.id\}" aria-label="\$\{esc\(p\.name\)\}, \$\{money\(\(p\.market \|\| 0\) \* i\.qty\)\}"><div class="pic">/.test(js) && !/<div class="row" style="align-items:center">\$\{cardPic\(p\)\}<div class="nm">/.test(js));
 { const keep98 = V.OWN.items; const card98 = V.CAT.rows.find(p => !p.sealed && p.market > 0); V.OWN.items = []; V.OWN.add(card98.id, { condition: 'NM' }); V.paintHome();
-  ok('...and a painted top list carries the tap on its row', new RegExp('<button class="row"[^>]*data-open="' + card98.id + '"').test(ctx.document.getElementById('topList').innerHTML));
+  ok('...and a painted top list carries the tap on its card', new RegExp('<button class="st" data-open="' + card98.id + '"').test(ctx.document.getElementById('topList').innerHTML));
   V.OWN.items = keep98; }
 /* one splash colour */
 ok('the splash is one scene in every mode (the listing\'s frame, take 116), never the mode\'s palette', /#splash\{[^}]*background:linear-gradient\(180deg,#1f3d72/.test(html) && !/#splash\{[^}]*var\(--bg\)/.test(html));
@@ -4191,19 +4191,21 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
        pairs(css, mode).length === 14 && lowPairs(css, mode).length === 0, lowPairs(css, mode).map(([n, r]) => `${n} ${r.toFixed(2)}`).join(', ') || pairs(css, mode).map(([n, r]) => `${n.split(' ')[0]} ${r.toFixed(2)}`).join(' '));
     { /* take 114's rules, planted back one by one -- each plant checked to have landed */
       const plant = (c, a, b) => (c.split(a).length === 2 ? c.replace(a, b) : null);
-      const t12 = plant(css, '--accent-bg:color-mix(in srgb,var(--brass) 8%,var(--card))', '--accent-bg:color-mix(in srgb,var(--brass) 12%,var(--card))');
-      const t14 = plant(css, '--bad-bg:color-mix(in srgb,var(--down) 10%,var(--card))', '--bad-bg:color-mix(in srgb,var(--down) 14%,var(--card))');
+      const t12 = (m => m ? css.replace(m[0], m[0].replace('var(--brass) 8%', 'var(--brass) 12%')) : null)(css.match(/--accent-bg:color-mix\(in srgb,var\(--brass\) 8%,var\(--card\)\);\s+--warn-bg:/));   // take 118: Hunt's tint reads 8% too; Collect's is the one its warning tint follows (the shipped css carries no comment to find it by)
+      const t14 = plant(css, '--bad-bg:color-mix(in srgb,var(--down) 10%,var(--card))', '--bad-bg:color-mix(in srgb,var(--down) 30%,var(--card))');   // take 118: on the indigo --down clears take 114's 14% (5.36); 30% is the plant
       const n82 = plant(css, 'nav button.on{color:var(--accent-ink);background:var(--accent-bg)}', 'nav button.on{color:var(--accent-ink);background:color-mix(in srgb,var(--card2) 70%,var(--brass) 12%)}');
       const o6 = plant(css, '.chip small{font-size:var(--fs-cap);', '.chip small{opacity:.6;font-size:var(--fs-cap);');
       const names = (c, m) => c ? lowPairs(c, m).map(([n]) => n) : ['(plant did not land)'];
-      ok('...control: take 114\'s Collect tint (12%) leaves --dim, --dim2 and --down under 4.5 on it, and its 14% bad tint --down (4.30)',
-         !!t12 && !!t14 && ['dim on the selected tint', 'dim2 on the selected tint', 'down on the selected tint'].every(n => names(t12, 'collect').includes(n)) && names(t14, 'collect').includes('down on the bad tint') && names(t12, 'play').length === 0,
-         `${names(t12, 'collect').join(', ')} | ${names(t14, 'collect').join(', ')}`);
+      const lows = (c, m) => c ? lowPairs(c, m).map(([n, r]) => `${n} ${r.toFixed(2)}`).join(', ') : '(plant did not land)';
+      ok('...control: take 114\'s Collect tint (12%) leaves --dim2 under 4.5 on the indigo (the take-118 --dim and --down are lighter and clear it), and a 30% bad tint leaves --down under it; Play is untouched',
+         !!t12 && !!t14 && names(t12, 'collect').includes('dim2 on the selected tint') && names(t14, 'collect').includes('down on the bad tint') && names(t12, 'play').length === 0 && names(t12, 'hunt').length === 0,
+         `${lows(t12, 'collect')} | ${lows(t14, 'collect')}`);
       ok('...control: take 114\'s translucent pill puts Prep & Play\'s active nav label under 4.5 (4.42), and only there', !!n82 && names(n82, 'play').join() === 'the nav\'s active label' && names(n82, 'collect').length === 0 && names(n82, 'hunt').length === 0, `${names(n82, 'play')}`);
       ok('...control: a count at .6 opacity is caught in every palette (2.6:1 in Collect)', !!o6 && MODES.every(m => names(o6, m).includes('a chip\'s count') && names(o6, m).includes('a selected chip\'s count')));
     }
-    ok('(SPEC-106-29) the tints are take 106\'s in Prep & Play and Hunt, lighter only in Collect', ['play', 'hunt'].every(m => tokens(css, m)['--accent-bg'] === 'color-mix(in srgb,var(--brass) 12%,var(--card))' && tokens(css, m)['--bad-bg'] === 'color-mix(in srgb,var(--down) 14%,var(--card))')
-       && tokens(css, 'collect')['--accent-bg'] === 'color-mix(in srgb,var(--brass) 8%,var(--card))' && tokens(css, 'collect')['--bad-bg'] === 'color-mix(in srgb,var(--down) 10%,var(--card))');
+    ok('(SPEC-106-29) the tints: the selected tint is take 106\'s 12% in Prep & Play and 8% in Collect (take 115) and on Hunt\'s kraft (take 118); the bad tint 10% in Collect, 14% elsewhere',
+       tokens(css, 'play')['--accent-bg'] === 'color-mix(in srgb,var(--brass) 12%,var(--card))' && ['collect', 'hunt'].every(m => tokens(css, m)['--accent-bg'] === 'color-mix(in srgb,var(--brass) 8%,var(--card))')
+       && ['play', 'hunt'].every(m => tokens(css, m)['--bad-bg'] === 'color-mix(in srgb,var(--down) 14%,var(--card))') && tokens(css, 'collect')['--bad-bg'] === 'color-mix(in srgb,var(--down) 10%,var(--card))');
 
     /* (SPEC-106-31) accent as text reads --accent-ink: nothing drawn on a Prep & Play screen is text in the fill's colour.
        Every Play screen is painted in Play's palette -- Decks, a deck, Cards, the Play counter, and the Sim from setup through
@@ -4535,5 +4537,22 @@ section('take 117 — the owner\'s polish: starter decks once, the strips readab
   ok('the Sim\'s opponent line says "in play", not "char"', / in play'/.test(js) && !/' char'/.test(js));
   V.go('home'); }
 
+
+section('take 118 — Collect on indigo and gold, Hunt in kraft, Home\'s premium pass (the owner\'s picks from real screenshots)');
+{ ok('Collect is Wano indigo with the bright gold G1: the block reads the measured hexes', /:root\{[\s\S]*?--bg:#100D22; --card:#1A1633; --card2:#231E43; --line:#37305C;/.test(html) && /--brass:#F2C14E; --brass2:#C4962A;/.test(html) && /--accent-ink:#F5CB5C; --line-strong:#766D96;/.test(html));
+  ok('Hunt is kraft and gold', /:root\[data-mode="hunt"\]\{\s*--bg:#1A1410; --card:#26201A; --card2:#322A22; --line:#4A3E33;/.test(html) && /--accent-ink:#E2B65A; --line-strong:#857665;/.test(html) && /body::before\{background:radial-gradient\(60% 40% at 50% 0%,#3A2C1E 0%/.test(html));
+  ok('Play is untouched', /:root\[data-mode="play"\]\{\s*--bg:#15171C; --card:#1E2128; --card2:#262A33;/.test(html) && /--brass:#E0553D; --brass2:#B64731;/.test(html));
+  ok('three modes, three grounds: no two share a hue family (indigo, charcoal, kraft)', (() => { const h = x => { const n = parseInt(x.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255; return [r, g, b]; }; const [c, p, k] = [h('#100D22'), h('#15171C'), h('#1A1410')]; return c[2] > c[0] && c[2] > c[1] && k[0] > k[2] && Math.abs(p[0] - p[2]) < 8; })());
+  ok('the reminders\' tint and the charts\' fallbacks follow the new gold; the old brass is nowhere in the page but the share page (a fixed page, dark by design)', (js.match(/iconColor: '#F2C14E'/g) || []).length === 2 && (js.match(/TOK\('--brass', '#F2C14E'\)/g) || []).length === 3 && (js.match(/#C9A24A/g) || []).length <= 6);
+  /* the premium pass */
+  ok('Home\'s panels are surfaces with a caps label and a fading rule; the hero is a card on the dearest printing\'s art; the total wears the gold gradient', /#home \.panel\{background:linear-gradient\(180deg,var\(--card2\),var\(--card\)\);border:1px solid var\(--line\);border-radius:18px;/.test(html) && /#home \.panel h3::after\{content:"";flex:1;height:1px;/.test(html) && /#home \.hero::before\{[^}]*background:var\(--hero-art,none\)/.test(html) && /#home \.total\{[^}]*background-clip:text;color:transparent\}/.test(html) && !/#home \.panel\{background:none/.test(html));
+  ok('the two tabs are a pill switch and the ranges one pill group; the cells wear the same surface', /#home \.segtabs\{[^}]*border-radius:999px\}/.test(html) && /#home \.ranges\{display:inline-flex;[^}]*border-radius:999px;/.test(html) && /\.statbar>div\{[^}]*background:linear-gradient\(180deg,var\(--card2\),var\(--card\)\)/.test(html));
+  V.MODE.set('collect', false); if (!V.OWN.items.length) { const c = V.CAT.rows.find(p => !p.sealed && p.img && p.market > 1); V.OWN.add(c.id, { condition: 'NM' }); } V.go('home'); V.paintHome();
+  const top = ctx.document.getElementById('topList').innerHTML, hero = ctx.document.getElementById('hero').style.cssText;
+  ok('Most valuable is a shelf of cards: a tap target per printing with its picture, its value and its name -- never a number alone (AGENTS rule 3)', /^<div class="shelf">/.test(top) && (top.match(/<button class="st" data-open="\d+"/g) || []).length >= 1 && (top.match(/<img class="ref"/g) || []).length >= 1 && /<div class="v mono">/.test(top) && /<span class="phl">/.test(top) && /class="pic"/.test(top));
+  ok('...and the hero carries the dearest printing\'s large art', /--hero-art:url\("https:\/\//.test(hero) && /_in_1000x1000\.jpg"\)/.test(hero), hero.slice(0, 120));
+  ok('...the shelf holds up to six', (top.match(/<button class="st"/g) || []).length <= 6);
+  ok('the take-98 tap still lands: a shelf card carries data-open, and no old row is painted', !/<button class="row"/.test(top));
+}
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

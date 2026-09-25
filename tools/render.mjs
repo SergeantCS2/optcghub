@@ -557,7 +557,7 @@ if (puppeteer) {
   });
   ok('Hunt: the slider knob sits under Hunt and the mode\'s nav and screen are on', hunt.knobUnderHunt && hunt.navShown && hunt.screenOn, JSON.stringify(hunt));
   ok('Hunt: the Sealed screen draws set headers and the newest sets\' rows (folded since take 81)', hunt.rows >= 3 && hunt.headers >= 10, `${hunt.rows} rows, ${hunt.headers} set headers`);
-  ok('Hunt: the third palette is applied (not the Collect background)', hunt.bg !== 'rgb(11, 22, 34)', hunt.bg);
+  ok('Hunt: the third palette is applied -- kraft, not Collect\'s indigo (take 118)', hunt.bg === 'rgb(26, 20, 16)', hunt.bg);
   await page.evaluate(() => { window.VAULT.MODE.set('collect', true); });
   /* Take 85: the opening screen was painted first and is gone once the app has drawn */
   await page.reload({ waitUntil: 'domcontentloaded' });   /* the splash is measured from a fresh load, not from wherever the run left the page */
@@ -607,7 +607,7 @@ if (puppeteer) {
   });
   ok('a keyboard-focused control shows a visible ring in the accent colour', ring.viaKeyboard, JSON.stringify(ring));
   ok('headings render in the palette accent, not the body colour (landmine 117)',
-     /rgb\(201, 162, 74\)/.test(wide.headColour), wide.headColour);
+     /rgb\(245, 203, 92\)/.test(wide.headColour), wide.headColour);   // take 118: the gold as text
   await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
 
   /* ---- take 10: the scanner's pixel stages, in a real canvas ------------
@@ -784,6 +784,17 @@ if (puppeteer) {
   }
   await page.evaluate(() => { document.documentElement.style.setProperty('--safe-area-inset-top', '36px'); const V = window.VAULT; while (V.closeAnyOverlay()) {} V.go('home'); window.scrollTo(0, 0); });
 
+  /* Take 118: Home's premium pass in real Chrome -- the shelf's cards are tap targets wider than 44 px, the hero reads its art,
+     the total is drawn in the gradient (a transparent colour over a clipped background), and the three grounds differ. */
+  const t118 = await page.evaluate(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('collect', false);
+    if (!V.OWN.items.length) { const c = V.CAT.rows.filter(p => !p.sealed && p.market > 20 && p.img).sort((a, b) => b.market - a.market).slice(0, 3); c.forEach(p => V.OWN.add(p.id, { qty: 1 })); }
+    V.go('home'); V.paintHome(); await new Promise(r => setTimeout(r, 400)); window.scrollTo(0, 0);
+    const R = e => e.getBoundingClientRect(); const st = [...document.querySelectorAll('#topList .st')];
+    const total = getComputedStyle(document.querySelector('#pfTotal'));
+    return { shelf: st.length, widths: st.map(b => Math.round(R(b).width)), heights: st.map(b => Math.round(R(b).height)), totalColor: total.color, clip: total.webkitBackgroundClip || total.backgroundClip, heroArt: getComputedStyle(document.querySelector('#hero'), '::before').backgroundImage.slice(0, 40), bg: getComputedStyle(document.body).backgroundColor }; });
+  ok('take 118: Most valuable is a shelf of cards, each a tap target of 100 px by more than 44', t118.shelf >= 3 && t118.widths.every(w => w === 100) && t118.heights.every(h => h > 44), JSON.stringify(t118));
+  ok('take 118: the total is drawn in the gold gradient and the hero carries the dearest printing\'s art', t118.totalColor === 'rgba(0, 0, 0, 0)' && /text/.test(t118.clip) && /^url\("https:\/\//.test(t118.heroArt) && t118.bg === 'rgb(16, 13, 34)', JSON.stringify(t118));
+
   /* Take 24: switching mode changes the palette and the nav, in Chrome. */
   await page.evaluate(() => { localStorage.setItem('optcghub.guide.v1', '1'); document.querySelector('#tour').hidden = true; document.querySelector('#tour').classList.remove('on');
                               document.querySelector('#modeSlider [data-mode="play"]').click(); });
@@ -799,7 +810,7 @@ if (puppeteer) {
   ok('the mode pill sits below the status bar (its bar starts at the very top and carries the inset since take 117)', md.sliderTop >= 36, String(md.sliderTop));
   await page.evaluate(() => document.querySelector('#modeSlider [data-mode="collect"]').click());
   await new Promise(r => setTimeout(r, 400));
-  ok('Collect: back to the night sea', (await page.evaluate(() => getComputedStyle(document.body).backgroundColor)) === 'rgb(11, 22, 34)');
+  ok('Collect: back to the indigo (take 118)', (await page.evaluate(() => getComputedStyle(document.body).backgroundColor)) === 'rgb(16, 13, 34)');
 
   const contrast = await page.evaluate(() => {
     const bg = getComputedStyle(document.body).backgroundColor;
@@ -1704,13 +1715,13 @@ if (puppeteer) {
       }
       V.DECKS.list = V.DECKS.list.filter(d => d !== dk); if (st) st.remove(); V.MODE.set('collect', true); await wait(300); V.go('home');
       return rows; }, css);
-    const tNow = await tint115(''), tThen = await tint115(':root{--accent-bg:color-mix(in srgb,var(--brass) 12%,var(--card));--bad-bg:color-mix(in srgb,var(--down) 14%,var(--card))}nav button.on{background:color-mix(in srgb,var(--card2) 70%,var(--brass) 12%)}');
+    const tNow = await tint115(''), tThen = await tint115(':root{--accent-bg:color-mix(in srgb,var(--brass) 12%,var(--card));--bad-bg:color-mix(in srgb,var(--down) 30%,var(--card))}nav button.on{background:color-mix(in srgb,var(--card2) 70%,var(--brass) 12%)}');   // take 118: the bad tint's plant is 30% -- on the indigo --down clears take 114's 14%
     const low115 = rows => rows.filter(r => !(r.r >= 4.5)).map(r => `${r.mode} ${r.part} "${r.what}" ${r.r}`);
     const parts115 = rows => ['collect', 'play', 'hunt'].map(m => { const rs = rows.filter(r => r.mode === m); return `${m}:${rs.filter(r => r.part === 'token').length}/${new Set(rs.map(r => r.part)).size}`; }).join(' ');
     ok('take 115 (SPEC-106-29, -30): every text on a tint clears 4.5:1 from the colours Chrome computes, in each palette -- the selected, bad, good and warning tints, the nav\'s labels (the active one on its pill over the bar), a deck that is not legal, and in Collect the picker\'s best match and a bulk-selected tile',
        parts115(tNow) === 'collect:10/7 play:10/4 hunt:10/4' && low115(tNow).length === 0, low115(tNow).join(' | ') || `${parts115(tNow)} min ${Math.min(...tNow.map(r => r.r))}`);
-    ok('take 115: ...control: take 114\'s rules planted back -- Collect\'s 12% tint and 14% bad tint, the translucent pill -- put Collect\'s dim, dim2 and down text and Prep & Play\'s active label under it, and nothing in Hunt',
-       ['dim on the selected tint', 'dim2 on the selected tint', 'down on the bad tint'].every(w => low115(tThen).some(x => x.startsWith(`collect token "${w}"`))) && low115(tThen).some(x => x.startsWith('play the nav\'s active label')) && !low115(tThen).some(x => x.startsWith('hunt')),
+    ok('take 115: ...control: take 114\'s rules planted back -- Collect\'s 12% tint, a 30% bad tint and the translucent pill -- put Collect\'s dim2 text (the take-118 dim and down are lighter and clear the 12% tint) and the bad tint\'s down, and Prep & Play\'s active label, under it, and nothing in Hunt',
+       ['dim2 on the selected tint', 'down on the bad tint'].every(w => low115(tThen).some(x => x.startsWith(`collect token "${w}"`))) && low115(tThen).some(x => x.startsWith('play the nav\'s active label')) && !low115(tThen).some(x => x.startsWith('hunt')),
        low115(tThen).join(' | '));
 
     /* (SPEC-111-50) landmine 164's wrap reached the search rows only: a deck's, a trade's, a want's and an alert's row kept the

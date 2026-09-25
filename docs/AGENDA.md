@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 117.* Ranked by blocking-ness, not by interest.
+*Current as of take 118.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -1233,6 +1233,16 @@ failed read is a hole, not "nothing listed".
 - UNKNOWN: whether stores can still order on GTS's due day itself.
 
 ## A42 — The UI series: uniform headers, card art used boldly, one voice · OPENED take 106 · CLOSED take 111 (PR #35, merged 16:31 UTC 24 Sept)
+
+**Take 118 (the UI/UX session), the owner's picks from drawn schemes:**
+Collect is Wano indigo with the bright gold G1 and Home wears the premium
+pass -- the hero on the dearest printing's art, the total in a gold
+gradient, a pill switch, one pill group, surfaced panels with caps labels,
+Most valuable as a shelf of the six dearest cards; Hunt is the treasure map,
+kraft; Prep & Play stays. Every pair measured in smoke on every build.
+**Ruled out (take 118):** Collect's C1-C4 and Hunt's H1 and H3 as drawn
+(the pair must not share a family, or the switch stops reading); the second
+gold G2; Most valuable as rows; a light skin (take 120's question).
 
 **Take 117 (the UI/UX session), the owner's polish list from the take-114
 look and this session's rendered audit:** Sealed lists a starter-deck set's

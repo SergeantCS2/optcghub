@@ -21,14 +21,15 @@
      hexagon of six is on every card face -- not a publisher mark. */
   --c-red:#d8383a; --c-green:#2e9e5b; --c-blue:#2f79c9;
   --c-purple:#8552b8; --c-black:#4a4f57; --c-yellow:#e2b93b;
-  /* Take 16 design pass. The subject is a sea chart at night: deep navy, not
-     tinted black; brass for the accent, not teal (teal is the reference app's);
-     parchment for text, not white; rope-brown for secondary, not grey. The six
+  /* Take 118 (the owner's pick, from real screenshots of four schemes): Collect is Wano indigo -- the icon's purple
+     inked dark -- with a bright gold, not the washed bronze; text a cool off-white, secondaries lavender-grey. Measured
+     before writing: fg 14.9, dim 8.1, dim2 5.4, the gold as text 11.3 on the card (4.9, 10.2 on card2), the control's
+     edge 3.2:1, the ink on the gold fill 10.9. Take 16's sea chart at night is the record of what it replaced. The six
      game colours stay exactly as they are -- they are data. */
-  --bg:#0B1622; --card:#12202E; --card2:#182A3A; --line:#26394B;
-  --fg:#EADFC8; --dim:#A08E70; --dim2:#9D8E74;   /* take 106: 4.58 on card2 (was 4.07) */
-  --teal:#C9A24A; --up:#7BC47F; --down:#E06D5C; --gold:#E9C46A;
-  --brass:#C9A24A; --brass2:#8C6F2E;
+  --bg:#100D22; --card:#1A1633; --card2:#231E43; --line:#37305C;
+  --fg:#EFECF7; --dim:#B3ACCF; --dim2:#928AB0;
+  --teal:#F2C14E; --up:#8FD19E; --down:#F0806E; --gold:#FFDF8C;
+  --brass:#F2C14E; --brass2:#C4962A;
   --r:14px; --pad:16px;
   /* Take 106 (A42, the UI series' foundation). Sizes are ROLES, one scale for
      the whole app: nothing is set under --fs-cap (12px). Colours below are
@@ -48,7 +49,7 @@
   --thumb-s:32px; --thumb-m:44px; --thumb-l:56px;   /* take 110: the three thumbnail sizes (THUMB in the script) -- a dense list, a list row, a sealed product */
   --hero-h:160px;     /* take 109: an art hero's height under the slider; Decks now, Sealed at take 110 */
   --z-screen:1; --z-modebar:20; --z-nav:30; --z-sheet:40; --z-overlay:60; --z-toast:70; --z-splash:100;
-  --on-accent:#1A1408; --accent-ink:#C9A24A; --line-strong:#6B7377;
+  --on-accent:#1A1408; --accent-ink:#F5CB5C; --line-strong:#766D96;   /* 3.6 on card, 3.3 on card2 */
   --accent-bg:color-mix(in srgb,var(--brass) 8%,var(--card));   /* take 115: 8% in Collect -- at 12% --dim, --dim2 and --down read 4.24, 4.21 and 4.18 on it (a picker's best match, a bulk-selected tile); the other two keep 12% */
   --warn-bg:color-mix(in srgb,var(--gold) 12%,var(--bg));
   --ok-bg:color-mix(in srgb,var(--up) 14%,var(--card));
@@ -102,22 +103,22 @@ svg.g{display:inline-block;vertical-align:-3px;color:var(--accent-ink);flex:0 0 
 html,body{margin:0;height:100%}
 body{overflow-x:hidden}   /* belt and braces for landmine 54 */
 body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:radial-gradient(circle at 50% 18%,rgba(201,162,74,.09),transparent 42%);}
+  background:radial-gradient(circle at 50% 18%,rgba(242,193,78,.12),transparent 42%);}
 /* On the table the glow is the lamp over a playmat, not a compass. */
-/* Hunt is Zoro's (take 76): a forest-green ground, cream text, the gold of
-   three earrings as the accent, and the sash's red only where something has
-   gone down. A palette and a three-stroke mark, nothing more -- the mark is
-   drawn and carries no likeness; card art is shown hot-linked, never drawn
+/* Hunt is the treasure map (take 118, the owner's pick over three schemes; Zoro's green from take 76 is the record):
+   a kraft ground, parchment text, gold as the accent, and red only where something has gone down. Measured before
+   writing: fg 13.2, dim 8.2, dim2 5.5, the gold as text 8.5 on the card (4.8, 7.4 on card2), the control's edge
+   3.1:1. Three modes, three grounds: indigo, kraft, Play's charcoal. Card art is shown hot-linked, never drawn
    (landmines 26, 28). */
 :root[data-mode="hunt"]{
-  --bg:#0B1B12; --card:#132A1C; --card2:#1B3A27; --line:#2E5A3D;
-  --fg:#EEF3E6; --dim:#A9C2AC; --dim2:#8FAA93;
-  --brass:#D6B04C; --brass2:#9A7A2B; --teal:#D6B04C; --gold:#E8C972;
+  --bg:#1A1410; --card:#26201A; --card2:#322A22; --line:#4A3E33;
+  --fg:#F3E7D2; --dim:#C9B79B; --dim2:#A79579;
+  --brass:#D6A544; --brass2:#9A7628; --teal:#D6A544; --gold:#EDCB78;
   --up:#8FD19E; --down:#F0806E;
-  --accent-ink:#D6B04C; --line-strong:#64856C;
-  --accent-bg:color-mix(in srgb,var(--brass) 12%,var(--card)); --bad-bg:color-mix(in srgb,var(--down) 14%,var(--card));   /* take 115: take 106's tints, as in Prep & Play */
+  --accent-ink:#E2B65A; --line-strong:#857665;   /* 3.7 on card, 3.2 on card2 */
+  --accent-bg:color-mix(in srgb,var(--brass) 8%,var(--card)); --bad-bg:color-mix(in srgb,var(--down) 14%,var(--card));   /* take 118: 8% on the kraft -- at take 106's 12% the gold lightens the card until --dim2 reads 4.43 on it; 4.78 at 8% (smoke measures every pair) */
 }
-:root[data-mode="hunt"] body::before{background:radial-gradient(60% 40% at 50% 0%,#1E4A2C 0%,transparent 70%)}
+:root[data-mode="hunt"] body::before{background:radial-gradient(60% 40% at 50% 0%,#3A2C1E 0%,transparent 70%)}
 .swords{display:inline-block;width:18px;height:18px;vertical-align:-3px;margin-right:6px;color:var(--accent-ink)}
 .rel{border-bottom:1px solid var(--line)}
 .rel .cd1{color:var(--up);font-weight:700} .rel .cd2{color:var(--accent-ink)} .rel .cd3{color:var(--fg)} .rel .cd4{color:var(--dim2)}   /* take 97: the countdown by nearness */
@@ -311,7 +312,7 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .total{font-size:var(--fs-total);margin:2px 0 0;color:var(--accent-ink);font-variant-numeric:lining-nums tabular-nums}
 .delta{font-size:var(--fs-body);font-weight:600;margin-top:2px}
 .up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--dim)}
-#spark{width:100%;height:150px;display:block;margin:8px 0 2px}
+#spark{width:100%;height:118px;display:block;margin:4px 0 0}
 .ranges{display:flex;justify-content:center;gap:6px;margin:6px 0 18px}
 .range{padding:8px 15px;border-radius:999px;font-size:var(--fs-label);font-weight:650;color:var(--dim)}
 .range.on{background:var(--brass);color:var(--on-accent)}
@@ -321,8 +322,34 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
   padding:16px;margin-bottom:16px}
 .panel h3{font-size:var(--fs-row);margin-bottom:12px;font-family:var(--display);font-weight:400;letter-spacing:.01em;color:var(--accent-ink)}
-#home .panel{background:none;border:0;border-top:1px solid var(--line);border-radius:0;
-  padding:18px 0 4px;margin-bottom:6px}
+/* Take 118, the premium pass (the owner: "make other parts more premium feeling"; drafted as real screenshots, taken as
+   drafted). Home's panels are surfaces again -- a card2-to-card gradient, an inner highlight, a soft shadow -- with a caps
+   label and a fading rule; the hero is a card on the dearest printing's own art, scrimmed to the card; the total wears a
+   gold gradient; the two tabs are a pill switch and the ranges one pill group; Most valuable is a shelf of cards. */
+#home .panel{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:18px;
+  padding:16px;margin-bottom:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 10px 26px rgba(0,0,0,.28)}
+#home .panel h3{display:flex;align-items:center;gap:10px;font-family:var(--heavy);font-weight:800;font-size:var(--fs-cap);letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:12px}
+#home .panel h3::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line-strong),transparent)}
+#home .hero{position:relative;padding:16px 16px 12px;margin:6px 0 0;border-radius:18px;overflow:hidden;border:1px solid var(--line);background:var(--card)}
+#home .hero::before{content:"";position:absolute;inset:-24px;background:var(--hero-art,none) center 22%/cover;filter:blur(26px) saturate(1.15);opacity:.5;z-index:0}
+#home .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.10),color-mix(in srgb,var(--card) 88%,transparent) 55%,var(--card) 100%);z-index:0}
+#home .hero>*{position:relative;z-index:1}
+#home .total{letter-spacing:-.01em;background:linear-gradient(180deg,var(--gold) 0%,var(--brass) 72%,var(--brass2) 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+#home .segtabs{margin:4px 0 8px;padding:4px;gap:4px;border-bottom:0;background:var(--card);border:1px solid var(--line);border-radius:999px}
+#home .segtabs button{border-radius:999px;border-bottom:0;margin-bottom:0;padding:9px 0;font-size:var(--fs-label)}
+#home .segtabs button.on{background:var(--card2);color:var(--fg);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 1px 2px rgba(0,0,0,.35)}
+#home .ranges{display:inline-flex;margin:8px auto 14px;padding:4px;gap:0;background:var(--card);border:1px solid var(--line);border-radius:999px;position:relative;left:50%;transform:translateX(-50%)}
+#home .range{padding:8px 14px;min-width:44px;font-size:var(--fs-sm)}   /* each pill keeps its own 44 px square inside the group (take 108) */
+#home .shelf{display:flex;gap:12px;overflow-x:auto;padding:2px 0 6px;margin:0 -4px;scrollbar-width:none}
+#home .shelf::-webkit-scrollbar{display:none}
+#home .shelf .st{flex:0 0 100px;width:100px;min-width:0;text-align:left;padding:0;background:none;border:0;color:var(--fg)}
+#home .shelf .badge.tag{position:absolute;left:6px;top:6px;z-index:1}   /* the printing's word on the picture's corner: two printings of one card never look alike (AGENTS rule 3) */
+#home .shelf .v{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#home .shelf .pic{position:relative;width:100%;aspect-ratio:.716;border-radius:9px;overflow:hidden;background:var(--card2);margin-bottom:8px;border:1px solid var(--line);box-shadow:0 6px 14px rgba(0,0,0,.35)}
+#home .shelf .pic .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:8px;text-align:center}
+#home .shelf .v{font-family:var(--heavy);font-weight:800;font-size:var(--fs-label);color:var(--fg)}
+#home .shelf .nm{font-size:var(--fs-cap);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#home .shelf .sub{color:var(--dim2)}
 .wn summary{cursor:pointer;display:flex;align-items:center;min-height:44px;font-weight:650;color:var(--accent-ink)}   /* take 117: the release note, closed, under About */
 .wn .note{padding:0 0 8px}
 .row{display:flex;align-items:baseline;gap:10px;padding:9px 0}
@@ -403,7 +430,7 @@ img.above{object-view-box:inset(0 0 58% 0)}
    so the middle of the line box is the pill's centre, and a 1-line pill with 4/1 padding puts its letters on that centre too */
 .ab-title .badge{vertical-align:middle;line-height:1;padding:4px 6px 1px}
 .statbar{display:flex;gap:8px;margin:2px 0 14px}   /* room under the row: the cells touched the panel below */
-.statbar>div{flex:1 1 0;min-width:0;max-width:calc((100% - 16px) / 3);background:var(--card2);border:1px solid var(--line);border-radius:var(--r-md);padding:8px 6px 7px;text-align:center}
+.statbar>div{flex:1 1 0;min-width:0;max-width:calc((100% - 16px) / 3);background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:var(--r-md);padding:8px 6px 7px;text-align:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}   /* take 118: the premium surface */
 .statbar b{display:block;font-family:var(--heavy);font-weight:800;font-size:var(--fs-title);line-height:1.15;font-variant-numeric:tabular-nums;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .statbar b.word{font-size:var(--fs-row)}   /* a word (Character) at the row size, so it fits a third of a 360 px phone */
 .statbar span{display:block;margin-bottom:3px;font-size:var(--fs-cap);font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}   /* the label above its value (the owner's word) */
@@ -3243,10 +3270,6 @@ function paintHome() {
                         : `Every figure here is from that day. Update the app for newer prices.`);
   } else sb.hidden = true;
   const cph = $('#curPillHome'); if (cph) cph.innerHTML = curPill();
-  if ((CAT.man.user || []).includes('home-bg.jpg') && !$('#hero').dataset.bg) {
-    $('#hero').dataset.bg = '1';
-    $('#hero').style.cssText += ';background:linear-gradient(color-mix(in srgb,var(--bg) 88%,transparent),var(--bg)),url(bundle/user/home-bg.jpg) center/cover;border-radius:14px;padding:12px;margin:0 -8px';
-  }
   $('#pfName').textContent = PF.active === 'all' ? 'All collections' : PF.name(PF.active);
   $('#pfTotal').textContent = money(tot);
   const days = { '1D': 1, '7D': 7, '1M': 30, '3M': 90, '6M': 180, MAX: 1e4 }[range];
@@ -3268,15 +3291,18 @@ function paintHome() {
 
   const top = PF.scope(OWN.items).slice()
     .map(i => ({ i, p: CAT.byId.get(i.id) })).filter(x => x.p)
-    .sort((a, b) => (b.p.market || 0) * b.i.qty - (a.p.market || 0) * a.i.qty).slice(0, 4);
-  $('#topList').innerHTML = top.length ? top.map(({ i, p }) => `
-    <button class="row" style="width:100%;text-align:left;align-items:center" data-open="${p.id}">${cardPic(p)}<div class="nm">
-      <b>${esc(p.name)}${p.treat !== 'base'
-        ? ` <span class="badge">${esc(TREAT[p.treat] || p.treat)}</span>` : ''}</b>
-      <span>${SEALED.isGoods(p) ? dotJoin(esc(sealedWord(p)), esc((CAT.sets.get(p.set) || {}).abbr || '')) : dotJoin(esc(i.condition), esc(p.sub || 'Normal'), esc(p.num))}</span>
-    </div><div class="v mono">${money((p.market || 0) * i.qty)}
-      <span>${deltaHtml(p, { pctOnly: true })}${i.qty > 1 ? ' \u00b7 \u00d7' + i.qty : ''}</span>
-    </div></button>`).join('')
+    .sort((a, b) => (b.p.market || 0) * b.i.qty - (a.p.market || 0) * a.i.qty).slice(0, 6);
+  /* take 118: the hero is a card on the dearest printing's own art (the owner's home-bg.jpg, when it exists, instead) */
+  const hero = $('#hero'), heroArt = (CAT.man.user || []).includes('home-bg.jpg') ? 'bundle/user/home-bg.jpg' : top.length && top[0].p.img ? artUrl(top[0].p, 'large') : '';
+  if (hero && hero.style && typeof hero.style.cssText === 'string') hero.style.cssText = hero.style.cssText.replace(/--hero-art:[^;]*;?/, '') + (heroArt ? `;--hero-art:url("${heroArt}")` : '');   // the DOM stub has no style text
+  else if (hero && hero.style) hero.style.cssText = heroArt ? `--hero-art:url("${heroArt}")` : '';
+  /* take 118: Most valuable is a shelf of the dearest cards -- the picture, the value, the name (with its printing's word
+     and the count); a tap opens the card as the rows did (take 98) */
+  $('#topList').innerHTML = top.length ? `<div class="shelf">${top.map(({ i, p }) => `
+    <button class="st" data-open="${p.id}" aria-label="${esc(p.name)}, ${money((p.market || 0) * i.qty)}"><div class="pic"><div class="ph"><span class="phl">${esc(p.name)}</span></div>${refArt(p, { size: 'large' })}${p.treat !== 'base' ? `<span class="badge tag">${esc(TREAT[p.treat] || p.treat)}</span>` : ''}</div>
+      <div class="v mono">${money((p.market || 0) * i.qty)}</div>
+      <div class="nm">${esc(p.name)}${i.qty > 1 ? ' \u00b7 \u00d7' + i.qty : ''}</div>
+      <div class="nm sub"><span>${SEALED.isGoods(p) ? dotJoin(esc(sealedWord(p)), esc((CAT.sets.get(p.set) || {}).abbr || '')) : dotJoin(esc(i.condition), esc(p.num))}</span></div></button>`).join('')}</div>`
     : '<div class="note">Scan a card and it will show up here.</div>';
 
   const prog = setProgress();
@@ -3409,7 +3435,7 @@ function spark(series, kind = 'record') {
     x.strokeStyle = TOK('--line', '#26394B'); x.lineWidth = 2; x.setLineDash([5, 5]);
     x.beginPath(); x.moveTo(0, h / 2); x.lineTo(w, h / 2); x.stroke();
     x.setLineDash([]);
-    x.fillStyle = TOK('--brass', '#C9A24A'); x.beginPath();
+    x.fillStyle = TOK('--brass', '#F2C14E'); x.beginPath();
     x.arc(w - 10, h / 2, 4.5, 0, 7); x.fill();
     x.fillStyle = TOK('--dim', '#A08E70'); x.font = '12.5px system-ui'; x.textAlign = 'center';
     x.fillText('One reading so far \u2014 ' + money(v) + '.',   /* take 110: the line above says when the next one comes */
@@ -3421,7 +3447,7 @@ function spark(series, kind = 'record') {
   const px = i => i / (series.length - 1) * w;
   const py = v => h - 8 - (v - lo + pad) / (hi - lo + pad * 2) * (h - 16);
   const g = x.createLinearGradient(0, 0, 0, h);
-  const acc = TOK('--brass', '#C9A24A'); g.addColorStop(0, rgbaOf(acc, .28)); g.addColorStop(1, rgbaOf(acc, 0));
+  const acc = TOK('--brass', '#F2C14E'); g.addColorStop(0, rgbaOf(acc, .28)); g.addColorStop(1, rgbaOf(acc, 0));
   x.beginPath(); x.moveTo(0, py(vs[0]));
   vs.forEach((v, i) => x.lineTo(px(i), py(v)));
   x.lineTo(w, h); x.lineTo(0, h); x.closePath(); x.fillStyle = g; x.fill();
@@ -5250,7 +5276,7 @@ const PLATFORM = {
   async notify(id, title, body) {
     const N = this.plugin('LocalNotifications');
     if (!N) { toast(`${title} \u2014 ${body}`); return false; }
-    try { await N.schedule({ notifications: [{ id, title, body, smallIcon: 'ic_stat_don', iconColor: '#C9A24A' }] }); return true; }
+    try { await N.schedule({ notifications: [{ id, title, body, smallIcon: 'ic_stat_don', iconColor: '#F2C14E' }] }); return true; }
     catch (e) { console.warn('notify failed', e); toast(`${title} \u2014 ${body}`); return false; }
   },
   /* take 97: a notification for a future moment (the release reminder), and
@@ -5259,7 +5285,7 @@ const PLATFORM = {
      proves, this one is the owner’s to see. No plugin: nothing scheduled. */
   async notifyAt(id, title, body, at) {
     const N = this.plugin('LocalNotifications'); if (!N) return false;
-    try { await N.schedule({ notifications: [{ id, title, body, smallIcon: 'ic_stat_don', iconColor: '#C9A24A', schedule: { at, allowWhileIdle: true } }] }); return true; }
+    try { await N.schedule({ notifications: [{ id, title, body, smallIcon: 'ic_stat_don', iconColor: '#F2C14E', schedule: { at, allowWhileIdle: true } }] }); return true; }
     catch (e) { console.warn('notifyAt failed', e); return false; }
   },
   async cancelNotify(id) {
@@ -5454,7 +5480,7 @@ function sparkOn(cv, series, kind = 'record') {
   const vals = series.map(s => s[1]); const lo = Math.min(...vals), hi = Math.max(...vals), span = hi - lo || 1;
   const pt = (i, v) => [8 + (w - 16) * (i / Math.max(1, series.length - 1)), h - 8 - (h - 16) * ((v - lo) / span)];
   x.beginPath(); series.forEach((s, i) => { const [px, py] = pt(i, s[1]); i ? x.lineTo(px, py) : x.moveTo(px, py); });
-  const acc = TOK('--brass', '#C9A24A');
+  const acc = TOK('--brass', '#F2C14E');
   x.strokeStyle = acc; x.lineWidth = 2; x.lineJoin = 'round';
   if (kind === 'estimate') x.setLineDash([6, 5]);
   x.stroke(); x.setLineDash([]);
