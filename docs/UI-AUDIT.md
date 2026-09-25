@@ -1,6 +1,6 @@
 # UI-AUDIT — the UI series' checklist (A42)
 
-*Current as of take 116.*
+*Current as of take 117.*
 
 The audit behind the UI series, taken on the take-104 source by four
 independent read-throughs (headings and copy; components, icons and
@@ -154,6 +154,28 @@ Take 115 (the production baseline) fixed what was broken or off its own spec and
 - [ ] Releases now lists an upcoming group whose only listing is its sealed product ("card list not published yet"); none today.
 - [ ] Text on Sealed's strips must clear 4.5:1 over a white picture (landmine 191): a lighter scrim needs a heavier text treatment.
 - [ ] The tokens nothing reads (take 115, A43): `--teal --fs-label --fs-row --sp-1 --sp-4 --sp-5 --sp-6 --r-sm --r-md --r-lg --ic-sm --ic-md --ic-lg --thumb-s --thumb-m --z-screen` -- use them or remove them.
+
+
+## 10. Take 117 -- the owner's polish list and this session's rendered audit
+
+The UI/UX session's audit of take 114 (the scratch look at three sizes, the
+sheets to the owner) and the owner's own screenshots. Each box is closed by
+take 117 unless it says otherwise.
+
+- [x] Sealed's set strips: taller, on the card's face, the release date in words under the name (B3).
+- [x] A starter-deck set's products listed twice: once, under Starter decks; the by-set fold skips them.
+- [x] A card's page: three cells on every card (Type, Cost or Life, Power), labels above values, a dash for none; 14 px under the row.
+- [x] The printing's badge off the title's centre line: on it (measured at 4x).
+- [x] The scanner's bottom row: Undo stacked over its word, Review on two lines, the shutter off centre -- a grid that keeps one shape (landmine 203).
+- [x] The scanner's hint under the well ran into the frame, then the note, when it took two lines: in the column's flow.
+- [x] The mode bar under the status-bar inset once a page scrolled (53 % covered at a 40 px inset): the bar carries the inset.
+- [x] The release note on Home: under More -> About, closed.
+- [x] A tile whose picture is missing ran the name into the number: the pill stacks over the number.
+- [x] The deck editor's bottom row scrolled the page sideways under 380 px: it wraps.
+- [x] Off-scale font sizes in the stylesheet (25 at take 114): on the token scale; the three input rules keep 16px (Android zooms under it).
+- [x] The nav's label colour set by two rules; the placeholder rule twice; the distributor line in the fill colour: one rule, once, the ink token.
+- [ ] The literal radii onto `--r-*` and the script's inline sizes onto the tokens (take 119's riders).
+- [ ] Captions under the scan row's icon buttons, if the owner wants them.
 
 ## Found in passing, routed elsewhere
 

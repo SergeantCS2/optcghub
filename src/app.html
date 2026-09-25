@@ -154,7 +154,7 @@ body{
   transition:background-color var(--dur-ui) ease-out,color var(--dur-ui) ease-out;   /* take 110: the palette turns with the crossfade */
   font:15px/1.45 var(--body);
   font-variant-numeric:tabular-nums;   /* take 110 (polish): every number in the app lines up in its column, not only the .mono ones */
-  padding-top:var(--sat);
+  padding-top:0;   /* take 117: the mode bar carries the status-bar inset */
   padding-left:var(--sal);padding-right:var(--sar);
   padding-bottom:calc(76px + var(--sab));
   overscroll-behavior-y:none;
@@ -255,12 +255,16 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .artbg.crisp img.own{object-position:50% 50%}
 /* Sealed's set headings as strips: the set's own top card behind the name, a scrim from the
    left so the name reads; a set with no card pictures yet keeps the plain ground. */
-.setstrip{position:relative;display:flex;width:100%;min-height:64px;justify-content:space-between;align-items:flex-end;gap:10px;text-align:left;
-  padding:0 14px 10px;margin:12px 0 6px;border-radius:12px;overflow:hidden;background:linear-gradient(160deg,var(--brass2),var(--card2))}
+.setstrip{position:relative;display:flex;width:100%;min-height:104px;justify-content:space-between;align-items:center;gap:10px;text-align:left;
+  padding:0 14px;margin:12px 0 6px;border-radius:12px;overflow:hidden;background:linear-gradient(160deg,var(--brass2),var(--card2))}
 .setstrip > .artbg{position:absolute;inset:0;-webkit-mask-image:none;mask-image:none}
 .setstrip > .artbg::after{background:linear-gradient(90deg,rgba(0,0,0,.8),rgba(0,0,0,.55) 70%)}   /* take 110's review: a date at the end of a long name measured 2.3:1 over bright art at .25; 5.4 at .55. Take 115 (landmine 158): .55 to the right end -- at .45, with the date 82% white, a date at the strip's end read 3.1 to 3.4:1 over 14 of the 33 yellow Leaders' art and a name 4.4 over 2 (measured in Chrome); render reads both over a white picture, the brightest any art can be: 4.74 */
 .setstrip > span{position:relative;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85)}
 .setstrip .note{color:#fff;white-space:nowrap}   /* a date breaks nowhere, least of all at its own hyphens (the take-110 look: "2026-10-" / "30"); white since take 115, as the name (at 82% white it would need the scrim at .62, darker over the art, to clear 4.5 over a white picture) */
+/* take 117 (B3, the owner's pick): a 104 px strip centred on the card's face, the name at the title size with the release date in words under it */
+.setstrip > span:first-of-type{flex:1;min-width:0;font-size:var(--fs-title);line-height:1.1}
+.setstrip > span:first-of-type .note{display:block;margin-top:4px;font-family:var(--body);font-size:var(--fs-sm);font-weight:600;letter-spacing:.02em;text-transform:none;opacity:.9}
+.setstrip .artbg.crisp img{object-position:50% 62%}
 /* The Play counter: each player's Leader behind their side, faint, fading before the numbers. */
 .plpanel{position:relative;overflow:hidden}
 .plpanel > .artbg{position:absolute;inset:0;opacity:.6}
@@ -287,7 +291,7 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .dklead{flex:1;min-width:0}
 .dklead b{display:block;font-family:var(--display);font-weight:400;font-size:var(--fs-title);line-height:1.15;letter-spacing:.01em;color:var(--accent-ink)}
 .dklead .meta{display:block;margin:2px 0 6px;font-size:var(--fs-sm);color:var(--dim)}   /* not every span: the colour chip is one */
-.pill{display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap;
+.pill{display:flex;align-items:center;gap:6px;font-size:var(--fs-sm);white-space:nowrap;
   color:var(--dim);background:var(--card2);border-radius:999px;padding:5px 11px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--up)}
 .dot.warn{background:var(--gold)}
@@ -300,35 +304,35 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .stale{background:var(--warn-bg);border:1px solid var(--brass2);border-radius:12px;padding:10px 14px;
   font-size:var(--fs-sm);color:var(--gold);margin:8px 0 6px}
 .stale[hidden]{display:none}
-.hero .who{font-size:15px;color:var(--dim)}
+.hero .who{font-size:var(--fs-body);color:var(--dim)}
 /* take 83: the label is a caption above the name, so one face carries the name at the hero's scale and the other stays small and quiet */
 .hero .who .cap{display:block;font-family:var(--heavy);font-weight:800;font-size:var(--fs-cap);letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:-1px}
-.hero .who em{color:var(--fg);font-style:normal;font-family:var(--display);font-weight:400;font-size:24px;letter-spacing:.01em}
+.hero .who em{color:var(--fg);font-style:normal;font-family:var(--display);font-weight:400;font-size:var(--fs-head);letter-spacing:.01em}
 .total{font-size:var(--fs-total);margin:2px 0 0;color:var(--accent-ink);font-variant-numeric:lining-nums tabular-nums}
-.delta{font-size:15px;font-weight:600;margin-top:2px}
+.delta{font-size:var(--fs-body);font-weight:600;margin-top:2px}
 .up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--dim)}
 #spark{width:100%;height:150px;display:block;margin:8px 0 2px}
 .ranges{display:flex;justify-content:center;gap:6px;margin:6px 0 18px}
-.range{padding:8px 15px;border-radius:999px;font-size:14px;font-weight:650;color:var(--dim)}
+.range{padding:8px 15px;border-radius:999px;font-size:var(--fs-label);font-weight:650;color:var(--dim)}
 .range.on{background:var(--brass);color:var(--on-accent)}
 .free{font-size:var(--fs-cap);font-weight:800;color:var(--accent-ink);vertical-align:super;letter-spacing:.02em}
 
 /* ---- panels ------------------------------------------------------------- */
 .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
   padding:16px;margin-bottom:16px}
-.panel h3{font-size:16px;margin-bottom:12px;font-family:var(--display);font-weight:400;letter-spacing:.01em;color:var(--accent-ink)}
+.panel h3{font-size:var(--fs-row);margin-bottom:12px;font-family:var(--display);font-weight:400;letter-spacing:.01em;color:var(--accent-ink)}
 #home .panel{background:none;border:0;border-top:1px solid var(--line);border-radius:0;
   padding:18px 0 4px;margin-bottom:6px}
-#home .segtabs + .stale + #whatsNew{border-top:0;padding-top:6px}   /* take 107: under the tab row's own line, a second rule doubled it */
-#wnOk{flex:0 0 auto;white-space:nowrap}   /* "Got it" wrapped to two lines beside a long note (seen at take 106) */
+.wn summary{cursor:pointer;display:flex;align-items:center;min-height:44px;font-weight:650;color:var(--accent-ink)}   /* take 117: the release note, closed, under About */
+.wn .note{padding:0 0 8px}
 .row{display:flex;align-items:baseline;gap:10px;padding:9px 0}
 .row+.row{border-top:1px solid var(--line)}
 .row .nm{flex:1;min-width:0}
 .row .nm b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .row .nm b:has(> .badge){white-space:normal}   /* take 111: a name that carries its printing's badge wraps -- the ellipsis cut the badge, the one word that tells two printings apart (AGENTS rule 3) */
-.row .nm > span{font-size:12.5px;color:var(--dim)}
+.row .nm > span{font-size:var(--fs-sm);color:var(--dim)}
 .row .v{text-align:right;font-weight:650}
-.row .v > span{display:block;font-size:12.5px;font-weight:600}
+.row .v > span{display:block;font-size:var(--fs-sm);font-weight:600}
 /* Take 111 (the last look): a row that leads with a picture centres it on the words -- baseline put the
    picture's bottom edge on the first line of text, and every Sealed and Releases row sat askew */
 .row:has(> .pic){align-items:center}
@@ -343,17 +347,16 @@ img.above{object-view-box:inset(0 0 58% 0)}
 
 /* ---- collection --------------------------------------------------------- */
 .actions{display:flex;gap:20px;overflow-x:auto;padding:10px 0 12px;
-  font-size:12.5px;color:var(--accent-ink);font-weight:600;scrollbar-width:none}
+  font-size:var(--fs-sm);color:var(--accent-ink);font-weight:600;scrollbar-width:none}
 .actions::-webkit-scrollbar{display:none}
 .actions button{display:flex;flex-direction:column;align-items:center;gap:5px;
   white-space:nowrap;color:var(--accent-ink)}
-.actions .ic{font-size:17px}
+.actions .ic{font-size:var(--fs-title)}
 .search{display:flex;align-items:center;gap:10px;background:var(--card2);
   border:1px solid var(--line-strong);border-radius:999px;padding:7px 8px 7px 16px;margin-bottom:14px}   /* take 106: a field's edge at 3:1; take 108: 7 px round a 44 px field and 44 px buttons */
+.search input::placeholder{color:var(--dim2)}
 .search input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--fg);font-size:16px;padding-left:4px;padding-right:4px}   /* 16px: under it Android zooms the page on focus (take 81) */
-.search input::placeholder{color:var(--dim2)}
 .search:focus-within{border-color:var(--brass)}
-.search input::placeholder{color:var(--dim2)}
 /* minmax(0,1fr), not 1fr. A grid item's automatic minimum size is min-content,
    and .tile .s carries white-space:nowrap on a set name like "Extra Booster:
    One Piece Heroines Edition" -- so min-content was the full unbroken string
@@ -376,7 +379,8 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .pic img.ref.ok{opacity:1}
 .art img.ref{opacity:0;transition:opacity var(--dur-ui)}
 .art img.ref.ok{opacity:1}
-.art .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.art .ph{position:absolute;inset:0;display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:center}   /* take 117: a column -- a <br> inside a flex row ran the name into the number */
+.art .ph .num{opacity:.7}
 /* The colour bar: a 4px strip in the card's colour(s), split for dual-colour. */
 .tile .cbar{height:4px;border-radius:2px;margin:-6px 0 8px;display:flex;overflow:hidden}
 .tile .cbar i{flex:1}
@@ -385,16 +389,24 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .art .own{position:absolute;top:6px;left:6px;background:color-mix(in srgb,var(--bg) 88%,transparent);
   color:var(--accent-ink);font-size:var(--fs-cap);font-weight:800;padding:2px 6px;border-radius:5px;
   letter-spacing:.03em}
-.tile .t{font-weight:650;font-size:14.5px;line-height:1.25;margin-bottom:3px}
-.tile .s{font-size:12px;color:var(--dim);line-height:1.35;
+.tile .t{font-weight:650;font-size:var(--fs-body);line-height:1.25;margin-bottom:3px}
+.tile .s{font-size:var(--fs-cap);color:var(--dim);line-height:1.35;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tile .c{font-size:var(--fs-cap);color:var(--accent-ink);margin:3px 0 8px}
 .tile .foot{margin-top:auto;display:flex;align-items:flex-end;justify-content:space-between}
-.tile .qty{font-size:12.5px;color:var(--dim);white-space:nowrap}
+.tile .qty{font-size:var(--fs-sm);color:var(--dim);white-space:nowrap}
 .tile .px{text-align:right;font-weight:700;white-space:nowrap}
 /* Only the DELTA line is a block. Take 8 rendered the ▲/▼ triangle as its own
    line because this rule caught every span, including the inline one. */
 .tile .px .dl{display:block;font-size:var(--fs-cap);font-weight:600;letter-spacing:-.01em}
+/* take 117, measured at 4x (the owner's screenshot: SP riding high beside the name): the caps' ink centre is .351 em above the baseline,
+   so the middle of the line box is the pill's centre, and a 1-line pill with 4/1 padding puts its letters on that centre too */
+.ab-title .badge{vertical-align:middle;line-height:1;padding:4px 6px 1px}
+.statbar{display:flex;gap:8px;margin:2px 0 14px}   /* room under the row: the cells touched the panel below */
+.statbar>div{flex:1 1 0;min-width:0;max-width:calc((100% - 16px) / 3);background:var(--card2);border:1px solid var(--line);border-radius:var(--r-md);padding:8px 6px 7px;text-align:center}
+.statbar b{display:block;font-family:var(--heavy);font-weight:800;font-size:var(--fs-title);line-height:1.15;font-variant-numeric:tabular-nums;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.statbar b.word{font-size:var(--fs-row)}   /* a word (Character) at the row size, so it fits a third of a 360 px phone */
+.statbar span{display:block;margin-bottom:3px;font-size:var(--fs-cap);font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}   /* the label above its value (the owner's word) */
 .badge{display:inline-block;font-size:var(--fs-cap);font-weight:800;letter-spacing:.03em;
   padding:2px 6px;border-radius:5px;background:var(--accent-bg);color:var(--accent-ink);margin-left:5px}
 
@@ -405,34 +417,43 @@ img.above{object-view-box:inset(0 0 58% 0)}
 #scan .appbar{align-self:stretch;padding-left:var(--pad);padding-right:var(--pad)}   /* the camera surface has no side padding; the header brings its own */
 #scan .unlim{margin-left:var(--pad);margin-right:var(--pad)}   /* take 111: nor does the note under the camera, which ran edge to edge */
 .setchip{display:flex;align-items:center;gap:7px;background:var(--card2);
-  border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:13.5px;font-weight:600}
+  border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:var(--fs-label);font-weight:600}
 .setchip b{color:var(--accent-ink)}
 .guide{flex:1;width:min(74vw,300px);margin:6px 0;border:2px solid var(--line-strong);
   border-radius:14px;position:relative;transition:border-color var(--dur-press)}
 .guide.seen{border-color:var(--gold)}
 .guide.hit{border-color:var(--up)}
-.guide .hint{position:absolute;inset:auto 0 -34px;text-align:center;font-size:12.5px;color:var(--dim2)}
+.scanwrap > .hint{flex:0 0 auto;margin:8px 0 0;padding:0 16px;text-align:center;font-size:var(--fs-sm);color:var(--dim2)}   /* take 117: in the column's flow under the well, so a two-line hint ("Camera unavailable: ...") takes its height from the well and never runs into the frame or the note (the look at the owner's sizes) */
 /* What the viewfinder shows before the camera stream arrives -- the owner's
    "when the camera isn't loaded". A card outline with corner marks, brass,
    over the app's own sea. Hidden the moment the video has a frame. */
 .guide .idle{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
   justify-content:center;gap:14px;color:var(--accent-ink);opacity:.8;pointer-events:none;
   background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--brass) 10%,transparent),transparent 55%)}
-.guide .idle span{font-size:13px;color:var(--dim)}
+.guide .idle span{font-size:var(--fs-sm);color:var(--dim)}
 .guide.live .idle{display:none}
 .unlim{background:var(--accent-bg);border:1px solid var(--brass2);border-radius:12px;
-  padding:11px 16px;font-size:13.5px;color:var(--accent-ink);font-weight:650;margin:26px 0 6px}
+  padding:11px 16px;font-size:var(--fs-label);color:var(--accent-ink);font-weight:650;margin:26px 0 6px}
 .lastscan{min-height:44px;text-align:center;padding:8px 0}
 .lastscan b{font-weight:650}
-.lastscan span{display:block;font-size:12.5px;color:var(--dim)}
-.tally{display:flex;justify-content:center;gap:22px;font-size:14px;color:var(--dim);padding:2px 0 10px}
+.lastscan span{display:block;font-size:var(--fs-sm);color:var(--dim)}
+.tally{display:flex;justify-content:center;gap:22px;font-size:var(--fs-label);color:var(--dim);padding:2px 0 10px}
 .tally b{color:var(--fg);font-weight:700}
-.shutterbar{display:flex;align-items:center;justify-content:space-between;
+/* take 117 (the owner's screenshot: Undo stacked over its word, Review on two lines, the shutter squeezed): a three-column grid, so the
+   row is the same shape whether or not the torch shows, at 360, 411 and 840 px -- icon buttons left, the shutter centred, Review right */
+.dkfoot{flex-wrap:wrap}
+.dkfoot .ghost{padding:11px 12px;min-width:0}   /* take 117: four pills at 18 px needed 375 px; a 360 px phone scrolled sideways (landmine 156) */
+@media (max-width:380px){.dkfoot #dkSave{flex:1 1 100%}}
+.shutterbar{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;   /* equal sides whatever they hold: the shutter stays centred */
   width:100%;padding:6px var(--pad) 20px}
+.shutterbar .shl{display:flex;flex-wrap:wrap;gap:6px;justify-self:start}   /* three 44 px buttons fit a 411 px phone's side; on a 360 px phone the third wraps under */
+.shutterbar .shl .ghost{width:44px;height:44px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:50%}
+.shutterbar .shr{justify-self:end}
+.shutterbar .shr .ghost{white-space:nowrap;padding:11px 16px}
 .shutter{width:74px;height:74px;border-radius:50%;background:#fff;
   border:5px solid #000;box-shadow:0 0 0 3px #fff}
 .ghost{border:1px solid var(--line);border-radius:999px;padding:11px 18px;
-  font-size:14px;font-weight:650;color:var(--dim)}
+  font-size:var(--fs-label);font-weight:650;color:var(--dim)}
 .ghost.go{color:var(--on-accent);background:var(--brass);border-color:var(--brass)}
 
 /* ---- picker: the primary surface, not a fallback ------------------------ */
@@ -456,7 +477,7 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .sheethead h2{flex:1;min-width:0;margin:10px 0 0;font-size:var(--fs-title);line-height:1.25}
 .sheethead .icb{margin:0 -10px 0 0}
 .why{background:var(--warn-bg);border:1px solid var(--brass2);color:var(--gold);border-radius:12px;
-  padding:11px 14px;font-size:13px;line-height:1.45;margin-bottom:14px}
+  padding:11px 14px;font-size:var(--fs-sm);line-height:1.45;margin-bottom:14px}
 .why b{color:var(--gold)}
 .opt{display:flex;gap:12px;align-items:center;width:100%;text-align:left;
   border:1px solid var(--line);border-radius:14px;padding:11px;margin-bottom:10px;
@@ -468,29 +489,29 @@ img.above{object-view-box:inset(0 0 58% 0)}
    demo-deck promos among them, which is exactly what the picker shows for a
    common card. An empty grey box read as "broken". The placeholder names the
    printing instead. */
-.opt .oa .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;line-height:1.2}
+.opt .oa .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.2}
 .opt .oa img{width:100%;height:100%;object-fit:cover}
 .opt .oi{flex:1;min-width:0}
-.opt .oi b{display:block;font-size:14.5px;font-weight:650}
-.opt .oi span{display:block;font-size:12px;color:var(--dim);
+.opt .oi b{display:block;font-size:var(--fs-body);font-weight:650}
+.opt .oi span{display:block;font-size:var(--fs-cap);color:var(--dim);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.opt .op{text-align:right;font-weight:700;font-size:15.5px}
+.opt .op{text-align:right;font-weight:700;font-size:var(--fs-row)}
 .opt .op span{display:block;font-size:var(--fs-cap);color:var(--dim2);font-weight:600}
 
 /* ---- detail ------------------------------------------------------------- */
-.detail .sub{color:var(--dim);font-size:13.5px;margin-bottom:14px}
+.detail .sub{color:var(--dim);font-size:var(--fs-label);margin-bottom:14px}
 .stepper{display:flex;align-items:center;gap:16px}
 .stepper button{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--brass2);   /* take 108: 44 px (it was 34) */
-  color:var(--accent-ink);font-size:19px;line-height:1;display:grid;place-items:center}
+  color:var(--accent-ink);font-size:var(--ic-md);line-height:1;display:grid;place-items:center}
 .prov{font-size:var(--fs-cap);color:var(--dim2);margin-top:9px;line-height:1.5}
-.spread{display:flex;gap:6px;align-items:center;margin-top:10px;font-size:12px;color:var(--dim)}
+.spread{display:flex;gap:6px;align-items:center;margin-top:10px;font-size:var(--fs-cap);color:var(--dim)}
 .spreadbar{flex:1;height:5px;border-radius:3px;background:var(--line);position:relative}
 .spreadbar i{position:absolute;top:-3px;width:3px;height:11px;border-radius:2px;background:var(--brass)}
 .seg{display:flex;gap:8px;margin:10px 0 4px}
 .seg button{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 0;
-  font-size:13px;font-weight:650;color:var(--dim);min-height:44px}
+  font-size:var(--fs-sm);font-weight:650;color:var(--dim);min-height:44px}
 .seg button.on{background:var(--accent-bg);border-color:var(--brass2);color:var(--accent-ink)}
-.note{font-size:12px;color:var(--dim2);line-height:1.5;margin-top:10px}
+.note{font-size:var(--fs-cap);color:var(--dim2);line-height:1.5;margin-top:10px}
 
 /* ---- first-run guide (take 116): four pages in the listing's frame ------------ */
 /* The band carries each page's title; the page's card rides the buff; the controls sit on the buff above a low
@@ -536,25 +557,25 @@ img.above{object-view-box:inset(0 0 58% 0)}
 #tour .gsea{height:calc(96px + var(--sab))}
 
 /* ---- filter / sort sheet -------------------------------------------------- */
-.fgrp{margin:16px 0 6px;font-size:13px;color:var(--dim)}
+.fgrp{margin:16px 0 6px;font-size:var(--fs-sm);color:var(--dim)}
 .chips{display:flex;flex-wrap:wrap;gap:10px 7px}   /* take 108: a 34 px chip and a 10 px gap -- rows 44 px apart, so each chip's 44 px square is its own */
-.chip{border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13px;
+.chip{border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:var(--fs-sm);
   font-weight:600;color:var(--dim);background:var(--card2);min-height:34px}   /* take 108: at least 34 px, so a 10 px row gap puts wrapped rows 44 px apart (the where-to-buy chips were 31) */
 .chip.on{background:var(--accent-bg);border-color:var(--brass2);color:var(--accent-ink)}
 .chip.buy{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:var(--accent-ink);padding:5px 10px}   /* take 96: an anchor as a chip */
 /* take 112, the owner's word: distributor info never floods a row. One short line per distributor under a sealed
    row's buy chips opens its page with "Distributor info" open; the long text sits under closed drop-downs */
 .dlines{flex-basis:100%;display:flex;flex-direction:column}
-.dline{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;padding:0 4px;text-align:left;font-size:var(--fs-sm);color:var(--brass)}
+.dline{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;padding:0 4px;text-align:left;font-size:var(--fs-sm);color:var(--accent-ink)}
 .dline > span{min-width:0}
 .dfold{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:44px;text-align:left;color:var(--fg)}
-.dfold .ttl{display:block;font-family:var(--display);font-size:16px;letter-spacing:.01em;color:var(--accent-ink)}
+.dfold .ttl{display:block;font-family:var(--display);font-size:var(--fs-row);letter-spacing:.01em;color:var(--accent-ink)}
 .dfold .note{display:block;margin-top:2px}
 .dbody{margin-top:10px}
 .dsec + .dsec{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
 /* take 114 (A32): a distributor's history on file, under its words inside the open Distributor info -- never on a
    row. A line per fact; a day or a moment never breaks (its spaces are no-break spaces in the words) */
-.dtl{margin-top:6px;font-size:12.5px;line-height:1.45;color:var(--dim2)}
+.dtl{margin-top:6px;font-size:var(--fs-sm);line-height:1.45;color:var(--dim2)}
 .dtl > span{display:block}
 .dtl > span + span{margin-top:2px}
 .dtl-h{display:flex;align-items:center;gap:6px;width:100%;min-height:44px;margin:0;padding:0;background:none;border:0;color:inherit;font:inherit;text-align:left}   /* take 115: no pointer here -- the button has the global one, and the header with nothing to open is not a control (landmine 118) */
@@ -588,7 +609,7 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .ck{aspect-ratio:.716;border-radius:6px;border:1px solid var(--line);background:var(--card2);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;position:relative;
   font-size:var(--fs-cap);color:var(--dim);overflow:hidden}
-.ck b{font-size:12px;color:var(--fg);font-variant-numeric:tabular-nums}
+.ck b{font-size:var(--fs-cap);color:var(--fg);font-variant-numeric:tabular-nums}
 .ck.have{border-color:var(--brass2);background:var(--accent-bg);color:var(--fg)}   /* take 106: --dim on the tint was 4.24:1 in Collect */
 .ck.have b{color:var(--accent-ink)}
 .ck.want::after{content:"";position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--down)}
@@ -601,9 +622,9 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .dkhead{display:flex;gap:12px;align-items:center;padding:12px 0 6px}
 .dkhead .lead{width:96px;flex:0 0 96px;aspect-ratio:.716;border-radius:7px;background:linear-gradient(160deg,var(--a1,var(--card2)),var(--a2,var(--card2)));overflow:hidden;position:relative}   /* take 115: the Leader's own colours under its picture (paintDeck sets them) -- offline, or a picture that failed, was an empty grey box */
 .dkhead .lead img{width:100%;height:100%;object-fit:cover}
-.dkcount{font-size:26px;font-weight:750;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.dkcount{font-size:var(--fs-head);font-weight:750;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .dkcount.ok{color:var(--up)} .dkcount.over{color:var(--down)}
-.legal{font-size:12.5px;padding:8px 12px;border-radius:10px;margin:8px 0}
+.legal{font-size:var(--fs-sm);padding:8px 12px;border-radius:10px;margin:8px 0}
 .legal.ok{background:var(--ok-bg);color:var(--up)} .legal.bad{background:var(--bad-bg);color:var(--down)}
 .curve{display:flex;align-items:flex-end;gap:4px;height:64px;margin:6px 0 2px}
 .curve div{flex:1;background:color-mix(in srgb,var(--brass) 35%,var(--card2));border-radius:3px 3px 0 0;position:relative;min-height:3px}   /* take 106: #1d2a2e was 1.1:1 on the card */
@@ -613,13 +634,13 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .dkrow{display:flex;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
 .dkrow:first-child{border-top:0}
 .dkrow .n{flex:1;min-width:0}
-.dkrow .n b{display:block;font-size:14px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dkrow .n b{display:block;font-size:var(--fs-label);font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dkrow .n b:has(> .badge){white-space:normal}   /* take 115: the deck, trade, want and alert rows too -- the badge is the word that tells two printings apart (landmine 164) */
 /* Direct child only. `.dkrow .n span` caught the .badge inside <b> and drew
    it as a full-width bar — landmine 86's third instance. */
 .dkrow .n > span{font-size:var(--fs-cap);color:var(--dim);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dkrow .cnt{display:flex;align-items:center;gap:8px}
-.dkrow .cnt button{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line);font-size:16px;color:var(--dim)}
+.dkrow .cnt button{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line);font-size:var(--fs-row);color:var(--dim)}
 .dkrow .cnt b{min-width:14px;text-align:center}
 .dkrow.illegal{opacity:.5}
 .dkrow .cost{width:24px;height:24px;border-radius:50%;background:var(--card2);border:1px solid var(--line);
@@ -628,8 +649,12 @@ img.above{object-view-box:inset(0 0 58% 0)}
   background:var(--card2);color:var(--dim);margin-left:3px;letter-spacing:.01em}
 
 /* ---- mode slider ------------------------------------------------------------ */
-.modebar{position:sticky;top:var(--sat);z-index:var(--z-modebar);display:flex;justify-content:center;padding:6px 0 2px;
+/* take 117 (the owner's screenshot: a card's art under the clock once the page scrolled). The bar sits at the very top and carries the
+   status-bar inset as its own padding, so its ground covers the inset band at every inset (0 on a phone without an edge-to-edge WebView,
+   24 to 48 on the others -- measured at each); at the top of a screen with a hero the art still shows through behind the pill. */
+.modebar{position:sticky;top:0;z-index:var(--z-modebar);display:flex;justify-content:center;padding:calc(var(--sat) + 6px) 0 2px;
   background:linear-gradient(var(--bg) 70%,transparent)}
+:root:not(.at-top) .modebar{background:linear-gradient(var(--bg) 78%,transparent)}
 .curtain{display:none;position:fixed;inset:0;z-index:var(--z-overlay);background:var(--bg);align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px}
 .curtain.on{display:flex}
 .mode{display:inline-grid;grid-template-columns:repeat(3,1fr);position:relative;background:var(--card2);border:1px solid var(--line);
@@ -639,7 +664,7 @@ img.above{object-view-box:inset(0 0 58% 0)}
    so the knob -- a third -- sits under each one (at 96/106/96 px it sat
    off-centre under Prep & Play) and no label wraps. The label on the knob
    is --on-accent in every mode (#F1EFE6 on the red was 3.29:1). */
-.mode button{position:relative;z-index:1;min-width:96px;white-space:nowrap;padding:8px 14px;border-radius:999px;font-size:14px;font-weight:700;font-family:var(--heavy);
+.mode button{position:relative;z-index:1;min-width:96px;white-space:nowrap;padding:8px 14px;border-radius:999px;font-size:var(--fs-label);font-weight:700;font-family:var(--heavy);
   color:var(--dim);letter-spacing:.01em;transition:color var(--dur-ui)}
 .mode button.on{color:var(--on-accent)}
 .mode .knob{position:absolute;top:3px;bottom:3px;left:3px;width:calc(33.333% - 3px);border-radius:999px;
@@ -655,19 +680,16 @@ img.above{object-view-box:inset(0 0 58% 0)}
 nav{position:fixed;left:calc(12px + var(--sal));right:calc(12px + var(--sar));bottom:calc(10px + var(--sab));height:66px;z-index:var(--z-nav);
   background:color-mix(in srgb,#0B0D10 92%,transparent);backdrop-filter:blur(16px);border:1px solid color-mix(in srgb,var(--brass) 45%,#2A2E36);
   box-shadow:0 6px 24px rgba(0,0,0,.45);border-radius:999px;display:flex;justify-content:space-around;align-items:center;padding:0 6px}
-nav button{flex:1 1 0;color:#B9BEC7}
-nav button.on{color:var(--accent-ink)}
-nav button .ic{color:inherit}
 /* `hidden` loses to any author `display` -- both navs drew and the wrong one
    sat on top (take 24). Landmine 98. */
 nav[hidden]{display:none}
-nav button{display:flex;flex-direction:column;align-items:center;gap:3px;
+nav button{flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:3px;
   font-size:var(--fs-cap);color:var(--dim2);font-weight:600;padding:4px 10px;border-radius:999px}
 nav button svg.g{color:var(--dim2)}
 nav button.on svg.g{color:var(--accent-ink)}
-nav button .ic{font-size:19px;line-height:1}
+nav button .ic{font-size:var(--ic-md);line-height:1;color:inherit}
 nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115: the selected tint, opaque -- the 82% mix over the 92% bar read 4.42:1 in Prep & Play, less with a picture scrolled under it */
-.empty{text-align:center;color:var(--dim);padding:56px 20px 48px;line-height:1.6;font-size:14.5px;position:relative}
+.empty{text-align:center;color:var(--dim);padding:56px 20px 48px;line-height:1.6;font-size:var(--fs-body);position:relative}
 .empty svg.g{display:block;width:64px;height:64px;margin:0 auto 14px;opacity:.6}
 .nw{white-space:nowrap}
 /* take 110 (polish): a card's copy row in two lines -- the finish and its condition beside the price, the
@@ -679,7 +701,7 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
 .empty .empty-line{display:inline-block;color:var(--fg);font-weight:700;margin-bottom:2px}   /* take 110: what is missing, then what to do */
 .toast{position:fixed;left:50%;bottom:calc(96px + var(--sab));transform:translateX(-50%);z-index:var(--z-toast);
   background:var(--card2);border:1px solid var(--line);border-radius:999px;
-  padding:10px 18px;font-size:13.5px;font-weight:600;opacity:0;transition:opacity var(--dur-ui);
+  padding:10px 18px;font-size:var(--fs-label);font-weight:600;opacity:0;transition:opacity var(--dur-ui);
   pointer-events:none;white-space:normal;max-width:min(92vw,520px);text-align:center;box-sizing:border-box;width:max-content}   /* take 99, the look: left:50% halves the available width, so without width:max-content a long toast wrapped into a tall half-width pill */
 .toast.on{opacity:1}
 /* Take 110 (A42, the owner's "Fold layout later", brought forward at the owner's word for this take):
@@ -761,7 +783,6 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
     <button id="tabPerf" role="tab" aria-selected="false" tabindex="-1">Performance</button>
   </div>
   <div class="stale" id="staleBanner" hidden></div>
-  <div class="panel" id="whatsNew" hidden style="border-color:var(--brass)"></div>
   <div class="hero" id="hero">
     <button class="who" id="pfSwitch" style="text-align:left;display:block"><span class="cap">Collection</span><em id="pfName">One Piece</em> <svg class="g" width="16" height="16" aria-hidden="true" style="color:var(--dim2)"><use href="#g-chevron"/></svg></button>
     <div class="total mono" id="pfTotal">$0.00</div>
@@ -867,7 +888,7 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
   </header>
   <div class="note" style="margin:6px 0 10px">Everything needed to read this phone from a report: endpoints and their live status, what is stored, the last errors, the self-test. No collection contents. Copy it and send it.</div>
   <div class="row" style="gap:8px;margin-bottom:10px;flex-wrap:wrap"><button class="ghost go" id="diagRun">Run</button><button class="ghost" id="diagCopy" disabled>Copy report</button><button class="ghost" id="diagShare" disabled>Share</button><button class="ghost" id="devEarn">Test credits</button></div>
-  <pre id="diagOut" style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;line-height:1.45;color:var(--dim);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;min-height:80px"></pre>
+  <pre id="diagOut" style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:var(--fs-cap);line-height:1.45;color:var(--dim);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;min-height:80px"></pre>
 </section>
 <!-- take 91: More is markup like every screen; built on demand it was refused by go() (landmine 128) -->
 <section id="settings" class="screen">
@@ -914,12 +935,12 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
       <video id="cam" playsinline muted autoplay
              style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:12px;background:#000"></video>
       <canvas id="camOv" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas>
-      <div class="hint" id="camHint">Point at the card. Hold steady.</div>
       <div class="idle" id="camIdle">
         <svg width="120" height="165"><use href="#g-scancard"/></svg>
         <span>Point the camera at a card</span>
       </div>
     </div>
+    <div class="hint" id="camHint">Point at the card. Hold steady.</div>
     <div class="unlim" id="scanCredits">Scanning is free and unlimited.</div>
     <div class="lastscan" id="lastScan"></div>
     <div class="tally">
@@ -927,11 +948,13 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
       <span><b id="scTotal" class="mono">$0.00</b> batch</span>
     </div>
     <div class="shutterbar">
+      <div class="shl">
       <button class="ghost" id="btnTorch" aria-label="Torch" style="display:none"><svg class="g" width="18" height="18" aria-hidden="true"><use href="#g-torch"/></svg></button>
       <button class="ghost" id="btnGallery" aria-label="Scan from a photo"><svg class="g" width="18" height="18" aria-hidden="true"><use href="#g-photo"/></svg></button>
-      <button class="ghost" id="btnUndo"><svg class="g" width="18" height="18" aria-hidden="true"><use href="#g-undo"/></svg> Undo</button>
+      <button class="ghost" id="btnUndo" aria-label="Undo the last scan"><svg class="g" width="18" height="18" aria-hidden="true"><use href="#g-undo"/></svg></button>
+      </div>
       <button class="shutter" id="btnShutter" aria-label="Capture"></button>
-      <button class="ghost go" id="btnDone">Review →</button>
+      <div class="shr"><button class="ghost go" id="btnDone">Review →</button></div>
     </div>
   </div>
 </section>
@@ -944,7 +967,7 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
   </header>
   <div class="dhero"><div class="art" id="dArt"></div></div>
   <div class="sub" id="dSub">—</div>
-  <div class="chips" id="dStats" style="margin-top:6px"></div>
+  <div id="dStats" style="margin-top:8px"></div>
 
   <div class="panel">
     <h3 id="dQtyH">Ungraded</h3>
@@ -1031,7 +1054,7 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
     <div style="flex:1;min-width:0">
       <div class="dklead" id="dkLeadLine"><span class="meta">Tap the card to choose a Leader</span></div>
     </div>
-    <div style="text-align:right"><div class="dkcount" id="dkN">0<span style="font-size:13px;color:var(--dim2)">/50</span></div></div>
+    <div style="text-align:right"><div class="dkcount" id="dkN">0<span style="font-size:var(--fs-sm);color:var(--dim2)">/50</span></div></div>
   </div>
   <div class="legal" id="dkLegal"></div>
   <div class="panel">
@@ -1049,7 +1072,7 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
   <div class="panel" id="dkValue"></div>
   <div class="panel"><h3>Main deck <span class="note" id="dkTypes"></span></h3><div id="dkRows"></div></div>
   <div class="panel" id="dkSim"></div>
-  <div class="row" style="gap:10px;margin-bottom:30px">
+  <div class="row dkfoot" style="gap:10px;margin-bottom:30px">
     <button class="ghost" id="dkImport" style="flex:1">Import</button>
     <button class="ghost" id="dkExport" style="flex:1">Export</button>
     <button class="ghost" id="dkDelete" style="flex:1;color:var(--down)">Delete</button>
@@ -3220,13 +3243,6 @@ function paintHome() {
                         : `Every figure here is from that day. Update the app for newer prices.`);
   } else sb.hidden = true;
   const cph = $('#curPillHome'); if (cph) cph.innerHTML = curPill();
-  /* What’s new (take 53): the release note for THIS take, from the manifest, until dismissed. */
-  const wn = $('#whatsNew'), note = CAT.man.whatsNew;
-  if (note && note.take === TAKE && localStorage.getItem('vault.seenTake') !== String(TAKE)) {
-    wn.hidden = false;
-    wn.innerHTML = `<div class="row" style="justify-content:space-between;align-items:flex-start;gap:10px"><div><h3 style="margin-bottom:6px">New in this update</h3><div class="note">${esc(note.text.charAt(0).toUpperCase() + note.text.slice(1))}</div></div><button class="ghost" id="wnOk">Got it</button></div>`;
-    $('#wnOk').addEventListener('click', () => { saveJson('vault.seenTake', String(TAKE)); wn.hidden = true; });
-  } else wn.hidden = true;
   if ((CAT.man.user || []).includes('home-bg.jpg') && !$('#hero').dataset.bg) {
     $('#hero').dataset.bg = '1';
     $('#hero').style.cssText += ';background:linear-gradient(color-mix(in srgb,var(--bg) 88%,transparent),var(--bg)),url(bundle/user/home-bg.jpg) center/cover;border-radius:14px;padding:12px;margin:0 -8px';
@@ -3713,7 +3729,7 @@ function paintCollection() {
         style="${sel ? 'border-color:var(--brass);background:var(--accent-bg)' : ''}">
       <div class="art">${
         i.photo ? `<img src="${esc(i.photo)}"><span class="own">Your scan</span>`
-                : `<div class="ph">${esc(p.name)}<br><span style="opacity:.6">${esc(p.num)}</span></div>` +
+                : `<div class="ph"><span class="phl">${esc(p.name)}</span><span class="num">${esc(p.num)}</span></div>` +
                   refArt(p)}
       </div>
       <div class="cbar">${colourBar(p)}</div>
@@ -4484,11 +4500,14 @@ function paintSealed() {
   const T = HUNT.feed && HUNT.feed.sources && HUNT.feed.sources.target; const byCat = HUNT.byCatalogId();
   const gts = HUNT.dist('gts'); const byDist = HUNT.distByCatalogId();   // take 94; take 115: gts, not G -- a local G hid the glyph helper
   /* starter decks, their own section (take 87): every deck product, newest set first */
-  if (SEALED.kind === 'all' && !SEALED.q) { const decks = CAT.rows.filter(p => SEALED.isProduct(p) && SEALED.kindOf(p) === 'deck').sort((a, b) => (CAT.sets.get(b.set)?.pub || '').localeCompare(CAT.sets.get(a.set)?.pub || '') || a.name.localeCompare(b.name));
+  /* take 117 (the owner's screenshot: starter decks outside their section): every product of a starter-deck SET -- the decks and
+     their display -- lives here, and the by-set fold below skips what this section lists, so nothing is listed twice */
+  const inDecks = new Set();
+  if (SEALED.kind === 'all' && !SEALED.q) { const decks = CAT.rows.filter(p => SEALED.isProduct(p) && ((CAT.sets.get(p.set) || {}).kind === 'deck' || SEALED.kindOf(p) === 'deck')).sort((a, b) => (CAT.sets.get(b.set)?.pub || '').localeCompare(CAT.sets.get(a.set)?.pub || '') || a.name.localeCompare(b.name)); decks.forEach(p => inDecks.add(p.id));
     /* take 110: a strip like every set’s heading, under the newest starter deck’s own top card */
     const dtop = decks.map(p => setTop(p.set)).find(Boolean);
-    if (decks.length) out.push(`<button class="fgrp setstrip" data-setfold="decks" aria-expanded="${!SEALED.closed.has('decks')}">${dtop ? artBack(dtop, { crisp: true }) : ''}<span>Starter decks <span class="note">\u00b7 ${decks.length}</span></span><span class="note" aria-hidden="true">${chev(!SEALED.closed.has('decks'))}</span></button>`);
-    if (decks.length && !SEALED.closed.has('decks')) for (const p of decks.slice(0, 80)) out.push(sealedRow(p, esc(CAT.sets.get(p.set)?.name || ''), (byCat[p.id] || []).map(i => targetLine(i, T)).join(''), byDist)); }
+    if (decks.length) out.push(`<button class="fgrp setstrip" data-setfold="decks" aria-expanded="${!SEALED.closed.has('decks')}">${dtop ? artBack(dtop, { crisp: true }) : ''}<span>Starter decks<span class="note">${decks.length} products</span></span><span class="note" aria-hidden="true">${chev(!SEALED.closed.has('decks'))}</span></button>`);
+    if (decks.length && !SEALED.closed.has('decks')) for (const p of decks.slice(0, 240)) out.push(sealedRow(p, esc(CAT.sets.get(p.set)?.name || ''), (byCat[p.id] || []).map(i => targetLine(i, T)).join(''), byDist)); }
   /* stock alerts: what is watched, and where it was last seen */
   if (STOCK.list.length) out.push(`<div class="panel"><h3>Stock alerts</h3>${STOCK.list.map(a => { const srcs = STOCK.sourcesFor(a.id); const on = srcs.filter(x => x.available);
     return `<div class="row"><div class="nm"><b>${esc(a.name)}</b><span>${on.length ? 'in stock: ' + esc(on.map(x => x.label).join(', ')) : srcs.length ? 'not in stock at ' + srcs.length + ' watched source' + (srcs.length === 1 ? '' : 's') : 'no source carries it yet'}${a.fired && a.fired.length ? ' \u00b7 last alert ' + esc(HUNT.ageLabel(a.fired[0].t)) : ''}</span></div><div class="v"><button class="ghost" data-stock="${a.id}" aria-label="Stop watching ${esc(a.name)}">${G('trash', 18)}</button></div></div>`; }).join('')}
@@ -4529,11 +4548,11 @@ function paintSealed() {
   if (dsecs.length) out.push(`<div class="panel" style="border-color:var(--brass)">${distFold('sealed', distSummary(), dsecs.join(''))}</div>`);
   /* folded by set (take 81): a header with a count per set; the two newest
      open, the rest open on tap, a search opens everything it matches */
-  const bySet = new Map(); for (const p of rows.slice(0, 600)) { if (!bySet.has(p.set)) bySet.set(p.set, []); bySet.get(p.set).push(p); }
-  let n = 0;
+  const bySet = new Map(); for (const p of rows.slice(0, 600)) { if (inDecks.has(p.id)) continue; if (!bySet.has(p.set)) bySet.set(p.set, []); bySet.get(p.set).push(p); }
+  let n = 0; const TODAY = new Date().toISOString().slice(0, 10);
   for (const [setId, ps] of bySet) { const st = CAT.sets.get(setId) || {}; const open = SEALED.q || !SEALED.closed.has(setId); n++;
     const top = setTop(setId);   /* take 110: the set’s own top card behind its name */
-    out.push(`<button class="fgrp setstrip" data-setfold="${esc(setId)}" aria-expanded="${open}">${top ? artBack(top, { crisp: true }) : ''}<span>${esc(st.name || 'Other')}${st.pub ? ` <span class="note">\u00b7 ${esc(dayText(st.pub))}</span>` : ''}</span><span class="note" aria-hidden="true">${chev(open)}</span></button>`);
+    out.push(`<button class="fgrp setstrip" data-setfold="${esc(setId)}" aria-expanded="${open}">${top ? artBack(top, { crisp: true }) : ''}<span>${esc(st.name || 'Other')}${st.pub ? `<span class="note">${st.pub > TODAY ? 'Releases' : 'Released'} ${esc(dayText(st.pub))}</span>` : ''}</span><span class="note" aria-hidden="true">${chev(open)}</span></button>`);
     if (!open) continue;
     for (const p of ps) {
     const tl = (byCat[p.id] || []).map(i => targetLine(i, T)).join('') + LOCAL.shopLines(p.id).map(l => `<span style="display:block;color:var(--brass)">${esc(l.shop)}${l.mi != null ? ' ~' + l.mi + ' mi' : ''} ${money(l.price)} \u00b7 ${l.available ? 'in stock online' : 'sold out online'} \u00b7 ${esc(HUNT.ageLabel(LOCAL.shops.fetched_at))}</span>`).join('');
@@ -5677,15 +5696,15 @@ function openDetail(id, { dist = false } = {}) {
   $('#dArt').innerHTML = (sealedP ? `<div class="ph" style="font-family:var(--display);font-size:28px">${setCode ? `<span class="phl">${esc(setCode)}</span>` : ''}</div>` : `<div class="ph" style="font-size:12px">${esc(p.num)}</div>`) + refArt(p, { size: 'large' });
   paintBack($('#dBack'), p);   /* take 109 (A42, C): the card’s own art and colours behind the top */
   $('#dArt').classList.toggle('product', sealedP);
-  const stats = [];
-  if (p.type) stats.push([(TYPE_GLYPH[p.type] ? G(TYPE_GLYPH[p.type], 14) + ' ' : '') + esc(p.type), '']);
-  if (p.cost != null && p.cost !== '') stats.push([G('don', 14) + ' ' + esc(p.cost), 'cost']);
-  if (p.power) stats.push([`${Number(p.power).toLocaleString()}`, 'power']);
-  if (p.life) stats.push([G('life', 14) + ' ' + esc(p.life), 'life']);
-  if (p.counter && p.counter !== '') stats.push([G('counter', 14) + ' +' + Number(p.counter).toLocaleString(), 'counter']);
-  $('#dStats').innerHTML = colourDots(p)
-    + stats.map(([v, k]) => `<span class="chip" style="padding:4px 9px;font-size:12px">${v}${
-        k ? `<small>${k}</small>` : ''}</span>`).join('');
+  /* take 117 (the owner's word): three cells on every card, the same three -- the type, the cost (a Leader's life), the
+     power -- and a dash where a card has none, so the row is one shape on every page; the counter and the colour are
+     read off the card itself. A product or a DON!! card, which has none of the three, shows no row. */
+  const hasCost = p.cost != null && p.cost !== '';
+  const cells = p.type && (hasCost || p.power || p.life) ? [
+    ['Type', esc(p.type), 'word'],
+    p.type === 'Leader' ? ['Life', p.life ? esc(p.life) : '\u2014', ''] : ['Cost', hasCost ? esc(p.cost) : '\u2014', ''],
+    ['Power', p.power ? Number(p.power).toLocaleString() : '\u2014', '']] : [];
+  $('#dStats').innerHTML = cells.length ? `<div class="statbar">${cells.map(([k, v, c]) => `<div><span>${k}</span><b${c ? ` class="${c}"` : ''}>${v}</b></div>`).join('')}</div>` : '';
   /* The triangle is INSIDE the price text -- `.row .v span` is display:block
      and would put a separate span on its own line, which is exactly what
      happened at take 8 on tiles (landmine 8's fix) and again here at take 17. */
@@ -5854,7 +5873,7 @@ function paintSettings() {
      It was created here on first paint, and the take-83 guard in go()
      refused the id before this ran -- so More bounced to Home for eight takes. */
   const s = $('#setBody');   // take 107: the header above it is markup, like every screen’s
-  const m = CAT.man;
+  const m = CAT.man; const note = m.whatsNew;   // take 117: the release note lives here, under About
   s.innerHTML = `
     <div class="panel"><h3>Your collection</h3>
       <div class="row"><div class="nm"><b>${OWN.items.length} lines</b>
@@ -5875,6 +5894,7 @@ function paintSettings() {
     </div>
     <div class="panel"><h3>About</h3>
       <div class="row"><div class="nm"><b id="aboutTake">Take ${TAKE} \u00b7 built ${esc(momentText(CAT.man.built_at))}</b><span>${CAT.man.cards ? CAT.man.cards.toLocaleString() + ' cards' : ''} \u00b7 prices ${esc(dayText(CAT.man.source_updated_at))}</span></div></div>
+      ${note && note.take === TAKE ? `<details class="wn"><summary>New in this update</summary><div class="note">${esc(note.text.charAt(0).toUpperCase() + note.text.slice(1))}</div></details>` : ''}
       <div class="note" id="aboutIcons">Some of the icons are Lucide’s (ISC licence) and Feather’s (MIT licence); their notices travel inside the app.</div></div>
     <div class="panel"><h3>Self-test</h3>
       <div class="row"><div class="nm"><b>Does this phone run the app?</b><span>catalogue, scanner gate, OCR, backup, camera, fonts, sync \u2014 in one tap</span></div>
@@ -6284,7 +6304,7 @@ function paintSim() {
   if (g.bot != null && !SIMUI.post && !(g.phase === 'battle')) i = 1 - g.bot;    // the human’s screen, always, against the app
   const P = SIM.P(i), O = SIM.P(1 - i);
   const pips = X => { const given = X.leader.don + X.chars.reduce((a, c) => a + c.don, 0); return `<span title="DON!!: ${X.don.active} active, ${X.don.rested} rested, ${given} given, ${X.donDeck} in the DON!! deck" style="letter-spacing:1px">${'\u25cf'.repeat(X.don.active)}<span style="opacity:.35">${'\u25cf'.repeat(X.don.rested)}</span><span style="color:var(--accent-ink)">${'\u25cf'.repeat(given)}</span><span style="opacity:.18">${'\u25cb'.repeat(X.donDeck)}</span></span>`; };
-  const head = (X, mine) => `<div class="row" style="gap:8px;flex-wrap:wrap"><b>${esc(X.name)}</b><span class="note">Life <b>${X.life.length}</b> \u00b7 Deck ${X.deck.length} \u00b7 Hand ${X.hand.length}${mine ? '' : ' \u00b7 ' + (X.chars.length) + ' char'}</span></div><div class="note" style="margin-top:2px">DON!! ${pips(X)}</div>`;
+  const head = (X, mine) => `<div class="row" style="gap:8px;flex-wrap:wrap"><b>${esc(X.name)}</b><span class="note">Life <b>${X.life.length}</b> \u00b7 Deck ${X.deck.length} \u00b7 Hand ${X.hand.length}${mine ? '' : ' \u00b7 ' + (X.chars.length) + ' in play'}</span></div><div class="note" style="margin-top:2px">DON!! ${pips(X)}</div>`;
   const unit = (X, xi, ref, mine) => { const o = ref === 'leader' ? X.leader : X.chars[ref]; const pw = SIM.power(xi, ref);
     const open = mine && SIMUI.menu === String(ref);
     const granted = SIM.kwOf(xi, ref).filter(k => !((CAT.byId.get(o.id) || {}).kw || '').split('|').includes(k));

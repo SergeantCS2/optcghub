@@ -1505,4 +1505,17 @@ const take116 = [
     } }
 ];
 
-export const STEPS = { 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
+/* ---- take 117 — the owner's polish list: what each fix looks like ------------------------------------------ */
+const take117 = [
+  { name: 'open', run: async (page, ctx) => { await ctx.open(); return { ok: true }; } },
+  view('sealed-set-strips-b3', `V.NAV.zipAsked = true; V.MODE.set('hunt', true); await ${pause}; V.SEALED.q = ''; V.SEALED.kind = 'all'; V.SEALED.closed.clear(); V.SEALED.closed.add('decks'); V.go('sealed'); V.paintSealed(); await ${pause}; const s = [...document.querySelectorAll('#sealedList .setstrip[data-setfold]:not([data-setfold="decks"])')].find(x => x.querySelector('.artbg img')); if (s) { s.scrollIntoView({ block: 'start' }); window.scrollBy(0, -130); }`, { art: '#sealedList .setstrip img', y: -1 }),
+  view('sealed-starter-decks-open', `V.SEALED.closed.delete('decks'); V.paintSealed(); await ${pause}; const s = document.querySelector('[data-setfold="decks"]'); if (s) { s.scrollIntoView({ block: 'start' }); window.scrollBy(0, -130); }`, { art: '#sealedList img', y: -1 }),
+  view('card-page-three-cells', `V.SEALED.closed.add('decks'); V.MODE.set('collect', true); await ${pause}; const p = V.CAT.rows.find(p => p.type === 'Character' && p.cost != null && p.cost !== '' && p.power && p.counter && p.img && p.treat !== 'base'); V.openDetail((p || V.CAT.rows.find(p => p.type === 'Character' && p.counter && p.img)).id)`, { art: '#dArt img' }),
+  view('card-page-leader', `const p = V.CAT.rows.find(p => p.type === 'Leader' && p.life && p.img); V.openDetail(p.id)`, { art: '#dArt img' }),
+  view('scan-shutter-row-with-torch', `V.go('scan'); await ${pause}; document.querySelector('#btnTorch').style.display = ''`),
+  view('top-bar-scrolled-inset-40', `document.documentElement.style.setProperty('--safe-area-inset-top', '40px'); const p = V.CAT.rows.find(p => !p.sealed && p.img && p.market > 1); V.openDetail(p.id); await ${pause}; window.scrollTo(0, 230)`, { art: '#dArt img', y: -1 }),
+  view('more-about-release-note-open', `document.documentElement.style.setProperty('--safe-area-inset-top', ''); V.go('settings'); await ${pause}; const d = document.querySelector('.wn'); if (d) { d.open = true; d.scrollIntoView({ block: 'start' }); window.scrollBy(0, -130); }`, { y: -1 }),
+  view('collection-tile-without-a-picture', `if (!V.OWN.items.length) { const c = V.CAT.rows.find(p => !p.sealed && p.img && p.market > 20); V.OWN.add(c.id, { qty: 1 }); } V.go('collection'); await ${pause}; const t = document.querySelector('#colGrid .art'); if (t) { const i = t.querySelector('img'); if (i) i.remove(); const q = t.querySelector('.ph'); if (q) q.style.display = ''; }`)
+];
+
+export const STEPS = { 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };

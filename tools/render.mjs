@@ -759,6 +759,31 @@ if (puppeteer) {
   ok('the tour dismisses and remembers', await page.evaluate(() =>
      document.querySelector('#tour').hidden && !document.querySelector('#tour').classList.contains('on') && Object.keys(localStorage).some(k => k.startsWith('optcghub.guide.') && localStorage.getItem(k) === '1')));
 
+  /* Take 117: the shutter row on a grid at 360 and 411 px with the torch shown (the owner's screenshot: Undo stacked over its word,
+     Review on two lines, the shutter squeezed to 71 px); and the mode bar covering the status-bar inset when a page has scrolled,
+     at the four insets phones report (the take-114 bar covered 53 % of the band at 40 px). */
+  for (const w of [360, 411]) {
+    await page.setViewport({ width: w, height: 915, deviceScaleFactor: 2 });
+    await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('collect', false); V.go('scan'); document.querySelector('#btnTorch').style.display = ''; });
+    await new Promise(r => setTimeout(r, 400));
+    const row = await page.evaluate(() => { const R = e => e.getBoundingClientRect(); const bs = [...document.querySelectorAll('.shutterbar button')].filter(b => R(b).width > 0);
+      return { n: bs.length, squares: bs.filter(b => b.matches('.shl .ghost')).map(b => [Math.round(R(b).width), Math.round(R(b).height)]), shutter: Math.round(R(document.querySelector('#btnShutter')).width),
+               review: Math.round(R(document.querySelector('#btnDone')).height), centre: Math.round(R(document.querySelector('#btnShutter')).left + R(document.querySelector('#btnShutter')).width / 2 - innerWidth / 2) }; });
+    ok(`take 117: at ${w} px the shutter row keeps its shape with the torch shown: three 44 px icon buttons, the shutter 74 px and centred, Review on one line`,
+       row.squares.length === 3 && row.squares.every(([a, b]) => a === 44 && b === 44) && row.shutter === 74 && Math.abs(row.centre) <= 2 && row.review <= 48, JSON.stringify(row));
+  }
+  await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
+  for (const inset of [0, 24, 40, 48]) {
+    await page.evaluate(i => document.documentElement.style.setProperty('--safe-area-inset-top', i + 'px'), inset);
+    await page.evaluate(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('collect', false); V.openDetail(V.CAT.rows.find(p => !p.sealed && p.img && p.market > 1).id); await new Promise(r => setTimeout(r, 300)); window.scrollTo(0, 230); });
+    await new Promise(r => setTimeout(r, 300));
+    const bar = await page.evaluate(() => { const bar = document.querySelector('.modebar'), r = bar.getBoundingClientRect(); const pts = []; for (let y = 2; y < r.bottom - 2; y += 6) for (const x of [12, 120, 205, 300, 399]) { const el = document.elementFromPoint(x, y); pts.push(el && (el === bar || bar.contains(el)) ? 1 : 0); }
+      return { top: Math.round(r.top), height: Math.round(r.height), covered: +(pts.filter(Boolean).length / pts.length).toFixed(3), scrollY: Math.round(scrollY) }; });
+    ok(`take 117: with a ${inset} px status-bar inset and the page scrolled, the mode bar alone answers every point of its band, the inset included`,
+       bar.top === 0 && bar.covered === 1 && bar.scrollY > 100 && bar.height >= 52 + inset, JSON.stringify(bar));
+  }
+  await page.evaluate(() => { document.documentElement.style.setProperty('--safe-area-inset-top', '36px'); const V = window.VAULT; while (V.closeAnyOverlay()) {} V.go('home'); window.scrollTo(0, 0); });
+
   /* Take 24: switching mode changes the palette and the nav, in Chrome. */
   await page.evaluate(() => { localStorage.setItem('optcghub.guide.v1', '1'); document.querySelector('#tour').hidden = true; document.querySelector('#tour').classList.remove('on');
                               document.querySelector('#modeSlider [data-mode="play"]').click(); });
@@ -767,11 +792,11 @@ if (puppeteer) {
     bg: getComputedStyle(document.body).backgroundColor,
     navs: [...document.querySelectorAll('nav')].filter(n => getComputedStyle(n).display !== 'none').map(n => n.id),
     screen: document.querySelector('.screen.on').id,
-    sliderTop: Math.round(document.querySelector('.modebar').getBoundingClientRect().top) }));
+    sliderTop: Math.round(document.querySelector('.modebar .mode').getBoundingClientRect().top) }));   // take 117: the pill -- the bar itself starts at the top and carries the inset
   ok('Prep & Play: the body is charcoal (red accent; green until take 82)', md.bg === 'rgb(21, 23, 28)', md.bg);
   ok('Prep & Play: only the play nav is visible', md.navs.length === 1 && md.navs[0] === 'navPlay', JSON.stringify(md.navs));
   ok('Prep & Play: lands on Decks', md.screen === 'decks', md.screen);
-  ok('the mode slider sits below the status bar', md.sliderTop >= 36, String(md.sliderTop));
+  ok('the mode pill sits below the status bar (its bar starts at the very top and carries the inset since take 117)', md.sliderTop >= 36, String(md.sliderTop));
   await page.evaluate(() => document.querySelector('#modeSlider [data-mode="collect"]').click());
   await new Promise(r => setTimeout(r, 400));
   ok('Collect: back to the night sea', (await page.evaluate(() => getComputedStyle(document.body).backgroundColor)) === 'rgb(11, 22, 34)');
@@ -938,11 +963,11 @@ if (puppeteer) {
         if (![[cx - 21, cy], [cx + 21, cy], [cx, cy - 21], [cx, cy + 21]].every(([x, y]) => { const t = document.elementFromPoint(x, y); return !!t && (t === e || e.contains(t)); }) || !size44(e, q)) bad++; }
       for (const s of strips) { s.style.flexBasis = ''; s.style.maxWidth = ''; }
       return { strips: strips.length, chips: n, bad }; };
-    V.HUNT.feed = feed; V.MODE.set('hunt', true); await wait(300); V.go('sealed'); V.paintSealed(); await wait(300); while (V.closeAnyOverlay()) {}
+    V.HUNT.feed = feed; V.MODE.set('hunt', true); await wait(300); V.SEALED.closed.delete('decks'); V.go('sealed'); V.paintSealed(); await wait(300); while (V.closeAnyOverlay()) {}   // take 117: the fixture's rows are starter decks, in their section
     const clean = sweep();
     const st = document.createElement('style'); st.textContent = '.chip{min-height:0!important}'; document.head.appendChild(st); await wait(50);
     const control = sweep(); st.remove();
-    V.HUNT.feed = prev; V.paintSealed(); V.MODE.set('collect', true); await wait(300); V.go('home');
+    V.HUNT.feed = prev; V.SEALED.closed.add('decks'); V.paintSealed(); V.MODE.set('collect', true); await wait(300); V.go('home');
     return { clean, control };
   }, JSON.parse(fs.readFileSync(fxFeed, 'utf8')));
   ok('take 108: where-to-buy chips wrapped onto two lines keep a 44 px square each', wrap108.clean.strips > 0 && wrap108.clean.chips >= 2 * wrap108.clean.strips && wrap108.clean.bad === 0, JSON.stringify(wrap108));
@@ -1263,15 +1288,15 @@ if (puppeteer) {
       await page.evaluate(async () => { const c = document.createElement('canvas'); c.width = c.height = 8; const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, 8, 8);
         const i = new Image(); i.className = 'above ok'; i.alt = ''; i.src = c.toDataURL(); await i.decode(); document.querySelector('#ink115strip > .artbg').prepend(i); });
       await new Promise(r => setTimeout(r, 60)); o.strip.white = await both();
-      if (!css) {   /* the control in the same place: take 114's strip -- the scrim .45 at its end, the date 82% white */
-        await page.evaluate(() => { const t = document.createElement('style'); t.id = 'ink114strip'; t.textContent = '.setstrip > .artbg::after{background:linear-gradient(90deg,rgba(0,0,0,.8),rgba(0,0,0,.55) 70%,rgba(0,0,0,.45))!important}.setstrip .note{color:rgba(255,255,255,.82)!important}'; document.head.appendChild(t); });
+      if (!css) {   /* the control in the same place: take 114's strip -- its lightest scrim, .45 at the end, under the whole strip, the date 82% white (since take 117 the date sits under the name at the start, so the end's value is planted everywhere) */
+        await page.evaluate(() => { const t = document.createElement('style'); t.id = 'ink114strip'; t.textContent = '.setstrip > .artbg::after{background:rgba(0,0,0,.45)!important}.setstrip .note{color:rgba(255,255,255,.82)!important}'; document.head.appendChild(t); });
         await new Promise(r => setTimeout(r, 60)); o.strip.t114 = await both();
         await page.evaluate(() => document.getElementById('ink114strip').remove()); }
     }
     await page.evaluate(() => { const V = window.VAULT; V.paintSealed(); V.MODE.set('collect', true); V.go('home'); const s = document.getElementById('ink110'); if (s) s.remove(); });
     return o; };
   const inkNow = await ink(''), inkThen = await ink('.plpanel > .artbg::after{background:linear-gradient(to bottom,rgba(0,0,0,.35),transparent 34%)!important}.plpanel .note{color:var(--dim2)!important}#detail .artbg.dback{right:0!important;width:auto!important;-webkit-mask-image:linear-gradient(#000 55%,transparent)!important;mask-image:linear-gradient(#000 55%,transparent)!important}'
-    + '.setstrip > .artbg::after{background:linear-gradient(90deg,rgba(0,0,0,.8),rgba(0,0,0,.25) 70%,rgba(0,0,0,.15))!important}.setstrip .note{color:rgba(255,255,255,.82)!important}');   /* take 115: and the strip's first push */
+    + '.setstrip > .artbg::after{background:rgba(0,0,0,.25)!important}.setstrip .note{color:rgba(255,255,255,.82)!important}');   /* take 115: and the strip's first push -- .25 at 70%, .15 at the end; the .25 planted everywhere since take 117 (the date under the name, at the start) */
   ok('take 110 (the review): words over a yellow card read at 4.5:1 or better -- a card\'s line beside it on the open Fold, the Play counter\'s labels over its Leader', !!yellowL && inkNow.sub >= 4.5 && inkNow.life >= 4.5 && inkNow.lead >= 4.5, JSON.stringify({ sub: inkNow.sub, life: inkNow.life, lead: inkNow.lead }));
   ok('take 110 (the review): ...control: the first push\'s ground measures under it', inkThen.sub < 4.5 && inkThen.life < 4.5, JSON.stringify({ sub: inkThen.sub, life: inkThen.life }));
   const s115 = inkNow.strip || {}, pair = x => Array.isArray(x) && x.length === 2 && x.every(v => typeof v === 'number');

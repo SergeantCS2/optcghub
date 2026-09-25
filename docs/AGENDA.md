@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 116.* Ranked by blocking-ness, not by interest.
+*Current as of take 117.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -1233,6 +1233,22 @@ failed read is a hole, not "nothing listed".
 - UNKNOWN: whether stores can still order on GTS's due day itself.
 
 ## A42 — The UI series: uniform headers, card art used boldly, one voice · OPENED take 106 · CLOSED take 111 (PR #35, merged 16:31 UTC 24 Sept)
+
+**Take 117 (the UI/UX session), the owner's polish list from the take-114
+look and this session's rendered audit:** Sealed lists a starter-deck set's
+products once, under Starter decks, and every set strip is 104 px on the
+card's face with the release date in words under the name (B3, the owner's
+pick); a card's page shows the same three cells on every card -- Type, Cost
+or a Leader's Life, Power -- each label above its value, and the printing's
+badge sits on the title's centre line; the scanner's bottom row is a grid
+that keeps one shape at every width (landmine 203) and its hint sits in
+the column's flow; the mode bar carries the status-bar inset and covers it
+once a page scrolls; the release note moved from Home to More -> About;
+every stylesheet size is on the token scale. **Ruled out (take 117):** five
+cells (they overflowed at 411 px); captions under the scan row's icon
+buttons (a one-rule rider if the owner wants them); a whole-card thumbnail
+beside the strip name (the owner chose the taller strip); the hint above the
+well.
 
 The owner, 24 Sept, to the UI/UX session: the app "needs refinement,
 some text isn't consistent, some title/headers shift/don't line up or

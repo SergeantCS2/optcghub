@@ -1,4 +1,4 @@
-# OP TCG Hub — take 116
+# OP TCG Hub — take 117
 
 ## Installing — read this first
 
@@ -17,6 +17,14 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 117:** Sealed lists each starter deck once, in the Starter decks
+section, and every set strip is taller, with the set's release date in words.
+A card's page shows its cost, power and counter as three plain numbers, and
+the printing's badge sits level with the name. The scanner's bottom row keeps
+one shape on every phone. The mode bar covers the status bar when a page
+scrolls. The release note moved from Home to More, under About. Nothing you
+have saved changes.
 
 **New at take 116:** The opening screen and the first-open guide are redone
 in the store listing's frame: a Prussian band, a buff sky, the app's card on a
