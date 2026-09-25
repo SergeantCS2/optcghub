@@ -216,6 +216,84 @@ disk and green, and it was committed (8f7f75e) before the rest ran again.
 - Seven new hunt selftest checks, each with a control, fail on take 114's
   workflows (124 ok / 11 FAIL there); 135 ok on this tree.
 
+**The spec's own words, on screen (A4):** each of these was ticked done in
+UI-AUDIT or claimed in a HANDOFF and was not, or not everywhere (landmine
+187). MEASURED on take 114 in Chrome and smoke, then fixed:
+- **Contrast.** Collect's secondary text on the selected tint read 4.24,
+  and "not legal" 4.30: Collect's tints are now 8 % and 10 % (Prep & Play and
+  Hunt keep 12 % and 14 %), and every text on a tint is computed per palette
+  from the shipped rules (landmine 189). Prep & Play's active nav label read
+  4.42 over a translucent mix: it sits on the opaque tint now (4.61). The
+  Sim's "choose a target" and its given-DON pips read the accent as text.
+- **The splash's mark** took the mode's colour (red in Prep & Play); it is
+  Collect's brass in every mode.
+- **Nothing under 12 px, as drawn:** the chip counts drew at 10 and 10.8 px
+  through the browser's own `smaller` (landmine 188); they are 12 px at full
+  strength.
+- **One glyph, one meaning:** a trash glyph (Lucide's trash-2, ISC, byte for
+  byte) for remove and discard -- the want list, a price alert, a stock
+  watch, a note, the Sim's trash -- so `g-minus` is only "one fewer" and
+  `g-close` only closes; the two remove buttons that drew the × character use
+  it, and the gate now refuses a remove button drawn as ×.
+- Local's Open and Events' Register carry the external-link glyph and a name;
+  `aria-pressed` on the eleven toggles that lacked it, and `aria-selected` on
+  the mode slider's tabs (render now counts the selected tab per tablist).
+- A deck's Leader box in the card's own colours when its picture fails; the
+  trade and want rows and the picker read the thumbnail sizes; days in words
+  on Local's events and the release reminders (the .ics stays ISO); keywords
+  one way ("Blockers", "no Rush", "an active Blocker", "a Trigger"); the Sim's
+  buttons at three words, with what happens in a note beside them; four
+  straight apostrophes curled; set completion through the one percentage
+  rule (1 of 592 reads 0.2 %, it read 0 %; 590 of 592 reads 99.7 %, it read
+  100 %); a badged name wraps in deck, trade, want and alert rows (6 of 6
+  whole at 360 and 412 px; it was 0 of 6); a pointer only on a history
+  header that opens something; the dead thumbnail tokens gone and `--fs-total`
+  the size `.total` draws.
+
+**Render at the Fold's measured sizes (A5):**
+- Every Fold size in render is the MEASURED 411 x 960 and 749 x 832 at 2.625
+  (landmine 186: its "Fold inner" 673 never reached the two panes), and the
+  harness zone is America/New_York, MEASURED; no result changed (the same
+  offsets as Detroit in 2026).
+- **A real 44 px floor** (landmine 190): the probe reads the box, or the
+  `::after` hit area, with a 43 px boundary control. It found the deck-name
+  field at 338 x 43.6, now 44.
+- **Sealed's strips measured over a white picture** (landmine 191): over the
+  33 yellow Leaders' art, take 114's strip put the date under 4.5 for 14 of
+  them (worst 3.12). The scrim holds 0.55 to the strip's right end and the
+  date is white: 4.74 under white.
+- Chrome checks for what smoke reads from the rules: the tints and the nav
+  in all three palettes (minimums 4.53, 4.61, 4.64), the badged rows, the
+  history header's cursor, the Leader box offline, a kept distributor "not
+  reached"; the tab check per tablist; the Decks thumbnail check brings its
+  own stand-in instead of racing the host's refusal (landmine 192). Render
+  198 → 215 checks; take 114's build: 208 passed, 7 failed.
+
+**The look (A40), take 115's list:** 18 steps at both sizes, 36 in all,
+each with a measured ok: the four sheets take 111's tour never opened (the
+Leader sheet, a deck's printing sheet, the ask sheet, the scanner's "Which
+EB03-024?"), set completion, the binder's page turns, the "Restore from"
+sheet through the app's own browser path, the badged deck rows, the Leader
+box offline, the Sim's buttons, One Piece Collection Sets under its own name,
+and a distributor that could not be reached on Sealed and on a product's
+page. `VIEWPORTS` and the zone are MEASURED; take 106's three knob steps wait
+for the knob at rest (one helper); the unused `DLINES` is gone; the look's
+selftest needs a result per viewport from every control and probe (landmine
+185's addendum). On take 114's build the list read 9 ok, 27 not ok.
+
+**What the look found, fixed by the session:**
+- **"Hand back" broke onto two lines at 411 px** (110 x 65), squeezed by the
+  note A4 put beside it (landmine 193): Hand back, Apply and Skip are
+  `flex:none` in rows that wrap.
+- **A product's own Distributor info did not say GTS was not reached**, the
+  one place A3's fix had missed: its summary now says "1 not reached since
+  …", and the kept distributor's line "could not reach it since …; its last
+  check, …, is shown".
+- The mode slider's `aria-selected`, which A4 had to back out, went in once
+  A5's per-tablist check made room; render now requires the Mode tablist to
+  mark its tabs (watched: 214 passed, 1 failed with it taken out).
+- The look: 36 of 36.
+
 ## Take 114 — 2026-09-24 — A32's distributor state timeline, from the history rows
 
 Opened before any code (PROTOCOL §6). Take 113 merged as PR #37 at 19:43

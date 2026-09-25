@@ -199,6 +199,12 @@ Start here. Do not read top to bottom.
 | A control that cannot run passes | **185** |
 | A size nobody measured is every harness's viewport | **186** |
 | A box is ticked for the part of its line that shipped | **187** |
+| A size read from the source is not the size drawn | **188** |
+| One tint percentage for three palettes | **189** |
+| A tolerance is read as the threshold | **190** |
+| One card's art is not the worst art | **191** |
+| A check races a refusal it depends on | **192** |
+| A flex row shrinks a button to its longest word | **193** |
 | Pipeline stops on a resumed run | 51 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
@@ -2528,6 +2534,10 @@ and caught the error as a pass. The runner's `check` clones one commit with no
 tags, so there the control would have passed without reading anything. Rule:
 build a control from the fault, on data the check has everywhere it runs; a
 control whose setup fails has failed.
+*The same take, the look: its selftest counted a control that produced no
+result as fired. It now needs one result per viewport for every control and
+probe; with one control left out, take 114's harness exited 0 and take
+115's exits 1.*
 
 **186. A size nobody measured was every harness's viewport.** The Fold's open
 screen was INFERRED at 840 x 757 at 2 from take 110, and the look and render
@@ -2545,6 +2555,44 @@ the external links (two lacked the glyph), `aria-pressed` (three toggles of
 eleven), the thumbnails, the days in words, the keywords, the Sim's labels.
 Rule: tick a box only when every item its line names is done, or edit the
 line to say what shipped and open a box for the rest.
+
+**188. A size read from the source was not the size drawn.** Take 106's
+guard refused a literal `font-size` under 12 px and passed for eight takes,
+while `.chip small` set no size and the browser's own `smaller` drew the
+counts at 10 and 10.8 px, at 60 % opacity (2.56:1 in Collect). Rule: read the
+rule that reaches the element -- the browser's defaults for `small`, `sub`
+and `sup`, relative units -- not only the literals (take 115).
+
+**189. One tint percentage for three palettes.** Take 106 made the selected
+tint 12 % of the accent in every mode and checked the accent on it. The
+secondary text on the same tint read 4.24 in Collect, and a "not legal" tint
+4.30 (take 115, MEASURED). Rule: compute every text that sits on a tint, per
+palette, from the shipped rules; Collect's tints are now 8 % and 10 %.
+
+**190. A tolerance was read as the threshold.** Take 108's "44 px square"
+read four points 21 px from a control's centre: a cross about 42 px wide, so
+the deck-name field shipped at 338 x 43.6 for seven takes (take 115). Rule:
+read the size from the box model (or the `::after` hit area), and put the
+boundary control one pixel under the line.
+
+**191. One card's art was not the worst art.** Take 110 measured the white
+name and date on Sealed's strips over one card's art and recorded 5.4:1.
+Over the art of all 33 yellow Leaders, 14 put the date under 4.5 (worst
+3.12, ST29-001 at 749 px) (take 115). Rule: check text over art with a white
+picture in the art's place, wherever the text can land; the strip's scrim now
+holds 0.55 to its right end and the date is white.
+
+**192. A check raced a refusal it depended on.** Render's check of the Decks
+list's thumbnail (landmine 132) needed the image host to refuse a picture in
+time, and failed one run in five here (take 115). Rule: a check that needs a
+picture, or its absence, brings its own when the real one is missing.
+
+**193. A flex row shrank a button to its longest word.** Take 115 shortened
+the Sim's buttons and put what happens in a note beside them; the note
+beside "Hand back" names a deck, and at 411 px it squeezed the button onto
+two lines (110 x 65). The look caught it. Rule: a button beside text that can
+grow is `flex:none`, its row wraps, and the look checks each label is on one
+line.
 
 ## §2 — Inherited from APEX ORV
 
