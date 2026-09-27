@@ -17,11 +17,17 @@ const SHOTS = path.join(ADS, 'shots'), ART = path.join(ADS, 'art');
 fs.mkdirSync(SHOTS, { recursive: true }); fs.mkdirSync(ART, { recursive: true });
 /* The Fold's open screen, MEASURED at take 115 (tools/look/steps.mjs VIEWPORTS): the landscape ads' layout */
 const OPEN = { width: 749, height: 832 };
-/* The hero printings: one number, three printings, and TCGplayer scans without the "SAMPLE" mark, picked
-   by eye from the catalogue on 27 Sept (most large scans carry it). A printing is the unit (AGENTS §3), so
-   these are product ids, and the number is only the caption's. */
-const HERO = { num: 'OP01-120', ids: [454664, 454665, 454666] };
-const PICKER_NUM = 'OP01-120';
+/* The hero printings: one number, three of its printings. A printing is the unit (AGENTS §3), so these are
+   product ids, and the number is only the caption's. HERO=NUM:id,id,id overrides.
+   - Round 1 and the first round-2 drafts: OP01-120 Shanks 454664, 454665, 454666 -- the one number of the
+     widest 30 whose three scans carry no "SAMPLE" mark (picked by eye, 27 Sept).
+   - Since round 2's second pass (the owner: "change Shanks to Zoro, whatever the most expensive Zoro card is
+     with three cards"): OP09-076, the dearest Zoro with three or more printings -- the Championship 25-26
+     Regionals prize ($5,000 market on 26 Sept; one listing, at $8,000), its alternate art, and the
+     Emperors in the New World base ($0.20). Two of the three scans carry "SAMPLE", as TCGplayer serves them. */
+const HERO = (() => { const e = process.env.HERO; if (!e) return { num: 'OP09-076', ids: [597016, 654099, 619217] };
+  const [num, ids] = e.split(':'); return { num, ids: ids.split(',').map(Number) }; })();
+const PICKER_NUM = HERO.num;
 
 const report = { steps: [], hero: null };
 const { browser, page, net, open } = await launch();
@@ -139,6 +145,14 @@ const steps = [
     await settle(1000);
     return { viewport: OPEN, rects: await rects({ hero: '#hero', spark: '#spark', top: '#topList' }) };
   }],
+  ['open-home-tall', async () => {
+    /* the open Fold's Home as a long screenshot: the total, the month, and the panels below it side by side.
+       The owner (27 Sept): the number and the graph alone are boring -- show the panels, without naming them. */
+    await page.setViewportSize({ width: OPEN.width, height: 1500 });
+    await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('collect', true); V.go('home'); V.setHomeTab(false); V.paintHome(); window.scrollTo(0, 0); });
+    await settle(1000);
+    return { viewport: { width: OPEN.width, height: 1500 }, rects: await rects({ hero: '#hero', spark: '#spark', ranges: '#ranges', top: '.panel:has(#topList)', sets: '#setComp' }) };
+  }],
   ['open-collection', async () => {
     await page.setViewportSize(OPEN);
     await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('collect', true); V.go('collection'); window.scrollTo(0, 0); });
@@ -160,7 +174,7 @@ for (const [name, run] of steps.filter(([n]) => !only.length || only.some(o => n
 /* ---- the hero art: each printing's largest scan, as the app draws it (artUrl 'large'), at its own size ---- */
 if (!only.length || only.includes('art')) {
   const hero = await page.evaluate((ids) => ids.map(id => { const V = window.VAULT, p = V.CAT.byId.get(id);
-    return { id, num: p.num, name: p.name, treat: p.treat, sub: p.sub || '', rarity: p.rarity || '', set: (V.CAT.sets.get(p.set) || {}).name || '',
+    return { id, num: p.num, name: p.name, treat: p.treat, sub: p.sub || '', rarity: p.rarity || '', prov: p.prov || '', set: (V.CAT.sets.get(p.set) || {}).name || '',
       market: p.market, shown: V.money(p.market), url: V.artUrl(p, 'large') }; }), HERO.ids);
   if (!process.env.NO_ART) {
     const art = await page.context().newPage();
@@ -176,6 +190,23 @@ if (!only.length || only.includes('art')) {
     await art.close();
   }
   report.hero = { num: HERO.num, printings: hero };
+  /* every printing of the number, dearest first, each with its own scan: a multi-pull shows them all */
+  const all = await page.evaluate((num) => { const V = window.VAULT; return V.candidates(num, null).filter(p => p.img).sort((a, b) => (b.market || 0) - (a.market || 0))
+    .map(p => ({ id: p.id, treat: p.treat, rarity: p.rarity || '', prov: p.prov || '', market: p.market, shown: V.money(p.market), url: V.artUrl(p, 'large') })); }, HERO.num);
+  if (!process.env.NO_ART) {
+    const art = await page.context().newPage();
+    await art.route('**/*', async r => { try { return r.fulfill({ response: await r.fetch() }); } catch { return r.abort(); } });
+    await art.setViewportSize({ width: 800, height: 1200 });
+    for (const a of all) {
+      const done = hero.find(h => h.id === a.id); if (done && done.file) { a.file = done.file; a.size = done.size; continue; }
+      await art.setContent(`<body style="margin:0;background:#000"><img id=a src="${a.url}" style="display:block"></body>`);
+      await art.waitForFunction(() => document.querySelector('#a').complete, null, { timeout: 20000 }).catch(() => {});
+      a.size = await art.evaluate(() => { const i = document.querySelector('#a'); return { w: i.naturalWidth, h: i.naturalHeight }; });
+      if (a.size.w) { a.file = path.join(ART, a.id + '.png'); await (await art.$('#a')).screenshot({ path: a.file, scale: 'css' }); }
+    }
+    await art.close();
+  }
+  report.hero.all = all;
 }
 report.net = net;
 report.captured = new Date().toISOString();

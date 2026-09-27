@@ -55,11 +55,12 @@ def grain(o=.08, m="overlay", f=.85, k="0"):
 def art(pid):
     return b64(os.path.join(ART, f"{pid}.png"), "image/png")
 
-def crop_img(shot, crop, w):
-    """a real screen's crop (CSS px), w px wide: the img's style inside an overflow-hidden box"""
+def crop_img(shot, crop, w, shot_w=SHOT_W):
+    """a real screen's crop (CSS px), w px wide: the img's style inside an overflow-hidden box. shot_w is the
+    shot's width in px: 1079 for the Fold's cover screen, 1966 for its open screen"""
     cx, cy, cw, ch = crop
     k = w / (cw * DPR)
-    return (f'<img src="{b64(os.path.join(SHOTS, shot + ".png"), "image/png")}" style="position:absolute;width:{SHOT_W * k:.1f}px;'
+    return (f'<img src="{b64(os.path.join(SHOTS, shot + ".png"), "image/png")}" style="position:absolute;width:{shot_w * k:.1f}px;'
             f'left:{-cx * DPR * k:.1f}px;top:{-cy * DPR * k:.1f}px">'), round(ch * DPR * k)
 
 def day(iso):

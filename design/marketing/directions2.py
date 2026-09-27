@@ -24,13 +24,22 @@ sys.path.insert(0, HERE)
 import directions as D                               # b64, face, page, grain, art, crop_img, day, icon
 ADS, OUT = D.ADS, os.path.join(D.ADS, "directions2")
 
+RARITY = {"C": "Common", "UC": "Uncommon", "R": "Rare", "SR": "Super Rare", "SEC": "Secret Rare", "L": "Leader",
+          "SP": "Special", "P": "Promo", "TR": "Treasure Rare"}
+HERO = LEFT = RIGHT = None
+
 def data():
+    """the capture's numbers, and the hero printings' roles by price: the dearest, the middle, the cheapest"""
+    global HERO, LEFT, RIGHT
     R, ps, labels, why, home_crop, when = D.data()
     S = {s["name"]: s for s in R["steps"]}
-    count = why.split()[0]                           # "7" of "7 printings share OP01-120, ..."
+    count = why.split()[0]                           # "6" of "6 printings share OP09-076, ..."
+    HERO, LEFT, RIGHT = sorted(ps, key=lambda i: -(ps[i]["market"] or 0))
     return R, S, ps, labels, why, count, home_crop, when
 
-HERO, LEFT, RIGHT = 454666, 454665, 454664            # the manga parallel, the look-alike, the base
+def badge_text(p):
+    """a prize card's name is its provenance; otherwise the rarity, spelled out"""
+    return p["prov"] or f'{p["rarity"]} &middot; {RARITY.get(p["rarity"], p["rarity"])}'
 SPARK = "M0,-1 C.08,-.08 .08,-.08 1,0 C.08,.08 .08,.08 0,1 C-.08,.08 -.08,.08 -1,0 C-.08,-.08 -.08,-.08 0,-1Z"
 
 def sparkles(points, color="#fff"):
@@ -44,7 +53,7 @@ body{background:radial-gradient(ellipse 60% 45% at 50% 50%,#3a1f7a 0%,#1a1242 45
   background:repeating-conic-gradient(from 4deg,rgba(255,214,120,.20) 0deg 5deg,transparent 5deg 15deg);
   -webkit-mask-image:radial-gradient(circle,#000 0,rgba(0,0,0,.7) 30%,transparent 68%)}
 .halo{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(255,226,150,.55),rgba(255,160,90,.18) 40%,transparent 70%)}
-h1{font:italic 900 108px/.9 'Barlow Condensed';letter-spacing:-.01em;text-transform:uppercase;transform:skewX(-6deg);
+h1{font:italic 900 102px/.9 'Barlow Condensed';letter-spacing:-.01em;text-transform:uppercase;transform:skewX(-6deg);
   filter:drop-shadow(0 6px 0 rgba(0,0,0,.45))}
 h1 .gold{background:linear-gradient(180deg,#fff6d2 0%,#ffd66b 48%,#e39c1f 100%);-webkit-background-clip:text;color:transparent}
 .chamf{clip-path:polygon(18px 0,100% 0,100% calc(100% - 18px),calc(100% - 18px) 100%,0 100%,0 18px)}
@@ -70,6 +79,7 @@ h1 .gold{background:linear-gradient(180deg,#fff6d2 0%,#ffd66b 48%,#e39c1f 100%);
 .tag{position:absolute;padding:10px 18px;background:rgba(255,255,255,.08);font:700 20px/1 Rajdhani;letter-spacing:.2em;text-transform:uppercase;color:#e9e6ff}
 .foot{font:600 18px/1.35 Rajdhani;letter-spacing:.04em;color:#a9a6cc}
 .win{position:absolute;overflow:hidden;box-shadow:0 0 0 2px rgba(255,214,120,.7),0 0 60px rgba(255,190,90,.25),0 40px 90px rgba(0,0,0,.7)}
+.win.fade{-webkit-mask-image:linear-gradient(180deg,#000 86%,transparent 100%)}
 .corner{position:absolute;width:44px;height:44px;border:4px solid #ffd66b}
 """
 
@@ -85,27 +95,30 @@ def pull(ratio):
         body = [f'<div class="rays" style="left:-150px;top:120px;width:1500px;height:1500px"></div>',
                 f'<div class="halo" style="left:260px;top:360px;width:680px;height:680px"></div>',
                 f'<div class="abs brand ov safe" style="left:64px;top:56px"><img src="{D.icon()}"><b>OP TCG Hub</b></div>',
-                f'<div class="tag chamf ov txt safe" style="right:64px;top:60px">{hero["num"]} &middot; {hero["set"]}</div>',
+                f'<div class="tag chamf ov txt safe" style="right:64px;top:60px">{hero["num"]} &middot; {hero["name"]}</div>',
                 f'<h1 class="abs ov txt safe" style="left:64px;top:150px;width:1080px">Which one did<br><span class="gold">you pull?</span></h1>']
         for pid, x, y, w, t in ((LEFT, 96, 560, 270, -9), (RIGHT, 834, 560, 270, 9)):
             body.append(f'<div class="card back safe" style="left:{x}px;top:{y}px;width:{w}px;transform:rotate({t}deg)"><img src="{D.art(pid)}"></div>')
         body.append(f'<div class="card pulled safe" style="left:405px;top:440px;width:390px;transform:rotate(-3deg)"><img src="{D.art(HERO)}"></div>')
-        body.append(f'<div class="badge chamf ov txt safe" style="left:505px;top:404px;transform:rotate(-3deg)">{hero["rarity"]} &middot; Secret Rare</div>')
+        body.append(f'<div class="badge chamf ov txt safe" style="left:600px;top:404px;transform:translateX(-50%) rotate(-3deg);font-size:26px;white-space:nowrap">{badge_text(hero)}</div>')
         body.append(sparkles([(360, 470, 26, .95), (838, 520, 20, .9), (820, 930, 30, .95), (380, 940, 16, .8), (600, 380, 14, .7)], "#fff6d2"))
         rows = "".join(f'<div class="row{" hit" if pid == HERO else ""}"><span>{labels[pid]}</span><b>{ps[pid]["shown"]}</b></div>' for pid in (RIGHT, LEFT, HERO))
         body.append(f'<div class="hud chamf ov safe" style="left:220px;top:1080px;width:760px;padding:20px 24px 6px"><h3>Market value &middot; TCGplayer &middot; {when}</h3>{rows}</div>')
         body.append(f'<div class="abs foot ov txt safe" style="left:220px;top:1404px;width:760px;text-align:center">{hero["num"]} has {count} printings. The scanner shows them all, and asks which one you hold.</div>')
         return D.page(ratio, css, "".join(body), "pull-portrait")
-    img, h = D.crop_img("home", home_crop, 700)
+    t = S["open-home-tall"]["rects"]
+    top = t["hero"]["y"] - 12
+    crop = (8, top, 733, t["top"]["y"] + t["top"]["h"] + 12 - top)
+    img, h = D.crop_img("open-home-tall", crop, 640, 1966)
     delta = S["home"]["delta"]
     body = [f'<div class="rays" style="left:-200px;top:-80px;width:1600px;height:1600px"></div>',
             f'<div class="halo" style="left:250px;top:300px;width:700px;height:700px;opacity:.6"></div>',
             f'<div class="abs brand ov safe" style="left:64px;top:56px"><img src="{D.icon()}"><b>OP TCG Hub</b></div>',
-            f'<h1 class="abs ov txt safe" style="left:64px;top:140px;width:1080px;font-size:110px">Binder value<br><span class="gold">updated nightly</span></h1>',
-            f'<div class="win chamf safe" style="left:250px;top:400px;width:700px;height:{h}px">{img}</div>']
-    for x, y, r in ((236, 386, 0), (914, 386, 90), (914, 364 + h, 180), (236, 364 + h, 270)):
+            f'<h1 class="abs ov txt safe" style="left:64px;top:132px;width:1080px;font-size:100px">Binder value<br><span class="gold">updated nightly</span></h1>',
+            f'<div class="win chamf fade safe" style="left:280px;top:392px;width:640px;height:{h}px">{img}</div>']
+    for x, y, r in ((266, 378, 0), (884, 378, 90), (884, 356 + h, 180), (266, 356 + h, 270)):
         body.append(f'<div class="corner" style="left:{x}px;top:{y}px;border-right:0;border-bottom:0;transform:rotate({r}deg)"></div>')
-    body.append(f'<div class="badge chamf ov txt safe" style="left:700px;top:{400 + h - 30}px;font-size:30px">{delta.split(" in")[0]} &middot; 1M</div>')
+    body.append(f'<div class="badge chamf ov txt safe" style="left:740px;top:470px;font-size:30px;transform:rotate(-3deg)">{delta.split(" in")[0]} &middot; 1M</div>')
     body.append(sparkles([(250, 420, 18, .9), (960, 700, 24, .9)], "#fff6d2"))
     body.append(f'<div class="abs foot ov txt safe" style="left:64px;top:1110px;width:1072px">A sample collection. TCGplayer market prices, {when}.</div>')
     return D.page(ratio, css, "".join(body), "pull-square")
@@ -257,7 +270,40 @@ def episode(ratio):
             f'<div class="abs foot ov txt safe" style="left:60px;top:1122px;width:900px">A sample collection. TCGplayer market prices, {when}.</div>']
     return D.page(ratio, css, "".join(body), "episode-square")
 
-DRAFTS = {"pull": pull, "jump": jump, "episode": episode}
+def pullmulti(ratio):
+    """a multi-pull result: every printing of the number in a grid, the dearest glowing, each with its price"""
+    R, S, ps, labels, why, count, home_crop, when = data()
+    allp = [a for a in R["hero"]["all"] if a.get("file")][:6]
+    top = allp[0]
+    css = pull_fonts() + PULL_CSS + """
+.slot{position:absolute;text-align:center}
+.slot .card{position:relative;margin:0 auto}
+.slot .card img{aspect-ratio:600/838;object-fit:cover}
+.slot .chip{margin:14px auto 0;padding:8px 0 6px;background:rgba(10,12,35,.88);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.18)}
+.slot .chip span{display:block;font:700 15px/1.2 Rajdhani;letter-spacing:.14em;text-transform:uppercase;color:#bdb9e0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 10px}
+.slot .chip b{display:block;font:italic 800 38px/1.1 'Barlow Condensed';color:#fff}
+.slot.top .chip{box-shadow:inset 0 0 0 2px #ffd66b,0 0 30px rgba(255,214,107,.35)}.slot.top .chip b{color:#ffd66b}
+.slot .chip span.long{white-space:normal;font-size:13px;letter-spacing:.1em;line-height:1.25}
+"""
+    def label(a):
+        return a["prov"] or a["treat"].replace("_", " ").title()   # a prize card's name is its provenance
+    body = [f'<div class="rays" style="left:-150px;top:60px;width:1500px;height:1500px;opacity:.8"></div>',
+            f'<div class="abs brand ov safe" style="left:64px;top:56px"><img src="{D.icon()}"><b>OP TCG Hub</b></div>',
+            f'<div class="tag chamf ov txt safe" style="right:64px;top:60px">{R["hero"]["num"]} &middot; {count} printings</div>',
+            f'<h1 class="abs ov txt safe" style="left:64px;top:140px;width:1080px;font-size:96px">Same number.<br><span class="gold">Every pull priced.</span></h1>']
+    cw, xs, ys = 270, (95, 465, 835), (400, 890)
+    for i, a in enumerate(allp):
+        x, y = xs[i % 3], ys[i // 3]
+        cls = "card pulled" if i == 0 else "card back"
+        dim = "" if i == 0 else "filter:none;"
+        body.append(f'<div class="slot{" top" if i == 0 else ""} safe" style="left:{x}px;top:{y}px;width:{cw}px">'
+                    f'<div class="{cls}" style="width:{cw}px;{dim}"><img src="{D.art(a["id"])}"></div>'
+                    f'<div class="chip chamf ov" style="width:{cw}px"><span{" class=long" if len(label(a)) > 22 else ""}>{label(a)}</span><b>{a["shown"]}</b></div></div>')
+    body.append(sparkles([(95 + cw - 10, 410, 22, .95), (110, 640, 14, .8)], "#fff6d2"))
+    body.append(f'<div class="abs foot ov txt safe" style="left:64px;top:1420px;width:1072px;text-align:center">TCGplayer market prices, {when}. The scanner shows them all, and asks which one you hold.</div>')
+    return D.page(ratio, css, "".join(body), f"pullmulti-{ratio}")
+
+DRAFTS = {"pull": pull, "jump": jump, "episode": episode, "pullmulti": pullmulti}
 
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
@@ -265,6 +311,6 @@ if __name__ == "__main__":
     for name, make in DRAFTS.items():
         if only and name not in only:
             continue
-        for ratio in ("portrait", "square"):
+        for ratio in (("portrait",) if name == "pullmulti" else ("portrait", "square")):
             open(os.path.join(OUT, f"{name}-{ratio}.html"), "w").write(make(ratio))
     print(f"directions2: written to {OUT}")

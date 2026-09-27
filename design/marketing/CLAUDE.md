@@ -133,8 +133,10 @@ node design/marketing/render.mjs [--dir directions]  # PNGs, report.json, thumbs
 
 ## Data facts
 
-- **Hero printings:** OP01-120 Shanks, product ids 454664 (base), 454665 (parallel) and 454666 (manga
-  parallel). Of the 30 numbers with the widest spread on 27 Sept, these were the one number whose scans
+- **Hero printings (now):** OP09-076 Roronoa Zoro: 597016 (base, $0.20), 654099 (alternate art, $60.26)
+  and 619217 (the Championship Regionals prize, $5,000.00), on 26 Sept prices. `HERO=NUM:id,id,id` overrides.
+- **Hero printings (round 1 and round 2's first pass):** OP01-120 Shanks, product ids 454664 (base),
+  454665 (parallel) and 454666 (manga parallel). Of the 30 numbers with the widest spread on 27 Sept, these were the one number whose scans
   carry no TCGplayer "SAMPLE" mark. Most large scans carry it.
 - The two parallels look almost identical, and one is about 46 times the other (26 Sep prices). That is
   the product's sharpest truth.
@@ -221,6 +223,26 @@ What bit in round 2: the overlay measure counted a styled word twice (a Range ov
 each inline element's box). It now measures text nodes only, and its selftest plants a caption with and
 without a `<span>` and requires the same share, watched to fail on the old measure. Also, a class shared
 between a card and a table row gave the row the card's holo shine.
+
+**Round 2 verdict (the owner, 27 Sept):** still off on all three, but **Pull is the closest yet** to the
+owner's image; the energy is about right. Two changes:
+- **Zoro instead of Shanks**: "whatever the most expensive Zoro card is with three cards". That is OP09-076
+  (the capture's `HERO` default since then):
+  - 619217, the Championship 25-26 Regionals Season 1 prize: $5,000.00 market on 26 Sept, its only
+    listing $8,000, a thin market;
+  - 654099, the alternate art: $60.26;
+  - 597016, the Emperors in the New World base: $0.20.
+  Six printings share the number ("35714× apart" in the app's own picker line).
+- **Home needs more than the number and the graph.** Show the Most valuable and Set completion panels in
+  the screenshot, without naming them in the text. The capture's `open-home-tall` is the open Fold's
+  Home as a long screenshot for this.
+
+**Round 2, second pass (sent 27 Sept):** Pull rebuilt on the Zoro:
+- **pull (4:5):** the prize card as the pull, badged with its own provenance.
+- **pull (1:1):** the open Fold's Home with the Most valuable and Set completion panels, fading out at the
+  foot, unnamed in the words.
+- **pullmulti (4:5):** a new variant, every printing of OP09-076 as a multi-pull result grid ("Same number.
+  Every pull priced."), the dearest glowing.
 
 **Design contract:** written here once the owner picks or mixes a direction. It will cover purpose
 (persuade), composition per ratio, type/colour/material roles, how the app's UI sits inside the style,
