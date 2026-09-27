@@ -578,16 +578,17 @@ P5_CSS = P3_CSS + """
 .pa img{position:absolute;left:0;top:0;width:100%;aspect-ratio:600/838;border-radius:4%}
 """
 
-STATUS_ICONS = ('<svg width="96" height="22" viewBox="0 0 96 22" aria-hidden="true" fill="currentColor">'
+# one family: every glyph 12 units tall on one baseline, one stroke weight, filled like Android's own; drawn
+# at a height set by the status bar (not fixed pixels), so a small phone gets small icons
+STATUS_ICONS = ('<svg viewBox="0 0 58 12" aria-hidden="true" fill="currentColor" style="height:{h}px;width:auto">'
     # signal bars
-    '<rect x="0" y="14" width="4" height="6" rx="1"/><rect x="6" y="10" width="4" height="10" rx="1"/>'
-    '<rect x="12" y="6" width="4" height="14" rx="1"/><rect x="18" y="2" width="4" height="18" rx="1"/>'
-    # wi-fi
-    '<path d="M40 19.5l-3.2-3.8a5.2 5.2 0 0 1 6.4 0z"/><path d="M34.6 13.3a8.6 8.6 0 0 1 10.8 0l-1.6 1.9a6.1 6.1 0 0 0-7.6 0z"/>'
-    '<path d="M32.3 10.6a12.2 12.2 0 0 1 15.4 0l-1.6 1.9a9.7 9.7 0 0 0-12.2 0z"/>'
+    '<rect x="0" y="8" width="2.4" height="4" rx=".6"/><rect x="3.6" y="5.5" width="2.4" height="6.5" rx=".6"/>'
+    '<rect x="7.2" y="3" width="2.4" height="9" rx=".6"/><rect x="10.8" y="0" width="2.4" height="12" rx=".6"/>'
+    # wi-fi, a filled fan
+    '<path d="M25 12L17.2 4.2A11 11 0 0 1 32.8 4.2Z"/>'
     # battery
-    '<rect x="58" y="4" width="32" height="15" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/>'
-    '<rect x="61" y="7" width="22" height="9" rx="1.6"/><rect x="91.5" y="9" width="2.5" height="5" rx="1"/></svg>')
+    '<rect x="37.65" y=".65" width="18.2" height="10.7" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.3"/>'
+    '<rect x="39.6" y="2.6" width="11.5" height="6.8" rx=".9"/><rect x="56.6" y="4.2" width="1.4" height="3.6" rx=".6"/></svg>')
 
 def device(x, y, w, h, shot, crop, screen_w, shot_w=1079, tilt=0.0):
     """a modern slab: an ultra-thin, even black bezel, a thin titanium rim with one soft highlight, no camera,
@@ -597,7 +598,8 @@ def device(x, y, w, h, shot, crop, screen_w, shot_w=1079, tilt=0.0):
     img, _ = D.crop_img(shot, crop, sw, shot_w)
     return (f'<div class="dev" style="left:{x}px;top:{y}px;width:{w}px;height:{h}px;border-radius:{r}px;transform:rotate({tilt}deg)">'
             f'<div class="scr" style="left:{bez}px;top:{bez}px;right:{bez}px;bottom:{bez}px;border-radius:{r - bez}px">'
-            f'<div class="sbar" style="height:{sbh}px;padding:0 {round(sw * .07)}px"><b>10:08</b>{STATUS_ICONS}</div>'
+            f'<div class="sbar" style="height:{sbh}px;padding:0 {round(sw * .07)}px"><b style="font-size:{round(sbh * .36)}px">10:08</b>'
+            f'{STATUS_ICONS.replace("{h}", str(round(sbh * .28)))}</div>'
             f'<div style="position:absolute;left:0;right:0;top:{sbh}px;bottom:0;overflow:hidden">{img}</div></div>'
             f'<div class="glass" style="left:{bez}px;top:{bez}px;right:{bez}px;bottom:{bez}px;border-radius:{r - bez}px"></div></div>')
 

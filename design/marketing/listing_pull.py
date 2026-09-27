@@ -49,7 +49,7 @@ def concepts(R, S):
     base = {k: SP.CONCEPTS[k](R, S) for k in ("printing", "value", "binder", "offline", "deck", "trade")}
     ty = S["picker"]["rects"]["title"]["y"]
     out = {
-        "01-printing": dict(base["printing"], screen=("picker", (0, ty - 60, 411, 960 - (ty - 60)))),   # to the screen's foot
+        "01-printing": dict(base["printing"], screen=("picker", (0, ty - 48, 411, 960 - (ty - 48)))),   # from the sheet's top edge (at ty - 60 the dimmed page behind showed as a sliver) to the screen's foot
         "02-value":    dict(base["value"], screen=("home", (0, 40, 411, 890)),
                             callout=("home",) + (base["value"]["callout"][1],)),
         "03-binder":   dict(base["binder"], screen=("collection", (0, 40, 411, 890)), callout=None),
