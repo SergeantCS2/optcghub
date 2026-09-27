@@ -17,7 +17,7 @@ in the README, 110x on the listing and 63x in the app on 27 Sept. Text and badge
 (render.mjs holds them under 20 % of the image, Google's guidance); what must stay inside the frame carries
 "safe". No Install button is drawn: the ad unit draws its own, and a fake one is misleading design.
 
-  python3 design/ads/images.py   -> $ADS_OUT/images/*.html (render.mjs shoots them)
+  python3 design/marketing/style_listing.py   -> $ADS_OUT/images/*.html (render.mjs shoots them)
 """
 import base64, datetime, json, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))

@@ -11,8 +11,8 @@ Google's limits and editorial rules, and this app's own:
 - Google's editorial rules: no "!" in a headline, no "!!" anywhere (so "DON!!" never appears), no word
   in capitals that is not an acronym, no "#1" or "best", no emoji.
 
-  python3 design/ads/copy_assets.py              -> the assets, checked, and $ADS_OUT/copy.txt to paste
-  python3 design/ads/copy_assets.py --selftest   -> the guard, watched to refuse a bad sample of each kind first
+  python3 design/marketing/copy_assets.py              -> the assets, checked, and $ADS_OUT/copy.txt to paste
+  python3 design/marketing/copy_assets.py --selftest   -> the guard, watched to refuse a bad sample of each kind first
 """
 import os, re, sys
 

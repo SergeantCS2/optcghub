@@ -4,12 +4,14 @@
 // - the overlay (every element of class "ov": caption, line, chips, lockup, note) under 20 % of the image
 // - everything of class "safe" 24 px or more off every edge; the three fonts loaded
 // Then a thumbnail sheet at the width an ad is often drawn (300 px), to read by eye.
-//   node design/ads/render.mjs            -> $ADS_OUT/images/out/*.png|jpg, report.json, thumbs.png
-//   node design/ads/render.mjs --selftest -> the guard, watched to refuse a planted frame of each kind first
+//   node design/marketing/render.mjs [--dir NAME] -> $ADS_OUT/NAME/out/*.png|jpg, report.json, and NAME/thumbs.png
+//   node design/marketing/render.mjs --selftest -> the guard, watched to refuse a planted frame of each kind first
 import fs from 'node:fs'; import path from 'node:path';
 import { browser } from '../play-listing/lib.mjs';
 import { ADS_DIR } from './paths.mjs';
-const DIR = path.join(ADS_DIR, 'images'), OUT = path.join(DIR, 'out');
+/* --dir NAME shoots $ADS_OUT/NAME (a style's compositions); images, the listing style's, by default */
+const at = process.argv.indexOf('--dir');
+const DIR = path.join(ADS_DIR, at > 0 ? process.argv[at + 1] : 'images'), OUT = path.join(DIR, 'out');
 const SIZES = { landscape: [1200, 628], square: [1200, 1200], portrait: [1200, 1500] };
 const MAX_BYTES = 5 * 1024 * 1024, OVERLAY = 20, EDGE = 24;
 
@@ -92,7 +94,7 @@ const outs = report.map(r => path.join(OUT, r.image));
 await sheet.setContent(`<body style="margin:0;padding:12px;background:#ddd;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;font:12px sans-serif">` +
   outs.map(o => `<figure style="margin:0;width:300px"><img src="data:image/${o.endsWith('.jpg') ? 'jpeg' : 'png'};base64,${fs.readFileSync(o).toString('base64')}" style="width:300px;display:block"><figcaption>${path.basename(o)}</figcaption></figure>`).join('') + '</body>');
 await sheet.waitForTimeout(500);
-await sheet.screenshot({ path: path.join(ADS_DIR, 'thumbs.png'), fullPage: true });
+await sheet.screenshot({ path: path.join(DIR, 'thumbs.png'), fullPage: true });
 await b.close();
 fs.writeFileSync(path.join(OUT, 'report.json'), JSON.stringify(report, null, 1));
 for (const r of report) console.log(JSON.stringify(r));

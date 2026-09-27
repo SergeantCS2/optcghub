@@ -3,8 +3,8 @@
 // own importers, then the month's history is rebuilt from the app's nightly prices. Then it shoots the
 // states each ad needs. Every number an ad may print is written to report.json, and the compositions
 // read them from there, never typed in (a price in an ad is out of date within a week).
-//   node design/ads/capture.mjs            -> $ADS_OUT/shots/*.png, $ADS_OUT/art/*.png, report.json
-//   node design/ads/capture.mjs picker home -> only those steps (the seeding always runs)
+//   node design/marketing/capture.mjs            -> $ADS_OUT/shots/*.png, $ADS_OUT/art/*.png, report.json
+//   node design/marketing/capture.mjs picker home -> only those steps (the seeding always runs)
 // The card art is on (the owner, 27 Sept: as the listing, and as the hero in places). NO_ART=1 refuses the
 // image CDN, as in the listing. The art is fetched by Node at render time and exists only in the renders
 // outside the tree; it is never committed (landmines 26, 28).

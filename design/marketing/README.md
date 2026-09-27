@@ -1,4 +1,7 @@
-# Google Ads: the App campaign's creatives
+# Marketing: the App campaign's and the listing's creatives
+
+**Start with `CLAUDE.md` here**: the brief, the rulings, the specs, the styles and what is in progress.
+This file is the short reference.
 
 A design source for the App campaign that promotes the Play listing. **Nothing here ships.** The build
 never reads this directory. The owner uploads to Google Ads, and the owner uploads videos to YouTube.
@@ -41,12 +44,14 @@ which is never committed (landmines 26, 28).
 
 ```bash
 export ADS_OUT=../ads-build                    # outside the tree (the default)
-python3 design/ads/copy_assets.py --selftest   # the text guard, watched to refuse each planted line
-python3 design/ads/copy_assets.py              # the five headlines and five descriptions -> copy.txt
-node design/ads/capture.mjs                    # the live build's screens and the hero art -> shots/, art/, report.json
-python3 design/ads/images.py                   # the compositions -> images/*.html
-node design/ads/render.mjs --selftest          # the image guard, watched to refuse each planted frame
-node design/ads/render.mjs                     # images/out/*.png, report.json, thumbs.png
+python3 design/marketing/copy_assets.py --selftest   # the text guard, watched to refuse each planted line
+python3 design/marketing/copy_assets.py              # the five headlines and five descriptions -> copy.txt
+node design/marketing/capture.mjs                    # the live build's screens and the hero art -> shots/, art/, report.json
+python3 design/marketing/style_listing.py           # style v1's compositions -> images/*.html
+bash design/marketing/fetch_fonts.sh                # the premium drafts' OFL typefaces -> fonts/
+python3 design/marketing/directions.py              # the four premium drafts -> directions/*.html
+node design/marketing/render.mjs --selftest          # the image guard, watched to refuse each planted frame
+node design/marketing/render.mjs [--dir directions]  # NAME/out/*.png, report.json, NAME/thumbs.png
 ```
 
 ## The files
@@ -55,8 +60,10 @@ node design/ads/render.mjs                     # images/out/*.png, report.json, 
 |---|---|
 | `copy_assets.py` | The text assets and their guard: length, "!" and "!!", capitals, prices and multiples, "no ads", affiliation, superlatives, emoji, the game's name. |
 | `capture.mjs` | Seeds the live build as the listing does, then shoots the ads' states (the picker, Home, the binder, the card, the deck, Home offline, the Fold's open screen) and the hero printings' own scans. Every number and position goes to `report.json`. |
-| `images.py` | Four concepts at three ratios, in the listing's scheme (it imports `design/play-listing/frames.py`). |
+| `style_listing.py` | Four concepts at three ratios, in the listing's scheme (it imports `design/play-listing/frames.py`). |
 | `render.mjs` | Shoots them and refuses a wrong size, over 5 MB, an overlay of 20 % or more, anything within 24 px of an edge, a missing font or a broken image. |
+| `directions.py` | The four premium drafts (vault, wano, guide, launch), for the owner to choose between. |
+| `fetch_fonts.sh` | Their typefaces, OFL-1.1, from npm's @fontsource packages; nothing committed until a pick. |
 | `paths.mjs` | Where the renders go. |
 
 ## The concepts
