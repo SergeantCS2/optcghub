@@ -116,7 +116,9 @@ node design/marketing/render.mjs [--dir directions]  # PNGs, report.json, thumbs
 | `render.mjs` | Shoots a folder of compositions. It refuses a wrong size, over 5 MB, an overlay of 20 % or more (text measured by its lines), anything of class `safe` within 24 px of an edge, a font that did not load, or a broken image. |
 | `style_listing.py` | Style v1 (wave 1). |
 | `directions.py` | Round 1 premium drafts (not taken). |
-| `directions2.py` | Round 2 drafts: pull, jump, episode, pullmulti, and pull3 (the lead). |
+| `directions2.py` | Round 2 drafts: pull, jump, episode, pullmulti, pull3-5 (the record). |
+| `style_pull.py` | **The production style** (the contract below): six concepts at three sizes; `--tune` for the aura presets. |
+| `heroes.mjs` / `heroes.json` | Hero candidates per character (a contact sheet), and the picks per concept. |
 | `accent.mjs` | Each saved scan's own accent colour -> `art/accents.json`; the aura's colour comes from it. |
 | `fetch_fonts.sh` | The drafts' fonts. Only the chosen style's are committed later, under `fonts/` with their licences. |
 | `paths.mjs` | Where the renders go. |
@@ -347,7 +349,67 @@ like the Fold 7. The aura: try one pixel-based pass, or go back to v3's soft red
   - Never drawn flame contours.
 - **Subtext:** 28 px, `#d4d7d2`, a light shadow. The kanji is gone.
 
-**Design contract:** written here once the owner picks or mixes a direction. It will cover purpose
+**Pull v5 verdict (the owner, 27 Sept):** "Closer! The aura is closer as well." The owner then ruled:
+- **The aura is the pixel-built one** (`pull5pixel`), exactly as it rendered, to be tuned from there. A
+  recoloured variant, its luminance mapped onto the art's accent to remove the grey streaks, was tried and
+  was not what the owner meant.
+- **Heroes are varied fan favourites.**
+- **Order:** ad images first, then the listing, then video, then HTML5.
+
+## Design contract: Style v2, "Pull" (locked 27 Sept; `style_pull.py`)
+
+- **Purpose:** persuade. One claim per frame, proven by the app's real screen.
+- **Composition, per frame:**
+  - a sentence-case headline in two lines with one accent word (in the hero art's accent colour), and a
+    subline;
+  - a device (ads) or a frameless screen (listing) showing the app's real screen;
+  - the hero card, large and tilted, in its pixel aura, with any related printings fanned behind it;
+  - one real UI piece lifted out as the callout;
+  - a footnote naming the price source and date, and "A sample collection/deck/trade" where it applies;
+  - the icon and name small (top right; top left in 1200×628).
+- **Ground:** the hero's own art, blurred and darkened (`.ground` + `.shade`). The palette comes from the
+  card.
+- **Type:** Inter 800 for the headline (88/80/56 px by size); Inter 500 for the subline at 28 px `#d4d7d2`
+  with a light shadow; the footnote at 17 px `#a9ada8`. No italics, no all caps except micro-labels.
+- **The aura** (`AURA`, `pixel_aura()`):
+  - the card's own scan blurred (16), saturated (2.2), displaced upward by vertical fractal noise (0.018 /
+    0.004, scale 190) and brightened (1.5), in a masked body 1.36× wide rising 0.32× above the card;
+  - a halo of the card itself (blur 28);
+  - a rim light in the art's accent (`accent.mjs`).
+  - `original` is the owner's pick. `softer` and `stronger` turn the same knobs, and `--tune` renders all
+    three.
+- **Device** (ads): a seamless slab with a 9 px even bezel, a thin titanium rim with one highlight, no
+  camera, no crease and no keys, and a real status bar that nothing covers. The phone is 19.5:9; the Fold
+  7 open is about 1.08:1.
+- **Callout:** one real crop of the app with an accent rim, at most 290 / 220 / 132 px tall by size. It sits
+  bottom right with the footnote under it (portrait and square), or under the subline (1200×628).
+- **Per size (`LAYOUT`):**
+  - 4:5 and 1:1: the headline top left, the device at bottom left bleeding off the frame, the hero at right;
+    a single hero is larger and further left (`SOLO`);
+  - 1200×628: the name top left, then the headline, the subline and the callout on the left, with the
+    device and the hero on the right.
+- **Words:** image captions pass `check_caption()`, which is `copy_assets.py`'s rules. A card number is not
+  a word in capitals, and a footnote may credit TCGplayer as the source.
+- **Finish condition:** `render.mjs` passes (size, 5 MB, overlay under 20 %, 24 px edges, fonts, images),
+  and the session has read every frame at full and thumbnail size before sending.
+
+**The ad set (Phase C, 27 Sept):** 6 concepts × 3 sizes = 18 images (`render.mjs --dir pull`).
+
+| Concept | Headline | Hero (`heroes.json`) | Screen | Callout |
+|---|---|---|---|---|
+| printing | Same Zoro. *Three* prices. | EB04-007 Zoro and its two others | the picker on the phone | the SP's own row |
+| value | Your binder, valued *nightly*. | OP05-119 Luffy, the gold SP | Home on the Fold | Home's total |
+| binder | Every card, *priced*. | EB02-006 Yamato | the collection on the Fold | Most valuable |
+| offline | Works with *no signal*. | OP01-120 Shanks, the manga | Home on the phone | the "Offline OK" row |
+| deck | Built to *the rules*. | OP01-013 Sanji (in the Red Zoro deck) | the deck | the legality line |
+| trade | Trade at *the table*. | OP02-013 Ace, with the showcase's OP01-016 Nami | Trade | the verdict (+$32.76 on 26 Sept) |
+
+**What bit in Phase C:**
+- the caption guard refused the source credit and the card number (both now scoped);
+- lifted panels taller than the frame allowed (capped);
+- the aura covering the name in 1200×628 (moved);
+- the offline callout repeating the phone (now the status row);
+- empty space beside a single hero (`SOLO`). It will cover purpose
 (persuade), composition per ratio, type/colour/material roles, how the app's UI sits inside the style,
 the listing frames, motion, and a verifiable finish condition.
 

@@ -65,6 +65,8 @@ node design/marketing/render.mjs [--dir directions]  # NAME/out/*.png, report.js
 | `directions.py` | Round 1 premium drafts (vault, wano, guide, launch): premium, and too far from the franchise (the owner). |
 | `directions2.py` | Round 2 drafts (pull, jump, episode, pullmulti, pull3): pull3 leads. |
 | `accent.mjs` | Each saved scan's own accent colour, for effects drawn around a card. |
+| `style_pull.py` | The production style: six concepts at three sizes (`--tune` renders the aura presets). |
+| `heroes.mjs` / `heroes.json` | Hero candidates per character, and the picks per concept. |
 | `fetch_fonts.sh` | Their typefaces, OFL-1.1, from npm's @fontsource packages; nothing committed until a pick. |
 | `paths.mjs` | Where the renders go. |
 

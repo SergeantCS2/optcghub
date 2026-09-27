@@ -1,0 +1,9 @@
+{
+ "_note": "Each concept's hero printing(s), by product id: a printing is the unit (AGENTS rule 3). Picked on 27 Sept from heroes.mjs's candidates (varied fan favourites, the owner's call), favouring clean scans and cards the showcase holds. The owner may swap any id; capture.mjs saves every id's scan.",
+ "printing": { "ids": [685303, 685304, 705991], "why": "EB04-007 Roronoa Zoro, its three printings: the owner's pick" },
+ "value":    { "ids": [632504], "why": "OP05-119 Monkey.D.Luffy, the gold SP: the dearest card in the catalogue on 26 Sept" },
+ "binder":   { "ids": [692137], "why": "EB02-006 Yamato: a scan without the SAMPLE mark" },
+ "offline":  { "ids": [454666], "why": "OP01-120 Shanks, the manga parallel: a scan without the SAMPLE mark" },
+ "deck":     { "ids": [557285], "why": "OP01-013 Sanji: a printing of a card in the showcase Red Zoro deck" },
+ "trade":    { "ids": [485862, 587966], "why": "OP02-013 Portgas.D.Ace (they give) against the showcase collection's OP01-016 Nami manga (you give): a near-even real trade" }
+}

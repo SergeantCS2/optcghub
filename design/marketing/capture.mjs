@@ -10,6 +10,7 @@
 // outside the tree; it is never committed (landmines 26, 28).
 import { launch, wait, REPO, COVER } from '../play-listing/lib.mjs';
 import { ADS_DIR as ADS } from './paths.mjs';
+const HERE = path.dirname(new globalThis.URL(import.meta.url).pathname);
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -38,6 +39,19 @@ const settle = async (ms = 700) => { await wait(ms); await page.evaluate(() => d
 const artLoaded = () => page.waitForFunction(() => [...document.images].filter(i => { const r = i.getBoundingClientRect();
   return r.width && r.bottom > 0 && r.top < innerHeight; }).every(i => i.complete), null, { timeout: 15000, polling: 250 }).then(() => true, () => false);
 const home = () => page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} });
+/* Play bars "Free", calls to action, rankings and "new/sale" wording in listing images -- the app's own words
+   too (Play Console Help, read 27 Sept). Every visible match is recorded with where it sits (CSS px), ported
+   from design/play-listing/capture.mjs; the listing composer refuses a frame that shows one. */
+const BANNED = String.raw`\b(free|download|install|best|top|top rated|try now|play now|new|discount|sale)\b|#1\b`;
+const banned = () => page.evaluate((src) => { const Rx = new RegExp(src, 'gi'), out = [];
+  const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let n; (n = w.nextNode());) { for (const m of n.textContent.matchAll(Rx)) {
+    const rg = document.createRange(); rg.setStart(n, m.index); rg.setEnd(n, m.index + m[0].length);
+    const r = rg.getClientRects()[0]; if (!r || !r.width || r.bottom < 0 || r.top > innerHeight) continue;
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2), el = n.parentElement;
+    out.push({ word: m[0], top: Math.round(r.top), left: Math.round(r.left), covered: !(hit && (hit === el || el.contains(hit) || hit.contains(el))),
+      text: n.textContent.trim().slice(0, 70) }); } }
+  return out; }, BANNED);
 /* where the pieces a composition crops to sit on screen, in CSS px (the shot is at COVER.dpr) */
 const rects = (sels) => page.evaluate((sels) => Object.fromEntries(Object.entries(sels).map(([k, s]) => { const e = document.querySelector(s);
   if (!e) return [k, null]; const r = e.getBoundingClientRect(); return [k, { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) }]; })), sels);
@@ -125,7 +139,8 @@ const steps = [
   ['deck', async () => {
     await page.evaluate((id) => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('play', true); V.openDeck(id); window.scrollTo(0, 0); }, deckId);
     await settle(1000);
-    return page.evaluate(() => ({ head: ((document.querySelector('#deck') || {}).textContent || '').replace(/\s+/g, ' ').trim().slice(0, 140) }));
+    const m = await page.evaluate(() => ({ head: ((document.querySelector('#deck') || {}).textContent || '').replace(/\s+/g, ' ').trim().slice(0, 140) }));
+    return { ...m, rects: await rects({ lead: '#dkLeadLine', legal: '#dkLegal', curve: '.panel:has(#dkCurve)' }) };
   }],
   ['offline', async () => {
     /* the network cut, then Home repainted and the collection opened: what a collector sees in airplane mode */
@@ -140,6 +155,17 @@ const steps = [
       if (d && l) { d.className = 'dot'; l.textContent = 'Offline OK'; } });
     await settle(300);
     return { ...r, pill: 'staged: paintNet() at a zero count', rects: await rects({ pill: '#netlbl', hero: '#hero', spark: '#spark', ranges: '#ranges' }) };
+  }],
+  ['trade', async () => {
+    /* heroes.json's trade: you give the showcase collection's printing, you get theirs -- through the app's own
+       TRADE lists, then Trade repainted by go() */
+    const H = JSON.parse(fs.readFileSync(path.join(HERE, 'heroes.json'), 'utf8')).trade.ids;
+    const r = await page.evaluate(([get, give]) => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('collect', true);
+      V.TRADE.give.length = 0; V.TRADE.get.length = 0; V.TRADE.add('give', give); V.TRADE.add('get', get); V.go('trade'); window.scrollTo(0, 0);
+      return { give: V.money(V.CAT.byId.get(give).market), get: V.money(V.CAT.byId.get(get).market),
+        verdict: ((document.querySelector('#trVerdict') || {}).textContent || '').replace(/\s+/g, ' ').trim().slice(0, 160) }; }, H);
+    await settle(900);
+    return { ...r, rects: await rects({ give: '.panel:has(#trGive)', get: '.panel:has(#trGet)', verdict: '#trVerdict' }) };
   }],
   ['open-home', async () => {
     await page.context().setOffline(false);
@@ -170,7 +196,7 @@ for (const [name, run] of steps.filter(([n]) => !only.length || only.some(o => n
   try {
     const m = await run(); const loaded = await artLoaded(); await wait(400);
     const file = path.join(SHOTS, name + '.png'); await page.screenshot({ path: file });
-    report.steps.push({ name, ok: true, artLoaded: loaded, file, ...m });
+    report.steps.push({ name, ok: true, artLoaded: loaded, file, ...m, banned: await banned() });
   } catch (e) { report.steps.push({ name, ok: false, error: String(e).slice(0, 240) }); }
 }
 
@@ -210,6 +236,26 @@ if (!only.length || only.includes('art')) {
     await art.close();
   }
   report.hero.all = all;
+  /* every concept's hero (heroes.json), each with its own scan and its catalogue facts */
+  const H = JSON.parse(fs.readFileSync(path.join(HERE, 'heroes.json'), 'utf8'));
+  const ids = [...new Set(Object.entries(H).filter(([k]) => !k.startsWith('_')).flatMap(([, v]) => v.ids))];
+  const heroes = await page.evaluate((ids) => ids.map(id => { const V = window.VAULT, p = V.CAT.byId.get(id);
+    return p ? { id, num: p.num, name: p.name, treat: p.treat, rarity: p.rarity || '', prov: p.prov || '', set: (V.CAT.sets.get(p.set) || {}).name || '',
+      market: p.market, shown: V.money(p.market), url: V.artUrl(p, 'large') } : { id, missing: true }; }), ids);
+  if (!process.env.NO_ART) {
+    const art = await page.context().newPage();
+    await art.route('**/*', async r => { try { return r.fulfill({ response: await r.fetch() }); } catch { return r.abort(); } });
+    await art.setViewportSize({ width: 800, height: 1200 });
+    for (const a of heroes.filter(a => !a.missing)) {
+      const f = path.join(ART, a.id + '.png'); if (fs.existsSync(f)) { a.file = f; continue; }
+      await art.setContent(`<body style="margin:0;background:#000"><img id=a src="${a.url}" style="display:block"></body>`);
+      await art.waitForFunction(() => document.querySelector('#a').complete, null, { timeout: 20000 }).catch(() => {});
+      const size = await art.evaluate(() => { const i = document.querySelector('#a'); return { w: i.naturalWidth, h: i.naturalHeight }; });
+      if (size.w) { a.file = f; await (await art.$('#a')).screenshot({ path: f, scale: 'css' }); }
+    }
+    await art.close();
+  }
+  report.heroes = Object.fromEntries(heroes.map(h => [h.id, h]));
 }
 report.net = net;
 report.captured = new Date().toISOString();

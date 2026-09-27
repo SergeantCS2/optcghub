@@ -41,6 +41,11 @@ SPARE_HEADLINES = [
     "Scan One Piece TCG cards",
     "OP TCG Hub: scan & value",
     "Hunt One Piece TCG sealed",
+    # the Pull style's image headlines (27 Sept), so the text and the pictures speak alike
+    "Your binder, valued nightly",
+    "Every card, priced",
+    "Built to the rules",
+    "Trade at the table",
 ]
 SPARE_DESCRIPTIONS = [
     "Free, with short rewarded ads that unlock saves. Scanning is never gated.",
