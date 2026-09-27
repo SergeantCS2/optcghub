@@ -554,7 +554,123 @@ def pull4(ratio):
             f'<div class="abs foot ov txt safe" style="left:64px;top:1120px;width:720px">A sample collection. TCGplayer market prices, {when}.</div>']
     return D.page(ratio, css, "".join(body), "pull4-square")
 
-DRAFTS = {"pull": pull, "jump": jump, "episode": episode, "pullmulti": pullmulti, "pull3": pull3, "pull4": pull4}
+# ================================================================ pull v5 (27 Sept)
+# The owner on v4: too much on the subtext; the phone still looks bad and the fold line is unwanted; the drawn
+# aura is a downgrade -- an aura only works blended seamlessly into the card. The device: modern, seamless
+# thin bezels like the Fold 7, no front camera (Google's own frames stop at older Pixels). The aura: built
+# from the card's own pixels -- its colours bleeding out of its edges and rising -- or v3's soft glow.
+
+P5_CSS = P3_CSS + """
+.sub{font:500 28px/1.38 Inter;letter-spacing:-.01em;color:#d4d7d2;text-shadow:0 1px 6px rgba(0,0,0,.5)}
+.foot{font:500 17px/1.4 Inter;color:#a9ada8}
+.dev{position:absolute;background:#050505;
+  box-shadow:0 0 0 2.5px #3a3d40,0 0 0 3.5px #0c0d0e,inset 0 0 0 1px rgba(255,255,255,.06),
+    0 2px 4px rgba(0,0,0,.6),0 40px 90px rgba(0,0,0,.55)}
+.dev::before{content:'';position:absolute;inset:-2.5px;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(160deg,rgba(255,255,255,.38),rgba(255,255,255,0) 22%,rgba(255,255,255,0) 78%,rgba(255,255,255,.18));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;padding:2.5px}
+.dev .scr{position:absolute;overflow:hidden;background:#100d22}
+.dev .glass{position:absolute;pointer-events:none;background:linear-gradient(125deg,rgba(255,255,255,.07),rgba(255,255,255,0) 30%)}
+.sbar{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:center;color:#f1f1f3;z-index:3;background:#100d22}
+.sbar b{font:600 19px/1 Inter;letter-spacing:.01em}
+.sbar svg{display:block}
+.pa{position:absolute;pointer-events:none}
+.pa img{position:absolute;left:0;top:0;width:100%;aspect-ratio:600/838;border-radius:4%}
+"""
+
+STATUS_ICONS = ('<svg width="96" height="22" viewBox="0 0 96 22" aria-hidden="true" fill="currentColor">'
+    # signal bars
+    '<rect x="0" y="14" width="4" height="6" rx="1"/><rect x="6" y="10" width="4" height="10" rx="1"/>'
+    '<rect x="12" y="6" width="4" height="14" rx="1"/><rect x="18" y="2" width="4" height="18" rx="1"/>'
+    # wi-fi
+    '<path d="M40 19.5l-3.2-3.8a5.2 5.2 0 0 1 6.4 0z"/><path d="M34.6 13.3a8.6 8.6 0 0 1 10.8 0l-1.6 1.9a6.1 6.1 0 0 0-7.6 0z"/>'
+    '<path d="M32.3 10.6a12.2 12.2 0 0 1 15.4 0l-1.6 1.9a9.7 9.7 0 0 0-12.2 0z"/>'
+    # battery
+    '<rect x="58" y="4" width="32" height="15" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/>'
+    '<rect x="61" y="7" width="22" height="9" rx="1.6"/><rect x="91.5" y="9" width="2.5" height="5" rx="1"/></svg>')
+
+def device(x, y, w, h, shot, crop, screen_w, shot_w=1079, tilt=0.0):
+    """a modern slab: an ultra-thin, even black bezel, a thin titanium rim with one soft highlight, no camera,
+    no keys, no crease; an Android status bar in the app's own top colour over the app's real screen"""
+    bez = 9; r = round(w * .075)
+    sw = w - 2 * bez; sbh = round(sw * .085)
+    img, _ = D.crop_img(shot, crop, sw, shot_w)
+    return (f'<div class="dev" style="left:{x}px;top:{y}px;width:{w}px;height:{h}px;border-radius:{r}px;transform:rotate({tilt}deg)">'
+            f'<div class="scr" style="left:{bez}px;top:{bez}px;right:{bez}px;bottom:{bez}px;border-radius:{r - bez}px">'
+            f'<div class="sbar" style="height:{sbh}px;padding:0 {round(sw * .07)}px"><b>10:08</b>{STATUS_ICONS}</div>'
+            f'<div style="position:absolute;left:0;right:0;top:{sbh}px;bottom:0;overflow:hidden">{img}</div></div>'
+            f'<div class="glass" style="left:{bez}px;top:{bez}px;right:{bez}px;bottom:{bez}px;border-radius:{r - bez}px"></div></div>')
+
+def pixel_aura(pid, w, accent, seed=21):
+    """the card's own image, blurred and scaled out of its own edges, pushed upward by vertical noise and faded
+    by a mask: the glow is the card's colours, so it meets the card without a line. Sits in the card's box."""
+    h = round(w * 838 / 600); src = D.art(pid)
+    fid = f"pf{seed}"
+    return (f'<svg width="0" height="0" style="position:absolute"><filter id="{fid}" x="-50%" y="-60%" width="200%" height="220%">'
+            f'<feGaussianBlur stdDeviation="16"/>'
+            f'<feColorMatrix type="saturate" values="2.2" result="b"/>'
+            f'<feTurbulence type="fractalNoise" baseFrequency="0.018 0.004" numOctaves="3" seed="{seed}" result="n"/>'
+            f'<feDisplacementMap in="b" in2="n" scale="190" xChannelSelector="R" yChannelSelector="G"/></filter></svg>'
+            # the rising body: flame-displaced, masked to fade down the sides and below
+            f'<div class="pa" style="left:{-w * .18:.0f}px;top:{-h * .32:.0f}px;width:{w * 1.36:.0f}px;height:{h * 1.4:.0f}px;'
+            f'-webkit-mask-image:radial-gradient(ellipse 58% 62% at 50% 44%,#000 38%,rgba(0,0,0,.55) 62%,transparent 86%);mix-blend-mode:screen;opacity:.95">'
+            f'<img src="{src}" style="width:100%;height:100%;filter:url(#{fid}) brightness(1.5)"></div>'
+            # the halo: the card, scaled a little and softly blurred, so its own colours ring its edge
+            f'<div class="pa" style="left:{-w * .07:.0f}px;top:{-h * .09:.0f}px;width:{w * 1.14:.0f}px;height:{h * 1.12:.0f}px;mix-blend-mode:screen;opacity:.9">'
+            f'<img src="{src}" style="width:100%;height:100%;filter:blur(28px) saturate(2) brightness(1.35)"></div>'
+            # the seam: an accent rim light on the card's own border
+            f'<div class="pa" style="left:-3px;top:-3px;width:{w + 6}px;height:{h + 6}px;border-radius:4.5%;'
+            f'box-shadow:0 0 18px 4px {accent},0 0 60px 10px color-mix(in srgb,{accent} 45%,transparent);opacity:.65"></div>')
+
+def pull5(ratio, aura_kind="v3"):
+    R, S, ps, labels, why, count, home_crop, when = data()
+    hero, mid, low = ps[HERO], ps[LEFT], ps[RIGHT]
+    ac = accents().get(str(HERO), {"deep": "#4c1c23", "bright": "#ff6e83"})
+    css = p3_fonts() + P5_CSS.replace("var(--accent)", ac["bright"])
+    ground = (f'<img class="ground" src="{D.art(HERO)}" style="left:-160px;top:-220px;width:1600px">'
+              '<div class="shade"></div>')
+    brand = f'<div class="abs brand ov safe" style="right:64px;top:74px"><img src="{D.icon()}"><b>OP TCG Hub</b></div>'
+    def hero_aura(w):
+        h = round(w * 838 / 600)
+        return pixel_aura(HERO, w, ac["bright"]) if aura_kind == "pixel" else aura(w, h, ac["deep"], ac["bright"])
+    if ratio == "portrait":
+        body = [ground, brand,
+                f'<h1 class="abs ov txt safe" style="left:64px;top:64px;width:760px">Same {hero["name"].split()[-1]}.<br><em>{WORDS.get(len(ps), len(ps))}</em> prices.</h1>',
+                f'<div class="abs sub ov txt safe" style="left:64px;top:262px;width:600px">{hero["num"]} has {count} printings. The scanner shows each one, and asks which you hold.</div>']
+        # the phone: 19.5:9, upright but for a breath of tilt, its foot cropped by the frame's edge only
+        pw = 440; ph = round((pw - 18) * 19.5 / 9) + 18
+        ty = S["picker"]["rects"]["title"]["y"]
+        body.append(device(64, 880, pw, ph, "picker", (0, ty - 40, 411, 900), None, tilt=-2))
+        cx, cy, cw = 690, 440, 420
+        body.append(f'<div class="abs" style="left:{cx}px;top:{cy}px;width:{cw}px;height:{round(cw * 838 / 600)}px;transform:rotate(7deg)">{hero_aura(cw)}</div>')
+        body.append(f'<div class="card safe" style="left:500px;top:520px;width:300px;transform:rotate(-13deg)"><img src="{D.art(low["id"])}"></div>')
+        body.append(f'<div class="card safe" style="left:590px;top:480px;width:320px;transform:rotate(-3deg)"><img src="{D.art(mid["id"])}"></div>')
+        body.append(f'<div class="card safe" style="left:{cx}px;top:{cy}px;width:{cw}px;transform:rotate(7deg)"><img src="{D.art(HERO)}"></div>')
+        o = next(o for o in S["picker"]["options"] if o["price"] == hero["shown"])
+        cimg, chh2 = D.crop_img("picker", (12, o["top"] - 4, 387, o["bottom"] - o["top"] + 8), 560)
+        body.append(f'<div class="callout ov safe" style="left:576px;top:1200px;width:560px;height:{chh2}px">{cimg}</div>')
+        body.append(f'<div class="abs foot ov txt safe" style="left:576px;top:{1200 + chh2 + 20}px;width:560px">TCGplayer market prices, {when}.</div>')
+        return D.page(ratio, css, "".join(body), "pull5-portrait")
+    # square: the Fold 7 open, as a seamless slab; its total lifted out
+    t = S["open-home-tall"]["rects"]
+    fw = 640; fh = round((fw - 18) * 1.08) + 18
+    hr = S["home"]["rects"]["hero"]
+    cimg, chh = D.crop_img("home", (hr["x"] - 4, hr["y"] - 4, hr["w"] + 8, hr["h"] + 8), 460)
+    body = [ground, brand,
+            f'<h1 class="abs ov txt safe" style="left:64px;top:64px;width:760px;font-size:80px">Your binder,<br>valued <em>nightly</em>.</h1>',
+            device(496, 350, fw, fh, "open-home-tall", (0, t["hero"]["y"] - 70, 749, 1100), None, 1966, tilt=-2),
+            f'<div class="callout ov safe" style="left:64px;top:560px;width:460px;height:{chh}px">{cimg}</div>',
+            f'<div class="abs sub ov txt safe" style="left:64px;top:{560 + chh + 32}px;width:380px;font-size:26px">Every card at the price of the printing you own.</div>',
+            f'<div class="abs foot ov txt safe" style="left:64px;top:1116px;width:720px">A sample collection. TCGplayer market prices, {when}.</div>']
+    return D.page(ratio, css, "".join(body), "pull5-square")
+
+def pull5pixel(ratio):
+    """the pixel-born aura, tried once and kept for the record: it met the card's edge softly, but the
+    displaced streaks smeared the black-and-white art into a grey band, so v3's glow leads"""
+    return pull5(ratio, "pixel").replace("pull5-", "pull5pixel-")
+
+DRAFTS = {"pull": pull, "jump": jump, "episode": episode, "pullmulti": pullmulti, "pull3": pull3, "pull4": pull4,
+          "pull5": pull5, "pull5pixel": pull5pixel}
 
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
@@ -562,6 +678,6 @@ if __name__ == "__main__":
     for name, make in DRAFTS.items():
         if only and name not in only:
             continue
-        for ratio in (("portrait",) if name == "pullmulti" else ("portrait", "square")):
+        for ratio in (("portrait",) if name in ("pullmulti", "pull5pixel") else ("portrait", "square")):
             open(os.path.join(OUT, f"{name}-{ratio}.html"), "w").write(make(ratio))
     print(f"directions2: written to {OUT}")

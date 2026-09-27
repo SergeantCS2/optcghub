@@ -321,6 +321,32 @@ More manga inspiration.
   contour per layer holds its shape;
 - the app's crop bled under the status bar without `overflow:hidden`.
 
+**Pull v4 verdict (the owner, 27 Sept):**
+- too much on the subtext;
+- the phone and UI still looked bad, and the fold line was unwanted;
+- the drawn flame contour was a "massive downgrade": an aura only works if it blends seamlessly into the
+  card.
+
+The device: Google's official frame in a modern style, with no front camera and seamless thin bezels
+like the Fold 7. The aura: try one pixel-based pass, or go back to v3's soft red.
+
+**Pull v5** (`pull5`, sent 27 Sept):
+- **Device rules (from here on):**
+  - an ultra-thin, even black bezel (9 px) and a thin titanium rim with one soft highlight;
+  - no camera hole, no crease, no side keys;
+  - a real Android status bar: the time plus signal, Wi-Fi and battery glyphs drawn as SVG, in the
+    app's own top colour;
+  - nothing in the scene covers the status bar;
+  - the same slab for the phone (19.5:9) and the Fold 7 open.
+  - Google's Device Art Generator frames stop at the Pixel 4 era, so they aren't usable as they are.
+- **Aura rule:**
+  - `pull5pixel` built the aura from the card's own pixels (its scan, blurred and displaced upward). It
+    met the card's edge softly, but the streaks smeared the black-and-white art into a grey band, so it
+    was not clearly better and was rejected.
+  - v3's soft rising glow in the art's accent leads.
+  - Never drawn flame contours.
+- **Subtext:** 28 px, `#d4d7d2`, a light shadow. The kanji is gone.
+
 **Design contract:** written here once the owner picks or mixes a direction. It will cover purpose
 (persuade), composition per ratio, type/colour/material roles, how the app's UI sits inside the style,
 the listing frames, motion, and a verifiable finish condition.
