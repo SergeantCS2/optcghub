@@ -130,13 +130,15 @@ def _vivid(rgb, k):
 def _mix(a, b, t):
     return [a[i] * (1 - t) + b[i] * t for i in range(3)]
 
-def flame_aura(pid, w, accent, level=AURA_LEVEL, seed=7):
+def flame_aura(pid, w, accent, level=AURA_LEVEL, seed=7, motion=None):
     """in the card's own box (card-local px), behind the card. Pass 2 (the owner: "too tall ... the top is just
     flat and cut off ... like the card is giving off a seamless aura"):
     - the colour starts as the card's own edge: its top and side slices are stretched outward, so just past the
       border the flame is the border's colour, and further out it becomes the card's ramp
     - a tight emission at the edge (the card, 2 % larger, lightly blurred) joins card and light without a line
-    - headroom above the field, so every tongue fades out instead of meeting the box's edge"""
+    - headroom above the field, so every tongue fades out instead of meeting the box's edge
+    motion: seconds of video. The two noises scroll upward (an feOffset under each, driven by SMIL, which the
+    video engine sets frame by frame), so the tongues rise and the wisps rise faster; a still passes None."""
     a = aura_params(level); h = round(w * 838 / 600); src = D.art(pid)
     # the side margin holds the field's blur (3 sigma past the widened card), so no glow meets the box's side
     px, pt, pb = w * max(a["spread"], 3 * a["field"] + .05), h * a["rise"], h * .10
@@ -151,6 +153,14 @@ def flame_aura(pid, w, accent, level=AURA_LEVEL, seed=7):
     hot_hex = "#" + "".join(f"{round(v * 255):02x}" for v in hot)
     k2, k3, k4 = a["k"]; F = w * a["field"]; e = w * .045
     u = f"{pid}{level}{seed}"
+    # rise speeds in px per second, as a share of the card's height: the outline slow, the wisps quicker
+    v1, v2 = h * .16, h * .34
+    ext = v2 * motion if motion else 0              # the flame filters reach below the box by the scroll's length
+    def scroll(inp, out, v):
+        if not motion:
+            return ""
+        return (f'<feOffset in="{inp}" dy="0" result="{out}"><animate attributeName="dy" from="0" to="{-v * motion:.0f}" '
+                f'dur="{motion}s" fill="freeze"/></feOffset>')
     def ramp(fid, blur, keep):
         return (f'<filter id="{fid}" filterUnits="userSpaceOnUse" x="0" y="0" width="{W:.0f}" height="{H:.0f}" color-interpolation-filters="sRGB">'
                 f'<feGaussianBlur stdDeviation="{blur:.1f}" result="b"/>'
@@ -162,13 +172,16 @@ def flame_aura(pid, w, accent, level=AURA_LEVEL, seed=7):
     def flame(fid, k4v):
         # the outline: the field plus noise, thresholded and softened; then the wisps: the body's alpha times
         # (1 - wisp + wisp x a second, finer vertical noise), so light moves inside it without breaking its edge
-        return (f'<filter id="{fid}" filterUnits="userSpaceOnUse" x="0" y="0" width="{W:.0f}" height="{H:.0f}" color-interpolation-filters="sRGB">'
+        n, n2 = ("n1", "n21") if motion else ("n", "n2")
+        return (f'<filter id="{fid}" filterUnits="userSpaceOnUse" x="0" y="0" width="{W:.0f}" height="{H + ext:.0f}" color-interpolation-filters="sRGB">'
                 f'<feGaussianBlur in="SourceGraphic" stdDeviation="{F:.1f}" result="f"/>'
-                f'<feTurbulence type="fractalNoise" baseFrequency="{a["freq"]}" numOctaves="{a["octaves"]}" seed="{seed}" result="n"/>'
+                f'<feTurbulence type="fractalNoise" baseFrequency="{a["freq"]}" numOctaves="{a["octaves"]}" seed="{seed}" result="{n}"/>'
+                + scroll(n, "n", v1) +
                 f'<feColorMatrix in="n" type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 1 0 0 0 0" result="na"/>'
                 f'<feComposite in="f" in2="na" operator="arithmetic" k2="{k2}" k3="{k3}" k4="{k4v}"/>'
                 f'<feComponentTransfer result="t"><feFuncA type="linear" slope="{a["sharp"]}"/></feComponentTransfer>'
-                f'<feTurbulence type="fractalNoise" baseFrequency="0.028 0.006" numOctaves="2" seed="{seed + 3}" result="n2"/>'
+                f'<feTurbulence type="fractalNoise" baseFrequency="0.028 0.006" numOctaves="2" seed="{seed + 3}" result="{n2}"/>'
+                + scroll(n2, "n2", v2) +
                 f'<feColorMatrix in="n2" type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 1 0 0 0 0" result="w"/>'
                 f'<feComposite in="t" in2="w" operator="arithmetic" k1="{a["wisp"]:.3f}" k2="{1 - a["wisp"]:.3f}"/>'
                 f'<feGaussianBlur stdDeviation="{a["post"]:.1f}"/></filter>')
@@ -245,11 +258,11 @@ def accent_of(pid):
 def card(pid, x, y, w, tilt, extra=""):
     return f'<div class="card safe" style="left:{x:.0f}px;top:{y:.0f}px;width:{w:.0f}px;transform:rotate({tilt}deg);{extra}"><img src="{D.art(pid)}"></div>'
 
-def aura_box(pid, x, y, w, tilt, accent, level):
+def aura_box(pid, x, y, w, tilt, accent, level, motion=None, extra=""):
     h = round(w * 838 / 600)
     inner = pixel_aura(pid, w, accent, level if level in AURA else AURA_DEFAULT) if AURA_MODE == "original" \
-        else flame_aura(pid, w, accent, level if level in AURA2 else AURA_LEVEL)
-    return (f'<div class="abs" style="left:{x:.0f}px;top:{y:.0f}px;width:{w:.0f}px;height:{h}px;transform:rotate({tilt}deg)">{inner}</div>')
+        else flame_aura(pid, w, accent, level if level in AURA2 else AURA_LEVEL, motion=motion)
+    return (f'<div class="abs" style="left:{x:.0f}px;top:{y:.0f}px;width:{w:.0f}px;height:{h}px;transform:rotate({tilt}deg){extra}">{inner}</div>')
 
 # where each piece goes, per ratio. screen: the device's box (x, y, width), its height from its kind; hero: the
 # hero card (x, y, width, tilt); callout: (x, y, width); the headline's size and the sub's box

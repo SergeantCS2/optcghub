@@ -512,6 +512,58 @@ consistent -- the aura looks to just have jagged pillars of flame, rather than a
 (persuade), composition per ratio, type/colour/material roles, how the app's UI sits inside the style,
 the listing frames, motion, and a verifiable finish condition.
 
+### Phase E: motion (27 Sept)
+
+**The owner, on the listing:** "fix the phone edge sliver and the wifi/battery icon, smaller and more uniform.
+then start the video."
+
+**Fixes:**
+- **Status icons.** They are one family now: signal, a filled Wi-Fi fan and a battery, all 12 units tall on
+  one baseline. They are drawn at 28 % of the status bar's height and the time at 36 %, so a small phone gets
+  small icons.
+- **Picker panel.** It starts at the sheet's edge (`ty - 48`). At `ty - 60` the dimmed page behind showed as a
+  sliver.
+
+**The pipeline (`motion/`):**
+- **`storyboards/video1.json`** holds the scenes as data: times and on-screen words. Prices, the total, the
+  date and the heroes come from the capture and `heroes.json`.
+- **`build.py`** lays the storyboard out and writes `$ADS_OUT/motion/<name>-<ratio>.html`.
+  - Every element rests at its spot, and a keyframe timeline (opacity, offset, scale and rotation, eased per
+    segment) moves it through `window.__frame(t)`.
+  - Impacts flash manga speed lines and shake the stage for 0.16 s.
+  - The count-up eases the capture's own total from zero.
+  - Every image is written once to `assets/` beside the page. Inlined at every use, the page was 56 MB.
+- **`style_pull.flame_aura(..., motion=seconds)`** makes the tongues rise: an `feOffset` under each noise,
+  driven by SMIL, scrolls the outline at 0.16 and the wisps at 0.34 card-heights a second. Stills pass `None`
+  and are unchanged.
+- **`engine.mjs`** is frame-exact and never reads the clock. For each frame at t it:
+  - sets every Web Animation and every outer SVG's SMIL clock to t, then calls `__frame(t)`;
+  - screenshots the frame as a JPEG and pipes it to ffmpeg: H.264 at CRF 17, yuv420p, 30 fps, faststart, and
+    a silent AAC track.
+  - `--stills a,b` writes PNGs instead of a video.
+  - ffmpeg is the static binary from `imageio-ffmpeg` in a scratch venv (`FFMPEG_PY`), not a repo dependency.
+- **`check.py`** reads the encoded file back: 10–60 s, h264 yuv420p, 30 fps, an allowed size, AAC audio, at
+  most 1 GB. `--frames` pulls PNGs from the MP4. `--selftest` plants a 4 s clip, which must be refused, and a
+  12 s one, which must pass.
+
+**Video 1, "Same Zoro" (20 s, 9:16):**
+
+| Time | Scene |
+|---|---|
+| 0–5 s | The fan lands and the SP ignites. "Same Zoro." then "*Three* prices." with the three real prices as pills. |
+| 5–10 s | The phone rises with the real picker; the SP row lifts out. |
+| 10–14 s | Luffy slams in, the phone shows Home, and "Collection value" counts up to $16,054.93. |
+| 14–17 s | Three one-second beats: "Scan with *no cap*." (Yamato), "*No* account." (Sanji), "Works *offline*." (Shanks). |
+| 17–20 s | The end card: the icon, the name, "Scan it. Value it. Build it.", the descriptive line, "On Google Play". |
+
+It is silent until the owner supplies audio. A 20 s render takes about 4.5 minutes and comes out at 11.7 MB.
+
+**How it was verified:**
+- 14 frames were read from the MP4 itself, in a contact sheet.
+- Aura crops at 3.9, 4.3 and 4.7 s differ: the tongues rise.
+
+**Next:** 1:1 and 16:9 cuts, `study.mjs` for the owner's inspiration videos, then Phase F (HTML5).
+
 ## Process
 
 - **Waves:** a wave is rendered, read by the session, sent with one line each, and picked by the owner

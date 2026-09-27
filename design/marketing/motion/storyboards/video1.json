@@ -1,0 +1,18 @@
+{
+ "_note": "Video 1, 'Same Zoro'. Scenes as data: times in seconds, words as they appear on screen (checked by copy_assets' rules through style_pull.check_caption). Prices, the total and the date come from the capture (report.json), never from here. build.py lays it out per ratio; engine.mjs renders it.",
+ "duration": 20,
+ "scenes": [
+  { "id": "fan",    "start": 0,    "end": 5,  "head": "Same Zoro.", "head2": "<em>Three</em> prices.",
+    "labels": { "base": "Base", "alternate_art": "Alt art", "sp": "SP" } },
+  { "id": "picker", "start": 5,    "end": 10, "head": "It asks<br><em>which one</em>.",
+    "sub": "The scanner shows every printing of a number." },
+  { "id": "value",  "start": 10,   "end": 14, "head": "Your binder,<br>valued <em>nightly</em>.", "hero": "value",
+    "label": "Collection value" },
+  { "id": "beats",  "start": 14,   "end": 17, "beats": [
+      { "word": "Scan with<br><em>no cap</em>.", "hero": "binder" },
+      { "word": "<em>No</em><br>account.",        "hero": "deck" },
+      { "word": "Works<br><em>offline</em>.",     "hero": "offline" } ] },
+  { "id": "end",    "start": 17,   "end": 20, "line": "Scan it. Value it. Build it.",
+    "what": "One Piece Card Game collection tracker", "store": "On Google Play" }
+ ]
+}
