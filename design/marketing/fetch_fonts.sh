@@ -20,4 +20,9 @@ get @fontsource/inter inter-latin-{400,500,600,700,800}-normal.woff2
 get @fontsource/ibm-plex-mono ibm-plex-mono-latin-{400,500,600}-normal.woff2
 get @fontsource-variable/fraunces fraunces-latin-full-{normal,italic}.woff2
 get @fontsource/shippori-mincho shippori-mincho-latin-{500,600,700,800}-normal.woff2
+# round 2 (game, manga, anime): the 119 subset of Dela Gothic One holds the katakana for the icon's DON
+get @fontsource/barlow-condensed barlow-condensed-latin-{600,700,800,900}-{normal,italic}.woff2
+get @fontsource/rajdhani rajdhani-latin-{500,600,700}-normal.woff2
+get @fontsource/dela-gothic-one dela-gothic-one-latin-400-normal.woff2 dela-gothic-one-119-400-normal.woff2
+get @fontsource/rubik rubik-latin-{700,800,900}-{normal,italic}.woff2
 echo "fetch_fonts: $(ls "$OUT" | wc -l) files in $OUT, every package OFL-1.1"

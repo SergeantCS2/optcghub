@@ -62,7 +62,8 @@ node design/marketing/render.mjs [--dir directions]  # NAME/out/*.png, report.js
 | `capture.mjs` | Seeds the live build as the listing does, then shoots the ads' states (the picker, Home, the binder, the card, the deck, Home offline, the Fold's open screen) and the hero printings' own scans. Every number and position goes to `report.json`. |
 | `style_listing.py` | Four concepts at three ratios, in the listing's scheme (it imports `design/play-listing/frames.py`). |
 | `render.mjs` | Shoots them and refuses a wrong size, over 5 MB, an overlay of 20 % or more, anything within 24 px of an edge, a missing font or a broken image. |
-| `directions.py` | The four premium drafts (vault, wano, guide, launch), for the owner to choose between. |
+| `directions.py` | Round 1 premium drafts (vault, wano, guide, launch): premium, and too far from the franchise (the owner). |
+| `directions2.py` | Round 2 drafts (pull, jump, episode): gacha, manga and the anime, kept premium. |
 | `fetch_fonts.sh` | Their typefaces, OFL-1.1, from npm's @fontsource packages; nothing committed until a pick. |
 | `paths.mjs` | Where the renders go. |
 

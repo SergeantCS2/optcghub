@@ -160,7 +160,8 @@ for (const [name, run] of steps.filter(([n]) => !only.length || only.some(o => n
 /* ---- the hero art: each printing's largest scan, as the app draws it (artUrl 'large'), at its own size ---- */
 if (!only.length || only.includes('art')) {
   const hero = await page.evaluate((ids) => ids.map(id => { const V = window.VAULT, p = V.CAT.byId.get(id);
-    return { id, num: p.num, name: p.name, treat: p.treat, sub: p.sub || '', market: p.market, shown: V.money(p.market), url: V.artUrl(p, 'large') }; }), HERO.ids);
+    return { id, num: p.num, name: p.name, treat: p.treat, sub: p.sub || '', rarity: p.rarity || '', set: (V.CAT.sets.get(p.set) || {}).name || '',
+      market: p.market, shown: V.money(p.market), url: V.artUrl(p, 'large') }; }), HERO.ids);
   if (!process.env.NO_ART) {
     const art = await page.context().newPage();
     await art.route('**/*', async r => { try { return r.fulfill({ response: await r.fetch() }); } catch { return r.abort(); } });

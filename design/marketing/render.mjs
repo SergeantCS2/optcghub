@@ -19,8 +19,11 @@ const MAX_BYTES = 5 * 1024 * 1024, OVERLAY = 20, EDGE = 24;
    of class "safe" too near an edge */
 function measure() {
   const W = innerWidth, H = innerHeight, clip = r => Math.max(0, Math.min(r.right, W) - Math.max(r.left, 0)) * Math.max(0, Math.min(r.bottom, H) - Math.max(r.top, 0));
-  /* a text block counts its lines (a range's rects), not its box; a badge counts its box */
-  const lines = e => { const r = document.createRange(); r.selectNodeContents(e); return [...r.getClientRects()]; };
+  /* a text block counts its lines, not its box: the rects of its text nodes only (a range over the whole
+     block also returns each inline element's box, so a styled word counted twice); a badge counts its box */
+  const lines = e => { const out = [], w = document.createTreeWalker(e, NodeFilter.SHOW_TEXT);
+    for (let n; (n = w.nextNode());) { if (!n.textContent.trim()) continue; const r = document.createRange(); r.selectNodeContents(n); out.push(...r.getClientRects()); }
+    return out; };
   const ov = [...document.querySelectorAll('.ov')].reduce((a, e) => a + (e.classList.contains('txt') ? lines(e).reduce((b, r) => b + clip(r), 0) : clip(e.getBoundingClientRect())), 0);
   const near = [...document.querySelectorAll('.safe')].map(e => ({ e, r: e.getBoundingClientRect() }))
     .filter(({ r }) => r.left < 24 || r.top < 24 || r.right > W - 24 || r.bottom > H - 24)
@@ -72,11 +75,20 @@ async function selftest(b) {
     const why = verdict('square', m, 1000, { w: 1200, h: 1200 }).join(' | ');
     if (!why.includes(want)) missed.push([name, want, why]);
   }
+  /* a caption with a styled word measures the same as without it (the double count this guard once made) */
+  const same = [];
+  for (const body of ['<h1 class="ov txt" style="position:absolute;left:100px;top:100px;font:80px Impact">Every printing priced</h1>',
+                      '<h1 class="ov txt" style="position:absolute;left:100px;top:100px;font:80px Impact">Every <span>printing</span> priced</h1>']) {
+    const f = path.join(tmp, 'span.html'); fs.writeFileSync(f, `<!doctype html><html><body style="margin:0;width:1200px;height:1200px">${body}</body></html>`);
+    const page = await b.newPage({ viewport: { width: 1200, height: 1200 } }); await page.goto('file://' + f); await page.waitForTimeout(100);
+    same.push((await page.evaluate(measure)).overlay); await page.close();
+  }
+  if (Math.abs(same[0] - same[1]) > 0.3) missed.push(['span', 'styled word counted once', `${same[0]} vs ${same[1]}`]);
   if (!verdict('square', { overlay: 5, near: [], fonts: true, broken: 0 }, 6 * 1048576, { w: 1200, h: 1200 }).some(x => x.includes('MB'))) missed.push(['bytes', 'MB', 'not refused']);
   if (!verdict('square', { overlay: 5, near: [], fonts: true, broken: 0 }, 1000, { w: 1200, h: 628 }).some(x => x.includes('size'))) missed.push(['size', 'size', 'not refused']);
   fs.rmSync(tmp, { recursive: true });
   if (missed.length) { console.log('selftest: the guard let a planted frame through', JSON.stringify(missed)); process.exit(1); }
-  console.log('selftest: overlay, edge, broken image, bytes and size each refused');
+  console.log('selftest: overlay, edge, broken image, bytes and size each refused; a styled word counted once');
 }
 
 const b = await browser();

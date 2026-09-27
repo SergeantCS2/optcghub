@@ -1,0 +1,270 @@
+#!/usr/bin/env python3
+"""Round 2 of the premium drafts (27 Sept): the franchise's energy, kept premium.
+
+Round 1 (directions.py: vault, wano, guide, launch) was premium and lost "the anime/manga/video game vibe"
+(the owner). The owner's round-2 brief: the worlds are Gacha/JRPG, shonen manga and the anime itself; the
+energy is "stylish", one or two big effects per frame; premium means rarity and reward, high polish,
+cinematic framing, and value shown precisely and honestly. So there are three drafts, one per world, on the
+same real content as round 1 (OP01-120's three SEC printings at 4:5, Home's value at 1:1):
+
+  pull     a gacha result screen: the SEC pull lit by rays and a holo rim, HUD panels with chamfered
+           corners, a condensed italic headline, the market values as a result readout
+  jump     a shonen manga page: panels and gutters, speed lines, the icon's own DON sound effect, one
+           spot red for the money, the cards the only full colour on the page
+  episode  the anime's title-card energy: a bright sky, a sunburst behind the hit, a card breaking out of
+           its frame, a fat outlined italic title
+
+Every number, rarity and set comes from capture.mjs's report.json. A draft, not finished work.
+  bash design/marketing/fetch_fonts.sh && python3 design/marketing/directions2.py
+  node design/marketing/render.mjs --dir directions2
+"""
+import json, math, os, random, sys
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+import directions as D                               # b64, face, page, grain, art, crop_img, day, icon
+ADS, OUT = D.ADS, os.path.join(D.ADS, "directions2")
+
+def data():
+    R, ps, labels, why, home_crop, when = D.data()
+    S = {s["name"]: s for s in R["steps"]}
+    count = why.split()[0]                           # "7" of "7 printings share OP01-120, ..."
+    return R, S, ps, labels, why, count, home_crop, when
+
+HERO, LEFT, RIGHT = 454666, 454665, 454664            # the manga parallel, the look-alike, the base
+SPARK = "M0,-1 C.08,-.08 .08,-.08 1,0 C.08,.08 .08,.08 0,1 C-.08,.08 -.08,.08 -1,0 C-.08,-.08 -.08,-.08 0,-1Z"
+
+def sparkles(points, color="#fff"):
+    return "".join(f'<svg class="abs" style="left:{x - s}px;top:{y - s}px;width:{2 * s}px;height:{2 * s}px;opacity:{o}" viewBox="-1 -1 2 2" aria-hidden="true">'
+                   f'<path d="{SPARK}" fill="{color}"/></svg>' for x, y, s, o in points)
+
+# ================================================================ pull (gacha / JRPG)
+PULL_CSS = """
+body{background:radial-gradient(ellipse 60% 45% at 50% 50%,#3a1f7a 0%,#1a1242 45%,#070a1f 100%);font-family:Rajdhani,sans-serif;color:#fff}
+.rays{position:absolute;border-radius:50%;
+  background:repeating-conic-gradient(from 4deg,rgba(255,214,120,.20) 0deg 5deg,transparent 5deg 15deg);
+  -webkit-mask-image:radial-gradient(circle,#000 0,rgba(0,0,0,.7) 30%,transparent 68%)}
+.halo{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(255,226,150,.55),rgba(255,160,90,.18) 40%,transparent 70%)}
+h1{font:italic 900 108px/.9 'Barlow Condensed';letter-spacing:-.01em;text-transform:uppercase;transform:skewX(-6deg);
+  filter:drop-shadow(0 6px 0 rgba(0,0,0,.45))}
+h1 .gold{background:linear-gradient(180deg,#fff6d2 0%,#ffd66b 48%,#e39c1f 100%);-webkit-background-clip:text;color:transparent}
+.chamf{clip-path:polygon(18px 0,100% 0,100% calc(100% - 18px),calc(100% - 18px) 100%,0 100%,0 18px)}
+.hud{position:absolute;background:linear-gradient(180deg,rgba(18,20,52,.92),rgba(8,10,30,.92))}
+.hud::before{content:'';position:absolute;inset:0;border:1.5px solid rgba(255,214,120,.55);clip-path:inherit}
+.hud h3{font:700 19px/1 Rajdhani;letter-spacing:.26em;text-transform:uppercase;color:#ffd66b}
+.row{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-top:1px solid rgba(255,255,255,.10)}
+.row span{font:600 21px/1 Rajdhani;letter-spacing:.08em;text-transform:uppercase;color:#c9c6e8}
+.row b{font:italic 800 38px/1 'Barlow Condensed';letter-spacing:.01em;color:#fff}
+.row.hit{background:linear-gradient(90deg,rgba(255,214,120,.18),transparent);margin:0 -24px;padding:10px 24px;border-top-color:rgba(255,214,120,.5)}
+.row.hit span{color:#ffe7a3}.row.hit b{color:#ffd66b;font-size:48px}
+.badge{position:absolute;padding:10px 22px 8px;background:linear-gradient(180deg,#ffe9a8,#e7a93a);color:#2a1600;
+  font:italic 900 34px/1 'Barlow Condensed';letter-spacing:.06em}
+.card{position:absolute;border-radius:3.6%/2.6%;overflow:hidden}
+.card img{display:block;width:100%}
+.pulled{box-shadow:0 0 0 3px rgba(255,255,255,.95),0 0 36px rgba(125,249,255,.65),0 0 90px rgba(255,106,213,.40),0 30px 60px rgba(0,0,0,.6)}
+.pulled::after{content:'';position:absolute;inset:0;mix-blend-mode:color-dodge;opacity:.30;
+  background:linear-gradient(125deg,transparent 28%,#ff8bd8 40%,#8ef6ff 48%,#fff29a 56%,transparent 68%)}
+.back{filter:brightness(.62) saturate(.85);box-shadow:0 20px 40px rgba(0,0,0,.6),0 0 0 2px rgba(255,255,255,.25)}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{width:46px;height:46px;border-radius:10px;box-shadow:0 0 0 2px rgba(255,214,120,.8)}
+.brand b{font:700 24px/1 Rajdhani;letter-spacing:.22em;text-transform:uppercase}
+.tag{position:absolute;padding:10px 18px;background:rgba(255,255,255,.08);font:700 20px/1 Rajdhani;letter-spacing:.2em;text-transform:uppercase;color:#e9e6ff}
+.foot{font:600 18px/1.35 Rajdhani;letter-spacing:.04em;color:#a9a6cc}
+.win{position:absolute;overflow:hidden;box-shadow:0 0 0 2px rgba(255,214,120,.7),0 0 60px rgba(255,190,90,.25),0 40px 90px rgba(0,0,0,.7)}
+.corner{position:absolute;width:44px;height:44px;border:4px solid #ffd66b}
+"""
+
+def pull_fonts():
+    return "".join([D.face("Barlow Condensed", f"barlow-condensed-latin-{w}-italic.woff2", w, "italic") for w in (800, 900)] +
+                   [D.face("Rajdhani", f"rajdhani-latin-{w}-normal.woff2", w) for w in (600, 700)])
+
+def pull(ratio):
+    R, S, ps, labels, why, count, home_crop, when = data()
+    hero = ps[HERO]
+    css = pull_fonts() + PULL_CSS
+    if ratio == "portrait":
+        body = [f'<div class="rays" style="left:-150px;top:120px;width:1500px;height:1500px"></div>',
+                f'<div class="halo" style="left:260px;top:360px;width:680px;height:680px"></div>',
+                f'<div class="abs brand ov safe" style="left:64px;top:56px"><img src="{D.icon()}"><b>OP TCG Hub</b></div>',
+                f'<div class="tag chamf ov txt safe" style="right:64px;top:60px">{hero["num"]} &middot; {hero["set"]}</div>',
+                f'<h1 class="abs ov txt safe" style="left:64px;top:150px;width:1080px">Which one did<br><span class="gold">you pull?</span></h1>']
+        for pid, x, y, w, t in ((LEFT, 96, 560, 270, -9), (RIGHT, 834, 560, 270, 9)):
+            body.append(f'<div class="card back safe" style="left:{x}px;top:{y}px;width:{w}px;transform:rotate({t}deg)"><img src="{D.art(pid)}"></div>')
+        body.append(f'<div class="card pulled safe" style="left:405px;top:440px;width:390px;transform:rotate(-3deg)"><img src="{D.art(HERO)}"></div>')
+        body.append(f'<div class="badge chamf ov txt safe" style="left:505px;top:404px;transform:rotate(-3deg)">{hero["rarity"]} &middot; Secret Rare</div>')
+        body.append(sparkles([(360, 470, 26, .95), (838, 520, 20, .9), (820, 930, 30, .95), (380, 940, 16, .8), (600, 380, 14, .7)], "#fff6d2"))
+        rows = "".join(f'<div class="row{" hit" if pid == HERO else ""}"><span>{labels[pid]}</span><b>{ps[pid]["shown"]}</b></div>' for pid in (RIGHT, LEFT, HERO))
+        body.append(f'<div class="hud chamf ov safe" style="left:220px;top:1080px;width:760px;padding:20px 24px 6px"><h3>Market value &middot; TCGplayer &middot; {when}</h3>{rows}</div>')
+        body.append(f'<div class="abs foot ov txt safe" style="left:220px;top:1404px;width:760px;text-align:center">{hero["num"]} has {count} printings. The scanner shows them all, and asks which one you hold.</div>')
+        return D.page(ratio, css, "".join(body), "pull-portrait")
+    img, h = D.crop_img("home", home_crop, 700)
+    delta = S["home"]["delta"]
+    body = [f'<div class="rays" style="left:-200px;top:-80px;width:1600px;height:1600px"></div>',
+            f'<div class="halo" style="left:250px;top:300px;width:700px;height:700px;opacity:.6"></div>',
+            f'<div class="abs brand ov safe" style="left:64px;top:56px"><img src="{D.icon()}"><b>OP TCG Hub</b></div>',
+            f'<h1 class="abs ov txt safe" style="left:64px;top:140px;width:1080px;font-size:110px">Binder value<br><span class="gold">updated nightly</span></h1>',
+            f'<div class="win chamf safe" style="left:250px;top:400px;width:700px;height:{h}px">{img}</div>']
+    for x, y, r in ((236, 386, 0), (914, 386, 90), (914, 364 + h, 180), (236, 364 + h, 270)):
+        body.append(f'<div class="corner" style="left:{x}px;top:{y}px;border-right:0;border-bottom:0;transform:rotate({r}deg)"></div>')
+    body.append(f'<div class="badge chamf ov txt safe" style="left:700px;top:{400 + h - 30}px;font-size:30px">{delta.split(" in")[0]} &middot; 1M</div>')
+    body.append(sparkles([(250, 420, 18, .9), (960, 700, 24, .9)], "#fff6d2"))
+    body.append(f'<div class="abs foot ov txt safe" style="left:64px;top:1110px;width:1072px">A sample collection. TCGplayer market prices, {when}.</div>')
+    return D.page(ratio, css, "".join(body), "pull-square")
+
+# ================================================================ jump (shonen manga)
+def speed_lines(w, h, cx, cy, n=150, seed=5, inner=(.28, .46), color="#0b0b0b"):
+    rnd = random.Random(seed); R = math.hypot(w, h); polys = []
+    for i in range(n):
+        a = rnd.uniform(0, 2 * math.pi); da = rnd.uniform(.004, .014)
+        r0 = rnd.uniform(*inner) * min(w, h)
+        p = [(cx + math.cos(a) * r0, cy + math.sin(a) * r0),
+             (cx + math.cos(a - da) * R, cy + math.sin(a - da) * R), (cx + math.cos(a + da) * R, cy + math.sin(a + da) * R)]
+        polys.append('<polygon points="' + " ".join(f"{x:.1f},{y:.1f}" for x, y in p) + '"/>')
+    return f'<svg class="abs" style="left:0;top:0;width:{w}px;height:{h}px" viewBox="0 0 {w} {h}" aria-hidden="true"><g fill="{color}">{"".join(polys)}</g></svg>'
+
+def burst(w, h, spikes=18, seed=3):
+    rnd = random.Random(seed); pts = []
+    for i in range(spikes * 2):
+        a = i / (spikes * 2) * 2 * math.pi; r = 1 if i % 2 == 0 else rnd.uniform(.72, .82)
+        pts.append(f"{50 + 50 * r * math.cos(a):.1f},{50 + 50 * r * math.sin(a):.1f}")
+    return (f'<svg class="abs" style="inset:0;width:100%;height:100%" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">'
+            f'<polygon points="{" ".join(pts)}" fill="#e5202e" stroke="#0b0b0b" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg>')
+
+JUMP_CSS = """
+body{background:#f6f3ec;font-family:'Barlow Condensed',sans-serif;color:#0b0b0b}
+.panel{position:absolute;overflow:hidden;background:#fff;outline:5px solid #0b0b0b}
+.tone{position:absolute;inset:0;background:radial-gradient(circle,#0b0b0b 1.3px,transparent 1.6px) 0 0/9px 9px}
+.sfx{font:400 160px/.9 Dela;color:#0b0b0b;-webkit-text-stroke:11px #fff;paint-order:stroke fill;letter-spacing:-.04em;white-space:nowrap}
+.head{font:400 68px/1 Dela;letter-spacing:-.01em;text-transform:uppercase;white-space:nowrap}
+.nar{position:absolute;background:#fff;border:4px solid #0b0b0b;padding:12px 18px;font:italic 800 30px/1.1 'Barlow Condensed';text-transform:uppercase;letter-spacing:.01em}
+.card{position:absolute;border-radius:3.6%/2.6%;overflow:hidden;box-shadow:0 0 0 5px #0b0b0b}
+.card img{display:block;width:100%}
+.price{position:absolute;text-align:center;color:#fff;font:400 50px/1 Dela;-webkit-text-stroke:3px #0b0b0b;paint-order:stroke fill;white-space:nowrap}
+.price small{display:block;font:italic 800 24px/1 'Barlow Condensed';letter-spacing:.08em;margin-bottom:8px;-webkit-text-stroke:0;color:#fff}
+.tag{font:italic 800 22px/1 'Barlow Condensed';letter-spacing:.12em;text-transform:uppercase}
+.money{font:400 42px/1 Dela;color:#e5202e}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{width:44px;height:44px;border-radius:9px;box-shadow:0 0 0 3px #0b0b0b}
+.brand b{font:400 26px/1 Dela}
+.foot{font:600 19px/1.3 'Barlow Condensed';letter-spacing:.04em;color:#3a3a3a}
+.shot{position:absolute;overflow:hidden;box-shadow:0 0 0 5px #0b0b0b}
+"""
+
+def jump_fonts():
+    return "".join([D.face("Dela", "dela-gothic-one-latin-400-normal.woff2", 400), D.face("Dela", "dela-gothic-one-119-400-normal.woff2", 400),
+                    D.face("Barlow Condensed", "barlow-condensed-latin-800-italic.woff2", 800, "italic"),
+                    D.face("Barlow Condensed", "barlow-condensed-latin-600-normal.woff2", 600)])
+
+def jump(ratio):
+    R, S, ps, labels, why, count, home_crop, when = data()
+    hero = ps[HERO]
+    css = jump_fonts() + JUMP_CSS
+    if ratio == "portrait":
+        M = 40
+        body = [
+            # panel 1: the question, on tone
+            f'<div class="panel" style="left:{M}px;top:{M}px;width:{1200 - 2 * M}px;height:300px;clip-path:polygon(0 0,100% 0,100% 82%,0 100%)">'
+            f'<div class="tone" style="-webkit-mask-image:linear-gradient(90deg,transparent 35%,#000 100%);opacity:.5"></div></div>',
+            f'<div class="abs head ov txt safe" style="left:84px;top:78px;width:900px">Same number.<br><span style="color:#e5202e">Different card.</span></div>',
+            # panel 2: the hit, speed lines, the sound effect breaking the frame
+            f'<div class="panel" style="left:{M}px;top:326px;width:{1200 - 2 * M}px;height:700px;clip-path:polygon(0 4%,100% 0,100% 100%,0 96%)">'
+            f'{speed_lines(1120, 700, 520, 360, 170)}</div>',
+            f'<div class="card safe" style="left:350px;top:372px;width:410px;transform:rotate(-5deg)"><img src="{D.art(HERO)}"></div>',
+            f'<div class="abs sfx ov txt safe" style="left:742px;top:410px;transform:rotate(8deg)">ドン!!</div>',
+            f'<div class="abs safe" style="left:720px;top:730px;width:420px;height:250px;transform:rotate(-4deg)">{burst(420, 250)}'
+            f'<div class="price ov txt" style="position:absolute;left:0;right:0;top:78px"><small>{labels[HERO]}</small>{hero["shown"]}</div></div>',
+            f'<div class="nar ov txt safe" style="left:84px;top:386px;transform:rotate(-2deg)">{hero["num"]}.<br>{count} printings.</div>',
+            # panel 3 and 4: the look-alikes, and the app asking
+            f'<div class="panel" style="left:{M}px;top:1052px;width:540px;height:340px">'
+            f'<div class="tone" style="-webkit-mask-image:linear-gradient(180deg,#000,transparent 70%);opacity:.35"></div></div>',
+        ]
+        for pid, x in ((LEFT, 92), (RIGHT, 332)):
+            body.append(f'<div class="card safe" style="left:{x}px;top:1072px;width:176px"><img src="{D.art(pid)}"></div>')
+            body.append(f'<div class="abs ov txt safe" style="left:{x - 20}px;top:1330px;width:216px;text-align:center"><span class="money" style="font-size:36px">{ps[pid]["shown"]}</span></div>')
+        why_r = S["picker"]["rects"]["why"]; opts = S["picker"]["rects"]["opts"]
+        crop = (why_r["x"] - 8, S["picker"]["rects"]["title"]["y"] - 14, why_r["w"] + 16, opts["y"] + 300 - (S["picker"]["rects"]["title"]["y"] - 14))
+        img, h = D.crop_img("picker", crop, 520)
+        body.append(f'<div class="panel" style="left:604px;top:1052px;width:556px;height:340px;background:#100d22">'
+                    f'<div style="position:absolute;left:18px;top:14px;width:520px;height:{h}px">{img}</div></div>')
+        body.append(f'<div class="nar ov txt safe" style="left:640px;top:1300px;transform:rotate(2deg);font-size:26px">The scanner asks.</div>')
+        body.append(f'<div class="abs foot ov txt safe" style="left:{M}px;top:1420px;width:700px">TCGplayer market prices, {when}.</div>')
+        body.append(f'<div class="abs brand ov safe" style="right:{M}px;top:1410px"><img src="{D.icon()}"><b>OP TCG Hub</b></div>')
+        return D.page(ratio, css, "".join(body), "jump-portrait")
+    img, h = D.crop_img("home", home_crop, 620)
+    delta = S["home"]["delta"]
+    body = [f'<div class="panel" style="left:40px;top:40px;width:1120px;height:1030px">{speed_lines(1120, 1030, 560, 560, 160, 9, (.36, .5))}</div>',
+            f'<div class="abs head ov txt safe" style="left:84px;top:78px;width:1000px;font-size:74px">Your binder.<br><span style="color:#e5202e">Priced nightly.</span></div>',
+            f'<div class="shot safe" style="left:290px;top:330px;width:620px;height:{h}px;transform:rotate(-3deg)">{img}</div>',
+            f'<div class="abs safe" style="left:760px;top:{330 + h - 110}px;width:360px;height:220px;transform:rotate(6deg)">{burst(360, 220, 16, 8)}'
+            f'<div class="price ov txt" style="position:absolute;left:0;right:0;top:62px;font-size:48px"><small>This month</small>{delta.split(" in")[0]}</div></div>',
+            f'<div class="abs foot ov txt safe" style="left:40px;top:1098px;width:700px">A sample collection. TCGplayer market prices, {when}.</div>',
+            f'<div class="abs brand ov safe" style="right:40px;top:1090px"><img src="{D.icon()}"><b>OP TCG Hub</b></div>']
+    return D.page(ratio, css, "".join(body), "jump-square")
+
+# ================================================================ episode (the anime's own energy)
+EP_CSS = """
+body{background:linear-gradient(180deg,#0f5fd6 0%,#1e9bff 55%,#8fd6ff 100%);font-family:Rubik,sans-serif;color:#fff}
+.sun{position:absolute;border-radius:50%;
+  background:repeating-conic-gradient(from 0deg,#ffd23f 0deg 9deg,#ff9f1c 9deg 18deg);
+  -webkit-mask-image:radial-gradient(circle,#000 0,#000 30%,transparent 70%)}
+.title{font:italic 900 118px/.92 Rubik;text-transform:uppercase;letter-spacing:-.02em;color:#fff;
+  -webkit-text-stroke:12px #0a1a4a;paint-order:stroke fill;filter:drop-shadow(0 10px 0 #0a1a4a)}
+.title .hot{color:#ffd23f}
+.ep{position:absolute;padding:10px 22px 8px;background:#e8342e;color:#fff;font:italic 800 32px/1 'Barlow Condensed';letter-spacing:.12em;
+  text-transform:uppercase;transform:rotate(-4deg);box-shadow:6px 6px 0 #0a1a4a}
+.frame{position:absolute;border:10px solid #fff;border-radius:28px;box-shadow:0 0 0 8px #0a1a4a,0 24px 0 8px rgba(10,26,74,.35)}
+.card{position:absolute;border-radius:3.6%/2.6%;overflow:hidden;box-shadow:0 0 0 7px #fff,0 0 0 13px #0a1a4a,0 26px 40px rgba(10,26,74,.45)}
+.card img{display:block;width:100%}
+.pill{position:absolute;text-align:center;background:#fff;color:#0a1a4a;border-radius:999px;padding:10px 0 8px;box-shadow:0 0 0 6px #0a1a4a,0 10px 0 6px rgba(10,26,74,.35)}
+.pill span{display:block;font:italic 800 20px/1 'Barlow Condensed';letter-spacing:.1em;text-transform:uppercase;color:#4a5a8a}
+.pill b{display:block;font:italic 900 42px/1.05 Rubik;letter-spacing:-.01em}
+.pill.hot{background:#ffd23f}.pill.hot b{font-size:52px;color:#0a1a4a}
+.brand{display:flex;align-items:center;gap:14px}
+.brand img{width:56px;height:56px;border-radius:12px;box-shadow:0 0 0 5px #fff,0 0 0 9px #0a1a4a}
+.brand b{font:italic 900 40px/1 Rubik;text-transform:uppercase;color:#fff;-webkit-text-stroke:7px #0a1a4a;paint-order:stroke fill}
+.foot{font:600 19px/1.3 'Barlow Condensed';letter-spacing:.04em;color:#0a1a4a}
+.shot{position:absolute;overflow:hidden;border-radius:26px;box-shadow:0 0 0 8px #fff,0 0 0 14px #0a1a4a,0 26px 0 14px rgba(10,26,74,.3)}
+"""
+
+def ep_fonts():
+    return "".join([D.face("Rubik", "rubik-latin-900-italic.woff2", 900, "italic"), D.face("Barlow Condensed", "barlow-condensed-latin-800-italic.woff2", 800, "italic"),
+                    D.face("Barlow Condensed", "barlow-condensed-latin-600-normal.woff2", 600)])
+
+def episode(ratio):
+    R, S, ps, labels, why, count, home_crop, when = data()
+    hero = ps[HERO]
+    css = ep_fonts() + EP_CSS
+    if ratio == "portrait":
+        body = [f'<div class="sun" style="left:-100px;top:320px;width:1400px;height:1400px"></div>',
+                f'<div class="ep ov txt safe" style="left:70px;top:70px">Next time on your binder</div>',
+                f'<div class="abs title ov txt safe" style="left:60px;top:150px;width:1080px">One number,<br><span class="hot">{count} cards!</span></div>',
+                f'<div class="frame" style="left:150px;top:640px;width:900px;height:360px;background:rgba(255,255,255,.16)"></div>']
+        for pid, x, y, w, t in ((LEFT, 200, 600, 240, -8), (RIGHT, 760, 600, 240, 8)):
+            body.append(f'<div class="card safe" style="left:{x}px;top:{y}px;width:{w}px;transform:rotate({t}deg)"><img src="{D.art(pid)}"></div>')
+        body.append(f'<div class="card safe" style="left:425px;top:470px;width:350px;transform:rotate(-2deg)"><img src="{D.art(HERO)}"></div>')
+        for pid, cx, y, w, hot in ((LEFT, 250, 1110, 230, False), (HERO, 600, 1090, 380, True), (RIGHT, 950, 1110, 230, False)):
+            body.append(f'<div class="pill ov safe{" hot" if hot else ""}" style="left:{cx - w / 2:.0f}px;top:{y}px;width:{w}px"><span>{labels[pid]}</span><b>{ps[pid]["shown"]}</b></div>')
+        body.append(f'<div class="abs brand ov safe" style="left:60px;top:1330px"><img src="{D.icon()}"><b>OP TCG Hub</b></div>')
+        body.append(f'<div class="abs foot ov txt safe" style="left:60px;top:1420px;width:900px">{hero["num"]} {hero["name"]}, {hero["rarity"]}. TCGplayer market prices, {when}.</div>')
+        return D.page(ratio, css, "".join(body), "episode-portrait")
+    img, h = D.crop_img("home", home_crop, 640)
+    delta = S["home"]["delta"]
+    body = [f'<div class="sun" style="left:-120px;top:120px;width:1440px;height:1440px"></div>',
+            f'<div class="ep ov txt safe" style="left:70px;top:70px">Updated every night</div>',
+            f'<div class="abs title ov txt safe" style="left:60px;top:140px;width:1080px;font-size:104px">Your binder&rsquo;s<br><span class="hot">bounty!</span></div>',
+            f'<div class="shot safe" style="left:280px;top:420px;width:640px;height:{h}px;transform:rotate(-3deg)">{img}</div>',
+            f'<div class="pill hot ov safe" style="left:760px;top:{420 + h - 40}px;width:330px;transform:rotate(5deg)"><span>This month</span><b style="font-size:48px">{delta.split(" in")[0]}</b></div>',
+            f'<div class="abs brand ov safe" style="left:60px;top:1044px"><img src="{D.icon()}" style="width:48px;height:48px"><b style="font-size:34px">OP TCG Hub</b></div>',
+            f'<div class="abs foot ov txt safe" style="left:60px;top:1122px;width:900px">A sample collection. TCGplayer market prices, {when}.</div>']
+    return D.page(ratio, css, "".join(body), "episode-square")
+
+DRAFTS = {"pull": pull, "jump": jump, "episode": episode}
+
+if __name__ == "__main__":
+    os.makedirs(OUT, exist_ok=True)
+    only = sys.argv[1:]
+    for name, make in DRAFTS.items():
+        if only and name not in only:
+            continue
+        for ratio in ("portrait", "square"):
+            open(os.path.join(OUT, f"{name}-{ratio}.html"), "w").write(make(ratio))
+    print(f"directions2: written to {OUT}")

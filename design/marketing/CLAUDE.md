@@ -103,7 +103,8 @@ python3 design/marketing/copy_assets.py              # headlines and description
 node design/marketing/capture.mjs                    # live build -> shots/, art/, report.json
 bash design/marketing/fetch_fonts.sh                 # OFL typefaces from npm's @fontsource -> fonts/
 python3 design/marketing/style_listing.py            # style v1 compositions -> images/*.html
-python3 design/marketing/directions.py               # the four v2 drafts -> directions/*.html
+python3 design/marketing/directions.py               # round 1 drafts -> directions/*.html
+python3 design/marketing/directions2.py              # round 2 drafts -> directions2/*.html
 node design/marketing/render.mjs --selftest          # the image guard: planted frames refused first
 node design/marketing/render.mjs [--dir directions]  # PNGs, report.json, thumbs.png per folder
 ```
@@ -114,7 +115,8 @@ node design/marketing/render.mjs [--dir directions]  # PNGs, report.json, thumbs
 | `copy_assets.py` | The ad text and its guard. |
 | `render.mjs` | Shoots a folder of compositions. It refuses a wrong size, over 5 MB, an overlay of 20 % or more (text measured by its lines), anything of class `safe` within 24 px of an edge, a font that did not load, or a broken image. |
 | `style_listing.py` | Style v1 (wave 1). |
-| `directions.py` | The four premium drafts. |
+| `directions.py` | Round 1 premium drafts (not taken). |
+| `directions2.py` | Round 2 drafts: pull, jump, episode. |
 | `fetch_fonts.sh` | The drafts' fonts. Only the chosen style's are committed later, under `fonts/` with their licences. |
 | `paths.mjs` | Where the renders go. |
 
@@ -191,6 +193,34 @@ the Shanks trio at 4:5 and Home's value at 1:1):
 | **Wano Gold** | Indigo, a gold-hairline seigaiha, a hand-laid gold-leaf mount, lacquer price plates, a vermilion seal; Shippori Mincho. | The strongest brand link (the icon's wave, the app's Wano indigo and gold) and the most flavoured: cliché risk, can read as Japanese-market. |
 | **Price Guide** | Paper and ink, a masthead with the price date, cards like photos on a desk, mono figures, a red pen's loop on the number that matters; Fraunces and IBM Plex Mono. | The most trustworthy and distinct; a light ground is quieter in dark feeds. |
 | **Launch** | Near-black studio light, cards floating in depth with a foil sheen, a big tight Inter, figures as a spec sheet. | Instantly "premium app", and the most generic. Glow and glass tip into the common look, so it stays spare. |
+
+**Round 1 verdict (the owner, 27 Sept):**
+> "While more premium, we lost the anime/manga/video game vibe along with it, I don't really vibe with
+> any of these."
+
+None of the four is taken. Premium must not cost the franchise's energy.
+
+**Round 2 brief (the owner's answers, 27 Sept):**
+- **World:** Gacha/JRPG, shonen manga, and the anime itself. Not the card-game-client look, and not
+  auction, editorial or tech.
+- **Energy:** stylish to start: bold and game-like but controlled, one or two big effects per frame.
+  "We may change this."
+- **What makes it premium:** all four of rarity and reward (the SP/SEC pull moment, foil, gold, a
+  reveal), high polish, cinematic (key-art composition, dramatic light, a hero moment), and value and
+  trust (money shown precisely and honestly).
+
+**Round 2 drafts, sent 27 Sept** (`directions2.py`, `render.mjs --dir directions2`; same content, stylish energy):
+
+| Draft | World | Character |
+|---|---|---|
+| **Pull** | Gacha / JRPG | A result screen. The SEC pull (the rarity from the catalogue) lit by gold rays and a holo rim, the two other printings dimmed behind, a chamfered HUD reading out the three market values, a condensed italic headline ("Which one did you pull?"). |
+| **Jump** | Shonen manga | A manga page: panels, gutters, screentone, speed lines, the icon's own ドン!! sound effect breaking the frame, one spot red for the money, the cards the only full colour, the app's picker as the last panel ("The scanner asks."). |
+| **Episode** | The anime itself | Title-card energy: a bright sky, a sunburst behind the hit, the card breaking out of its frame, a fat outlined italic title ("One number, 7 cards!"), a "Next time on your binder" tag, "Your binder's bounty!" for the value. |
+
+What bit in round 2: the overlay measure counted a styled word twice (a Range over a block also returns
+each inline element's box). It now measures text nodes only, and its selftest plants a caption with and
+without a `<span>` and requires the same share, watched to fail on the old measure. Also, a class shared
+between a card and a table row gave the row the card's holo shine.
 
 **Design contract:** written here once the owner picks or mixes a direction. It will cover purpose
 (persuade), composition per ratio, type/colour/material roles, how the app's UI sits inside the style,
