@@ -303,7 +303,132 @@ def pullmulti(ratio):
     body.append(f'<div class="abs foot ov txt safe" style="left:64px;top:1420px;width:1072px;text-align:center">TCGplayer market prices, {when}. The scanner shows them all, and asks which one you hold.</div>')
     return D.page(ratio, css, "".join(body), f"pullmulti-{ratio}")
 
-DRAFTS = {"pull": pull, "jump": jump, "episode": episode, "pullmulti": pullmulti}
+# ================================================================ pull v3 (27 Sept): de-slopped, manga-led
+# The owner on Pull v2: it reads "very AI like" (the font, the rays, the sparkles, the table); wanted bigger
+# card art, more colour, more app, never hands, and manga instead of sparkles ("his signature demon aura").
+# The references (PokeScreener, Collectr, Robinhood) share one grammar: a clean sentence-case headline with
+# one accent word, one real device with the real UI, one or two real UI pieces lifted out and enlarged, one
+# accent colour, and no stock effects. So: no rays, no sparkles, no invented table. The light and the colour
+# come from the card: the ground is the hero's own art, blurred; the aura takes the art's own accent
+# (accent.mjs); the only prices are the app's own rows.
+
+WORDS = {2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six", 7: "Seven"}
+
+def accents():
+    try:
+        return json.load(open(os.path.join(ADS, "art", "accents.json")))
+    except OSError:
+        return {}
+
+def aura(w, h, deep, bright, seed=11, pad=170):
+    """a rising, flame-edged glow the size of the card: the demon aura, in the card's own colour. Vertical
+    streaks come from noise that changes fast across and slowly up; the hot inner edge is a second, tighter
+    flame. It sits behind the card, positioned at the card's own box."""
+    W, H = w + 2 * pad, h + 2 * pad
+    def fl(fid, freq, scale, blur):
+        return (f'<filter id="{fid}" x="-40%" y="-50%" width="180%" height="190%" color-interpolation-filters="sRGB">'
+                f'<feGaussianBlur in="SourceGraphic" stdDeviation="{blur}" result="b"/>'
+                f'<feTurbulence type="fractalNoise" baseFrequency="{freq}" numOctaves="3" seed="{seed}" result="n"/>'
+                f'<feDisplacementMap in="b" in2="n" scale="{scale}" xChannelSelector="R" yChannelSelector="G" result="d"/>'
+                f'<feComponentTransfer in="d"><feFuncA type="linear" slope="1.6" intercept="-0.05"/></feComponentTransfer></filter>')
+    return (f'<svg class="abs" style="left:{-pad}px;top:{-pad}px;width:{W}px;height:{H}px;overflow:visible;pointer-events:none" viewBox="0 0 {W} {H}" aria-hidden="true">'
+            f'<defs>{fl(f"fo{seed}", "0.022 0.006", 95, 30)}{fl(f"fi{seed}", "0.03 0.009", 45, 12)}'
+            f'<linearGradient id="ag{seed}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="{deep}"/><stop offset=".7" stop-color="{bright}"/>'
+            f'<stop offset="1" stop-color="{bright}" stop-opacity=".0"/></linearGradient></defs>'
+            f'<rect x="{pad - 40}" y="{pad - 150}" width="{w + 80}" height="{h + 170}" rx="60" fill="url(#ag{seed})" opacity=".9" filter="url(#fo{seed})"/>'
+            f'<rect x="{pad - 12}" y="{pad - 44}" width="{w + 24}" height="{h + 52}" rx="30" fill="{bright}" opacity=".75" filter="url(#fi{seed})"/></svg>')
+
+def slash(x, y, length, angle, width, color="#ffffff", opacity=.75):
+    """a sword's cut, drawn as a tapering crescent (the manga 'zan' stroke), not a sparkle"""
+    return (f'<svg class="abs" style="left:{x}px;top:{y}px;width:{length}px;height:{width * 4}px;transform:rotate({angle}deg);transform-origin:0 50%;overflow:visible" '
+            f'viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="sg{x}{y}" x1="0" x2="1">'
+            f'<stop offset="0" stop-color="{color}" stop-opacity="0"/><stop offset=".55" stop-color="{color}" stop-opacity="{opacity}"/>'
+            f'<stop offset="1" stop-color="{color}" stop-opacity="0"/></linearGradient></defs>'
+            f'<path d="M0 22 Q50 2 100 18 Q50 10 0 22Z" fill="url(#sg{x}{y})"/></svg>')
+
+P3_CSS = """
+body{background:#060707;font-family:Inter,sans-serif;color:#f4f5f3;overflow:hidden}
+.ground{position:absolute;filter:blur(90px) saturate(1.5) brightness(.6)}
+.shade{position:absolute;inset:0;background:radial-gradient(ellipse 85% 70% at 62% 45%,rgba(6,7,7,0) 0%,rgba(6,7,7,.4) 62%,rgba(6,7,7,.92) 100%)}
+h1{font:800 88px/1.02 Inter;letter-spacing:-.035em;color:#f4f5f3}
+h1 em{font-style:normal;color:var(--accent)}
+.sub{font:500 27px/1.38 Inter;letter-spacing:-.01em;color:#b8bcb7}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{width:48px;height:48px;border-radius:11px}
+.brand b{font:700 23px/1 Inter;letter-spacing:-.01em;color:#f4f5f3}
+.card{position:absolute;border-radius:3.6%/2.6%;overflow:hidden;box-shadow:0 2px 3px rgba(0,0,0,.5),0 24px 50px rgba(0,0,0,.55)}
+.card img{display:block;width:100%;aspect-ratio:600/838;object-fit:cover}
+.tone{position:absolute;border-radius:50%;background:radial-gradient(circle,var(--accent) 1.4px,transparent 1.8px) 0 0/10px 10px;
+  -webkit-mask-image:radial-gradient(closest-side,#000 0,rgba(0,0,0,.6) 45%,transparent 100%);opacity:.22}
+.device{position:absolute;background:#0c0d0d;box-shadow:0 0 0 2px #2d302f,0 0 0 3px #050505,0 60px 120px rgba(0,0,0,.7),inset 0 0 0 1px rgba(255,255,255,.07)}
+.device .screen{position:absolute;overflow:hidden;background:#100d22}
+.device .cam{position:absolute;width:16px;height:16px;border-radius:50%;background:#050505;box-shadow:inset 0 0 0 3px #151717;z-index:3}
+.device .hinge{position:absolute;top:0;bottom:0;width:2px;left:50%;background:linear-gradient(180deg,rgba(255,255,255,.0),rgba(255,255,255,.07),rgba(255,255,255,0));z-index:3}
+.callout{position:absolute;overflow:hidden;border-radius:18px;background:#100d22;
+  box-shadow:0 0 0 1.5px var(--accent),0 30px 60px rgba(0,0,0,.6),0 0 60px color-mix(in srgb,var(--accent) 30%,transparent)}
+.foot{font:500 17px/1.4 Inter;color:#8d918c}
+"""
+
+def p3_fonts():
+    return "".join(D.face("Inter", f"inter-latin-{w}-normal.woff2", w) for w in (500, 600, 700, 800))
+
+def device(x, y, w, h, inner_html, radius=54, pad=12, tilt=0.0, fold=False, cls=""):
+    """a plain modern phone (a punch-hole camera, as the owner's Samsung has), or the open Fold with its hinge"""
+    cam = '' if fold else f'<div class="cam" style="left:{w / 2 - 8:.0f}px;top:{pad + 14}px"></div>'   # the Fold's inner camera is under the screen
+    hinge = '<div class="hinge"></div>' if fold else ''
+    return (f'<div class="device {cls}" style="left:{x}px;top:{y}px;width:{w}px;height:{h}px;border-radius:{radius}px;transform:rotate({tilt}deg)">'
+            f'<div class="screen" style="left:{pad}px;top:{pad}px;right:{pad}px;bottom:{pad}px;border-radius:{radius - pad}px">{inner_html}</div>{cam}{hinge}</div>')
+
+def pull3(ratio):
+    R, S, ps, labels, why, count, home_crop, when = data()
+    hero, mid, low = ps[HERO], ps[LEFT], ps[RIGHT]
+    ac = accents().get(str(HERO), {"deep": "#0f5a35", "bright": "#6df0a4"})
+    css = p3_fonts() + P3_CSS.replace("var(--accent)", ac["bright"])
+    ground = (f'<img class="ground" src="{D.art(HERO)}" style="left:-160px;top:-220px;width:1600px">'
+              '<div class="shade"></div>')
+    brand = f'<div class="abs brand ov safe" style="right:64px;top:74px"><img src="{D.icon()}"><b>OP TCG Hub</b></div>'
+    if ratio == "portrait":
+        body = [ground, brand,
+                f'<h1 class="abs ov txt safe" style="left:64px;top:64px;width:760px">Same {hero["name"].split()[-1]}.<br><em>{WORDS.get(len(ps), len(ps))}</em> prices.</h1>',
+                f'<div class="abs sub ov txt safe" style="left:64px;top:262px;width:640px">{hero["num"]} has {count} printings. The scanner shows each one, and asks which you hold.</div>']
+        # the phone, bottom left, bleeding off the frame: the app's own picker, from the top of the screen
+        pw, ph, pad = 430, 900, 12
+        ty = S["picker"]["rects"]["title"]["y"]
+        img, _ = D.crop_img("picker", (0, ty - 90, 411, 900), pw - 2 * pad)
+        body.append(device(58, 842, pw, ph, img, tilt=-7))
+        # the fan: the two others behind, the dear one in front in its aura, cut by two sword strokes
+        cx, cy, cw = 640, 400, 470
+        chh = round(cw * 838 / 600)
+        body.append(f'<div class="tone" style="left:{cx - 160}px;top:{cy - 150}px;width:{cw + 320}px;height:{chh + 300}px"></div>')
+        body.append(f'<div class="abs" style="left:{cx}px;top:{cy}px;width:{cw}px;height:{chh}px;transform:rotate(8deg)">{aura(cw, chh, ac["deep"], ac["bright"])}</div>')
+        body.append(slash(470, 440, 700, 22, 30, "#ffffff", .5))
+        body.append(f'<div class="card safe" style="left:330px;top:500px;width:360px;transform:rotate(-15deg)"><img src="{D.art(low["id"])}"></div>')
+        body.append(f'<div class="card safe" style="left:470px;top:455px;width:380px;transform:rotate(-4deg)"><img src="{D.art(mid["id"])}"></div>')
+        body.append(f'<div class="card safe" style="left:{cx}px;top:{cy}px;width:{cw}px;transform:rotate(8deg)"><img src="{D.art(HERO)}"></div>')
+        # the callout: the app's own row for the dear one, lifted out of the picker and enlarged
+        o = next(o for o in S["picker"]["options"] if o["price"] == hero["shown"])
+        crop = (12, o["top"] - 4, 387, o["bottom"] - o["top"] + 8)
+        cimg, chh2 = D.crop_img("picker", crop, 520)
+        body.append(f'<div class="callout ov safe" style="left:612px;top:1196px;width:520px;height:{chh2}px">{cimg}</div>')
+        body.append(f'<div class="abs foot ov txt safe" style="left:612px;top:{1196 + chh2 + 22}px;width:520px">TCGplayer market prices, {when}.</div>')
+        return D.page(ratio, css, "".join(body), "pull3-portrait")
+    # square: the binder, on the open Fold, over the same ground; the total lifted out as the one callout
+    t = S["open-home-tall"]["rects"]
+    fw, fh, pad = 660, round(660 * 832 / 749), 14
+    img, _ = D.crop_img("open-home-tall", (0, t["hero"]["y"] - 70, 749, 1100), fw - 2 * pad, 1966)
+    hr = S["home"]["rects"]["hero"]
+    cimg, chh = D.crop_img("home", (hr["x"] - 4, hr["y"] - 4, hr["w"] + 8, hr["h"] + 8), 470)
+    body = [ground, brand,
+            f'<h1 class="abs ov txt safe" style="left:64px;top:64px;width:760px;font-size:80px">Your binder,<br>valued <em>nightly</em>.</h1>',
+            f'<div class="abs" style="left:880px;top:250px;width:250px;height:{round(250 * 838 / 600)}px;transform:rotate(12deg)">{aura(250, round(250 * 838 / 600), ac["deep"], ac["bright"], 5, 110)}</div>',
+            f'<div class="card safe" style="left:880px;top:250px;width:250px;transform:rotate(12deg)"><img src="{D.art(HERO)}"></div>',
+            device(470, 330, fw, fh, img, radius=40, pad=pad, tilt=-3, fold=True),
+            f'<div class="callout ov safe" style="left:64px;top:560px;width:470px;height:{chh}px">{cimg}</div>',
+            f'<div class="abs sub ov txt safe" style="left:64px;top:{560 + chh + 34}px;width:360px;font-size:24px">Every card at the price of the printing you own.</div>',
+            f'<div class="abs foot ov txt safe" style="left:64px;top:1120px;width:520px">A sample collection. TCGplayer market prices, {when}.</div>']
+    return D.page(ratio, css, "".join(body), "pull3-square")
+
+DRAFTS = {"pull": pull, "jump": jump, "episode": episode, "pullmulti": pullmulti, "pull3": pull3}
 
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)

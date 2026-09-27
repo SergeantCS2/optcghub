@@ -116,7 +116,8 @@ node design/marketing/render.mjs [--dir directions]  # PNGs, report.json, thumbs
 | `render.mjs` | Shoots a folder of compositions. It refuses a wrong size, over 5 MB, an overlay of 20 % or more (text measured by its lines), anything of class `safe` within 24 px of an edge, a font that did not load, or a broken image. |
 | `style_listing.py` | Style v1 (wave 1). |
 | `directions.py` | Round 1 premium drafts (not taken). |
-| `directions2.py` | Round 2 drafts: pull, jump, episode. |
+| `directions2.py` | Round 2 drafts: pull, jump, episode, pullmulti, and pull3 (the lead). |
+| `accent.mjs` | Each saved scan's own accent colour -> `art/accents.json`; the aura's colour comes from it. |
 | `fetch_fonts.sh` | The drafts' fonts. Only the chosen style's are committed later, under `fonts/` with their licences. |
 | `paths.mjs` | Where the renders go. |
 
@@ -133,7 +134,9 @@ node design/marketing/render.mjs [--dir directions]  # PNGs, report.json, thumbs
 
 ## Data facts
 
-- **Hero printings (now):** OP09-076 Roronoa Zoro: 597016 (base, $0.20), 654099 (alternate art, $60.26)
+- **Hero printings (now, since Pull v3):** EB04-007 Roronoa Zoro: 685303 (base, $14.32), 685304 (alternate
+  art, $73.28), 705991 (SP, $456.94), all SR and none a promo; three printings, 32× apart on 26 Sept prices.
+- **Hero printings (round 2, second pass):** OP09-076 Roronoa Zoro: 597016 (base, $0.20), 654099 (alternate art, $60.26)
   and 619217 (the Championship Regionals prize, $5,000.00), on 26 Sept prices. `HERO=NUM:id,id,id` overrides.
 - **Hero printings (round 1 and round 2's first pass):** OP01-120 Shanks, product ids 454664 (base),
   454665 (parallel) and 454666 (manga parallel). Of the 30 numbers with the widest spread on 27 Sept, these were the one number whose scans
@@ -243,6 +246,56 @@ owner's image; the energy is about right. Two changes:
   foot, unnamed in the words.
 - **pullmulti (4:5):** a new variant, every printing of OP09-076 as a multi-pull result grid ("Same number.
   Every pull priced."), the dearest glowing.
+
+**Pull v2 verdict (the owner, 27 Sept):** "it all feels very AI like": the font, the formatting, the
+rays, the sparkles, the table. Wanted:
+- bigger card art, more colour, more app on screen;
+- manga, not sparkles ("his signature demon aura");
+- **never hands in pictures**;
+- the single pull leads;
+- **EB04-007** and its two other printings.
+
+The owner's references: PokeScreener, Dragon Shield's Poké TCG Scanner, TCG Card Scanner for Pokémon,
+CardValuePro, Collectr (iOS), and any app that helps. Not a fan of Pokémon TCG Pocket.
+
+**What the references teach** (their App Store and Play screenshots, 27 Sept). PokeScreener, Collectr and
+Robinhood share one grammar:
+- a clean, bold, sentence-case headline in two lines, with one accent word;
+- one real device with the real UI;
+- one or two real UI pieces lifted out and enlarged, breaking the frame;
+- one accent colour, used sparingly;
+- a charcoal ground with soft light, not pure black;
+- no stock effects.
+
+**The not-AI rules (every style from now on):**
+- no repeating-conic rays, no four-point sparkles, no glass HUD tables the app doesn't have;
+- no all-caps italic headlines, and no italic used as decoration;
+- sentence case with one accent word;
+- effects come from the content: the ground is the hero's own art, blurred; an aura takes the art's own
+  accent colour (`accent.mjs`); prices appear only as the app's own rows;
+- the art large;
+- no hands.
+
+**Pull v3** (`pull3` in `directions2.py`, sent 27 Sept), on EB04-007:
+- the SP $456.94, the alternate art $73.28 and the base $14.32; "3 printings share EB04-007 … 32× apart";
+- **4:5:**
+  - "Same Zoro. *Three* prices." (the name and the count from the data);
+  - the three printings fanned, with the SP in front in a rising demon aura (red, the SP art's accent);
+  - one white sword-cut stroke behind;
+  - a phone (a punch-hole camera, as the owner's Samsung has) showing the app's own picker, bleeding off
+    the frame;
+  - the SP's own picker row lifted out as the callout;
+- **1:1:**
+  - "Your binder, valued *nightly*.";
+  - the open Fold with its hinge (no camera dot: its inner camera is under the screen) showing Home with
+    Most valuable and Set completion;
+  - Home's total panel lifted out as the callout;
+  - the SP in its aura behind the device.
+- **What bit:**
+  - the aura drawn after the fan painted over the other cards (draw it first);
+  - a coloured sword stroke across the card's face competed with the art (keep strokes behind);
+  - the phone opened on the web build's empty camera (start the crop at the picker sheet);
+  - a camera dot over a tab label read as a defect.
 
 **Design contract:** written here once the owner picks or mixes a direction. It will cover purpose
 (persuade), composition per ratio, type/colour/material roles, how the app's UI sits inside the style,

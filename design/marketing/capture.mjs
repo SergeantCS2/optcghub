@@ -24,8 +24,11 @@ const OPEN = { width: 749, height: 832 };
    - Since round 2's second pass (the owner: "change Shanks to Zoro, whatever the most expensive Zoro card is
      with three cards"): OP09-076, the dearest Zoro with three or more printings -- the Championship 25-26
      Regionals prize ($5,000 market on 26 Sept; one listing, at $8,000), its alternate art, and the
-     Emperors in the New World base ($0.20). Two of the three scans carry "SAMPLE", as TCGplayer serves them. */
-const HERO = (() => { const e = process.env.HERO; if (!e) return { num: 'OP09-076', ids: [597016, 654099, 619217] };
+     Emperors in the New World base ($0.20). Two of the three scans carry "SAMPLE", as TCGplayer serves them.
+   - Since Pull v3 (the owner: "change the card to be EB04-007 and its other two cards"): EB04-007's three
+     printings, all SR and none a promo -- the base and the alternate art from Adventure on Kami's Island and
+     the SP from The World's Strongest Warriors. */
+const HERO = (() => { const e = process.env.HERO; if (!e) return { num: 'EB04-007', ids: [685303, 685304, 705991] };
   const [num, ids] = e.split(':'); return { num, ids: ids.split(',').map(Number) }; })();
 const PICKER_NUM = HERO.num;
 
