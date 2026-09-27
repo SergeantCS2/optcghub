@@ -69,7 +69,7 @@ node design/marketing/render.mjs [--dir directions]  # NAME/out/*.png, report.js
 | `heroes.mjs` / `heroes.json` | Hero candidates per character, and the picks per concept. |
 | `listing_pull.py` | The Play listing: eight 1080x1920 screenshots and the 1024x500 feature graphic (`render.mjs --dir listing`). |
 | `motion/storyboards/*.json` | A video's scenes and words, as data. |
-| `motion/build.py` | A storyboard laid out in the Pull style, as a timed composition page with its assets beside it. |
+| `motion/build.py` | A storyboard laid out in the Pull style (`--ratio 9x16`, `1x1` or `16x9`), as a timed composition page with its assets beside it. |
 | `motion/engine.mjs` | Renders a composition page frame by frame to an H.264 MP4 (or `--stills`). |
 | `motion/check.py` | The video guard: the MP4 read back against the Google Ads spec; `--frames`, `--selftest`. |
 | `fetch_fonts.sh` | Their typefaces, OFL-1.1, from npm's @fontsource packages; nothing committed until a pick. |

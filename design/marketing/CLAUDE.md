@@ -562,7 +562,21 @@ It is silent until the owner supplies audio. A 20 s render takes about 4.5 minut
 - 14 frames were read from the MP4 itself, in a contact sheet.
 - Aura crops at 3.9, 4.3 and 4.7 s differ: the tongues rise.
 
-**Next:** 1:1 and 16:9 cuts, `study.mjs` for the owner's inspiration videos, then Phase F (HTML5).
+**The cuts (the owner: "Pacing's fine, make the square and landscape cuts"):**
+- `build.py --ratio 9x16|1x1|16x9` renders 1080×1920, 1080×1080 and 1920×1080. All three share one timeline,
+  so the pacing is identical; only `LAYOUT` differs.
+- **Square:** the fan leaves when the phone rises; there is no room beside it.
+- **Landscape:** the fan steps aside to the far right, the prices stack under the headline, and the callout
+  and total sit in the left column.
+- `zoom` scales the UI pieces, so a smaller frame keeps their proportions.
+- Speed lines reach the frame's diagonal.
+- `.sub` wraps balanced, so the landscape sub-line no longer leaves a single word on its last line.
+
+**What bit in the cuts:**
+- In the square cut, the phone overlapped the brand mark; it moved down.
+- In the square beats, the word crowded the card; the word is smaller and the card sits further right.
+
+**Next:** `study.mjs` for the owner's inspiration videos, then Phase F (HTML5).
 
 ## Process
 
