@@ -297,6 +297,30 @@ Robinhood share one grammar:
   - the phone opened on the web build's empty camera (start the crop at the picker sheet);
   - a camera dot over a tab label read as a defect.
 
+**Pull v3 verdict (the owner, 27 Sept):** "getting there". The subtext was hard to read, and the aura was
+off: stronger, more manga. "A real phone, not whatever that is. A real phone, a real foldable/tablet."
+More manga inspiration.
+
+**The references added:**
+- **MANGA Plus** (Shueisha's own app): a real, detailed phone, the art bursting out in front of it, a
+  bold red ground, heavy headlines.
+- **PokeScreener, Collectr and Robinhood**, as before.
+
+**Pull v4** (`pull4`, sent 27 Sept):
+- **Subtext:** larger and near-white, with a shadow.
+- **A real phone:** a metal frame, side keys, a punch-hole, glass and a status bar.
+- **The Fold open:** squarer corners and the crease, with no camera on the inner screen.
+- **The aura is a drawn manga contour:** an ink layer, a colour layer with an ink outline in the art's
+  own accent, and a hot core, rising into curved tongues, tallest over the top.
+- **The slash kanji behind the fan:** the card's own attribute, as brushed outline (Yuji Boku, OFL).
+- **The square** is the Fold and its lifted total only. The small card was hidden behind the device, so
+  it went.
+
+**What bit:**
+- the first flame pass (independent spikes) went wild and covered the headline and the logo; one
+  contour per layer holds its shape;
+- the app's crop bled under the status bar without `overflow:hidden`.
+
 **Design contract:** written here once the owner picks or mixes a direction. It will cover purpose
 (persuade), composition per ratio, type/colour/material roles, how the app's UI sits inside the style,
 the listing frames, motion, and a verifiable finish condition.

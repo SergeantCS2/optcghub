@@ -25,4 +25,6 @@ get @fontsource/barlow-condensed barlow-condensed-latin-{600,700,800,900}-{norma
 get @fontsource/rajdhani rajdhani-latin-{500,600,700}-normal.woff2
 get @fontsource/dela-gothic-one dela-gothic-one-latin-400-normal.woff2 dela-gothic-one-119-400-normal.woff2
 get @fontsource/rubik rubik-latin-{700,800,900}-{normal,italic}.woff2
+# Pull v4: a brush face for the card's own attribute, the slash kanji (its subset 81 holds U+65AC)
+get @fontsource/yuji-boku yuji-boku-81-400-normal.woff2
 echo "fetch_fonts: $(ls "$OUT" | wc -l) files in $OUT, every package OFL-1.1"

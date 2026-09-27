@@ -428,7 +428,133 @@ def pull3(ratio):
             f'<div class="abs foot ov txt safe" style="left:64px;top:1120px;width:520px">A sample collection. TCGplayer market prices, {when}.</div>']
     return D.page(ratio, css, "".join(body), "pull3-square")
 
-DRAFTS = {"pull": pull, "jump": jump, "episode": episode, "pullmulti": pullmulti, "pull3": pull3}
+# ================================================================ pull v4 (27 Sept)
+# The owner on v3: getting there. The subtext is hard to read; the aura is off -- stronger, more manga;
+# "a real phone, not whatever that is. A real phone, a real foldable/tablet"; more manga inspiration.
+# MANGA Plus (Shueisha's own app) markets itself with a real, detailed phone and the art bursting out in
+# front of it. So: a phone with a metal frame, side keys, a punch-hole and a status bar; the Fold open, with
+# its crease and no camera on the inner screen; a drawn aura -- ink-outlined flame tongues in the card's own
+# colour over a black ink layer, rising; and the card's own attribute, the slash kanji printed on it, brushed
+# large behind the fan.
+
+def flames(w, h, deep, bright, seed=3, n=None, reach=1.0):
+    """the manga aura: closed flame silhouettes hugging a card (w x h, card-local px) -- an ink layer, a colour
+    layer with an ink outline, and a hot core -- whose edge rises into curved, pointed tongues, tallest over
+    the top and fading down the sides. Each layer is one contour, walked round the card's upper outline."""
+    rnd = random.Random(seed); pad = 240
+    def contour(off, amp, count, sharp):
+        pts = []
+        # the outline from the bottom of the left side, up and over the top, down to the right side's bottom
+        path = [(0, h * .92), (0, 0), (w, 0), (w, h * .92)]
+        L = [math.dist(path[i], path[i + 1]) for i in range(3)]; T = sum(L)
+        for k in range(count + 1):
+            d = T * k / count; i = 0
+            while i < 2 and d > L[i]: d -= L[i]; i += 1
+            (x1, y1), (x2, y2) = path[i], path[i + 1]
+            f = d / L[i]; x, y = x1 + (x2 - x1) * f, y1 + (y2 - y1) * f
+            nx, ny = (-1, 0) if i == 0 else (0, -1) if i == 1 else (1, 0)
+            lift = (1 - y / h) ** 1.4 if i != 1 else 1.0          # tallest on the top edge, dying down the sides
+            peak = k % 2 == 1
+            a = off + (amp * reach * lift * rnd.uniform(.55, 1.1) if peak else amp * reach * lift * rnd.uniform(.05, .22))
+            px, py = x + nx * a, y + ny * a - (a * .55 if peak else 0)   # tongues lean upward: fire rises
+            if peak: px += rnd.uniform(-1, 1) * sharp
+            pts.append((px, py, peak))
+        d = f"M{pad:.0f},{h * .98 + pad:.0f} L{pts[0][0] + pad:.0f},{pts[0][1] + pad:.0f} "
+        for j in range(1, len(pts)):
+            (x0, y0, _), (x1, y1, pk) = pts[j - 1], pts[j]
+            mx, my = (x0 + x1) / 2, (y0 + y1) / 2
+            if pk:   # a tongue: bow out, then snap to the point
+                d += f"Q{mx + (y1 - y0) * .25 + pad:.0f},{my - (x1 - x0) * .25 + pad:.0f} {x1 + pad:.0f},{y1 + pad:.0f} "
+            else:    # a trough: a soft curve back in
+                d += f"Q{mx - (y1 - y0) * .18 + pad:.0f},{my + (x1 - x0) * .18 + pad:.0f} {x1 + pad:.0f},{y1 + pad:.0f} "
+        return d + f"L{w + pad:.0f},{h * .98 + pad:.0f}Z"
+    n = n or max(18, round((w + 2 * h) / 38))
+    ink, col, hot = contour(26, 150, n, 18), contour(14, 118, n, 14), contour(4, 56, n, 8)
+    W, H = w + 2 * pad, h + 2 * pad
+    return (f'<svg class="abs" style="left:{-pad}px;top:{-pad}px;width:{W}px;height:{H}px;overflow:visible;pointer-events:none" viewBox="0 0 {W} {H}" aria-hidden="true">'
+            f'<defs><linearGradient id="fg{seed}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="{deep}"/><stop offset=".5" stop-color="{bright}"/>'
+            f'<stop offset="1" stop-color="#ffe8e4"/></linearGradient></defs>'
+            f'<path d="{ink}" fill="#0b0b0b"/>'
+            f'<path d="{col}" fill="url(#fg{seed})" stroke="#0b0b0b" stroke-width="5" stroke-linejoin="round"/>'
+            f'<path d="{hot}" fill="#fff4f0" opacity=".85"/></svg>')
+
+P4_CSS = P3_CSS + """
+.sub{font:500 30px/1.36 Inter;letter-spacing:-.01em;color:#eef0ec;text-shadow:0 2px 14px rgba(0,0,0,.75)}
+.foot{font:500 18px/1.4 Inter;color:#d3d6d1;text-shadow:0 1px 8px rgba(0,0,0,.8)}
+.kanji{position:absolute;font:400 760px/1 Brush;white-space:nowrap;color:transparent;-webkit-text-stroke:3px var(--kanji);opacity:.5}
+.rphone{position:absolute;border-radius:64px;box-shadow:0 70px 140px rgba(0,0,0,.75),0 0 0 1px rgba(0,0,0,.6);
+  background:linear-gradient(140deg,#6d7176 0%,#26282b 18%,#46494d 42%,#17181a 70%,#595c60 100%)}
+.rphone .bezel{position:absolute;inset:5px;border-radius:59px;background:#030303}
+.rphone .screen{position:absolute;overflow:hidden;background:#100d22}
+.rphone .glass{position:absolute;pointer-events:none;background:linear-gradient(118deg,rgba(255,255,255,.13) 0%,rgba(255,255,255,.03) 28%,rgba(255,255,255,0) 40%)}
+.rphone .key{position:absolute;width:6px;border-radius:3px;background:linear-gradient(90deg,#1c1d1f,#77797c 50%,#1c1d1f)}
+.rphone .punch{position:absolute;width:24px;height:24px;border-radius:50%;background:#000;box-shadow:inset 0 0 0 3px #111,0 0 0 2px #050505;z-index:4}
+.rphone .status{position:absolute;left:0;right:0;top:0;height:54px;display:flex;justify-content:space-between;align-items:center;
+  padding:0 34px;font:600 21px/1 Inter;color:#f2f2f2;z-index:3;background:linear-gradient(180deg,rgba(16,13,34,.95),rgba(16,13,34,0))}
+.rphone .status i{font-style:normal;letter-spacing:2px;font-size:17px}
+.rphone .crease{position:absolute;top:0;bottom:0;width:18px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.07) 45%,rgba(0,0,0,.25) 55%,rgba(255,255,255,0));z-index:3}
+"""
+
+def realphone(x, y, w, h, inner_html, tilt=0.0, fold=False):
+    """a real phone: a metal frame, a black bezel, side keys, a punch-hole camera and a status bar over the
+    app. fold=True is the Fold open: squarer corners, the crease, and no camera on the inner screen."""
+    r = 40 if fold else 64
+    b = 18 if fold else 16                               # frame + bezel to the glass
+    keys = ("" if fold else f'<div class="key" style="right:-4px;top:{h * .22:.0f}px;height:{h * .09:.0f}px"></div>'
+            f'<div class="key" style="right:-4px;top:{h * .34:.0f}px;height:{h * .15:.0f}px"></div>')
+    punch = "" if fold else f'<div class="punch" style="left:{w / 2 - 12:.0f}px;top:{b + 20}px"></div>'
+    crease = f'<div class="crease" style="left:{w / 2 - 9:.0f}px"></div>' if fold else ""
+    status = ('<div class="status"><span>10:08</span><i>&#9679;&#9679;&#9679; 5G &#9646;</i></div>')
+    return (f'<div class="rphone" style="left:{x}px;top:{y}px;width:{w}px;height:{h}px;border-radius:{r}px;transform:rotate({tilt}deg)">{keys}'
+            f'<div class="bezel" style="border-radius:{r - 5}px"></div>'
+            f'<div class="screen" style="left:{b}px;top:{b}px;right:{b}px;bottom:{b}px;border-radius:{r - b + 4}px">{status}{inner_html}</div>'
+            f'<div class="glass" style="left:{b}px;top:{b}px;right:{b}px;bottom:{b}px;border-radius:{r - b + 4}px"></div>{crease}{punch}</div>')
+
+def p4_fonts():
+    return p3_fonts() + D.face("Brush", "yuji-boku-81-400-normal.woff2", 400)
+
+def pull4(ratio):
+    R, S, ps, labels, why, count, home_crop, when = data()
+    hero, mid, low = ps[HERO], ps[LEFT], ps[RIGHT]
+    ac = accents().get(str(HERO), {"deep": "#4c1c23", "bright": "#ff6e83"})
+    css = p4_fonts() + P4_CSS.replace("var(--accent)", ac["bright"]).replace("var(--kanji)", ac["bright"])
+    ground = (f'<img class="ground" src="{D.art(HERO)}" style="left:-160px;top:-220px;width:1600px">'
+              '<div class="shade"></div>')
+    brand = f'<div class="abs brand ov safe" style="right:64px;top:74px"><img src="{D.icon()}"><b>OP TCG Hub</b></div>'
+    if ratio == "portrait":
+        body = [ground, f'<div class="kanji" style="left:520px;top:300px">斬</div>', brand,
+                f'<h1 class="abs ov txt safe" style="left:64px;top:64px;width:760px">Same {hero["name"].split()[-1]}.<br><em>{WORDS.get(len(ps), len(ps))}</em> prices.</h1>',
+                f'<div class="abs sub ov txt safe" style="left:64px;top:262px;width:620px">{hero["num"]} has {count} printings. The scanner shows each one, and asks which you hold.</div>']
+        pw, ph, b = 450, 940, 16
+        ty = S["picker"]["rects"]["title"]["y"]
+        img, _ = D.crop_img("picker", (0, ty - 120, 411, 900), pw - 2 * b)
+        body.append(realphone(50, 830, pw, ph, f'<div style="position:absolute;left:0;top:54px;right:0;bottom:0;overflow:hidden">{img}</div>', tilt=-6))
+        cx, cy, cw = 650, 470, 440
+        chh = round(cw * 838 / 600)
+        body.append(f'<div class="abs" style="left:{cx}px;top:{cy}px;width:{cw}px;height:{chh}px;transform:rotate(8deg)">{flames(cw, chh, ac["deep"], ac["bright"])}</div>')
+        body.append(f'<div class="card safe" style="left:340px;top:570px;width:340px;transform:rotate(-15deg)"><img src="{D.art(low["id"])}"></div>')
+        body.append(f'<div class="card safe" style="left:480px;top:525px;width:360px;transform:rotate(-4deg)"><img src="{D.art(mid["id"])}"></div>')
+        body.append(f'<div class="card safe" style="left:{cx}px;top:{cy}px;width:{cw}px;transform:rotate(8deg)"><img src="{D.art(HERO)}"></div>')
+        o = next(o for o in S["picker"]["options"] if o["price"] == hero["shown"])
+        cimg, chh2 = D.crop_img("picker", (12, o["top"] - 4, 387, o["bottom"] - o["top"] + 8), 520)
+        body.append(f'<div class="callout ov safe" style="left:612px;top:1216px;width:520px;height:{chh2}px">{cimg}</div>')
+        body.append(f'<div class="abs foot ov txt safe" style="left:612px;top:{1216 + chh2 + 22}px;width:520px">TCGplayer market prices, {when}.</div>')
+        return D.page(ratio, css, "".join(body), "pull4-portrait")
+    t = S["open-home-tall"]["rects"]
+    fw = 680; b = 18; fh = round((fw - 2 * b) * 832 / 749) + 2 * b
+    img, _ = D.crop_img("open-home-tall", (0, t["hero"]["y"] - 60, 749, 1100), fw - 2 * b, 1966)
+    hr = S["home"]["rects"]["hero"]
+    cimg, chh = D.crop_img("home", (hr["x"] - 4, hr["y"] - 4, hr["w"] + 8, hr["h"] + 8), 470)
+    sw = 230; shh = round(sw * 838 / 600)
+    body = [ground, brand,
+            f'<h1 class="abs ov txt safe" style="left:64px;top:64px;width:760px;font-size:80px">Your binder,<br>valued <em>nightly</em>.</h1>',
+            realphone(460, 330, fw, fh, f'<div style="position:absolute;left:0;top:54px;right:0;bottom:0;overflow:hidden">{img}</div>', tilt=-3, fold=True),
+            f'<div class="callout ov safe" style="left:64px;top:560px;width:470px;height:{chh}px">{cimg}</div>',
+            f'<div class="abs sub ov txt safe" style="left:64px;top:{560 + chh + 34}px;width:380px;font-size:26px">Every card at the price of the printing you own.</div>',
+            f'<div class="abs foot ov txt safe" style="left:64px;top:1120px;width:720px">A sample collection. TCGplayer market prices, {when}.</div>']
+    return D.page(ratio, css, "".join(body), "pull4-square")
+
+DRAFTS = {"pull": pull, "jump": jump, "episode": episode, "pullmulti": pullmulti, "pull3": pull3, "pull4": pull4}
 
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
