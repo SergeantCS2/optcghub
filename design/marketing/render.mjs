@@ -12,7 +12,9 @@ import { ADS_DIR } from './paths.mjs';
 /* --dir NAME shoots $ADS_OUT/NAME (a style's compositions); images, the listing style's, by default */
 const at = process.argv.indexOf('--dir');
 const DIR = path.join(ADS_DIR, at > 0 ? process.argv[at + 1] : 'images'), OUT = path.join(DIR, 'out');
-const SIZES = { landscape: [1200, 628], square: [1200, 1200], portrait: [1200, 1500] };
+/* Google Ads' three image sizes, and the Play listing's screenshot and feature graphic */
+const SIZES = { landscape: [1200, 628], square: [1200, 1200], portrait: [1200, 1500], listing: [1080, 1920], feature: [1024, 500] };
+const TAGLINE = 20;   // Play: a tagline takes at most 20 % of a listing image (class "tl": its lines' union, top to bottom)
 const MAX_BYTES = 5 * 1024 * 1024, OVERLAY = 20, EDGE = 24;
 
 /* the measurement, run in the page: the overlay's area (its rects, clipped to the frame) and anything
@@ -28,7 +30,9 @@ function measure() {
   const near = [...document.querySelectorAll('.safe')].map(e => ({ e, r: e.getBoundingClientRect() }))
     .filter(({ r }) => r.left < 24 || r.top < 24 || r.right > W - 24 || r.bottom > H - 24)
     .map(({ e, r }) => `${e.className.split(' ')[0]} ${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.right)},${Math.round(r.bottom)}`);
-  return { overlay: +(ov / (W * H) * 100).toFixed(1), near, fonts: document.fonts.check('40px D') && document.fonts.check('20px B') && document.fonts.check('900 20px H'),
+  const tl = [...document.querySelectorAll('.tl')].map(e => e.getBoundingClientRect());
+  const tagline = tl.length ? +((Math.max(...tl.map(r => r.bottom)) - Math.min(...tl.map(r => r.top))) / H * 100).toFixed(1) : 0;
+  return { overlay: +(ov / (W * H) * 100).toFixed(1), tagline, near, fonts: document.fonts.check('40px D') && document.fonts.check('20px B') && document.fonts.check('900 20px H'),
     broken: [...document.images].filter(i => !i.naturalWidth).length };
 }
 export function verdict(ratio, m, bytes, size) {
@@ -37,6 +41,7 @@ export function verdict(ratio, m, bytes, size) {
   if (size.w !== w || size.h !== h) why.push(`size ${size.w}x${size.h}, not ${w}x${h}`);
   if (bytes > MAX_BYTES) why.push(`${(bytes / 1048576).toFixed(1)} MB, over 5`);
   if (m.overlay >= OVERLAY) why.push(`overlay ${m.overlay} %, not under ${OVERLAY}`);
+  if ((ratio === 'listing' || ratio === 'feature') && m.tagline > TAGLINE) why.push(`tagline ${m.tagline} % of the height, over ${TAGLINE}`);
   if (m.near.length) why.push(`within ${EDGE} px of an edge: ${m.near.join('; ')}`);
   if (!m.fonts) why.push('a font did not load');
   if (m.broken) why.push(`${m.broken} image(s) broken`);
@@ -49,7 +54,9 @@ async function shoot(b, file) {
   await page.goto('file://' + file); await page.evaluate(() => Promise.all([...document.fonts].map(f => f.load()))); await page.waitForTimeout(300);
   const m = await page.evaluate(measure);
   let out = file.replace(/\.html$/, '.png').replace(DIR, OUT);
-  await page.screenshot({ path: out });
+  /* the feature graphic has no alpha (Play): a JPEG */
+  if (ratio === 'feature') { out = out.replace(/\.png$/, '.jpg'); await page.screenshot({ path: out, type: 'jpeg', quality: 94 }); }
+  else await page.screenshot({ path: out });
   let bytes = fs.statSync(out).size;
   if (bytes > MAX_BYTES) { fs.unlinkSync(out); out = out.replace(/\.png$/, '.jpg'); await page.screenshot({ path: out, type: 'jpeg', quality: 92 }); bytes = fs.statSync(out).size; }
   await page.close();
@@ -84,11 +91,16 @@ async function selftest(b) {
     same.push((await page.evaluate(measure)).overlay); await page.close();
   }
   if (Math.abs(same[0] - same[1]) > 0.3) missed.push(['span', 'styled word counted once', `${same[0]} vs ${same[1]}`]);
+  /* a listing frame with a tagline over 20 % of its height */
+  if (!verdict('listing', { overlay: 5, tagline: 24, near: [], fonts: true, broken: 0 }, 1000, { w: 1080, h: 1920 }).some(x => x.includes('tagline')))
+    missed.push(['tagline', 'tagline', 'not refused']);
+  if (verdict('listing', { overlay: 5, tagline: 16, near: [], fonts: true, broken: 0 }, 1000, { w: 1080, h: 1920 }).length)
+    missed.push(['tagline-ok', 'a 16 % tagline passes', 'refused']);
   if (!verdict('square', { overlay: 5, near: [], fonts: true, broken: 0 }, 6 * 1048576, { w: 1200, h: 1200 }).some(x => x.includes('MB'))) missed.push(['bytes', 'MB', 'not refused']);
   if (!verdict('square', { overlay: 5, near: [], fonts: true, broken: 0 }, 1000, { w: 1200, h: 628 }).some(x => x.includes('size'))) missed.push(['size', 'size', 'not refused']);
   fs.rmSync(tmp, { recursive: true });
   if (missed.length) { console.log('selftest: the guard let a planted frame through', JSON.stringify(missed)); process.exit(1); }
-  console.log('selftest: overlay, edge, broken image, bytes and size each refused; a styled word counted once');
+  console.log('selftest: overlay, edge, broken image, bytes, size and a listing tagline over 20 % each refused; a styled word counted once');
 }
 
 const b = await browser();

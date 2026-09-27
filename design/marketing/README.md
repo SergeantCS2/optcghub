@@ -67,6 +67,7 @@ node design/marketing/render.mjs [--dir directions]  # NAME/out/*.png, report.js
 | `accent.mjs` | Each saved scan's own accent colour, for effects drawn around a card (`--selftest` for the split-hue case). |
 | `style_pull.py` | The production style: six concepts at three sizes (`--tune` renders the aura presets). |
 | `heroes.mjs` / `heroes.json` | Hero candidates per character, and the picks per concept. |
+| `listing_pull.py` | The Play listing: eight 1080x1920 screenshots and the 1024x500 feature graphic (`render.mjs --dir listing`). |
 | `fetch_fonts.sh` | Their typefaces, OFL-1.1, from npm's @fontsource packages; nothing committed until a pick. |
 | `paths.mjs` | Where the renders go. |
 

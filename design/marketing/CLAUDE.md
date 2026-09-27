@@ -119,6 +119,7 @@ node design/marketing/render.mjs [--dir directions]  # PNGs, report.json, thumbs
 | `directions2.py` | Round 2 drafts: pull, jump, episode, pullmulti, pull3-5 (the record). |
 | `style_pull.py` | **The production style** (the contract below): six concepts at three sizes; `--tune` for the aura presets. |
 | `heroes.mjs` / `heroes.json` | Hero candidates per character (a contact sheet), and the picks per concept. |
+| `listing_pull.py` | The Play listing in the Pull style: eight screenshots and the feature graphic, with Play's word guard (`--selftest`). |
 | `accent.mjs` | Each saved scan's own accent colour -> `art/accents.json` (a 45-degree hue window, the edges counted twice); the aura's colour comes from it. `--selftest` checks the split-hue case both ways. |
 | `fetch_fonts.sh` | The drafts' fonts. Only the chosen style's are committed later, under `fonts/` with their licences. |
 | `paths.mjs` | Where the renders go. |
@@ -463,6 +464,33 @@ consistent -- the aura looks to just have jagged pillars of flame, rather than a
     dome);
   - the body sat at about 65 % opacity, so it read as haze (hence the steeper slope);
   - the ramp's white top made the body smoke (hence `top`, `tint` and `vivid`).
+
+**The aura's setting:** the owner first said "between is good", then, looking at the Luffy comparison,
+"I like the third": `flame` (`AURA_LEVEL`). The scale stays, so any preset is one line.
+
+**The Play listing (Phase D, 27 Sept; `listing_pull.py`, `render.mjs --dir listing`):**
+- **Eight 1080×1920 screenshots:** printing, value, binder, detail, deck, trade, sealed, offline. Game
+  day is left out because its opponent side is upside down. Plus the 1024×500 feature graphic.
+- **The same style as the ads,** except the app's screen is a frameless panel: Play asks listings to avoid
+  device imagery.
+- **Heroes:** as the ads', plus **Boa Hancock OP07-038 SP** for the detail page
+  (`heroes.json`, `detail`). Nami's manga was tried first, but her set, "Premium Booster -The Best-", puts
+  "Best" on the page. Sealed has no hero; its ground is the sealed list itself, its accent the app's brass.
+- **Play's rules, enforced:**
+  - `render.mjs` refuses a tagline block (class `tl`) over 20 % of a listing or feature image, and writes
+    the feature graphic as a JPEG (no alpha). Its selftest plants a 24 % tagline and passes a 16 % one,
+    watched to fail with the rule removed.
+  - `listing_pull.py` refuses a frame whose own words carry "Free", "Best", "Top", "New", sale, discount,
+    "#1" or a call to action. It also refuses a screen crop that would show one, using `capture.mjs`'s
+    per-screen word positions (words under a sheet do not count). Hancock's page says "not a sale" at
+    814 px, so its crop stops at 800. The selftest plants each case, watched to fail when covered words are
+    counted.
+- **New captured screens:** `sealed` (Hunt's sealed list at a set with pictures, ported from the
+  listing's capture) and the detail page of `heroes.json`'s `detail` hero.
+- **Not yet done:**
+  - the listing text in `docs/PLAY-LISTING.md` belongs to a numbered take, and still carries the title
+    drift;
+  - the owner uploads the images by hand.
 
 **The ad set (Phase C, 27 Sept):** 6 concepts × 3 sizes = 18 images (`render.mjs --dir pull`).
 

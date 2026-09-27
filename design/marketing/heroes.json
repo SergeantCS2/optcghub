@@ -5,5 +5,6 @@
  "binder":   { "ids": [692137], "why": "EB02-006 Yamato: a scan without the SAMPLE mark" },
  "offline":  { "ids": [454666], "why": "OP01-120 Shanks, the manga parallel: a scan without the SAMPLE mark" },
  "deck":     { "ids": [557285], "why": "OP01-013 Sanji: a printing of a card in the showcase Red Zoro deck" },
+ "detail":   { "ids": [629181], "why": "OP07-038 Boa Hancock, the SP ($6,969.69 on 26 Sept): a fan favourite whose set name carries none of the words Play bars in listing images (Nami's manga is in 'Premium Booster -The Best-')" },
  "trade":    { "ids": [485862, 587966], "why": "OP02-013 Portgas.D.Ace (they give) against the showcase collection's OP01-016 Nami manga (you give): a near-even real trade" }
 }

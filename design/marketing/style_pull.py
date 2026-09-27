@@ -87,7 +87,7 @@ AURA2 = {
     "between": dict(flicker=.45, rise=.44),
     "flame":   dict(flicker=1.0, rise=.48),      # pass 2, the "jagged pillars"
 }
-AURA_LEVEL = "between"      # the owner: "we need to find an in-between"
+AURA_LEVEL = "flame"        # the owner, after "between": "I like the third", on the Luffy comparisons (27 Sept)
 
 def _lerp(a, b, t):
     return a + (b - a) * t

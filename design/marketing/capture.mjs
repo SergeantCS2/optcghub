@@ -132,7 +132,8 @@ const steps = [
   }],
   ['detail', async () => {
     const card = await page.evaluate((id) => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.openDetail(id); window.scrollTo(0, 0);
-      const p = V.CAT.byId.get(id); return { card: p.name, num: p.num, treat: p.treat, market: V.money(p.market) }; }, HERO.ids[2]);
+      const p = V.CAT.byId.get(id); return { card: p.name, num: p.num, treat: p.treat, market: V.money(p.market) }; },
+      (JSON.parse(fs.readFileSync(path.join(HERE, 'heroes.json'), 'utf8')).detail || { ids: [HERO.ids[2]] }).ids[0]);
     await settle(900);
     return { ...card, rects: await rects({ title: '#detail h1, #dName', sub: '#dSub' }) };
   }],
@@ -166,6 +167,25 @@ const steps = [
         verdict: ((document.querySelector('#trVerdict') || {}).textContent || '').replace(/\s+/g, ' ').trim().slice(0, 160) }; }, H);
     await settle(900);
     return { ...r, rects: await rects({ give: '.panel:has(#trGive)', get: '.panel:has(#trGet)', verdict: '#trVerdict' }) };
+  }],
+  ['sealed', async () => {
+    /* Hunt's Sealed list at the first release set whose products all carry a picture (ported from the listing's
+       capture); art above the strip loads as the page moves, so the scroll repeats until the strip stays put */
+    await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.NAV.zipAsked = true; V.MODE.set('hunt', true); V.go('sealed'); while (V.closeAnyOverlay()) {} window.scrollTo(0, 0); });
+    await settle(1200);
+    const set = await page.evaluate(() => { const st = [...document.querySelectorAll('#sealedList .setstrip')];
+      for (const x of st) { if (/starter/i.test(x.textContent)) continue; const rows = [];
+        for (let n = x.nextElementSibling; n && !n.classList.contains('setstrip'); n = n.nextElementSibling) if (n.classList.contains('row')) rows.push(n);
+        if (rows.length >= 3 && rows.every(r => r.querySelector('img'))) { x.id = 'adSet'; return x.textContent.trim().slice(0, 60); } }
+      return null; });
+    let top = null;
+    for (let k = 0; k < 6; k++) {
+      await page.evaluate(() => { const x = document.querySelector('#adSet'); if (x) window.scrollTo(0, x.getBoundingClientRect().top + window.scrollY - 60); });
+      await artLoaded(); await settle(500);
+      const t = await page.evaluate(() => Math.round((document.querySelector('#adSet') || { getBoundingClientRect: () => ({ top: -1 }) }).getBoundingClientRect().top));
+      if (t === top) break; top = t;
+    }
+    return { set, stripTop: top };
   }],
   ['open-home', async () => {
     await page.context().setOffline(false);
