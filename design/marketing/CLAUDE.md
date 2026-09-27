@@ -119,7 +119,7 @@ node design/marketing/render.mjs [--dir directions]  # PNGs, report.json, thumbs
 | `directions2.py` | Round 2 drafts: pull, jump, episode, pullmulti, pull3-5 (the record). |
 | `style_pull.py` | **The production style** (the contract below): six concepts at three sizes; `--tune` for the aura presets. |
 | `heroes.mjs` / `heroes.json` | Hero candidates per character (a contact sheet), and the picks per concept. |
-| `accent.mjs` | Each saved scan's own accent colour -> `art/accents.json`; the aura's colour comes from it. |
+| `accent.mjs` | Each saved scan's own accent colour -> `art/accents.json` (a 45-degree hue window, the edges counted twice); the aura's colour comes from it. `--selftest` checks the split-hue case both ways. |
 | `fetch_fonts.sh` | The drafts' fonts. Only the chosen style's are committed later, under `fonts/` with their licences. |
 | `paths.mjs` | Where the renders go. |
 
@@ -413,8 +413,30 @@ AI like, needs to be more specific to the card / color matched / blended better.
 - **Seam:** the card's own edge colours, a few px out, fading toward the foot, instead of a neon rim.
 - **Ground:** darker (`GROUND_CSS`).
 
-`--tune` renders `refined` / `softer` / `stronger` on three heroes. `AURA_MODE = "original"` still draws
-the first pixel aura, for the record.
+`--tune` renders the presets on three heroes. `AURA_MODE = "original"` still draws the first pixel aura,
+for the record.
+
+**Pass 2 (the owner, 27 Sept):** "too tall, in Luffy you can see the top is just flat and cut off. The
+colour matching / blending needs to be better. Like the card is giving off a seamless aura", then "toned it
+back too far ... the blending is looking better". What changed:
+- **Height and the flat top.** The field had no room above it, so the tallest tongues met the edge of their
+  own box and were cut straight. The box now has headroom (`T = rise x 1.45`), and the dome fades to
+  nothing before the top, so every tongue ends in its own tip. At the same `rise` (.48) the flames render
+  about 30 % shorter than pass 1, which is the new `refined`. `softer` (.43) and `taller` (.54) sit either
+  side; pass 1's `softer` (.38) is the owner's "too far".
+- **The seam.** The colour starts as the card's own edge: its top slice (the top 110 of 838 px) is
+  stretched up into the flame, and its side slices (70 px each) out to the sides, so just past the border
+  the light is the border's colour. A tight emission (the card 2 % larger, lightly blurred) joins card and
+  light.
+- **The dark ring.** The hero card's drop shadow sat between the card and its light; it now casts only
+  at its foot, where the aura is quiet.
+- **The colour reader** (`accent.mjs`) scores a hue with its two neighbours and counts the card's top and
+  side edges twice. Yamato's blue fell across two bins (0.24 + 0.17) and lost to a 0.30 red, so her aura
+  came out red on a blue card; she is now blue.
+  - Its `--selftest` builds a synthetic card where a split blue must beat a larger single red, and the
+    same card with the window off must pick red: the bug reproduced, then fixed.
+  - The other heroes' readings stayed put or firmed up. Ace moved from his flames' orange toward his
+    frame's red-orange, since the edge is where the aura leaves the card.
 
 **The ad set (Phase C, 27 Sept):** 6 concepts × 3 sizes = 18 images (`render.mjs --dir pull`).
 

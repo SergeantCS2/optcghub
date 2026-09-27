@@ -64,7 +64,7 @@ node design/marketing/render.mjs [--dir directions]  # NAME/out/*.png, report.js
 | `render.mjs` | Shoots them and refuses a wrong size, over 5 MB, an overlay of 20 % or more, anything within 24 px of an edge, a missing font or a broken image. |
 | `directions.py` | Round 1 premium drafts (vault, wano, guide, launch): premium, and too far from the franchise (the owner). |
 | `directions2.py` | Round 2 drafts (pull, jump, episode, pullmulti, pull3): pull3 leads. |
-| `accent.mjs` | Each saved scan's own accent colour, for effects drawn around a card. |
+| `accent.mjs` | Each saved scan's own accent colour, for effects drawn around a card (`--selftest` for the split-hue case). |
 | `style_pull.py` | The production style: six concepts at three sizes (`--tune` renders the aura presets). |
 | `heroes.mjs` / `heroes.json` | Hero candidates per character, and the picks per concept. |
 | `fetch_fonts.sh` | Their typefaces, OFL-1.1, from npm's @fontsource packages; nothing committed until a pick. |

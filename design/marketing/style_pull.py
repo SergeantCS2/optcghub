@@ -74,9 +74,10 @@ def pixel_aura(pid, w, accent, level=AURA_DEFAULT, seed=21):
 # - ground: darker (see frame()), so the light has something to read against.
 AURA2 = {
     #          rise  spread field  freq             outer (k2, k3, k4)   core (k4)  sharp  opacity core_op
-    "refined": dict(rise=.48, spread=.20, field=.06, freq="0.017 0.0055", k=(1.5, 1.15, -1.29), core=-1.70, sharp=1.9, op=.95, core_op=.7),
-    "softer":  dict(rise=.38, spread=.16, field=.055, freq="0.017 0.0055", k=(1.4, 1.1, -1.33),  core=-1.76, sharp=1.6, op=.8,  core_op=.55),
-    "stronger":dict(rise=.60, spread=.24, field=.065, freq="0.016 0.005",  k=(1.6, 1.2, -1.25),  core=-1.64, sharp=2.1, op=1.0, core_op=.8),
+    # pass 2 (27 Sept): "refined" was too tall, "softer" went too far -- the lead now sits between them
+    "refined": dict(rise=.48, spread=.20, field=.06,  freq="0.017 0.0055", k=(1.5, 1.15, -1.29), core=-1.70, sharp=1.9, op=.95, core_op=.7),
+    "softer":  dict(rise=.43, spread=.18, field=.058, freq="0.017 0.0055", k=(1.45, 1.12, -1.31), core=-1.73, sharp=1.8, op=.92, core_op=.62),
+    "taller":  dict(rise=.54, spread=.21, field=.062, freq="0.017 0.0055", k=(1.55, 1.17, -1.27), core=-1.67, sharp=1.95, op=.97, core_op=.74),
 }
 AURA_MODE = "refined"      # "original" draws pixel_aura() as the owner first picked it
 
@@ -87,51 +88,66 @@ def _mix(a, b, t):
     return [a[i] * (1 - t) + b[i] * t for i in range(3)]
 
 def flame_aura(pid, w, accent, level="refined", seed=7):
-    """in the card's own box (card-local px), behind the card"""
+    """in the card's own box (card-local px), behind the card. Pass 2 (the owner: "too tall ... the top is just
+    flat and cut off ... like the card is giving off a seamless aura"):
+    - the colour starts as the card's own edge: its top and side slices are stretched outward, so just past the
+      border the flame is the border's colour, and further out it becomes the card's ramp
+    - a tight emission at the edge (the card, 2 % larger, lightly blurred) joins card and light without a line
+    - headroom above the field, so every tongue fades out instead of meeting the box's edge"""
     a = AURA2[level]; h = round(w * 838 / 600); src = D.art(pid)
     px, pt, pb = w * a["spread"], h * a["rise"], h * .10
-    W, H = w + 2 * px, h + pt + pb
+    T = pt * 1.45                                   # the card's top inside the box: the rise plus headroom
+    W, H = w + 2 * px, h + T + pb
     deep, bright = _hex(accent["deep"]), _hex(accent["bright"])
     hot = _mix(bright, [1, 1, 1], .55)
-    low = _mix(deep, bright, .35)        # the art's blacks rise as a deep flame, never as smoke
+    low = _mix(deep, bright, .35)                   # the art's blacks rise as a deep flame, never as smoke
     tables = ["{:.3f} {:.3f} {:.3f} {:.3f}".format(low[i], bright[i], bright[i], hot[i]) for i in range(3)]
     hot_hex = "#" + "".join(f"{round(v * 255):02x}" for v in hot)
     k2, k3, k4 = a["k"]; F = w * a["field"]; e = w * .045
     u = f"{pid}{level}{seed}"
-    colour = (f'<filter id="c{u}" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">'
-              f'<feGaussianBlur stdDeviation="{w * .03:.1f}" result="b"/>'
-              f'<feColorMatrix in="b" type="saturate" values="1.7" result="s"/>'
-              f'<feColorMatrix in="b" type="matrix" values=".3 .59 .11 0 0 .3 .59 .11 0 0 .3 .59 .11 0 0 0 0 0 1 0"/>'
-              f'<feComponentTransfer result="r"><feFuncR type="table" tableValues="{tables[0]}"/><feFuncG type="table" tableValues="{tables[1]}"/>'
-              f'<feFuncB type="table" tableValues="{tables[2]}"/></feComponentTransfer>'
-              f'<feComposite in="r" in2="s" operator="arithmetic" k2=".74" k3=".3"/></filter>')
+    def ramp(fid, blur, keep):
+        return (f'<filter id="{fid}" filterUnits="userSpaceOnUse" x="0" y="0" width="{W:.0f}" height="{H:.0f}" color-interpolation-filters="sRGB">'
+                f'<feGaussianBlur stdDeviation="{blur:.1f}" result="b"/>'
+                f'<feColorMatrix in="b" type="saturate" values="1.6" result="s"/>'
+                f'<feColorMatrix in="b" type="matrix" values=".3 .59 .11 0 0 .3 .59 .11 0 0 .3 .59 .11 0 0 0 0 0 1 0"/>'
+                f'<feComponentTransfer result="r"><feFuncR type="table" tableValues="{tables[0]}"/><feFuncG type="table" tableValues="{tables[1]}"/>'
+                f'<feFuncB type="table" tableValues="{tables[2]}"/></feComponentTransfer>'
+                f'<feComposite in="r" in2="s" operator="arithmetic" k2="{1 - keep:.2f}" k3="{keep + .04:.2f}"/></filter>')
     def flame(fid, k4v):
-        return (f'<filter id="{fid}" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">'
+        return (f'<filter id="{fid}" filterUnits="userSpaceOnUse" x="0" y="0" width="{W:.0f}" height="{H:.0f}" color-interpolation-filters="sRGB">'
                 f'<feGaussianBlur in="SourceGraphic" stdDeviation="{F:.1f}" result="f"/>'
                 f'<feTurbulence type="fractalNoise" baseFrequency="{a["freq"]}" numOctaves="4" seed="{seed}" result="n"/>'
                 f'<feColorMatrix in="n" type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 1 0 0 0 0" result="na"/>'
                 f'<feComposite in="f" in2="na" operator="arithmetic" k2="{k2}" k3="{k3}" k4="{k4v}"/>'
                 f'<feComponentTransfer><feFuncA type="linear" slope="{a["sharp"]}"/></feComponentTransfer>'
-                f'<feGaussianBlur stdDeviation="2.2"/></filter>')
-    field = (f'<rect x="{px - e:.0f}" y="{pt - e * .5:.0f}" width="{w + 2 * e:.0f}" height="{h * .9:.0f}" rx="{w * .06:.0f}" fill="#fff"/>'
-             f'<ellipse cx="{px + w / 2:.0f}" cy="{pt + h * .2:.0f}" rx="{w * .56:.0f}" ry="{pt * .95 + h * .2:.0f}" fill="url(#g{u})"/>')
-    grad = (f'<linearGradient id="g{u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".2"/>'
-            f'<stop offset=".38" stop-color="#fff" stop-opacity=".88"/><stop offset="1" stop-color="#fff"/></linearGradient>'
-            f'<linearGradient id="sf{u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".55" stop-color="#fff" stop-opacity=".7"/>'
-            f'<stop offset="1" stop-color="#fff" stop-opacity=".15"/></linearGradient>'
+                f'<feGaussianBlur stdDeviation="2.4"/></filter>')
+    # the field: the card, widened at the sides, and a dome over the top that fades to nothing before the box ends
+    field = (f'<rect x="{px - e:.0f}" y="{T - e * .5:.0f}" width="{w + 2 * e:.0f}" height="{h * .9:.0f}" rx="{w * .06:.0f}" fill="#fff"/>'
+             f'<ellipse cx="{px + w / 2:.0f}" cy="{T + h * .2:.0f}" rx="{w * .55:.0f}" ry="{pt * .92 + h * .2:.0f}" fill="url(#g{u})"/>')
+    defs = (f'<linearGradient id="g{u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/>'
+            f'<stop offset=".4" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff"/></linearGradient>'
+            f'<linearGradient id="sf{u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".6" stop-color="#fff" stop-opacity=".75"/>'
+            f'<stop offset="1" stop-color="#fff" stop-opacity=".12"/></linearGradient>'
             f'<mask id="ms{u}" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="{W:.0f}" height="{H:.0f}">'
-            f'<rect x="0" y="{pt - h * .05:.0f}" width="{W:.0f}" height="{h * 1.12:.0f}" fill="url(#sf{u})"/></mask>')
-    masks = (f'<mask id="mo{u}" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="{W:.0f}" height="{H:.0f}"><g filter="url(#fo{u})">{field}</g></mask>'
-             f'<mask id="mc{u}" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="{W:.0f}" height="{H:.0f}"><g filter="url(#fc{u})">{field}</g></mask>')
-    # the card's colours, climbing: the scan stretched from its foot to the top of the flame
-    img = (f'<image href="{src}" x="{px - w * .08:.0f}" y="0" width="{w * 1.16:.0f}" height="{pt + h:.0f}" preserveAspectRatio="none" filter="url(#c{u})"/>')
-    seam = (f'<image href="{src}" x="{px - w * .025:.0f}" y="{pt - h * .02:.0f}" width="{w * 1.05:.0f}" height="{h * 1.04:.0f}" '
-            f'preserveAspectRatio="none" filter="url(#c{u})" opacity=".85"/>')
-    return (f'<svg class="abs" style="left:{-px:.0f}px;top:{-pt:.0f}px;width:{W:.0f}px;height:{H:.0f}px;overflow:visible;pointer-events:none;mix-blend-mode:screen" '
-            f'viewBox="0 0 {W:.0f} {H:.0f}" aria-hidden="true"><defs>{colour}{flame(f"fo{u}", k4)}{flame(f"fc{u}", a["core"])}{grad}{masks}</defs>'
-            f'<g mask="url(#mo{u})" opacity="{a["op"]}">{img}</g>'
+            f'<rect x="0" y="{T - h * .06:.0f}" width="{W:.0f}" height="{h * 1.14:.0f}" fill="url(#sf{u})"/></mask>'
+            f'<mask id="mo{u}" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="{W:.0f}" height="{H:.0f}"><g filter="url(#fo{u})">{field}</g></mask>'
+            f'<mask id="mc{u}" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="{W:.0f}" height="{H:.0f}"><g filter="url(#fc{u})">{field}</g></mask>'
+            + ramp(f"c{u}", w * .035, .42) + ramp(f"e{u}", w * .012, .6) + flame(f"fo{u}", k4) + flame(f"fc{u}", a["core"]))
+    full = f'<image href="{src}" width="600" height="838" preserveAspectRatio="none"/>'
+    # the card's own edges, stretched outward: the top slice up into the flame, the side slices out to the sides
+    colour = (f'<g filter="url(#c{u})">'
+              f'<svg x="{px - w * .1:.0f}" y="{T - pt * 1.35:.0f}" width="{w * 1.2:.0f}" height="{pt * 1.35 + h * .08:.0f}" viewBox="0 0 600 110" preserveAspectRatio="none">{full}</svg>'
+              f'<svg x="0" y="{T:.0f}" width="{px + w * .06:.0f}" height="{h:.0f}" viewBox="0 0 70 838" preserveAspectRatio="none">{full}</svg>'
+              f'<svg x="{px + w * .94:.0f}" y="{T:.0f}" width="{px + w * .06:.0f}" height="{h:.0f}" viewBox="530 0 70 838" preserveAspectRatio="none">{full}</svg>'
+              f'<image href="{src}" x="{px:.0f}" y="{T:.0f}" width="{w:.0f}" height="{h:.0f}" preserveAspectRatio="none"/></g>')
+    emit = (f'<g mask="url(#ms{u})">'
+            f'<image href="{src}" x="{px - w * .03:.0f}" y="{T - h * .025:.0f}" width="{w * 1.06:.0f}" height="{h * 1.05:.0f}" preserveAspectRatio="none" filter="url(#c{u})" opacity=".8"/>'
+            f'<image href="{src}" x="{px - w * .01:.0f}" y="{T - h * .008:.0f}" width="{w * 1.02:.0f}" height="{h * 1.016:.0f}" preserveAspectRatio="none" filter="url(#e{u})" opacity=".95"/></g>')
+    return (f'<svg class="abs" style="left:{-px:.0f}px;top:{-T:.0f}px;width:{W:.0f}px;height:{H:.0f}px;overflow:visible;pointer-events:none;mix-blend-mode:screen" '
+            f'viewBox="0 0 {W:.0f} {H:.0f}" aria-hidden="true"><defs>{defs}</defs>'
+            f'<g mask="url(#mo{u})" opacity="{a["op"]}">{colour}</g>'
             f'<g mask="url(#mc{u})" opacity="{a["core_op"]}"><rect width="{W:.0f}" height="{H:.0f}" fill="{hot_hex}"/></g>'
-            f'<g mask="url(#ms{u})">{seam}</g></svg>')
+            f'{emit}</svg>')
 
 # ---------------------------------------------------------------- the frame
 sys.path.insert(0, HERE)
@@ -215,7 +231,7 @@ def frame(concept, ratio, level=AURA_DEFAULT):
     body.append(aura_box(hero, cx, cy, cw, ct, ac, level))
     for pid, ox, oy, k, t in c.get("behind", []):
         body.append(card(pid, cx + ox * cw, cy + oy * cw, cw * k, t))
-    body.append(card(hero, cx, cy, cw, ct))
+    body.append(card(hero, cx, cy, cw, ct, "box-shadow:0 34px 44px -20px rgba(0,0,0,.7)"))
     # the callout: one real piece of the app, lifted out -- no taller than CALLOUT_H, its width shrunk to fit;
     # portrait and square pin it bottom right with the footnote under it, landscape puts it under the subline
     kx, ky, kw = L["callout_fold" if fold else "callout"]
