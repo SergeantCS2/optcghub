@@ -438,6 +438,32 @@ back too far ... the blending is looking better". What changed:
   - The other heroes' readings stayed put or firmed up. Ace moved from his flames' orange toward his
     frame's red-orange, since the edge is where the aura leaves the card.
 
+**Pass 3 (the owner, 27 Sept):** "not there yet, we need to find an in-between, it needs to be more
+consistent -- the aura looks to just have jagged pillars of flame, rather than a gentle aura."
+- **Why the pillars:** the shape, not the colour. Fine, strongly vertical noise (0.017 across, 0.0055 up)
+  went through a hard threshold (slope 1.9), so every gap between tongues dropped to nothing.
+- **One knob for the shape: `flicker`** (`aura_params()`). 0 is a smooth glow hugging the card; 1 is
+  pass 2's flame, number for number. Everything the shape depends on moves together along it:
+  - the noise's weight and scale (broader and rounder toward 0);
+  - the threshold's hardness and the softening after it;
+  - faint vertical wisps inside the body instead of at its edge;
+  - the dome, which holds the light up when the noise no longer lifts it.
+  The side margin holds three blur radii, so no glow meets its box.
+- **The presets** (`AURA2`): `gentle` (flicker .20, rise .40), **`between`** (.45, .44, the lead,
+  `AURA_LEVEL`) and `flame` (1.0, .48; pass 2).
+- **Colour, kept from pass 2 and made to hold at every flicker:**
+  - the body's ramp tops out near the accent, with white-hot kept for the core at the card;
+  - above the card, the light turns from the edge's own colours into the card's accent, deepening toward
+    the tip, as a flame does;
+  - the body's colour is made more vivid (`_vivid`), because the aura is screened onto the ground, which
+    pales every colour toward pastel on a grey ground. Zoro's black-and-white art blurs to grey, and his
+    aura had risen as a pink-grey haze.
+- **What bit:**
+  - at low flicker the aura collapsed to a rim, because the noise had been doing the lifting (hence the
+    dome);
+  - the body sat at about 65 % opacity, so it read as haze (hence the steeper slope);
+  - the ramp's white top made the body smoke (hence `top`, `tint` and `vivid`).
+
 **The ad set (Phase C, 27 Sept):** 6 concepts × 3 sizes = 18 images (`render.mjs --dir pull`).
 
 | Concept | Headline | Hero (`heroes.json`) | Screen | Callout |

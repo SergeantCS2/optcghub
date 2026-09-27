@@ -6,8 +6,10 @@ The grammar (CLAUDE.md, "Style v2: Pull"): a sentence-case headline with one acc
 callout; the hero card in an aura made from its own pixels; the ground from the hero's own art, blurred.
 No rays, no sparkles, no invented tables, no hands. Every price and date comes from capture.mjs's report.
 
-The aura: the owner's pick, v5's pixel aura exactly as it was (see AURA). Every knob is in AURA; `--tune`
-renders the lead frame at each preset side by side.
+The aura (flame_aura): the card's own edge colours and a ramp of its accent, rising from it in a shape set by
+one knob, `flicker` (AURA2): 0 a smooth glow, 1 flame tongues. The lead is `between` (AURA_LEVEL), the owner's
+"in-between". `--tune` renders every preset on three heroes side by side. AURA_MODE = "original" draws the
+first pixel aura (AURA, pixel_aura), kept for the record.
 
   python3 design/marketing/style_pull.py [concept ...]   -> $ADS_OUT/pull/*.html
   python3 design/marketing/style_pull.py --tune          -> $ADS_OUT/pull-tune/*.html (the aura presets)
@@ -72,36 +74,80 @@ def pixel_aura(pid, w, accent, level=AURA_DEFAULT, seed=21):
 #   colour (accent.mjs): deep -> accent -> hot. The hues are the card's; the greys become its accent.
 # - seam: the card's own edge colours, a few px out and softly blurred, instead of a neon rim.
 # - ground: darker (see frame()), so the light has something to read against.
+# Pass 3 (27 Sept): "not there yet ... it needs to be more consistent -- the aura looks to just have jagged
+# pillars of flame, rather than a gentle aura. We need to find an in-between." The pillars came from the shape,
+# not the colour: fine, strongly vertical noise through a hard threshold, so every gap between tongues dropped
+# to nothing. The shape is now one knob, `flicker`: 0 is a smooth glow hugging the card, 1 is pass 2's flame
+# tongues exactly, and everything the shape depends on (the noise's weight and scale, the threshold's
+# hardness, the softening after it, the inner wisps) moves together along it. The colour and the seam, which
+# the owner liked, are untouched.
 AURA2 = {
-    #          rise  spread field  freq             outer (k2, k3, k4)   core (k4)  sharp  opacity core_op
-    # pass 2 (27 Sept): "refined" was too tall, "softer" went too far -- the lead now sits between them
-    "refined": dict(rise=.48, spread=.20, field=.06,  freq="0.017 0.0055", k=(1.5, 1.15, -1.29), core=-1.70, sharp=1.9, op=.95, core_op=.7),
-    "softer":  dict(rise=.43, spread=.18, field=.058, freq="0.017 0.0055", k=(1.45, 1.12, -1.31), core=-1.73, sharp=1.8, op=.92, core_op=.62),
-    "taller":  dict(rise=.54, spread=.21, field=.062, freq="0.017 0.0055", k=(1.55, 1.17, -1.27), core=-1.67, sharp=1.95, op=.97, core_op=.74),
+    # flicker: 0 a smooth glow .. 1 pass 2's flame; rise: how far the aura climbs above the card (x its height)
+    "gentle":  dict(flicker=.20, rise=.40),
+    "between": dict(flicker=.45, rise=.44),
+    "flame":   dict(flicker=1.0, rise=.48),      # pass 2, the "jagged pillars"
 }
-AURA_MODE = "refined"      # "original" draws pixel_aura() as the owner first picked it
+AURA_LEVEL = "between"      # the owner: "we need to find an in-between"
+
+def _lerp(a, b, t):
+    return a + (b - a) * t
+
+def aura_params(level):
+    """everything the aura's shape depends on, from its preset's flicker. At flicker 1 these are pass 2's own
+    numbers; toward 0 the noise weighs less and is broader and rounder, the threshold softens, the edge is
+    blurred more, and faint vertical wisps move inside the body instead of at its edge."""
+    p = AURA2[level]; f = p["flicker"]
+    k2, k3 = _lerp(1.3, 1.5, f), _lerp(.40, 1.15, f)
+    outline = _lerp(.40, .4767, f)                 # where the edge sits in the blurred field, noise at its mean
+    return dict(rise=p["rise"], field=_lerp(.085, .06, f), spread=_lerp(.17, .20, f),
+                freq=f"{_lerp(.008, .017, f):.4f} {_lerp(.0036, .0055, f):.4f}", octaves=3 if f < .7 else 4,
+                k=(k2, k3, -(outline * k2 + k3 * .5)), core=-(.75 * k2 + k3 * .5), sharp=_lerp(1.5, 1.9, f),
+                post=_lerp(8.0, 2.4, f), op=_lerp(.92, .95, f), core_op=_lerp(.3, .7, f), wisp=_lerp(.22, 0, f),
+                # the dome's vertical fade: with less noise to lift the light, the dome itself holds it up
+                dome=(_lerp(.18, .40, f), _lerp(.75, .85, f), _lerp(.44, 1.0, f)),
+                low=_lerp(.55, .35, f),
+                # the body's ramp tops out near the accent itself (white-hot is kept for the core, at the card),
+                # and the body leans on the ramp rather than the art's own greys, so it stays the card's colour
+                top=_lerp(.18, .55, f), keep=_lerp(.26, .42, f),
+                # above the card the light turns from the edge's own colours into the card's accent, deepening
+                # toward the top, as a flame does: (opacity at a third of the way up, at the top)
+                tint=(_lerp(.5, .2, f), _lerp(.85, .45, f)),
+                # the aura is screened onto the ground, which pales every colour toward pastel on a grey ground
+                # (Zoro's black-and-white art blurs to grey): the body's colour is made more vivid to meet it
+                vivid=_lerp(1.4, 1.0, f))
+
+AURA_MODE = "shaped"       # "original" draws pixel_aura() as the owner first picked it
 
 def _hex(c):
     c = c.lstrip("#"); return [int(c[i:i + 2], 16) / 255 for i in (0, 2, 4)]
 
+def _vivid(rgb, k):
+    """the same hue, its saturation raised by k (1 leaves it as it is)"""
+    import colorsys
+    h_, s_, v_ = colorsys.rgb_to_hsv(*rgb)
+    return list(colorsys.hsv_to_rgb(h_, min(1.0, s_ * k + (.06 if k > 1 else 0)), v_))
+
 def _mix(a, b, t):
     return [a[i] * (1 - t) + b[i] * t for i in range(3)]
 
-def flame_aura(pid, w, accent, level="refined", seed=7):
+def flame_aura(pid, w, accent, level=AURA_LEVEL, seed=7):
     """in the card's own box (card-local px), behind the card. Pass 2 (the owner: "too tall ... the top is just
     flat and cut off ... like the card is giving off a seamless aura"):
     - the colour starts as the card's own edge: its top and side slices are stretched outward, so just past the
       border the flame is the border's colour, and further out it becomes the card's ramp
     - a tight emission at the edge (the card, 2 % larger, lightly blurred) joins card and light without a line
     - headroom above the field, so every tongue fades out instead of meeting the box's edge"""
-    a = AURA2[level]; h = round(w * 838 / 600); src = D.art(pid)
-    px, pt, pb = w * a["spread"], h * a["rise"], h * .10
+    a = aura_params(level); h = round(w * 838 / 600); src = D.art(pid)
+    # the side margin holds the field's blur (3 sigma past the widened card), so no glow meets the box's side
+    px, pt, pb = w * max(a["spread"], 3 * a["field"] + .05), h * a["rise"], h * .10
     T = pt * 1.45                                   # the card's top inside the box: the rise plus headroom
     W, H = w + 2 * px, h + T + pb
     deep, bright = _hex(accent["deep"]), _hex(accent["bright"])
-    hot = _mix(bright, [1, 1, 1], .55)
-    low = _mix(deep, bright, .35)                   # the art's blacks rise as a deep flame, never as smoke
-    tables = ["{:.3f} {:.3f} {:.3f} {:.3f}".format(low[i], bright[i], bright[i], hot[i]) for i in range(3)]
+    hot = _mix(bright, [1, 1, 1], .55)              # the core's white-hot, at the card (from the accent as read)
+    bright = _vivid(bright, a["vivid"])             # the body's colour: the accent, as vivid as the screen needs
+    top = _mix(bright, [1, 1, 1], a["top"])         # the body's brightest: the accent, lifted a little
+    low = _mix(deep, bright, a["low"])              # the art's blacks rise as a deep flame, never as smoke
+    tables = ["{:.3f} {:.3f} {:.3f} {:.3f}".format(low[i], bright[i], bright[i], top[i]) for i in range(3)]
     hot_hex = "#" + "".join(f"{round(v * 255):02x}" for v in hot)
     k2, k3, k4 = a["k"]; F = w * a["field"]; e = w * .045
     u = f"{pid}{level}{seed}"
@@ -114,25 +160,38 @@ def flame_aura(pid, w, accent, level="refined", seed=7):
                 f'<feFuncB type="table" tableValues="{tables[2]}"/></feComponentTransfer>'
                 f'<feComposite in="r" in2="s" operator="arithmetic" k2="{1 - keep:.2f}" k3="{keep + .04:.2f}"/></filter>')
     def flame(fid, k4v):
+        # the outline: the field plus noise, thresholded and softened; then the wisps: the body's alpha times
+        # (1 - wisp + wisp x a second, finer vertical noise), so light moves inside it without breaking its edge
         return (f'<filter id="{fid}" filterUnits="userSpaceOnUse" x="0" y="0" width="{W:.0f}" height="{H:.0f}" color-interpolation-filters="sRGB">'
                 f'<feGaussianBlur in="SourceGraphic" stdDeviation="{F:.1f}" result="f"/>'
-                f'<feTurbulence type="fractalNoise" baseFrequency="{a["freq"]}" numOctaves="4" seed="{seed}" result="n"/>'
+                f'<feTurbulence type="fractalNoise" baseFrequency="{a["freq"]}" numOctaves="{a["octaves"]}" seed="{seed}" result="n"/>'
                 f'<feColorMatrix in="n" type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 1 0 0 0 0" result="na"/>'
                 f'<feComposite in="f" in2="na" operator="arithmetic" k2="{k2}" k3="{k3}" k4="{k4v}"/>'
-                f'<feComponentTransfer><feFuncA type="linear" slope="{a["sharp"]}"/></feComponentTransfer>'
-                f'<feGaussianBlur stdDeviation="2.4"/></filter>')
+                f'<feComponentTransfer result="t"><feFuncA type="linear" slope="{a["sharp"]}"/></feComponentTransfer>'
+                f'<feTurbulence type="fractalNoise" baseFrequency="0.028 0.006" numOctaves="2" seed="{seed + 3}" result="n2"/>'
+                f'<feColorMatrix in="n2" type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 1 0 0 0 0" result="w"/>'
+                f'<feComposite in="t" in2="w" operator="arithmetic" k1="{a["wisp"]:.3f}" k2="{1 - a["wisp"]:.3f}"/>'
+                f'<feGaussianBlur stdDeviation="{a["post"]:.1f}"/></filter>')
     # the field: the card, widened at the sides, and a dome over the top that fades to nothing before the box ends
     field = (f'<rect x="{px - e:.0f}" y="{T - e * .5:.0f}" width="{w + 2 * e:.0f}" height="{h * .9:.0f}" rx="{w * .06:.0f}" fill="#fff"/>'
              f'<ellipse cx="{px + w / 2:.0f}" cy="{T + h * .2:.0f}" rx="{w * .55:.0f}" ry="{pt * .92 + h * .2:.0f}" fill="url(#g{u})"/>')
-    defs = (f'<linearGradient id="g{u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/>'
-            f'<stop offset=".4" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff"/></linearGradient>'
+    dm, dmo, de = a["dome"]
+    tm, tt = a["tint"]
+    tip = "#" + "".join(f"{round(v * 255):02x}" for v in _mix(deep, bright, .55))
+    body = "#" + "".join(f"{round(v * 255):02x}" for v in bright)
+    tint = (f'<linearGradient id="t{u}" gradientUnits="userSpaceOnUse" x1="0" y1="{T:.0f}" x2="0" y2="{T - pt * 1.1:.0f}">'
+            f'<stop offset="0" stop-color="{body}" stop-opacity="0"/>'
+            f'<stop offset=".33" stop-color="{body}" stop-opacity="{tm:.2f}"/>'
+            f'<stop offset="1" stop-color="{tip}" stop-opacity="{tt:.2f}"/></linearGradient>')
+    defs = (tint + f'<linearGradient id="g{u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/>'
+            f'<stop offset="{dm:.2f}" stop-color="#fff" stop-opacity="{dmo:.2f}"/><stop offset="{de:.2f}" stop-color="#fff"/></linearGradient>'
             f'<linearGradient id="sf{u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".6" stop-color="#fff" stop-opacity=".75"/>'
             f'<stop offset="1" stop-color="#fff" stop-opacity=".12"/></linearGradient>'
             f'<mask id="ms{u}" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="{W:.0f}" height="{H:.0f}">'
             f'<rect x="0" y="{T - h * .06:.0f}" width="{W:.0f}" height="{h * 1.14:.0f}" fill="url(#sf{u})"/></mask>'
             f'<mask id="mo{u}" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="{W:.0f}" height="{H:.0f}"><g filter="url(#fo{u})">{field}</g></mask>'
             f'<mask id="mc{u}" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="{W:.0f}" height="{H:.0f}"><g filter="url(#fc{u})">{field}</g></mask>'
-            + ramp(f"c{u}", w * .035, .42) + ramp(f"e{u}", w * .012, .6) + flame(f"fo{u}", k4) + flame(f"fc{u}", a["core"]))
+            + ramp(f"c{u}", w * .035, a["keep"]) + ramp(f"e{u}", w * .012, .6) + flame(f"fo{u}", k4) + flame(f"fc{u}", a["core"]))
     full = f'<image href="{src}" width="600" height="838" preserveAspectRatio="none"/>'
     # the card's own edges, stretched outward: the top slice up into the flame, the side slices out to the sides
     colour = (f'<g filter="url(#c{u})">'
@@ -145,7 +204,7 @@ def flame_aura(pid, w, accent, level="refined", seed=7):
             f'<image href="{src}" x="{px - w * .01:.0f}" y="{T - h * .008:.0f}" width="{w * 1.02:.0f}" height="{h * 1.016:.0f}" preserveAspectRatio="none" filter="url(#e{u})" opacity=".95"/></g>')
     return (f'<svg class="abs" style="left:{-px:.0f}px;top:{-T:.0f}px;width:{W:.0f}px;height:{H:.0f}px;overflow:visible;pointer-events:none;mix-blend-mode:screen" '
             f'viewBox="0 0 {W:.0f} {H:.0f}" aria-hidden="true"><defs>{defs}</defs>'
-            f'<g mask="url(#mo{u})" opacity="{a["op"]}">{colour}</g>'
+            f'<g mask="url(#mo{u})" opacity="{a["op"]}">{colour}<rect width="{W:.0f}" height="{T:.0f}" fill="url(#t{u})"/></g>'
             f'<g mask="url(#mc{u})" opacity="{a["core_op"]}"><rect width="{W:.0f}" height="{H:.0f}" fill="{hot_hex}"/></g>'
             f'{emit}</svg>')
 
@@ -189,7 +248,7 @@ def card(pid, x, y, w, tilt, extra=""):
 def aura_box(pid, x, y, w, tilt, accent, level):
     h = round(w * 838 / 600)
     inner = pixel_aura(pid, w, accent, level if level in AURA else AURA_DEFAULT) if AURA_MODE == "original" \
-        else flame_aura(pid, w, accent, level if level in AURA2 else "refined")
+        else flame_aura(pid, w, accent, level if level in AURA2 else AURA_LEVEL)
     return (f'<div class="abs" style="left:{x:.0f}px;top:{y:.0f}px;width:{w:.0f}px;height:{h}px;transform:rotate({tilt}deg)">{inner}</div>')
 
 # where each piece goes, per ratio. screen: the device's box (x, y, width), its height from its kind; hero: the
