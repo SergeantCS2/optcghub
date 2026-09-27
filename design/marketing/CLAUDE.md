@@ -371,7 +371,7 @@ like the Fold 7. The aura: try one pixel-based pass, or go back to v3's soft red
   card.
 - **Type:** Inter 800 for the headline (88/80/56 px by size); Inter 500 for the subline at 28 px `#d4d7d2`
   with a light shadow; the footnote at 17 px `#a9ada8`. No italics, no all caps except micro-labels.
-- **The aura** (`AURA`, `pixel_aura()`):
+- **The aura:** `flame_aura()`, refined (below). Its first form (`AURA`, `pixel_aura()`), kept for the record:
   - the card's own scan blurred (16), saturated (2.2), displaced upward by vertical fractal noise (0.018 /
     0.004, scale 190) and brightened (1.5), in a masked body 1.36× wide rising 0.32× above the card;
   - a halo of the card itself (blur 28);
@@ -392,6 +392,29 @@ like the Fold 7. The aura: try one pixel-based pass, or go back to v3's soft red
   a word in capitals, and a footnote may credit TCGplayer as the source.
 - **Finish condition:** `render.mjs` passes (size, 5 MB, overlay under 20 %, 24 px edges, fonts, images),
   and the session has read every frame at full and thumbnail size before sending.
+
+**The aura, refined (the owner, 27 Sept):** "I like this aura, but it needs refinement ... it looks cheap and
+AI like, needs to be more specific to the card / color matched / blended better." A polish pass (ui-taste
+`polish.md`) on close-ups of three heroes found:
+- the rising streaks took the art's greys;
+- the enlarged blurred copy lit a soft rectangle round the card;
+- colours from every part of the art smeared side by side;
+- the glow was even on every side with a neon rim;
+- the ground washed the light out.
+
+`flame_aura()` (`AURA2`, `AURA_MODE = "refined"`) replaces it:
+- **Shape:** real flame tongues. A white field hugs the card, widened at the sides, with a dome over the
+  top. Fractal noise with long vertical streaks is added and the sum thresholded, so the edge breaks into
+  tongues that are tallest in the middle, lick up the sides and stay quiet at the foot. A tighter second
+  threshold is the hot core.
+- **Colour:** the card's own pixels, stretched upward and blurred, mixed 74/30 with a ramp of the card's
+  dominant colour (`accent.mjs`). The ramp runs from the deep colour lifted toward the accent, through the
+  accent, to hot. Blacks rise as deep flame, never smoke.
+- **Seam:** the card's own edge colours, a few px out, fading toward the foot, instead of a neon rim.
+- **Ground:** darker (`GROUND_CSS`).
+
+`--tune` renders `refined` / `softer` / `stronger` on three heroes. `AURA_MODE = "original"` still draws
+the first pixel aura, for the record.
 
 **The ad set (Phase C, 27 Sept):** 6 concepts × 3 sizes = 18 images (`render.mjs --dir pull`).
 

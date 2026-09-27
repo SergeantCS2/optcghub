@@ -56,6 +56,83 @@ def pixel_aura(pid, w, accent, level=AURA_DEFAULT, seed=21):
             f'<div class="pa" style="left:-3px;top:-3px;width:{w + 6}px;height:{h + 6}px;border-radius:4.5%;'
             f'box-shadow:0 0 18px 4px {accent["bright"]},0 0 60px 10px color-mix(in srgb,{accent["bright"]} 45%,transparent);opacity:{a["rim"]}"></div>')
 
+# ---------------------------------------------------------------- the refined aura (27 Sept, polish pass)
+# The owner on the pixel aura: "I like this aura, but it needs refinement ... it looks cheap and AI like,
+# needs to be more specific to the card / color matched / blended better." What the close-ups showed:
+# - the rising streaks took the art's greys (Zoro's black-and-white SP rose as smoke, not light)
+# - the enlarged, blurred copy of the card lit a soft rectangle round it (Luffy: a haze box)
+# - colours from every part of the art smeared side by side (Sanji: green, orange, yellow bands)
+# - the glow was even on all four sides, the bottom too, and the rim a uniform neon box-shadow
+# - the ground (the art, blurred) was bright enough to wash the aura out
+# The refinement, one coherent pass:
+# - shape: real flame tongues. A white field hugs the card and climbs above it; fractal noise with long
+#   vertical streaks is added and the sum thresholded, so the edge breaks into tongues that are tallest over
+#   the top and quiet at the foot. A second, tighter threshold is the hot core inside the outer tongues.
+# - colour: the card's own pixels, stretched upward and blurred, mixed with a ramp of the card's dominant
+#   colour (accent.mjs): deep -> accent -> hot. The hues are the card's; the greys become its accent.
+# - seam: the card's own edge colours, a few px out and softly blurred, instead of a neon rim.
+# - ground: darker (see frame()), so the light has something to read against.
+AURA2 = {
+    #          rise  spread field  freq             outer (k2, k3, k4)   core (k4)  sharp  opacity core_op
+    "refined": dict(rise=.48, spread=.20, field=.06, freq="0.017 0.0055", k=(1.5, 1.15, -1.29), core=-1.70, sharp=1.9, op=.95, core_op=.7),
+    "softer":  dict(rise=.38, spread=.16, field=.055, freq="0.017 0.0055", k=(1.4, 1.1, -1.33),  core=-1.76, sharp=1.6, op=.8,  core_op=.55),
+    "stronger":dict(rise=.60, spread=.24, field=.065, freq="0.016 0.005",  k=(1.6, 1.2, -1.25),  core=-1.64, sharp=2.1, op=1.0, core_op=.8),
+}
+AURA_MODE = "refined"      # "original" draws pixel_aura() as the owner first picked it
+
+def _hex(c):
+    c = c.lstrip("#"); return [int(c[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+
+def _mix(a, b, t):
+    return [a[i] * (1 - t) + b[i] * t for i in range(3)]
+
+def flame_aura(pid, w, accent, level="refined", seed=7):
+    """in the card's own box (card-local px), behind the card"""
+    a = AURA2[level]; h = round(w * 838 / 600); src = D.art(pid)
+    px, pt, pb = w * a["spread"], h * a["rise"], h * .10
+    W, H = w + 2 * px, h + pt + pb
+    deep, bright = _hex(accent["deep"]), _hex(accent["bright"])
+    hot = _mix(bright, [1, 1, 1], .55)
+    low = _mix(deep, bright, .35)        # the art's blacks rise as a deep flame, never as smoke
+    tables = ["{:.3f} {:.3f} {:.3f} {:.3f}".format(low[i], bright[i], bright[i], hot[i]) for i in range(3)]
+    hot_hex = "#" + "".join(f"{round(v * 255):02x}" for v in hot)
+    k2, k3, k4 = a["k"]; F = w * a["field"]; e = w * .045
+    u = f"{pid}{level}{seed}"
+    colour = (f'<filter id="c{u}" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">'
+              f'<feGaussianBlur stdDeviation="{w * .03:.1f}" result="b"/>'
+              f'<feColorMatrix in="b" type="saturate" values="1.7" result="s"/>'
+              f'<feColorMatrix in="b" type="matrix" values=".3 .59 .11 0 0 .3 .59 .11 0 0 .3 .59 .11 0 0 0 0 0 1 0"/>'
+              f'<feComponentTransfer result="r"><feFuncR type="table" tableValues="{tables[0]}"/><feFuncG type="table" tableValues="{tables[1]}"/>'
+              f'<feFuncB type="table" tableValues="{tables[2]}"/></feComponentTransfer>'
+              f'<feComposite in="r" in2="s" operator="arithmetic" k2=".74" k3=".3"/></filter>')
+    def flame(fid, k4v):
+        return (f'<filter id="{fid}" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">'
+                f'<feGaussianBlur in="SourceGraphic" stdDeviation="{F:.1f}" result="f"/>'
+                f'<feTurbulence type="fractalNoise" baseFrequency="{a["freq"]}" numOctaves="4" seed="{seed}" result="n"/>'
+                f'<feColorMatrix in="n" type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 1 0 0 0 0" result="na"/>'
+                f'<feComposite in="f" in2="na" operator="arithmetic" k2="{k2}" k3="{k3}" k4="{k4v}"/>'
+                f'<feComponentTransfer><feFuncA type="linear" slope="{a["sharp"]}"/></feComponentTransfer>'
+                f'<feGaussianBlur stdDeviation="2.2"/></filter>')
+    field = (f'<rect x="{px - e:.0f}" y="{pt - e * .5:.0f}" width="{w + 2 * e:.0f}" height="{h * .9:.0f}" rx="{w * .06:.0f}" fill="#fff"/>'
+             f'<ellipse cx="{px + w / 2:.0f}" cy="{pt + h * .2:.0f}" rx="{w * .56:.0f}" ry="{pt * .95 + h * .2:.0f}" fill="url(#g{u})"/>')
+    grad = (f'<linearGradient id="g{u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".2"/>'
+            f'<stop offset=".38" stop-color="#fff" stop-opacity=".88"/><stop offset="1" stop-color="#fff"/></linearGradient>'
+            f'<linearGradient id="sf{u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".55" stop-color="#fff" stop-opacity=".7"/>'
+            f'<stop offset="1" stop-color="#fff" stop-opacity=".15"/></linearGradient>'
+            f'<mask id="ms{u}" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="{W:.0f}" height="{H:.0f}">'
+            f'<rect x="0" y="{pt - h * .05:.0f}" width="{W:.0f}" height="{h * 1.12:.0f}" fill="url(#sf{u})"/></mask>')
+    masks = (f'<mask id="mo{u}" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="{W:.0f}" height="{H:.0f}"><g filter="url(#fo{u})">{field}</g></mask>'
+             f'<mask id="mc{u}" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="{W:.0f}" height="{H:.0f}"><g filter="url(#fc{u})">{field}</g></mask>')
+    # the card's colours, climbing: the scan stretched from its foot to the top of the flame
+    img = (f'<image href="{src}" x="{px - w * .08:.0f}" y="0" width="{w * 1.16:.0f}" height="{pt + h:.0f}" preserveAspectRatio="none" filter="url(#c{u})"/>')
+    seam = (f'<image href="{src}" x="{px - w * .025:.0f}" y="{pt - h * .02:.0f}" width="{w * 1.05:.0f}" height="{h * 1.04:.0f}" '
+            f'preserveAspectRatio="none" filter="url(#c{u})" opacity=".85"/>')
+    return (f'<svg class="abs" style="left:{-px:.0f}px;top:{-pt:.0f}px;width:{W:.0f}px;height:{H:.0f}px;overflow:visible;pointer-events:none;mix-blend-mode:screen" '
+            f'viewBox="0 0 {W:.0f} {H:.0f}" aria-hidden="true"><defs>{colour}{flame(f"fo{u}", k4)}{flame(f"fc{u}", a["core"])}{grad}{masks}</defs>'
+            f'<g mask="url(#mo{u})" opacity="{a["op"]}">{img}</g>'
+            f'<g mask="url(#mc{u})" opacity="{a["core_op"]}"><rect width="{W:.0f}" height="{H:.0f}" fill="{hot_hex}"/></g>'
+            f'<g mask="url(#ms{u})">{seam}</g></svg>')
+
 # ---------------------------------------------------------------- the frame
 sys.path.insert(0, HERE)
 import copy_assets as CA                             # the ad text's rules, applied to the image captions too
@@ -84,6 +161,9 @@ CALLOUT_H = {"portrait": 290, "square": 220, "landscape": 132}
 SOLO = {"portrait": (560, 390, 500, 7), "square": (660, 270, 400, 7)}   # a phone concept with one hero card
 OPEN_W = 1966                                        # the open Fold's shot, 749 CSS px at 2.625
 
+GROUND_CSS = (".ground{filter:blur(90px) saturate(1.45) brightness(.44)}"
+              ".shade{background:radial-gradient(ellipse 80% 65% at 62% 42%,rgba(6,7,7,.05) 0%,rgba(6,7,7,.5) 60%,rgba(6,7,7,.94) 100%)}")
+
 def accent_of(pid):
     return P2.accents().get(str(pid), {"deep": "#4c1c23", "bright": "#ff6e83"})
 
@@ -92,8 +172,9 @@ def card(pid, x, y, w, tilt, extra=""):
 
 def aura_box(pid, x, y, w, tilt, accent, level):
     h = round(w * 838 / 600)
-    return (f'<div class="abs" style="left:{x:.0f}px;top:{y:.0f}px;width:{w:.0f}px;height:{h}px;transform:rotate({tilt}deg)">'
-            f'{pixel_aura(pid, w, accent, level)}</div>')
+    inner = pixel_aura(pid, w, accent, level if level in AURA else AURA_DEFAULT) if AURA_MODE == "original" \
+        else flame_aura(pid, w, accent, level if level in AURA2 else "refined")
+    return (f'<div class="abs" style="left:{x:.0f}px;top:{y:.0f}px;width:{w:.0f}px;height:{h}px;transform:rotate({tilt}deg)">{inner}</div>')
 
 # where each piece goes, per ratio. screen: the device's box (x, y, width), its height from its kind; hero: the
 # hero card (x, y, width, tilt); callout: (x, y, width); the headline's size and the sub's box
@@ -103,7 +184,7 @@ LAYOUT = {
     "square":    dict(h1=80, head=(64, 64, 720), sub=(64, 250, 520, 26), phone=(64, 560, 380), fold=(64, 470, 600),
                       hero=(720, 300, 360, 7), hero_fold=(760, 300, 330, 8), callout=(520, 900, 616), callout_fold=(560, 930, 576)),
     "landscape": dict(h1=56, head=(56, 104, 580), sub=(56, 240, 520, 22), phone=(700, 64, 250), fold=(640, 96, 400),
-                      hero=(930, 104, 220, 7), hero_fold=(960, 70, 190, 8), callout=(56, 352, 440), callout_fold=(56, 352, 440)),
+                      hero=(935, 160, 210, 7), hero_fold=(965, 165, 175, 8), callout=(56, 352, 440), callout_fold=(56, 352, 440)),
 }
 
 def frame(concept, ratio, level=AURA_DEFAULT):
@@ -112,7 +193,7 @@ def frame(concept, ratio, level=AURA_DEFAULT):
     L = LAYOUT[ratio]; W, H = SIZES[ratio]
     fold = c["screen"][0] == "fold"
     hero = c["hero"]; ac = accent_of(hero)
-    css = P2.p3_fonts() + P2.P5_CSS.replace("var(--accent)", ac["bright"])
+    css = P2.p3_fonts() + P2.P5_CSS.replace("var(--accent)", ac["bright"]) + GROUND_CSS
     bad = check_caption(c["head"] + " " + c["sub"]) + check_caption(c["foot"], footnote=True)
     assert not bad, (concept, bad)
     brand_pos = (f'left:{L["head"][0]}px;top:34px' if ratio == "landscape" else f'right:{L["head"][0]}px;top:{L["head"][1] + 10}px')
@@ -224,9 +305,11 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     if "--tune" in args:
         out = os.path.join(ADS, "pull-tune"); os.makedirs(out, exist_ok=True)
-        for level in AURA:
-            open(os.path.join(out, f"printing-{level}-portrait.html"), "w").write(frame("printing", "portrait", level))
-        print(f"style_pull: the aura presets ({', '.join(AURA)}) written to {out}")
+        presets = AURA if AURA_MODE == "original" else AURA2
+        for level in presets:
+            for concept in ("printing", "value", "deck"):
+                open(os.path.join(out, f"{concept}-{level}-portrait.html"), "w").write(frame(concept, "portrait", level))
+        print(f"style_pull: the aura presets ({', '.join(presets)}) on three heroes written to {out}")
         sys.exit(0)
     out = os.path.join(ADS, "pull"); os.makedirs(out, exist_ok=True)
     n = 0
