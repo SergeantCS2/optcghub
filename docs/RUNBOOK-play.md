@@ -1,6 +1,6 @@
 # RUNBOOK — Google Play, from the repo to a running 14-day clock
 
-*Current as of take 120.* The whole procedure, in the order it must happen,
+*Current as of take 121.* The whole procedure, in the order it must happen,
 with who does each step. Everything on the repo side is already built; what
 follows is the owner's, and none of it is hard. The gate at the end is calendar
 time: **12 testers opted in for 14 continuous days** (landmine 35; re-checked
@@ -181,7 +181,7 @@ collects nothing, but AdMob does. Declare exactly this:
 | Phone screenshots, at least 2 | the Fold, cover screen: Home, Collection, a card detail, Scan, a deck. The first one leads with the collection, not a character: the listing does not foreground a franchise (landmine 30). The app itself shows card art from take 109 (A42) |
 | Category | **App → Tools** (or Entertainment) — never **Game**; it is a collection tracker |
 | Contact email | yours |
-| Website | `https://sergeantcs2.github.io/optcghub/` — this is the domain AdMob crawls for app-ads.txt (§9) |
+| Website | *Take 121: the live listing reads `https://sergeantcs2.dev/`, the owner's own site.* Whatever it is, AdMob fetches `/app-ads.txt` from its root, so the file lives there (§9, landmine 209). Take 40 set `https://sergeantcs2.github.io/optcghub/`, where the file already is |
 
 ## 7. Closed testing — the clock
 
@@ -236,33 +236,64 @@ real users, which is when §9's rule says they belong.
 
 ## 9. Ads — AdMob, in parallel, none of it blocks the clock
 
-The AdMob account exists (take 33): publisher `pub-6243777967151950`.
+The AdMob account exists (take 33): publisher `pub-6243777967151950`. *Rewritten
+at take 121, when AdMob could not verify the app.*
 
-1. **app-ads.txt — DONE take 40, PROVEN:** `https://sergeantcs2.github.io/app-ads.txt`
-   serves `google.com, pub-6243777967151950, DIRECT, f08c47fec0942fa0`.
-   How it works, because it confused once: GitHub gives an account one
-   *user site* at the root of `<user>.github.io`, published only by a repo
-   named exactly `<user>.github.io` — the name is the switch. Every other
-   repo publishes under a path (`optcghub` → `/optcghub/`). AdMob's crawler
-   takes the website on the listing, drops the path, and fetches
-   `/app-ads.txt` from the **root**, never from `/optcghub/`. So the file
-   lives in the root repo, beside a README, and that is the whole repo. It
-   is not required to serve ads or to start the clock; AdMob shows a warning
-   until it is found. Once the listing's *Website* is
-   `https://sergeantcs2.github.io/optcghub/`, AdMob → the app → *app-ads.txt
-   → Check for updates*; verified within about a day.
-2. **The IDs** (D11): the **app ID is in** (`~1538944343`, take 41). Left: **two rewarded ad units** (`…/…`) — *Apps → OP TCG Hub → App settings*
-   and *Ad units → Rewarded*. *Take 115: needed now -- the app is live on
-   production since 24 Sept, and test units earn nothing.* Register the
-   owner's own phones as AdMob **test devices** first: tapping a real unit
-   repeatedly on your own phone is invalid traffic and the ban is permanent
-   (A17). The ad settings ride the Pages manifest, so the take that carries
-   the IDs switches every install at its next sync.
-3. **Link the AdMob app to the Play listing** once it is live in a track, so
-   AdMob's store verification and app-ads.txt status can complete. *Take
-   115: the listing is live; whether this link was made is not recorded --
-   the owner's.*
-4. **Families:** this app is not directed at children. Never a Families
+**Two AdMob apps (the owner's screenshot, 28 Sept):** "OP TCG Hub: Collect,
+Hunt, SIM", `ca-app-pub-6243777967151950~9519036366`, linked to Google Play
+`com.optcghub.app` -- **the one the app uses from take 121**; and "testing",
+`~1538944343`, the take-41 app added by name before the app was on Play, never
+linked, renamed by the owner. Builds 41 to 120 name "testing" in their APK
+(landmine 210); only an AAB from take 121 on names the linked app. Make nothing
+under "testing".
+
+1. **app-ads.txt, at the root of the listing's website.** It is the IAB
+   standard by which a buyer checks that this publisher ID may sell ads in the
+   app; only the app's owner can edit the listing, so AdMob trusts the website
+   the listing names, drops the path, and fetches `/app-ads.txt` from that
+   domain's root -- nowhere else. The one line:
+
+   `google.com, pub-6243777967151950, DIRECT, f08c47fec0942fa0`
+
+   *Take 121, PROVEN 28 Sept:* the listing's website is
+   `https://sergeantcs2.dev/` (its Website link and `appstore:developer_url`),
+   and `https://sergeantcs2.dev/app-ads.txt` is 404; the line is served, right,
+   at `https://sergeantcs2.github.io/app-ads.txt` (take 40's user site, the repo
+   `SergeantCS2.github.io`), which the listing no longer names (landmine 209).
+   **Either** put the file at the root of `sergeantcs2.dev` (the owner's server;
+   keeps the listing on the owner's site, and one file covers every app under
+   this account), **or** set the listing's Website back to
+   `https://sergeantcs2.github.io/optcghub/` (*Store presence → Store settings*).
+   One of the two. Check, from anywhere:
+
+   `curl -s "$(curl -s 'https://play.google.com/store/apps/details?id=com.optcghub.app&hl=en' | grep -o 'appstore:developer_url" content="[^"]*' | cut -d'"' -f3 | sed -E 's#^(https?://[^/]+).*#\1#')/app-ads.txt"`
+
+   prints the line when the listing's website serves it. Then AdMob → the app →
+   *app-ads.txt* → **Check for updates**; verified within about a day, and the
+   AdMob tab is the proof, not a 200 (take 40 called it DONE on the 200). Every
+   time the listing's website changes, the file moves with it.
+2. **Test devices first:** AdMob → *Settings → Test devices → Add*, the Fold's
+   advertising ID (the phone's *Settings → Google → Ads*), and every phone the
+   owner taps ads on. Tapping a real unit on your own phone is invalid traffic
+   and the ban is permanent (A17).
+3. **The units (D11): three rewarded units under the linked app** (the owner,
+   take 121: one per placement) -- *Scan credits*, *Deck save*, *MAX unlock*.
+   The app reads neither the reward amount nor its type; the defaults do. They
+   go in `ADMOB_LIVE_SCAN`, `_DECK`, `_MAX` in `tools/config.py`, with
+   `ADMOB_LIVE_FROM` the first take that asks for consent; they ride the synced
+   manifest's `ads.live`, which a build loads only at or after that take, so
+   every older install keeps Google's test units (take 121). `ads.scan` and
+   `ads.deck` stay the test unit for good; the gate's `check_ads` refuses
+   anything else.
+4. **Consent (A43):** the app is on Play worldwide (the owner, take 121), so
+   EEA and UK users need Google's consent message before real ads. AdMob →
+   *Privacy & messaging → European regulations* → a message for this app,
+   **published**; the US states message is optional. The app's side (the UMP
+   calls, a *Privacy choices* row under More) is the take after 121, and the
+   gate refuses `ads.live` without it.
+5. **Payments**, to be paid rather than to serve: AdMob → *Payments* -- the
+   payment profile, tax information, and the PIN letter when it arrives.
+6. **Families:** this app is not directed at children. Never a Families
    category; `tagForChildDirectedTreatment` stays unset.
 
 ## 10. Developer verification — The owner, when Play asks
@@ -306,4 +337,4 @@ Two things per take:
 | Tester count stuck below 12 | invited ≠ opted in: they must open the link **and** install; ask them for a screenshot of the app |
 | The clock reset | a tester opted out; that is why 16–18 |
 | "Violation of Play Console Requirements — some types of apps can only be distributed by organisations" | the policy's four triggers are financial, health, VPN, government. Set *Financial features* to **none**, *Health* to **none**, *Government* **No**; category **App → Tools**; save every card; resubmit. Category alone is not on the list (take 43) |
-| AdMob app-ads.txt "not found" | the file must be at the **root** of `sergeantcs2.github.io`, and the listing's website must be set (§9) |
+| AdMob "couldn't verify", app-ads.txt "not found" or "details don't match" | the file must be at the **root of the website the live listing names** -- `sergeantcs2.dev` since take 121 -- not wherever it was put once (§9 item 1, landmine 209) |

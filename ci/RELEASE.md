@@ -1,4 +1,4 @@
-# OP TCG Hub — take 120
+# OP TCG Hub — take 121
 
 ## Installing — read this first
 
@@ -17,6 +17,12 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 121:** Watching the ad for all-time history (MAX) now opens it;
+before, it gave you a deck save instead. An ad that cannot be shown now says
+so. The app also names its AdMob app that is linked to this Play listing, the
+groundwork for real ads; the ads are still Google's test ads for now. Nothing
+you have saved changes.
 
 **New at take 120:** A light look, under More → Appearance: Dark (as before, and
 the default), Light, or Auto to follow the phone. In light each mode keeps its

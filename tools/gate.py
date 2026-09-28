@@ -424,6 +424,52 @@ def check_confidence_gate():
     note(f"auto-accept: {pct:.1f}% code alone, {100*safe2/tot2:.1f}% with set context")
 
 
+ADMOB_PUB = "ca-app-pub-6243777967151950"
+ADMOB_TEST = "ca-app-pub-3940256099942544/"
+ADMOB_RETIRED = {"ca-app-pub-6243777967151950~1538944343":
+                 '"testing", added by name before the app was on Play and never linked (landmine 210)'}
+ADMOB_LIVE_FLOOR = 122   # take 121 names the linked app and asks no consent (A43)
+
+
+def check_ads():
+    """Take 121 (landmines 209, 210). The synced manifest's ads block reaches every
+    install, old APKs included, which name the retired app and ask no consent. So
+    ads.scan and ads.deck stay Google's test unit for good, the app ID is never the
+    retired one, and real units ride ads.live: whole, the publisher's, three of them,
+    from a take after 121, and only when the app has a consent flow to ask with."""
+    mp = os.path.join(ROOT, "www", "bundle", "manifest.json")
+    if not os.path.exists(mp):
+        return note("no bundle manifest — ads checks skipped")
+    a = (json.load(open(mp)) or {}).get("ads") or {}
+    app = str(a.get("app") or "")
+    if app in ADMOB_RETIRED:
+        fail("ads", f"the app ID is {app}, {ADMOB_RETIRED[app]}")
+    elif not app.startswith(ADMOB_PUB + "~"):
+        fail("ads", f"the app ID {app!r} is not the publisher's")
+    for k in ("scan", "deck"):
+        if not str(a.get(k) or "").startswith(ADMOB_TEST):
+            fail("ads", f"ads.{k} is {a.get(k)!r}: every install from take 120 and earlier loads it -- it stays "
+                        "Google's test unit; real units ride ads.live (take 121)")
+    if a.get("test") is not True:
+        fail("ads", "ads.test is not true: the older installs' units are Google's test unit")
+    live = a.get("live")
+    if live is None:
+        return
+    units = [live.get(k) for k in ("scan", "deck", "max")]
+    for k, u in zip(("scan", "deck", "max"), units):
+        if not re.fullmatch(re.escape(ADMOB_PUB) + r"/\d+", str(u or "")):
+            fail("ads", f"ads.live.{k} is {u!r}, not one of the publisher's units ({ADMOB_PUB}/N)")
+    if len(set(map(str, units))) != 3:
+        fail("ads", "ads.live's units are not three: one unit per placement (the owner, take 121)")
+    f = live.get("from")
+    if not isinstance(f, int) or f < ADMOB_LIVE_FLOOR:
+        fail("ads", f"ads.live.from is {f!r}: take 121 names the linked app but asks no consent, so no build "
+                    f"before take {ADMOB_LIVE_FLOOR} loads real units")
+    if "requestConsentInfo" not in read("src", "app.html"):
+        fail("ads", "ads.live is set and the app asks for no consent (no requestConsentInfo): the app is "
+                    "worldwide (the owner, take 121; A43)")
+
+
 def check_catalogue():
     if not os.path.exists(MANIFEST):
         return note("no manifest — catalogue checks skipped")
@@ -610,6 +656,7 @@ def selftest():
             check_docs_current(n); check_handoff(n); check_agenda()
             check_landmine_citations(); check_secrets(); check_render_receipt()
             check_workflow_copies(); check_offline(provision_hosts()); check_icon_characters(); check_stale_copy()
+            check_ads()
             fired = any(f.startswith(cat + ":") for f in FAILS) if cat else bool(FAILS)
             stray = [f for f in FAILS if cat and not f.startswith(cat + ":")]
         finally:
@@ -682,6 +729,35 @@ def selftest():
         json.dump(cat, open(b, "w"))
     probe("undeclared host in the bundle's img column (take 100)", bad_host, "offline")
 
+    # take 121 (landmines 209, 210): the synced ads block reaches every install
+    def ads(t, live=None, consent=False, **top):
+        d = os.path.join(t, "www", "bundle"); os.makedirs(d, exist_ok=True)
+        b = os.path.join(d, "manifest.json")
+        m = json.load(open(b)) if os.path.exists(b) else {}
+        a = m.setdefault("ads", {})
+        a.update({"app": ADMOB_PUB + "~9519036366", "scan": ADMOB_TEST + "5224354917",
+                  "deck": ADMOB_TEST + "5224354917", "test": True, "live": live})
+        a.update(top)
+        json.dump(m, open(b, "w"))
+        if consent:
+            open(os.path.join(t, "src", "app.html"), "a").write("\n<script>/* requestConsentInfo */</script>\n")
+    good = {"scan": ADMOB_PUB + "/1111111111", "deck": ADMOB_PUB + "/2222222222", "max": ADMOB_PUB + "/3333333333",
+            "from": ADMOB_LIVE_FLOOR}
+    probe("ads: the retired \"testing\" app ID (take 121, landmine 210)",
+          lambda t: ads(t, app=next(iter(ADMOB_RETIRED))), "ads")
+    probe("ads: a real unit in ads.scan, which every older install loads (take 121)",
+          lambda t: ads(t, scan=ADMOB_PUB + "/1111111111"), "ads")
+    probe("ads: a live block carrying Google's test unit (take 121)",
+          lambda t: ads(t, live={**good, "max": ADMOB_TEST + "5224354917"}, consent=True), "ads")
+    probe("ads: a live block from take 121, which asks no consent (take 121)",
+          lambda t: ads(t, live={**good, "from": 121}, consent=True), "ads")
+    probe("ads: two placements sharing one live unit (take 121: three)",
+          lambda t: ads(t, live={**good, "max": good["deck"]}, consent=True), "ads")
+    probe("ads: a live block and no consent flow in the app (take 121)",
+          lambda t: ads(t, live=good), "ads")
+    probe("control: a whole live block from take 122, with a consent flow, passes (take 121)",
+          lambda t: ads(t, live=good, consent=True), expect=False)
+
     def drift(t):
         # the live copy and the ci/ copy of one workflow, one byte apart (take 89)
         os.makedirs(os.path.join(t, ".github", "workflows"), exist_ok=True)
@@ -715,6 +791,7 @@ if __name__ == "__main__":
     check_workflow_copies()
     check_stale_copy()
     check_play_readiness()
+    check_ads()
     check_escapes_in_markup()
     check_icon_characters()
     check_duplicate_ids()

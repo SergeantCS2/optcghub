@@ -5337,15 +5337,28 @@ const PLATFORM = {
        showRewardVideoAd()                         show
        addListener('onRewardedVideoAdReward', r)   the credit lands HERE, from
                                                    the event, never from the
-                                                   show() promise resolving --
-                                                   a dismissed ad resolves too.
+                                                   show() promise.
+     Take 121, read from 8.1.0's Android source: the reward event is sent
+     BEFORE show() resolves, and a dismissed ad, or one that fails to show,
+     never settles show() at all. So what was asked for is set before show(),
+     nothing waits on show(), and a failure to show arrives as its own event.
      Loading is done ahead of time on the scan screen so a tap shows an ad
      rather than a spinner; a failed load says so and the button stays. */
-  _adReady: { scan: false, deck: false },
+  _adReady: { scan: false, deck: false, max: false },
+  /* Take 121: which units this build loads. Real units ride ads.live and reach
+     a build only at or after ads.live.from: every install from take 120 and
+     earlier reads ads.scan and ads.deck, names the "testing" AdMob app in its
+     APK and has no consent flow, so those two stay Google's test units. */
+  adUnits() {
+    const a = CAT.man.ads || {}, L = a.live;
+    if (L && typeof L.from === 'number' && TAKE >= L.from && L.scan && L.deck && L.max) return { scan: L.scan, deck: L.deck, max: L.max, test: false, from: L.from };
+    return { scan: a.scan, deck: a.deck, max: a.deck, test: !!a.test };
+  },
+  _adFailed(e) { if (e) console.warn('ad not shown', e); this._pendingKind = null; this._adReady = { scan: false, deck: false, max: false }; toast('The ad could not be shown'); },
   async adsInit() {
     const A = this.plugin('AdMob'); if (!A || !CAT.man.ads) return false;
     try {
-      await A.initialize({ initializeForTesting: !!CAT.man.ads.test });
+      await A.initialize({ initializeForTesting: this.adUnits().test });
       await A.addListener('onRewardedVideoAdReward', r => {
         /* r = { type, amount } per AdMobRewardItem. Which credit was earned is
            known from what we asked to show, not from the reward type. */
@@ -5354,25 +5367,28 @@ const PLATFORM = {
         toast(`+${this._lastKind === 'deck' ? CREDITS.DECKS_PER_AD + ' deck save' : CREDITS.PER_AD + ' save credits'} \u2014 thank you`);
         if (typeof paintScan === 'function' && $('#scan').classList.contains('on')) paintScan();
       });
-      await A.addListener('onRewardedVideoAdDismissed', () => { this._adReady = { scan: false, deck: false }; this.adLoad('scan'); });
+      await A.addListener('onRewardedVideoAdDismissed', () => { this._adReady = { scan: false, deck: false, max: false }; this.adLoad('scan'); });
+      await A.addListener('onRewardedVideoAdFailedToShow', e => this._adFailed(e));
       await A.addListener('onRewardedVideoAdFailedToLoad', e => { console.warn('ad load failed', e); });
       return true;
     } catch (e) { console.warn('ads init failed', e); return false; }
   },
   async adLoad(kind = 'scan') {
     const A = this.plugin('AdMob'); if (!A || !CAT.man.ads) return false;
+    const u = this.adUnits();
     try {
-      await A.prepareRewardVideoAd({ adId: CAT.man.ads[kind], isTesting: !!CAT.man.ads.test });
+      await A.prepareRewardVideoAd({ adId: u[kind], isTesting: u.test });
       this._adReady[kind] = true; return true;
     } catch (e) { this._adReady[kind] = false; return false; }
   },
+  /* kind: 'scan', 'deck' or 'max', each its own unit (take 121). True once the
+     ad is asked to show; the credit is the reward event's. */
   async adShow(kind = 'scan') {
     const A = this.plugin('AdMob'); if (!A) return false;
-    if (kind === 'max') { const ok = await this.adShow('deck'); if (ok) this._pendingKind = 'max'; return ok; }   // any rewarded unit serves the MAX unlock
     if (!this._adReady[kind] && !(await this.adLoad(kind))) { toast('No ad available right now \u2014 try again in a moment'); return false; }
-    this._pendingKind = kind; this._lastKind = kind;
-    try { await A.showRewardVideoAd(); return true; }
-    catch (e) { this._pendingKind = null; toast('The ad could not be shown'); return false; }
+    this._pendingKind = kind; this._lastKind = kind; this._adReady[kind] = false;
+    try { A.showRewardVideoAd().catch(e => this._adFailed(e)); return true; }
+    catch (e) { this._adFailed(e); return false; }
   },
   /* In-app catalogue refresh (take 27). GET manifest.json from the Pages
      site; if its source date is newer than what is loaded, GET catalog.json,
@@ -6627,6 +6643,7 @@ const DIAG = {
     L.push('', '## app'); line('build', CAT.man.built_at || '?'); line('mode', MODE.cur); line('screen stack', NAV.stack.join(' > ') || '-');
     line('boot stack', (NAV.bootStack || []).join(' > ') || 'none'); line('screens on', [...document.querySelectorAll('.screen.on')].map(e => e.id).join(',') || 'NONE'); line('overlays on', ['#askSheet', '#picker', '#detail', '#tour', '#simCurtain'].filter(id => { const el = $(id); return el && el.classList && el.classList.contains('on'); }).join(',') || 'none'); line('splash', $('#splash') ? 'still in the page' : 'gone');
     line('currency', CUR.active() + (CAT.man.rates ? ` (rates ${CAT.man.rates.date}${CAT.man.rates.stale ? ', stale' : ''})` : ' (no rates)')); line('online', navigator.onLine); line('native', !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())); line('plugins', ['Camera', 'Filesystem', 'Share', 'LocalNotifications', 'Network', 'App', 'AdMob'].filter(n => PLATFORM.plugin(n)).join(', ') || 'none (browser)');
+    line('ads', !CAT.man.ads ? 'none' : (u => u.test ? `Google test units${CAT.man.ads.live && CAT.man.ads.live.from ? ` (live units wait for take ${CAT.man.ads.live.from})` : ''}` : `live units, from take ${u.from}`)(PLATFORM.adUnits()));
     L.push('', '## device'); line('ua', String(navigator.userAgent || '?').slice(0, 120)); line('viewport', `${typeof innerWidth === 'number' ? innerWidth + 'x' + innerHeight : '?'} @${devicePixelRatio || 1}`); line('language', navigator.language || '?'); line('tz', (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return '?'; } })());
     L.push('', '## catalogue'); line('cards', CAT.man.cards); line('printings', CAT.rows.length); line('pictures', picturesLine()); line('prices dated', (CAT.man.source_updated_at || '?').slice(0, 10)); line('history days', (CAT.days || []).length + (CAT.days && CAT.days.length ? ` (${CAT.days[0]}..${CAT.days[CAT.days.length - 1]})` : '')); line('catalogue copy', CAT.man.fromDisk ? 'synced on this phone' : 'the one that came with the app' + (CAT.refused ? ` (${CAT.refused})` : '')); line('sealed products', sealedCountLine()); line('stock decks', (CAT.stock || []).length); line('effects scripted', CAT.man.effects ? effectsLine(CAT.man.effects, Object.keys(CAT.effects || {}).length) : '?');
     L.push('', '## sync'); line('update url', CAT.man.updateUrl || 'NOT SET'); line('manifest', await this.probe(CAT.man.updateUrl ? CAT.man.updateUrl + 'manifest.json' : null));
@@ -6680,7 +6697,12 @@ const SELFTEST = {
       const txt = await PLATFORM.ocr(c); const m = parseRead(txt || ''); return { ok: !!m && m.number === 'OP01-016', note: txt ? `read "${String(txt).trim().slice(0, 30)}"` : 'no text returned' };
     });
     await check('Notifications permission', async () => { const N = PLATFORM.plugin('LocalNotifications'); if (!N) return null; const r = (await N.checkPermissions()) || {}; return { ok: !!r.display && r.display !== 'denied', note: r.display ? `display: ${r.display}` : 'the plugin answered without a permission state (its permission annotation is missing from the build, landmine 141)' }; });
-    await check('Ads plugin present, test units', () => { const A = PLATFORM.plugin('AdMob'); if (!A) return null; return { ok: !!(CAT.man.ads && CAT.man.ads.test), note: CAT.man.ads && CAT.man.ads.test ? 'Google test units' : 'REAL units in a test build' }; });
+    /* take 121: real units are right on a build at or after ads.live.from; what is wrong is a real unit in
+       ads.scan or ads.deck, which every install from take 120 and earlier reads */
+    await check('Ads: the units match this build', () => { const A = PLATFORM.plugin('AdMob'); if (!A) return null; const a = CAT.man.ads, u = PLATFORM.adUnits(), T = 'ca-app-pub-3940256099942544/';
+      if (!a || !u.scan || !u.deck || !u.max) return { ok: false, note: 'no ad units in the manifest' };
+      if (!a.test || ![a.scan, a.deck].every(x => String(x).startsWith(T))) return { ok: false, note: 'a real unit where every older install reads it (ads.scan, ads.deck)' };
+      return { ok: true, note: u.test ? `Google test units${a.live && a.live.from ? ` (live units wait for take ${a.live.from})` : ''}` : `live units, from take ${u.from}` }; });
     await check('Sim: scripted effects loaded and one offers correctly', () => { const n = Object.keys(CAT.effects || {}).length; if (!n) return { ok: false, note: 'no effects in the bundle' };
       const k = Object.keys(CAT.effects).find(id => CAT.effects[id].some(e => e.t === 'onplay' && e.if.length === 0 && e.do.length === 1 && e.do[0].a === 'draw'));
       if (!k) return { ok: false, note: `${n} cards scripted, no plain [On Play] draw among them` };

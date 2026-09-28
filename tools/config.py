@@ -63,15 +63,31 @@ SAFE_SPREAD_FACTOR = 1.25
 
 # ---------------------------------------------------------------------------
 # ADS — A17. Take 22 wires the SDK against GOOGLE'S PUBLISHED TEST IDS, which
-# serve real test ads and never accrue invalid traffic. The owner replaces these
-# three values with his own from the AdMob console and nothing else changes.
+# serve real test ads and never accrue invalid traffic. Since take 121 the
+# owner's real units go in ADMOB_LIVE_* below, never in ADMOB_REWARD_*.
 #
 # Rule (landmine 31 / A17 "ruled out"): real unit IDs NEVER go in a debug or
 # sideload-testing build until the account is verified -- invalid-traffic bans
 # are permanent. The test IDs below are safe in every build.
-ADMOB_APP_ID          = "ca-app-pub-6243777967151950~1538944343"   # the app's own ID (AdMob, take 41)
-ADMOB_REWARD_SCAN     = "ca-app-pub-3940256099942544/5224354917"   # Google test rewarded unit
-ADMOB_REWARD_DECK     = "ca-app-pub-3940256099942544/5224354917"   # same unit until the owner has two
+# Take 121: the AdMob app linked to the Play listing. "testing" (~1538944343),
+# the app added by name before the app was on Play, shipped from take 41 to 120
+# (landmine 210). This lands in the APK's manifest (ci/apk.sh): only a new AAB
+# changes it on a phone, never a sync.
+ADMOB_APP_ID          = "ca-app-pub-6243777967151950~9519036366"
+ADMOB_TEST_UNIT       = "ca-app-pub-3940256099942544/5224354917"   # Google's test rewarded unit
+# ads.scan and ads.deck in the synced manifest: every install from take 120 and
+# earlier reads these two, names "testing" and has no consent flow, so they
+# stay Google's test unit for good (take 121; the gate refuses anything else).
+ADMOB_REWARD_SCAN     = ADMOB_TEST_UNIT
+ADMOB_REWARD_DECK     = ADMOB_TEST_UNIT
+# D11 -- the real rewarded units, made under the linked app, one per placement
+# (the owner, take 121: three). They ride ads.live, which a build loads only at
+# or after ADMOB_LIVE_FROM: the first take that names the linked app AND asks
+# for consent (the app is worldwide; A43). None until the owner sends them.
+ADMOB_LIVE_SCAN       = None
+ADMOB_LIVE_DECK       = None
+ADMOB_LIVE_MAX        = None
+ADMOB_LIVE_FROM       = None
 # Test-ness is a property of the AD UNITS (what gets loaded and tapped), not
 # of the app ID: Google's own development guidance is a real app ID with the
 # sample units. The SDK's isTesting flag follows the units (take 41).

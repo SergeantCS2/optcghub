@@ -656,9 +656,10 @@ ok('the credit is earned from the Rewarded EVENT, never from show() resolving',
    /onRewardedVideoAdReward', r => \{[\s\S]*?CREDITS\.earn/.test(js) &&
    !/showRewardVideoAd\(\)[\s\S]{0,80}CREDITS\.earn/.test(js));
 ok('ADS_ENABLED is derived, and is OFF in a browser', V.ADS_ENABLED === false);
-ok('the unit IDs are Google\'s published TEST units, not real ones',
+ok('the top-level unit IDs are Google\'s published TEST units, for good: every install from take 120 and earlier reads them (take 121; real units ride ads.live)',
    manifest.ads && manifest.ads.test === true && /^ca-app-pub-3940256099942544\//.test(manifest.ads.scan) && /^ca-app-pub-3940256099942544\//.test(manifest.ads.deck));
-ok('the app ID is the app\'s own (take 41) and does not flip the test flag', /^ca-app-pub-6243777967151950~/.test(manifest.ads.app) && manifest.ads.test === true);
+ok('the app ID is the store-linked AdMob app (take 121), not "testing", the app added by name before the app was on Play (landmine 210), and does not flip the test flag',
+   manifest.ads.app === 'ca-app-pub-6243777967151950~9519036366' && manifest.ads.test === true, manifest.ads.app);
 ok('D10 constants come from the manifest', manifest.ads.free === 20 && manifest.ads.perAd === 20 && manifest.ads.decksFree === 1);
 
 section('take 14 — deck builder polish');
@@ -1028,7 +1029,7 @@ ok('the catalogue, index, gate and search checks PASS against the real catalogue
    ['Catalogue loaded', 'Printing index is one-to-one', 'The confidence gate asks on EB03-024\'s three printings', 'A unique number auto-accepts', 'Search finds a card by name', 'Star template shipped'].every(n => by[n] && by[n].s === 'PASS'),
    JSON.stringify(rep.checks.filter(c => c.s === 'FAIL')));
 ok('plugin checks SKIP where there is no plugin, never PASS by default',
-   ['Backup file round-trip (Filesystem)', 'Share sheet available', 'OCR reads a code the app drew (ML Kit)', 'Notifications permission', 'Ads plugin present, test units'].every(n => by[n] && by[n].s === 'SKIP'));
+   ['Backup file round-trip (Filesystem)', 'Share sheet available', 'OCR reads a code the app drew (ML Kit)', 'Notifications permission', 'Ads: the units match this build'].every(n => by[n] && by[n].s === 'SKIP'));
 ok('offline, the sync check SKIPs rather than failing', by['Sync URL answers'].s === 'SKIP');
 /* take 92, landmine 131: the OCR check was SKIP everywhere but a phone, and on
    the phone it failed a correct read for forty-six takes (`m.num`, a field
@@ -4671,6 +4672,75 @@ section('take 120 — the UI series wrapped up: the binder on the open Fold, the
      /<div class="oa">\$\{refArt\(p\)\}<div class="ph">\$\{esc\(\(p\.num \|\| ''\)\.split\('-'\)\.pop\(\) \|\| ''\)\}<\/div><\/div>\n\s*<div class="oi"><b>\$\{esc\(p\.name\)\}<\/b>/.test(js) && /<div class="oa">\$\{refArt\(p\)\}<div class="ph">\$\{esc\(\(p\.num \|\| ''\)\.split\('-'\)\.pop\(\) \|\| ''\)\}<\/div><\/div>\n\s*<div class="oi"><b>\$\{esc\(TREAT\[p\.treat\] \|\| p\.treat\)\}/.test(js) && /q=p&&p\.querySelector\('\.ph'\);if\(q\)q\.style\.display='none'/.test(js));
   { const readme = fs.readFileSync(path.join(ROOT, 'assets', 'user', 'README.md'), 'utf8');
     ok('the owner\'s README keeps only the slots the build reads -- home-bg, hero-play, hero-hunt and the fonts; the retired empty-collection slot is gone', !/empty-collection/.test(readme) && ['home-bg.jpg', 'hero-play.jpg', 'hero-hunt.jpg', 'display.woff2'].every(k => readme.includes(k))); }
+}
+
+{
+section('take 121 — the units a build may load, and the rewarded ads under the plugin\'s real order');
+/* Real units ride the synced manifest to every install, and every install from
+   take 120 and earlier names the "testing" AdMob app and has no consent flow.
+   So they ride ads.live, which a build loads only at or after ads.live.from;
+   the top-level units stay Google's test units for good. At the end of smoke:
+   the MAX grant below sets Home's range. */
+const P = V.PLATFORM, ads = V.CAT.man.ads, C = V.CREDITS, TEST = 'ca-app-pub-3940256099942544/';
+const live = { scan: 'ca-app-pub-6243777967151950/1111111111', deck: 'ca-app-pub-6243777967151950/2222222222', max: 'ca-app-pub-6243777967151950/3333333333' };
+const units = () => typeof P.adUnits === 'function' ? P.adUnits() : {};
+const hadLive = ads.live;
+ok('with no live block every placement -- scan, deck and MAX -- loads Google\'s test unit, testing', (u => u.test === true && [u.scan, u.deck, u.max].every(x => String(x).startsWith(TEST)))(units()), JSON.stringify(units()));
+ads.live = { ...live, from: V.TAKE }; const uAt = units();
+ads.live = { ...live, from: V.TAKE + 1 }; const uBefore = units();
+ads.live = { ...live, from: null }; const uNone = units();
+ok('a live block reaches a build at its take: its three units, not testing', uAt.test === false && uAt.scan === live.scan && uAt.deck === live.deck && uAt.max === live.max, JSON.stringify(uAt));
+ok('negative control: a build one take older keeps Google\'s test units', uBefore.test === true && String(uBefore.scan).startsWith(TEST), JSON.stringify(uBefore));
+ok('...and a live block that names no take opens nothing', uNone.test === true, JSON.stringify(uNone));
+
+/* @capacitor-community/admob 8.1.0, Android (RewardedAdCallbackAndListeners.kt):
+   the reward listener notifies onRewardedVideoAdReward FIRST and resolves
+   showRewardVideoAd() after; a dismissed ad, or one that fails to show,
+   never settles it (FullscreenPluginCallback.kt only notifies). */
+const L = {}, calls = [];
+const stub = {
+  initialize: async o => { calls.push(['init', o && o.initializeForTesting]); },
+  addListener: async (n, f) => { L[n] = f; return { remove() {} }; },
+  prepareRewardVideoAd: async o => { calls.push(['prepare', o.adId, o.isTesting]); return { adUnitId: o.adId }; },
+  showRewardVideoAd: async () => { calls.push(['show']); const r = { type: 'coins', amount: 1 }; if (L.onRewardedVideoAdReward) L.onRewardedVideoAdReward(r); return r; }
+};
+const plug0 = P.plugin; P.plugin = n => n === 'AdMob' ? stub : plug0.call(P, n);
+const keep = { scan: C.state.scan, deck: C.state.deck, earned: C.state.earned, until: V.MAXLOCK.until, max: ctx.localStorage.getItem('vault.maxUntil') };
+const flush = () => new Promise(r => setTimeout(r, 0));
+try {
+  ads.live = hadLive; P._adReady = { scan: false, deck: false, max: false }; P._pendingKind = null;
+  await P.adsInit();
+  V.MAXLOCK.until = 0; C.state.deck = keep.deck;
+  await Promise.race([P.adShow('max'), flush()]);
+  ok('the MAX ad opens MAX under the plugin\'s real order (the reward event before show() resolves) -- it granted a deck save instead', V.MAXLOCK.until > Date.now() && C.state.deck === keep.deck, `maxUntil ${V.MAXLOCK.until}, deck ${C.state.deck} (was ${keep.deck})`);
+  ok('...and leaves no pending kind behind', P._pendingKind == null, String(P._pendingKind));
+  C.state.scan = 0;
+  await Promise.race([P.adShow('scan'), flush()]);
+  ok('the scan ad still grants the scan credits, once', C.state.scan === C.PER_AD, `scan ${C.state.scan}`);
+  C.state.deck = 0;
+  await Promise.race([P.adShow('deck'), flush()]);
+  ok('the deck ad still grants one deck save', C.state.deck === C.DECKS_PER_AD, `deck ${C.state.deck}`);
+  ads.live = { ...live, from: V.TAKE }; P._adReady = { scan: false, deck: false, max: false }; calls.length = 0; V.MAXLOCK.until = 0;
+  await Promise.race([P.adShow('max'), flush()]);
+  ok('on a live build MAX loads its own unit, not testing', calls.some(c => c[0] === 'prepare' && c[1] === live.max && c[2] === false), JSON.stringify(calls));
+  stub.showRewardVideoAd = () => { calls.push(['show']); if (L.onRewardedVideoAdFailedToShow) L.onRewardedVideoAdFailedToShow({ code: 0, message: 'stub' }); return new Promise(() => {}); };
+  P._adReady = { scan: true, deck: true, max: true };
+  P.adShow('deck'); await flush(); await flush();
+  ok('an ad that fails to show clears its pending kind (8.1.0 never settles show() then), and the next reward cannot land on it', P._pendingKind == null && typeof L.onRewardedVideoAdFailedToShow === 'function', String(P._pendingKind));
+  stub.showRewardVideoAd = async () => { const r = { type: 'coins', amount: 1 }; if (L.onRewardedVideoAdReward) L.onRewardedVideoAdReward(r); return r; };
+  const check = async () => Object.fromEntries((await V.SELFTEST.run()).checks.map(c => [c.name, c]))['Ads: the units match this build'];
+  const onLive = await check();
+  ok('the self-test\'s ads check passes a live build at its take (before take 121 it failed every real unit)', onLive && onLive.s === 'PASS' && /live/.test(onLive.note), JSON.stringify(onLive));
+  ads.live = hadLive; const onTest = await check();
+  ok('...and passes Google\'s test units', onTest && onTest.s === 'PASS' && /test units/.test(onTest.note), JSON.stringify(onTest));
+  const s0 = ads.scan; ads.scan = live.scan; const onBad = await check(); ads.scan = s0;
+  ok('negative control: a real unit where every older install reads it FAILS the check', onBad && onBad.s === 'FAIL', JSON.stringify(onBad));
+  ok('Diagnostics says which units the build loads', /line\('ads', /.test(js));
+} finally {
+  P.plugin = plug0; ads.live = hadLive; P._adReady = { scan: false, deck: false, max: false }; P._pendingKind = null;
+  C.state.scan = keep.scan; C.state.deck = keep.deck; C.state.earned = keep.earned; V.MAXLOCK.until = keep.until;
+  if (keep.max == null) ctx.localStorage.removeItem('vault.maxUntil'); else ctx.localStorage.setItem('vault.maxUntil', keep.max);
+}
 }
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
