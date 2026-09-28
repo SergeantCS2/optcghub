@@ -102,7 +102,11 @@ def build(name="video1", ratio="9x16"):
     # ---- the stage: everything that shakes on an impact
     el.append('<div id="stage" class="abs mv" style="left:0;top:0;width:100%;height:100%">')
     TL["stage"] = [[0, {}]]
-    def impact(t):
+    CUES = []        # the sound: [t, kind, seconds or None], placed beside the motion it belongs to (mix.py plays it)
+    def cue(t, kind, dur=None):
+        CUES.append([round(t, 3), kind, dur])
+    def impact(t, kind="impact"):
+        cue(t, kind)
         TL["stage"] += [[t, {}], [t + .03, {"x": -14, "y": 9}], [t + .07, {"x": 11, "y": -8}], [t + .11, {"x": -6, "y": 4}], [t + .16, {}]]
     def flash(id_, t, cx, cy):
         add(id_, f'<svg width="{W}" height="{H}" viewBox="0 0 {W} {H}" style="opacity:.55">{speed_lines(cx, cy, 300 * min(W, H) / 1080, math.hypot(W, H), seed=len(TL))}</svg>',
@@ -129,6 +133,7 @@ def build(name="video1", ratio="9x16"):
         [[0, {"o": 0, "s": 1.9, "r": 8}], [.7, {"o": 0, "s": 1.9, "r": 8}], [.74, {"o": 1}], [.9, {"s": 1, "r": 0}, "in"]])
     el.append('</div>')
     impact(.9)
+    cue(.25, "swish"); cue(.5, "swish"); cue(.62, "whoosh"); cue(.92, "ignite")
     acc = ac[dear]["bright"]; px_ = L["pad"]
     for id_, text, top, t_in in (("h1a", f["head"], L["head_top"], .3), ("h1b", f["head2"], L["h1b_top"], 2.3)):
         add(id_, f'<h1 style="font-size:{L["h1"]}px;--accent:{acc}">{text}</h1>',
@@ -141,7 +146,8 @@ def build(name="video1", ratio="9x16"):
             [[0, {"o": 0, "y": 40}], [2.7 + i * .4, {"o": 0, "y": 40}], [2.85 + i * .4, {"o": 1, "y": 0}, "back"], [5, {}], [5.2, {"o": 0, "y": 40}, "in"]],
             pos=f"left:{x}px;top:{y}px;width:{w}px")
     x, y, w = L["pills"][2]
-    impact(3.55); flash("sl2", 3.55, x + w / 2, y + 60 * z)
+    impact(3.55, "cash"); flash("sl2", 3.55, x + w / 2, y + 60 * z)
+    cue(2.3, "hit_soft"); cue(2.75, "pop"); cue(3.15, "pop")
 
     # ---- scene 2, the picker: the phone rises with the real screen; the SP row lifts out
     p2 = sc["picker"]
@@ -165,7 +171,8 @@ def build(name="video1", ratio="9x16"):
     add("call1", f'<div class="callout" style="position:relative;width:{kw}px;height:{ch}px;--accent:{acc}">{cimg}</div>',
         [[0, {"o": 0, "x": -260, "s": .7}], [7.0, {"o": 0, "x": -260, "s": .7}], [7.45, {"o": 1, "x": 0, "s": 1}, "back"], [9.9, {}], [10.2, {"o": 0, "x": 300}, "in"]],
         pos=f"left:{kx}px;top:{ky}px")
-    impact(7.45)
+    impact(7.45, "impact_light")
+    cue(5.0, "whoosh"); cue(5.3, "rise"); cue(7.05, "pop"); cue(9.9, "whoosh")
     fx_, fy_, ff = L["foot"]
     add("foot1", f'<div class="foot" style="font-size:{ff}px">TCGplayer market prices, {when}.</div>',
         [[0, {"o": 0}], [2.7, {"o": 0}], [3.0, {"o": 1}], [9.9, {}], [10.1, {"o": 0}]], pos=f"left:{fx_}px;top:{fy_}px")
@@ -183,6 +190,7 @@ def build(name="video1", ratio="9x16"):
         [[0, {"o": 0, "s": 1.9}], [10.3, {"o": 0, "s": 1.9}], [10.35, {"o": 1}], [10.55, {"s": 1}, "in"], [13.85, {}], [14.05, {"o": 0, "s": 1.1}]],
         origin=f"{lx + lw / 2:.0f}px {ly + lw * .7:.0f}px")
     impact(10.55)
+    cue(10.45, "rise"); cue(10.5, "ignite")
     dx, dy, dw = L["phone2"]
     add("phone2", P2.device(dx, dy, dw, phone_h(dw), "home", (0, 40, 411, 900), None, 1079, tilt=-2),
         [[0, {"y": H}], [10.4, {"y": H}], [11.1, {"y": 0}, "out"], [13.85, {}], [14.1, {"y": H}, "in"]])
@@ -192,6 +200,7 @@ def build(name="video1", ratio="9x16"):
     add("foot2", f'<div class="foot" style="font-size:{ff}px">A sample collection. TCGplayer market prices, {when}.</div>',
         [[0, {"o": 0}], [10.4, {"o": 0}], [10.7, {"o": 1}], [13.85, {}], [14.0, {"o": 0}]], pos=f"left:{fx_}px;top:{fy_}px")
     count = (11.3, 12.9, R["collection"]["total"])
+    cue(count[0], "count", round(count[1] - count[0], 2)); cue(count[1], "cash"); cue(13.85, "whoosh")
 
     # ---- scene 4, three beats: a word and a card each, one second apiece
     bt = sc["beats"]; wx, wy, wf = L["beat_word"]
@@ -204,7 +213,7 @@ def build(name="video1", ratio="9x16"):
         add(f"cb{i}", SP.card(pid, bx, by, bw, 6, "box-shadow:0 34px 44px -20px rgba(0,0,0,.7)"),
             [[0, {"o": 0, "s": 1.8}], [t0, {"o": 0, "s": 1.8}], [t0 + .03, {"o": 1}], [t0 + .12, {"s": 1}, "in"], [t0 + .9, {"s": 1.04}],
              [t0 + 1.0, {"o": 0, "x": -500, "s": 1.04}, "in"]], origin=f"{bx + bw / 2:.0f}px {by + bw * .7:.0f}px")
-        impact(t0 + .12)
+        impact(t0 + .12); cue(t0 + .1, "ignite")
         add(f"wb{i}", f'<h1 style="font-size:{wf}px;line-height:.95;--accent:{a["bright"]}">{b["word"]}</h1>',
             [[0, {"o": 0, "s": 1.4}], [t0 + .05, {"o": 0, "s": 1.4}], [t0 + .17, {"o": 1, "s": 1}, "out"], [t0 + .9, {"s": 1.02}], [t0 + 1.0, {"o": 0, "x": -300}, "in"]],
             pos=f"left:{wx}px;top:{wy}px", origin="0 50%")
@@ -214,6 +223,7 @@ def build(name="video1", ratio="9x16"):
     add("end", f'<div class="endc" style="--accent:{acc};zoom:{L["end_zoom"]}"><img src="{D.icon()}"><b>OP TCG Hub</b><p>{e["line"]}</p><span>{e["what"]}</span><img class="gp" src="{badge()}" alt="Get it on Google Play"></div>',
         [[0, {"o": 0, "s": .9}], [17.0, {"o": 0, "s": .9}], [17.4, {"o": 1, "s": 1}, "out"]], pos=f"left:0;top:{L['end_top']}px;width:100%", origin="50% 30%")
     el.append('</div>')                                         # the stage
+    cue(17.0, "chime")
     add("legal", f'<div class="legal">{e["legal"]}</div>', [[0, {"o": 0}], [17.2, {"o": 0}], [17.6, {"o": 1}]],
         pos=f"left:0;width:100%;top:{fy_ + ff * .2:.0f}px")
     add("brand", f'<div class="brand"><img src="{D.icon()}"><b>OP TCG Hub</b></div>', [[0, {"o": 1}], [16.9, {"o": 1}], [17.1, {"o": 0}]], pos=f"right:{L['brand'][0]}px;top:{L['brand'][1]}px")
@@ -269,7 +279,7 @@ window.__frame = t => {
 };
 window.__frame(0);
 """ % (json.dumps(TL), json.dumps(count))
-    return (f'<!doctype html><html><head><meta charset=utf-8><meta name="duration" content="{DUR}"><title>{name}-{ratio}</title><style>'
+    return sorted(CUES), (f'<!doctype html><html><head><meta charset=utf-8><meta name="duration" content="{DUR}"><title>{name}-{ratio}</title><style>'
             f"*{{box-sizing:border-box;margin:0}}html,body{{width:{W}px;height:{H}px;overflow:hidden}}body{{position:relative}}"
             f".abs{{position:absolute}}{css}</style></head><body>{''.join(el)}<script>{js}</script></body></html>")
 
@@ -294,5 +304,9 @@ if __name__ == "__main__":
     name = next((a for a in args if a != ratio), "video1")
     out = os.path.join(SP.ADS, "motion"); os.makedirs(out, exist_ok=True)
     f = os.path.join(out, f"{name}-{ratio}.html")
-    open(f, "w").write(externalise(build(name, ratio), out))
+    cues, html = build(name, ratio)
+    open(f, "w").write(externalise(html, out))
+    # the cue sheet beside the page: the same timeline's sound, for mix.py
+    json.dump({"duration": json.load(open(os.path.join(HERE, "storyboards", f"{name}.json")))["duration"], "cues": cues},
+              open(f.replace(".html", ".cues.json"), "w"), indent=0)
     print(f"build: {name} at {ratio} -> {f}")

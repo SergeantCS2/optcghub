@@ -589,7 +589,52 @@ play logo"):**
 - The trademark line, "Google Play and the Google Play logo are trademarks of Google LLC.", is pinned
   verbatim in `build.py` rather than run through the caption guard, whose all-caps rule would refuse "LLC".
 
-**Next:** `study.mjs` for the owner's inspiration videos, then Phase F (HTML5).
+**Sound (the owner, 28 Sept: "Let's add some audio ... maybe we can leverage Freesound.org API -- adding sounds
+to transitions, card popups and etc"):**
+- **The cue sheet.** `build.py` places each sound cue beside the motion it belongs to (`cue(t, kind)`;
+  `impact()` cues itself) and writes `<name>-<ratio>.cues.json` beside the page. Sound and picture share one
+  timeline, so they cannot drift apart. There are 27 cues in Video 1:
+  - swishes as the fan flies in, a whoosh then an impact and an ignite on the SP's slam;
+  - pops on the price pills and a cash hit on the SP's price;
+  - a whoosh at each scene change and a rise under each phone;
+  - a tick train through the count-up, then a cash hit on the total;
+  - an impact and an ignite on each beat;
+  - a chime on the end card.
+- **The palette.** `sounds.json` holds each kind's Freesound query, duration range, gain, maximum length,
+  and the pinned pick (a sound id, so renders repeat).
+- **Freesound, CC0 only (`freesound.py`).**
+  - The key is `FREESOUND_API_KEY` in the environment's settings. It is never a file here and never printed.
+  - Freesound's API terms leave commercial use "negotiated case by case", and each sound keeps its own
+    licence. So the search asks for CC0 only, and `licence_ok()` refuses anything else again at search and
+    at fetch. CC BY needs a credit an ad cannot show; CC BY-NC forbids ads.
+  - The files are the HQ MP3 previews, which token authentication can reach; originals need OAuth2.
+  - `search` writes candidates and an audition per kind (the candidates in a row). `pick KIND N` pins one.
+    `fetch` re-checks each pick's licence and writes `credits.json`.
+  - `--selftest` plants eight licences. A guard loosened to "any Creative Commons" fails it.
+- **The mix (`mix.py`).**
+  - Each cue's file is trimmed to its kind's maximum (the count-up to the count's own length), faded out
+    over 60 ms, set to its gain and delayed to the millisecond. The cues are summed without normalising.
+  - Loudness is set in two passes (loudnorm measured, then applied linearly) to -16 LUFS with a true peak
+    under -1.5 dBTP, and laid under the picture: the video is copied untouched to `<stem>-sound.mp4`. It
+    takes 3 s, with no re-render.
+  - `--synth` plays ffmpeg-made placeholders (tones and filtered noise). They prove the timing before any
+    pick exists and are never the delivered sound.
+- **The guard.** `check.py --audio` requires -20 to -12 LUFS and a true peak of at most -1 dBTP, because a
+  silent track passes every other check.
+  - Its selftest adds a silent clip, which must be refused, and a tone at about -16 LUFS, which must pass.
+  - On its first run the guard read the tone as silent: `-map` with `-filter_complex` made ffmpeg refuse
+    the graph, and the empty output parsed as -inf. The negative control is what caught it.
+- **Verified with the placeholders:** a waveform of the mix on a 1 s grid, with every onset on its cue:
+  - the SP's slam at 0.9 s and the cash hit at 3.55 s;
+  - the callout at 7.45 s and Luffy at 10.55 s;
+  - the ticks from 11.3 s and the beats at 14.12, 15.12 and 16.12 s;
+  - the chime at 17 s.
+  The result was -16.0 LUFS with a true peak of -1.1 dBTP.
+
+**Next:**
+- the owner's Freesound key: search, the auditions, the owner's picks, fetch, then mix all three cuts;
+- `study.mjs` for the owner's inspiration videos;
+- Phase F (HTML5).
 
 ## Process
 

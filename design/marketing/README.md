@@ -71,7 +71,10 @@ node design/marketing/render.mjs [--dir directions]  # NAME/out/*.png, report.js
 | `motion/storyboards/*.json` | A video's scenes and words, as data. |
 | `motion/build.py` | A storyboard laid out in the Pull style (`--ratio 9x16`, `1x1` or `16x9`), as a timed composition page with its assets beside it. |
 | `motion/engine.mjs` | Renders a composition page frame by frame to an H.264 MP4 (or `--stills`). |
-| `motion/check.py` | The video guard: the MP4 read back against the Google Ads spec; `--frames`, `--selftest`. |
+| `motion/check.py` | The video guard: the MP4 read back against the Google Ads spec; `--audio` for the sound's level; `--frames`, `--selftest`. |
+| `motion/sounds.json` | The sound palette: one Freesound search per cue kind (CC0 only), its gain and length, and the pinned pick. |
+| `motion/freesound.py` | Freesound, CC0 only: `search` (candidates and auditions), `pick`, `fetch` (licence re-checked, credits); key from `FREESOUND_API_KEY`. |
+| `motion/mix.py` | The cue sheet played with the picks (or `--synth` placeholders), loudness-set and laid under the picture. |
 | `fetch_fonts.sh` | Their typefaces, OFL-1.1, from npm's @fontsource packages; nothing committed until a pick. |
 | `fetch_badge.sh` | Google's official "Get it on Google Play" badge into `$ADS_OUT/badge` (never committed), checked as Google's file. |
 | `paths.mjs` | Where the renders go. |
