@@ -676,6 +676,13 @@ more consistent and I wouldn't mind a backing music track, like a low volume gen
     beat at 14.0508 s inside the riser bar that ends at 14.051 s. The grid is now compared a quarter-beat
     wide.
   - Checked afterwards: the low band peaks at about 0.48 at every slam, 14.05 s included.
+  - The last bar's pad stopped dead under the final chord, leaving a step on the waveform at 19.1 s. The bar
+    the end card falls in now fades its pad over 1.2 s.
+  - One mix stalled in ffmpeg for five minutes and did not reproduce: the same command finished in 7 s. Every
+    ffmpeg call in `mix.py` now has a 120 s timeout, so a stall fails loudly.
+- **Delivered:** all three cuts re-rendered on the warp and mixed over the bed: -16.6 LUFS, true peak
+  -1.1 dBTP, in spec. Frames either side of the 0.963 s and 14.051 s slams were read from the MP4: the card
+  is still falling 33 ms before and has landed, with its speed lines, 34 ms after.
 
 **Next:**
 - the owner's ear on the sound: any kind is swapped in `sounds.json` and remixed in seconds;

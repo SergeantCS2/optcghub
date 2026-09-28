@@ -97,8 +97,11 @@ def track(sheet):
         if t0 >= end:
             break
         m = int(4 * b * SR) + int(.1 * SR); ch = chords[k % 4]
+        tail = .1
+        if t0 + 4 * b > end:                                   # the bar the end card falls in: the pad fades under the ring
+            tail = 1.2; m = int((end - t0 + tail) * SR)
         pad = sum(saw(hz(x - 12), m, .006) for x in ch) / 3
-        pad *= np.minimum(1, np.arange(m) / (.05 * SR)) * np.minimum(1, (m - np.arange(m)) / (.1 * SR))
+        pad *= np.minimum(1, np.arange(m) / (.05 * SR)) * np.minimum(1, (m - np.arange(m)) / (tail * SR))
         place(music, pad, t0, .28)
     # the ending: the last chord rings out from the end card's downbeat
     m = n - int(end * SR)

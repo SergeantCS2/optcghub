@@ -77,7 +77,8 @@ def peak_of(f):
     return PEAKS[f]
 
 def run(cmd):
-    return subprocess.run(cmd, capture_output=True, text=True, check=True)
+    # a mix takes seconds; one stalled once for five minutes and did not reproduce, so a stall now fails loudly
+    return subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=120)
 
 def mix(video, synth=False, out=None, music=True):
     stem = video[:-4]
