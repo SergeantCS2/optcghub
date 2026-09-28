@@ -219,6 +219,36 @@ Diagnostics line, so the take has no look steps (101-103 and 113 had none).
   launch. Harmless with test devices registered; the consent take reorders
   boot anyway.
 
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+- PR #46 merged 28 Sept, 20:59Z; `build` run 75 green in every job (seed,
+  bundle, apk, pages, report); Release take-121 published 21:10Z with the
+  APK (27,701,773 bytes), the AAB (20,889,216), the mapping and the Play
+  icon. PROVEN from the apk job's log: "AdMob app id
+  ca-app-pub-6243777967151950~9519036366 in strings.xml + manifest (Google
+  test units at the top level; take 121)", versionCode 121, the AAB signed
+  by the upload key (SHA256 `32:8E:60:A5:…`, the pinned one). The Pages
+  manifest serves take 121: `ads.app` the linked app, `ads.scan` and
+  `ads.deck` Google's test unit, `ads.live` null.
+- The owner's first *Check for updates* after setting the Website back
+  (about 20:50Z) still read "details don't match". The file side PROVEN
+  right the same hour: the listing reads
+  `https://sergeantcs2.github.io/optcghub/`; that root serves the line, 200
+  `text/plain`, to Googlebot's and Google-adstxt's user agents alike; no
+  `robots.txt`; `http://` 301s to the same file (Google allows it); the
+  bytes exact. Google's page for it (support.google.com/admob/answer/9363762):
+  "If you've recently added your developer website or updated your app
+  listing in Google Play, allow up to 24 hours for AdMob to detect these
+  changes", and "You need to wait at least 24 hours for the app-ads.txt
+  status to update". The same page settles the shared domain: for a
+  subdomain website the crawler checks the subdomain's own
+  `/app-ads.txt` first, so `github.io`'s own page (a redirect to
+  pages.github.com) is not read while ours answers. INFERRED: AdMob still
+  crawled the old website. The next check is after 21:00Z on 29 Sept; if it
+  is still red, AdMob's app-ads.txt tab (Apps → View all apps) names the
+  website it reads.
+- The owner's: upload take-121's AAB to production, once.
+
 ## Take 120 — 2026-09-25 — the light theme, and the UI series wrapped up
 
 Opened before any code (PROTOCOL §6) by the UI/UX session, after take 119

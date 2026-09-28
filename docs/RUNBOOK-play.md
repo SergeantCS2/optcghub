@@ -275,6 +275,11 @@ under "testing".
    *app-ads.txt* → **Check for updates**; verified within about a day, and the
    AdMob tab is the proof, not a 200 (take 40 called it DONE on the 200). Every
    time the listing's website changes, the file moves with it.
+   *Take 121: after a change to the listing's website, Google allows up to 24
+   hours for AdMob to see it and asks for at least 24 hours before the
+   status updates (support.google.com/admob/answer/9363762); a Check for
+   updates inside that window reads the old site ("details don't match",
+   28 Sept). Change nothing in the window, then check again.*
 2. **Test devices first:** AdMob → *Settings → Test devices → Add*, the Fold's
    advertising ID (the phone's *Settings → Google → Ads*), and every phone the
    owner taps ads on. Tapping a real unit on your own phone is invalid traffic
