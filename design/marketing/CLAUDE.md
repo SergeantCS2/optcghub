@@ -554,7 +554,7 @@ then start the video."
 | 5–10 s | The phone rises with the real picker; the SP row lifts out. |
 | 10–14 s | Luffy slams in, the phone shows Home, and "Collection value" counts up to $16,054.93. |
 | 14–17 s | Three one-second beats: "Scan with *no cap*." (Yamato), "*No* account." (Sanji), "Works *offline*." (Shanks). |
-| 17–20 s | The end card: the icon, the name, "Scan it. Value it. Build it.", the descriptive line, "On Google Play". |
+| 17–20 s | The end card: the icon, the name, "Scan it. Value it. Build it.", the descriptive line, and Google's official "Get it on Google Play" badge, with Google's trademark line at the foot. |
 
 It is silent until the owner supplies audio. A 20 s render takes about 4.5 minutes and comes out at 11.7 MB.
 
@@ -575,6 +575,19 @@ It is silent until the owner supplies audio. A 20 s render takes about 4.5 minut
 **What bit in the cuts:**
 - In the square cut, the phone overlapped the brand mark; it moved down.
 - In the square beats, the word crowded the card; the word is smaller and the card sits further right.
+
+**The Google Play badge (the owner, 28 Sept: "say available on google play at the end with the actual google
+play logo"):**
+- Google's badge guidelines (Partner Marketing Hub, read 28 Sept) allow two badges only: "Get it on Google
+  Play" and "Pre-register on Google Play". The badge must not be altered in any way, including its text or
+  colour.
+- The Play icon may not be used on its own in marketing. So "Available on" with the logo is not allowed,
+  and the end card carries the "Get it on" badge exactly as Google ships it.
+- `fetch_badge.sh` downloads it to `$ADS_OUT/badge`, never committed, and refuses a file that is not
+  Google's 646×250 PNG. The CSS adds no shadow, filter or radius.
+- The badge is at least 28 px tall, and its file carries its own clear space.
+- The trademark line, "Google Play and the Google Play logo are trademarks of Google LLC.", is pinned
+  verbatim in `build.py` rather than run through the caption guard, whose all-caps rule would refuse "LLC".
 
 **Next:** `study.mjs` for the owner's inspiration videos, then Phase F (HTML5).
 

@@ -13,6 +13,7 @@
       { "word": "<em>No</em><br>account.",        "hero": "deck" },
       { "word": "Works<br><em>offline</em>.",     "hero": "offline" } ] },
   { "id": "end",    "start": 17,   "end": 20, "line": "Scan it. Value it. Build it.",
-    "what": "One Piece Card Game collection tracker", "store": "On Google Play" }
+    "what": "One Piece Card Game collection tracker",
+    "legal": "Google Play and the Google Play logo are trademarks of Google LLC." }
  ]
 }

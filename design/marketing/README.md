@@ -73,6 +73,7 @@ node design/marketing/render.mjs [--dir directions]  # NAME/out/*.png, report.js
 | `motion/engine.mjs` | Renders a composition page frame by frame to an H.264 MP4 (or `--stills`). |
 | `motion/check.py` | The video guard: the MP4 read back against the Google Ads spec; `--frames`, `--selftest`. |
 | `fetch_fonts.sh` | Their typefaces, OFL-1.1, from npm's @fontsource packages; nothing committed until a pick. |
+| `fetch_badge.sh` | Google's official "Get it on Google Play" badge into `$ADS_OUT/badge` (never committed), checked as Google's file. |
 | `paths.mjs` | Where the renders go. |
 
 ## The concepts

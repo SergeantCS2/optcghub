@@ -19,6 +19,12 @@ import style_pull as SP                              # the Pull style: aura, car
 import directions2 as P2                             # device, P5_CSS, fonts
 D = SP.D
 
+def badge():
+    """Google's "Get it on Google Play" badge as fetch_badge.sh saved it (never drawn or altered here)"""
+    f = os.path.join(SP.ADS, "badge", "google-play-badge.png")
+    assert os.path.exists(f), "no badge: run bash design/marketing/fetch_badge.sh"
+    return D.b64(f, "image/png")
+
 RATIOS = {"9x16": (1080, 1920), "1x1": (1080, 1080), "16x9": (1920, 1080)}
 
 # where each piece rests, per ratio (px). fan/luffy/beat_card: a card (x, y, width); phone*: (x, y, width), the
@@ -65,8 +71,10 @@ def build(name="video1", ratio="9x16"):
     when = D.day(R["source"])
     # every word on screen passes the ad text's rules
     words = [sc["fan"]["head"], sc["fan"]["head2"], sc["picker"]["head"], sc["picker"]["sub"], sc["value"]["head"],
-             sc["value"]["label"], sc["end"]["line"], sc["end"]["what"], sc["end"]["store"]] + [b["word"] for b in sc["beats"]["beats"]]
+             sc["value"]["label"], sc["end"]["line"], sc["end"]["what"]] + [b["word"] for b in sc["beats"]["beats"]]
     bad = SP.check_caption(" ".join(words)) + SP.check_caption(f"TCGplayer market prices, {when}. A sample collection.", footnote=True)
+    # Google's trademark line is Google's wording, kept verbatim (its "LLC" is not a word in capitals)
+    assert sc["end"]["legal"] == "Google Play and the Google Play logo are trademarks of Google LLC.", sc["end"]["legal"]
     assert not bad, bad
 
     ps = {p["id"]: p for p in R["hero"]["printings"]}
@@ -203,9 +211,11 @@ def build(name="video1", ratio="9x16"):
 
     # ---- scene 5, the end card
     e = sc["end"]
-    add("end", f'<div class="endc" style="--accent:{acc};zoom:{L["end_zoom"]}"><img src="{D.icon()}"><b>OP TCG Hub</b><p>{e["line"]}</p><span>{e["what"]}</span><i>{e["store"]}</i></div>',
+    add("end", f'<div class="endc" style="--accent:{acc};zoom:{L["end_zoom"]}"><img src="{D.icon()}"><b>OP TCG Hub</b><p>{e["line"]}</p><span>{e["what"]}</span><img class="gp" src="{badge()}" alt="Get it on Google Play"></div>',
         [[0, {"o": 0, "s": .9}], [17.0, {"o": 0, "s": .9}], [17.4, {"o": 1, "s": 1}, "out"]], pos=f"left:0;top:{L['end_top']}px;width:100%", origin="50% 30%")
     el.append('</div>')                                         # the stage
+    add("legal", f'<div class="legal">{e["legal"]}</div>', [[0, {"o": 0}], [17.2, {"o": 0}], [17.6, {"o": 1}]],
+        pos=f"left:0;width:100%;top:{fy_ + ff * .2:.0f}px")
     add("brand", f'<div class="brand"><img src="{D.icon()}"><b>OP TCG Hub</b></div>', [[0, {"o": 1}], [16.9, {"o": 1}], [17.1, {"o": 0}]], pos=f"right:{L['brand'][0]}px;top:{L['brand'][1]}px")
 
     css = P2.p3_fonts() + P2.P5_CSS + SP.GROUND_CSS + """
@@ -228,7 +238,10 @@ def build(name="video1", ratio="9x16"):
 .endc b{font:800 104px/1 Inter;letter-spacing:-.04em;margin-top:24px}
 .endc p{font:700 48px/1.2 Inter;letter-spacing:-.02em;color:var(--accent)}
 .endc span{font:500 32px/1.3 Inter;color:#b8bcb7}
-.endc i{font:700 32px/1 Inter;font-style:normal;margin-top:40px;padding:22px 40px;border-radius:999px;background:#f4f5f3;color:#0b0b0c}
+/* Google's badge exactly as shipped: no shadow, filter or radius (the rules forbid effects); its file carries its
+   own clear space (40 px of 250 each side, over the quarter-height the rules ask) */
+.endc img.gp{width:500px;height:auto;border-radius:0;box-shadow:none;margin-top:10px}
+.legal{font:500 20px/1.3 Inter;color:#8d918c;text-align:center}
 """
     js = """
 const TL = %s, COUNT = %s;
