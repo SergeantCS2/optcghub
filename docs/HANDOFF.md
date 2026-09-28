@@ -248,6 +248,18 @@ Diagnostics line, so the take has no look steps (101-103 and 113 had none).
   is still red, AdMob's app-ads.txt tab (Apps → View all apps) names the
   website it reads.
 - The owner's: upload take-121's AAB to production, once.
+- **What I got wrong, found after the merge:** the take called AdMob's
+  payment details "to be paid rather than to serve". Google's *About app
+  readiness* (answer 10564477): "your account must be verified before it's
+  approved to serve ads. To have your account verified, you must enter your
+  payment details". RUNBOOK-play §9 item 5 corrected; the owner told.
+- The owner's app-ads.txt tab, 28 Sept evening: "No ad requests with
+  app-ads.txt yet", no rows. Expected, per answer 9776740: the tab shows
+  nothing "if your app hasn't generated an ad request in the last 7 days or
+  if your app hasn't been verified". Google's test units are not this
+  account's (INFERRED: their publisher is `pub-3940256099942544`), so it
+  fills with the consent take's real units. Verification after a website
+  change can take up to a week (answer 9675354).
 
 ## Take 120 — 2026-09-25 — the light theme, and the UI series wrapped up
 

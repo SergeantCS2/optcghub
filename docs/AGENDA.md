@@ -30,7 +30,9 @@ what it handed on is A43.)
    test devices; **D11**, three rewarded units (scan credits, deck save,
    MAX unlock) under "OP TCG Hub: Collect, Hunt, SIM" `~9519036366`, never
    "testing"; the European-regulations message published in AdMob's
-   *Privacy & messaging*; the payments profile.
+   *Privacy & messaging*; the payments profile -- **needed to serve**:
+   Google verifies the account from the payment details (corrected after
+   take 121's merge; RUNBOOK-play §9 item 5).
 3. **Take 113's Fold check:** the launcher on both screens, the splash, a
    reminder's ドン!! glyph (landmine 170).
 4. **Answers still open:** A43's large items -- ad consent (answered take

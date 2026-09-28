@@ -300,9 +300,25 @@ under "testing".
    **published**; the US states message is optional. The app's side (the UMP
    calls, a *Privacy choices* row under More) is the take after 121, and the
    gate refuses `ads.live` without it.
-5. **Payments**, to be paid rather than to serve: AdMob → *Payments* -- the
-   payment profile, tax information, and the PIN letter when it arrives.
-6. **Families:** this app is not directed at children. Never a Families
+5. **Payments -- needed to SERVE, not only to be paid** (corrected after
+   take 121's merge; the take had it as "to be paid rather than to serve").
+   Google's *About app readiness* (support.google.com/admob/answer/10564477):
+   "When you first sign up for AdMob, your account must be verified before
+   it's approved to serve ads. To have your account verified, you must enter
+   your payment details" -- up to 24 hours, rarely two weeks. AdMob →
+   *Payments*: the payment profile and tax information; the PIN letter when
+   earnings reach the threshold.
+6. **What to expect, from Google's pages:** the *app-ads.txt* tab (Apps →
+   View all apps) stays empty until the app sends ad requests with this
+   account's own units and is verified ("Your app-ads.txt status won't show
+   ... if your app hasn't generated an ad request in the last 7 days or if
+   your app hasn't been verified", answer 9776740) -- Google's test units
+   are not this account's, so it is empty until the consent take's real
+   units. After a website change, verification can take up to a week
+   ("Wait one week before seeking additional help", answer 9675354). Once
+   verified, the app readiness review starts by itself, "typically 2-3
+   days", with limited serving until approved (answer 10564477).
+7. **Families:** this app is not directed at children. Never a Families
    category; `tagForChildDirectedTreatment` stays unset.
 
 ## 10. Developer verification — The owner, when Play asks
