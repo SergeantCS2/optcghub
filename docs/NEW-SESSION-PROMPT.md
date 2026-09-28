@@ -211,7 +211,8 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   A23's tail, A31).
 - **A21 -- Google Play: LIVE in production since 24 Sept 2026.** Every
   merged take's AAB is one upload to the production track, once (landmine
-  33); only take 101's upload is recorded. `ci/RELEASE.md` is the Release
+  33); the uploads recorded are take 101's and take 121's (live 28 Sept).
+  `ci/RELEASE.md` is the Release
   body and Home's "New in this update"; its newest paragraph must fit
   Play's 500-character release notes.
 - **A32 -- Hunt** is the owner's large item and the mode EXISTS (takes

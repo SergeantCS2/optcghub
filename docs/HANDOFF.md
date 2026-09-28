@@ -260,6 +260,20 @@ Diagnostics line, so the take has no look steps (101-103 and 113 had none).
   account's (INFERRED: their publisher is `pub-3940256099942544`), so it
   fills with the consent take's real units. Verification after a website
   change can take up to a week (answer 9675354).
+- **The owner, 28 Sept evening:** take 121's AAB uploaded to production and
+  live; the Fold updated from Play and **an ad watched on it** -- the first
+  ad on a device this record holds (which placement, and whether its credit
+  landed, not said); AdMob's payment details correct; *Verify app* still
+  "details don't match". Re-checked 22:09Z, all PROVEN: the live listing
+  (two locales) reads `https://sergeantcs2.github.io/optcghub/`; that root
+  answers Google-adstxt's user agent 200 `text/plain` with the line, over
+  `https://` and `http://` (a 301 to the same file); the old site still
+  answers 404, so the unchanged message is the one AdMob gave while the
+  listing named it. Nothing in the app is an input to verification
+  (Google's *Verify your app*: the published app, its store link, the
+  listing's website, the file there). The listing changed between 19:10Z
+  and 20:43Z; the next *Check for updates* is after about 20:45Z, 29 Sept,
+  and Google allows up to a week after a website change.
 
 ## Take 120 — 2026-09-25 — the light theme, and the UI series wrapped up
 

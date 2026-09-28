@@ -22,7 +22,8 @@ what it handed on is A43.)
    is recorded -- say which you upload. The sideload APK does not install
    over the Play build (landmine 34): a sideload proof means export →
    uninstall → sideload → import. *Take 121:* its AAB is the first that
-   names the store-linked AdMob app; upload it.
+   names the store-linked AdMob app -- **uploaded and live, 28 Sept** (the
+   owner), the second upload the record holds after take 101's.
 2. **Ads, in order (take 121; RUNBOOK-play §9):** app-ads.txt -- the
    listing's Website is back on `sergeantcs2.github.io/optcghub/` (the
    owner's pick, PROVEN live 28 Sept), whose root serves the line -- so
