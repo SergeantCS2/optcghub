@@ -1,7 +1,7 @@
 """The video's sound: build.py's cue sheet played with sounds.json's picks, laid under the rendered picture.
 
   python3 design/marketing/motion/mix.py video1-9x16.mp4 [--synth] [--out f.mp4] [--bed track --start s] [--audio-only]
-    --bed plays a recorded track (oga.py, CC0) from --start instead of music.py's groove
+    the bed is bed.json's pick (the owner's); --bed plays another recording from --start; --house the groove made here
     the cue sheet is the video's stem + .cues.json (build.py writes it beside the page); the result is the stem
     + -sound.mp4, the picture copied untouched and the silent track replaced
 
@@ -103,7 +103,7 @@ def duck(bed, fx, thr=0.02, ratio=5.0, attack=.004, release=.26):
     g = np.interp(np.arange(len(bed)), np.arange(n) * blk + blk / 2, gain)
     return bed * g[:, None]
 
-def mix(video, synth=False, out=None, music=True, bed=None, start=0.0, audio_only=False):
+def mix(video, synth=False, out=None, music=True, bed=None, start=0.0, audio_only=False, house=False):
     """the effects are placed sample by sample in numpy, not in one ffmpeg graph: a graph mixing 59 inputs
     (amix, adelay) stalled ffmpeg now and then for minutes, with or without the bed, and did not reproduce"""
     import numpy as np
@@ -135,7 +135,13 @@ def mix(video, synth=False, out=None, music=True, bed=None, start=0.0, audio_onl
         if music:
             if bed:                                                   # a recorded track (oga.py, CC0)
                 bedf = bed_from(bed, start, D, sheet["end"], tmp)
-            else:                                                     # the groove made here (music.py)
+            elif os.path.exists(os.path.join(HERE, "bed.json")) and not house:   # the owner's pick (bed.json)
+                pick = json.load(open(os.path.join(HERE, "bed.json")))
+                f = os.path.join(kenney.ADS, pick["file"])
+                if not os.path.exists(f):
+                    sys.exit(f"mix: {f} is missing: oga.py fetch {pick['source']['slug']}, then jazzhop.py (bed.json says how)")
+                bedf = bed_from(f, pick["start"], D, sheet["end"], tmp)
+            else:                                                     # the house groove made here (music.py), turned down
                 bedf = os.path.join(tmp, "bed.wav")
                 subprocess.run([sys.executable, os.path.join(HERE, "music.py"), stem + ".cues.json", bedf], check=True)
             b = decode(bedf)[:N]
@@ -155,12 +161,24 @@ def mix(video, synth=False, out=None, music=True, bed=None, start=0.0, audio_onl
              f"measured_LRA={m['input_lra']}:measured_thresh={m['input_thresh']}:offset={m['target_offset']}:linear=true,"
              f"aresample={SR}", "-ar", str(SR), norm])
         out = out or stem + "-sound.mp4"
-        if audio_only:                                                # an audition: the soundtrack alone
-            run([check.ffmpeg(), "-y", "-loglevel", "error", "-i", norm, "-c:a", "libmp3lame", "-b:a", "192k", out])
-        else:
-            run([check.ffmpeg(), "-y", "-loglevel", "error", "-i", video, "-i", norm, "-map", "0:v", "-map", "1:a",
-                 "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-t", str(D), "-movflags", "+faststart", out])
-    what = "a recorded bed" if bed else "the house bed" if music else "no bed"
+        # the encoder's own overshoot differs by material (1.1 dB on the jazz-hop bed): measure the encoded file,
+        # and if its true peak is over -1.2 dBTP, lower the track by the excess and encode again
+        trim = 0.0
+        for attempt in range(3):
+            src = norm
+            if trim:
+                src = os.path.join(tmp, "trim.wav")
+                run([check.ffmpeg(), "-y", "-loglevel", "error", "-i", norm, "-af", f"volume={trim:.2f}dB", src])
+            if audio_only:                                            # an audition: the soundtrack alone
+                run([check.ffmpeg(), "-y", "-loglevel", "error", "-i", src, "-c:a", "libmp3lame", "-b:a", "192k", out])
+            else:
+                run([check.ffmpeg(), "-y", "-loglevel", "error", "-i", video, "-i", src, "-map", "0:v", "-map", "1:a",
+                     "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-t", str(D), "-movflags", "+faststart", out])
+            _, tp = check.loudness(out)
+            if tp <= -1.2:
+                break
+            trim -= tp + 1.2 + 0.3
+    what = "a recorded bed" if bed else "no bed" if not music else "the house bed" if house else "bed.json's pick"
     print(f"mix: {len(cues)} cues, {n} sounds, {what} ({'placeholders' if synth else 'Kenney CC0 and our own whooshes'}) under {os.path.basename(video)} -> {out}")
     return out
 
@@ -177,4 +195,4 @@ if __name__ == "__main__":
         print(__doc__); sys.exit(2)
     opt = lambda k, d=None: a[a.index(k) + 1] if k in a else d
     mix(a[0], synth="--synth" in a, out=opt("--out"), music="--no-music" not in a,
-        bed=opt("--bed"), start=float(opt("--start", 0)), audio_only="--audio-only" in a)
+        bed=opt("--bed"), start=float(opt("--start", 0)), audio_only="--audio-only" in a, house="--house" in a)

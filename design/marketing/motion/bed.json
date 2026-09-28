@@ -1,0 +1,8 @@
+{
+ "_note": "The backing track under every video (the owner, 28 Sept: \"A, put it under all three videos\"): Spring Spring's \"Jazz\" (OpenGameArt, CC0), reworked as jazz-hop by jazzhop.py, played from `start` seconds in. mix.py uses it unless --bed or --house says otherwise. To rebuild it: oga.py fetch jazz-1, then jazzhop.py on jazz_2.ogg.",
+ "title": "Jazz (jazz-hop rework)",
+ "source": { "site": "opengameart", "slug": "jazz-1", "file": "jazz_2.ogg", "author": "Spring Spring", "licence": "CC0" },
+ "rework": { "script": "jazzhop.py", "bpm": 90.02, "phase": 1.853 },
+ "file": "music/rework/jazz-hop.wav",
+ "start": 15
+}

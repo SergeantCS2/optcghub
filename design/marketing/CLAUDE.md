@@ -751,8 +751,16 @@ able to come up with, also think samurai champloo"):**
   - Emma_MA, "Jazz n' brass loop": the author calls it 90s PC-game music;
   - Spring Spring, "Icy Cold Blues": bright, with a centroid of about 2,600 Hz.
 
+**The pick (the owner, 28 Sept: "A, put it under all three videos"):** the jazz-hop rework of "Jazz".
+- **Pinned in `bed.json`:** the source (OpenGameArt `jazz-1`, Spring Spring, CC0), the rework (`jazzhop.py`
+  at 90.02 BPM, phase 1.853 s), and the 15 s start. `mix.py` plays it by default: `--bed` takes another
+  recording, `--house` the groove made here.
+- **Mixed under all three cuts**, with the pictures unchanged: -17.6 LUFS, true peak -2.2 dBTP, in spec.
+- **What bit:** this bed's AAC overshoot is 1.1 dB, so the first mixes read -0.9 dBTP and `check.py` refused
+  them. `mix.py` now measures its own encoded file. If the true peak is over -1.2 dBTP, it lowers the track by
+  the excess plus 0.3 dB and encodes again, up to three times.
+
 **Next:**
-- the owner's pick of the bed, then the three cuts mixed with it;
 - the owner's ear on the sound: any kind is swapped in `sounds.json` and remixed in seconds;
 - `study.mjs` for the owner's inspiration videos;
 - Phase F (HTML5).
