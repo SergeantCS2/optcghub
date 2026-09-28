@@ -600,25 +600,28 @@ to transitions, card popups and etc"):**
   - a tick train through the count-up, then a cash hit on the total;
   - an impact and an ignite on each beat;
   - a chime on the end card.
-- **The palette.** `sounds.json` holds each kind's Freesound query, duration range, gain, maximum length,
-  and the pinned pick (a sound id, so renders repeat).
-- **Freesound, CC0 only (`freesound.py`).**
-  - The key is `FREESOUND_API_KEY` in the environment's settings. It is never a file here and never printed.
-  - Freesound's API terms leave commercial use "negotiated case by case", and each sound keeps its own
-    licence. So the search asks for CC0 only, and `licence_ok()` refuses anything else again at search and
-    at fetch. CC BY needs a credit an ad cannot show; CC BY-NC forbids ads.
-  - The files are the HQ MP3 previews, which token authentication can reach; originals need OAuth2.
-  - `search` writes candidates and an audition per kind (the candidates in a row). `pick KIND N` pins one.
-    `fetch` re-checks each pick's licence and writes `credits.json`.
-  - `--selftest` plants eight licences. A guard loosened to "any Creative Commons" fails it.
+- **The source: Kenney's audio packs (the owner, 28 Sept: "Is there any free alternatives? I don't want to
+  request credentials").** Freesound was dropped: its API needs a key. Kenney (kenney.nl) publishes CC0
+  packs with no account and no key, and each pack carries its own `License.txt`: "Creative Commons Zero,
+  CC0 ... personal and commercial projects. Credit ... is not mandatory".
+  - `kenney.py` fetches the packs `sounds.json` names into `$ADS_OUT/sfx/kenney/`. Nothing is committed.
+  - It keeps a pack only if its own licence file names CC0 and no other licence; otherwise the pack is
+    deleted and the run refused.
+  - `--selftest` plants five licence files. A guard without the "no other licence" condition fails it.
+- **The palette.** `sounds.json` gives each kind one or more layers, each with a gain and an offset:
+  - Kenney files: the casino pack's card slides and chips, which suit a card app; punches with a
+    low-frequency boom under the slams; a thruster roar as the aura ignites; coins with chips on a price;
+    ticks for the count-up; a heavy bell with a confirmation on the end card.
+  - Two sounds made here from filtered noise, the whoosh and the rise. Kenney has no true whoosh, and
+    filtered noise is how whooshes are made; they are ours, with no licence at all.
+  - A layer with `every` repeats through the cue: the count-up's ticks, every 70 ms.
 - **The mix (`mix.py`).**
   - Each cue's file is trimmed to its kind's maximum (the count-up to the count's own length), faded out
     over 60 ms, set to its gain and delayed to the millisecond. The cues are summed without normalising.
   - Loudness is set in two passes (loudnorm measured, then applied linearly) to -16 LUFS with a true peak
     under -1.5 dBTP, and laid under the picture: the video is copied untouched to `<stem>-sound.mp4`. It
     takes 3 s, with no re-render.
-  - `--synth` plays ffmpeg-made placeholders (tones and filtered noise). They prove the timing before any
-    pick exists and are never the delivered sound.
+  - `--synth` plays every kind as an ffmpeg-made placeholder, to prove the timing on its own.
 - **The guard.** `check.py --audio` requires -20 to -12 LUFS and a true peak of at most -1 dBTP, because a
   silent track passes every other check.
   - Its selftest adds a silent clip, which must be refused, and a tone at about -16 LUFS, which must pass.
@@ -630,9 +633,12 @@ to transitions, card popups and etc"):**
   - the ticks from 11.3 s and the beats at 14.12, 15.12 and 16.12 s;
   - the chime at 17 s.
   The result was -16.0 LUFS with a true peak of -1.1 dBTP.
+- **Delivered with Kenney's sounds:** 27 cues as 63 sounds. All three cuts measure -16.8 LUFS with a true
+  peak of -1.2 dBTP; the -1.5 dBTP ceiling holds the linear pass just under -16. On the waveform, every
+  onset is on its cue, as with the placeholders.
 
 **Next:**
-- the owner's Freesound key: search, the auditions, the owner's picks, fetch, then mix all three cuts;
+- the owner's ear on the sound: any kind is swapped in `sounds.json` and remixed in seconds;
 - `study.mjs` for the owner's inspiration videos;
 - Phase F (HTML5).
 

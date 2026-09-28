@@ -4,17 +4,19 @@
     the cue sheet is the video's stem + .cues.json (build.py writes it beside the page); the result is the stem
     + -sound.mp4, the picture copied untouched and the silent track replaced
 
-- each cue: its kind's file, trimmed to the kind's max (or the cue's own length, as the count-up's), a short
-  fade out, the kind's gain, delayed to the cue's time to the millisecond, all summed without normalising;
+- each cue: its kind's layers (sounds.json), each trimmed to the kind's max (or the cue's own length, as the
+  count-up's), faded out briefly, set to the kind's gain plus the layer's own, delayed to the cue's time plus
+  the layer's offset to the millisecond (a layer with "every" repeats through the cue), all summed without
+  normalising;
 - then loudness in two passes (ffmpeg's loudnorm, measured first, applied linearly): -16 LUFS integrated,
   true peak under -1.5 dBTP. YouTube plays ads at about -14, so the track sits just under and is never squashed;
-- --synth plays placeholder sounds made by ffmpeg (tones and filtered noise) instead of Freesound's: they prove
-  the sync before any pick exists, and are never the delivered sound."""
+- the sounds are Kenney's CC0 packs (kenney.py fetches them) and two made here from filtered noise, the whoosh
+  and the rise (SYNTH); --synth plays every kind as its placeholder instead, to prove the timing alone."""
 import json, os, re, subprocess, sys, tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-import check, freesound
+import check, kenney
 
 TARGET, PEAK = -16.0, -1.5
 FADE = 0.06
@@ -35,7 +37,7 @@ SYNTH = {
 }
 
 def synth_file(kind):
-    d = os.path.join(freesound.SFX, "synth"); os.makedirs(d, exist_ok=True)
+    d = os.path.join(kenney.ADS, "sfx", "synth"); os.makedirs(d, exist_ok=True)
     f = os.path.join(d, f"{kind}.wav")
     if not os.path.exists(f):
         src, flt = SYNTH[kind]
@@ -43,15 +45,12 @@ def synth_file(kind):
                         *(["-af", flt] if flt else []), "-ac", "2", f], check=True)
     return f
 
-def sound_file(kind, spec, synth):
+def layers(kind, spec, synth):
+    """(file, gain dB, offset s, every s or None) for each layer of a kind"""
     if synth:
-        return synth_file(kind)
-    if not spec.get("pick"):
-        sys.exit(f"mix: {kind} has no pick in sounds.json (freesound.py search, then pick)")
-    f = os.path.join(freesound.SFX, f"{spec['pick']}.mp3")
-    if not os.path.exists(f):
-        sys.exit(f"mix: {f} is missing (freesound.py fetch)")
-    return f
+        return [(synth_file(kind), 0, 0, None)]
+    return [(synth_file(l["synth"]) if "synth" in l else kenney.path_of(l), l.get("gain", 0), l.get("offset", 0), l.get("every"))
+            for l in spec["layers"]]
 
 def run(cmd):
     return subprocess.run(cmd, capture_output=True, text=True, check=True)
@@ -59,18 +58,24 @@ def run(cmd):
 def mix(video, synth=False, out=None):
     stem = video[:-4]
     sheet = json.load(open(stem + ".cues.json"))
-    D, cues, pal = sheet["duration"], sheet["cues"], freesound.palette()
+    D, cues, pal = sheet["duration"], sheet["cues"], kenney.palette()
     missing = sorted({k for _, k, _ in cues} - set(pal))
     assert not missing, f"mix: cue kinds with no entry in sounds.json: {missing}"
     ins, parts = [], []
-    for j, (t, kind, dur) in enumerate(cues):
+    for t, kind, dur in cues:
         spec = pal[kind]; cap = dur or spec["max"]          # the count-up plays as long as the count
-        ins += ["-i", sound_file(kind, spec, synth)]
-        ms = round(t * 1000)
-        parts.append(f"[{j}:a]aresample=48000,aformat=channel_layouts=stereo,atrim=0:{cap},asetpts=PTS-STARTPTS,"
-                     f"afade=t=out:st={max(0, cap - FADE):.3f}:d={FADE},volume={spec['gain']}dB,adelay={ms}|{ms}[c{j}]")
-    graph = (";".join(parts) + ";" + "".join(f"[c{j}]" for j in range(len(cues))) +
-             f"amix=inputs={len(cues)}:normalize=0:dropout_transition=0,apad,atrim=0:{D}[m]")
+        for f, lg, off, every in layers(kind, spec, synth):
+            starts = [off + k * every for k in range(int((cap - off) / every) + 1)] if every else [off]
+            for st in starts:
+                j = len(ins) // 2; ins += ["-i", f]
+                seg = cap - st if not every else min(every, cap - st)
+                ms = round((t + st) * 1000)
+                parts.append(f"[{j}:a]aresample=48000,aformat=channel_layouts=stereo,atrim=0:{seg:.3f},asetpts=PTS-STARTPTS,"
+                             f"afade=t=out:st={max(0, seg - FADE):.3f}:d={min(FADE, seg):.3f},volume={spec['gain'] + lg}dB,"
+                             f"adelay={ms}|{ms}[c{j}]")
+    n = len(parts)
+    graph = (";".join(parts) + ";" + "".join(f"[c{j}]" for j in range(n)) +
+             f"amix=inputs={n}:normalize=0:dropout_transition=0,apad,atrim=0:{D}[m]")
     with tempfile.TemporaryDirectory() as tmp:
         raw, norm = os.path.join(tmp, "raw.wav"), os.path.join(tmp, "norm.wav")
         run([check.ffmpeg(), "-y", "-loglevel", "error", *ins, "-filter_complex", graph, "-map", "[m]", raw])
@@ -86,7 +91,7 @@ def mix(video, synth=False, out=None):
         out = out or stem + "-sound.mp4"
         run([check.ffmpeg(), "-y", "-loglevel", "error", "-i", video, "-i", norm, "-map", "0:v", "-map", "1:a",
              "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-t", str(D), "-movflags", "+faststart", out])
-    print(f"mix: {len(cues)} cues ({'placeholders' if synth else 'Freesound picks'}) under {os.path.basename(video)} -> {out}")
+    print(f"mix: {len(cues)} cues, {n} sounds ({'placeholders' if synth else 'Kenney CC0 and our own whooshes'}) under {os.path.basename(video)} -> {out}")
     return out
 
 if __name__ == "__main__":

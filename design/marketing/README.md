@@ -72,9 +72,9 @@ node design/marketing/render.mjs [--dir directions]  # NAME/out/*.png, report.js
 | `motion/build.py` | A storyboard laid out in the Pull style (`--ratio 9x16`, `1x1` or `16x9`), as a timed composition page with its assets beside it. |
 | `motion/engine.mjs` | Renders a composition page frame by frame to an H.264 MP4 (or `--stills`). |
 | `motion/check.py` | The video guard: the MP4 read back against the Google Ads spec; `--audio` for the sound's level; `--frames`, `--selftest`. |
-| `motion/sounds.json` | The sound palette: one Freesound search per cue kind (CC0 only), its gain and length, and the pinned pick. |
-| `motion/freesound.py` | Freesound, CC0 only: `search` (candidates and auditions), `pick`, `fetch` (licence re-checked, credits); key from `FREESOUND_API_KEY`. |
-| `motion/mix.py` | The cue sheet played with the picks (or `--synth` placeholders), loudness-set and laid under the picture. |
+| `motion/sounds.json` | The sound palette: each cue kind's layers (Kenney CC0 files, or our own noise whoosh and rise), their gains and lengths. |
+| `motion/kenney.py` | Fetches the Kenney audio packs `sounds.json` names, keeping a pack only if its own License.txt says CC0 (`--selftest`). No account, no key. |
+| `motion/mix.py` | The cue sheet played with the palette's layers (or `--synth` placeholders), loudness-set and laid under the picture. |
 | `fetch_fonts.sh` | Their typefaces, OFL-1.1, from npm's @fontsource packages; nothing committed until a pick. |
 | `fetch_badge.sh` | Google's official "Get it on Google Play" badge into `$ADS_OUT/badge` (never committed), checked as Google's file. |
 | `paths.mjs` | Where the renders go. |
