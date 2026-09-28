@@ -23,10 +23,10 @@ what it handed on is A43.)
    over the Play build (landmine 34): a sideload proof means export →
    uninstall → sideload → import. *Take 121:* its AAB is the first that
    names the store-linked AdMob app; upload it.
-2. **Ads, in order (take 121; RUNBOOK-play §9):** app-ads.txt at the root of
-   the website the listing names -- `sergeantcs2.dev`, where it is 404
-   today, or set the Website back to `sergeantcs2.github.io/optcghub/` --
-   then AdMob's *Check for updates* (landmine 209); your phones as AdMob
+2. **Ads, in order (take 121; RUNBOOK-play §9):** app-ads.txt -- the
+   listing's Website is back on `sergeantcs2.github.io/optcghub/` (the
+   owner's pick, PROVEN live 28 Sept), whose root serves the line -- so
+   AdMob's *Verify app* is what is left (landmine 209); your phones as AdMob
    test devices; **D11**, three rewarded units (scan credits, deck save,
    MAX unlock) under "OP TCG Hub: Collect, Hunt, SIM" `~9519036366`, never
    "testing"; the European-regulations message published in AdMob's

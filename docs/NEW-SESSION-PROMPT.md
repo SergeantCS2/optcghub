@@ -93,8 +93,8 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   the gate's `check_ads` refuses anything else and refuses `ads.live`
   without a consent flow (the app is worldwide). The MAX unlock has its
   own unit and no longer grants a deck save (landmine 211). The owner's:
-  app-ads.txt at the root of the listing's website, `sergeantcs2.dev`
-  (landmine 209), test devices, three units, the consent message in
+  AdMob's *Verify app* (the listing's website is back on github.io, whose
+  root serves app-ads.txt; landmine 209), test devices, three units, the consent message in
   AdMob. A build loads live units only once `PLATFORM._canRequestAds` is
   true, which nothing in take 121 sets. **Next, yours:** the consent flow
   (UMP before `initialize`, setting `_canRequestAds`; a Privacy choices row

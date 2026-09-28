@@ -118,7 +118,10 @@ Diagnostics line, so the take has no look steps (101-103 and 113 had none).
 
 ### The owner's, from here (RUNBOOK-play §9)
 
-1. **app-ads.txt:** no need to change the URL back. Either put the one line
+1. **app-ads.txt -- DONE the same day, the owner's pick: GitHub** ("I'll be
+   using github"). PROVEN 28 Sept, 20:43Z: the live listing's website reads
+   `https://sergeantcs2.github.io/optcghub/` and its root serves the line
+   (200, `text/plain`). Left: AdMob → the app → *Verify app*. Before it: no need to change the URL back. Either put the one line
    in a file at `https://sergeantcs2.dev/app-ads.txt` (keeps the listing on
    the owner's site; one file covers every app under this account), or set
    the listing's Website to `https://sergeantcs2.github.io/optcghub/`, where

@@ -181,7 +181,7 @@ collects nothing, but AdMob does. Declare exactly this:
 | Phone screenshots, at least 2 | the Fold, cover screen: Home, Collection, a card detail, Scan, a deck. The first one leads with the collection, not a character: the listing does not foreground a franchise (landmine 30). The app itself shows card art from take 109 (A42) |
 | Category | **App → Tools** (or Entertainment) — never **Game**; it is a collection tracker |
 | Contact email | yours |
-| Website | *Take 121: the live listing reads `https://sergeantcs2.dev/`, the owner's own site.* Whatever it is, AdMob fetches `/app-ads.txt` from its root, so the file lives there (§9, landmine 209). Take 40 set `https://sergeantcs2.github.io/optcghub/`, where the file already is |
+| Website | `https://sergeantcs2.github.io/optcghub/` -- *take 121: it had become `https://sergeantcs2.dev/`, the owner's own site, where app-ads.txt was 404; the owner set it back the same day (PROVEN live 28 Sept).* Whatever it is, AdMob fetches `/app-ads.txt` from its root, so the file lives there (§9, landmine 209). Take 40 set `https://sergeantcs2.github.io/optcghub/`, where the file already is |
 
 ## 7. Closed testing — the clock
 
@@ -265,7 +265,9 @@ under "testing".
    keeps the listing on the owner's site, and one file covers every app under
    this account), **or** set the listing's Website back to
    `https://sergeantcs2.github.io/optcghub/` (*Store presence → Store settings*).
-   One of the two. Check, from anywhere:
+   One of the two. *The owner took the second, the same day: PROVEN 28 Sept,
+   20:43Z, the listing reads `https://sergeantcs2.github.io/optcghub/` and the
+   check below prints the line.* Check, from anywhere:
 
    `curl -s "$(curl -s 'https://play.google.com/store/apps/details?id=com.optcghub.app&hl=en' | grep -o 'appstore:developer_url" content="[^"]*' | cut -d'"' -f3 | sed -E 's#^(https?://[^/]+).*#\1#')/app-ads.txt"`
 

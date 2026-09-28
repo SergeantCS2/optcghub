@@ -48,8 +48,9 @@ since 24 Sept 2026.
   account; version code 35 accepted into internal testing; advertising-ID
   declaration and Data Safety done to landmine 94; listing copy in; closed
   track created; app-ads.txt served from the root user site (take 40), which
-  AdMob no longer reads: the listing's website is `https://sergeantcs2.dev/`,
-  where the file is 404 (take 121, landmine 209; the owner's); the
+  the listing names again since take 121 (it had moved to
+  `https://sergeantcs2.dev/`, where the file was 404, landmine 209; the owner
+  set it back the same day), AdMob's *Verify app* the owner's; the
   closed-testing release approved by Play review (take 52); **take 101
   uploaded to the closed track, the app APPROVED FOR PRODUCTION (24
   Sept, take 102) and LIVE on Google Play the same day (take 105:
