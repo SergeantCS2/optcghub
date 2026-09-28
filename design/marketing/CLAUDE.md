@@ -817,6 +817,51 @@ assets", read 28 Sept):
 - The status line showed through the end card. `tell()` sets its opacity inline, which beat the
   stylesheet rule; it now takes `!important`.
 
+**Round 2 (the owner, 28 Sept: "add sound after the first tap. Change the end to say, Scanner, Deck Builder,
+hunt product and local events & stock! ... change the card for this only to the red Luffy manga rare ... same
+Luffy of course ... include below the card or somewhere real screenshots from the app, maybe it being scanned,
+adding it to the collection and the number going up in my portfolio"):**
+- **The card.** No Luffy manga rare is red by the catalogue's colour; the priced ones are OP05-119 (purple,
+  $5,000) and OP11-118 (blue frame, red Gear 4 art, $1,288.89). OP09-119 has the reddest art but no market
+  price, so it cannot carry one. The ad uses OP11-118:
+  - the base ($3.51), the alternate art ($26.91) and the manga ($1,288.89);
+  - its fourth printing, the Nami-deck base ($1.02), is left out of the deal. So the words never count:
+    "Same Luffy. Not the *same* price.", with the footnote "Three of OP11-118's printings.".
+  - `accent.mjs` reads the card as blue (its frame). The aura takes the art's own red instead: the
+    weighted mean of its saturated red pixels, deep #4e1816, bright #ff5e57 (`ACCENT` in `build.py`).
+- **The app's own screens (`capture.mjs h5- art`, with HERO=OP11-118:… and REPORT=html5).** Four steps run
+  only when named, write `report-html5.json`, and never touch `report.json`:
+  - Home before;
+  - the scanner's picker ("Which OP11-118?", four printings, "1264× apart"), with the manga tapped into
+    the batch;
+  - Review, committing it ("Committed 1 card");
+  - Home after: $16,053.25 before, $17,342.14 after.
+  - `build.py` asserts the rise equals the card's price.
+  - The crops keep only honest parts. The web build's scan screen also says "Camera unavailable" and
+    "Saving ... is too, for now", and the "free" in that line sits at 636 px, outside the crop.
+- **The flow after the find:** the manga steps back to the corner and three captioned screens follow:
+  1. the picker;
+  2. the scan summary ("you picked it", "1 scanned, $1,288.89 batch");
+  3. Home's total, before crossfading to after, with a "+$1,288.89" chip.
+  Then the end card: the icon, the name, the line, and four chips: Scanner, Deck builder, Hunt sealed
+  product, Local events & stock. The stock claim is the app's stock alerts (take 77): Target online, a
+  Target shelf in the zip, a local shop's online store. The footnote says Hunt's local events and stock are
+  United States only. The owner's "!" was not carried into the chips.
+- **Sound, after the first tap only.** Kenney effects (card slide, chips, the punch with its boom, coins, the
+  bell), our whoosh, and 26 s of the jazz-hop bed from `bed.json`'s start.
+  - The zip takes no audio files, so they ride as base64 mp3 in `sfx.js` (1,176 KB zip, 11 files).
+  - They play through Web Audio, with a mute button that appears once sound is on.
+  - **What bit:** the first tap's own sounds were silent, because they were asked for while the buffers
+    still decoded. `play.mjs` caught it ("the wrong sound never played"). Sounds asked for before decoding
+    now queue, and play on decode if under 0.8 s old.
+- **`play.mjs` now:**
+  - requires sound to start on the first tap, with the flip, wrong, found, coin and chime sounds heard;
+  - requires the untouched path never to start audio;
+  - shoots each app step once its caption is up.
+  A mutant that starts audio on load is refused: "untouched: sound without a tap".
+- **The look:** "Not the same price." at 42 px wrapped to three lines over the prompt, so the headline is
+  34 px. Step 1's caption touched the picker, so the picker moved down 22 px.
+
 **Next:**
 - the owner's look at the HTML5 ad; then Google's HTML5 validator (the owner uploads) and more playables
   if wanted;

@@ -79,7 +79,7 @@ node design/marketing/render.mjs [--dir directions]  # NAME/out/*.png, report.js
 | `motion/oga.py` | Backing music from OpenGameArt, CC0 only (the page's own licence field), with no account or key; `--selftest`. |
 | `motion/jazzhop.py` | A jazz-hop rework of a CC0 jazz recording: boom-bap drums made here on the track's own grid, the record dusted, vinyl crackle (numpy). |
 | `motion/bed.json` | The backing track the owner picked (source, licence, rework, start); `mix.py` plays it by default. |
-| `html5/build.py` | HTML5 ad 1, "Which printing?": a playable for App campaigns (AdMob), built from the capture, zipped. |
+| `html5/build.py` | HTML5 ad 1, "Which printing?": a playable for App campaigns (AdMob), built from the capture (`report-html5.json`), with sound after the first tap (`sfx.js`), zipped. |
 | `html5/check.py` | The zip against Google's HTML5 rules (size, files, types, meta tags, ExitApi, externals); `--selftest`. |
 | `html5/play.mjs` | Plays the zip in Chromium with ExitApi stubbed: the player path, the untouched path, five screen sizes; screenshots. |
 | `fetch_fonts.sh` | Their typefaces, OFL-1.1, from npm's @fontsource packages; nothing committed until a pick. |

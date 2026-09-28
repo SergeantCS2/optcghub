@@ -212,7 +212,43 @@ const steps = [
 
 /* the open-* steps run last and leave the viewport at the open screen's size; nothing after them shoots the app */
 const only = process.argv.slice(2);
-for (const [name, run] of steps.filter(([n]) => !only.length || only.some(o => n.startsWith(o)))) {
+/* ---- the HTML5 ad's states (only when named: `node capture.mjs h5-`), in order: Home before, the scan's
+   picker with the dear printing tapped (it joins the batch), Review (the batch committed to the collection),
+   Home after, its total up by the card's price. They change the sample collection, so they never run in a
+   full capture, and their report is report-html5.json (REPORT=html5), never report.json. */
+const pickDear = () => page.evaluate((ids) => { const V = window.VAULT;
+  const ps = ids.map(id => V.CAT.byId.get(id)).filter(Boolean).sort((a, b) => (b.market || 0) - (a.market || 0)); return ps[0].id; }, HERO.ids);
+const homeTotal = async () => { await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('collect', true); V.go('home'); V.setHomeTab(false); V.paintHome(); window.scrollTo(0, 0); });
+  await settle(700); await page.evaluate(() => { const b = [...document.querySelectorAll('#home button')].find(x => /got it/i.test(x.textContent)); if (b) b.click(); window.scrollTo(0, 0); });
+  await settle(700);
+  return page.evaluate(() => ({ total: (document.querySelector('#pfTotal') || {}).textContent, value: +window.VAULT.OWN.total().toFixed(2) }))
+    .then(async m => ({ ...m, rects: await rects({ hero: '#hero', spark: '#spark', top: '#topList' }) })); };
+steps.push(
+  ['h5-home-before', homeTotal],
+  ['h5-scanned', async () => {
+    const seed = await page.evaluate((num) => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('collect', true); V.BATCH.rows.length = 0; V.BATCH.save(); V.go('scan');
+      const rows = V.CAT.rows.filter(p => p.num); const i = rows.findIndex(p => p.num === num && p.treat === 'base');
+      const r0 = Math.random; let used = false; Math.random = () => { if (!used) { used = true; Math.random = r0; return (i + 0.5) / rows.length; } return r0(); };
+      return i >= 0; }, PICKER_NUM);
+    if (!seed) throw new Error('no base printing of ' + PICKER_NUM);
+    await settle(500); await page.click('#btnShutter');
+    await page.waitForSelector('#picker.on', { timeout: 8000 }); await settle(700);
+    await page.screenshot({ path: path.join(SHOTS, 'h5-picker.png') });
+    const pk = await page.evaluate(() => ({ title: document.querySelector('#pkTitle').textContent, why: document.querySelector('#pkWhy').textContent.trim() }));
+    const dear = await pickDear();
+    await page.click(`[data-pick="${dear}"]`); await settle(900);
+    return page.evaluate(() => ({ count: document.querySelector('#scCount').textContent, total: document.querySelector('#scTotal').textContent }))
+      .then(async m => ({ ...m, picker: pk, dear, rects: await rects({ count: '#scCount', total: '#scTotal', done: '#btnDone' }) }));
+  }],
+  ['h5-committed', async () => {
+    await page.click('#btnDone'); await settle(500);
+    const toast = await page.evaluate(() => { const t = [...document.querySelectorAll('.toast, #toast')].map(x => x.textContent.trim()).filter(Boolean); return t.join(' | '); });
+    await settle(600);
+    return { toast, screen: await page.evaluate(() => (document.querySelector('.screen.on, .screen.active') || {}).id || null) };
+  }],
+  ['h5-home-after', homeTotal],
+);
+for (const [name, run] of steps.filter(([n]) => only.length ? only.some(o => n.startsWith(o)) : !n.startsWith('h5-'))) {
   try {
     const m = await run(); const loaded = await artLoaded(); await wait(400);
     const file = path.join(SHOTS, name + '.png'); await page.screenshot({ path: file });
@@ -279,6 +315,6 @@ if (!only.length || only.includes('art')) {
 }
 report.net = net;
 report.captured = new Date().toISOString();
-fs.writeFileSync(path.join(ADS, only.length ? 'report-partial.json' : 'report.json'), JSON.stringify(report, null, 1));
+fs.writeFileSync(path.join(ADS, process.env.REPORT ? `report-${process.env.REPORT}.json` : only.length ? 'report-partial.json' : 'report.json'), JSON.stringify(report, null, 1));
 console.log(JSON.stringify(report, null, 1));
 await browser.close();

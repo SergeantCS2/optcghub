@@ -1,6 +1,8 @@
 // The HTML5 ad, played in real Chromium from the .zip itself (extracted), with Google's ExitApi stubbed to count
 // calls. Screenshots of every step go beside the zip, for the session to read before sending.
 //   node design/marketing/html5/play.mjs AD.zip
+// Sound: the untouched path must never start audio (Google: no sound before the viewer interacts); the player
+// path must start it on the first tap and play the effects (window.__sound, which the ad keeps).
 // Refused: a console or page error; an image that did not load; a request outside the zip other than Google's
 // exit API and Google Fonts; the player path (a wrong pick, then the SP, then the badge) not reaching the end
 // card and exactly one ExitApi.exit(); the untouched path (no tap) not reaching the end card by itself; the
@@ -49,10 +51,20 @@ const shot = (page, name) => page.screenshot({ path: path.join(shots, name + '.p
   const { ctx, page, log } = await open(390, 844);
   await wait(1400); await shot(page, '1-deal');
   const wrong = await page.$('.slot:not(.dear)'); await wrong.tap(); await wait(900); await shot(page, '2-wrong-pick');
+  const snd = await page.evaluate(() => window.__sound);
+  if (!snd.started) fails.push('player: no sound after the first tap');
   await (await page.$('.slot.dear')).tap(); await wait(700); await shot(page, '3-found');
   await wait(1600); await shot(page, '4-hero');
+  // the app's three screens: each shot once its own caption is up (taps take variable time here)
+  for (const [n, name, extra] of [[1, '5-app-scan', 700], [2, '6-app-add', 700], [3, '7-app-grow', 1500]]) {
+    await page.waitForFunction(n => (document.getElementById('cap').textContent || '').startsWith(n + ' / 3'), n, { timeout: 12000 })
+      .catch(() => fails.push(`player: app step ${n} never showed`));
+    await wait(extra); await shot(page, name);
+  }
   await page.waitForFunction(() => document.body.classList.contains('end'), null, { timeout: 8000 }).catch(() => fails.push('player: no end card'));
-  await wait(700); await shot(page, '5-end');
+  await wait(700); await shot(page, '8-end');
+  const played = await page.evaluate(() => window.__sound.played);
+  for (const k of ['flip', 'wrong', 'found', 'coin', 'chime']) if (!played.includes(k)) fails.push(`player: the ${k} sound never played (${played})`);
   await page.tap('#end .badge'); await wait(200);
   const exits = await page.evaluate(() => window.__exits || 0);
   if (exits !== 1) fails.push(`player: ExitApi.exit() called ${exits} times after the badge (want 1)`);
@@ -61,11 +73,13 @@ const shot = (page, name) => page.screenshot({ path: path.join(shots, name + '.p
 // untouched: the hint, then the reveal plays itself and the end card follows
 {
   const { ctx, page, log } = await open(360, 640);
-  await wait(4800); await shot(page, '6-idle-hint');
+  await wait(4800); await shot(page, '9-idle-hint');
   const hinted = await page.evaluate(() => document.querySelectorAll('.slot.hint').length);
   if (hinted !== 3) fails.push(`untouched: ${hinted} cards hinting at 4.8 s (want 3)`);
-  await page.waitForFunction(() => document.body.classList.contains('end'), null, { timeout: 20000 }).catch(() => fails.push('untouched: no end card by itself'));
-  await wait(700); await shot(page, '7-untouched-end');
+  await page.waitForFunction(() => document.body.classList.contains('end'), null, { timeout: 30000 }).catch(() => fails.push('untouched: no end card by itself'));
+  await wait(700); await shot(page, '10-untouched-end');
+  const heard = await page.evaluate(() => window.__sound);
+  if (heard.started || heard.played.length) fails.push(`untouched: sound without a tap (${JSON.stringify(heard)})`);
   const exits = await page.evaluate(() => window.__exits || 0);
   if (exits !== 0) fails.push(`untouched: ExitApi.exit() called ${exits} times without a tap`);
   await audit(page, log, 'untouched'); await ctx.close();
@@ -73,7 +87,7 @@ const shot = (page, name) => page.screenshot({ path: path.join(shots, name + '.p
 // the layout at other sizes: a Fold's cover screen, a tall phone, a tablet
 for (const [w, h] of [[412, 915], [344, 882], [768, 1024]]) {
   const { ctx, page, log } = await open(w, h);
-  await wait(1400); await shot(page, `8-size-${w}x${h}`);
+  await wait(1400); await shot(page, `11-size-${w}x${h}`);
   await audit(page, log, `${w}x${h}`); await ctx.close();
 }
 await b.close();
