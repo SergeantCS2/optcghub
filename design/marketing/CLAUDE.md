@@ -684,7 +684,50 @@ more consistent and I wouldn't mind a backing music track, like a low volume gen
   -1.1 dBTP, in spec. Frames either side of the 0.963 s and 14.051 s slams were read from the MP4: the card
   is still falling 33 ms before and has landed, with its speed lines, 34 ms after.
 
+**Sound, pass 3: the music (the owner, 28 Sept: "I don't like this song, it sounds like a children's song or
+what you would see in a mobile game ad that's false advertising. I want something you find in a cigar
+lounge/coffee shop"):**
+- **The brief:** lounge and lo-fi jazz, meaning warm electric piano, jazz chords, a soft kit and a slow
+  tempo. Oscillators made here cannot play that convincingly (the house bed's saws were part of what read
+  as childish), so the bed is now a real recording.
+- **The source: OpenGameArt, CC0 only (`oga.py`).** No account, no key.
+  - A page is kept only if its own License(s) field lists CC0 alone, linked to the CC0 deed.
+  - `--selftest` plants five cases: CC0 alone passes; BY, CC0 dual-licensed with BY, a CC0 label on a BY
+    deed, and a page with no licence field are refused. A guard loosened to "any CC0 label" fails it.
+  - FreePD, the first choice, has closed.
+- **Left out by hand:**
+  - chiptune and 8-bit pieces: the mobile-game sound the owner named;
+  - "Samurai Champloo inspired loop" and "Giant Steps but smooth": a recording's CC0 does not clear a song
+    someone else wrote.
+- **Screened by measurement.** The candidates' spectral centroid (warm under about 1,400 Hz), tempo and
+  length were measured, since the session cannot listen.
+- **Seven auditions**, each the ad's real soundtrack (the effects over the bed, ducked, loudness-set) as a
+  20 s MP3:
+  1. Holizna, "First Snow";
+  2. Holizna, "So Broke";
+  3. Holizna, "Laundry On The Wire";
+  4. Holizna, "2 Hour Delay" (all four from "Lo-Fi and Chill (Collection)");
+  5. Spring Spring, "(Basically not) Fusion Jazz";
+  6. OatCog, "Coffee House Bump";
+  7. Spring Spring, "Jazz".
+- **`mix.py --bed TRACK --start S [--audio-only]`** plays a recording from S: faded in over 0.8 s, and out
+  from 0.6 s after the end card.
+- **The mixer, rebuilt.**
+  - The ffmpeg graph mixing 59 inputs (`amix` with `adelay`) stalled for minutes several times, with and
+    without the bed. Splitting it into two passes did not cure it: it stalled again in the effects-only
+    pass.
+  - The effects are now placed sample by sample in numpy, and the ducking is a numpy compressor keyed by
+    the effects (5 ms blocks, 4 ms attack, 260 ms release, ratio 5). ffmpeg keeps only single-input jobs.
+  - Six mixes in a row then took 35 s, with no stall. `mix.py` re-runs itself under `FFMPEG_PY` when the
+    system python has no numpy.
+  - `check.py --audio` then caught a true peak of -0.9 dBTP (the AAC encoder overshoots a -1.5 ceiling).
+    The loudness pass now aims at -2.0 dBTP, and all seven auditions measure -1.3 to -1.9 dBTP.
+- **The beat grid.** The picture's warp is fitted to the house bed's 119.2 BPM. A lounge bed does not need
+  its hits on the beat; once the owner picks, the grid can be fitted to that track's own tempo (a
+  re-render).
+
 **Next:**
+- the owner's pick of the bed, then the three cuts mixed with it;
 - the owner's ear on the sound: any kind is swapped in `sounds.json` and remixed in seconds;
 - `study.mjs` for the owner's inspiration videos;
 - Phase F (HTML5).
@@ -706,7 +749,7 @@ more consistent and I wouldn't mind a backing music track, like a low volume gen
 - The premium direction, or a mix of directions (drafts sent 27 Sept).
 - Inspiration videos: the owner has some. They go through `study` (frames at every cut, a timing sheet)
   so their structure, not their content, shapes the storyboards.
-- Music: a house bed made here (`music.py`) since 28 Sept. Voice-over: none. A licensed track from the owner
-  would replace the bed in `mix.py`.
+- Music: a CC0 lounge or lo-fi recording from OpenGameArt (`oga.py`, `mix.py --bed`), picked by the owner from
+  auditions; the house bed made here (`music.py`) was turned down. Voice-over: none.
 - Tools the owner may load (video, design or voice). They slot in behind the same storyboards.
 - Phone footage of a real scan on the Fold would be the strongest scan proof when the owner can record it.

@@ -75,7 +75,8 @@ node design/marketing/render.mjs [--dir directions]  # NAME/out/*.png, report.js
 | `motion/sounds.json` | The sound palette: each cue kind's layers (Kenney CC0 files, or our own noise whoosh and rise), their gains and lengths. |
 | `motion/kenney.py` | Fetches the Kenney audio packs `sounds.json` names, keeping a pack only if its own License.txt says CC0 (`--selftest`). No account, no key. |
 | `motion/mix.py` | The cue sheet played with the palette's layers (or `--synth` placeholders), loudness-set and laid under the picture. |
-| `motion/music.py` | The backing house groove, made from oscillators and noise on the cue sheet's beat grid (numpy; ours, no licence). |
+| `motion/music.py` | A house groove made from oscillators and noise on the cue sheet's beat grid (numpy; ours, no licence). Turned down for a lounge recording. |
+| `motion/oga.py` | Backing music from OpenGameArt, CC0 only (the page's own licence field), with no account or key; `--selftest`. |
 | `fetch_fonts.sh` | Their typefaces, OFL-1.1, from npm's @fontsource packages; nothing committed until a pick. |
 | `fetch_badge.sh` | Google's official "Get it on Google Play" badge into `$ADS_OUT/badge` (never committed), checked as Google's file. |
 | `paths.mjs` | Where the renders go. |

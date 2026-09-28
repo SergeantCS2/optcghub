@@ -1,6 +1,7 @@
 """The video's sound: build.py's cue sheet played with sounds.json's picks, laid under the rendered picture.
 
-  python3 design/marketing/motion/mix.py video1-9x16.mp4 [--synth] [--out f.mp4]
+  python3 design/marketing/motion/mix.py video1-9x16.mp4 [--synth] [--out f.mp4] [--bed track --start s] [--audio-only]
+    --bed plays a recorded track (oga.py, CC0) from --start instead of music.py's groove
     the cue sheet is the video's stem + .cues.json (build.py writes it beside the page); the result is the stem
     + -sound.mp4, the picture copied untouched and the silent track replaced
 
@@ -9,7 +10,7 @@
   the layer's offset to the millisecond (a layer with "every" repeats through the cue), all summed without
   normalising;
 - then loudness in two passes (ffmpeg's loudnorm, measured first, applied linearly): -16 LUFS integrated,
-  true peak under -1.5 dBTP. YouTube plays ads at about -14, so the track sits just under and is never squashed;
+  true peak under -2 dBTP. YouTube plays ads at about -14, so the track sits just under and is never squashed;
 - a layer lands by its loudest moment, not its first sample: its peak is measured and the layer delayed so
   the peak falls on the cue (a card slide peaks 0.15 s into its file, a whoosh 0.4 s; a punch at once). A
   whoosh or rise is cued where its motion arrives, so it swells into the moment instead of trailing it;
@@ -23,7 +24,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import check, kenney
 
-TARGET, PEAK = -16.0, -1.5
+TARGET, PEAK = -16.0, -2.0     # -2 dBTP: the AAC encoder overshoots a -1.5 ceiling (check.py caught -0.9)
 MUSIC = -15            # the bed against the effects, before the loudness pass: low, under everything
 FADE = 0.06
 
@@ -60,61 +61,90 @@ def layers(kind, spec, synth):
     return [(synth_file(l["synth"]) if "synth" in l else kenney.path_of(l), l.get("gain", 0), l.get("offset", 0), l.get("every"))
             for l in spec["layers"]]
 
-PEAKS = {}
+SR = 48000
+_DEC = {}
+def decode(f):
+    """a file as float32 stereo at 48 kHz (each file decoded once)"""
+    import numpy as np
+    if f not in _DEC:
+        raw = subprocess.run([check.ffmpeg(), "-v", "error", "-i", f, "-ac", "2", "-ar", str(SR), "-f", "f32le", "-"],
+                             capture_output=True, check=True, timeout=120).stdout
+        _DEC[f] = np.frombuffer(raw, np.float32).reshape(-1, 2).copy()
+    return _DEC[f]
+
 def peak_of(f):
-    """seconds into the file of its loudest 5 ms (decoded at 8 kHz mono; no numpy needed)"""
-    if f not in PEAKS:
-        import array
-        raw = subprocess.run([check.ffmpeg(), "-v", "error", "-i", f, "-ac", "1", "-ar", "8000", "-f", "s16le", "-"],
-                             capture_output=True, check=True).stdout
-        a = array.array("h"); a.frombytes(raw)
-        w = 40; best, at = -1, 0
-        for i in range(0, max(1, len(a) - w), w // 2):
-            e = sum(x * x for x in a[i:i + w])
-            if e > best:
-                best, at = e, i
-        PEAKS[f] = at / 8000
-    return PEAKS[f]
+    """seconds into the file of its loudest 5 ms"""
+    import numpy as np
+    x = decode(f).mean(1); w = int(.005 * SR)
+    e = np.convolve(x * x, np.ones(w), "valid")
+    return float(np.argmax(e)) / SR
 
 def run(cmd):
-    # a mix takes seconds; one stalled once for five minutes and did not reproduce, so a stall now fails loudly
+    # ffmpeg does only single-input jobs here (decode, trim, loudness, mux); a stall still fails loudly
     return subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=120)
 
-def mix(video, synth=False, out=None, music=True):
+def bed_from(path, start, D, end, tmp):
+    """a recorded track as the bed: D seconds from `start`, faded in over 0.8 s and out from the end card"""
+    f = os.path.join(tmp, "bed.wav")
+    run([check.ffmpeg(), "-y", "-loglevel", "error", "-ss", str(start), "-t", str(D), "-i", path, "-ac", "2", "-ar", str(SR),
+         "-af", f"afade=t=in:d=0.8,afade=t=out:st={end + 0.6:.2f}:d={D - end - 0.6:.2f},apad,atrim=0:{D}", f])
+    return f
+
+def duck(bed, fx, thr=0.02, ratio=5.0, attack=.004, release=.26):
+    """the bed under the effects: a feed-forward compressor keyed by the effects' level, in 5 ms blocks"""
+    import numpy as np
+    blk = int(.005 * SR); n = len(fx) // blk
+    lvl = np.sqrt((fx[:n * blk] ** 2).mean(1).reshape(n, blk).mean(1))
+    a, r = np.exp(-.005 / attack), np.exp(-.005 / release); env = np.zeros(n); e = 0.0
+    for k in range(n):                                               # 4000 blocks: a plain loop is quick enough
+        e = a * e + (1 - a) * lvl[k] if lvl[k] > e else r * e + (1 - r) * lvl[k]
+        env[k] = e
+    gain = np.where(env > thr, (np.maximum(env, 1e-9) / thr) ** (1 / ratio - 1), 1.0)
+    g = np.interp(np.arange(len(bed)), np.arange(n) * blk + blk / 2, gain)
+    return bed * g[:, None]
+
+def mix(video, synth=False, out=None, music=True, bed=None, start=0.0, audio_only=False):
+    """the effects are placed sample by sample in numpy, not in one ffmpeg graph: a graph mixing 59 inputs
+    (amix, adelay) stalled ffmpeg now and then for minutes, with or without the bed, and did not reproduce"""
+    import numpy as np
     stem = video[:-4]
     sheet = json.load(open(stem + ".cues.json"))
     D, cues, pal = sheet["duration"], sheet["cues"], kenney.palette()
     missing = sorted({k for _, k, _ in cues} - set(pal))
     assert not missing, f"mix: cue kinds with no entry in sounds.json: {missing}"
-    ins, parts = [], []
+    N = int(round(D * SR)); fx = np.zeros((N, 2), np.float32); n = 0
     for t, kind, dur in cues:
         spec = pal[kind]; cap = dur or spec["max"]          # the count-up plays as long as the count
         for f, lg, off, every in layers(kind, spec, synth):
+            x = decode(f); pk = peak_of(f)
             starts = [off + k * every for k in range(int((cap - off) / every) + 1)] if every else [off]
-            pk = peak_of(f)
             for st in starts:
-                j = len(ins) // 2; ins += ["-i", f]
                 seg = cap - st if not every else min(every, cap - st)
                 land = t + st - pk                               # where the file must start for its peak to hit the cue
-                skip = max(0.0, -land); ms = round(max(0.0, land) * 1000)
-                parts.append(f"[{j}:a]aresample=48000,aformat=channel_layouts=stereo,atrim={skip:.3f}:{skip + seg:.3f},asetpts=PTS-STARTPTS,"
-                             f"afade=t=out:st={max(0, seg - FADE):.3f}:d={min(FADE, seg):.3f},volume={spec['gain'] + lg}dB,"
-                             f"adelay={ms}|{ms}[c{j}]")
-    n = len(parts)
-    graph = (";".join(parts) + ";" + "".join(f"[c{j}]" for j in range(n)) +
-             f"amix=inputs={n}:normalize=0:dropout_transition=0,apad,atrim=0:{D}" + ("[m]" if not music else "[fx]"))
+                skip = max(0.0, -land)
+                y = x[int(skip * SR):int((skip + seg) * SR)].copy()
+                fl = min(len(y), int(FADE * SR))
+                if fl: y[-fl:] *= np.linspace(1, 0, fl, dtype=np.float32)[:, None]
+                y *= 10 ** ((spec["gain"] + lg) / 20)
+                i0 = int(round(max(0.0, land) * SR)); i1 = min(N, i0 + len(y))
+                if i1 > i0: fx[i0:i1] += y[:i1 - i0]
+                n += 1
     with tempfile.TemporaryDirectory() as tmp:
-        if music:
-            bed = os.path.join(tmp, "bed.wav")
-            py = os.environ.get("FFMPEG_PY", sys.executable)          # music.py needs numpy: the venv's python
-            subprocess.run([py, os.path.join(HERE, "music.py"), stem + ".cues.json", bed], check=True)
-            k = len(ins) // 2; ins += ["-i", bed]
-            # the bed ducks under the effects: a sidechain keyed by them, quick to duck and slow to return
-            graph += (f";[fx]asplit=2[fx1][fx2];[{k}:a]aresample=48000,aformat=channel_layouts=stereo,volume={MUSIC}dB[bd];"
-                      f"[bd][fx2]sidechaincompress=threshold=0.02:ratio=5:attack=4:release=260[bdk];"
-                      f"[fx1][bdk]amix=inputs=2:normalize=0:dropout_transition=0,atrim=0:{D}[m]")
         raw, norm = os.path.join(tmp, "raw.wav"), os.path.join(tmp, "norm.wav")
-        run([check.ffmpeg(), "-y", "-loglevel", "error", *ins, "-filter_complex", graph, "-map", "[m]", raw])
+        total = fx
+        if music:
+            if bed:                                                   # a recorded track (oga.py, CC0)
+                bedf = bed_from(bed, start, D, sheet["end"], tmp)
+            else:                                                     # the groove made here (music.py)
+                bedf = os.path.join(tmp, "bed.wav")
+                subprocess.run([sys.executable, os.path.join(HERE, "music.py"), stem + ".cues.json", bedf], check=True)
+            b = decode(bedf)[:N]
+            b = np.pad(b, ((0, N - len(b)), (0, 0))) * 10 ** (MUSIC / 20)
+            total = fx + duck(b, fx)
+        import wave
+        with wave.open(raw, "wb") as w:
+            w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR)
+            w.writeframes((np.clip(total, -1, 1) * 32767).astype("<i2").tobytes())
         # loudness, pass 1: measure
         err = run([check.ffmpeg(), "-hide_banner", "-i", raw, "-af", f"loudnorm=I={TARGET}:TP={PEAK}:LRA=11:print_format=json",
                    "-f", "null", "-"]).stderr
@@ -123,15 +153,28 @@ def mix(video, synth=False, out=None, music=True):
         run([check.ffmpeg(), "-y", "-loglevel", "error", "-i", raw, "-af",
              f"loudnorm=I={TARGET}:TP={PEAK}:LRA=11:measured_I={m['input_i']}:measured_TP={m['input_tp']}:"
              f"measured_LRA={m['input_lra']}:measured_thresh={m['input_thresh']}:offset={m['target_offset']}:linear=true,"
-             f"aresample=48000", "-ar", "48000", norm])
+             f"aresample={SR}", "-ar", str(SR), norm])
         out = out or stem + "-sound.mp4"
-        run([check.ffmpeg(), "-y", "-loglevel", "error", "-i", video, "-i", norm, "-map", "0:v", "-map", "1:a",
-             "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-t", str(D), "-movflags", "+faststart", out])
-    print(f"mix: {len(cues)} cues, {n} sounds{', over the house bed' if music else ''} ({'placeholders' if synth else 'Kenney CC0 and our own whooshes'}) under {os.path.basename(video)} -> {out}")
+        if audio_only:                                                # an audition: the soundtrack alone
+            run([check.ffmpeg(), "-y", "-loglevel", "error", "-i", norm, "-c:a", "libmp3lame", "-b:a", "192k", out])
+        else:
+            run([check.ffmpeg(), "-y", "-loglevel", "error", "-i", video, "-i", norm, "-map", "0:v", "-map", "1:a",
+                 "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-t", str(D), "-movflags", "+faststart", out])
+    what = "a recorded bed" if bed else "the house bed" if music else "no bed"
+    print(f"mix: {len(cues)} cues, {n} sounds, {what} ({'placeholders' if synth else 'Kenney CC0 and our own whooshes'}) under {os.path.basename(video)} -> {out}")
     return out
 
 if __name__ == "__main__":
+    try:
+        import numpy                                                  # the mix is numpy: re-run under the venv's python
+    except ImportError:
+        py = os.environ.get("FFMPEG_PY")
+        if not py:
+            sys.exit("mix: needs numpy (set FFMPEG_PY to the venv python that has imageio-ffmpeg and numpy)")
+        os.execv(py, [py, os.path.abspath(__file__), *sys.argv[1:]])
     a = sys.argv[1:]
     if not a or a[0].startswith("--"):
         print(__doc__); sys.exit(2)
-    mix(a[0], synth="--synth" in a, out=a[a.index("--out") + 1] if "--out" in a else None, music="--no-music" not in a)
+    opt = lambda k, d=None: a[a.index(k) + 1] if k in a else d
+    mix(a[0], synth="--synth" in a, out=opt("--out"), music="--no-music" not in a,
+        bed=opt("--bed"), start=float(opt("--start", 0)), audio_only="--audio-only" in a)
