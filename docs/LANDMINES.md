@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 120.*
+*Current as of take 121.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -221,6 +221,9 @@ Start here. Do not read top to bottom.
 | A drag on the mode bar highlights a label | 206 |
 | A control's planted line is repeated by a second block | 207 |
 | The body's colour is read mid-fade after a theme flip | 208 |
+| AdMob "couldn't verify" the app; app-ads.txt not found, or "details don't match" | 209 |
+| AdMob's app for the build says "Add store"; the store-linked app is another ID | 210 |
+| The MAX ad grants a deck save and MAX stays shut; a reward lands on the wrong kind | 211 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -2747,7 +2750,43 @@ straight after it is the fade's.** Render's first take-120 run read the body
 between the parchment and the indigo (`rgb(162, 157, 156)`) after Auto
 flipped the root: the root flips at once, `body{transition:background-color
 var(--dur-ui)}` does not. Landmine 143's rule, on a colour: poll for the
-expected value up to a second, never a sleep sized to the fade.
+expected value up to a second, never a sleep sized to the fade. *Take 121:
+the same check's two mode reads still slept `wait(300)` and read Hunt's
+cream mid-fade, `rgb(241, 232, 217)`, on a busy VM; they poll now.*
+
+**209. app-ads.txt was served where the listing no longer pointed.** AdMob
+fetches `/app-ads.txt` from the root of the Play listing's *Website*, as the
+listing reads today. Take 40 put the file at `sergeantcs2.github.io` and
+called it DONE on the file being served; the listing's website later became
+`https://sergeantcs2.dev/`, which answers 404 for it, and AdMob "couldn't
+verify" the app (take 121). Proof is AdMob's own app-ads.txt tab, not a 200
+from wherever the file happens to be. Before believing it: read the website
+off the live listing (its Website link, or `appstore:developer_url` in the
+page), then fetch `<that origin>/app-ads.txt`; and whenever the listing's
+website changes, the file moves with it (RUNBOOK-play §9).
+
+**210. The build named an AdMob app the store does not know.** An app added in
+AdMob by name, before the app is published, gets its own app ID; take 41
+shipped that one (`~1538944343`). When the owner added the app again from
+Play at the first production build, AdMob made a second app, `~9519036366`,
+linked to the listing, and every build still named the first (take 121).
+The ID ships in the APK's manifest (`ci/apk.sh`), so only a new AAB on Play
+changes it; the Pages manifest's `ads.app` changes nothing on a device. Ad
+units belong to one app: make them under the app the build names. Smoke pins
+the build to the linked app and refuses the old one.
+
+**211. The rewarded plugin sends the reward before show() resolves.**
+`@capacitor-community/admob` 8.1.0, Android (`RewardedAdCallbackAndListeners.kt`):
+the earned-reward listener notifies `onRewardedVideoAdReward` first and resolves
+`showRewardVideoAd()` after; a dismissed ad, or one that fails to show, never
+settles that promise at all (`FullscreenPluginCallback.kt` only notifies). The
+MAX unlock (take 87) set what it was owed only after `show()` resolved, so the
+reward event read `'deck'` and granted a deck save, and MAX never opened (take
+121, INFERRED on a device; smoke's stub in the plugin's order reproduced it:
+"deck 1 (was 0)", MAX shut). What was asked for is set before `show()`, nothing
+waits on `show()`, and `onRewardedVideoAdFailedToShow` clears it. Read the
+native source, not only `definitions.d.ts`, when an order matters (landmine 73
+read the types).
 
 ## §2 — Inherited from APEX ORV
 

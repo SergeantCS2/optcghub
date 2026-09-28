@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 120
+# V1-STATE — what exists, as of take 121
 
-*Current as of take 120.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 121.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -47,14 +47,18 @@ since 24 Sept 2026.
 - **Play:** the app exists in the console as `com.optcghub.app` on a personal
   account; version code 35 accepted into internal testing; advertising-ID
   declaration and Data Safety done to landmine 94; listing copy in; closed
-  track created; app-ads.txt served from the root user site (take 40); the
+  track created; app-ads.txt served from the root user site (take 40), which
+  the listing names again since take 121 (it had moved to
+  `https://sergeantcs2.dev/`, where the file was 404, landmine 209; the owner
+  set it back the same day), AdMob's *Verify app* the owner's; the
   closed-testing release approved by Play review (take 52); **take 101
   uploaded to the closed track, the app APPROVED FOR PRODUCTION (24
   Sept, take 102) and LIVE on Google Play the same day (take 105:
   `play.google.com/store/apps/details?id=com.optcghub.app`, take 101's
   bundle; the owner's own Fold runs the Play build at 17 of 17)** — from
   here every take is one upload to the production track; the real AdMob
-  rewarded unit IDs (D11) ride the take after he sends them. The accepted
+  rewarded unit IDs (D11) ride the take after he sends them (take 121:
+  three, through `ads.live`, after the consent flow). The accepted
   upload proved the registered upload key is the one the secrets hold,
   and its fingerprint is pinned (take 103).
 - **16 KB page size:** every arm64 native library in the APK loads at 0x4000
@@ -76,7 +80,7 @@ since 24 Sept 2026.
 | Prep & Play | mode slider + palette; Cards browse (keywords, colour, cost, text, for-this-deck); Play counter with §6-4-1 first turn and a *pass the phone* mode (take 44); **Sim: the hot-seat board** — two legal decks, the rules of RULES.md §3 enforced with sections cited, effects by hand through a tray, the curtain at every hand-over (take 46); **scripted effects** parsed from card text at build time, 2,161 of 7,553 lines (28.6%): chains, costs, continuous effects and keywords, follow-ons, searches in every phrasing, Events at both timings, cost changes, modifiers with honest expiries that follow their card, offered under their conditions with engine-computed targets (takes 47–51); **an opponent** — legal, not clever, never reads the hand — so one person can play (take 55) | render draws the dealt board; smoke 22 against §3, 40 on the effect classes, two whole bot games under a conservation invariant |
 | Trade | two lists valued with spread; paste their list; share summary | smoke |
 | Wants & alerts | want list valued at likeliest printing; set checklist grid; binder pages; price alerts via local notifications, idempotent per catalogue date | smoke |
-| Ads | AdMob 8.1.0, the app's own app ID with Google's test ad units (take 41); credit ledger; pending tray; reward from the event only | smoke; **no ad has been seen on a device** |
+| Ads | AdMob 8.1.0; the store-linked AdMob app `~9519036366` since take 121 (take 41 to 120 named "testing", landmine 210); Google's test units, and real units only through `ads.live`, to builds at or after its take and only once consent allows ads (take 121); one unit per placement, MAX its own (take 121: it granted a deck save before, landmine 211); credit ledger; pending tray; reward from the event only | smoke; the gate's `check_ads`; **no ad has been seen on a device** |
 | Onboarding | the opening screen and the first-open guide in the store listing's frame (take 116): four pages, one per mode and one for what stays on the phone, each with a real printing looked up when it opens; Next pages, Back closes it unseen, a dialog for screen readers; the key `optcghub.guide.v3`; the native launch image is the same scene, painted by `ci/icon.py`; **New in this update** on Home once per take, from the release note (take 53) | render 2; smoke 14; the look 18 |
 | Packaging | signed APK (committed sideload key), AAB branch for Play (needs 4 secrets), one standard icon: the adaptive icon (background and foreground; no themed layer, at the owner's word), legacy and round icons, the reminders' glyph, the splash and the Play icon from four SVGs (`ci/icon.py`, checked, its controls in the gate; take 113, the owner's pick), CAMERA + POST_NOTIFICATIONS + AD_ID in the manifest | built every take since 9; signer verified by aapt2/apksigner |
 | CI | build.yml on `main` only (seed → bundle → pages + apk → report), nightly 21:30 UTC with sidecar commit-back; **check.yml runs the whole pipeline on every PR with a read-only token (take 89)**; hunt.yml hourly; bootstrap.yml as recovery. Since take 89 the workflows live in git, byte-identical to their `ci/` copies, and a take is a PR the owner merges. *Take 115:* a report job that needs every job files one `nightly-failure` thread for any failed job and closes it only on a run where every job ran green, and the hourly does the same under `hourly-failure` (landmine 184); the nightly's Pages deploy reads the hourly's files again inside the `pages` group the hourly holds; the hourly validates the catalogue it deploys; the Release carries the Play icon; `apk.sh` stops on a Gradle failure (landmine 183) and `check.sh` fails when it cannot fetch main | **ran green on a runner at take 32; APK installed by the owner.** Four red nights 09-18..21 read at take 89: the Events fixture's clock and the hashes guard's treatment of unpublished images (landmines 123, 124); both fixed with controls |
@@ -206,7 +210,7 @@ reproductions, outside the harness).
 | First notification | needs a phone | 8.5 |
 | Export and restore on the Fold | share sheet and file picker are INFERRED from the plugin definitions until seen | landmine 110 |
 | First Sync on the Fold | `UPDATE_URL` is set; the first *Sync now* that shows a date proves Pages and the URL | RUNBOOK §5 |
-| Real AdMob unit IDs | D11, needed now: the app is live on Google Play since 24 Sept and every install shows test ads; the account exists and app-ads.txt is live | A17, RUNBOOK-play §9 |
+| Real AdMob unit IDs | D11, needed now: the app is live on Google Play since 24 Sept and every install shows test ads. Take 121: three units under the linked app, and a consent flow first (the app is worldwide); app-ads.txt is 404 at the listing's website (landmine 209) | A17, A43, RUNBOOK-play §9 |
 | The named fonts as files | D16; the roles ship with free faces, the slot takes licensed ones | A26 |
 | Whether the faces themselves fit | the colour and contrast are fixed (take 60); whether Luckiest Guy and Bangers are the right faces is D16 | A26 |
 | A TalkBack session on a phone | every control has a name and the roles are right (take 66); whether the order and wording make sense needs a person | A30 |

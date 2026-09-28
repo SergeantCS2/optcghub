@@ -1,4 +1,223 @@
-# HANDOFF — through Take 120
+# HANDOFF — through Take 121
+
+## Take 121 — 2026-09-28 — the store-linked AdMob app, and the groundwork for real ads
+
+Opened before any code (PROTOCOL §6), from `main` at the nightly of 27 Sept
+(Release take-120 present; the nightly `build`, run 74, green). The owner,
+with two AdMob screenshots: "I'd like to get ads working properly, we added a
+test app-ads.txt in the past but we need to re-set this up", the app ID
+`ca-app-pub-6243777967151950~9519036366` and the line `google.com,
+pub-6243777967151950, DIRECT, f08c47fec0942fa0`; "Audit the stack, find all
+places where we need to update this, update what you can and tell me what I
+need to do." Then, with a third screenshot: the new AdMob app was added from
+the first build and is linked to Play; the take-41 app, never linked, is
+renamed "testing"; the new one is the one to use; "tell me if I need to
+change the URL back"; and "Locate ever spot we need to update, everything
+we need to do - provide my steps and ask any question. Form a plan to get
+working ads." His answers to the plan's four questions: the app is on Play
+**worldwide**; this take carries **the groundwork** (the app ID, old installs
+kept on test units, the self-test); **three** rewarded units; and on the
+website, "What's the reason for this? I put my personal website to maybe
+generate traffic, but if we need to put the github that's more than fine."
+
+### What the audit found
+
+- **app-ads.txt is right, and where AdMob does not look.** PROVEN 28 Sept:
+  `https://sergeantcs2.github.io/app-ads.txt` answers 200, `text/plain`, 59
+  bytes, exactly the line AdMob asks for. The Play listing's *Website* is
+  `https://sergeantcs2.dev/` (its Website link and its
+  `appstore:developer_url`, read off
+  `play.google.com/store/apps/details?id=com.optcghub.app`), and
+  `https://sergeantcs2.dev/app-ads.txt` is that site's own 404 page (http
+  308s to https and www 301s to the bare domain, both to the same 404).
+  AdMob reads the file at the root of the listing's website, so it finds
+  nothing. INFERRED: that is the "couldn't verify". The record said "DONE
+  take 40, PROVEN", which proved the file is served, never that AdMob found
+  it, and when the listing's website moved to the owner's own site nothing
+  moved with it (landmine 209). No repo this session can reach deploys
+  `sergeantcs2.dev`; the fix there is the owner's.
+- **The build named the wrong AdMob app.** `config.py` carried
+  `~1538944343`. The console (the owner's screenshot, 28 Sept): "OP TCG Hub:
+  Collect, Hunt, SIM", `~9519036366`, linked to Google Play
+  `com.optcghub.app`; "testing", `~1538944343`, "Add store to lift limit".
+  Both "Requires review" and "Limited ad serving", both 0 ad units. Every
+  build since take 41 names "testing" in its manifest (landmine 210).
+- **Where the app ID lives,** every place, read at HEAD: `tools/config.py`;
+  `ci/apk.sh` writes it into `strings.xml` and the manifest's
+  `com.google.android.gms.ads.APPLICATION_ID` and asserts both;
+  `tools/build_app.py` copies it into the synced manifest's `ads.app`, which
+  nothing on a phone reads (the SDK takes it from the Android manifest,
+  INFERRED from Google's guide). So only a new AAB changes it; a Sync cannot.
+- **Real units would have reached every old install.** The units ride the
+  synced manifest (`ads.scan`, `ads.deck`), which every install reads at its
+  next Sync, and every install from take 120 and earlier names "testing"
+  and asks no consent. The record's plan (D11: "the take that carries the
+  IDs switches every install") would have sent real units there.
+- **The rewarded plugin's order,** read from 8.1.0's Android source
+  (`RewardedAdCallbackAndListeners.kt`, `FullscreenPluginCallback.kt`): the
+  reward event is sent before `showRewardVideoAd()` resolves, and a dismissed
+  ad, or one that fails to show, never settles it. The MAX unlock set what
+  it was owed only after `show()` resolved, so its reward read `'deck'`: **the
+  MAX ad granted a deck save and MAX never opened** (landmine 211; INFERRED
+  on a device, reproduced by smoke's stub in the plugin's order). The code's
+  comment "a dismissed ad resolves too" was wrong. A failure to show was
+  never heard.
+- **The self-test failed any real unit** ("REAL units in a test build").
+- **Already right:** Play's "Contains ads", Data Safety's advertising ID, the
+  privacy page naming AdMob, `AD_ID` in the manifest, no Families category.
+  The consent API is in the plugin already (`requestConsentInfo`,
+  `showConsentForm`, `showPrivacyOptionsForm`).
+
+### What this take changes
+
+- **The app ID** is `ca-app-pub-6243777967151950~9519036366`, the
+  store-linked app; the ads are still Google's test ads.
+- **Real units reach only the builds they may.** `ADMOB_LIVE_SCAN`, `_DECK`,
+  `_MAX`, `_FROM` in `config.py` (all `None` until D11) become the synced
+  manifest's `ads.live`, whole or not at all; `PLATFORM.adUnits()` loads them
+  only when the build's own `TAKE` is at or after `ads.live.from`, and
+  Google's test unit otherwise. `ads.scan` and `ads.deck`, which every older
+  install reads, stay the test unit for good.
+- **One unit per placement,** MAX its own (the owner: three); what an ad is
+  owed is set before `show()`, nothing waits on `show()`, and
+  `onRewardedVideoAdFailedToShow` clears it with "The ad could not be
+  shown". A shown ad is marked not ready at once.
+- **The owner's audit of the PR (28 Sept, "Audit all of your changes, ensure
+  we're good after this PR passes and that there's nothing else to be done
+  on your side")** found two more, both fixed on the branch before the
+  merge, each watched red on the PR's first build: `show()` named no unit,
+  and 8.1.0 then shows the LAST prepared ad (`AdRewardExecutor.java`), which
+  three distinct units make a different one than asked for -- each kind now
+  shows the unit it prepared (`{ adId }`, since 8.0.1); and a build loaded
+  live units on `ads.live.from` alone, so a `from` set one take too low would
+  have put real units on a build with no consent flow -- a build now loads
+  them only once `PLATFORM._canRequestAds` is true, which nothing in take
+  121 sets and the consent take sets from the consent SDK's
+  `canRequestAds`. And `ci/apk.sh`'s log line now prints the app ID it
+  wrote, so the Release build's log says which app shipped (the injection
+  run against a stub Android tree here: the new ID lands, and replaces a
+  stale one).
+- **The self-test's ads check** is "Ads: the units match this build": PASS on
+  test units or on live units at their take, FAIL on a real unit in
+  `ads.scan` or `ads.deck`. **Diagnostics** gains an `ads` line (test units,
+  or live units and from which take). Not a UI refinement: the check was
+  wrong and the report was silent (take 104's rule).
+- **The gate's `check_ads`** (the contract for the synced block): never the
+  retired app ID; `ads.scan`, `ads.deck` the test unit and `ads.test` true;
+  `ads.live` whole, three distinct units of the publisher's, `from` 122 or
+  later (121 asks no consent), and only with `requestConsentInfo` in the app.
+  Seven probes under `--selftest`, one a clean control.
+- **The record:** RUNBOOK-play §6's Website row, §9 rewritten (the reason
+  for app-ads.txt, both fixes, a one-command check, the two apps, test
+  devices, three units, consent, payments) and the troubleshooting row;
+  DECISIONS-OPEN D11; AGENDA's Priorities, row 10, A17's take-121 section and
+  A43's consent item; V1-STATE; the session prompt. Landmines 209, 210, 211.
+
+Nothing on screen changes but a toast when an ad cannot be shown and the
+Diagnostics line, so the take has no look steps (101-103 and 113 had none).
+
+### The owner's, from here (RUNBOOK-play §9)
+
+1. **app-ads.txt -- DONE the same day, the owner's pick: GitHub** ("I'll be
+   using github"). PROVEN 28 Sept, 20:43Z: the live listing's website reads
+   `https://sergeantcs2.github.io/optcghub/` and its root serves the line
+   (200, `text/plain`). Left: AdMob → the app → *Verify app*. Before it: no need to change the URL back. Either put the one line
+   in a file at `https://sergeantcs2.dev/app-ads.txt` (keeps the listing on
+   the owner's site; one file covers every app under this account), or set
+   the listing's Website to `https://sergeantcs2.github.io/optcghub/`, where
+   it already is. Then AdMob → the app → app-ads.txt → *Check for updates*.
+2. **Merge, then upload take 121's AAB:** the first build naming the linked app.
+3. **Test devices:** the Fold's advertising ID in AdMob, before any real unit.
+4. **D11:** three rewarded units under "OP TCG Hub: Collect, Hunt, SIM"
+   (`~9519036366`), never "testing": scan credits, deck save, MAX unlock.
+5. **Consent:** AdMob → Privacy & messaging → European regulations, a
+   message for this app, published.
+6. **Payments:** the payment profile and tax information.
+
+### Measured
+
+- The probes above, 28 Sept (curl; the listing's page as served).
+- Take 120's code with BUILD at 121, the whole pipeline from a fresh ingest
+  (87 groups): smoke 1356/1356, render 242/242 (mode: chrome); the gate red
+  only on V1-STATE's heading, not yet written.
+- The new checks on that build, before any code: **13 of smoke's red** (the
+  app ID, adUnits missing, the MAX ad: "maxUntil 0, deck 1 (was 0)", a
+  pending "max" left behind, MAX loading the deck's unit, a failure to show
+  leaving "deck" pending, the self-test's check absent, no Diagnostics line)
+  and the gate's `ads` red on `~1538944343`.
+- RUNBOOK-play §9's check, run: today it prints `sergeantcs2.dev`'s 404
+  page; on the root it derives from a website with a path
+  (`/optcghub/` → `https://sergeantcs2.github.io`) it prints the line.
+
+### What I got wrong
+
+- Read the verification page's "your details don't match" as the file's
+  content first. Measured, the content is AdMob's own line byte for byte;
+  the fault is where it is.
+- Planned the MAX fault as "the next ad grants MAX". Traced again, the next
+  `adShow` overwrites the stale kind: the fault is narrower, the MAX ad pays a
+  deck save and MAX stays shut. The stub reproduced exactly that.
+- The first draft of §9's one-command check appended `app-ads.txt` to the
+  website as written, which on `sergeantcs2.github.io/optcghub/` fetches
+  under the path AdMob never reads; it takes the origin now, and was run
+  both ways.
+
+### Ruled out
+
+- Changing app-ads.txt's content: it already is the line AdMob asks for.
+- A copy at `/optcghub/app-ads.txt` on Pages: AdMob reads the root only.
+- Linking "testing" to the store instead: the owner chose the new app.
+- Real units in `ads.scan` / `ads.deck`: every older install reads them.
+- Real units in this take: D11 is open, and the app is worldwide, so a
+  consent flow comes first; the gate holds that.
+- The consent flow in this take: the owner chose the groundwork, and it
+  needs his published message to test against.
+- A gate check that fetches the listing's website: the host is the owner's
+  server, not the runner's; the check is one command in RUNBOOK-play §9.
+- Keeping MAX on the deck's unit: the owner chose one unit per placement,
+  which AdMob reports apart.
+- Deleting "testing" in AdMob: renamed, it is harmless, and it is the
+  owner's console.
+
+### Tests
+
+- This branch, 28 Sept, from origin/main at the nightly of 27 Sept:
+  `ci/deps.sh`, then the whole pipeline on take 120's code (the baseline
+  above); then the new checks watched red on that build (13 in smoke, the
+  gate's `ads`); then the code: smoke **1370/1370**, render **242/242
+  (mode: chrome)**; `gate.py --selftest` **28/28** (the seven `ads` probes,
+  one a clean control, among them); `scrub.py --check --docs` clean.
+- **The audit round** (after PR #46's first `check` went green): the two new
+  smoke checks red on that build (the MAX show "with no adId", and a live
+  unit loaded with no consent answer); with the fixes, smoke **1372/1372**;
+  `apk.sh`'s AdMob block run on a stub tree; `bash -n ci/apk.sh` and
+  `apk.sh --selftest` green. One render run read **241/242**: take 120's
+  "each mode keeps its own ground in light" read Hunt's cream mid-fade,
+  `rgb(241, 232, 217)` for `rgb(242, 232, 213)`, after a `wait(300)` --
+  landmine 208's rule, broken in that check's own mode reads, on a VM busy
+  with the clean run. The reads poll for the ground up to a second now, the
+  assertion unchanged (a wrong ground still reads wrong after the second);
+  render **242/242 (mode: chrome)** after it, and the gate's probes 28/28.
+- **The clean run (PROTOCOL §6b, `build_app.py` changed):** the tracked tree
+  with this take's changes copied into an empty directory, `node_modules`
+  linked, the pipeline from ingest (87 groups, 7,666 products fresh, hash
+  coverage 100 %): smoke 1369/1370 there, the one being the `.gitignore`
+  anchoring check, which asks `git check-ignore` and the copy was not a
+  repository (take 120 met the same); after `git init` in the copy, smoke
+  1370/1370, render 242/242 (mode: chrome), gate passed.
+- `seal.sh --gate-only`, bare: GATE PASSED; the runner-owned files restored
+  (`catalog/prices_daily.json`, `catalog/hashes.json`, and the nightly's
+  `catalog/rates.json`).
+
+### DEFERRED
+
+- AdMob's verification of the app: waits on the owner's item 1 and the crawl.
+- The consent flow and D11's units: the next take (AGENDA Priorities, mine 0).
+- The first ad seen on a device (V1-STATE), and the MAX fix seen there.
+- `initialize` reads the units at boot: a Sync that brings `ads.live` in
+  mid-session loads live units into an SDK started for testing until the next
+  launch. Harmless with test devices registered; the consent take reorders
+  boot anyway.
 
 ## Take 120 — 2026-09-25 — the light theme, and the UI series wrapped up
 

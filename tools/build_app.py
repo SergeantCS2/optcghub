@@ -294,9 +294,17 @@ def build(verbose=True):
     # code, so a unit-ID change is a config change. ADS_ENABLED in the app is
     # derived: units present AND running under Capacitor.
     from config import (ADMOB_APP_ID, ADMOB_REWARD_SCAN, ADMOB_REWARD_DECK, ADMOB_IS_TEST,
+                        ADMOB_LIVE_SCAN, ADMOB_LIVE_DECK, ADMOB_LIVE_MAX, ADMOB_LIVE_FROM,
                         CREDITS_FREE_ON_INSTALL, CREDITS_PER_AD, DECKS_FREE, DECKS_PER_AD)
+    # take 121: the real units ride ads.live, whole or not at all; a build loads them
+    # only at or after its take. The gate's check_ads is the contract for the block.
+    live = [ADMOB_LIVE_SCAN, ADMOB_LIVE_DECK, ADMOB_LIVE_MAX, ADMOB_LIVE_FROM]
+    if any(v is not None for v in live) and not all(v is not None for v in live):
+        raise SystemExit("build_app: ADMOB_LIVE_SCAN, _DECK, _MAX and _FROM go in together or not at all (take 121)")
     man["ads"] = {"app": ADMOB_APP_ID, "scan": ADMOB_REWARD_SCAN, "deck": ADMOB_REWARD_DECK,
                   "test": ADMOB_IS_TEST,
+                  "live": ({"scan": ADMOB_LIVE_SCAN, "deck": ADMOB_LIVE_DECK, "max": ADMOB_LIVE_MAX,
+                            "from": ADMOB_LIVE_FROM} if ADMOB_LIVE_FROM is not None else None),
                   "free": CREDITS_FREE_ON_INSTALL, "perAd": CREDITS_PER_AD,
                   "decksFree": DECKS_FREE, "decksPerAd": DECKS_PER_AD}
     man["take"] = n

@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 120.* Paste the block between the rules into a new session
+*Current as of take 121.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 120 takes by previous sessions. The repo is
+built across 121 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -84,6 +84,23 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   them in order with his results (his rule, take 94).
 
 **What is in flight when you arrive:**
+
+- **Take 121 -- the store-linked AdMob app, and the groundwork for real
+  ads.** The build names `~9519036366` (the AdMob app linked to Play;
+  "testing", `~1538944343`, shipped from take 41 to 120, landmine 210).
+  Real units ride `ads.live` only, loaded by a build at or after its
+  `from`; `ads.scan` and `ads.deck` stay Google's test unit for good, and
+  the gate's `check_ads` refuses anything else and refuses `ads.live`
+  without a consent flow (the app is worldwide). The MAX unlock has its
+  own unit and no longer grants a deck save (landmine 211). The owner's:
+  AdMob's *Verify app* (the listing's website is back on github.io, whose
+  root serves app-ads.txt; landmine 209), test devices, three units, the consent message in
+  AdMob. A build loads live units only once `PLATFORM._canRequestAds` is
+  true, which nothing in take 121 sets. **Next, yours:** the consent flow
+  (UMP before `initialize`, setting `_canRequestAds`; a Privacy choices row
+  under More; the gate's `ADMOB_LIVE_FLOOR` raised to that take), then the
+  units with `ADMOB_LIVE_FROM` that take -- RUNBOOK-play §9, AGENDA A17's
+  take-121 section.
 
 - **Take 115 -- the production baseline.** When you read this it is merged
   (if it is not, it is in flight: nothing else starts until it merges). A
@@ -232,7 +249,8 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
 - **The self-test (A28)** runs on the Fold: 17 pass, 0 fail on take 114
   (the owner, 25 Sept); its report and Diagnostics are the measurement to
   ask for after a release that changes the device side.
-- **D16 (the fonts) and D11 (the AdMob unit IDs, needed now) are open**;
+- **D16 (the fonts) and D11 (the AdMob unit IDs, needed now; three, under
+  the linked app, since take 121) are open**;
   D7 (take 113), D15 and D17 (take 106) are answered. Do not build ahead of
   the open ones.
 - **A31 (Collectr import)** waits on one real exported file; the owner's own
@@ -258,6 +276,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 121" and begin with PROTOCOL §0.
+Say "take 122" and begin with PROTOCOL §0.
 
 ---

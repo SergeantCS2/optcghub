@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 120.* Ranked by blocking-ness, not by interest.
+*Current as of take 121.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -21,14 +21,20 @@ what it handed on is A43.)
    take's AAB is one upload, once (landmine 33), and only take 101's upload
    is recorded -- say which you upload. The sideload APK does not install
    over the Play build (landmine 34): a sideload proof means export →
-   uninstall → sideload → import.
-2. **D11, needed now:** the two real AdMob rewarded unit IDs. Register your
-   phones as AdMob test devices first; the take that carries the IDs
-   switches every install at its next sync.
+   uninstall → sideload → import. *Take 121:* its AAB is the first that
+   names the store-linked AdMob app; upload it.
+2. **Ads, in order (take 121; RUNBOOK-play §9):** app-ads.txt -- the
+   listing's Website is back on `sergeantcs2.github.io/optcghub/` (the
+   owner's pick, PROVEN live 28 Sept), whose root serves the line -- so
+   AdMob's *Verify app* is what is left (landmine 209); your phones as AdMob
+   test devices; **D11**, three rewarded units (scan credits, deck save,
+   MAX unlock) under "OP TCG Hub: Collect, Hunt, SIM" `~9519036366`, never
+   "testing"; the European-regulations message published in AdMob's
+   *Privacy & messaging*; the payments profile.
 3. **Take 113's Fold check:** the launcher on both screens, the splash, a
    reminder's ドン!! glyph (landmine 170).
-4. **Answers still open:** A43's large items -- ad consent for EEA and UK
-   users, reproducible builds (a lockfile or pinned versions, and the
+4. **Answers still open:** A43's large items -- ad consent (answered take
+   121: the app is worldwide, so it is my next take, below), reproducible builds (a lockfile or pinned versions, and the
    nightly's AAB), a measurement of the app's data folder before any
    automatic-backup rule, and More's "Last backup" line after the
    sideload-to-Play switch; A41's parts and the source; the take-100 look's
@@ -52,6 +58,13 @@ unticked boxes and A43's UI part; the session prompt's section for it says
 what take 115 changed on screen.
 
 **Mine, in order**
+0. **The consent flow, then D11's units (take 121's follow-on):** UMP before
+   `initialize` and before any load, setting `PLATFORM._canRequestAds` from
+   its `canRequestAds` (take 121's builds never set it, so they never load a
+   real unit); a *Privacy choices* row under More; a line in the privacy
+   page; the gate's `ADMOB_LIVE_FLOOR` raised to that take; the owner's
+   three units in `ADMOB_LIVE_*` with `ADMOB_LIVE_FROM` that take. Waits on
+   the owner's message and units.
 1. **A43's small items**, when wanted: the gate checks (the catalogue's
    shape; "Say take N" = BUILD + 1), the Restore file picker, the waiting
    batch in the backup, the cost basis in the currency on screen, CSV
@@ -567,7 +580,7 @@ is what stands between the seed and that clock, in order, with who does it.
 | 7 | Data Safety form: **AD_ID collected/shared for advertising** (landmine 94); camera; no other collection | The owner | **DONE** — advertising-ID declaration Yes / advertising; Data Safety: device IDs collected and shared, advertising, required, not ephemeral, encrypted in transit, no deletion request, no accounts |
 | 8 | Internal test → closed test; 16–18 testers recruited (landmine 35) | The owner | **closed-test release APPROVED by Play review (take 52, the owner's report).** Now: the opt-in link to 16–18; the clock starts when the twelfth is opted in; `ci/RELEASE.md` is the guide they read |
 | 9 | Developer verification: package + signing key registered (landmine 36) | The owner | |
-| 10 | Real AdMob IDs — **not required to start the clock**; Google's test units are correct for a closed test | The owner, D11 | account exists (take 33): `pub-6243777967151950`; **app-ads.txt live at the root site, take 40** — RUNBOOK-play §9 |
+| 10 | Real AdMob IDs — **not required to start the clock**; Google's test units are correct for a closed test | The owner, D11 | account exists (take 33): `pub-6243777967151950`; **app-ads.txt live at the root site, take 40** — RUNBOOK-play §9. *Take 121: the listing's website is `sergeantcs2.dev`, where the file is 404, so AdMob cannot verify (landmine 209); the app ID is the store-linked `~9519036366` (landmine 210)* |
 
 - **Ruled out: waiting for real AdMob IDs.** Test units are what a closed test
   should run on.
@@ -1401,10 +1414,18 @@ UI-AUDIT's open boxes; they are listed here once so nothing is lost.
    fill for a user in the EEA or the UK there is no fallback, and that
    user's pending cards never commit. The owner decides whether the app
    serves those users and how; a consent flow is a new plugin, a Play form
-   and a take of its own.
+   and a take of its own. *Take 121, answered: the app is on Play
+   worldwide. The consent API is in the plugin already (8.1.0's
+   `requestConsentInfo`, `showConsentForm`, `showPrivacyOptionsForm`), so
+   no new plugin; the owner publishes AdMob's European-regulations message;
+   the take after 121 builds it, and the gate refuses `ads.live` until it
+   does (A17's take-121 section).*
 2. **D11, the two real rewarded unit IDs** (the owner's). Register the
    owner's phones as AdMob test devices first; the IDs ride the Pages
    manifest, so the take that carries them switches every install.
+   *Take 121: no longer -- they ride `ads.live`, which only builds at or
+   after its take load; every older install keeps Google's test units.
+   Three units, under the linked app (A17's take-121 section).*
 3. **Reproducible builds.** There is no `package-lock.json` (`seal.sh`
    deletes it, so `npm ci` in `apk.sh` always falls back to `npm install`);
    `ci/deps.sh` installs unpinned; and the nightly replaces take N's AAB
@@ -2439,7 +2460,7 @@ a One Piece background, and placeholders for whatever I cannot supply.
   template); a layer-list drawable placed by gravity would end the stretch.
   Its own small take.
 
-## A17 — Ads and revenue · SDK WIRED take 22 against Google test units · REAL APP ID take 41 · unit IDs pending (D11)
+## A17 — Ads and revenue · SDK WIRED take 22 against Google test units · REAL APP ID take 41 · THE STORE-LINKED APP and ads.live take 121 · units and consent pending (D11, A43)
 
 The owner's ask, take 13: ad revenue, probably Google's. Starting ideas — 20 scans
 free then 20 per rewarded ad, repeating; 1 deck build free then 1 per ad,
@@ -2553,6 +2574,28 @@ ad, 1 free deck, +1 per ad. These live in `config.py` as constants, not in code.
 - **Ad-free purchase?** A one-time IAP that grants unlimited credits is the
   usual companion to rewarded ads and needs the Billing library. Not
   proposed for v1 unless he wants it.
+
+### Take 121 — the store-linked app, and the way real units reach a build
+
+The owner: ads working properly. The audit (HANDOFF take 121): app-ads.txt
+right but at a root the listing no longer names (landmine 209); the build
+naming "testing", an AdMob app the store does not know (landmine 210); the
+MAX ad granting a deck save under the plugin's real event order (landmine
+211); the self-test failing any real unit. Built: the linked app ID; real
+units only through `ads.live`, loaded by a build at or after its `from`,
+with `ads.scan` and `ads.deck` Google's test unit for good (every older
+install reads them); one unit per placement, MAX its own (the owner: three);
+`onRewardedVideoAdFailedToShow` handled; the self-test and Diagnostics say
+which units a build loads; the gate's `check_ads`. The owner's answers:
+the app is worldwide, so consent comes first; three units. Next: the consent
+flow, then the units (Priorities, mine 0).
+
+- **Ruled out: real units in `ads.scan` / `ads.deck`.** Every install from
+  take 120 and earlier reads them, names "testing" and asks no consent.
+- **Ruled out: real units before a consent flow.** The app is on Play
+  worldwide; the gate refuses `ads.live` without `requestConsentInfo`.
+- **Ruled out: a gate check that fetches the listing's website.** The host is
+  the owner's server; the check is one command in RUNBOOK-play §9.
 
 ## A16 — Theming, icon, splash · DESIGNED take 16, ICONOGRAPHY take 17 · ICON REVERTED take 33 as asked · one request declined · ICON SHIPPED take 113 (the owner's pick)
 
