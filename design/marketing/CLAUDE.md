@@ -890,6 +890,19 @@ Carrying On His Will (OP13)"):**
 - The ground and the aura come from the red art. `ACCENT` is round 2's red, unchanged, as the owner asked.
   The zip is 1,295 KB with 12 files.
 
+**Launch (28 Sept):** App campaign "OP TCG Hub" (App installs, install volume, $10/day, Canada and the
+United States, English, view-through on), ad group "Collectors: Pull style": 18 images, 3 videos (YouTube,
+@SergeantSlabs), 5 headlines, 5 descriptions, and the HTML5 zip. The audience signal is two custom segments
+(Google search terms; interests, sites and apps, One Piece only, Pokémon removed). The install conversion is
+Google Play's own, so there is no code in the app, and "Use your data" is left empty (the listing promises no
+tracking).
+- **What bit:** the editor showed no Publish button while the ad group carried an orange ⚠. The cause was the
+  HTML5 bundle: attached (under "Media Bundles for your ad") but still processing. Once it settled, Publish
+  appeared.
+- **The owner's own edits to the ad text** (not `copy_assets.py`'s): a description with "cheapest" was flagged
+  to the owner as a superlative Google asks proof for. The 16:9 video's auto-thumbnail caught the count-up at
+  "$0.00": a custom thumbnail or another auto frame was advised.
+
 **Next:**
 - the owner's look at the HTML5 ad; then Google's HTML5 validator (the owner uploads) and more playables
   if wanted;
