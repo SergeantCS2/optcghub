@@ -52,6 +52,32 @@ LAYOUT = {
                  brand=(96, 60)),
 }
 
+def lerp(x, xs, ys):
+    for i in range(1, len(xs)):
+        if x <= xs[i]:
+            return ys[i - 1] + (ys[i] - ys[i - 1]) * (x - xs[i - 1]) / (xs[i] - xs[i - 1])
+    return ys[-1]
+
+def beat_grid(hits, dur, bpms=(118, 128)):
+    """the tempo (0.1 BPM steps) and phase whose beats sit nearest every hit (the worst hit counts), and the warp
+    [timeline anchors, video anchors] moving each hit onto its beat. A house tempo, so the bed stays house."""
+    best = None
+    for b10 in range(bpms[0] * 10, bpms[1] * 10 + 1):
+        b = 60 / (b10 / 10)
+        for o in range(0, int(b * 1000)):
+            off = o / 1000
+            errs = [abs(h - off - round((h - off) / b) * b) for h in hits]
+            key = (round(max(errs), 3), sum(errs))
+            if best is None or key < best[0]:
+                best = (key, b10 / 10, off)
+    (_, _), bpm, off = best
+    b = 60 / bpm
+    on = [off + round((h - off) / b) * b for h in hits]
+    tl, vd = [0.0] + hits + [dur], [0.0] + [round(x, 4) for x in on] + [dur]
+    assert all(x < y for x, y in zip(vd, vd[1:])), ("warp not monotonic", vd)
+    assert max(abs(a - c) for a, c in zip(hits, on)) <= .08, ("a hit moves more than 80 ms", list(zip(hits, on)))
+    return {"bpm": bpm, "offset": round(off, 4)}, [tl, vd]
+
 def speed_lines(cx, cy, r0, r1, n=84, seed=5, colour="#fff"):
     """manga focus lines: thin wedges from a ring out past the frame, of uneven width and reach"""
     rnd = random.Random(seed); ps = []
@@ -105,8 +131,9 @@ def build(name="video1", ratio="9x16"):
     CUES = []        # the sound: [t, kind, seconds or None], placed beside the motion it belongs to (mix.py plays it)
     def cue(t, kind, dur=None):
         CUES.append([round(t, 3), kind, dur])
+    HITS = []        # the slams, which the music's beat grid is fitted to (below)
     def impact(t, kind="impact"):
-        cue(t, kind)
+        cue(t, kind); HITS.append(t)
         TL["stage"] += [[t, {}], [t + .03, {"x": -14, "y": 9}], [t + .07, {"x": 11, "y": -8}], [t + .11, {"x": -6, "y": 4}], [t + .16, {}]]
     def flash(id_, t, cx, cy):
         add(id_, f'<svg width="{W}" height="{H}" viewBox="0 0 {W} {H}" style="opacity:.55">{speed_lines(cx, cy, 300 * min(W, H) / 1080, math.hypot(W, H), seed=len(TL))}</svg>',
@@ -133,7 +160,7 @@ def build(name="video1", ratio="9x16"):
         [[0, {"o": 0, "s": 1.9, "r": 8}], [.7, {"o": 0, "s": 1.9, "r": 8}], [.74, {"o": 1}], [.9, {"s": 1, "r": 0}, "in"]])
     el.append('</div>')
     impact(.9)
-    cue(.25, "swish"); cue(.5, "swish"); cue(.62, "whoosh"); cue(.92, "ignite")
+    cue(.6, "swish"); cue(.86, "whoosh"); cue(1.2, "ignite")   # card 1 lands .63; the SP drops into .9; its aura is up by 1.2
     acc = ac[dear]["bright"]; px_ = L["pad"]
     for id_, text, top, t_in in (("h1a", f["head"], L["head_top"], .3), ("h1b", f["head2"], L["h1b_top"], 2.3)):
         add(id_, f'<h1 style="font-size:{L["h1"]}px;--accent:{acc}">{text}</h1>',
@@ -172,7 +199,7 @@ def build(name="video1", ratio="9x16"):
         [[0, {"o": 0, "x": -260, "s": .7}], [7.0, {"o": 0, "x": -260, "s": .7}], [7.45, {"o": 1, "x": 0, "s": 1}, "back"], [9.9, {}], [10.2, {"o": 0, "x": 300}, "in"]],
         pos=f"left:{kx}px;top:{ky}px")
     impact(7.45, "impact_light")
-    cue(5.0, "whoosh"); cue(5.3, "rise"); cue(7.05, "pop"); cue(9.9, "whoosh")
+    cue(5.3, "whoosh"); cue(5.62, "rise"); cue(7.05, "pop"); cue(10.1, "whoosh")   # the fan's fastest; the phone's arrival; the exits
     fx_, fy_, ff = L["foot"]
     add("foot1", f'<div class="foot" style="font-size:{ff}px">TCGplayer market prices, {when}.</div>',
         [[0, {"o": 0}], [2.7, {"o": 0}], [3.0, {"o": 1}], [9.9, {}], [10.1, {"o": 0}]], pos=f"left:{fx_}px;top:{fy_}px")
@@ -190,7 +217,7 @@ def build(name="video1", ratio="9x16"):
         [[0, {"o": 0, "s": 1.9}], [10.3, {"o": 0, "s": 1.9}], [10.35, {"o": 1}], [10.55, {"s": 1}, "in"], [13.85, {}], [14.05, {"o": 0, "s": 1.1}]],
         origin=f"{lx + lw / 2:.0f}px {ly + lw * .7:.0f}px")
     impact(10.55)
-    cue(10.45, "rise"); cue(10.5, "ignite")
+    cue(10.72, "rise"); cue(10.85, "ignite")
     dx, dy, dw = L["phone2"]
     add("phone2", P2.device(dx, dy, dw, phone_h(dw), "home", (0, 40, 411, 900), None, 1079, tilt=-2),
         [[0, {"y": H}], [10.4, {"y": H}], [11.1, {"y": 0}, "out"], [13.85, {}], [14.1, {"y": H}, "in"]])
@@ -200,7 +227,7 @@ def build(name="video1", ratio="9x16"):
     add("foot2", f'<div class="foot" style="font-size:{ff}px">A sample collection. TCGplayer market prices, {when}.</div>',
         [[0, {"o": 0}], [10.4, {"o": 0}], [10.7, {"o": 1}], [13.85, {}], [14.0, {"o": 0}]], pos=f"left:{fx_}px;top:{fy_}px")
     count = (11.3, 12.9, R["collection"]["total"])
-    cue(count[0], "count", round(count[1] - count[0], 2)); cue(count[1], "cash"); cue(13.85, "whoosh")
+    cue(count[0], "count", round(count[1] - count[0], 2)); cue(count[1], "cash"); cue(13.98, "whoosh")
 
     # ---- scene 4, three beats: a word and a card each, one second apiece
     bt = sc["beats"]; wx, wy, wf = L["beat_word"]
@@ -213,7 +240,7 @@ def build(name="video1", ratio="9x16"):
         add(f"cb{i}", SP.card(pid, bx, by, bw, 6, "box-shadow:0 34px 44px -20px rgba(0,0,0,.7)"),
             [[0, {"o": 0, "s": 1.8}], [t0, {"o": 0, "s": 1.8}], [t0 + .03, {"o": 1}], [t0 + .12, {"s": 1}, "in"], [t0 + .9, {"s": 1.04}],
              [t0 + 1.0, {"o": 0, "x": -500, "s": 1.04}, "in"]], origin=f"{bx + bw / 2:.0f}px {by + bw * .7:.0f}px")
-        impact(t0 + .12); cue(t0 + .1, "ignite")
+        impact(t0 + .12)
         add(f"wb{i}", f'<h1 style="font-size:{wf}px;line-height:.95;--accent:{a["bright"]}">{b["word"]}</h1>',
             [[0, {"o": 0, "s": 1.4}], [t0 + .05, {"o": 0, "s": 1.4}], [t0 + .17, {"o": 1, "s": 1}, "out"], [t0 + .9, {"s": 1.02}], [t0 + 1.0, {"o": 0, "x": -300}, "in"]],
             pos=f"left:{wx}px;top:{wy}px", origin="0 50%")
@@ -253,8 +280,11 @@ def build(name="video1", ratio="9x16"):
 .endc img.gp{width:500px;height:auto;border-radius:0;box-shadow:none;margin-top:10px}
 .legal{font:500 20px/1.3 Inter;color:#8d918c;text-align:center}
 """
+    # ---- the beat grid: the house bed's tempo and phase fitted to the slams, then the picture warped (at most
+    # 70 ms, about two frames, piecewise-linear between the hits) so every slam lands exactly on a beat
+    grid, warp = beat_grid(sorted(HITS + [17.0]), DUR)
     js = """
-const TL = %s, COUNT = %s;
+const TL = %s, COUNT = %s, WARP = %s;
 const E = { lin: t => t, out: t => 1 - Math.pow(1 - t, 3), in: t => t * t * t,
   io: t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
   back: t => { const c = 1.70158, d = c + 1; return 1 + d * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); } };
@@ -270,7 +300,10 @@ function at(keys, t) {
   return keys[keys.length - 1][1];
 }
 const money = v => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-window.__frame = t => {
+// video time -> timeline time: the timeline was written unwarped; the warp puts its slams on the music's beats
+const lerp = (x, xs, ys) => { for (let i = 1; i < xs.length; i++) if (x <= xs[i]) return ys[i - 1] + (ys[i] - ys[i - 1]) * (x - xs[i - 1]) / (xs[i] - xs[i - 1]); return ys[ys.length - 1]; };
+window.__frame = v => {
+  const t = lerp(v, WARP[1], WARP[0]);
   for (const id in TL) { const p = at(TL[id], t), s = els[id].style;
     s.opacity = Math.max(0, Math.min(1, p.o)); s.display = p.o <= .001 ? 'none' : '';
     s.transform = `translate(${p.x}px,${p.y}px) rotate(${p.r}deg) scale(${p.s})`; }
@@ -278,8 +311,10 @@ window.__frame = t => {
   document.getElementById('num').textContent = money(Math.round(total * (1 - Math.pow(1 - u, 4)) * 100) / 100);
 };
 window.__frame(0);
-""" % (json.dumps(TL), json.dumps(count))
-    return sorted(CUES), (f'<!doctype html><html><head><meta charset=utf-8><meta name="duration" content="{DUR}"><title>{name}-{ratio}</title><style>'
+""" % (json.dumps(TL), json.dumps(count), json.dumps(warp))
+    to_video = lambda t: lerp(t, warp[0], warp[1])
+    cues = sorted([round(to_video(t), 3), k, d] for t, k, d in CUES)
+    return {"cues": cues, "grid": grid, "drop": round(to_video(HITS[0]), 3), "end": round(to_video(17.0), 3)}, (f'<!doctype html><html><head><meta charset=utf-8><meta name="duration" content="{DUR}"><title>{name}-{ratio}</title><style>'
             f"*{{box-sizing:border-box;margin:0}}html,body{{width:{W}px;height:{H}px;overflow:hidden}}body{{position:relative}}"
             f".abs{{position:absolute}}{css}</style></head><body>{''.join(el)}<script>{js}</script></body></html>")
 
@@ -304,9 +339,9 @@ if __name__ == "__main__":
     name = next((a for a in args if a != ratio), "video1")
     out = os.path.join(SP.ADS, "motion"); os.makedirs(out, exist_ok=True)
     f = os.path.join(out, f"{name}-{ratio}.html")
-    cues, html = build(name, ratio)
+    sheet, html = build(name, ratio)
     open(f, "w").write(externalise(html, out))
     # the cue sheet beside the page: the same timeline's sound, for mix.py
-    json.dump({"duration": json.load(open(os.path.join(HERE, "storyboards", f"{name}.json")))["duration"], "cues": cues},
+    json.dump({"duration": json.load(open(os.path.join(HERE, "storyboards", f"{name}.json")))["duration"], **sheet},
               open(f.replace(".html", ".cues.json"), "w"), indent=0)
     print(f"build: {name} at {ratio} -> {f}")

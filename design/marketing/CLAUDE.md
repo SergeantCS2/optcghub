@@ -598,7 +598,7 @@ to transitions, card popups and etc"):**
   - pops on the price pills and a cash hit on the SP's price;
   - a whoosh at each scene change and a rise under each phone;
   - a tick train through the count-up, then a cash hit on the total;
-  - an impact and an ignite on each beat;
+  - an impact on each beat (the ignite there was dropped with the fire, below);
   - a chime on the end card.
 - **The source: Kenney's audio packs (the owner, 28 Sept: "Is there any free alternatives? I don't want to
   request credentials").** Freesound was dropped: its API needs a key. Kenney (kenney.nl) publishes CC0
@@ -610,9 +610,9 @@ to transitions, card popups and etc"):**
   - `--selftest` plants five licence files. A guard without the "no other licence" condition fails it.
 - **The palette.** `sounds.json` gives each kind one or more layers, each with a gain and an offset:
   - Kenney files: the casino pack's card slides and chips, which suit a card app; punches with a
-    low-frequency boom under the slams; a thruster roar as the aura ignites; coins with chips on a price;
+    low-frequency boom under the slams; coins with chips on a price;
     ticks for the count-up; a heavy bell with a confirmation on the end card.
-  - Two sounds made here from filtered noise, the whoosh and the rise. Kenney has no true whoosh, and
+  - Sounds made here from filtered noise: the whoosh, the rise and the aura's swell. Kenney has no true whoosh, and
     filtered noise is how whooshes are made; they are ours, with no licence at all.
   - A layer with `every` repeats through the cue: the count-up's ticks, every 70 ms.
 - **The mix (`mix.py`).**
@@ -637,6 +637,46 @@ to transitions, card popups and etc"):**
   peak of -1.2 dBTP; the -1.5 dBTP ceiling holds the linear pass just under -16. On the waveform, every
   onset is on its cue, as with the placeholders.
 
+**Sound, pass 2 (the owner, 28 Sept: "The fire of the cards sound weird, the timing in some audio needs to be
+more consistent and I wouldn't mind a backing music track, like a low volume generic house music"):**
+- **The fire.** The aura's thruster roar (Kenney's `thrusterFire_000`) is gone. The aura now breathes in on
+  a low swell made here: brown noise under 420 Hz, a quarter-sine in and out. It plays on the two hero
+  slams only; the three beats keep their punch alone.
+- **Why the timing felt uneven, measured.** Each layer's onset and peak were read from its own file:
+  - the punches, pops and ticks peak within 50 ms of their start;
+  - the card slide peaks at 0.16 s, the whooshes at 0.41 and 0.49 s, and the rise at 0.65 s.
+  So the slams hit on the frame, while every whoosh, slide and rise trailed its motion by up to two thirds
+  of a second.
+- **The fix, in two parts.**
+  - `mix.py` lands each layer by its loudest moment: it measures each file's peak (loudest 5 ms, decoded
+    at 8 kHz), then delays the file, or trims its head, so the peak falls on the cue.
+  - `build.py` cues each whoosh or rise where its motion arrives or is fastest: the first card landing at
+    0.6 s, the SP dropping into 0.86 s, the fan at 5.3 s, the phone arriving at 5.62 s, the exits at 10.1
+    and 13.98 s, and Home's phone at 10.72 s.
+- **The picture on the beat.** `beat_grid()` fits a house tempo (118–128 BPM, in 0.1 steps) and phase to
+  the slams, minimising the worst miss: 119.2 BPM, phase 0.46 s, worst miss 70 ms.
+  - The picture is then warped, piecewise-linear between the slams (`WARP`, applied inside `__frame`), so
+    each slam lands exactly on a beat. The largest move is 70 ms, about two frames; the slopes stay within
+    about 5 % of real time.
+  - The cue sheet is written in video time through the same warp, with the grid, the drop (the first
+    slam) and the end card's time.
+  - The warp asserts that it stays monotonic and that no hit moves more than 80 ms.
+- **The music (`music.py`, ours).** A generic house groove made from oscillators and noise with numpy
+  (the venv's python, `FFMPEG_PY`): no licence, no download, no account. It runs on the cue sheet's grid,
+  in A minor (Am F C G, a bar each):
+  - a filtered pad swelling in, with the hats a bar early;
+  - the kick drops on the SP's slam;
+  - four-on-the-floor with a clap on 2 and 4, offbeat hats, an offbeat bass and pumped chord stabs;
+  - a noise riser bar, without the kick, into the three beats;
+  - the drums stop on the end card's downbeat and the last chord rings out.
+  In the mix it sits at `MUSIC` = -15 dB against the effects, and ducks under them through a sidechain keyed
+  by the effects (ratio 5, 4 ms attack, 260 ms release). `--no-music` leaves it out.
+- **What bit:**
+  - the first beat lost its kick: the cue sheet rounds to the millisecond, and a 1 µs comparison put the
+    beat at 14.0508 s inside the riser bar that ends at 14.051 s. The grid is now compared a quarter-beat
+    wide.
+  - Checked afterwards: the low band peaks at about 0.48 at every slam, 14.05 s included.
+
 **Next:**
 - the owner's ear on the sound: any kind is swapped in `sounds.json` and remixed in seconds;
 - `study.mjs` for the owner's inspiration videos;
@@ -659,6 +699,7 @@ to transitions, card popups and etc"):**
 - The premium direction, or a mix of directions (drafts sent 27 Sept).
 - Inspiration videos: the owner has some. They go through `study` (frames at every cut, a timing sheet)
   so their structure, not their content, shapes the storyboards.
-- Music or voice-over: none licensed yet. Silent with burned-in captions until the owner supplies a track.
+- Music: a house bed made here (`music.py`) since 28 Sept. Voice-over: none. A licensed track from the owner
+  would replace the bed in `mix.py`.
 - Tools the owner may load (video, design or voice). They slot in behind the same storyboards.
 - Phone footage of a real scan on the Fold would be the strongest scan proof when the owner can record it.
