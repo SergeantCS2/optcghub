@@ -95,9 +95,12 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   own unit and no longer grants a deck save (landmine 211). The owner's:
   app-ads.txt at the root of the listing's website, `sergeantcs2.dev`
   (landmine 209), test devices, three units, the consent message in
-  AdMob. **Next, yours:** the consent flow (UMP before `initialize`, a
-  Privacy choices row under More), then the units with `ADMOB_LIVE_FROM`
-  that take -- RUNBOOK-play §9, AGENDA A17's take-121 section.
+  AdMob. A build loads live units only once `PLATFORM._canRequestAds` is
+  true, which nothing in take 121 sets. **Next, yours:** the consent flow
+  (UMP before `initialize`, setting `_canRequestAds`; a Privacy choices row
+  under More; the gate's `ADMOB_LIVE_FLOOR` raised to that take), then the
+  units with `ADMOB_LIVE_FROM` that take -- RUNBOOK-play §9, AGENDA A17's
+  take-121 section.
 
 - **Take 115 -- the production baseline.** When you read this it is merged
   (if it is not, it is in flight: nothing else starts until it merges). A

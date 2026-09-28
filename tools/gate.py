@@ -428,7 +428,9 @@ ADMOB_PUB = "ca-app-pub-6243777967151950"
 ADMOB_TEST = "ca-app-pub-3940256099942544/"
 ADMOB_RETIRED = {"ca-app-pub-6243777967151950~1538944343":
                  '"testing", added by name before the app was on Play and never linked (landmine 210)'}
-ADMOB_LIVE_FLOOR = 122   # take 121 names the linked app and asks no consent (A43)
+# take 121 names the linked app and asks no consent (A43). The consent take raises this to its
+# own number; the app holds the same line itself (PLATFORM._canRequestAds, set only by consent).
+ADMOB_LIVE_FLOOR = 122
 
 
 def check_ads():

@@ -5348,11 +5348,22 @@ const PLATFORM = {
   /* Take 121: which units this build loads. Real units ride ads.live and reach
      a build only at or after ads.live.from: every install from take 120 and
      earlier reads ads.scan and ads.deck, names the "testing" AdMob app in its
-     APK and has no consent flow, so those two stay Google's test units. */
+     APK and has no consent flow, so those two stay Google's test units. And
+     only once _canRequestAds is true, which nothing in take 121 sets: the
+     consent take sets it from the consent SDK's canRequestAds, so a build with
+     no consent flow never loads a real unit, whatever ads.live.from says. */
+  _canRequestAds: undefined,
+  _adIds: {},
   adUnits() {
     const a = CAT.man.ads || {}, L = a.live;
-    if (L && typeof L.from === 'number' && TAKE >= L.from && L.scan && L.deck && L.max) return { scan: L.scan, deck: L.deck, max: L.max, test: false, from: L.from };
+    if (L && typeof L.from === 'number' && TAKE >= L.from && L.scan && L.deck && L.max && this._canRequestAds === true) return { scan: L.scan, deck: L.deck, max: L.max, test: false, from: L.from };
     return { scan: a.scan, deck: a.deck, max: a.deck, test: !!a.test };
+  },
+  adUnitsNote() {
+    const L = (CAT.man.ads || {}).live, u = this.adUnits();
+    if (!u.test) return `live units, from take ${u.from}`;
+    if (!L || typeof L.from !== 'number') return 'Google test units';
+    return `Google test units (live units wait for ${TAKE < L.from ? `take ${L.from}` : 'consent'})`;
   },
   _adFailed(e) { if (e) console.warn('ad not shown', e); this._pendingKind = null; this._adReady = { scan: false, deck: false, max: false }; toast('The ad could not be shown'); },
   async adsInit() {
@@ -5378,7 +5389,7 @@ const PLATFORM = {
     const u = this.adUnits();
     try {
       await A.prepareRewardVideoAd({ adId: u[kind], isTesting: u.test });
-      this._adReady[kind] = true; return true;
+      this._adIds[kind] = u[kind]; this._adReady[kind] = true; return true;
     } catch (e) { this._adReady[kind] = false; return false; }
   },
   /* kind: 'scan', 'deck' or 'max', each its own unit (take 121). True once the
@@ -5387,7 +5398,8 @@ const PLATFORM = {
     const A = this.plugin('AdMob'); if (!A) return false;
     if (!this._adReady[kind] && !(await this.adLoad(kind))) { toast('No ad available right now \u2014 try again in a moment'); return false; }
     this._pendingKind = kind; this._lastKind = kind; this._adReady[kind] = false;
-    try { A.showRewardVideoAd().catch(e => this._adFailed(e)); return true; }
+    /* by the unit it prepared (the adId option, since 8.0.1): without it 8.1.0 shows the LAST prepared ad */
+    try { A.showRewardVideoAd({ adId: this._adIds[kind] }).catch(e => this._adFailed(e)); return true; }
     catch (e) { this._adFailed(e); return false; }
   },
   /* In-app catalogue refresh (take 27). GET manifest.json from the Pages
@@ -6643,7 +6655,7 @@ const DIAG = {
     L.push('', '## app'); line('build', CAT.man.built_at || '?'); line('mode', MODE.cur); line('screen stack', NAV.stack.join(' > ') || '-');
     line('boot stack', (NAV.bootStack || []).join(' > ') || 'none'); line('screens on', [...document.querySelectorAll('.screen.on')].map(e => e.id).join(',') || 'NONE'); line('overlays on', ['#askSheet', '#picker', '#detail', '#tour', '#simCurtain'].filter(id => { const el = $(id); return el && el.classList && el.classList.contains('on'); }).join(',') || 'none'); line('splash', $('#splash') ? 'still in the page' : 'gone');
     line('currency', CUR.active() + (CAT.man.rates ? ` (rates ${CAT.man.rates.date}${CAT.man.rates.stale ? ', stale' : ''})` : ' (no rates)')); line('online', navigator.onLine); line('native', !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())); line('plugins', ['Camera', 'Filesystem', 'Share', 'LocalNotifications', 'Network', 'App', 'AdMob'].filter(n => PLATFORM.plugin(n)).join(', ') || 'none (browser)');
-    line('ads', !CAT.man.ads ? 'none' : (u => u.test ? `Google test units${CAT.man.ads.live && CAT.man.ads.live.from ? ` (live units wait for take ${CAT.man.ads.live.from})` : ''}` : `live units, from take ${u.from}`)(PLATFORM.adUnits()));
+    line('ads', !CAT.man.ads ? 'none' : PLATFORM.adUnitsNote());
     L.push('', '## device'); line('ua', String(navigator.userAgent || '?').slice(0, 120)); line('viewport', `${typeof innerWidth === 'number' ? innerWidth + 'x' + innerHeight : '?'} @${devicePixelRatio || 1}`); line('language', navigator.language || '?'); line('tz', (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return '?'; } })());
     L.push('', '## catalogue'); line('cards', CAT.man.cards); line('printings', CAT.rows.length); line('pictures', picturesLine()); line('prices dated', (CAT.man.source_updated_at || '?').slice(0, 10)); line('history days', (CAT.days || []).length + (CAT.days && CAT.days.length ? ` (${CAT.days[0]}..${CAT.days[CAT.days.length - 1]})` : '')); line('catalogue copy', CAT.man.fromDisk ? 'synced on this phone' : 'the one that came with the app' + (CAT.refused ? ` (${CAT.refused})` : '')); line('sealed products', sealedCountLine()); line('stock decks', (CAT.stock || []).length); line('effects scripted', CAT.man.effects ? effectsLine(CAT.man.effects, Object.keys(CAT.effects || {}).length) : '?');
     L.push('', '## sync'); line('update url', CAT.man.updateUrl || 'NOT SET'); line('manifest', await this.probe(CAT.man.updateUrl ? CAT.man.updateUrl + 'manifest.json' : null));
@@ -6702,7 +6714,7 @@ const SELFTEST = {
     await check('Ads: the units match this build', () => { const A = PLATFORM.plugin('AdMob'); if (!A) return null; const a = CAT.man.ads, u = PLATFORM.adUnits(), T = 'ca-app-pub-3940256099942544/';
       if (!a || !u.scan || !u.deck || !u.max) return { ok: false, note: 'no ad units in the manifest' };
       if (!a.test || ![a.scan, a.deck].every(x => String(x).startsWith(T))) return { ok: false, note: 'a real unit where every older install reads it (ads.scan, ads.deck)' };
-      return { ok: true, note: u.test ? `Google test units${a.live && a.live.from ? ` (live units wait for take ${a.live.from})` : ''}` : `live units, from take ${u.from}` }; });
+      return { ok: true, note: PLATFORM.adUnitsNote() }; });
     await check('Sim: scripted effects loaded and one offers correctly', () => { const n = Object.keys(CAT.effects || {}).length; if (!n) return { ok: false, note: 'no effects in the bundle' };
       const k = Object.keys(CAT.effects).find(id => CAT.effects[id].some(e => e.t === 'onplay' && e.if.length === 0 && e.do.length === 1 && e.do[0].a === 'draw'));
       if (!k) return { ok: false, note: `${n} cards scripted, no plain [On Play] draw among them` };

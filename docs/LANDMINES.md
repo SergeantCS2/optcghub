@@ -2750,7 +2750,9 @@ straight after it is the fade's.** Render's first take-120 run read the body
 between the parchment and the indigo (`rgb(162, 157, 156)`) after Auto
 flipped the root: the root flips at once, `body{transition:background-color
 var(--dur-ui)}` does not. Landmine 143's rule, on a colour: poll for the
-expected value up to a second, never a sleep sized to the fade.
+expected value up to a second, never a sleep sized to the fade. *Take 121:
+the same check's two mode reads still slept `wait(300)` and read Hunt's
+cream mid-fade, `rgb(241, 232, 217)`, on a busy VM; they poll now.*
 
 **209. app-ads.txt was served where the listing no longer pointed.** AdMob
 fetches `/app-ads.txt` from the root of the Play listing's *Website*, as the

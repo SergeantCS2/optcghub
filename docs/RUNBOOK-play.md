@@ -232,7 +232,8 @@ After go-live: every take is one upload to the **production** track (§
 "Every take after the first"); the closed track can stay for early testers
 or be retired. The real AdMob rewarded unit IDs (D11) go into
 `tools/config.py` in the take after the owner sends them — production is
-real users, which is when §9's rule says they belong.
+real users, which is when §9's rule says they belong. *Take 121: three of
+them, in `ADMOB_LIVE_*`, with the consent flow first (§9 items 3 and 4).*
 
 ## 9. Ads — AdMob, in parallel, none of it blocks the clock
 
@@ -281,7 +282,8 @@ under "testing".
    The app reads neither the reward amount nor its type; the defaults do. They
    go in `ADMOB_LIVE_SCAN`, `_DECK`, `_MAX` in `tools/config.py`, with
    `ADMOB_LIVE_FROM` the first take that asks for consent; they ride the synced
-   manifest's `ads.live`, which a build loads only at or after that take, so
+   manifest's `ads.live`, which a build loads only at or after that take and
+   once the consent SDK allows ads (`PLATFORM._canRequestAds`), so
    every older install keeps Google's test units (take 121). `ads.scan` and
    `ads.deck` stay the test unit for good; the gate's `check_ads` refuses
    anything else.

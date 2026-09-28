@@ -138,7 +138,7 @@ if "com.google.android.gms.ads.APPLICATION_ID" not in m:
     open(M, "w").write(m)
 assert f'<string name="admob_app_id">{ADMOB_APP_ID}</string>' in open(S).read(), "admob_app_id did not land"
 assert 'com.google.android.gms.ads.APPLICATION_ID' in open(M).read(), "AdMob meta-data did not land"
-print(f"  AdMob app id in strings.xml + manifest ({'TEST' if ADMOB_IS_TEST else 'REAL'} id)")
+print(f"  AdMob app id {ADMOB_APP_ID} in strings.xml + manifest ({'Google test' if ADMOB_IS_TEST else 'REAL'} units at the top level; take 121)")
 PYADS
 
 # CAMERA. The scanner uses getUserMedia in the WebView; Capacitor's

@@ -82,6 +82,21 @@ generate traffic, but if we need to put the github that's more than fine."
   owed is set before `show()`, nothing waits on `show()`, and
   `onRewardedVideoAdFailedToShow` clears it with "The ad could not be
   shown". A shown ad is marked not ready at once.
+- **The owner's audit of the PR (28 Sept, "Audit all of your changes, ensure
+  we're good after this PR passes and that there's nothing else to be done
+  on your side")** found two more, both fixed on the branch before the
+  merge, each watched red on the PR's first build: `show()` named no unit,
+  and 8.1.0 then shows the LAST prepared ad (`AdRewardExecutor.java`), which
+  three distinct units make a different one than asked for -- each kind now
+  shows the unit it prepared (`{ adId }`, since 8.0.1); and a build loaded
+  live units on `ads.live.from` alone, so a `from` set one take too low would
+  have put real units on a build with no consent flow -- a build now loads
+  them only once `PLATFORM._canRequestAds` is true, which nothing in take
+  121 sets and the consent take sets from the consent SDK's
+  `canRequestAds`. And `ci/apk.sh`'s log line now prints the app ID it
+  wrote, so the Release build's log says which app shipped (the injection
+  run against a stub Android tree here: the new ID lands, and replaces a
+  stale one).
 - **The self-test's ads check** is "Ads: the units match this build": PASS on
   test units or on live units at their take, FAIL on a real unit in
   `ads.scan` or `ads.deck`. **Diagnostics** gains an `ads` line (test units,
@@ -169,6 +184,17 @@ Diagnostics line, so the take has no look steps (101-103 and 113 had none).
   gate's `ads`); then the code: smoke **1370/1370**, render **242/242
   (mode: chrome)**; `gate.py --selftest` **28/28** (the seven `ads` probes,
   one a clean control, among them); `scrub.py --check --docs` clean.
+- **The audit round** (after PR #46's first `check` went green): the two new
+  smoke checks red on that build (the MAX show "with no adId", and a live
+  unit loaded with no consent answer); with the fixes, smoke **1372/1372**;
+  `apk.sh`'s AdMob block run on a stub tree; `bash -n ci/apk.sh` and
+  `apk.sh --selftest` green. One render run read **241/242**: take 120's
+  "each mode keeps its own ground in light" read Hunt's cream mid-fade,
+  `rgb(241, 232, 217)` for `rgb(242, 232, 213)`, after a `wait(300)` --
+  landmine 208's rule, broken in that check's own mode reads, on a VM busy
+  with the clean run. The reads poll for the ground up to a second now, the
+  assertion unchanged (a wrong ground still reads wrong after the second);
+  render **242/242 (mode: chrome)** after it, and the gate's probes 28/28.
 - **The clean run (PROTOCOL §6b, `build_app.py` changed):** the tracked tree
   with this take's changes copied into an empty directory, `node_modules`
   linked, the pipeline from ingest (87 groups, 7,666 products fresh, hash

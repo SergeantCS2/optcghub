@@ -867,7 +867,10 @@ if (puppeteer) {
     out.light = { theme: root.dataset.theme, stored: localStorage.getItem('vault.theme'), bg: bg(), scheme: scheme(), seg: segRead(), navBg: navBg(), sb: window.__sb.slice() };
     V.go('home'); await wait(400); const tot = document.querySelector('#home .total'), panel = [...document.querySelectorAll('#home .panel')].find(p => p.getBoundingClientRect().height > 0);
     out.home = { total: tot ? getComputedStyle(tot).backgroundImage.slice(0, 15) : null, clip: tot ? getComputedStyle(tot).webkitBackgroundClip : null, color: tot ? getComputedStyle(tot).color : null, shadow: panel ? getComputedStyle(panel).boxShadow : null };
-    V.MODE.set('play', true); await wait(300); out.play = bg(); V.MODE.set('hunt', true); await wait(300); out.hunt = bg(); V.MODE.set('collect', true); await wait(300);
+    /* take 121: polled for the ground up to a second, never a sleep sized to the slide and its fade (landmine 208):
+       a wait(300) read Hunt's cream mid-fade, rgb(241, 232, 217), on a loaded VM */
+    const until = async want => { const t0 = Date.now(); while (bg() !== want && Date.now() - t0 < 1000) await wait(25); return bg(); };
+    V.MODE.set('play', true); out.play = await until('rgb(233, 235, 239)'); V.MODE.set('hunt', true); out.hunt = await until('rgb(242, 232, 213)'); V.MODE.set('collect', true); await wait(300);
     if (V.THEME) V.THEME.set('system'); await wait(100); out.auto = { stored: localStorage.getItem('vault.theme'), theme: root.dataset.theme };
     return out; });
   ok('take 120: dark by default -- nothing stored, the root says dark, the indigo, color-scheme dark', t120.def.theme === 'dark' && t120.def.stored === null && t120.def.bg === 'rgb(16, 13, 34)' && t120.def.scheme === 'dark', JSON.stringify(t120.def));

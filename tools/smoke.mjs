@@ -4686,12 +4686,16 @@ const live = { scan: 'ca-app-pub-6243777967151950/1111111111', deck: 'ca-app-pub
 const units = () => typeof P.adUnits === 'function' ? P.adUnits() : {};
 const hadLive = ads.live;
 ok('with no live block every placement -- scan, deck and MAX -- loads Google\'s test unit, testing', (u => u.test === true && [u.scan, u.deck, u.max].every(x => String(x).startsWith(TEST)))(units()), JSON.stringify(units()));
+const consent0 = P._canRequestAds;
+P._canRequestAds = true;   /* what the consent take sets from the consent SDK's canRequestAds */
 ads.live = { ...live, from: V.TAKE }; const uAt = units();
 ads.live = { ...live, from: V.TAKE + 1 }; const uBefore = units();
 ads.live = { ...live, from: null }; const uNone = units();
-ok('a live block reaches a build at its take: its three units, not testing', uAt.test === false && uAt.scan === live.scan && uAt.deck === live.deck && uAt.max === live.max, JSON.stringify(uAt));
+P._canRequestAds = undefined; ads.live = { ...live, from: V.TAKE }; const uNoConsent = units();
+ok('a live block reaches a build at its take once consent allows ads: its three units, not testing', uAt.test === false && uAt.scan === live.scan && uAt.deck === live.deck && uAt.max === live.max, JSON.stringify(uAt));
 ok('negative control: a build one take older keeps Google\'s test units', uBefore.test === true && String(uBefore.scan).startsWith(TEST), JSON.stringify(uBefore));
 ok('...and a live block that names no take opens nothing', uNone.test === true, JSON.stringify(uNone));
+ok('...and a build at its take with no consent answer keeps the test units: whatever ads.live.from says, a build with no consent flow never loads a real unit', uNoConsent.test === true && String(uNoConsent.max).startsWith(TEST), JSON.stringify(uNoConsent));
 
 /* @capacitor-community/admob 8.1.0, Android (RewardedAdCallbackAndListeners.kt):
    the reward listener notifies onRewardedVideoAdReward FIRST and resolves
@@ -4702,7 +4706,7 @@ const stub = {
   initialize: async o => { calls.push(['init', o && o.initializeForTesting]); },
   addListener: async (n, f) => { L[n] = f; return { remove() {} }; },
   prepareRewardVideoAd: async o => { calls.push(['prepare', o.adId, o.isTesting]); return { adUnitId: o.adId }; },
-  showRewardVideoAd: async () => { calls.push(['show']); const r = { type: 'coins', amount: 1 }; if (L.onRewardedVideoAdReward) L.onRewardedVideoAdReward(r); return r; }
+  showRewardVideoAd: async o => { calls.push(['show', o && o.adId]); const r = { type: 'coins', amount: 1 }; if (L.onRewardedVideoAdReward) L.onRewardedVideoAdReward(r); return r; }
 };
 const plug0 = P.plugin; P.plugin = n => n === 'AdMob' ? stub : plug0.call(P, n);
 const keep = { scan: C.state.scan, deck: C.state.deck, earned: C.state.earned, until: V.MAXLOCK.until, max: ctx.localStorage.getItem('vault.maxUntil') };
@@ -4720,9 +4724,10 @@ try {
   C.state.deck = 0;
   await Promise.race([P.adShow('deck'), flush()]);
   ok('the deck ad still grants one deck save', C.state.deck === C.DECKS_PER_AD, `deck ${C.state.deck}`);
-  ads.live = { ...live, from: V.TAKE }; P._adReady = { scan: false, deck: false, max: false }; calls.length = 0; V.MAXLOCK.until = 0;
+  ads.live = { ...live, from: V.TAKE }; P._canRequestAds = true; P._adReady = { scan: false, deck: false, max: false }; calls.length = 0; V.MAXLOCK.until = 0;
   await Promise.race([P.adShow('max'), flush()]);
   ok('on a live build MAX loads its own unit, not testing', calls.some(c => c[0] === 'prepare' && c[1] === live.max && c[2] === false), JSON.stringify(calls));
+  ok('...and shows the ad it prepared by its unit: with no adId, 8.1.0 shows the LAST prepared ad, which three units make a different one', calls.some(c => c[0] === 'show' && c[1] === live.max), JSON.stringify(calls));
   stub.showRewardVideoAd = () => { calls.push(['show']); if (L.onRewardedVideoAdFailedToShow) L.onRewardedVideoAdFailedToShow({ code: 0, message: 'stub' }); return new Promise(() => {}); };
   P._adReady = { scan: true, deck: true, max: true };
   P.adShow('deck'); await flush(); await flush();
@@ -4737,7 +4742,7 @@ try {
   ok('negative control: a real unit where every older install reads it FAILS the check', onBad && onBad.s === 'FAIL', JSON.stringify(onBad));
   ok('Diagnostics says which units the build loads', /line\('ads', /.test(js));
 } finally {
-  P.plugin = plug0; ads.live = hadLive; P._adReady = { scan: false, deck: false, max: false }; P._pendingKind = null;
+  P.plugin = plug0; ads.live = hadLive; P._adReady = { scan: false, deck: false, max: false }; P._pendingKind = null; P._canRequestAds = consent0;
   C.state.scan = keep.scan; C.state.deck = keep.deck; C.state.earned = keep.earned; V.MAXLOCK.until = keep.until;
   if (keep.max == null) ctx.localStorage.removeItem('vault.maxUntil'); else ctx.localStorage.setItem('vault.maxUntil', keep.max);
 }

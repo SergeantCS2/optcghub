@@ -59,9 +59,12 @@ what take 115 changed on screen.
 
 **Mine, in order**
 0. **The consent flow, then D11's units (take 121's follow-on):** UMP before
-   `initialize` and before any load, a *Privacy choices* row under More, a
-   line in the privacy page; the owner's three units in `ADMOB_LIVE_*` with
-   `ADMOB_LIVE_FROM` that take. Waits on the owner's message and units.
+   `initialize` and before any load, setting `PLATFORM._canRequestAds` from
+   its `canRequestAds` (take 121's builds never set it, so they never load a
+   real unit); a *Privacy choices* row under More; a line in the privacy
+   page; the gate's `ADMOB_LIVE_FLOOR` raised to that take; the owner's
+   three units in `ADMOB_LIVE_*` with `ADMOB_LIVE_FROM` that take. Waits on
+   the owner's message and units.
 1. **A43's small items**, when wanted: the gate checks (the catalogue's
    shape; "Say take N" = BUILD + 1), the Restore file picker, the waiting
    batch in the backup, the cost basis in the currency on screen, CSV
