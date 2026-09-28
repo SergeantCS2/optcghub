@@ -862,6 +862,34 @@ adding it to the collection and the number going up in my portfolio"):**
 - **The look:** "Not the same price." at 42 px wrapped to three lines over the prompt, so the headline is
   34 px. Step 1's caption touched the picker, so the picker moved down 22 px.
 
+**Round 3 (the owner, 28 Sept: "use the red sp Luffy Monkey.D.Luffy (118) (Red Super Alternate Art) -
+Carrying On His Will (OP13)"):**
+- **What I got wrong in round 2.** I searched for a red Luffy by the app's `treat` ("manga") and found
+  none. The app files both of OP13-118's Super Alternate Arts under `treat: "base"`; only TCGplayer's title
+  (`full`) names them. So a search for a printing by kind reads `full` as well as `treat`. The picker's
+  "Base · Super Alternate Art" label comes from the same fact; the app is a take's business, not this one's.
+- **The card:** OP13-118 has seven printings. The Red Super Alternate Art (657401) has no TCGplayer sale;
+  its one listing is a $99,999 placeholder. So it has no market price, and the app shows "—".
+  - The owner then asked for "67,661" as its price, for the promo only. No source carried that figure.
+    PriceCharting ("Red Manga") had it at $8,931.86 ungraded and $31,606.92 for a PSA 10, and its top
+    recent sale was a PSA 10 on 2 Jul 2026 (listed $45,000 to $68,999). An unsourced price in an ad breaks
+    the honesty rule and risks Google's misrepresentation policy, so the owner chose PriceCharting's
+    ungraded price.
+  - It is `RED` in `build.py`, with the day it was read, and it is credited on the card's tag, in the "Found
+    it" line ("on PriceCharting"), on the row's pill and in the footnote. The app is not changed. The build
+    refuses once TCGplayer prices the card, so its own price replaces `RED`. Re-read PriceCharting before
+    any re-upload.
+- **The game:** the base ($14.75), the Super Alternate Art ($2,116.43) and the red one ($8,931.86), which
+  ignites in the aura. The row adds the Wanted Poster ($327.72). `label()` reads each printing's name from
+  `full`.
+- **The app's screens (HERO=OP13-118:657400,657404,657402,657401):** the picker, cropped from 205 px so its
+  "7 printings ... 143× apart" box and the red one's "—" row show. Then the Super Alternate Art picked in.
+  Home goes from $16,053.25 to $18,169.68, and the chip reads +$2,116.43. The app can't add a price it
+  doesn't have, so step 2's caption names the printing it adds: "Pick yours. Here, the Super Alternate Art
+  joins your collection." `build.py` asserts the caption names the printing that was scanned in.
+- The ground and the aura come from the red art. `ACCENT` is round 2's red, unchanged, as the owner asked.
+  The zip is 1,295 KB with 12 files.
+
 **Next:**
 - the owner's look at the HTML5 ad; then Google's HTML5 validator (the owner uploads) and more playables
   if wanted;

@@ -1,19 +1,22 @@
 """HTML5 ad 1, "Which printing?": a playable for App campaigns (AdMob), in the Pull style.
 
-  node design/marketing/capture.mjs h5- art   (HERO=OP11-118:632497,632498,632499 REPORT=html5): the app's own
+  node design/marketing/capture.mjs h5- art   (HERO=OP13-118:657400,657404,657402,657401 REPORT=html5): the app's own
                                                   screens and the card art -> report-html5.json, shots/h5-*.png
   python design/marketing/html5/build.py        (the venv python: imageio-ffmpeg) -> $ADS_OUT/html5/which-printing/
                                                   and which-printing.zip
 
 The play (portrait):
-- three face-down OP11-118 Luffys, dealt in a fresh order on every load, under "Same Luffy. Not the same price."
-  (the owner, 28 Sept: "the red Luffy manga rare ... same Luffy of course"). OP11-118 has four printings; the
-  game deals three, and the words never count them;
-- a tap flips a card to its printing and its real price. A wrong pick says which it was and asks again; the
-  Manga ignites in its flame aura, the three prices line up;
+- three face-down OP13-118 Luffys (Carrying On His Will), dealt in a fresh order on every load, under "Same Luffy.
+  Not the same price.": the base, the Super Alternate Art and the Red Super Alternate Art (the owner, 28 Sept:
+  "use the red sp Luffy ... (Red Super Alternate Art)"). The red one has no TCGplayer sale (its only listing is
+  a $99,999 placeholder) and no price in the app, so its price here is PriceCharting's ungraded one, read on the
+  day and credited on the card, the row and the footnote (RED below; the owner chose it over an unsourced
+  figure). It is for this ad only: the app is not changed;
+- a tap flips a card to its printing and its price. A wrong pick says which it was and asks again; the red one
+  ignites in its flame aura, and the four printings' prices line up (the Wanted Poster joins the row);
 - then the app itself, in its own screens from the capture (the owner: "real screenshots from the app, maybe it
   being scanned, adding it to the collection and the number going up"): the scanner asking which printing, the
-  Manga picked into the batch, and Home's total before and after, up by the card's price;
+  Super Alternate Art picked into the batch, and Home's total before and after, up by the card's price;
 - the end card: the icon, the name, the line, the four features (the owner: "Scanner, Deck Builder, hunt product
   and local events & stock"), Google's badge;
 - sound after the first tap only (Google's rule): Kenney's CC0 effects and the owner's jazz-hop bed, packed as
@@ -44,19 +47,28 @@ TEXT = {
     "right": "Found it: the {label}, {price}.",
     "auto": "Here is each printing, cheapest first.",
     "s1": "Scan it: the scanner asks which printing you hold.",
-    "s2": "Pick it, and it joins your collection.",
+    "s2": "Pick yours. Here, the Super Alternate Art joins your collection.",
     "s3": "Your collection's value goes up by its price.",
     "line": "Scan it. Value it. Build it.",
     "what": "One Piece Card Game collection tracker",
 }
 FEATURES = ["Scanner", "Deck builder", "Hunt sealed product", "Local events &amp; stock"]
-LABEL = {"base": "Base", "alternate_art": "Alternate Art", "sp": "SP", "manga": "Manga"}
-# the Manga's own red, read from its art (its frame is blue, so the edge-weighted accent.mjs reads blue; the
-# owner wanted the aura as it was): the weighted mean of its saturated red pixels, 26 % of the colour
+def label(p):
+    """the printing's own name: the last bracket of TCGplayer's title unless it is the collector number (the app's
+    treat calls both Super Alternate Arts "base")"""
+    import re
+    b = re.findall(r"\(([^)]*)\)", p.get("full") or "")
+    return b[-1] if b and not b[-1].isdigit() else "Base"
+# the red one's price: PriceCharting, "Monkey.D.Luffy [Red Manga] OP13-118", ungraded, read 28 Sept 2026 (its PSA
+# 10 then $31,606.92). Re-read it before any re-upload; the build refuses if TCGplayer has since priced it
+RED = {"price": 8931.86, "source": "PriceCharting", "grade": "ungraded", "read": "28 Sep 2026",
+       "url": "https://www.pricecharting.com/game/one-piece-carrying-on-his-will/monkeydluffy-red-manga-op13-118"}
+# a red measured from OP11-118's art in round 2 and kept (the owner: "so we don't have to adjust the aura
+# much"); the Red Super Alternate Art is red through and through
 ACCENT = {"deep": "#4e1816", "bright": "#ff5e57"}
 # the crops of the capture's screens, in CSS px of the 411-wide phone: only the honest parts (the web build's
 # scan screen also says "Camera unavailable" and "Saving ... is too, for now", which is false on the phone)
-CROPS = {"picker": ("h5-picker", (0, 282, 411, 478)), "scanned": ("h5-scanned", (0, 690, 411, 90)),
+CROPS = {"picker": ("h5-picker", (0, 205, 411, 545)), "scanned": ("h5-scanned", (0, 690, 411, 90)),
          "before": ("h5-home-before", (8, 176, 395, 190)), "after": ("h5-home-after", (8, 176, 395, 190))}
 
 def ff(*a):
@@ -89,11 +101,18 @@ def build():
     st = {s["name"]: s for s in R["steps"]}
     before, after = st["h5-home-before"], st["h5-home-after"]
     when = D.day(R["source"])
-    ps = sorted(R["hero"]["printings"], key=lambda p: p["market"] or 0)        # cheapest first
-    dear = ps[-1]; acc = ACCENT["bright"]; num = R["hero"]["num"]
+    red = [p for p in R["hero"]["printings"] if "Red Super Alternate Art" in (p.get("full") or "")]
+    assert len(red) == 1 and red[0]["market"] is None, ("TCGplayer now prices the red one: use its price, not RED", red)
+    app = sorted((p for p in R["hero"]["printings"] if p is not red[0]), key=lambda p: p["market"])   # cheapest first
+    red = dict(red[0], shown=f"${RED['price']:,.2f}", src=RED["source"])
+    added = app[-1]                                    # the one the capture scanned in: the app's dearest
+    assert label(added) in TEXT["s2"], ("the caption names another printing than the one scanned in", label(added))
+    game, row, dear = [app[0], added, red], app + [red], red
+    acc = ACCENT["bright"]; num = R["hero"]["num"]
     gain = round(after["value"] - before["value"], 2)
-    assert abs(gain - dear["market"]) < .02, ("the total did not rise by the card's price", gain, dear["market"])
-    foot = f"TCGplayer market prices, {when}. Three of {num}'s printings."
+    assert abs(gain - added["market"]) < .02, ("the total did not rise by the card's price", gain, added["market"])
+    foot = (f"TCGplayer market prices, {when}. The Red Super Alternate Art has no sales there yet: "
+            f"{RED['source']}, {RED['grade']}, {RED['read']}.")
     foot2 = f"A sample collection. TCGplayer market prices, {when}."
     words = " ".join(v for k, v in TEXT.items() if "{" not in v) + " " + " ".join(FEATURES).replace("&amp;", "and")
     bad = SP.check_caption(words) + SP.check_caption(foot + " " + foot2, footnote=True)
@@ -104,7 +123,7 @@ def build():
         shutil.rmtree(out)
     for d in ("art", "img"):
         os.makedirs(os.path.join(out, d))
-    for p in ps:
+    for p in row:
         ff("-i", os.path.join(SP.ADS, "art", f"{p['id']}.png"), "-q:v", "3", os.path.join(out, "art", f"{p['id']}.jpg"))
     for name, (shot, (x, y, w, h)) in CROPS.items():
         ff("-i", os.path.join(SP.ADS, "shots", shot + ".png"), "-vf", f"crop={round(w * K)}:{round(h * K)}:{round(x * K)}:{round(y * K)},scale=720:-1",
@@ -120,22 +139,23 @@ def build():
         sfx = sounds(tmp, bed)
     open(os.path.join(out, "sfx.js"), "w").write("/* the ad's sounds: Kenney (kenney.nl, CC0), a whoosh made here, and a jazz-hop rework of Spring Spring's \"Jazz\" (OpenGameArt, CC0) */\nvar SFX = " + json.dumps(sfx) + ";\n")
 
-    # the hero: the Manga large, in its aura (drawn once, shown when it is found); the art by relative path
+    # the hero: the red one large, in its aura (drawn once, shown when it is found); the art by relative path
     hx, hy, hw = 95, 262, 200
-    aura = SP.aura_box(dear["id"], hx, hy, hw, 5, ACCENT, SP.AURA_LEVEL).replace(D.art(dear["id"]), f"art/{dear['id']}.jpg")
+    aura = SP.aura_box(red["id"], hx, hy, hw, 5, ACCENT, SP.AURA_LEVEL).replace(D.art(red["id"]), f"art/{red['id']}.jpg")
     assert "data:image" not in aura, "the aura still inlines the art"
     lines = speed_lines(hx + hw / 2, hy + hw * .7, 150, 900, n=72, seed=4)
-    cards = [{"id": p["id"], "label": LABEL.get(p["treat"], p["treat"]), "price": p["shown"], "dear": p is dear} for p in ps]
+    cards = [{"id": p["id"], "label": label(p), "src": p.get("src", ""), "price": p["shown"], "dear": p is dear} for p in game]
     # the cards and the price row are written here with fixed paths (check.py verifies every one); the script only
     # shuffles where each card sits
     slots_html = "".join(
         f'<div class="slot deal{" dear" if c["dear"] else ""}" data-id="{c["id"]}"><div class="flip">'
         f'<div class="face back"><img src="img/icon.svg" alt=""><b>?</b></div>'
         f'<div class="face front"><img src="art/{c["id"]}.jpg" alt=""></div></div>'
-        f'<div class="tag">{c["price"]}<span>{c["label"]}</span></div></div>' for c in cards)
-    row_html = "".join(f'<div class="pill{" dear" if c["dear"] else ""}"><b>{c["price"]}</b><span>{c["label"]}</span></div>' for c in cards)
+        f'<div class="tag">{c["price"]}<span>{c["label"]}</span>' + (f'<span>{c["src"]}</span>' if c["src"] else '') + '</div></div>' for c in cards)
+    row_html = "".join(f'<div class="pill{" dear" if p is dear else ""}"><b>{p["shown"]}</b><span>{label(p)}</span>'
+                       + (f'<i>{p["src"]}</i>' if p.get("src") else "") + '</div>' for p in row)
     feats = "".join(f"<span>{f}</span>" for f in FEATURES)
-    delta = "+" + dear["shown"]
+    delta = "+" + added["shown"]
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -151,7 +171,7 @@ def build():
 :root{{--acc:{acc};--k:1}}
 *{{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}}
 html,body{{width:100%;height:100%;overflow:hidden;background:#0a0a0b;color:#f4f5f3;font-family:Inter,system-ui,sans-serif}}
-.ground{{position:fixed;inset:-10%;background:url(art/{dear['id']}.jpg) center/cover;filter:blur(48px) saturate(1.4) brightness(.36);transform:scale(1.2)}}
+.ground{{position:fixed;inset:-10%;background:url(art/{red['id']}.jpg) center/cover;filter:blur(48px) saturate(1.4) brightness(.36);transform:scale(1.2)}}
 .shade{{position:fixed;inset:0;background:radial-gradient(ellipse 90% 70% at 50% 42%,rgba(6,7,7,.1),rgba(6,7,7,.55) 60%,rgba(6,7,7,.95))}}
 #stage{{position:absolute;left:50%;top:50%;width:{W}px;height:{H}px;transform:translate(-50%,-50%) scale(var(--k));transform-origin:50% 50%}}
 .abs{{position:absolute}}
@@ -183,44 +203,44 @@ h1 em{{font-style:normal;color:var(--acc)}}
 .tag span{{display:block;font:600 11px/1 Inter,sans-serif;color:#b8bcb7;margin-top:4px}}
 .slot.open .tag{{opacity:1}}
 .slot.dear.open .tag{{box-shadow:0 0 0 2px var(--acc),0 0 24px color-mix(in srgb,var(--acc) 50%,transparent);color:var(--acc)}}
-#hero{{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .5s,transform .7s cubic-bezier(.6,0,.2,1);transform-origin:{hx + hw / 2}px {hy}px}}
-#hero .big{{position:absolute;left:{hx}px;top:{hy}px;width:{hw}px;transform:rotate(5deg) scale(1.6);opacity:0;transition:transform .45s cubic-bezier(.7,0,.8,.4),opacity .15s;border-radius:3.6%/2.6%;overflow:hidden;box-shadow:0 30px 40px -18px rgba(0,0,0,.75)}}
-#hero .big img{{display:block;width:100%}}
+#hero{{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .5s}}
+#hero .red{{position:absolute;left:{hx}px;top:{hy}px;width:{hw}px;transform:rotate(5deg) scale(1.6);opacity:0;transition:transform .45s cubic-bezier(.7,0,.8,.4),opacity .15s;
+  border-radius:3.6%/2.6%;overflow:hidden;box-shadow:0 30px 40px -18px rgba(0,0,0,.75)}}
+#hero .red img{{display:block;width:100%}}
+body.red #hero .red{{transform:rotate(5deg) scale(1);opacity:1}}
 #hero .auraw{{opacity:0;transform:scale(.85);transform-origin:50% 85%;transition:opacity .6s .35s,transform .7s .35s}}
 #hero .lines{{position:absolute;inset:0;opacity:0}}
 body.found #hero{{opacity:1}}
-body.found #hero .big{{transform:rotate(5deg) scale(1);opacity:1}}
-body.found #hero .auraw{{opacity:1;transform:scale(1);animation:breathe 2.4s ease-in-out 1.2s infinite}}
-body.found #hero .lines{{animation:flash .6s ease-out .42s both}}
+body.red #hero .auraw{{opacity:1;transform:scale(1);animation:breathe 2.4s ease-in-out 1.2s infinite}}
+body.red #hero .lines{{animation:flash .6s ease-out .42s both}}
 @keyframes breathe{{0%,100%{{transform:scale(1)}}50%{{transform:scale(1.035) translateY(-3px)}}}}
 @keyframes flash{{0%{{opacity:0;transform:scale(1.2)}}12%{{opacity:.55;transform:scale(1)}}100%{{opacity:0;transform:scale(.97)}}}}
 body.found .slot{{opacity:0;pointer-events:none;transform:translateY(40px)}}
 .row{{position:absolute;left:14px;right:14px;top:585px;display:flex;gap:8px;opacity:0;transform:translateY(20px);transition:opacity .4s .7s,transform .4s .7s}}
-body.found .row{{opacity:1;transform:none}}
-.pill{{flex:1;padding:10px 8px;border-radius:14px;background:rgba(16,13,34,.9);box-shadow:0 0 0 1px rgba(255,255,255,.15);text-align:center}}
-.pill b{{display:block;font:800 19px/1 Inter,sans-serif;letter-spacing:-.02em}}
-.pill span{{display:block;margin-top:5px;font:600 11px/1 Inter,sans-serif;color:#b8bcb7}}
+body.red .row{{opacity:1;transform:none}}
+.pill{{flex:1;min-width:0;padding:10px 5px;border-radius:14px;background:rgba(16,13,34,.9);box-shadow:0 0 0 1px rgba(255,255,255,.15);text-align:center}}
+.pill b{{display:block;font:800 15px/1 Inter,sans-serif;letter-spacing:-.03em;white-space:nowrap}}
+.pill span{{display:block;margin-top:5px;font:600 10px/1.2 Inter,sans-serif;color:#b8bcb7}}
+.pill i{{display:block;margin-top:3px;font:600 9px/1 Inter,sans-serif;font-style:normal;color:#9da19c}}
 .pill.dear{{box-shadow:0 0 0 2px var(--acc),0 0 30px color-mix(in srgb,var(--acc) 45%,transparent)}}
 .pill.dear b{{color:var(--acc)}}
 .foot{{position:absolute;left:20px;right:20px;top:668px;font:500 11px/1.3 Inter,sans-serif;color:#9da19c;opacity:0;transition:opacity .4s 1s}}
-body.found .foot{{opacity:1}}
-/* the app, in its own screens: the Manga steps back to the corner and the screens take the stage */
-body.app #hero{{transform:translate(118px,-196px) scale(.4)}}
-body.app h1,body.app .row,body.app .foot{{opacity:0 !important;transition:opacity .3s}}
-body.app #hero .lines{{display:none}}
+body.red .foot{{opacity:1}}
+/* the app, in its own screens: the cards step back and the screens take the stage */
+body.app h1,body.app #hero,body.app .row,body.app .foot{{opacity:0 !important;transition:opacity .3s}}
 #app{{position:absolute;left:24px;right:24px;top:236px;height:470px;opacity:0;pointer-events:none;transform:translateY(24px);transition:opacity .5s,transform .5s}}
 body.app #app{{opacity:1;transform:none}}
-#app .cap{{position:absolute;left:0;right:70px;top:-66px;font:700 19px/1.3 Inter,sans-serif;letter-spacing:-.01em;transition:opacity .3s}}
+#app .cap{{position:absolute;left:0;right:70px;top:-96px;font:700 19px/1.3 Inter,sans-serif;letter-spacing:-.01em;transition:opacity .3s}}
 #app .cap i{{display:block;font:700 12px/1 Inter,sans-serif;font-style:normal;letter-spacing:.14em;color:var(--acc);margin-bottom:8px}}
 .scr{{position:absolute;left:0;right:0;top:0;border-radius:20px;overflow:hidden;background:#100d22;
   box-shadow:0 0 0 1.5px rgba(255,255,255,.14),0 30px 70px rgba(0,0,0,.6);opacity:0;transform:scale(.96);transition:opacity .45s,transform .45s}}
 .scr img{{display:block;width:100%}}
 .scr.on{{opacity:1;transform:none}}
-#s1{{top:22px}} #s2{{top:120px}} #s3a,#s3b{{top:90px}}
+#s1{{top:0}} #s2{{top:120px}} #s3a,#s3b{{top:90px}}
 .chip{{position:absolute;right:-6px;top:58px;padding:8px 12px;border-radius:999px;background:var(--acc);color:#16060a;font:800 18px/1 Inter,sans-serif;
   box-shadow:0 10px 30px color-mix(in srgb,var(--acc) 50%,transparent);opacity:0;transform:scale(.6);transition:opacity .3s,transform .4s cubic-bezier(.2,1.6,.4,1)}}
 .chip.on{{opacity:1;transform:none}}
-#app .f2{{position:absolute;left:0;right:0;top:420px;font:500 11px/1.3 Inter,sans-serif;color:#9da19c}}
+#app .f2{{position:absolute;left:0;right:0;top:462px;font:500 11px/1.3 Inter,sans-serif;color:#9da19c}}
 .gp{{position:absolute;left:50%;bottom:26px;width:170px;transform:translateX(-50%);cursor:pointer}}
 .gp img{{display:block;width:100%}}
 #end{{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;padding:0 24px 60px;
@@ -251,14 +271,14 @@ body.end #hero,body.end #app,body.end .row,body.end .foot,body.end .say,body.end
 <div id="hero">
 <svg class="lines" width="{W}" height="{H}" viewBox="0 0 {W} {H}" aria-hidden="true">{lines}</svg>
 <div class="auraw">{aura}</div>
-<div class="big"><img src="art/{dear['id']}.jpg" alt="{dear['name']} {LABEL.get(dear['treat'], '')}"></div>
+<div class="red"><img src="art/{red['id']}.jpg" alt="{red['name']} {label(red)}"></div>
 </div>
 <div class="row" id="row">{row_html}</div>
 <div class="foot">{foot}</div>
 <div id="app">
 <div class="cap" id="cap"></div>
 <div class="scr" id="s1"><img src="img/app-picker.jpg" alt="The scanner asks which printing"></div>
-<div class="scr" id="s2"><img src="img/app-scanned.jpg" alt="The Manga picked into the batch"></div>
+<div class="scr" id="s2"><img src="img/app-scanned.jpg" alt="The Super Alternate Art picked into the batch"></div>
 <div class="scr" id="s3a"><img src="img/app-before.jpg" alt="The collection's value before"></div>
 <div class="scr" id="s3b"><img src="img/app-after.jpg" alt="The collection's value after"></div>
 <div class="chip" id="chip">{delta}</div>
@@ -312,7 +332,7 @@ document.getElementById('mute').addEventListener('click', function (e) {{
 /* ---- the game ---- */
 var say = document.getElementById('say');
 function tell(s) {{ say.style.opacity = 0; setTimeout(function () {{ say.textContent = s; say.style.opacity = 1; }}, 180); }}
-function fill(s, c) {{ return s.replace('{{label}}', c.label).replace('{{price}}', c.price); }}
+function fill(s, c) {{ return s.replace('{{label}}', c.label).replace('{{price}}', c.price + (c.src ? ' on ' + c.src : '')); }}
 var order = CARDS.slice(); for (var i = order.length - 1; i > 0; i--) {{ var j = Math.floor(Math.random() * (i + 1)); var t = order[i]; order[i] = order[j]; order[j] = t; }}
 var done = false, idle, auto;
 order.forEach(function (c, i) {{
@@ -338,12 +358,12 @@ function step(n) {{
 function caption(i, s) {{ var c = document.getElementById('cap'); c.style.opacity = 0;
   setTimeout(function () {{ c.innerHTML = '<i>' + i + ' / 3</i>' + s; c.style.opacity = 1; }}, 200); }}
 function found() {{
-  document.body.classList.add('found'); play('found', 1); setTimeout(function () {{ play('coin', .7); }}, 800);
-  setTimeout(function () {{ document.body.classList.add('app'); say.style.opacity = 0; play('whoosh', .8); caption(1, T.s1); step('s1'); }}, 2600);
-  setTimeout(function () {{ caption(2, T.s2); step('s2'); play('flip', .9); }}, 5000);
-  setTimeout(function () {{ caption(3, T.s3); step('s3a'); }}, 7200);
-  setTimeout(function () {{ step('s3b'); document.getElementById('chip').classList.add('on'); play('coin', .9); }}, 8200);
-  setTimeout(function () {{ document.body.classList.add('end'); play('chime', .8); }}, 10600);
+  document.body.classList.add('found', 'red'); play('found', 1); setTimeout(function () {{ play('coin', .7); }}, 800);
+  setTimeout(function () {{ document.body.classList.add('app'); say.style.opacity = 0; play('whoosh', .8); caption(1, T.s1); step('s1'); }}, 3000);
+  setTimeout(function () {{ caption(2, T.s2); step('s2'); play('flip', .9); }}, 5400);
+  setTimeout(function () {{ caption(3, T.s3); step('s3a'); }}, 7800);
+  setTimeout(function () {{ step('s3b'); document.getElementById('chip').classList.add('on'); play('coin', .9); }}, 8800);
+  setTimeout(function () {{ document.body.classList.add('end'); play('chime', .8); }}, 11200);
 }}
 function autoplay() {{
   if (done) return; tell(T.auto);
