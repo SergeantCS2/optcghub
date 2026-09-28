@@ -726,6 +726,31 @@ lounge/coffee shop"):**
   its hits on the beat; once the owner picks, the grid can be fitted to that track's own tempo (a
   re-render).
 
+**Round 2 of the bed (the owner, 28 Sept: "I like Jazz the most, but kinda curious what else you might be
+able to come up with, also think samurai champloo"):**
+- **The lead:** Spring Spring's "Jazz" (`jazz-1`, CC0). "Samurai Champloo" points to Nujabes-style jazz-hop:
+  a warm jazz record over dusty, laid-back boom-bap. The loop titled after it on OpenGameArt stays out, since
+  it imitates a copyrighted song; the style is the reference, never a tune.
+- **"Jazz" measured:** 90.02 BPM in 4/4, a four-beat bar (onset autocorrelation 0.98 at 2.667 s), and the
+  first downbeat at 1.853 s (the beat with the most low-band onsets). It already carries a light kit.
+- **The rework made here (`jazzhop.py`):** the recording unchanged, plus drums synthesised here on its own
+  grid:
+  - kick on 1, a ghost kick on the "a" of 2, kick on the "and" of 3;
+  - snare on 2 and 4, 18 ms late;
+  - hats swung 58 %, with a ghost rim before the bar line.
+  The record is rolled off above 4.5 kHz and lightly driven, as a sampled record would be. It ducks 22 %
+  under each kick, over vinyl crackle and hiss.
+  - **Checked:** the cross-correlation of low-band onsets between the original and the rework peaks at 0 ms
+    offset, so the added kicks sit in the record's own groove.
+- **Also auditioned, all CC0 through `oga.py`:**
+  - omfgdude, "Funky Hip Hop Lofi Jam" (its lowpassed version, 84.7 BPM);
+  - omfgdude, "lofi hip hop";
+  - Umplix, "Jazz" (`jazz-2`);
+  - Zane Little Music, "Freeway Fumes".
+- **Left out:**
+  - Emma_MA, "Jazz n' brass loop": the author calls it 90s PC-game music;
+  - Spring Spring, "Icy Cold Blues": bright, with a centroid of about 2,600 Hz.
+
 **Next:**
 - the owner's pick of the bed, then the three cuts mixed with it;
 - the owner's ear on the sound: any kind is swapped in `sounds.json` and remixed in seconds;

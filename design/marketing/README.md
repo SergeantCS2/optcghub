@@ -77,6 +77,7 @@ node design/marketing/render.mjs [--dir directions]  # NAME/out/*.png, report.js
 | `motion/mix.py` | The cue sheet played with the palette's layers (or `--synth` placeholders), loudness-set and laid under the picture. |
 | `motion/music.py` | A house groove made from oscillators and noise on the cue sheet's beat grid (numpy; ours, no licence). Turned down for a lounge recording. |
 | `motion/oga.py` | Backing music from OpenGameArt, CC0 only (the page's own licence field), with no account or key; `--selftest`. |
+| `motion/jazzhop.py` | A jazz-hop rework of a CC0 jazz recording: boom-bap drums made here on the track's own grid, the record dusted, vinyl crackle (numpy). |
 | `fetch_fonts.sh` | Their typefaces, OFL-1.1, from npm's @fontsource packages; nothing committed until a pick. |
 | `fetch_badge.sh` | Google's official "Get it on Google Play" badge into `$ADS_OUT/badge` (never committed), checked as Google's file. |
 | `paths.mjs` | Where the renders go. |
