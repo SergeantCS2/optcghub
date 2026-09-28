@@ -760,10 +760,68 @@ able to come up with, also think samurai champloo"):**
   them. `mix.py` now measures its own encoded file. If the true peak is over -1.2 dBTP, it lowers the track by
   the excess plus 0.3 dB and encodes again, up to three times.
 
+### Phase F: HTML5 (the owner, 28 Sept: "start the HTML5 ad")
+
+**Google's rules** (Google Ads Help, "About HTML5/Playable ads for App campaigns" and "Fix issues with HTML5
+assets", read 28 Sept):
+
+| Rule | Requirement |
+|---|---|
+| Package | one .zip of at most 5 MB and 512 files |
+| File types | .html .css .js .png .jpg .gif .svg only, with no spaces in paths |
+| Primary .html | `<!DOCTYPE html>`, explicit end tags, `ad.size` (width=320,height=480) and `ad.orientation` meta tags |
+| Exit | `exitapi.js` as a literal `<script>` in `<head>`, and `ExitApi.exit()` for the click |
+| Resources | relative paths; externals only Google Fonts and Google-hosted jQuery, Greensock and CreateJS |
+| Banned | iframes and amp- tags |
+| Layout | responsive, full screen |
+| Sound | only after the viewer interacts (this ad is silent) |
+
+**Ad 1, "Which printing?" (`html5/build.py` -> `$ADS_OUT/html5/which-printing.zip`, 634 KB, 6 files):**
+- **The deal:** three face-down EB04-007 Zoros under "Same Zoro. *Three* prices.", dealt in a fresh order
+  on every load. The card back is drawn here (the icon on the app's indigo, a brass keyline, "?"), never the
+  game's printed back.
+- **A tap** flips a card to its printing and the capture's price. A wrong pick says which printing it was
+  and asks again.
+- **The SP** swaps to the hero: the SP large in its flame aura (static, breathing in CSS), a flash of speed
+  lines, the three prices in a row and the footnote "TCGplayer market prices, 26 Sep 2026."
+- **The end card** follows after 3.6 s: the icon, the name, "Scan it. Value it. Build it.", the line "Three
+  printings of one number. The scanner shows each one, and asks which you hold.", the descriptive line, and
+  Google's badge, with the trademark line.
+- **Untouched:** the cards pulse at 4 s, and at 9 s the reveal plays itself, cheapest first, then the end
+  card follows.
+- **Exits:** the badge sits at the foot throughout, and the end card is tappable. Both call
+  `ExitApi.exit()`.
+- **The stage** is 390x844, scaled to fit any screen over the blurred SP ground. Inter comes from Google
+  Fonts; the art is the capture's scans as JPEG.
+
+**The guards:**
+- **`html5/check.py`** checks the zip against every rule above. Its `--selftest` passes a good package and
+  refuses twelve planted faults: oversize, too many files, an .mp3, a space in a path, no `ad.size`, a bad
+  orientation, no literal exitapi script, no `ExitApi.exit()`, an iframe, an outside script, a missing
+  file, and no `</html>`.
+- **`html5/play.mjs`** plays the zip itself in Chromium, with `ExitApi` stubbed to count calls. It fails on
+  any of:
+  - the player path (a wrong pick, the SP, the badge) not reaching the end card with exactly one exit;
+  - the untouched path not hinting and ending by itself, or exiting without a tap;
+  - a console error, a broken image, or a request outside the zip and Google's list;
+  - the stage leaving the screen at 390x844, 360x640, 412x915, 344x882 (the Fold's cover) or 768x1024.
+  Two planted mutants are refused: one with the exit call removed, one loading an image from another host.
+  Screenshots of every step go to `which-printing-play/`.
+
+**What bit:**
+- `check.py` refused the first build: the script wrote the cards' `src` by string concatenation, which no
+  static check can verify. The cards are now written into the HTML with fixed paths, and the script only
+  shuffles where they sit.
+- In the first look the cards sat high and small, leaving the lower half of the screen empty. They grew
+  from 106 to 118 px wide and moved down to the middle.
+- The status line showed through the end card. `tell()` sets its opacity inline, which beat the
+  stylesheet rule; it now takes `!important`.
+
 **Next:**
+- the owner's look at the HTML5 ad; then Google's HTML5 validator (the owner uploads) and more playables
+  if wanted;
 - the owner's ear on the sound: any kind is swapped in `sounds.json` and remixed in seconds;
-- `study.mjs` for the owner's inspiration videos;
-- Phase F (HTML5).
+- `study.mjs` for the owner's inspiration videos.
 
 ## Process
 
