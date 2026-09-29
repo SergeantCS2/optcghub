@@ -1846,4 +1846,46 @@ const take123 = [
       return { ok: m.block && leaked.length === 0 && /is attacked/.test(m.text), leakedOfTheirs: leaked.join(', '), block: m.block };
     } },
 ];
-export const STEPS = { 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
+/* ---- take 125 — the scanner reads the number where the recogniser finds it ----
+   No camera here, so the app is handed one: getUserMedia answers with a canvas's stream (captureStream) -- a drawn
+   card, no card art, on a light textured ground where take 123's outline boxed the whole frame -- and the recogniser
+   is injected, answering with the number where the canvas printed it, as the plugin does. From there it is the app's
+   own path: startCamera, the live loop, the vote, the hold, accept. */
+const scanRig = `const V = window.VAULT, SC = V.scan, wait = ms => new Promise(r => setTimeout(r, ms));
+  const rig = window.__rig || (window.__rig = (() => {
+    const c = document.createElement('canvas'); c.width = 1080; c.height = 1920; const g = c.getContext('2d');
+    const one = [...V.CAT.byNum.entries()].find(([n, l]) => l.length === 1 && /^OP\\d{2}-\\d{3}$/.test(n));
+    const other = [...V.CAT.byNum.keys()].find(n => /^EB\\d{2}-\\d{3}$/.test(n));
+    const card = (x, y, w, num, name) => { const h = w * 88 / 63; g.fillStyle = '#7a1f2b'; g.fillRect(x, y, w, h); g.fillStyle = '#2b3a67'; g.fillRect(x + w * .06, y + w * .08, w * .88, h * .5);
+      g.fillStyle = '#f3ead8'; g.fillRect(x + w * .06, y + h * .64, w * .88, h * .24); g.fillStyle = '#fff'; g.font = 'bold ' + Math.round(w * .07) + 'px sans-serif'; g.fillText(name, x + w * .3, y + h * .6);
+      g.font = Math.round(w * .035) + 'px sans-serif'; g.fillText(num, x + w * .77, y + h * .96); return { num, x: x + w * SC.CODE_AT.x, y: y + h * SC.CODE_AT.y, w: w * .14, h: w * .035 }; };
+    const ground = () => { g.fillStyle = '#d8cbb3'; g.fillRect(0, 0, 1080, 1920); for (let i = 0; i < 4000; i++) { g.fillStyle = i % 2 ? '#e9dfcc' : '#c4b79d'; g.fillRect((i * 97) % 1080, (i * 131) % 1920, 6, 3); } };
+    let printed = [];
+    const r = { c, one, other, stream: c.captureStream(10), draw(which) { ground(); printed = which === 'two' ? [card(40, 560, 480, one[0], 'One'), card(560, 560, 480, other, 'Two')] : [card(140, 380, 800, one[0], V.CAT.byId.get(one[1][0].id).name)]; },
+      lines(h) { const b = document.querySelector('#cam').getBoundingClientRect(), view = SC.viewRect(1080, 1920, b.width, b.height), k = h.width / view.w;
+        return printed.map(p => ({ text: p.num, box: { x: (p.x - p.w / 2 - view.x) * k, y: (p.y - p.h / 2 - view.y) * k, w: p.w * k, h: p.h * k } })); } };
+    r.draw('one');
+    navigator.mediaDevices.getUserMedia = async () => r.stream;
+    SC.PLATFORM.hasOcr = () => true;
+    SC.PLATFORM.ocr = async h => { const lines = r.lines(h); return { text: lines.map(l => l.text).join('\\n'), lines }; };
+    return r;
+  })());`;
+const scanState = `({ count: V.BATCH.rows.length, tally: document.querySelector('#scCount').textContent, last: document.querySelector('#lastScan').textContent.trim(),
+  hint: document.querySelector('#camHint').textContent, seen: document.querySelector('#guide').classList.contains('seen'), video: document.querySelector('#cam').videoWidth + 'x' + document.querySelector('#cam').videoHeight })`;
+const take125 = [
+  { name: 'open', run: async (page, ctx) => { await ctx.open(); return { ok: true }; } },
+  { name: 'scan-a-card-on-a-light-ground-is-read-at-once', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V0 = window.VAULT; while (V0.closeAnyOverlay()) {} V0.BATCH.setId = null; V0.BATCH.rows.length = 0; V0.BATCH.save();
+        ${scanRig} V.go('scan'); await wait(1500); return ${scanState}; })()`);
+      return { ok: m.count === 1 && m.video === '1080x1920' && m.last.length > 0, ...m };
+    } },
+  { name: 'scan-the-card-left-in-view-is-counted-once', run: async (page) => {
+      const m = await page.evaluate(`(async () => { ${scanRig} await wait(2500); return ${scanState}; })()`);
+      return { ok: m.count === 1 && m.tally === '1', ...m };
+    } },
+  { name: 'scan-two-cards-in-view-one-at-a-time', run: async (page) => {
+      const m = await page.evaluate(`(async () => { ${scanRig} rig.draw('two'); await wait(1500); const out = ${scanState}; return out; })()`);
+      return { ok: /One card at a time/.test(m.hint) && m.count === 1 && !m.seen, ...m };
+    } },
+];
+export const STEPS = { 125: take125, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };

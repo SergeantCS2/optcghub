@@ -359,6 +359,46 @@ ok('three different reads never vote',
 /* the platform seam: no recogniser here, and the app must SAY so */
 ok('no OCR in this environment, and the scanner knows it', SC.PLATFORM.hasOcr() === false);
 
+section('take 125 — the scanner reads the number where the recogniser finds it (A2; landmines 16, 225-227)');
+/* a lost dash: every OCR slip of it (a dot, another width of dash, a gap) is stripped by normaliseRead */
+ok('a number whose dash is lost is read: OP09.118SEC, OP09 118, OP09–118',
+   ['OP09.118SEC', 'OP09 118', 'OP09–118'].every(t => pr(t).number === 'OP09-118'), JSON.stringify(['OP09.118SEC', 'OP09 118', 'OP09–118'].map(t => pr(t).number)));
+ok('...a promo keeps its dash: P084 is no read, P-084 is', pr('P084').number === null && pr('P-084').number === 'P-084');
+ok('...and the badge digits still run on harmlessly: EB04-024008, SPOP05-119SEC2', pr('EB04-024008').number === 'EB04-024' && pr('SPOP05-119SEC2').sp === true);
+/* where a number may be: on a card in the view -- not in the top or left quarter (CODE_AT) */
+{ const at = (text, x, y) => ({ text, box: { x: x - 30, y: y - 4, w: 60, h: 8 } });
+  const nums = lines => SC.codesIn({ text: '', lines }, 1000, 1400).map(r => r.number);
+  ok('a number in the view\'s top quarter or left quarter is a neighbour\'s and is not taken', nums([at('OP14-040', 800, 200), at('OP10-002', 150, 1300)]).length === 0);
+  ok('...control: the same numbers where a card in view prints its own are taken', nums([at('OP14-040', 800, 1300), at('OP10-002', 700, 1300)]).join() === 'OP14-040,OP10-002');
+  ok('...a line without a place is taken at its word', nums([{ text: 'OP14-040', box: null }]).join() === 'OP14-040');
+  ok('...and a line that is not a real number is not taken', nums([at('OP99-999', 800, 1300), at('Kuzan', 500, 1200)]).length === 0);
+  ok('the place is the one MEASURED on the cards (CODE_AT: 84 % across, 95.2 % down)', SC.CODE_AT.x === 0.84 && SC.CODE_AT.y === 0.952);
+  /* a number that runs down the picture is on a card that is not upright in this look: a turned look's neighbour */
+  const tall = (text, x, y) => ({ text, box: { x: x - 4, y: y - 30, w: 8, h: 60 } });
+  ok('a number whose line runs down the picture is not taken (a turned look turns the neighbours too)', nums([tall('OP14-040', 800, 1300)]).length === 0);
+  ok('...control: the same number running across is', nums([at('OP14-040', 800, 1300)]).join() === 'OP14-040');
+  /* the card's own words: OP10-046 is Kyros; the owner's close-up read OP10-040 twice */
+  const read = lines => SC.codesIn({ text: lines.map(l => l.text).join('\n'), lines }, 1000, 1400).map(r => r.number).join();
+  ok('a number the card\'s name contradicts is refused: OP10-040 read on a card that says Kyros (OP10-046, a digit away)', read([at('Kyros', 500, 1200), at('OP10-040', 800, 1300)]) === '');
+  ok('...control: OP10-046 on the same card is read', read([at('Kyros', 500, 1200), at('OP10-046', 800, 1300)]) === 'OP10-046');
+  ok('...control: OP10-040 with no name read is read (refused only on a contradiction, never corrected)', read([at('OP10-040', 800, 1300)]) === 'OP10-040');
+  ok('a number with its own name printed BELOW it is on a card upside down in this look, and is not taken', read([at('OP10-046', 800, 1300), at('Kyros', 500, 1350)]) === '');
+  ok('...control: its name above it, as an upright card prints it, and it is', read([at('Kyros', 500, 1250), at('OP10-046', 800, 1300)]) === 'OP10-046'); }
+/* the view the guide shows: object-fit: cover of the frame */
+{ const r = SC.viewRect(1080, 1920, 300, 440);
+  ok('the view is the middle of the frame the guide shows: the Fold\'s 1080 x 1920 in a 300 x 440 guide is 1080 x 1584 from y 168', [r.x, r.y, r.w, r.h].map(Math.round).join() === '0,168,1080,1584', JSON.stringify(r)); }
+ok('the looks: the whole view first, then the number\'s corner, the glare look, and both sides', SC.LOOKS.map(l => l.name).join() === 'whole,near,glare,left,right');
+/* the vote, then the hold: a card left in view is counted once (landmine 16) */
+{ const decisions = (v, seq, resetAfter) => { let n = 0; for (const x of seq) if (v.push(x)) { n++; if (resetAfter) v.reset(); } return n; };
+  const stay = ['OP01-016', 'OP01-016', 'OP01-016', 'OP01-016', 'OP01-016', 'OP01-016', 'OP01-016', 'OP01-016'];
+  ok('a card left in view for eight reads is decided once', decisions(SC.makeVoter(), stay) === 1);
+  ok('...control: a vote reset after each decision, as take 10\'s loop did, decides it four times', decisions(SC.makeVoter(), stay, true) === 4);
+  const v = SC.makeVoter();
+  ok('the number decided is held while it stays in view', v.push('OP01-016') === null && v.push('OP01-016') === 'OP01-016' && v.held === 'OP01-016' && v.push('OP01-016') === null);
+  ok('...two captures without it (a hand, a flicker) do not let it go', v.push(null) === null && v.push(null) === null && v.held === 'OP01-016' && v.push('OP01-016') === null);
+  ok('...three do, and the card back in view is decided again from two fresh reads', (v.push(null), v.push(null), v.push(null), v.held === null) && v.push('OP01-016') === null && v.push('OP01-016') === 'OP01-016');
+  ok('...another card while one is held is voted on as usual', v.push('OP01-017') === null && v.push('OP01-017') === 'OP01-017' && v.held === 'OP01-017'); }
+
 /* identifyFrame, the star detector and the quad detector need a REAL canvas
    with real pixels. This harness's DOM mock has neither -- getImageData
    returns a proxy -- so those stages live in render.mjs (Chrome mode), where a
@@ -964,10 +1004,11 @@ ok('offline, the sync check SKIPs rather than failing', by['Sync URL answers'].s
    parseRead never had). Exercise the comparison with an injected answer. */
 {
   const P = V.PLATFORM, hadOcr = P.hasOcr, ocr = P.ocr;
-  P.hasOcr = () => true; P.ocr = async () => 'OP01-016';
+  const said = text => async () => ({ text, lines: [{ text, box: null }] });   // take 125: the recogniser's answer is { text, lines }
+  P.hasOcr = () => true; P.ocr = said('OP01-016');
   const good = Object.fromEntries((await V.SELFTEST.run()).checks.map(c => [c.name, c]))['OCR reads a code the app drew (ML Kit)'];
   ok('the OCR self-test PASSES a correct read of the code it drew', good && good.s === 'PASS' && /OP01-016/.test(good.note), JSON.stringify(good));
-  P.ocr = async () => 'nothing like a code';
+  P.ocr = said('nothing like a code');
   const bad = Object.fromEntries((await V.SELFTEST.run()).checks.map(c => [c.name, c]))['OCR reads a code the app drew (ML Kit)'];
   ok('negative control: a wrong read FAILS it', bad && bad.s === 'FAIL', JSON.stringify(bad));
   P.hasOcr = hadOcr; P.ocr = ocr;
