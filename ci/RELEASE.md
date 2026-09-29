@@ -1,4 +1,4 @@
-# OP TCG Hub — take 122
+# OP TCG Hub — take 123
 
 ## Installing — read this first
 
@@ -17,6 +17,14 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 123:** Under the hood of the Sim: the board now draws only what
+the player whose turn it is may see -- the other hand, both Lives and both
+decks as counts -- from one view the engine hands it, ready for the Sim's
+redesign. Two people sharing the phone are now Player 1 and Player 2, so
+neither board calls the other player "You". A Life card with [Trigger] that
+its player chooses not to use now goes to hand unseen, as the rules say:
+the log no longer names it. Nothing else about how a game plays changes.
 
 **New at take 122:** The Sim plays by the rules more closely. Once Per Turn
 means once per card, ten ready-made decks' Leaders now use their own

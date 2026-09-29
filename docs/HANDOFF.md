@@ -1,4 +1,158 @@
-# HANDOFF — through Take 122
+# HANDOFF — through Take 123
+
+## Take 123 — 2026-09-29 — the Sim ready for the UI pass: one view per seat, private things kept by the engine
+
+Opened before any code (PROTOCOL §6), on the take-122 branch while PR #47
+waits for the owner's merge (green, marked ready on his word); it is rebased
+on `main` and opened as its own PR once #47 is merged.
+
+The owner, after seeing take 122's look: "Looks good ... We just need to
+ensure the core of the game is good and the code is ready for the full UI
+overhaul, if so continue." His board rule from the plan: the real table,
+private things shown only on that player's turn.
+
+**The plan:**
+
+- `SIM.view(seat)` -- the one thing a board draws from. Public: the fields,
+  trashes, DON!!, the battle, the log. Private, and redacted by the engine,
+  not the screen: the other seat's hand (a count), both Lives and both decks
+  (counts; no one sees a face-down Life), cards being looked at (only to the
+  player looking), an effect's choices (only to the player deciding). Each
+  card carries what a playmat needs: its uid and ref, name, cost, power now
+  and printed, rested, DON!! given, keywords printed and granted, its
+  picture's URLs and fallback colours, its proof mark, its text and what the
+  app will do with each line.
+- The board repainted from `view()` and `legal()` only, the same look; a guard
+  that no painter reads the engine's state.
+- A smoke check that no hidden card appears in the other seat's view, with a
+  planted leak as its control.
+- `docs/SIM-UI.md`: the contract the UI pass builds against -- the API, the
+  view model, the privacy guarantees, what it must keep, and the harnesses
+  that catch a UI that breaks a rule.
+
+PR #47 was merged at 14:05 UTC; this take was rebased onto `main` and opened
+as its own PR.
+
+### What this take changes
+
+- **`SIM.view(seat)`** in `src/sim.js`, with `SIM.face` (a card as a board
+  draws it) and `SIM.onField` (a card in play: its uid and ref, power now
+  and printed, rested, DON!! given, keywords printed and granted, its lines
+  with what the app does and their proof marks, and the continuous lines the
+  app does not compute). A read: calling it changes nothing. The other
+  seat's hand is a count (§3-4); both Lives and both decks are counts
+  (§3-10, §3-2); `looking` goes only to the player looking; an offer's
+  `choices` and `legal` go only to the seat deciding. A hand card carries
+  its `play` hint (`SIM.canPlay`) at every moment, so a board can say why a
+  card cannot be played while an effect waits.
+- **The board drawn from the view alone.** `paintSim` takes
+  `SIM.view(simSeat())` and hands it to every painter (`simTableHtml`,
+  `simBattleHtml`, `simPostHtml`, `simOverHtml`, `simMulliganHtml`,
+  `simUnit`, `simStage`, `simHandLabel`, `simOfferPanel`, `simLog`); no
+  painter reads `SIM.g` or `SIM.P`. The look is the same as take 122's.
+- **Hot-seat players are Player 1 and Player 2.** The look showed Player
+  2's board naming the other seat "You"; against the app the human is still
+  "You".
+- **`docs/SIM-UI.md`** -- the contract for the owner's UI pass: the API,
+  the view's fields, the moves, what is private and to whom, what the pass
+  must keep, and the checks that will tell it it broke something. The gate
+  requires the file.
+- **A [Trigger] not yet used stays a face-down Life card** (§10-1-5: its
+  player may add it to hand without revealing it). A review of the view
+  against the rules found the view's first cut handing the other seat the
+  waiting Trigger's card and text (the offer is now `hidden`, saying only
+  that the game waits on a [Trigger]), and two log lines older than this
+  take naming hidden cards: a declined by-hand Trigger (now "adds the Life
+  card to hand without revealing it") and a by-hand "place a card from
+  hand on top of the deck" (now "a card from hand"). Landmine 224.
+- RULES.md §6 says what the view keeps private; the digest's "where" for
+  §3-2, §3-4, §3-10 and §10-1-5 names `SIM.view`.
+
+### Measured
+
+- **Smoke 1,437 passed, 0 failed** (1,419 at the take's start). **Render 242
+  in Chrome.**
+- **The privacy checks, each watched failing first:** smoke plants names no
+  real card carries in both hands, both Lives, both decks and a look, and
+  finds none of the other seat's in either view; a build that hands the
+  other hand to the view is named five times. The painter guard names a
+  planted `SIM.P` read. Self-play's ninth plant, a view that shows the
+  other hand, is named at move 1.
+- **The Trigger leak, measured on the build before its fix:** 212 of 400
+  self-play games handed the attacker the defender's unused Trigger; smoke's
+  three new checks fail there, naming the card (Guard Point; a Hamlet put on
+  top of the deck). After the fix: 0, and self-play's tenth and eleventh
+  plants (a view that names the Trigger, a log that names it) are named.
+- **Self-play with the view audit:** 4,000 games both ways (837,191 moves
+  audited, 34,963 illegal moves refused unchanged) and 1,200 two-app games
+  (250,951 moves): **0 violations**; `--selftest` names all eleven plants.
+- **Card proofs: 25 proofs, 85 printings, 346 scenarios, 0 failed** -- the
+  engine's behaviour unchanged.
+- **The look, take 123:** a real hot-seat game in Chromium at both Fold
+  sizes -- seat one sees its six cards and none of the other's, the curtain
+  names Player 2, seat two after the hand-over sees its seven and none of
+  the other's, the defender sees the battle and not the attacker's hand:
+  10 of 10.
+- **The view's size:** 21 KB of JSON at the median, 45 KB at most, over
+  6,424 views of 20 bot games; the log and the trashes are most of it late
+  in a game (one turn-11 view: 30 KB, the log 8.6 KB, the trashes 9 KB).
+- **The clean run (PROTOCOL §6b; the gate's self-play changed):** the tracked
+  tree with this take's files in an empty directory, `git init` first,
+  `node_modules` linked, the pipeline from ingest (87 groups, 7,676 products,
+  hash coverage 100%): smoke 1,437/1,437, render 242 in Chrome, the gate
+  passed. The seal passed here, and `gate.py --selftest` fires every probe.
+
+### What I got wrong
+
+- My escape pass (landmine 219) diffs against `main`; with take 122 not
+  yet merged it read take 122's lines as new and escaped the Sim's
+  subtitle markup a second time. It now reads only lines inside
+  `<script id="app">`.
+- `view()` first left a hand card's play hint `null` while an effect
+  waited, and the table painter crashed on it; `canPlay` is now read every
+  time.
+- The look's first leak check named a hand card that shares its name with
+  the Kid Leader on the table (landmine 223).
+- `docs/SIM-UI.md` first gave the view as "about 6 KB" from one early-game
+  view; measured, it is 21 KB at the median.
+- I first wrote the view and its checks without the [Trigger]: the checks
+  planted hidden cards in hands, Lives and decks, and never a Life card on
+  its way to hand. Reading the engine's every log line and offer against
+  §10-1-5 found it, before the PR.
+- My first self-play check on the log met landmine 223 on its first sweep:
+  26 games "named" a Monkey.D.Luffy Trigger that was only the player's name
+  ("Yellow Monkey.D.Luffy -- built from ST29"). It now reads the line with
+  the players' names taken out.
+
+### Ruled out
+
+- **Privacy by the screen:** a board that hides the other hand with CSS or
+  the curtain still holds it in the page, and a redesign can show it by
+  mistake. The view a seat is handed never contains it.
+- **A data source per painter:** each painter reading the parts of the
+  engine it needs is how a new board would leak; one view, one guard.
+
+### Tests
+
+- `node tools/smoke.mjs` -- the take-123 section: the view a pure read, no
+  hidden card in the other seat's view (planted leak as control), own hand
+  and look present, legal and choices only for the seat deciding, the
+  playmat's fields, the painter guard (planted `SIM.P` as control), the
+  seat names, `paintSim` on `SIM.view(simSeat())`.
+- `node tools/selfplay.mjs [--two-apps] [--selftest]` -- both seats' views
+  audited after every move, a declined Trigger's log line too; eleven
+  plants.
+- `node tools/look.mjs 123` -- five steps at both Fold sizes, 10 of 10.
+
+### DEFERRED
+
+- The UI/UX pass itself (the playmat, the pictures, the zoom): the owner's,
+  with his own skills, on this contract.
+- Copy for that pass: the log and some headings use the player's name as
+  the subject, so against the app they read "You ends the turn".
+- The view carries the whole log and every trash card's face each time; a
+  second phone (D18) would want only what changed. Not needed on one phone.
+- Two phones by a code or a QR: D18.
 
 ## Take 122 — 2026-09-29 — the Sim's engine: rules v1.2.1, the audit's fixes, card proofs, self-play, a Rules button
 

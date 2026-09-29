@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 122.*
+*Current as of take 123.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -235,6 +235,8 @@ Start here. Do not read top to bottom.
 | The Sim offers a choice or a cost that it then refuses | 220 |
 | A test that passed for many takes fails after an unrelated change | 221 |
 | A proof binds a printing no deck deals | 222 |
+| A privacy check names a card the other seat may see | 223 |
+| The other seat learns a card that moved unrevealed | 224 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -2893,6 +2895,34 @@ errata, which no ready-made deck deals, and ran nowhere the owner plays it.
 AGENTS rule 3 again, one layer down: a proof names its printing (`cards.py
 --new NUM --id ID`, the one the deck deals), binds that text, and leaves the
 other unproven until it is proven.
+
+**223. A hidden card named by its name is also a public card of that name.**
+The look's first privacy check (take 123) searched the page for the names of
+the other seat's hand and reported a leak: a Eustass"Captain"Kid in that hand
+shares its name with the Kid Leader on the table, which both seats see. A
+card name is not an identity; four copies and a Leader of the same name are
+ordinary. A check by name first takes out every name the seat may see
+anyway -- both fields (Leader, Characters, Stage), both trashes, and its own
+hand (`publicNames` in `tools/look/steps.mjs`); smoke's check plants names
+no real card carries, and self-play's reads the view's structure
+(`them.hand` is `null`). It bit twice in one take: self-play's check that a
+declined [Trigger] is not named in the log (landmine 224) first "found" 26
+games naming a Monkey.D.Luffy -- the player, named for its deck and Leader
+("Yellow Monkey.D.Luffy -- built from ST29"). The players' names are taken
+out of the line before it is read.
+
+**224. The log is in every view, so a sentence can leak what the view keeps
+out.** Take 123 kept the other hand, the Lives and the decks out of a seat's
+view -- and the log, which both seats read, still named a declined [Trigger]
+("<its name>: the rest is declined"; §10-1-5 lets its player add it to hand
+without revealing it) and a card put from hand on top of the deck by hand.
+The view's first cut also handed the attacker the waiting Trigger's card and
+text in its `offer`: in 212 of 400 self-play games. A privacy check that
+plants hidden cards only where they rest (hand, Life, deck) never sees a card
+on its way between two hidden places. Read every log sentence and every
+field of the view against where its card came from and where it went; a
+card that moves unrevealed is named nowhere. Checked by smoke (the log
+sentences included in its leak check) and by self-play after every move.
 
 ## §2 — Inherited from APEX ORV
 

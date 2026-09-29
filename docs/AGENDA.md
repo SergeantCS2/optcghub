@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 122.* Ranked by blocking-ness, not by interest.
+*Current as of take 123.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -74,14 +74,15 @@ what take 115 changed on screen.
    residential IP.
 3. **A41** -- waits on the owner's list of the parts and the source; then
    one take per source, measured on the runner first.
-4. **A23, the Sim -- the owner's priority from take 122.** Take 122 (in
-   flight): the audit's fixes and the whole-Sim review, the rules on v1.2.1
-   with Check for updates, card proofs, self-play (two apps included), the
-   wording families, the Rules button. Take 123: the view model and the privacy rule, then
-   "ready for the UI" to the owner, whose UI/UX pass (the real table, the
-   pictures) follows. After it: the tail -- modal effects, ordering,
-   protection, the opponent's hidden choices -- one mechanism per take,
-   each proven through `tools/cards/`.
+4. **A23, the Sim -- the owner's priority from take 122.** Take 122 (merged,
+   PR #47): the audit's fixes and the whole-Sim review, the rules on v1.2.1
+   with Check for updates, card proofs for ST01 and every ready-made Leader,
+   self-play (two apps included), the wording families, the Rules button.
+   Take 123: the view model and the privacy rule, and `docs/SIM-UI.md` --
+   **ready for the UI.** Next is the owner's UI/UX pass (the real table, the
+   pictures, the zoom), built on `docs/SIM-UI.md`. After it: the tail --
+   modal effects, ordering, protection, the opponent's hidden choices -- one
+   mechanism per take, each proven through `tools/cards/`.
 5. **A31** Collectr import, the day a real exported file exists.
 6. The standing offer: the release-notes trim.
 
@@ -2206,10 +2207,15 @@ in the future, the simulator.
 - **Untagged effect sentences** (ST30-001's "-2000 while you have a 7000
   Character") are not effect lines yet: its own take, since taking them in
   reopens every proof's text fingerprint.
-- **Next (take 123):** `SIM.view(seat)`, the privacy rule ("private things
-  only on that player's turn") enforced by the engine, the board drawn from
-  `view()` and `legal()`, and D18 brought up to date for two phones by a code
-  or a QR with no accounts. Then the owner's UI pass.
+- **Take 123 -- ready for the UI pass (done).** `SIM.view(seat)`, the
+  privacy rule ("private things only on that player's turn") kept by the
+  engine -- an unused [Trigger] and the log included (landmine 224) --
+  the board drawn from `view()` and `legal()` only, and
+  `docs/SIM-UI.md`, the contract the owner's UI pass builds against. D18 was
+  brought up to date at take 122. **Ruled out: privacy by the screen** -- a
+  board that hides the other hand with CSS or a curtain still holds it in the
+  page; the view a seat is handed never contains what that seat may not see,
+  so a redesigned board cannot show it by mistake. Then the owner's UI pass.
 
 The owner wants an actual simulator inside Prep & Play, in the future. Scoped
 honestly:

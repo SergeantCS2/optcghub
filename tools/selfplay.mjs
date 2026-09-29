@@ -10,7 +10,8 @@
  * one zone, DON!! summing to ten, the Character and Stage limits, no negative count, attacks only by an active
  * card at a legal target after the attacker's first turn, costs paid from active DON!!, a uid of its own for
  * every card on the field, a Once Per Turn line
- * resolved at most once per card and turn (counted here, not read from the engine), the refresh, and the
+ * resolved at most once per card and turn (counted here, not read from the engine), each seat's view holding
+ * only what that seat may see (take 123), the refresh, and the
  * two defeats. At the end the game is replayed from its seed and moves and must end the same.
  *
  *   node tools/selfplay.mjs [--games N] [--seed S] [--policy bot|chaos|both] [--two-apps] [--json]
@@ -48,6 +49,19 @@ function audit(S, g, before, a, seat, head, book, deckSizes) {
   });
   /* a by-hand tray spends what its line's words allow and no more (landmine 212): every budget a count, never below zero */
   if (g.hand) for (const [k, v] of Object.entries(g.hand.left)) if (k !== '_' && !(Array.isArray(v) || (Number.isFinite(v) && v >= 0))) say(`the by-hand tray's budget for ${k} is ${v} (landmine 212)`);
+  /* take 123: each seat's view holds only what that seat may see -- the other hand and what it looks at are counts, an effect's
+     choices and the moves go to the seat deciding, and no Life or deck is in it at all */
+  for (const s of [0, 1]) { const v = S.view(s), priv = [];
+    if (v.them.hand !== null || v.them.looking !== null) priv.push('the other hand or its look');
+    if (v.offer && v.offer.seat !== s && v.offer.choices !== null) priv.push("the other seat's choices");
+    if (v.who !== s && v.legal.length) priv.push("the other seat's moves");
+    if ([v.me, v.them].some(X => 'life' in X || 'deck' in X)) priv.push('a Life or a deck');
+    const q = g.queue[0]; if (q && q.fromLife && q.step === 0 && q.i !== s && v.offer && (v.offer.cardId !== null || v.offer.raw !== null)) priv.push('a [Trigger] its player has not revealed (§10-1-5)');
+    if (priv.length) say(`seat ${s}'s view holds ${priv.join(', ')} (take 123)`); }
+  /* §10-1-5: a [Trigger] declined goes to hand unrevealed, so the public log does not name it -- read with the players' names taken
+     out, since a player is named for its deck and its Leader ("Yellow Monkey.D.Luffy -- built from ST29"; landmine 223) */
+  const line0 = g.players.reduce((l, P) => l.split(P.name).join(''), g.log[0] || '');
+  if (a.t === 'fxskip' && head && head.fromLife && head.step === 0 && line0.includes(S.card(head.cardId).name)) say(`the log names a Life card its player added to hand unrevealed (§10-1-5)`);
   /* every card on the field is its own card: a uid each, none shared -- what applies to a card, and its Once Per Turn, follow it */
   const uids = g.players.flatMap(P => [P.leader, ...P.chars].concat(P.stage ? [P.stage] : []).map(o => o.uid));
   if (uids.some(u => !(u > 0)) || new Set(uids).size !== uids.length) say(`a card on the field without its own uid (${uids.join(',')})`);
@@ -118,6 +132,9 @@ if (argv.includes('--selftest')) {
     ['an empty deck ignored (take 121 lost only on a failed draw)', 'empty deck', S => { S.rules = function () { const g = this.g; if (g.over === null && g.players.some(P => P.lost)) { g.over = g.players[0].lost ? 1 : 0; g.phase = 'over'; } }; }],
     ['a refusal that keeps its changes', 'changed the game', S => { S.restore = () => {}; const st = S.step; S.step = function (i, a) { const r = st.call(this, i, a); if (!r.ok) this.g.players[i].planted = 1; return r; }; }],
     ['a by-hand tray that never spends (take 121\'s row, in a tray)', 'beyond what its line names', S => { const ho = S.handOp; S.handOp = function (i, a) { const keep = JSON.stringify(this.g.hand.left), r = ho.call(this, i, a); if (r.ok && this.g.hand) this.g.hand.left = JSON.parse(keep); return r; }; }],
+    ['a view that shows the other hand', "view holds", S => { const vw = S.view; S.view = function (s) { const v = vw.call(this, s); v.them.hand = this.P(1 - s).hand.slice(); return v; }; }],
+    ['a view that names a [Trigger] its player has not revealed', 'has not revealed', S => { const vw = S.view; S.view = function (s) { const v = vw.call(this, s), q = this.g.queue[0]; if (v.offer && v.offer.hidden) { v.offer.cardId = q.cardId; v.offer.raw = q.e.raw; } return v; }; }],
+    ['a log that names a declined [Trigger]', 'unrevealed', S => { const st = S.step; S.step = function (i, a) { const q = this.g.queue[0], r = st.call(this, i, a); if (r.ok && a.t === 'fxskip' && q && q.fromLife && !q.step) this.g.log[0] = this.card(q.cardId).name + ': the rest is declined'; return r; }; }],
     ['two cards on the field sharing one uid', 'own uid', S => { const inst = S.inst; S.inst = function (id, turn) { const o = inst.call(this, id, turn); o.uid = 7; return o; }; }],
     ['a card duplicated into play', 'cards in its zones', S => { const pl = S.play; S.play = function (i, h, o) { const id = this.P(i).hand[h]; const r = pl.call(this, i, h, o); if (r.ok && r.card.type === 'Character') this.P(i).chars.push(this.inst(id, this.g.turn)); return r; }; }]
   ];

@@ -1,6 +1,6 @@
 # RULES — the One Piece Card Game, as the deck builder and the Sim must understand it
 
-*Current as of take 122.*
+*Current as of take 123.*
 
 Source: **Bandai, ONE PIECE CARD GAME Comprehensive Rules, Version 1.2.1,
 last updated 28 August 2026** — read in full at take 122 for the Sim's audit
@@ -211,3 +211,11 @@ Character is K.O.'d" (ST08-001) fires after any K.O., by battle or by an
 effect, and never for a card trashed to make room (§3-7-6-1-1). Every Leader
 of the seventeen ready-made decks has a proof in `tools/cards/`: ten run
 from their text, seven by hand, each held to its timing and its tray.
+
+What a player may see is kept by the engine, not the screen (take 123):
+`SIM.view(seat)` gives the other hand as a count (§3-4), both Lives and both
+decks as counts (§3-10, §3-2), the cards being looked at only to the player
+looking, a [Trigger] from Life not yet used only to its player (§10-1-5:
+declined, it goes to hand unrevealed, and the log does not name it), and an
+effect's choices and the legal moves only to the seat deciding; the board
+draws from it and nothing else (`docs/SIM-UI.md`).

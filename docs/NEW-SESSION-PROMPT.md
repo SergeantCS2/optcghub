@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 122.* Paste the block between the rules into a new session
+*Current as of take 123.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -85,6 +85,19 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
 
 **What is in flight when you arrive:**
 
+- **Take 123 -- the Sim ready for the UI pass** (AGENDA A23; HANDOFF take
+  123). `SIM.view(seat)` is everything a board draws and nothing its seat may
+  not see: the other hand, both Lives and both decks are counts, a look, an
+  unused [Trigger], an effect's choices and the legal moves go to the seat
+  deciding, and the log names no card that moved unrevealed -- kept by the
+  engine, not the screen. The board draws from it alone and moves only
+  through `SIM.act`; smoke fails a painter that reads the engine or a view
+  that leaks, and self-play audits both seats' views after every move.
+  `docs/SIM-UI.md` is the contract. Landmines 223-224. **Next, the owner's:** his
+  UI/UX pass on the Sim (the real table, the pictures, the zoom), built on
+  `docs/SIM-UI.md`. **Yours after it:** A23's tail, one mechanism per take,
+  each proven in `tools/cards/`; D18 (two phones) is his to call.
+
 - **Take 122 -- the Sim's engine, on the owner's word the priority** (AGENDA
   A23's take-122 section; HANDOFF take 122 has the whole-Sim review and every
   measurement). The engine is `src/sim.js`; every move is one `SIM.act`, a
@@ -94,11 +107,8 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   Sim against itself (and two copies of it against each other) with an
   auditor after every move; `tools/wording.py` finds the wording one
   template away. The gate runs the proofs, a self-play sample both ways, two
-  apps, and the auditor's planted faults. Landmines 212-222. **Next,
-  yours:** take 123 -- `SIM.view(seat)` and the privacy rule, the board drawn
-  from `view()` and `legal()`, then tell the owner "ready for the UI"; his
-  UI/UX pass (the real table, the pictures) follows. D18 is his for two
-  phones.
+  apps, and the auditor's planted faults. Landmines 212-222. Merged (PR
+  #47); take 123 followed it.
 
 - **Take 121 -- the store-linked AdMob app, and the groundwork for real
   ads.** The build names `~9519036366` (the AdMob app linked to Play;
@@ -291,6 +301,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 123" and begin with PROTOCOL §0.
+Say "take 124" and begin with PROTOCOL §0.
 
 ---
