@@ -223,13 +223,53 @@ if (puppeteer) {
     const skip = [...document.querySelectorAll('#tour button')].find(b => /skip/i.test(b.textContent)); if (skip) skip.click();
     V.MODE.set('play', false); document.querySelector('nav button[data-go="sim"]').click();
     V.SIM.new(d, d, 0); V.SIM.g.bot = 1; V.SIM.g.players[1].name = 'The app'; V.SIM.mulligan(0, false); V.SIM.mulligan(1, false); V.paintSim();
-    const b = document.querySelector('#simBoard');
-    return { panels: b.querySelectorAll('.panel').length, hand: b.querySelectorAll('[data-sim^="play:"]').length, end: !!b.querySelector('[data-sim="end"]'), h: b.getBoundingClientRect().height, legal: V.legality(d).problems.length, vsApp: /The app/.test(b.textContent) };
+    const b = document.querySelector('#simBoard'), r = b.getBoundingClientRect(), nav = document.querySelector('#navPlay'), shown = sel => { const e = document.querySelector(sel); return !!e && getComputedStyle(e).display !== 'none'; };
+    /* take 124: the table -- two halves across the band, the hand as whole cards, the dock; the nav aside; every control on it a
+       44 px square of its own (take 108's measure: its box, and the cross 21 px out from its centre landing on it) */
+    const ctl = [...b.querySelectorAll('button, select')].filter(e => { const q = e.getBoundingClientRect(); return q.width > 0 && q.height > 0; }), small = [];
+    for (const e of ctl) { e.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' }); const q = e.getBoundingClientRect();
+      /* take 124: a hand card held under the next one (the owner's "screen space") owns the strip up to it; its square is there */
+      const nx = e.parentElement && e.parentElement.classList.contains('tb-hand') ? e.nextElementSibling : null, nq = nx && nx.getBoundingClientRect();
+      const right = nq && Math.abs(nq.top - q.top) < q.height / 2 && nq.left < q.right ? nq.left : q.right, w = right - q.left, cx = q.left + w / 2, cy = q.top + q.height / 2;
+      const own = [[cx - 21, cy], [cx + 21, cy], [cx, cy - 21], [cx, cy + 21]].every(([x, y]) => { const t = document.elementFromPoint(x, y); return !!t && (t === e || e.contains(t)); });
+      if (w < 43.99 || q.height < 43.99 || !own) small.push(`${(e.dataset.sim || e.getAttribute('aria-label') || e.textContent).trim().slice(0, 24)} ${Math.round(w)}x${Math.round(q.height)}${own ? '' : ' covered'}`); }
+    window.scrollTo(0, 0);
+    return { halves: b.querySelectorAll('.tb-half').length, band: !!b.querySelector('.tb-band'), dock: !!b.querySelector('.tb-dock'), hand: b.querySelectorAll('.tb-hand .sc').length, end: !!b.querySelector('[data-sim="end"]'),
+      h: Math.round(r.height), bottom: Math.round(b.getBoundingClientRect().bottom), vh: innerHeight, cw: getComputedStyle(b).getPropertyValue('--cw').trim(), navShown: !!nav && getComputedStyle(nav).display !== 'none', tabsShown: shown('.modebar'), headerShown: shown('#sim > .appbar'), top: Math.round(r.top),
+      controls: ctl.length, small, legal: V.legality(d).problems.length, vsApp: /The app/.test(b.textContent), sideways: document.documentElement.scrollWidth > innerWidth + 0.5 };
   });
-  ok('the hot-seat board draws: opponent, player, log panels', sim.panels >= 3, JSON.stringify(sim));
-  ok('the hand is drawn as rows with Play buttons, and the turn can be ended', sim.hand === 5 && sim.end && sim.legal === 0);
-  ok('the board has real height on the phone viewport', sim.h > 600, String(sim.h));
+  ok('the Sim draws its table and the game fills the screen: two halves across the band, the dock; the mode tabs, the header and the nav stepped aside (take 124, the owner)', sim.halves === 2 && sim.band && sim.dock && !sim.navShown && !sim.tabsShown && !sim.headerShown && sim.top <= 60, JSON.stringify(sim));
+  ok('the hand is whole cards in a strip, and the turn can be ended', sim.hand === 5 && sim.end && sim.legal === 0, JSON.stringify(sim));
+  ok('the table fits the phone\'s screen: its cards sized from the space (--cw), its foot on the screen, nothing sideways', sim.h > 500 && sim.bottom <= sim.vh + 1 && /^\d+px$/.test(sim.cw) && parseInt(sim.cw, 10) >= 44 && !sim.sideways, JSON.stringify({ h: sim.h, bottom: sim.bottom, vh: sim.vh, cw: sim.cw }));
+  ok('every control on the table is a 44 px square of its own (take 108\'s measure)', sim.controls >= 10 && sim.small.length === 0, `${sim.small.length} of ${sim.controls}: ${sim.small.slice(0, 4).join(' | ')}`);
   ok('against the app, the board names the opponent as the app (take 55)', sim.vsApp === true);
+  /* take 124, the owner mid-take: the card backs in the game's colours, as Chrome draws them -- the deck's deep blue, the DON!!
+     deck's white in black, a DON!! face up white -- and "using the screen space as optimally as possible" at four sizes: the
+     table's foot at the screen's (24 px at most unused), all five cards of a first hand on the screen with a 44 px strip of
+     their own, nothing sideways; the control is take 124's first hand (one strip at 1.45 cards) on the same page */
+  const backs = await page.evaluate(() => { const b = document.querySelector('#simBoard'), rgb = s => (s.match(/\d+(\.\d+)?/g) || []).slice(0, 3).map(Number);
+    const hue = ([r, g, bl]) => { const mx = Math.max(r, g, bl), d = mx - Math.min(r, g, bl); if (!d) return -1; const h = mx === r ? ((g - bl) / d) % 6 : mx === g ? (bl - r) / d + 2 : (r - g) / d + 4; return (h * 60 + 360) % 360; };
+    const deck = b.querySelector('.me .stk.deck .sb'), dk = b.querySelector('.me .dkst .sb'), tk = b.querySelector('.me .tk');
+    return { deck: deck && hue(rgb(getComputedStyle(deck).backgroundColor)), face: deck && getComputedStyle(deck, '::before').backgroundImage.slice(0, 60),
+      dkFrame: dk && rgb(getComputedStyle(dk).backgroundColor), dkFace: dk && getComputedStyle(dk, '::before').backgroundImage.slice(0, 60), tk: tk && getComputedStyle(tk).backgroundImage.slice(0, 60) }; });
+  ok('the card backs as Chrome draws them: the deck\'s back a deep blue, the DON!! deck\'s white in a black frame, a DON!! face up white (the owner, take 124)',
+     backs.deck >= 205 && backs.deck <= 245 && /radial-gradient/.test(backs.face || '') && backs.dkFrame && Math.max(...backs.dkFrame) <= 16 && /rgb\(255, 255, 255\)/.test(backs.dkFace || '') && /rgb\(255, 255, 255\)/.test(backs.tk || ''), JSON.stringify(backs));
+  const spaceAt = async (vp) => { await page.setViewport(vp); await new Promise(r => setTimeout(r, 150));
+    return page.evaluate(() => { const V = window.VAULT; V.paintSim(); const b = document.querySelector('#simBoard'), sec = document.querySelector('#sim'), padB = parseFloat(getComputedStyle(sec).paddingBottom) || 0;
+      const measure = () => { const hand = b.querySelector('.tb-hand'), hr = hand.getBoundingClientRect(), cards = [...hand.querySelectorAll('.sc')];
+        const strips = cards.map((e, i) => { const q = e.getBoundingClientRect(), nx = cards[i + 1] && cards[i + 1].getBoundingClientRect(); return { q, w: (nx && Math.abs(nx.top - q.top) < q.height / 2 && nx.left < q.right ? nx.left : q.right) - q.left }; });
+        return { n: cards.length, shown: strips.filter(({ q }) => q.left >= hr.left - 1 && q.right <= hr.right + 1 && q.top >= 0 && q.bottom <= innerHeight + 0.5).length, strip: Math.round(Math.min(...strips.map(s => s.w))),
+          unused: Math.round(innerHeight - b.getBoundingClientRect().bottom - padB), sideways: document.documentElement.scrollWidth > innerWidth + 0.5, cw: getComputedStyle(b).getPropertyValue('--cw').trim(), hw: Math.round(cards[0].getBoundingClientRect().width) }; };
+      const now = measure(), hand = b.querySelector('.tb-hand');
+      /* the control: take 124's first hand on this page -- one strip, 1.45 cards wide where the width sets the card */
+      hand.classList.remove('fit'); hand.style.paddingLeft = hand.style.paddingRight = ''; hand.querySelectorAll('.sc').forEach(e => { e.style.marginLeft = ''; });
+      const cw = parseFloat(now.cw); b.style.setProperty('--hw', (innerWidth < 640 ? Math.floor(cw * 1.45) : Math.floor(cw * 1.12)) + 'px'); const old = measure(); V.paintSim();
+      return { now, old }; }); };
+  const space = {}; for (const [k, vp] of Object.entries({ phone: PHONE(360, 780), cover: FOLD.cover, inner: FOLD.inner, tablet: { width: 1280, height: 800, deviceScaleFactor: 2 } })) space[k] = await spaceAt(vp);
+  await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
+  ok('the table uses the screen at four sizes -- a phone, the Fold\'s two, a tablet: its foot within 24 px of the screen\'s, all of a first hand on the screen, each card with a 44 px strip of its own, nothing sideways (the owner, take 124)',
+     Object.values(space).every(({ now: s }) => s.unused >= 0 && s.unused <= 24 && s.n === 5 && s.shown === 5 && s.strip >= 44 && !s.sideways), JSON.stringify(Object.fromEntries(Object.entries(space).map(([k, v]) => [k, v.now]))));
+  ok('...control: take 124\'s first hand -- one strip -- leaves the Fold\'s cover 60 px or more unused, or hides part of the hand', space.cover.old.unused >= 60 || space.cover.old.shown < 5, JSON.stringify(space.cover.old));
   const simShot = await page.screenshot({ encoding: 'base64', fullPage: false });
   fs.writeFileSync(path.join(ROOT, 'www', 'render-sim.png'), Buffer.from(simShot, 'base64'));
   await page.evaluate(() => { window.VAULT.SIM.g = null; window.VAULT.MODE.set('collect', false); document.querySelector('nav button[data-go="collection"]').click(); });

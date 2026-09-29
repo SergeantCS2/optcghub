@@ -561,7 +561,11 @@ def check_sim():
     violation -- the app's opponent, chaos with refused moves that must change nothing, and two apps kept in step
     by moves alone -- and the auditor names every fault planted in it. Watched failing at take 122: the proofs on
     take 121's app (123 of 200 scenarios), the auditor's eight plants, and this check's own probe below; the review's
-    self-play sweep (7,200 games) found three more faults in the engine, each now a check."""
+    self-play sweep (7,200 games) found three more faults in the engine, each now a check. Take 124 (the owner: "Test all
+    starter decks and as many random/arbitrary decks (that are still legal), after every turn ends audit all moves against
+    the rules"): the sample deals ready-made pairings and random legal decks in turn, and the rulebook
+    (tools/lib/rulebook.mjs) holds every move to the rules' own model of the game, the card's words check every scripted
+    step to its text; their plants run in the selftest, each named."""
     if not os.path.exists(os.path.join(ROOT, "www", "app.js")):
         return note("www/ not built -- the Sim's proofs and self-play were skipped")
     for args, what in ((["tools/cardproof.mjs"], "card proofs"),

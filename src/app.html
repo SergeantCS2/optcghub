@@ -805,6 +805,241 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
   padding:10px 18px;font-size:var(--fs-label);font-weight:600;opacity:0;transition:opacity var(--dur-ui);
   pointer-events:none;white-space:normal;max-width:min(92vw,520px);text-align:center;box-sizing:border-box;width:max-content}   /* take 99, the look: left:50% halves the available width, so without width:max-content a long toast wrapped into a tall half-width pill */
 .toast.on{opacity:1}
+/* ---- the Sim's table (take 124) ----------------------------------------------------------------------------------
+   A playmat. Its felt is dark in both themes, as a mat is on any table: inside #simBoard.table the palette is Prep &
+   Play's dark one, value for value (smoke checks they are equal, so the contrast the six palettes measure holds here),
+   and every control on the table reads as it does in dark mode. Every size is a fraction of --cw, a card's width, which
+   simFit() solves from the space; nothing is under --fs-cap. The nav steps aside while a game is on the screen. */
+#simBoard.table{--bg:#15171C;--card:#1E2128;--card2:#262A33;--line:#3A3F4B;--fg:#F1EFE6;--dim:#B8BCC6;--dim2:#969CAA;
+  --brass:#E0553D;--brass2:#B64731;--teal:#E0553D;--gold:#F0B27A;--up:#8FD19E;--down:#F28B7B;--accent-ink:#E5705C;--line-strong:#71747A;--on-accent:#1A1408;
+  --accent-bg:color-mix(in srgb,var(--brass) 12%,var(--card));--bad-bg:color-mix(in srgb,var(--down) 14%,var(--card));--ok-bg:color-mix(in srgb,var(--up) 14%,var(--card));--warn-bg:color-mix(in srgb,var(--gold) 12%,var(--bg));
+  --mat:#101318;--mat2:#181C23;--mat-line:rgba(241,239,230,.16);
+  --cw:64px;--ch:calc(var(--cw) * 1.397);--hw:calc(var(--cw) * 1.12);--gap:6px;
+  color-scheme:dark;color:var(--fg);position:relative;display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:"top" "mat" "hand" "dock";row-gap:8px;
+  margin:0 calc(8px - var(--pad));-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+/* the game fills the screen once it is dealt (the owner, take 124): the mode tabs, the header and the nav step aside, and the
+   table carries the status bar's inset itself; Leave on its top bar brings them back */
+#sim.screen:has(#simBoard.table){padding-top:var(--sat);padding-bottom:calc(8px + var(--sab))}
+#sim.screen:has(#simBoard.table) > .appbar{display:none}
+:root:has(#sim.screen.on #simBoard.table) .modebar{display:none}
+:root:has(#sim.screen.on #simBoard.table) nav{display:none}
+.tb-top{grid-area:top;display:flex;align-items:center;gap:2px;min-height:48px;padding:2px 0 0}
+.tb-leave{display:flex;align-items:center;gap:4px;flex:none;min-height:44px;padding:0 14px 0 8px;border-radius:var(--r-pill);border:1px solid var(--line);color:var(--fg);font-weight:700;font-size:var(--fs-label)}
+.tb-leave svg.g{color:var(--fg)}
+.tb-stat{flex:1 1 auto;min-width:0;padding:0 8px;font-size:var(--fs-sm);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-stat b{color:var(--fg);font-family:var(--heavy);font-weight:800}
+.tb-top .icb{color:var(--fg)}
+.tb-mat{grid-area:mat;position:relative;border-radius:var(--r-lg);overflow:hidden;padding:4px;
+  background:radial-gradient(90% 50% at 50% 50%,rgba(224,85,61,.13),transparent 70%),repeating-linear-gradient(45deg,rgba(255,255,255,.022) 0 2px,transparent 2px 6px),linear-gradient(180deg,var(--mat2),var(--mat) 46%,var(--mat) 54%,var(--mat2));
+  box-shadow:inset 0 0 0 1px var(--mat-line),0 12px 30px rgba(0,0,0,.35)}
+.tb-half{position:relative;display:grid;gap:var(--gap);padding:4px 0}
+.tb-ground{position:absolute;inset:0;overflow:hidden;opacity:.36;pointer-events:none;background:linear-gradient(160deg,var(--a1),var(--a2))}
+.tb-ground img{width:100%;height:100%;object-fit:cover;object-position:50% 22%;filter:blur(16px) saturate(1.15);transform:scale(1.2)}
+.tb-half.them .tb-ground{-webkit-mask-image:linear-gradient(180deg,#000 30%,transparent 96%);mask-image:linear-gradient(180deg,#000 30%,transparent 96%)}
+.tb-half.me .tb-ground{-webkit-mask-image:linear-gradient(0deg,#000 30%,transparent 96%);mask-image:linear-gradient(0deg,#000 30%,transparent 96%)}
+.tb-row{position:relative;display:grid;grid-template-columns:repeat(5,var(--cw));justify-content:center;align-items:center;gap:var(--gap)}
+.slot{display:grid;place-items:center;width:var(--cw);height:var(--ch);border-radius:var(--r-sm);border:1px dashed var(--mat-line);
+  color:var(--dim);font-family:var(--heavy);font-weight:800;font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase}
+/* a card: its face (turned when rested), and upright on it its power, its DON!!, its marks */
+.sc{position:relative;display:block;flex:none;width:var(--cw);height:var(--ch);padding:0;border-radius:var(--r-sm);touch-action:manipulation;
+  transition:transform var(--dur-ui) cubic-bezier(.4,0,.2,1)}
+.sc .sf,.stk .sb,.stk.trash .sf{position:absolute;inset:0}
+.sf{border-radius:var(--r-sm);overflow:hidden;background:linear-gradient(160deg,var(--a1),var(--a2));
+  box-shadow:0 3px 8px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.16);transition:transform var(--dur-ui) cubic-bezier(.4,0,.2,1),box-shadow var(--dur-ui)}
+.sf img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity var(--dur-ui);-webkit-user-drag:none}
+.sf img.ok{opacity:1}
+.sft{position:absolute;left:4px;right:4px;top:5px;font-size:var(--fs-cap);line-height:1.2;color:#fff;text-align:left;text-shadow:0 1px 2px rgba(0,0,0,.85);overflow:hidden}
+.sft b{display:block;font-weight:700;overflow-wrap:break-word;-webkit-hyphens:auto;hyphens:auto}
+.sft i{display:block;margin-top:2px;font-style:normal;opacity:.92}
+.sc.rest .sf{transform:rotate(90deg) scale(.715)}
+.sc .pw,.stk .cnt{position:absolute;left:50%;bottom:-5px;z-index:2;transform:translateX(-50%);padding:1px 7px;border-radius:var(--r-pill);background:rgba(8,10,14,.9);
+  border:1px solid rgba(255,255,255,.24);font-family:var(--heavy);font-weight:800;font-size:var(--fs-cap);line-height:1.35;color:#fff;font-variant-numeric:tabular-nums;white-space:nowrap}
+.sc .pw.up{color:#A6E6B4;border-color:rgba(143,209,158,.7)}
+.sc .pw.down{color:#FFA696;border-color:rgba(242,139,123,.7)}
+.sc .dn{position:absolute;right:-5px;top:-5px;z-index:2;min-width:22px;padding:1px 5px;border-radius:var(--r-pill);background:linear-gradient(180deg,#FFFFFF,#ECE9E1);border:1.5px solid #0A0A0A;
+  color:#0A0A0A;font-family:var(--heavy);font-weight:800;font-size:var(--fs-cap);line-height:1.35;box-shadow:0 2px 6px rgba(0,0,0,.55)}
+.sc .kws{position:absolute;left:-5px;top:22%;z-index:2;display:flex;flex-direction:column;gap:3px}
+.sc .kws i{display:grid;place-items:center;min-width:20px;height:20px;padding:0 3px;border-radius:var(--r-pill);background:rgba(8,10,14,.9);border:1px solid rgba(255,255,255,.24);
+  font-style:normal;font-family:var(--heavy);font-weight:800;font-size:var(--fs-cap);color:#fff}
+.sc .kws svg.g{color:#fff}
+.sc .ya{position:absolute;left:0;bottom:0;z-index:2;width:0;height:0;border-style:solid;border-width:16px 0 0 16px;border-color:transparent transparent transparent var(--gold)}
+.sc .tg{position:absolute;left:50%;top:50%;z-index:3;transform:translate(-50%,-50%);padding:2px 8px;border-radius:var(--r-pill);background:var(--brass);color:var(--on-accent);
+  font-family:var(--heavy);font-weight:800;font-size:var(--fs-cap);white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.sc.sel{transform:translateY(-4px)}
+.sc.sel .sf{box-shadow:0 0 0 2px var(--fg),0 0 0 4px var(--brass),0 10px 22px rgba(0,0,0,.6)}
+.sc.can .sf{box-shadow:0 0 0 2px rgba(240,178,122,.85),0 0 14px rgba(240,178,122,.35),0 3px 8px rgba(0,0,0,.5)}
+.sc.aim .sf{box-shadow:0 0 0 2px var(--brass),0 0 16px rgba(224,85,61,.6);animation:tbAim 1.2s ease-in-out infinite}
+@keyframes tbAim{50%{box-shadow:0 0 0 3px var(--brass),0 0 26px rgba(224,85,61,.9)}}
+.sc.no .sf{filter:saturate(.5) brightness(.58)}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* a card back in the game's colours (the owner, take 124): the deck's deep blue in a darker blue border, a Leader's red in a
+   darker red one, a DON!! card's white in black -- the compass over the sea chart on each, as the app's icon draws it
+   (g-cardart); Life's lie sideways, the emblem turned with them */
+.sb{display:block;position:relative;border-radius:var(--r-sm);overflow:hidden;background:#0B1B45;color:#8DB4F5;--cbk:#EAF2FF;--f1:#2555AD;--f2:#112B69;box-shadow:0 2px 6px rgba(0,0,0,.55)}
+.sb.ld{background:#4C0A10;color:#FFBBAF;--cbk:#FFF3EF;--f1:#D23A3C;--f2:#80141A}
+.sb.dn{background:#0A0A0A;color:#161616;--cbk:#FFFFFF;--f1:#FFFFFF;--f2:#E9E6DE}
+.sb::before{content:"";position:absolute;inset:6%;border-radius:2px;background:radial-gradient(circle at 50% 46%,var(--f1),var(--f2) 80%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.sb .cb{position:absolute;inset:6%;width:88%;height:88%}
+.sb.rv{position:absolute;inset:0;z-index:3;pointer-events:none}
+.stk{position:relative;display:block;width:var(--cw);height:var(--ch)}
+/* Life lies sideways, as on the play sheet, each card a little lower than the one under it (the deck stands upright) */
+.stk .sb.lf{left:0;right:0;height:calc(var(--cw) / 1.397);top:calc((var(--ch) - var(--cw) / 1.397) * var(--k) / max(1, var(--m) - 1))}
+.stk .sb.lf .cb{inset:auto;left:50%;top:50%;width:calc(var(--cw) / 1.397 * .88);height:calc(var(--cw) * .88);transform:translate(-50%,-50%) rotate(90deg)}
+.stk .cnt svg.g{width:12px;height:12px;margin-right:3px;vertical-align:-2px;color:#FFA696}
+.stk.trash{padding:0;border-radius:var(--r-sm)}
+.stk .slot{position:absolute;inset:0;width:auto;height:auto}
+/* the cost area: a DON!! card each, face up -- white in its black border (the owner, take 124) -- active upright, rested turned;
+   the DON!! deck beside them, its white backs stacked, and its count */
+.tb-don{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px}
+.tk{display:grid;place-items:center;width:calc(var(--cw) * .28);height:calc(var(--cw) * .4);border-radius:3px;background:linear-gradient(160deg,#FFFFFF,#ECE9E1);
+  box-shadow:inset 0 0 0 1.5px #0A0A0A,0 1px 3px rgba(0,0,0,.55);transition:transform var(--dur-ui),opacity var(--dur-ui)}
+.tk.r{transform:rotate(90deg);opacity:.5}
+.tk svg.g{width:72%;height:auto;color:#0A0A0A}
+.tb-strip .tk svg.g{display:none}
+.tb-don .dk{display:flex;align-items:center;gap:5px;margin-left:6px;font-family:var(--heavy);font-weight:800;font-size:var(--fs-cap);color:var(--dim)}
+.dkst{position:relative;display:block;flex:none;width:calc(var(--cw) * .28 + 4px);height:calc(var(--cw) * .4 + 4px)}
+.dkst .sb{position:absolute;width:calc(var(--cw) * .28);height:calc(var(--cw) * .4);border-radius:3px;box-shadow:0 1px 2px rgba(0,0,0,.5)}
+.tb-strip .dkst{width:15px;height:20px}
+.tb-strip .dkst .sb{width:11px;height:16px;border-radius:2px}
+.tb-foot{position:relative;display:flex;justify-content:center;min-height:calc(var(--cw) * .4)}
+.tb-strip{position:relative;display:flex;align-items:center;gap:8px;min-height:28px;padding:0 6px;font-size:var(--fs-cap);color:var(--dim)}
+.tb-strip b{flex:0 1 auto;min-width:0;color:var(--fg);font-family:var(--heavy);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-strip .tb-don{flex:1 0 auto;justify-content:flex-end;gap:3px}
+.tb-strip .tk{width:11px;height:16px}
+.tb-hb{display:flex;padding-left:6px}
+.tb-hb i{display:block;width:13px;height:18px;margin-left:-6px;border-radius:2px;background:radial-gradient(circle at 50% 46%,#2555AD,#112B69 80%);border:2px solid #0B1B45;box-shadow:0 1px 3px rgba(0,0,0,.5)}
+/* the middle of the table */
+.tb-band{position:relative;z-index:1;display:flex;align-items:center;gap:4px;min-height:66px;margin:2px -4px;padding:2px 4px 2px 10px;border-block:1px solid var(--mat-line);
+  background:linear-gradient(90deg,rgba(224,85,61,.04),rgba(224,85,61,.16) 50%,rgba(224,85,61,.04))}
+.tb-tick{flex:1 1 auto;min-width:0;padding:0 6px;font-size:var(--fs-sm);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-clash{flex:1 1 auto;min-width:0;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--fg)}
+.tb-clash b{font-family:var(--heavy);font-weight:800;font-size:var(--fs-title);font-variant-numeric:tabular-nums}
+.tb-clash span{font-size:var(--fs-cap);color:var(--gold);font-weight:700}
+.tb-clash svg.g{color:var(--accent-ink)}
+.tb-go{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.tb-go > .ghost{flex:none;white-space:nowrap}
+.tb-go > .note{margin:0}
+.tb-go.tb-end{flex:none;flex-direction:column;gap:2px;margin-left:2px}
+.tb-end .ghost{padding:10px 14px}
+.tb-end .note{font-size:var(--fs-cap);color:var(--dim)}
+/* the hand: whole cards in a strip; from 640 px, a column beside the table */
+.tb-hand{grid-area:hand;display:flex;gap:var(--gap);overflow-x:auto;overscroll-behavior-x:contain;padding:12px 6px 10px;scroll-snap-type:x proximity;scrollbar-width:none}
+.tb-hand::-webkit-scrollbar{display:none}
+.tb-hand .sc{width:var(--hw);height:calc(var(--hw) * 1.397);scroll-snap-align:start}
+.tb-hand .sc.can{transform:translateY(-6px)}
+.tb-hand .sc.can.sel,.tb-hand .sc.aim{transform:translateY(-8px)}
+.tb-hand > .note{margin:auto}
+/* all of the hand at once where it fits (simFit): in rows under the table on a phone, in the column beside it from 640 px */
+.tb-hand.fit{flex-wrap:wrap;justify-content:center;align-content:center;row-gap:12px;overflow:hidden}
+.tb-hand.fit .sc.can{transform:translateY(-4px)}
+/* held like a hand, each card over the last: what a card says on it sits in the strip of its own (--hx), and the card
+   selected comes to the front */
+.tb-hand.fit .sc .tg,.tb-hand.fit .sc .pw{left:calc(var(--hx,var(--hw)) / 2)}
+.tb-hand .sc.sel{z-index:3}
+/* the dock: the selected card and its moves, or the step the table waits on */
+.tb-dock{grid-area:dock;display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;min-height:52px;padding:6px 10px;border-radius:var(--r-lg);
+  background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line)}
+.tb-say{flex:1 1 150px;min-width:0;font-size:var(--fs-sm);color:var(--dim);line-height:1.35}
+.tb-say b{color:var(--fg)}
+.tb-why{display:block;margin-top:2px;font-size:var(--fs-cap);color:var(--dim2)}
+.tb-dock > .ghost,.tb-dock .tb-go > .ghost{padding:10px 14px}
+/* the effect panel, over the hand */
+.tb-panel{position:absolute;left:0;right:0;bottom:0;z-index:6;max-height:62%;overflow:auto;padding:14px 14px calc(14px + var(--sab));border-radius:22px 22px 0 0;
+  background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-bottom:0;box-shadow:0 -14px 34px rgba(0,0,0,.55);animation:sheetUp var(--dur-sheet) cubic-bezier(.2,.8,.2,1)}
+.tb-panel h3{margin:0 0 4px;font-family:var(--heavy);font-weight:800;font-size:var(--fs-row);color:var(--accent-ink)}
+.tb-panel h3 + h3{margin-top:12px}
+.tb-panel .note{margin-top:6px}
+.tb-panel .tb-mark{color:var(--accent-ink)}
+.tb-panel .tb-go{margin-top:12px}
+.tb-panel .tb-go .linkish{display:inline-block;margin-left:auto;padding:12px 4px}
+.tb-moves{display:flex;flex-direction:column;align-items:stretch}
+.tb-picks{display:flex;gap:12px;overflow-x:auto;padding:10px 2px 8px;scrollbar-width:thin}
+.tb-pick{display:flex;flex-direction:column;align-items:center;gap:9px;flex:none;width:calc(var(--cw) + 24px);font-size:var(--fs-cap);color:var(--dim);text-align:center;overflow-wrap:anywhere}
+.tb-pick .sc{margin-top:4px}
+/* what happens over the table: the attack's line, a card on its way, a new turn, a battle's result */
+.tb-lines{position:absolute;inset:0;z-index:4;width:100%;height:100%;overflow:visible;pointer-events:none}
+.tb-lines line{animation:tbDash 1s linear infinite;filter:drop-shadow(0 0 6px rgba(224,85,61,.8))}
+@keyframes tbDash{to{stroke-dashoffset:-40}}
+.tb-ghost{position:fixed;z-index:var(--z-sheet);pointer-events:none}
+.tb-ghost > *{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;transform:none!important}
+.tb-banner{position:absolute;left:0;right:0;top:50%;z-index:7;display:flex;flex-direction:column;align-items:center;padding:12px;pointer-events:none;transform:translateY(-50%);
+  background:linear-gradient(90deg,transparent,rgba(8,10,14,.93) 18%,rgba(8,10,14,.93) 82%,transparent);animation:tbBanner 1.5s ease-in-out both}
+.tb-banner b{font-family:var(--display);font-weight:400;font-size:var(--fs-head);color:var(--fg);letter-spacing:.02em}
+.tb-banner span{font-size:var(--fs-sm);font-weight:700;color:var(--accent-ink)}
+@keyframes tbBanner{0%{opacity:0;transform:translate(-30%,-50%)}18%,78%{opacity:1;transform:translate(0,-50%)}100%{opacity:0;transform:translate(30%,-50%)}}
+.tb-burst{position:absolute;left:50%;top:50%;z-index:8;max-width:88%;padding:10px 22px;border-radius:var(--r-lg);transform:translate(-50%,-50%);text-align:center;pointer-events:none;
+  background:rgba(8,10,14,.93);border:2px solid var(--brass);box-shadow:0 12px 30px rgba(0,0,0,.6);animation:tbBurst 1.6s ease-out}
+.tb-burst b{display:block;font-family:var(--display);font-weight:400;font-size:var(--fs-hero);line-height:1.05;color:#FFA696}
+.tb-burst.held{border-color:var(--up)}
+.tb-burst.held b{color:#A6E6B4}
+.tb-burst span{display:block;margin-top:4px;font-size:var(--fs-sm);color:var(--dim)}
+@keyframes tbBurst{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}14%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}24%,82%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.96)}}
+.tb-side{display:none}
+/* the mulligan, the end, a new game */
+.tb-mull,.tb-over{grid-column:1/-1;grid-row:2;padding:12px 8px 8px}
+.tb-mull h3,.tb-over h3{margin:0;font-family:var(--heavy);font-weight:800;font-size:var(--fs-title);color:var(--fg)}
+.tb-mrow{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:12px;margin:14px 0}
+.tb-mhand{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.tb-mrow .sc{width:calc(var(--cw) * 1.3);height:calc(var(--cw) * 1.3 * 1.397)}
+.tb-mull > .tb-go,.tb-over > .tb-go{justify-content:center;margin:12px 0}
+.tb-over{text-align:center}
+.tb-over .tb-win{position:relative;width:min(46vw,210px);aspect-ratio:63/88;margin:6px auto 14px}
+.tb-over .tb-win .sf{position:absolute;inset:0;border-radius:var(--r-md);box-shadow:0 0 0 3px var(--gold),0 16px 40px rgba(0,0,0,.6)}
+.tb-over .tb-log{text-align:left;margin-top:8px}
+.tb-vs{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:10px;margin:4px 0 14px}
+.vsl{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;text-align:center}
+.vsl .sf{position:relative;display:block;width:min(38vw,168px);aspect-ratio:63/88;border-radius:var(--r-md);box-shadow:0 12px 28px rgba(0,0,0,.45)}
+.vsl .sf .sft{display:none}
+.vsl .sb{width:min(38vw,168px);aspect-ratio:63/88;border-radius:var(--r-md)}
+.vsl b{font-family:var(--heavy);font-weight:800;font-size:var(--fs-row)}
+.vsl span{max-width:100%;font-size:var(--fs-cap);color:var(--dim);overflow-wrap:anywhere}
+.vsx{font-family:var(--display);font-size:var(--fs-head);color:var(--accent-ink)}
+/* the sheet over the table: a card's zoom, the log, a trash, the game */
+.zm{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.zm-art{position:relative;width:min(70vw,300px);aspect-ratio:63/88;margin:0 auto}
+.zm-art .sf{position:absolute;inset:0;border-radius:var(--r-md)}
+.zm-name{margin:0;font-size:var(--fs-title);color:var(--fg)}
+.zm-stats{margin-top:4px;font-size:var(--fs-sm);color:var(--dim)}
+.zm-kw{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.zm-kw .kwtag{margin:0}
+.zm-text{margin-top:10px;font-size:var(--fs-body);line-height:1.5;white-space:pre-line}
+.zm-line{margin-top:8px;padding-top:6px;border-top:1px solid var(--line)}
+.zm .why{margin:12px 0 0}
+.zm .tb-go{margin-top:12px}
+.tb-log .ll{padding:7px 0;border-bottom:1px solid var(--line);font-size:var(--fs-sm);line-height:1.4}
+.tb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:10px}
+.tb-grid .sc{width:100%;height:auto;aspect-ratio:63/88}
+.tb-menu{display:grid;gap:12px}
+.curtain .cur-art{position:absolute;inset:0;z-index:-1;overflow:hidden;opacity:.34;pointer-events:none}
+.curtain .cur-art img{width:100%;height:100%;object-fit:cover;filter:blur(18px) saturate(1.1);transform:scale(1.15)}
+.curtain{isolation:isolate}
+.curtain .cur-card{width:min(38vw,150px);aspect-ratio:63/88;margin:0 auto 18px;border-radius:var(--r-md);overflow:hidden;background:var(--card2);box-shadow:0 14px 34px rgba(0,0,0,.55)}
+.curtain .cur-card img{display:block;width:100%;height:100%;object-fit:cover}
+.tb-over .tb-deck{margin-top:2px}
+@media (min-width:640px){
+  /* the table takes the whole height under the top bar; the hand and the dock share the column beside it */
+  #simBoard.table{grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:"top top" "mat hand" "mat dock";column-gap:10px;align-items:start}
+  #simBoard.table .tb-mat{align-self:start}
+  #simBoard.table .tb-hand{contain:size;align-self:stretch;flex-wrap:wrap;align-content:center;justify-content:center;overflow:hidden auto;padding:12px 4px}
+  #simBoard.table .tb-hand .sc.can{transform:translateY(-4px)}
+  #simBoard.table .tb-dock{align-self:end}
+  /* an effect's panel takes the hand's column, and the table stays in view: its choices from the hand carry their faces */
+  #simBoard.table .tb-panel{position:static;grid-area:hand;contain:size;align-self:stretch;max-height:none;border-radius:var(--r-lg);border-bottom:1px solid var(--line);box-shadow:none;animation:none;padding-bottom:14px}
+  #simBoard.table:has(.tb-panel) .tb-hand{display:none}
+  .zm{grid-template-columns:260px minmax(0,1fr);align-items:start}
+  .zm-art{width:100%}
+}
+@media (min-width:1000px){
+  #simBoard.table{grid-template-columns:auto minmax(0,1fr) var(--side,300px);grid-template-areas:"top top top" "mat hand side" "mat dock side"}
+  .tb-side{display:block;grid-area:side;contain:size;align-self:stretch;overflow:hidden auto;padding:14px;border-radius:var(--r-lg);background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line)}
+  .tb-side .zm{grid-template-columns:minmax(0,1fr)}
+  .tb-side .zm-art{width:min(100%,240px)}
+  #simBoard.table .tb-panel{grid-area:side}
+  #simBoard.table:has(.tb-panel) .tb-hand{display:flex}
+  #simBoard.table:has(.tb-panel) .tb-side{display:none}
+  .tb-side .tb-sh{margin:16px 0 4px;font-family:var(--heavy);font-weight:800;font-size:var(--fs-cap);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+}
+@media (min-width:900px){ body:has(#sim.screen.on #simBoard.table){max-width:none} }
 /* Take 110 (A42, the owner's "Fold layout later", brought forward at the owner's word for this take):
    the Fold's inner screen. Under 700 px is a phone; from 900 px a desktop browser gets take 60's centred
    phone column. Between them the open Fold (749 x 832 CSS px at a pixel ratio of 2.625, MEASURED on the
@@ -1253,7 +1488,7 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
 <!-- ============================ SIM (placeholder) ======================== -->
 <section id="sim" class="screen">
   <header class="appbar">
-    <div class="ab-text"><h1 class="ab-title">Sim</h1><p class="ab-sub">rules by the app · effects from the text, or by hand</p></div>
+    <div class="ab-text"><h1 class="ab-title">Sim</h1><p class="ab-sub" id="simSub">rules by the app · effects from the text, or by hand</p></div>
     <div class="ab-act"><button class="icb" data-rules="" aria-label="Rules"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-rules"/></svg></button><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
   </header>
   <div id="simBoard"></div>
@@ -1380,6 +1615,13 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
     <div id="rulesList"></div>
     <div class="row" style="gap:10px;margin-top:12px;flex-wrap:wrap"><button class="ghost" id="rulesSync">Check for updates</button><span class="note" id="rulesSyncNote" style="margin:0"></span></div>
     <a class="linkish" id="rulesPdf" href="https://en.onepiece-cardgame.com/pdf/rule_comprehensive.pdf" target="_blank" rel="noopener" style="margin-top:8px;display:inline-block">The official rules (PDF) <svg class="g" width="14" height="14" aria-hidden="true"><use href="#g-external"/></svg></a>
+  </div>
+</div>
+<div class="sheet" id="simSheet">
+  <div class="sheetbody">
+    <div class="grab"></div>
+    <div class="sheethead"><h2 id="simSheetTitle">The card</h2><button class="icb" data-close="simSheet" aria-label="Close"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-close"/></svg></button></div>
+    <div id="simSheetBody"></div>
   </div>
 </div>
 <div class="sheet" id="leaderPick">
@@ -3310,7 +3552,7 @@ const NAV = { stack: [], silent: false,
    It heals the symptom and names the cause. */
 function screenWatchdog(trigger) {
   setTimeout(() => { const on = document.querySelector('.screen.on'); if (on) return;
-    const overlays = ['#askSheet', '#picker', '#filters', '#leaderPick', '#printPick', '#rulesSheet', '#detail', '#tour', '#simCurtain', '#splash'].filter(id => { const el = $(id); return el && el.classList && el.classList.contains('on'); });
+    const overlays = ['#askSheet', '#picker', '#filters', '#leaderPick', '#printPick', '#rulesSheet', '#simSheet', '#detail', '#tour', '#simCurtain', '#splash'].filter(id => { const el = $(id); return el && el.classList && el.classList.contains('on'); });
     ERRS.push('blank', `no screen on after ${trigger}; stack ${NAV.stack.join('>') || '-'}; overlays ${overlays.join(',') || 'none'}; mode ${MODE.cur}`, 'watchdog');
     NAV.silent = true; go(MODE.home[MODE.cur] || 'home'); NAV.silent = false; }, 60);
 }
@@ -3323,7 +3565,7 @@ function closeAnyOverlay() {
   /* take 107: Back left the filter, Leader and printing sheets open while the
      screen under them changed (PROVEN in Chrome: the filter sheet over Home,
      the Leader sheet over Decks). They are overlays; Back closes them first. */
-  for (const id of ['#picker', '#filters', '#leaderPick', '#printPick', '#rulesSheet', '#tour', '#simCurtain']) { const el = $(id); if (el && el.classList.contains('on')) { if (id === '#picker') PICKER.dismiss(); else if (id === '#tour') guideClose(false); else el.classList.remove('on'); return true; } }   // take 115: a prompt on the picker answers no; take 116: the guide is an overlay by class; Back closes it unseen (landmine 201)
+  for (const id of ['#picker', '#filters', '#leaderPick', '#printPick', '#rulesSheet', '#simSheet', '#tour', '#simCurtain']) { const el = $(id); if (el && el.classList.contains('on')) { if (id === '#picker') PICKER.dismiss(); else if (id === '#tour') guideClose(false); else el.classList.remove('on'); return true; } }   // take 115: a prompt on the picker answers no; take 116: the guide is an overlay by class; Back closes it unseen (landmine 201)
   return false;
 }
 /* take 107: the header’s back arrow is the phone’s Back, not a second route.
@@ -6086,109 +6328,142 @@ $('#rulesQ').addEventListener('input', e => paintRules(e.target.value));
 $('#rulesSync').addEventListener('click', async () => { const n = $('#rulesSyncNote'); n.textContent = 'Checking\u2026'; const r = await RULES_DB.sync();
   n.textContent = r.ok ? (r.newer ? `Updated to v${r.version}.` : `Up to date (v${RULES_DB.cur().version}).`) : r.why; paintRules($('#rulesQ').value); });
 /* __SIM__ -- the engine and the opponent live in src/sim.js (take 122); build_app.py puts them here */
-/* ---- sim: the screen ----------------------------------------------------
-   One column, one player at a time, the curtain between them. The board is
-   drawn from the engine's answers -- whose decision (SIM.who()), which moves
-   (SIM.legal()) -- and every tap is one SIM.act() (take 122). A card on the
-   board is its catalogue line: name \u00b7 cost \u00b7 power \u00b7 counter \u00b7 keywords; the
-   table itself is the owner's UI/UX pass. */
-const SIMUI = { sel: null, post: null, pre: null, room: null, fxt: null, result: null,
+/* ---- sim: the table (take 124) ------------------------------------------------------------------------------------
+   Take 122 made every move one SIM.act, take 123 gave each seat its view; take 124 draws that view as a table: both
+   halves as the play sheet lays them out (the Characters in front; Life, Stage, the Leader, Trash and Deck behind; the
+   cost area of DON!!), the cards' hot-linked pictures, the hand as a strip, a dock for the selected card's moves, the
+   effect panel, the zoom. The painters below draw from the view alone -- smoke reads every function between their two
+   markers -- and the controller after them holds the view it painted, so a tap sends back one of that view's legal
+   moves (docs/SIM-UI.md). */
+const SIMUI = { sel: null, focus: null, post: null, seen: 0, pre: null, room: null, fxt: null, v: null, sheet: null,
+  busy: false, timer: null, hurry: false, pace: 650, press: null, pressed: false, d1: null, d2: null, opp: 'human', first: 0,
   legalDecks() { return DECKS.all().filter(d => d.leader && legality(d).problems.length === 0); } };
-/* a card as the view hands it (SIM.face / SIM.onField): name, cost, printed power, counter, keywords, colours */
-function simCard(c, extra = '', noPower = false) {
-  if (!c) return `<span class="note">unknown</span>`;
-  const kw = c.kw.filter(k => ['Rush', 'Rush: Character', 'Blocker', 'Double Attack', 'Banish', 'Trigger', 'Unblockable'].includes(k));
-  if (extra && /\u2022kw:/.test(extra)) { extra.match(/\u2022kw:([^\u2022]*)/)[1].split(',').filter(Boolean).forEach(k => { if (!kw.includes(k)) kw.push(k + '*'); }); extra = extra.replace(/\u2022kw:[^\u2022]*\u2022/, ''); }
-  const dots = c.colours.map(col => `<i style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:3px;vertical-align:1px;background:var(--c-${CCLASS[col]})"></i>`).join('');
-  const bits = [c.cost != null ? c.cost + 'c' : '', (!noPower && c.printedPower != null) ? c.printedPower : '', c.counter ? '+' + c.counter : '', kw.length ? esc(kw.join(', ')) : '', String(extra || '').replace(/^\s*\u00b7\s*/, '')].filter(Boolean);
-  return `<b>${dots}${esc(c.name)}</b> <span class="note">${bits.join(' \u00b7 ')}</span>`;
-}
+/* ==== the table's painters (take 124): each draws from the view it is handed and the board's own choices -- what is
+   selected, what is aimed -- never from the engine; smoke reads every function from here to SIM_PAINTERS_END, markers
+   that survive the build's comment strip ==== */
+const SIM_PAINTERS = 'begin';
+const SIMKW_GLYPH = { Blocker: 'blocker', Rush: 'rush' };
+const SIM_YOU = { activates: 'activate', gives: 'give', plays: 'play', ends: 'end', mulligans: 'mulligan', trashes: 'trash', concedes: 'concede', has: 'have', adds: 'add', counters: 'counter', takes: 'take' };
+function simCan(L, pred) { return L.some(pred); }
+function simSide(v, seat) { return v.me.seat === seat ? v.me : v.them; }
+/* a player's short name: the seat's own word before its deck's name */
+function simShort(X) { return String(X.name || '').split(' \u2014 ')[0]; }
+/* a log line as the table says it: against the app the human's own lines in the second person -- the engine writes
+   "You ends the turn" (docs/SIM-UI.md, what the pass keeps; the audit's row 2) -- and on the ticker without its turn */
+function simSay(line, bare, v) { let t = String(line || '');
+  if (v) [v.me, v.them].forEach(X => { const sh = simShort(X); if (X.name && X.name !== sh) t = t.split(X.name).join(sh); });   // a seat by its short name: the deck is named once, on the setup
+  const s = t.replace(/^(T\d+ )?You (activates|gives|plays|ends|mulligans|trashes|concedes|has|adds|counters|takes)\b/, (m, t, w) => (t || '') + 'You ' + SIM_YOU[w]);
+  return bare ? s.replace(/^T\d+ /, '') : s; }
 /* a section number in the Sim's words opens it in the Rules sheet */
 function simCite(text) { return esc(text).replace(/§(\d+(?:-\d+)*)/g, (m, id) => `<button class="linkish" data-rules="${id}" style="display:inline;width:auto;padding:0;min-height:0;font:inherit;font-weight:650">§${id}</button>`); }
-/* whose screen: the defender reading a result, the human against the app, else whoever the game waits on */
-function simSeat() { const g = SIM.g; if (SIMUI.post) return SIMUI.post.i; if (g.bot != null) return 1 - g.bot; const w = SIM.who(); return w == null ? g.active : w; }
-function simWhy() { const g = SIM.g; if (g.phase === 'mulligan') return 'keep or mulligan'; if (g.queue.length) return 'an effect to resolve';
-  if (g.phase === 'battle') return 'an attack is coming \u2014 block or counter'; return `turn ${g.turn}`; }
-/* Against the app there is nothing to hide: no curtain, the app just moves. The human's attack stops before
-   the damage, so its block and counter are on screen when the human taps Resolve. */
-function simBotRun() { const g = SIM.g; if (!g || g.bot == null) return;
-  for (let guard = 0; SIM.who() === g.bot && guard < 400; guard++) if (!BOT.move(g.bot, g.phase === 'battle' && g.battle.att !== g.bot ? ['resolve'] : [])) break; }
-function simCurtain(text, sub) { if (SIM.g && SIM.g.bot != null) return; const c = $('#simCurtain'); c.innerHTML = `<div class="big" style="font-size:var(--fs-head);margin-bottom:8px">Hand the phone to</div><h2 style="font-size:var(--fs-hero);margin:0 0 12px">${esc(text)}</h2><div class="note">${esc(sub || 'tap when you have it')}</div>`; c.classList.add('on'); }
-/* one tap, one act; then the hand-over the rules imply: a new decider means the curtain (or the app's move) */
-function simAct(i, a) { const g = SIM.g, before = SIM.who(); const r = SIM.act(i, a);
-  if (!r.ok) { if (r.why) toast(r.why); return r; }
-  SIMUI.sel = null; SIMUI.room = null; SIMUI.fxt = null;
-  if (a.t === 'resolve') { if (g.bot != null && i === g.bot) SIMUI.result = r.res; else SIMUI.post = { i, att: 1 - i, res: r.res }; }
-  simAfter(before); return r; }
-function simAfter(before) { const g = SIM.g; if (!g || g.over !== null || SIMUI.post) return; if (g.bot != null) return simBotRun();
-  const w = SIM.who(); if (w != null && w !== before) simCurtain(SIM.P(w).name, simWhy()); }
-/* The board is one painter per state of the game (take 122's review), and each draws only from the view its seat is
-   handed (take 123): SIM.view(seat) holds what that seat may see, and its legal moves. No painter reads the engine's
-   state, so a redesigned board cannot show what the seat was never given (smoke holds that line; docs/SIM-UI.md). */
-function paintSim() { const box = $('#simBoard'), v = SIM.g ? SIM.view(simSeat()) : null;
-  if (!v) { box.innerHTML = simSetupHtml(); return; }
-  if (v.over !== null) { box.innerHTML = simOverHtml(v); return; }
-  if (v.phase === 'mulligan') { box.innerHTML = simMulliganHtml(v); return; }
-  const offer = v.legal.length && v.offer ? simOfferPanel(v) : '';
-  if (SIMUI.post) box.innerHTML = simPostHtml(v, offer);
-  else if (v.phase === 'battle') box.innerHTML = simBattleHtml(v, offer);
-  else box.innerHTML = simTableHtml(v, offer); }
-const simCan = (L, pred) => L.some(pred);
-const simSide = (v, seat) => v.me.seat === seat ? v.me : v.them;
-function simPips(X) { const d = X.don; return `<span title="DON!!: ${d.active} active, ${d.rested} rested, ${d.given} given, ${d.deck} in the DON!! deck" style="letter-spacing:1px">${'\u25cf'.repeat(d.active)}<span style="opacity:.35">${'\u25cf'.repeat(d.rested)}</span><span style="color:var(--accent-ink)">${'\u25cf'.repeat(d.given)}</span><span style="opacity:.18">${'\u25cb'.repeat(d.deck)}</span></span>`; }
-function simHead(X, mine) { return `<div class="row" style="gap:8px;flex-wrap:wrap"><b>${esc(X.name)}</b><span class="note">Life <b>${X.lifeCount}</b> \u00b7 Deck ${X.deckCount} \u00b7 Hand ${X.handCount} \u00b7 Trash ${X.trash.length}${mine ? '' : ' \u00b7 ' + (X.chars.length) + ' in play'}</span></div><div class="note" style="margin-top:2px">DON!! ${simPips(X)}</div>`; }
-/* a Leader or Character line with the buttons legal() allows for it */
-function simUnit(v, c, mine) { const can = pred => simCan(v.legal, pred), ref = c.ref;
-  const marked = mine && SIMUI.sel && SIMUI.sel.ref === ref;
-  return `<div class="row" style="gap:8px;align-items:center;opacity:${c.rested ? .55 : 1}${marked ? ';outline:1px solid var(--brass);border-radius:var(--r-md);padding:2px 6px' : ''}"><div class="nm">${simCard(c, `\u2022kw:${c.granted.join(',')}\u2022 \u00b7 <b>${c.power}</b>${c.don ? ' (+' + c.don + ' DON!!)' : ''}${c.rested ? ' \u00b7 rested' : ''}${c.unapplied.length ? ` \u00b7 <span title="${esc(c.unapplied.join(' '))}">its continuous text is yours to apply</span>` : ''}`, true)}</div>
-    ${mine && can(x => x.t === 'activate' && x.ref === ref) ? `<button class="ghost go" data-sim="fxmain:${ref}">Main</button>` : ''}
-    ${mine && can(x => x.t === 'give' && x.ref === ref) ? `<button class="ghost" data-sim="give:${ref}" title="+1000 on your turn">+DON</button>` : ''}
-    ${mine && can(x => x.t === 'attack' && x.ref === ref) ? `<button class="ghost" data-sim="attack:${ref}">Attack</button>` : ''}
-    ${!mine && SIMUI.sel && can(x => x.t === 'attack' && x.ref === SIMUI.sel.ref && x.target === ref) ? `<button class="ghost go" data-sim="target:${ref}">Target</button>` : ''}</div>`; }
-function simStage(v, X, mine) { return X.stage ? `<div class="row" style="gap:8px"><div class="nm"><span class="note">Stage:</span> ${simCard(X.stage)}${X.stage.rested ? ' <span class="note">rested</span>' : ''}</div>${mine && simCan(v.legal, x => x.t === 'activate' && x.ref === 'stage') ? '<button class="ghost go" data-sim="fxmain:stage">Main</button>' : ''}</div>` : ''; }
-function simResult(res) { return res ? `<div class="panel" style="border-color:var(--brass)"><h3>${res.gone ? 'Ended' : (res.win ? 'Hit' : 'Held')} \u2014 ${res.a} vs ${res.d}</h3>${res.ko ? `<div class="note">${esc(res.ko)} K.O.\u2019d</div>` : ''}${res.life.map(l => `<div class="note">Life card ${l.banished ? 'banished' : 'to hand'}: <b>${esc(l.name)}</b></div>`).join('')}</div>` : ''; }
-function simSetupHtml() {
-    const ds = SIMUI.legalDecks();
-    return `<div class="panel"><h3>New game</h3>
-      <div class="note">Two players, one phone. The app keeps the rules of the Comprehensive Rules v${SIM.RULES} \u2014 phases, DON!!, cost, the Character and Stage limits, who may attack whom, block, counter, damage, Life, defeat. Card effects the app understands run from their text; every other effect is offered at its moment for you to resolve <b>by hand</b>, with only the moves its words name.</div>
-      ${ds.length ? `<div class="fgrp">Player 1 deck</div><select id="simD1" aria-label="Player 1 deck">${ds.map((d, i) => `<option value="${i}" ${d.id === SIMUI.pre ? 'selected' : ''}>${esc(d.name || 'Untitled')}</option>`).join('')}</select>
-      <div class="fgrp">Player 2 deck</div><select id="simD2" aria-label="Player 2 deck">${ds.map((d, i) => `<option value="${i}" ${i === Math.min(1, ds.length - 1) ? 'selected' : ''}>${esc(d.name || 'Untitled')}</option>`).join('')}</select>
-      <div class="fgrp">Opponent</div><select id="simOpp" aria-label="Opponent"><option value="human">A friend \u2014 pass the phone</option><option value="bot">The app \u2014 legal and not clever; it never sees your hand</option></select>
-      <div class="fgrp">Goes first (rock-paper-scissors is yours, §5-2-1-4)</div><select id="simFirst" aria-label="Who goes first"><option value="0">Player 1</option><option value="1">Player 2</option></select>
-      <div class="row" style="margin-top:14px"><button class="ghost go" data-sim="start" style="padding:10px 18px">Deal</button></div>`
-      : `<div class="note" style="margin-top:10px">No legal deck yet \u2014 build one in <b>Decks</b> (a Leader and exactly fifty cards) and it appears here.</div>`}</div>`; }
-function simOverHtml(v) {
-  return `<div class="panel"><h3>${v.over === -1 ? 'A draw \u2014 both lose at once (§9-2-1)' : esc(simSide(v, v.over).name) + ' wins'}</h3><div class="note">${esc(v.log[0] || '')}</div><div class="row" style="margin-top:12px"><button class="ghost go" data-sim="new">New game</button></div></div>${simLog(v)}`; }
-function simMulliganHtml(v) { const M = v.me;
-  return `<div class="panel"><h3>${esc(M.name)} \u2014 keep or mulligan?</h3><div class="note">Redraw once, the first player deciding first (${simCite('§5-2-1-6')}).</div>
-      <div class="note">Leader: ${simCard(M.leader)}</div><div class="fgrp">Your hand</div>${M.hand.map(c => `<div class="row"><div class="nm">${simCard(c)}</div></div>`).join('')}
-      <div class="row" style="gap:10px;margin-top:12px"><button class="ghost go" data-sim="keep:${v.seat}">Keep</button><button class="ghost" data-sim="mull:${v.seat}">Mulligan (once)</button></div></div>`; }
-/* the defender reading a result, with any effect it set off, before the phone goes back */
-function simPostHtml(v, offer) {
-  return `${simResult(SIMUI.post.res)}${offer}${offer ? '' : `<div class="row" style="margin-top:10px;flex-wrap:wrap"><button class="ghost go" data-sim="post" style="flex:none">Hand back</button><span class="note" style="margin:0">to ${esc(v.them.name)}</span></div>`}${simLog(v)}`; }
-function simBattleHtml(v, offer) { const b = v.battle, pw = b.powers, A = simSide(v, b.att), D = simSide(v, b.def), L = v.legal;
-  const att = b.attacker || A.leader, tgt = b.target || D.leader;
-    const lines =`<div class="row"><div class="nm">${simCard(att, '', true)}<span style="display:block">attacks with <strong>${pw.a}</strong></span></div></div>
-      <div class="row"><div class="nm">${simCard(tgt, '', true)}<span style="display:block">defends with <strong>${pw.d}</strong>${b.counter ? ' (counters +' + b.counter + ')' : ''}${b.blocked ? ' \u00b7 blocking' : ''}</span></div></div>`;
-    if (v.bot != null && b.def === v.bot) return `${offer}<div class="panel"><h3>The app defends</h3>${lines}<div class="note">${b.blocked ? 'It blocked.' : 'No block.'}${b.counter ? ' Countered +' + b.counter + '.' : ''} ${pw.a} vs ${pw.d}${pw.a >= pw.d ? ': hit' : ': held'}</div><div class="row" style="margin-top:10px"><button class="ghost go" data-sim="resolve">Resolve</button></div></div>${simLog(v)}`;
-    if (v.seat !== b.def || offer) return `${offer}<div class="panel"><h3>${esc(D.name)} is attacked</h3>${lines}</div>${simLog(v)}`;
-    return `<div class="panel"><h3>${esc(D.name)} is attacked</h3>${lines}
-      ${b.step === 'block' ? `<div class="fgrp">Block step (${simCite('§7-1-2')})</div>${L.filter(x => x.t === 'block').map(x => `<button class="linkish" data-sim="block:${x.k}">Block with ${esc(D.chars[x.k].name)}</button>`).join('') || `<div class="note">${b.unblockable ? 'The attacker is Unblockable' : 'No active Blocker'}</div>`}<button class="ghost" data-sim="noblock" style="margin-top:8px">No block</button><span class="note" style="margin-left:8px">then the counter step</span>`
-      : `<div class="fgrp">Counter step (${simCite('§7-1-3')})</div>${L.filter(x => x.t === 'counter').map(x => { const c = D.hand[x.h]; return `<button class="linkish" data-sim="counter:${x.h}">Counter with ${esc(c.name)} (+${c.counter})</button>`; }).join('') || '<div class="note">No Counter cards in hand</div>'}${L.filter(x => x.t === 'cevent').map(x => { const c = D.hand[x.h]; return `<button class="linkish" data-sim="cev:${x.h}">Play ${esc(c.name)} (${c.cost} DON!!)</button>`; }).join('')}<button class="ghost go" data-sim="resolve" style="margin-top:8px">Resolve</button><span class="note" style="margin-left:8px">${pw.a} vs ${pw.d}${pw.a >= pw.d ? ': hit' : ': held'}</span>`}
-    </div>${simLog(v)}`; }
-/* the table on the seat's Main Phase: the opponent's field, then the seat's field, hand and turn buttons */
-function simTableHtml(v, offer) { const P = v.me, O = v.them, can = pred => simCan(v.legal, pred);
-  const field = (X, mine) => [X.leader].concat(X.chars).map(c => simUnit(v, c, mine)).join('') + simStage(v, X, mine);
-  const res = SIMUI.result; SIMUI.result = null; const endOk = can(x => x.t === 'end');
-  const room = SIMUI.room ? `<div class="panel" style="border-color:var(--brass)"><h3>Five Characters</h3><div class="note">Choose one to trash to make room (${simCite('§3-7-6-1')}) \u2014 a rule, not a K.O.</div>${P.chars.map((c, k) => `<button class="linkish" data-sim="room:${k}">Trash ${esc(c.name)}</button>`).join('')}<button class="ghost" data-sim="roomx" style="margin-top:8px">Cancel</button></div>` : '';
-  return `${offer}${room}${simResult(res)}
-    <div class="panel"><h3>Opponent</h3>${simHead(O, false)}<div style="margin-top:8px">${field(O, false)}</div></div>
-    <div class="panel"><h3>${esc(P.name)} \u2014 turn ${v.turn}${SIMUI.sel ? ' \u00b7 <span style="color:var(--accent-ink)">choose a target</span>' : ''}${v.bot != null && v.active === v.bot ? ' \u00b7 <span class="note">the app is moving</span>' : ''}</h3>${simHead(P, true)}
-      <div style="margin-top:8px">${field(P, true)}</div>
-      <div class="fgrp">Hand</div>${P.hand.map(c => { const pl = c.play, ok = can(x => x.t === 'play' && x.h === c.h); return `<div class="row" style="gap:8px"><div class="nm">${simCard(c)}${pl.ok ? (pl.full ? `<span style="display:block;color:var(--dim2);font-size:var(--fs-sm)">five in play: trash one to play it (${simCite('§3-7-6-1')})</span>` : '') : `<span style="display:block;color:var(--dim2);font-size:var(--fs-sm)">${simCite(pl.why)}</span>`}</div><button class="ghost${ok ? ' go' : ''}" data-sim="play:${c.h}" ${ok ? '' : 'disabled'}>Play</button></div>`; }).join('') || '<div class="note">empty</div>'}
-      <div class="row" style="gap:10px;margin-top:14px;flex-wrap:wrap"><button class="ghost go" data-sim="end"${endOk ? '' : ' disabled'}>End turn</button><span class="note" style="margin:0">${v.bot != null ? 'then the app plays its turn' : 'then pass the phone'}</span>
-        <button class="ghost" data-sim="concede">Concede</button><span class="note" style="margin:0">you lose (${simCite('§1-2-3')})</span></div>
-    </div>${simLog(v)}`; }
+/* the card a key names in this view: L, S and mK are this seat's Leader, Stage and Characters; oL, oS and oK the other
+   seat's; hK a card in this seat's hand; tS.K the K-th card of seat S's trash; xK a card being looked at; cK an effect's
+   K-th choice */
+function simAt(v, key) { const k = String(key || ''), n = +((k.match(/\d+$/) || ['-1'])[0]);
+  if (k === 'L') return v.me.leader; if (k === 'S') return v.me.stage; if (k === 'oL') return v.them.leader; if (k === 'oS') return v.them.stage;
+  if (/^m\d+$/.test(k)) return v.me.chars[n] || null; if (/^o\d+$/.test(k)) return v.them.chars[n] || null;
+  if (/^h\d+$/.test(k)) return (v.me.hand || [])[n] || null; if (/^x\d+$/.test(k)) return (v.me.looking || [])[n] || null;
+  if (/^c\d+$/.test(k)) { const c = v.offer && v.offer.choices && v.offer.choices[n]; return c ? (c.face || simAt(v, c.ref)) : null; }
+  const t = k.match(/^t([01])\.(\d+)$/); if (t) return (simSide(v, +t[1]).trash || [])[+t[2]] || null;
+  return null; }
+/* this seat's move reference for a key: its Leader 'leader', its Stage 'stage', a Character its index */
+function simRef(key) { return key === 'L' ? 'leader' : key === 'S' ? 'stage' : /^m\d+$/.test(key) ? +key.slice(1) : null; }
+/* a card's face: its hot-linked picture over its own colours, and beneath the picture its name and printed numbers --
+   what shows while the picture loads or when it fails; nothing drawn from scratch (landmines 26, 28) */
+function simFace(c, big) {
+  const a = c.art, cs = c.colours || [], g = a && a.ground ? a.ground : (cs.length ? [`var(--c-${CCLASS[cs[0]]})`, `var(--c-${CCLASS[cs[1] || cs[0]]})`] : ['var(--card2)', 'var(--card)']);
+  const src = a ? (big ? a.large : a.thumb) : '', nums = [c.cost, c.printedPower].filter(x => x != null).join(' \u00b7 ');
+  return `<span class="sf" style="--a1:${g[0]};--a2:${g[1]}"><span class="sft"><b>${esc(c.name)}</b>${nums ? `<i>${nums}</i>` : ''}</span>${src ? `<img class="${artOk(src).trim()}" src="${esc(src)}" alt="" draggable="false" decoding="async"${big && a.thumb && a.thumb !== src ? ` data-thumb="${esc(a.thumb)}"` : ''} onload="${ART_ONLOAD}" onerror="var t=this.dataset.thumb;if(t){delete this.dataset.thumb;this.src=t}else{this.remove()}">` : ''}</span>`; }
+/* upright on a card: its power now (lit above its printed power, red below), its DON!!, its Blocker, Rush and Double
+   Attack, and a gold corner when its continuous text is the player's to apply (docs/SIM-UI.md, what the pass keeps) */
+function simBadges(c, extra) { const pw = c.power != null ? c.power : null, pp = c.printedPower, kw = c.keywords || [];
+  const dir = pw != null && pp != null && pw !== pp ? (pw > pp ? ' up' : ' down') : '';
+  const marks = kw.filter(k => SIMKW_GLYPH[k]).map(k => `<i title="${esc(k)}">${G(SIMKW_GLYPH[k], 12)}</i>`).join('') + (kw.includes('Double Attack') ? '<i title="Double Attack">2\u00d7</i>' : '');
+  return `${pw != null ? `<span class="pw${dir}">${pw}</span>` : ''}${c.don ? `<span class="dn">+${c.don}</span>` : ''}${marks ? `<span class="kws">${marks}</span>` : ''}${c.unapplied && c.unapplied.length ? '<span class="ya"><span class="vh">its continuous text is yours to apply</span></span>' : ''}${extra || ''}`; }
+/* a card on the table, in the hand, a pick or a trash: a button that selects it, or -- when the table asks for a choice
+   -- makes that choice (its data-sim is the move's own word) */
+function simCardHtml(c, key, o = {}) {
+  const lbl = [c.name, c.type === 'Leader' ? 'Leader' : '', c.power != null ? c.power + ' power' : (c.printedPower != null ? c.printedPower + ' power' : ''), c.rested ? 'rested' : '', c.don ? c.don + ' DON!! given' : ''].concat(c.keywords || []).filter(Boolean).join(', ');
+  const cls = ['sc', o.cls || '', c.rested ? 'rest' : '', SIMUI.focus === key && !o.nouid ? 'sel' : ''].filter(Boolean).join(' ');
+  return `<button class="${cls}" data-sim="${o.act || 'card:' + key}" data-key="${key}"${c.uid != null && !o.nouid ? ` data-uid="${c.uid}"` : ''} aria-label="${esc(lbl + (o.say ? ' \u2014 ' + o.say : ''))}">${simFace(c) + simBadges(c, o.badge)}</button>`; }
+function simSlot(label) { return `<span class="slot" aria-hidden="true">${esc(label || '')}</span>`; }
+/* a card back in the game's colours (take 124, the owner's word; landmine 30's exception for the icon, extended): the deck's
+   blue, 'ld' a Leader's red, 'dn' a DON!! card's white in black -- the compass over the sea chart, `g-cardart` in the sprite */
+function simBack(cls, style) { return `<span class="sb${cls ? ' ' + cls : ''}"${style ? ` style="${style}"` : ''}><svg class="cb" aria-hidden="true"><use href="#g-cardart"/></svg></span>`; }
+/* Life: its card backs lying sideways down the column, with the count; nobody sees a Life card (§3-10) */
+function simLifeHtml(X) { const n = X.lifeCount, m = Math.min(n, 6);
+  return `<span class="stk life z-life" role="img" aria-label="${n} Life">${m ? Array.from({ length: m }, (_, k) => simBack('lf', `--k:${k};--m:${m}`)).join('') : simSlot('Life')}<span class="cnt">${G('life', 12)}${n}</span></span>`; }
+/* the Deck: a stack and its count; nobody looks into a deck (§3-2) */
+function simDeckHtml(X) { const n = X.deckCount, m = Math.min(n, 3);
+  return `<span class="stk deck" role="img" aria-label="Deck, ${n} cards">${m ? Array.from({ length: m }, (_, k) => simBack('', `top:${(m - 1 - k) * 2}px;height:calc(100% - ${(m - 1) * 2}px);left:${k * 2}px;right:${(m - 1 - k) * 2}px`)).join('') : simSlot('Deck')}<span class="cnt">${n}</span></span>`; }
+/* the Trash: its newest card face up, the count, and a tap opens the whole of it (it is public) */
+function simTrashPile(X) { const n = X.trash.length, top = n ? X.trash[n - 1] : null;
+  return `<button class="stk trash z-trash" data-sim="trash:${X.seat}" aria-label="Trash, ${n} card${n === 1 ? '' : 's'}">${top ? simFace(top) : simSlot('Trash')}<span class="cnt">${n}</span></button>`; }
+/* the cost area: a DON!! card each, face up -- active upright, rested turned -- and the DON!! deck, its backs stacked, with
+   its count (§3-3, §6-4); a given DON!! is on its card */
+function simDonHtml(X) { const d = X.don, m = Math.min(d.deck, 3);
+  const deck = m ? `<span class="dkst">${Array.from({ length: m }, (_, k) => simBack('dn', `left:${k * 2}px;top:${(m - 1 - k) * 2}px`)).join('')}</span>` : '';
+  return `<span class="tb-don" role="img" aria-label="DON!!: ${d.active} active, ${d.rested} rested, ${d.given} given, ${d.deck} in the DON!! deck">${`<i class="tk">${G('don', 14)}</i>`.repeat(d.active)}${`<i class="tk r">${G('don', 14)}</i>`.repeat(d.rested)}<span class="dk">${deck}${d.deck}</span></span>`; }
+/* what the table asks of each card now, from the view's legal moves: a target to attack, a Blocker, a counter, an
+   effect's choice, one of five to trash -- each drawn on the card it names, as that move's own word; in a free Main
+   Phase what may act is lit and a tap selects it */
+function simTargets(v) { const L = v.legal, t = {}, lit = (key, act, badge, say) => { t[key] = { act, cls: 'aim', badge, say }; };
+  if (SIMUI.room) { v.me.chars.forEach((c, k) => { if (L.some(x => x.t === 'play' && x.h === SIMUI.room.h && x.trash === k)) lit('m' + k, 'room:' + k, '<span class="tg">Trash</span>', 'trash it to make room'); }); return t; }
+  if (SIMUI.fxt) { v.me.chars.forEach((c, k) => { if (L.some(x => x.t === 'fx' && x.target === SIMUI.fxt.target && x.trash === k)) lit('m' + k, 'fxroom:' + k, '<span class="tg">Trash</span>', 'trash it to make room'); }); return t; }
+  if (SIMUI.sel) { L.filter(x => x.t === 'attack' && x.ref === SIMUI.sel.ref).forEach(x => lit(x.target === 'leader' ? 'oL' : 'o' + x.target, 'target:' + x.target, '', 'attack it')); t[SIMUI.sel.ref === 'leader' ? 'L' : 'm' + SIMUI.sel.ref] = { cls: 'sel' }; return t; }
+  if (v.offer && !v.offer.hidden && !v.tray && v.offer.choices) v.offer.choices.forEach(c => { if (/^(L|[mo]\d+)$/.test(c.ref) && L.some(x => x.t === 'fx' && x.target === c.ref)) lit(c.ref, 'fx:' + c.ref, '', 'choose it'); });
+  L.forEach(x => { if (x.t === 'block') lit('m' + x.k, 'block:' + x.k, '<span class="tg">Block</span>', 'block with it');
+    if (x.t === 'counter') lit('h' + x.h, 'counter:' + x.h, `<span class="tg">+${(v.me.hand[x.h] || {}).counter}</span>`, 'counter with it');
+    if (x.t === 'cevent') lit('h' + x.h, 'cev:' + x.h, '<span class="tg">Event</span>', 'play it'); });
+  if (v.phase === 'main' && !v.offer && !v.battle) L.forEach(x => { const key = x.t === 'play' ? 'h' + x.h : (x.t === 'attack' || x.t === 'activate') ? (x.ref === 'leader' ? 'L' : x.ref === 'stage' ? 'S' : 'm' + x.ref) : null;
+    if (key && !t[key]) t[key] = { cls: 'can' }; });
+  return t; }
+/* a half of the table: this seat's nearest, its Characters towards the middle; the other seat's across it, mirrored --
+   the Leader in the middle of each back row, Life on each player's left */
+function simHalfHtml(v, X, mine, t) {
+  const card = (c, key) => simCardHtml(c, key, t[key] || {});
+  const chars = Array.from({ length: 5 }, (_, k) => X.chars[k] ? card(X.chars[k], (mine ? 'm' : 'o') + k) : simSlot(''));
+  const L = card(X.leader, mine ? 'L' : 'oL'), S = X.stage ? card(X.stage, mine ? 'S' : 'oS') : simSlot('Stage');
+  const back = mine ? [simLifeHtml(X), S, L, simTrashPile(X), simDeckHtml(X)] : [simDeckHtml(X), simTrashPile(X), L, S, simLifeHtml(X)];
+  const art = X.leader.art, ground = art ? `<span class="tb-ground" style="--a1:${art.ground[0]};--a2:${art.ground[1]}"><img src="${esc(art.thumb)}" alt="" draggable="false" decoding="async" onerror="this.remove()"></span>` : '';
+  const front = `<div class="tb-row front">${chars.join('')}</div>`, rear = `<div class="tb-row back">${back.join('')}</div>`;
+  if (mine) return `<div class="tb-half me">${ground}${front}${rear}<div class="tb-foot">${simDonHtml(X)}</div></div>`;
+  return `<div class="tb-half them">${ground}<div class="tb-strip"><b>${esc(simShort(X))}</b><span class="tb-hb" role="img" aria-label="${X.handCount} cards in hand">${'<i></i>'.repeat(Math.min(X.handCount, 10))}</span><span>${X.handCount} in hand</span>${simDonHtml(X)}</div>${rear}${front}</div>`; }
+/* the table's top bar, while the game fills the screen (the owner, take 124: the header and the mode tabs step aside): Leave
+   -- forfeit and back to the app --, whose turn it is, the Rules (on every Prep & Play screen, take 122), the log, the menu */
+function simTopHtml(v) { const turn = v.over !== null ? 'The game is over' : v.phase === 'mulligan' ? 'Keep or mulligan' : `Turn ${v.turn}`;
+  const who = v.over !== null || v.phase === 'mulligan' ? '' : v.active === v.seat ? (v.bot != null ? 'your turn' : simShort(v.me) + '\u2019s turn') : simShort(v.them) + (v.bot != null ? ' is playing' : '\u2019s turn');
+  return `<div class="tb-top"><button class="tb-leave" data-sim="leave" aria-label="Leave the table">${G('back', 20)}<span>Leave</span></button><span class="tb-stat"><b>${turn}</b>${who ? ` \u00b7 ${esc(who)}` : ''}</span><button class="icb" data-rules="" aria-label="Rules">${G('rules', 22)}</button><button class="icb" data-sim="log" aria-label="The log">${G('log', 22)}</button>${v.over === null ? `<button class="icb" data-sim="menu" aria-label="Game menu">${G('more', 22)}</button>` : ''}</div>`; }
+/* the middle of the table: the latest line of the log, a battle's two powers, and End turn with what happens after it */
+function simBandHtml(v) { const b = v.battle, endOk = v.legal.some(x => x.t === 'end');
+  const mid = b ? `<span class="tb-clash" aria-label="${b.powers.a} against ${b.powers.d}"><b>${b.powers.a}</b>${G('sword', 18)}<b>${b.powers.d}</b>${b.counter ? `<span>+${b.counter}</span>` : ''}</span>` : `<span class="tb-tick">${esc(simSay(v.log[0], true, v))}</span>`;
+  return `<div class="tb-band">${mid}${endOk ? `<span class="tb-go tb-end"><button class="ghost go" data-sim="end">End turn</button><span class="note">${v.bot != null ? 'then the app plays' : 'then pass the phone'}</span></span>` : ''}</div>`; }
+/* this seat's hand: whole cards in a strip -- lit when it may be played, dimmed when not; the other hand is a count (§3-4) */
+function simHandHtml(v, t) { const H = v.me.hand || [];
+  return `<div class="tb-hand" role="group" aria-label="Your hand, ${H.length} cards">${H.map((c, h) => { const o = t['h' + h] || {}; return simCardHtml(c, 'h' + h, Object.assign({}, o, { cls: ['hand', o.cls || (c.play && c.play.ok ? '' : 'no')].filter(Boolean).join(' ') })); }).join('') || '<span class="note">No cards in hand</span>'}</div>`; }
+/* a card's moves as buttons: exactly those of the view's legal moves that name it (the dock and the zoom both use this) */
+function simActsHtml(v, key) { const L = v.legal, ref = simRef(key), out = [];
+  if (/^h\d+$/.test(key)) { const h = +key.slice(1); if (L.some(x => x.t === 'play' && x.h === h)) out.push(`<button class="ghost go" data-sim="play:${h}">Play</button>`); }
+  if (ref != null) {
+    if (L.some(x => x.t === 'attack' && x.ref === ref)) out.push(`<button class="ghost go" data-sim="attack:${ref}">Attack</button>`);
+    L.filter(x => x.t === 'activate' && x.ref === ref).forEach((x, k) => out.push(`<button class="ghost" data-sim="fxmain:${ref}${k ? '.' + x.n : ''}">Main${k ? ' ' + (k + 1) : ''}</button>`));
+    if (L.some(x => x.t === 'give' && x.ref === ref)) out.push(`<button class="ghost" data-sim="give:${ref}" title="+1000 on your turn">+DON!!</button>`); }
+  return out.join(''); }
+/* the dock under the hand: the selected card and its moves; the defender's block and counter; the app's defence waiting
+   on Resolve; or what the table is waiting for */
+function simDockHtml(v) { const L = v.legal, b = v.battle, go = (btn, note) => `<span class="tb-go">${btn}${note != null ? `<span class="note">${note}</span>` : ''}</span>`;
+  const hitSay = p => `${p.a} vs ${p.d}${p.a >= p.d ? ': hit' : ': held'}`;
+  if (b && v.bot != null && b.def === v.bot && v.who === v.bot) return `<div class="tb-say"><b>The app defends</b> \u2014 ${b.blocked ? 'it blocked' : 'no block'}${b.counter ? `, countered +${b.counter}` : ''}.</div>${go('<button class="ghost go" data-sim="resolve">Resolve</button>', hitSay(b.powers))}`;
+  if (v.who !== v.seat) return v.bot != null && v.who === v.bot ? `<div class="tb-say">The app is playing\u2026${v.offer && !v.offer.hidden && v.offer.name ? ` <b>${esc(v.offer.name)}</b>` : ''}</div>${go('<button class="ghost" data-sim="hurry">Hurry</button>', 'its moves at once')}` : `<div class="tb-say">${esc(simShort(simSide(v, v.who)))} decides</div>`;
+  if (b && b.def === v.seat && !v.offer) { const D = v.me, tgt = b.target || D.leader;
+    const head = `<div class="tb-say"><b>${esc(tgt.name)}</b> is attacked by <b>${esc((b.attacker || v.them.leader).name)}</b>`;
+    if (b.step === 'block') return `${head} \u2014 Block step (${simCite('§7-1-2')}): ${L.some(x => x.t === 'block') ? 'tap a lit Blocker, or' : (b.unblockable ? 'the attacker is Unblockable' : 'no active Blocker')}</div>${go('<button class="ghost" data-sim="noblock">No block</button>', 'then the counter step')}`;
+    return `${head} \u2014 Counter step (${simCite('§7-1-3')}): ${L.some(x => x.t === 'counter' || x.t === 'cevent') ? 'tap a lit card in your hand, or' : 'No Counter cards in hand'}</div>${go('<button class="ghost go" data-sim="resolve">Resolve</button>', hitSay(b.powers))}`; }
+  if (SIMUI.sel) { const a = simAt(v, SIMUI.sel.ref === 'leader' ? 'L' : 'm' + SIMUI.sel.ref); return `<div class="tb-say"><b>${esc(a ? a.name : '')}</b> attacks \u00b7 <span style="color:var(--accent-ink)">choose a target</span></div>${go('<button class="ghost" data-sim="aimx">Cancel</button>')}`; }
+  const f = SIMUI.focus && simAt(v, SIMUI.focus);
+  if (f) { const acts = simActsHtml(v, SIMUI.focus), why = /^h\d+$/.test(SIMUI.focus) && f.play && !f.play.ok ? simCite(f.play.why) : (f.play && f.play.full ? `five in play: trash one to play it (${simCite('§3-7-6-1')})` : '');
+    return `<div class="tb-say"><b>${esc(f.name)}</b>${f.power != null ? ` \u00b7 ${f.power}` : ''}${f.unapplied && f.unapplied.length ? ' \u00b7 its continuous text is yours to apply; the power shown is without it' : ''}${why ? `<span class="tb-why">${why}</span>` : ''}</div>${acts}<button class="ghost" data-sim="zoom:${SIMUI.focus}">Zoom</button>`; }
+  return `<div class="tb-say">Tap a card for its moves; hold it to read it.</div>`; }
 /* the move a by-hand tray button makes, in a few words */
 function simHandLabel(v, a) { const P = v.me, X = a.side === 1 ? v.them : v.me, nm = c => esc((c || {}).name || '?'), at = ref => nm(ref === 'leader' ? X.leader : X.chars[ref]), who = a.side === 1 ? ' (theirs)' : '';
   switch (a.op) {
@@ -6201,25 +6476,244 @@ function simHandLabel(v, a) { const P = v.me, X = a.side === 1 ? v.them : v.me, 
     case 'play': return `Play ${nm((a.zone === 'trash' ? P.trash : P.hand)[a.k])} from ${a.zone}${a.trash != null ? ', trash ' + nm(P.chars[a.trash]) : ''}`;
     case 'look': return `Look at the top ${v.tray.left.look}`; case 'lookto': return `${nm(P.looking[a.k])} to ${a.to}`;
     default: return a.op; } }
-function simOfferPanel(v) {
+/* a choice drawn as the card it names, its name under it */
+function simPick(v, key, act, caption) { const c = simAt(v, key);
+  return `<span class="tb-pick">${c ? simCardHtml(c, key, { act, cls: 'aim', nouid: true, say: 'choose it' }) : `<button class="ghost" data-sim="${act}">${esc(caption)}</button>`}<span>${esc(caption)}</span></span>`; }
+/* the effect the game waits on, for the seat deciding: its words, its mark -- proven, unproven, by hand, proven wrong --
+   what the app will do, its choices drawn as cards (the field's are lit on the table too), and Report */
+function simOfferPanel(v, lead) {
   const cur = v.offer, L = v.legal; if (!cur) return '';
   const badge = { proven: 'proven by a test', unproven: 'the app runs it; no test has proven it yet', hand: 'by hand \u2014 the app does not run this line', wrong: `by hand \u2014 the app\u2019s version was proven wrong${cur.wrong && cur.wrong !== 'proven wrong' ? ': ' + esc(cur.wrong) : ''}` }[cur.proof];
-  const report = `<button class="linkish" data-sim="report" style="margin-left:auto">Report</button>`;
+  const report = '<button class="linkish" data-sim="report">Report</button>';
   let body;
   if (v.tray) { const moves = L.map((a, k) => ({ a, k })).filter(x => x.a.t === 'hand');
-    body = `<div class="note">Only the moves its words name, each logged.</div>${moves.map(x => `<button class="linkish" data-sim="hop:${x.k}">${simHandLabel(v, x.a)}</button>`).join('') || '<div class="note">No move to make \u2014 its effect is yours to apply as the text says.</div>'}
-      <div class="row" style="gap:10px;margin-top:8px;flex-wrap:wrap"><button class="ghost go" data-sim="hdone" style="flex:none">Done</button>${report}</div>`; }
-  else if (cur.hand) body = `<div class="row" style="gap:10px;margin-top:8px;flex-wrap:wrap"><button class="ghost go" data-sim="fxhand" style="flex:none">Resolve by hand</button><button class="ghost" data-sim="fxskip" style="flex:none">Skip</button><span class="note" style="margin:0">decline it</span>${report}</div>`;
+    body = `<div class="note">Only the moves its words name, each logged.</div>${(v.me.looking || []).length ? `<div class="tb-picks">${v.me.looking.map((c, k) => simPick(v, 'x' + k, 'zoom:x' + k, c.name)).join('')}</div>` : ''}<div class="tb-moves">${moves.map(x => `<button class="linkish" data-sim="hop:${x.k}">${simHandLabel(v, x.a)}</button>`).join('') || '<div class="note">No move to make \u2014 its effect is yours to apply as the text says.</div>'}</div>
+      <div class="tb-go"><button class="ghost go" data-sim="hdone">Done</button>${report}</div>`; }
+  else if (cur.hand) body = `<div class="tb-go"><button class="ghost go" data-sim="fxhand">Resolve by hand</button><button class="ghost" data-sim="fxskip">Skip</button><span class="note">decline it</span>${report}</div>`;
   else { const fx = L.filter(x => x.t === 'fx'), T = cur.choices, tg = T || [], none = fx.some(x => x.target == null);
     const room = SIMUI.fxt != null ? fx.filter(x => x.target === SIMUI.fxt.target && x.trash != null) : [];
     body = `<div class="note">The app will: ${esc(cur.does)}</div>${cur.steps > 1 ? `<div class="note">step ${cur.step + 1} of ${cur.steps}${cur.cost ? (cur.step === 0 ? ' \u2014 the cost; skipping declines the effect' : ' \u2014 the cost, paid in full once begun') : ''}</div>` : ''}
-      ${room.length ? `<div class="fgrp">Five Characters: trash one to make room (${simCite('§3-7-6-1')})</div>${room.map(x => `<button class="linkish" data-sim="fxroom:${x.trash}">Trash ${esc(v.me.chars[x.trash].name)}</button>`).join('')}`
-      : (tg.length ? `<div class="fgrp">Choose</div>${tg.map(t => `<button class="linkish" data-sim="fx:${t.ref}">${esc(t.name)}</button>`).join('')}` : (T ? '<div class="note">No legal target for this step.</div>' : ''))}
-      <div class="row" style="gap:10px;margin-top:8px;flex-wrap:wrap">${none && !room.length ? `<button class="ghost go" data-sim="fxapply" style="flex:none">${tg.length ? 'Choose none' : 'Apply'}</button>` : ''}${L.some(x => x.t === 'fxskip') ? '<button class="ghost" data-sim="fxskip" style="flex:none">Skip</button><span class="note" style="margin:0">decline it</span>' : '<span class="note" style="margin:0">a cost begun is paid in full (' + simCite('§8-3') + ')</span>'}${report}</div>`; }
-  return `<div class="panel" style="border-color:var(--brass)"><h3>${esc(cur.name)} \u2014 effect</h3><div class="note">${esc(cur.raw)}</div><div class="note" style="color:var(--accent-ink)">${badge}</div>${body}</div>`;
-}
-function simLog(v) { return `<div class="panel"><h3>Log</h3><div class="note">${v.log.slice(0, 8).map(esc).join('<br>') || '\u2014'}</div><button class="linkish" data-sim="sharelog" style="margin-top:6px">Share the log</button></div>`; }
-function simLogText() { const g = SIM.g; if (!g) return ''; const P = i => g.players[i]; return [`OP TCG Hub sim \u2014 take ${TAKE} \u2014 rules v${SIM.RULES}`, `${P(0).name} (${CAT.byId.get(P(0).leader.id)?.name}) vs ${P(1).name} (${CAT.byId.get(P(1).leader.id)?.name}), turn ${g.turn}`, '', ...g.log.slice().reverse()].join('\n'); }
+      ${room.length ? `<div class="fgrp">Five Characters: trash one to make room (${simCite('§3-7-6-1')})</div><div class="note">Tap a lit Character on the table.</div>`
+      : (tg.length ? `<div class="fgrp">Choose</div><div class="tb-picks">${tg.map((t, k) => simPick(v, t.face ? 'c' + k : t.ref, 'fx:' + t.ref, t.name)).join('')}</div>` : (T ? '<div class="note">No legal target for this step.</div>' : ''))}
+      <div class="tb-go">${none && !room.length ? `<button class="ghost go" data-sim="fxapply">${tg.length ? 'Choose none' : 'Apply'}</button>` : ''}${L.some(x => x.t === 'fxskip') ? '<button class="ghost" data-sim="fxskip">Skip</button><span class="note">decline it</span>' : cur.step > 0 && cur.cost ? '<span class="note">a cost begun is paid in full (' + simCite('§8-3') + ')</span>' : '<span class="note">it resolves in full (' + simCite('§8-1-3-1') + ')</span>'}${report}</div>`; }
+  return `<div class="tb-panel" role="region" aria-label="${esc(cur.name)} effect">${lead || ''}<h3>${esc(cur.name)} \u2014 effect</h3><div class="note">${esc(cur.raw)}</div><div class="note tb-mark">${badge}</div>${body}</div>`; }
+/* a battle's result, as the seat reading it may see it (view.last): a Life card named only to its owner (the audit's
+   row 1 -- take 123 painted what act() returned) */
+function simResultHtml(r) { if (!r) return '';
+  return `<h3>${r.gone ? 'Ended' : (r.win ? 'Hit' : 'Held')} \u2014 ${r.a} vs ${r.d}</h3>${r.ko ? `<div class="note">${esc(r.ko)} K.O.\u2019d</div>` : ''}${r.life.map(l => l.name ? `<div class="note">Life card ${l.banished ? 'banished' : 'to hand'}: <b>${esc(l.name)}</b></div>` : '<div class="note">A Life card went to its hand</div>').join('')}`; }
+/* the panel over the hand: the result the defender reads before handing back, a sixth Character's choice, the effect
+   waiting, or who is deciding it */
+function simPanelHtml(v) { const lead = SIMUI.post ? simResultHtml(v.last) : '';
+  if (v.offer && v.legal.length) return simOfferPanel(v, lead);
+  if (SIMUI.post) return `<div class="tb-panel">${lead}<div class="tb-go"><button class="ghost go" data-sim="post">Hand back</button><span class="note">to ${esc(simShort(v.them))}</span></div></div>`;
+  if (SIMUI.room) return `<div class="tb-panel slim"><h3>Five Characters</h3><div class="note">Choose one to trash to make room (${simCite('§3-7-6-1')}) \u2014 a rule, not a K.O. Tap a lit Character.</div><div class="tb-go"><button class="ghost" data-sim="roomx">Cancel</button></div></div>`;
+  if (v.offer && v.offer.hidden) return `<div class="tb-panel slim"><div class="note">${esc(simShort(simSide(v, v.offer.seat)))} decides on a Life card\u2019s [Trigger].</div></div>`;
+  return ''; }
+/* the zoom: the card at its largest, what it is now, its words line by line with what the app does and each line's mark,
+   the continuous text that is the player's to apply, and its moves */
+function simZoomHtml(v, key) { const c = simAt(v, key); if (!c) return '<div class="note">That card is no longer there.</div>';
+  const mark = { proven: 'proven by a test', unproven: 'the app runs it; no test has proven it yet', hand: 'by hand \u2014 the app does not run this line', wrong: 'by hand \u2014 the app\u2019s version was proven wrong' };
+  const kw = c.keywords || c.kw || [], gained = c.granted || [], acts = /^(L|S|m\d+|h\d+)$/.test(key) ? simActsHtml(v, key) : '';
+  const pw = c.power != null ? `${c.power} power${c.printedPower != null && c.power !== c.printedPower ? ' (printed ' + c.printedPower + ')' : ''}` : (c.printedPower != null ? c.printedPower + ' power' : '');
+  return `<div class="zm"><div class="zm-art">${simFace(c, true)}</div><div class="zm-info"><h3 class="zm-name">${esc(c.name)}</h3>
+    <div class="zm-stats">${[c.num, c.type, c.cost != null ? 'cost ' + c.cost : '', pw, c.counter ? 'counter +' + c.counter : '', c.don ? c.don + ' DON!! given' : '', c.rested ? 'rested' : ''].filter(Boolean).map(esc).join(' \u00b7 ')}</div>
+    ${kw.length ? `<div class="zm-kw">${kw.map(k => `<span class="kwtag">${esc(k)}${gained.includes(k) ? ' \u00b7 gained' : ''}</span>`).join('')}</div>` : ''}
+    ${c.text ? `<div class="zm-text">${esc(c.text)}</div>` : ''}
+    ${(c.lines || []).map(l => `<div class="zm-line"><div class="note">${esc(mark[l.proof] || '')}</div>${l.proof === 'hand' || l.proof === 'wrong' ? '' : `<div class="note">The app will: ${esc(l.does)}</div>`}</div>`).join('')}
+    ${c.unapplied && c.unapplied.length ? `<div class="why">Yours to apply: ${c.unapplied.map(esc).join(' ')} The power shown is without it.</div>` : ''}
+    ${c.play && !c.play.ok ? `<div class="note">${simCite(c.play.why)}</div>` : ''}
+    ${acts ? `<div class="tb-go">${acts}</div>` : ''}</div></div>`; }
+/* the log, newest first, each line as the table says it */
+function simLogHtml(v, n) { const lines = v.log.slice(0, n || v.log.length);
+  return `<div class="tb-log">${lines.map(l => `<div class="ll">${esc(simSay(l, false, v))}</div>`).join('') || '<div class="note">\u2014</div>'}</div><button class="linkish" data-sim="sharelog">Share the log</button>`; }
+/* a trash, newest first; each card opens its zoom */
+function simTrashSheetHtml(v, seat) { const X = simSide(v, seat), n = X.trash.length;
+  return `<div class="tb-grid">${X.trash.map((c, i) => simCardHtml(c, `t${seat}.${i}`, { act: `zoom:t${seat}.${i}`, nouid: true })).reverse().join('') || '<div class="note">Nothing in this trash yet.</div>'}</div>${n ? `<div class="note">${n} card${n === 1 ? '' : 's'}, public to both players.</div>` : ''}`; }
+/* the game's menu: concede, a new game, the log to share */
+function simMenuHtml(v) { return `<div class="tb-menu"><div class="tb-go"><button class="ghost" data-sim="concede">Forfeit</button><span class="note">${esc(simShort(simSide(v, v.seat)))} loses (${simCite('§1-2-3')}); the table stays</span></div><div class="tb-go"><button class="ghost" data-sim="sharelog">Share the log</button></div></div>`; }
+/* leaving the table: a game still on is forfeited first, and said so; a game over just closes */
+function simLeaveHtml(v) { return `<div class="tb-menu"><div class="note" style="margin:0">${v.over !== null ? 'The game is over. Leave the table and go back to the app?' : `Leaving forfeits this game: ${esc(simShort(simSide(v, v.seat)))} loses (${simCite('§1-2-3')}). The table closes and the app comes back.`}</div><div class="tb-go"><button class="ghost go" data-sim="leavenow">${v.over !== null ? 'Leave' : 'Forfeit & leave'}</button><button class="ghost" data-close="simSheet">Keep playing</button></div></div>`; }
+/* beside the table on a wide screen: the selected card read in full, and the log */
+function simSideHtml(v) { return `<aside class="tb-side" aria-label="The card and the log">${SIMUI.focus && simAt(v, SIMUI.focus) ? simZoomHtml(v, SIMUI.focus) : '<div class="note">Tap a card to read it here.</div>'}<h3 class="tb-sh">Log</h3>${simLogHtml(v, 40)}</aside>`; }
+/* the table in play */
+function simTableHtml(v) { const t = simTargets(v);
+  return `${simTopHtml(v)}<div class="tb-mat">${simHalfHtml(v, v.them, false, t)}${simBandHtml(v)}${simHalfHtml(v, v.me, true, t)}<svg class="tb-lines" aria-hidden="true"></svg></div>${simHandHtml(v, t)}<div class="tb-dock">${simDockHtml(v)}</div>${simPanelHtml(v)}${simSideHtml(v)}`; }
+/* the mulligan: this seat's Leader and five cards large, keep or redraw once */
+function simMulliganHtml(v) { const M = v.me;
+  return `${simTopHtml(v)}<div class="tb-mull"><h3>${esc(simShort(M))} \u2014 keep or mulligan?</h3><div class="note">Redraw once, the first player deciding first (${simCite('§5-2-1-6')}). Hold a card to read it.</div>
+    <div class="tb-mrow">${simCardHtml(M.leader, 'L', { act: 'zoom:L', nouid: true })}<div class="tb-mhand">${M.hand.map((c, h) => simCardHtml(c, 'h' + h, { act: 'zoom:h' + h })).join('')}</div></div>
+    <div class="tb-go"><button class="ghost go" data-sim="keep:${v.seat}">Keep</button><button class="ghost" data-sim="mull:${v.seat}">Mulligan (once)</button></div></div>`; }
+/* the end: the winner's Leader, the line that ended it, a new game and the log */
+function simOverHtml(v) { const W = v.over === -1 ? null : simSide(v, v.over);
+  return `${simTopHtml(v)}<div class="tb-over">${W ? `<div class="tb-win">${simFace(W.leader, true)}</div>` : ''}<h3>${v.over === -1 ? 'A draw \u2014 both lose at once (§9-2-1)' : esc(simShort(W)) + ' wins'}</h3>${W && W.name !== simShort(W) ? `<div class="note tb-deck">${esc(W.name.split(' \u2014 ').slice(1).join(' \u2014 '))}</div>` : ''}<div class="note">${esc(simSay(v.log[0] || '', false, v))}</div><div class="tb-go"><button class="ghost go" data-sim="new">New game</button><button class="ghost" data-sim="sharelog">Share the log</button></div>${simLogHtml(v, 12)}</div>`; }
+/* a new game: the two Leaders face to face over the decks chosen, then the choices */
+function simSetupHtml(decks) { const ds = decks, i1 = Math.max(0, ds.findIndex(x => x.d.id === (SIMUI.d1 || SIMUI.pre))), i2 = SIMUI.d2 != null && ds.findIndex(x => x.d.id === SIMUI.d2) >= 0 ? ds.findIndex(x => x.d.id === SIMUI.d2) : Math.min(1, ds.length - 1);
+  const bot = SIMUI.opp === 'bot', face = (x, who) => `<div class="vsl">${x && x.face ? simFace(x.face, true) : simBack('ld')}<b>${esc(who)}</b><span>${esc(x ? x.d.name || 'Untitled' : '')}</span></div>`;
+  return `${ds.length ? `<div class="tb-vs">${face(ds[i1], 'Player 1')}<span class="vsx">VS</span>${face(ds[i2], bot ? 'The app' : 'Player 2')}</div>` : ''}<div class="panel"><h3>New game</h3>
+      <div class="note">Two players, one phone, or you against the app. The app keeps the rules of the Comprehensive Rules v${SIM.RULES} \u2014 phases, DON!!, cost, the Character and Stage limits, who may attack whom, block, counter, damage, Life, defeat. Card effects the app understands run from their text; every other effect is offered at its moment for you to resolve <b>by hand</b>, with only the moves its words name.</div>
+      ${ds.length ? `<div class="fgrp">Player 1 deck</div><select id="simD1" aria-label="Player 1 deck">${ds.map((x, i) => `<option value="${i}" ${i === i1 ? 'selected' : ''}>${esc(x.d.name || 'Untitled')}</option>`).join('')}</select>
+      <div class="fgrp">${bot ? 'The app\u2019s deck' : 'Player 2 deck'}</div><select id="simD2" aria-label="Player 2 deck">${ds.map((x, i) => `<option value="${i}" ${i === i2 ? 'selected' : ''}>${esc(x.d.name || 'Untitled')}</option>`).join('')}</select>
+      <div class="fgrp">Opponent</div><select id="simOpp" aria-label="Opponent"><option value="human"${bot ? '' : ' selected'}>A friend \u2014 pass the phone</option><option value="bot"${bot ? ' selected' : ''}>The app \u2014 legal and not clever; it never sees your hand</option></select>
+      <div class="fgrp">Goes first (rock-paper-scissors is yours, §5-2-1-4)</div><select id="simFirst" aria-label="Who goes first"><option value="0"${SIMUI.first ? '' : ' selected'}>Player 1</option><option value="1"${SIMUI.first ? ' selected' : ''}>${bot ? 'The app' : 'Player 2'}</option></select>
+      <div class="row" style="margin-top:14px"><button class="ghost go" data-sim="start" style="padding:10px 18px">Deal</button></div>`
+      : `<div class="note" style="margin-top:10px">No legal deck yet \u2014 build one in <b>Decks</b> (a Leader and exactly fifty cards) and it appears here.</div>`}</div>`; }
+const SIM_PAINTERS_END = 'end';   /* ==== the painters' end ==== */
+
+/* ==== the table's controller (take 124): it paints the view of the seat whose screen it is, keeps that view, and sends
+   back only its legal moves; the app's moves come one at a time; what moved is drawn moving ==== */
+/* whose screen: the defender reading a result, the human against the app, else whoever the game waits on */
+function simSeat() { const g = SIM.g; if (SIMUI.post) return SIMUI.post.i; if (g.bot != null) return 1 - g.bot; const w = SIM.who(); return w == null ? g.active : w; }
+function simWhy() { const g = SIM.g; if (g.phase === 'mulligan') return 'keep or mulligan'; if (g.queue.length) return 'an effect to resolve';
+  if (g.phase === 'battle') return 'an attack is coming \u2014 block or counter'; return `turn ${g.turn}`; }
+/* the header's line under the title: the setup's words, or whose turn it is */
+function simSubText(v) { if (!v) return 'rules by the app \u00b7 effects from the text, or by hand';
+  if (v.over !== null) return 'the game is over'; if (v.phase === 'mulligan') return 'keep or mulligan';
+  const mine = v.active === v.seat; return `turn ${v.turn} \u00b7 ${mine ? (v.bot != null ? 'your turn' : simShort(v.me) + '\u2019s turn') : simShort(v.them) + (v.bot != null ? ' is playing' : '\u2019s turn')}`; }
+/* the app's moves one at a time, each painted, while the browser can draw them: not under reduced motion, not in a
+   harness without a frame clock, not once Hurry is tapped */
+function simPaced() { return !SIMUI.hurry && typeof requestAnimationFrame === 'function' && !reducedMotion(); }
+/* Against the app there is nothing to hide: no curtain, the app just moves -- one move a beat (take 124; take 123 ran
+   them all inside the tap). The human's attack stops before the damage, so its block and counter are on the table when
+   the human taps Resolve. */
+function simBotRun() { const g = SIM.g; if (!g || g.bot == null) return; clearTimeout(SIMUI.timer); SIMUI.timer = null;
+  const hold = () => SIM.g.phase === 'battle' && SIM.g.battle && SIM.g.battle.att !== SIM.g.bot ? ['resolve'] : [];
+  if (!simPaced()) { for (let guard = 0; SIM.who() === g.bot && guard < 400; guard++) if (!BOT.move(g.bot, hold())) break; SIMUI.busy = false; SIMUI.hurry = false; return; }
+  if (SIM.who() !== g.bot) { SIMUI.busy = false; return; }
+  SIMUI.busy = true;
+  const step = () => { SIMUI.timer = null;
+    if (SIM.g !== g || SIM.who() !== g.bot || !BOT.move(g.bot, hold())) { SIMUI.busy = false; SIMUI.hurry = false; paintSim(); return; }
+    paintSim(); if (!simPaced()) { simBotRun(); paintSim(); return; } SIMUI.timer = setTimeout(step, SIMUI.pace); };
+  SIMUI.timer = setTimeout(step, Math.round(SIMUI.pace * 0.6)); }
+/* the hand-over between two people: the next player's name over their own Leader (public), nothing of either hand */
+function simCurtain(text, sub, L) { if (SIM.g && SIM.g.bot != null) return; const c = $('#simCurtain'), [who, ...deck] = String(text || '').split(' \u2014 ');
+  c.innerHTML = `${L && L.art ? `<div class="cur-art" aria-hidden="true"><img src="${esc(L.art.thumb)}" alt="" onerror="this.remove()"></div><div class="cur-card" aria-hidden="true"><img src="${esc(L.art.large || L.art.thumb)}" alt="" onerror="this.remove()"></div>` : ''}<div class="big" style="font-size:var(--fs-head);margin-bottom:8px">Hand the phone to</div><h2 style="font-size:var(--fs-hero);margin:0 0 6px">${esc(who)}</h2>${deck.length ? `<div class="note" style="margin:0 0 10px">${esc(deck.join(' \u2014 '))}</div>` : ''}<div class="note">${esc(sub || 'tap when you have it')}</div>`; c.classList.add('on'); }
+/* one tap, one act; then the hand-over the rules imply: a new decider means the curtain (or the app's move) */
+function simAct(i, a) { const g = SIM.g, before = SIM.who(); const r = SIM.act(i, a);
+  if (!r.ok) { if (r.why) toast(r.why); return r; }
+  SIMUI.sel = null; SIMUI.room = null; SIMUI.fxt = null; SIMUI.focus = null;
+  if (a.t === 'resolve' && g.bot == null) SIMUI.post = { i };   // two on one phone: the defender reads the result before the phone goes back
+  simAfter(before); return r; }
+function simAfter(before) { const g = SIM.g; if (!g || g.over !== null || SIMUI.post) return; if (g.bot != null) return simBotRun();
+  const w = SIM.who(); if (w != null && w !== before) simCurtain(SIM.P(w).name, simWhy(), SIM.view(w).me.leader); }
+/* The board is drawn from the view its seat is handed (take 123) and kept (take 124): SIM.view(seat) holds what that seat
+   may see, and its legal moves. No painter reads the engine's state, so the table cannot show what the seat was never
+   given (smoke holds that line; docs/SIM-UI.md). */
+function paintSim() { const box = $('#simBoard'); if (!box) return;
+  const before = simSnap(box), v = SIM.g ? SIM.view(simSeat()) : null; SIMUI.v = v;
+  box.classList.toggle('table', !!v); const sub = $('#simSub'); if (sub) sub.textContent = simSubText(v);
+  if (!v) box.innerHTML = simSetupHtml(SIMUI.legalDecks().map(d => ({ d, face: d.leader ? SIM.face(d.leader) : null })));
+  else if (v.over !== null) box.innerHTML = simOverHtml(v);
+  else if (v.phase === 'mulligan') box.innerHTML = simMulliganHtml(v);
+  else box.innerHTML = simTableHtml(v);
+  simFit(); simMotion(before, v); simReveal(v); simDecor(v); if (SIMUI.sheet && $('#simSheet').classList.contains('on')) simSheetPaint(); }
+/* the card size from the space: the table's height is a straight line in --cw, so two trial sizes give it and the largest
+   card that fits is solved for; its width is the five columns (and, from 640 px, the hand's column beside them, from 1000
+   px the side panel too). Then the hand: the space left for it, all of it used (the owner, take 124: "using the screen
+   space as optimally as possible") */
+function simFit() { const b = $('#simBoard');
+  if (!b || !b.classList.contains('table') || typeof b.getBoundingClientRect !== 'function' || typeof getComputedStyle !== 'function' || typeof innerHeight !== 'number') return;
+  try { const W = document.documentElement.clientWidth, sec = $('#sim'), padB = parseFloat(getComputedStyle(sec).paddingBottom) || 0, wide = W >= 640;
+    const H = innerHeight - (b.getBoundingClientRect().top + (window.scrollY || 0)) - padB, hand = b.querySelector('.tb-hand');
+    const side = W >= 1000 ? Math.round(Math.max(280, Math.min(400, W * 0.24))) : 0; b.style.setProperty('--side', side + 'px');
+    b.style.removeProperty('--hw'); if (hand) { hand.classList.remove('fit'); hand.style.removeProperty('padding-left'); hand.style.removeProperty('padding-right'); }
+    const tall = cw => { b.style.setProperty('--cw', cw + 'px'); return b.getBoundingClientRect().height; };
+    const h60 = tall(60), h80 = tall(80), k = (h80 - h60) / 20, o = h60 - 60 * k;
+    const byW = wide ? (W - 66 - side) / 6.2 : (W - 48) / 5, byH = k > 0 ? (H - o) / k : byW;
+    /* the mulligan and the end are not the table: their cards wrap, so the table's line does not hold; the size take 124 first had */
+    if (!b.querySelector('.tb-mat')) { b.style.setProperty('--cw', Math.max(44, Math.min(92, Math.floor(wide ? (W - 88 - side) / 7.24 : byW))) + 'px'); return; }
+    const cw = Math.max(44, Math.min(140, Math.floor(Math.min(byW, byH)))); b.style.setProperty('--cw', cw + 'px');
+    const n = hand ? hand.querySelectorAll('.sc').length : 0; if (!n) return;
+    /* the hand's space: on a phone the strip under the table and the height the table leaves; from 640 px its column */
+    const cs = getComputedStyle(hand), px = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0), py = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+    const hr = hand.getBoundingClientRect(), slack = wide ? 0 : Math.max(0, H - b.getBoundingClientRect().height - 4), Wh = hr.width - px, Hh = hr.height - py + slack;
+    /* all of it at once, at the largest card the space holds: in rows twelve apart (room for a lifted card), a row's cards
+       six apart or, held like a hand, each over the last with a strip of its own -- 44 px at least and two fifths of the
+       card, its cost and counter in it (take 108's measure: every control a 44 px square of its own) */
+    const cap = cw * (wide ? 2 : 2.2), floor = Math.max(56, cw * (wide ? 0.7 : 0.85));
+    let best = null; for (let rows = 1; rows <= (wide ? n : 2); rows++) { const per = Math.ceil(n / rows), a = Wh / (1 + 0.4 * (per - 1));
+      const w = Math.floor(Math.min((Hh - (rows - 1) * 12 - 6) / rows / 1.397, per === 1 ? Wh : a >= 110 ? a : Wh - 44 * (per - 1), cap));
+      if (!best || w > best.w) best = { rows, per, w }; }
+    if (best.w >= floor) { const { per, w } = best, step = per > 1 ? Math.floor(Math.min(w + 6, (Wh - w) / (per - 1))) : w + 6, row = w + (per - 1) * step;
+      hand.classList.add('fit'); b.style.setProperty('--hw', w + 'px'); hand.style.setProperty('--hx', Math.min(w, step - 6 * (step >= w + 6)) + 'px');
+      /* a row is exactly its cards and two pixels to spare, so a line breaks after `per` of them and never a fraction early */
+      hand.style.paddingLeft = hand.style.paddingRight = Math.max(0, Math.floor((hr.width - row) / 2) - 1) + 'px';
+      /* a shorter last row spreads its cards over the width a full row takes, overlapping only as much as it must */
+      const last = n - per * (Math.ceil(n / per) - 1), lastStep = last > 1 ? Math.floor(Math.min(w + 6, (row - w) / (last - 1))) : step;
+      hand.querySelectorAll('.sc').forEach((e, i) => { const s = i >= n - last ? lastStep : step, top = i === n - 1 || i % per === per - 1;   // the last of a row lies on top, whole
+        e.style.marginLeft = i % per ? (s - w - 6) + 'px' : '0'; e.style.setProperty('--hx', (top ? w : Math.min(w, s - 6 * (s >= w + 6))) + 'px'); }); return; }
+    /* too many to show at once at a card worth reading: a phone's strip scrolls sideways, as tall as the height left allows; a
+       column fills its width and scrolls down */
+    if (!wide) { if (slack > 4) b.style.setProperty('--hw', Math.floor(Math.min(cw * 1.45, cw * 1.12 + slack / 1.397)) + 'px'); return; }
+    const per = Math.max(1, Math.floor((Wh + 6) / (floor + 6))); b.style.setProperty('--hw', Math.floor(Math.min(cap, (Wh - (per - 1) * 6) / per)) + 'px'); } catch (e) {} }
+/* before a repaint: where each card on the table stood, and the view it showed */
+function simSnap(box) { const v = SIMUI.v; if (!v || !box || typeof box.querySelectorAll !== 'function' || typeof box.getBoundingClientRect !== 'function') return null;
+  try { const at = new Map(), rect = sel => { const e = box.querySelector(sel); return e ? e.getBoundingClientRect() : null; };
+    box.querySelectorAll('.tb-mat [data-uid]').forEach(e => at.set(e.dataset.uid, { r: e.getBoundingClientRect(), html: e.outerHTML, mine: !!e.closest('.me') }));
+    return { v, at, trash: { me: rect('.me .z-trash'), them: rect('.them .z-trash') }, life: { me: rect('.me .z-life'), them: rect('.them .z-life') }, hand: { me: rect('.tb-hand'), them: rect('.tb-hb') } }; }
+  catch (e) { return null; } }
+/* after it, what changed is drawn moving: a card dealt in, a card sliding to its new place, a card turning to rest or back,
+   a card that left the table going to its trash, a Life card leaving its stack, a DON!! landing, a power changing, a new
+   turn's banner, an attacker's lunge. Reduced motion, a hand-over (the table turned to the other seat), or a harness
+   without the browser's animations draws none of it. */
+function simMotion(b, v) { const box = $('#simBoard');
+  if (!b || !v || !box || b.v.seat !== v.seat || b.v.over !== null || reducedMotion() || typeof Element === 'undefined' || !Element.prototype.animate) return;
+  try { const E = [...box.querySelectorAll('.tb-mat [data-uid]')], now = new Map(E.map(e => [e.dataset.uid, e]));
+    const cards = x => { const m = new Map(); [x.me, x.them].forEach(X => [X.leader, X.stage, ...X.chars].forEach(c => { if (c) m.set(String(c.uid), c); })); return m; };
+    const old = cards(b.v), cur = cards(v), ease = 'cubic-bezier(.4,0,.2,1)';
+    for (const e of E) { const uid = e.dataset.uid, o = b.at.get(uid), was = old.get(uid), c = cur.get(uid);
+      if (!o) { e.animate([{ transform: 'translateY(-16px) scale(1.2)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 340, easing: 'cubic-bezier(.2,.8,.2,1)' }); continue; }
+      const r = e.getBoundingClientRect(), dx = o.r.left - r.left, dy = o.r.top - r.top;
+      if (Math.abs(dx) + Math.abs(dy) > 2) e.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: 'none' }], { duration: 280, easing: ease });
+      if (!was || !c) continue; const f = e.querySelector('.sf'), p = e.querySelector('.pw'), d = e.querySelector('.dn');
+      if (f && was.rested !== c.rested) f.animate(c.rested ? [{ transform: 'none' }, { transform: 'rotate(90deg) scale(.715)' }] : [{ transform: 'rotate(90deg) scale(.715)' }, { transform: 'none' }], { duration: 280, easing: ease });
+      if (p && was.power !== c.power) p.animate([{ transform: 'translateX(-50%) scale(1.6)' }, { transform: 'translateX(-50%) scale(1)' }], { duration: 380, easing: 'ease-out' });
+      if (d && c.don > was.don) d.animate([{ transform: 'translateY(-18px) scale(1.7)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 400, easing: 'cubic-bezier(.2,.8,.2,1)' }); }
+    for (const [uid, o] of b.at) if (!now.has(uid)) simGhost(o.html, o.r, (o.mine ? b.trash.me : b.trash.them) || o.r, 0);
+    ['me', 'them'].forEach(s => { const lost = b.v[s].lifeCount - v[s].lifeCount; for (let k = 0; k < lost && b.life[s]; k++) simGhost(simBack(), b.life[s], b.hand[s] || b.life[s], k * 140); });
+    if (v.turn !== b.v.turn) simBanner(v);
+    if (v.battle && !b.v.battle && v.battle.attacker) { const e = now.get(String(v.battle.attacker.uid)); if (e) e.animate([{ transform: 'none' }, { transform: `translateY(${v.battle.att === v.seat ? -16 : 16}px) scale(1.08)` }, { transform: 'none' }], { duration: 440, easing: 'ease-out' }); }
+  } catch (e) {} }
+/* a Leader the first time it shows this game turns over from its red back, as players reveal their Leaders to start (the owner,
+   take 124: "red for leaders") -- once for each; under reduced motion, or turned to rest already, it is simply face up */
+function simReveal(v) { const box = $('#simBoard'); if (!v || !box || v.over !== null) return;
+  const shown = SIMUI.shown || (SIMUI.shown = new Set());
+  (v.phase === 'mulligan' ? [['L', v.me.seat]] : [['L', v.me.seat], ['oL', v.them.seat]]).forEach(([key, seat]) => { if (shown.has(seat)) return; shown.add(seat);   // the mulligan shows the deciding seat's Leader, the table both
+    const e = typeof box.querySelector === 'function' && box.querySelector(`[data-key="${key}"]`);
+    if (!e || reducedMotion() || typeof Element === 'undefined' || !Element.prototype.animate || e.classList.contains('rest')) return;
+    try { const f = e.querySelector('.sf'), t = document.createElement('span'); if (!f) return; t.innerHTML = simBack('ld rv'); const bk = t.firstChild; e.appendChild(bk);
+      const wait = 180 + 140 * (key === 'oL'), turn = 260, p = 'perspective(700px) ';
+      bk.animate([{ transform: p + 'rotateY(0deg)' }, { transform: p + 'rotateY(0deg)', offset: wait / (wait + turn) }, { transform: p + 'rotateY(90deg)' }], { duration: wait + turn, easing: 'ease-in', fill: 'forwards' }).onfinish = () => bk.remove();
+      f.animate([{ transform: p + 'rotateY(-90deg)' }, { transform: p + 'rotateY(-90deg)', offset: (wait + turn) / (wait + 2 * turn) }, { transform: p + 'rotateY(0deg)' }], { duration: wait + 2 * turn, easing: 'ease-out' });
+      setTimeout(() => bk.remove(), wait + turn + 400); } catch (err) {} }); }
+/* a card on its way somewhere: a copy of how it looked, from where it was to where it goes, fading */
+function simGhost(html, from, to, delay) { if (!from || !document.body || !document.body.appendChild) return;
+  const d = document.createElement('div'); d.className = 'tb-ghost'; d.innerHTML = html;
+  Object.assign(d.style, { left: from.left + 'px', top: from.top + 'px', width: from.width + 'px', height: from.height + 'px' }); document.body.appendChild(d);
+  const dx = to.left + to.width / 2 - (from.left + from.width / 2), dy = to.top + to.height / 2 - (from.top + from.height / 2);
+  const a = d.animate([{ transform: 'none', opacity: 1 }, { transform: `translate(${dx}px,${dy}px) scale(.5)`, opacity: 0 }], { duration: 560, delay, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' });
+  a.onfinish = () => d.remove(); setTimeout(() => d.remove(), 1600 + delay); }
+/* a new turn, across the middle of the table */
+function simBanner(v) { const mat = document.querySelector('#simBoard .tb-mat'); if (!mat) return; const b = document.createElement('div'); b.className = 'tb-banner';
+  const mine = v.active === v.seat; b.innerHTML = `<b>Turn ${v.turn}</b><span>${mine ? (v.bot != null ? 'Your turn' : esc(simShort(v.me)) + '\u2019s turn') : esc(simShort(v.them)) + (v.bot != null ? ' plays' : '\u2019s turn')}</span>`;
+  mat.appendChild(b); setTimeout(() => b.remove(), 1600); }
+/* over the table after the paint: the attack's line from attacker to target, and a battle's result not yet shown -- hit
+   or held, a K.O., the defender's own Life card -- once, where the two met; a hit is felt as well as seen */
+function simDecor(v) { const box = $('#simBoard'); if (!v || !box || typeof box.querySelector !== 'function') return;
+  try { const mat = box.querySelector('.tb-mat'), svg = box.querySelector('.tb-lines'); if (!mat || !svg || typeof mat.getBoundingClientRect !== 'function') return;
+    const m = mat.getBoundingClientRect(), mid = e => { const r = e.getBoundingClientRect(); return [Math.round(r.left - m.left + r.width / 2), Math.round(r.top - m.top + r.height / 2)]; };
+    const b = v.battle, from = b && b.attacker && mat.querySelector(`[data-uid="${b.attacker.uid}"]`), to = b && b.target && mat.querySelector(`[data-uid="${b.target.uid}"]`);
+    if (from && to) { const [x1, y1] = mid(from), [x2, y2] = mid(to); svg.innerHTML = `<defs><marker id="tbArrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#E0553D"/></marker></defs><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#E0553D" stroke-width="5" stroke-linecap="round" stroke-dasharray="12 8" marker-end="url(#tbArrow)"/>`; }
+    const r = v.last; if (!r || r.n === SIMUI.seen || r.turn !== v.turn || v.over !== null) return; SIMUI.seen = r.n;
+    const own = r.life.filter(l => l.name).map(l => `${l.banished ? 'Banished' : 'To hand'}: ${esc(l.name)}`).join(' \u00b7 ');
+    const d = document.createElement('div'); d.className = 'tb-burst ' + (r.gone ? 'held' : r.win ? 'hit' : 'held'); d.setAttribute('role', 'status');
+    d.innerHTML = `<b>${r.gone ? 'Ended' : r.ko ? 'K.O.' : r.win ? 'Hit' : 'Held'}</b><span>${r.a} vs ${r.d}${own ? ' \u00b7 ' + own : ''}</span>`;
+    mat.appendChild(d); setTimeout(() => d.remove(), 1700); if (r.win && !r.gone) PLATFORM.haptic(); } catch (e) {} }
+/* the sheet over the table: a card's zoom, the log, a trash, the game's menu -- painted from the kept view */
+function simSheetOpen(kind, arg) { SIMUI.sheet = { kind, arg }; simSheetPaint(); $('#simSheet').classList.add('on'); }
+function simSheetPaint() { const s = SIMUI.sheet, v = SIMUI.v; if (!s || !v) return;
+  $('#simSheetTitle').textContent = s.kind === 'trash' ? `${simShort(simSide(v, +s.arg))}\u2019s trash` : ({ zoom: 'The card', log: 'The log', menu: 'The game', leave: 'Leave the table' }[s.kind] || '');
+  $('#simSheetBody').innerHTML = s.kind === 'zoom' ? simZoomHtml(v, s.arg) : s.kind === 'log' ? simLogHtml(v) : s.kind === 'trash' ? simTrashSheetHtml(v, +s.arg) : s.kind === 'leave' ? simLeaveHtml(v) : simMenuHtml(v); }
+function simLogText() { const g = SIM.g; if (!g) return ''; const P = i => g.players[i]; return [`OP TCG Hub sim \u2014 take ${TAKE} \u2014 rules v${SIM.RULES}`, `${P(0).name} (${CAT.byId.get(P(0).leader.id)?.name}) vs ${P(1).name} (${CAT.byId.get(P(1).leader.id)?.name}), turn ${g.turn}`, '', ...g.log.slice().reverse().map(l => simSay(l, false, SIMUI.v))].join('\n'); }
 /* Report (take 122): the effect on screen, what the app made of it, and the whole game as its seed and moves --
    enough to replay it exactly and turn it into a proof (tools/cardproof.mjs --from-report). Shared by the
    player's own hand, never sent anywhere else (PROTOCOL §9). */
@@ -6228,44 +6722,73 @@ function simReport() { const g = SIM.g, o = g.queue[0]; const p = o && SIM.card(
     offer: o ? { cardId: o.cardId, num: p && p.num, name: p && p.name, t: o.e.t, raw: o.e.raw, parsed: o.e.do, proof: SIM.proofOf(o.cardId, o.e), step: o.step } : null,
     log: g.log.slice(0, 30) }, null, 1); }
 function simShare(title, text) { if (navigator.share) navigator.share({ title, text }).catch(() => {}); else { try { navigator.clipboard.writeText(text); toast('Copied'); } catch (e) { toast('Copy failed'); } } }
-$('#sim').addEventListener('click', e => {
-  const b = e.target.closest('[data-sim]'); if (!b) return; const [act, arg] = b.dataset.sim.split(':'); const g = SIM.g;
-  const ref = arg === 'leader' || arg === 'stage' ? arg : (arg == null ? null : +arg);
-  if (act === 'start') { const ds = SIMUI.legalDecks(); const d1 = ds[+$('#simD1').value], d2 = ds[+$('#simD2').value]; const first = +$('#simFirst').value;
+/* a tap: the board's own choices (select, aim, zoom, the sheets) change what is drawn; a move is found in the view the
+   board painted and sent back as it is (docs/SIM-UI.md, Moves) -- nothing here asks the engine what is legal. The one move not in the
+   human's view is the app's own Resolve, which the app holds so the human sees the block and counter first. */
+function simTap(code) { const s = String(code), c = s.indexOf(':'), act = c < 0 ? s : s.slice(0, c), arg = c < 0 ? null : s.slice(c + 1);
+  const ref = arg === 'leader' || arg === 'stage' ? arg : (arg == null || arg === '' || isNaN(+arg) ? arg : +arg);
+  if (act === 'start') { const ds = SIMUI.legalDecks(); if (!ds.length) return; const d1 = ds[+$('#simD1').value] || ds[0], d2 = ds[+$('#simD2').value] || ds[Math.min(1, ds.length - 1)], first = +$('#simFirst').value || 0;
     const bot = $('#simOpp') && $('#simOpp').value === 'bot';
     SIM.new({ ...d1, name: (bot ? 'You' : 'Player 1') + (d1.name ? ' \u2014 ' + d1.name : '') },   // two on one phone: each seat by its number (take 123: Player 2 read its opponent as "You")
       { ...d2, name: (bot ? 'The app' : 'Player 2') + (d2.name ? ' \u2014 ' + d2.name : '') }, first, bot ? { bot: 1 } : {});
-    Object.assign(SIMUI, { sel: null, post: null, room: null, fxt: null, result: null });
-    if (bot) simBotRun(); else simCurtain(SIM.P(SIM.who()).name, 'keep or mulligan first'); paintSim(); return; }
-  if (act === 'new') { SIM.g = null; Object.assign(SIMUI, { sel: null, post: null, room: null, fxt: null, result: null }); paintSim(); return; }
+    Object.assign(SIMUI, { sel: null, focus: null, post: null, room: null, fxt: null, seen: 0, hurry: false, shown: new Set() });
+    if (bot) simBotRun(); else simCurtain(SIM.P(SIM.who()).name, 'keep or mulligan first', SIM.view(SIM.who()).me.leader); paintSim(); window.scrollTo(0, 0); return; }
+  if (act === 'new') { clearTimeout(SIMUI.timer); SIM.g = null; Object.assign(SIMUI, { sel: null, focus: null, post: null, room: null, fxt: null, busy: false, hurry: false, sheet: null }); paintSim(); return; }
   if (act === 'sharelog') { simShare('OP TCG Hub game log', simLogText()); return; }
   if (act === 'report') { simShare('OP TCG Hub \u2014 a Sim effect report', simReport()); return; }
-  const i = act === 'resolve' && g.bot != null && g.phase === 'battle' && g.battle.def === g.bot ? g.bot : SIM.who();
-  if (act === 'keep' || act === 'mull') simAct(ref, { t: act });
-  else if (act === 'play') { const v = SIM.canPlay(i, ref); if (v.ok && v.full) SIMUI.room = { h: ref }; else simAct(i, { t: 'play', h: ref }); }
-  else if (act === 'room') { const h = SIMUI.room && SIMUI.room.h; SIMUI.room = null; if (h != null) simAct(i, { t: 'play', h, trash: ref }); }
-  else if (act === 'roomx') SIMUI.room = null;
-  else if (act === 'give') simAct(i, { t: 'give', ref });
-  else if (act === 'fxmain') simAct(i, { t: 'activate', ref });
-  else if (act === 'attack') { const v = SIM.canAttack(i, ref); if (!v.ok) { toast(v.why); return; } SIMUI.sel = SIMUI.sel && SIMUI.sel.ref === ref ? null : { ref }; }
-  else if (act === 'target') { const aref = SIMUI.sel && SIMUI.sel.ref; SIMUI.sel = null; if (aref != null) simAct(i, { t: 'attack', ref: aref, target: ref }); }
-  else if (act === 'block') simAct(i, { t: 'block', k: ref });
-  else if (act === 'noblock') simAct(i, { t: 'noblock' });
-  else if (act === 'counter') simAct(i, { t: 'counter', h: ref });
-  else if (act === 'cev') simAct(i, { t: 'cevent', h: ref });
-  else if (act === 'resolve') simAct(i, { t: 'resolve' });
-  else if (act === 'fx') { const L = SIM.legal(i); const tg = arg; if (L.some(x => x.t === 'fx' && x.target === tg && x.trash != null)) SIMUI.fxt = { target: tg }; else simAct(i, { t: 'fx', target: tg }); }
-  else if (act === 'fxroom') { const tg = SIMUI.fxt && SIMUI.fxt.target; SIMUI.fxt = null; simAct(i, { t: 'fx', target: tg, trash: ref }); }
-  else if (act === 'fxapply') simAct(i, { t: 'fx', target: null });
-  else if (act === 'fxskip') simAct(i, { t: 'fxskip' });
-  else if (act === 'fxhand') simAct(i, { t: 'fxhand' });
-  else if (act === 'hop') { const a = SIM.legal(i)[ref]; if (a && a.t === 'hand') simAct(i, a); }
-  else if (act === 'hdone') simAct(i, { t: 'handdone' });
-  else if (act === 'end') simAct(i, { t: 'end' });
-  else if (act === 'concede') simAct(simSeat(), { t: 'concede' });
-  else if (act === 'post') { const before = SIMUI.post.i; SIMUI.post = null; simAfter(before); }
-  paintSim();
-});
+  const v = SIMUI.v; if (!v) return;
+  if (act === 'log' || act === 'menu' || act === 'leave') return simSheetOpen(act);
+  /* leave the table (the owner, take 124): a game still on is forfeited for the seat on screen (§1-2-3), then the table closes and
+     the app's header, tabs and nav come back */
+  if (act === 'leavenow') { const was = SIM.g && SIM.g.over === null; if (was) SIM.act(simSeat(), { t: 'concede' }); clearTimeout(SIMUI.timer); SIM.g = null;
+    Object.assign(SIMUI, { sel: null, focus: null, post: null, room: null, fxt: null, busy: false, hurry: false, sheet: null, seen: 0 }); $('#simCurtain').classList.remove('on'); paintSim(); window.scrollTo(0, 0); if (was) toast('Forfeited \u2014 the table is closed'); return; }
+  if (act === 'trash' || act === 'zoom') return simSheetOpen(act, arg);
+  if (act === 'card') { SIMUI.focus = SIMUI.focus === arg ? null : arg; SIMUI.sel = null; paintSim(); return; }
+  if (act === 'aimx') { SIMUI.sel = null; paintSim(); return; }
+  if (act === 'roomx') { SIMUI.room = null; paintSim(); return; }
+  if (act === 'hurry') { SIMUI.hurry = true; simBotRun(); paintSim(); return; }
+  if (act === 'post') { const before = SIMUI.post.i; SIMUI.post = null; simAfter(before); paintSim(); return; }
+  if (SIMUI.busy && act !== 'concede') return;   // the app is moving
+  const L = v.legal, pick = f => L.find(f), send = (a, seat = v.seat) => { if (a) simAct(seat, a); else toast('Not now'); };
+  switch (act) {
+    case 'keep': case 'mull': send(pick(x => x.t === act)); break;
+    case 'play': { const h = +arg, one = pick(x => x.t === 'play' && x.h === h && x.trash == null);
+      if (one) send(one); else if (L.some(x => x.t === 'play' && x.h === h)) { SIMUI.room = { h }; SIMUI.focus = null; } else { const hc = (v.me.hand || [])[h]; toast(hc && hc.play && hc.play.why ? hc.play.why : 'Not now'); } break; }
+    case 'room': { const h = SIMUI.room && SIMUI.room.h; SIMUI.room = null; send(pick(x => x.t === 'play' && x.h === h && x.trash === +arg)); break; }
+    case 'give': send(pick(x => x.t === 'give' && x.ref === ref)); break;
+    case 'fxmain': { const [r0, n] = String(arg).split('.'), r = r0 === 'leader' || r0 === 'stage' ? r0 : +r0; send(pick(x => x.t === 'activate' && x.ref === r && (n == null || x.n === +n))); break; }
+    case 'attack': if (L.some(x => x.t === 'attack' && x.ref === ref)) { SIMUI.sel = SIMUI.sel && SIMUI.sel.ref === ref ? null : { ref }; SIMUI.focus = null; } else toast('It cannot attack now'); break;
+    case 'target': { const a = SIMUI.sel && pick(x => x.t === 'attack' && x.ref === SIMUI.sel.ref && x.target === ref); SIMUI.sel = null; send(a); break; }
+    case 'block': send(pick(x => x.t === 'block' && x.k === +arg)); break;
+    case 'noblock': send(pick(x => x.t === 'noblock')); break;
+    case 'counter': send(pick(x => x.t === 'counter' && x.h === +arg)); break;
+    case 'cev': send(pick(x => x.t === 'cevent' && x.h === +arg)); break;
+    case 'resolve': { const mine = pick(x => x.t === 'resolve'); if (mine) send(mine); else if (v.bot != null && v.battle && v.battle.def === v.bot && v.who === v.bot) send({ t: 'resolve' }, v.bot); break; }
+    case 'fx': { const all = L.filter(x => x.t === 'fx' && x.target === arg); if (all.some(x => x.trash != null)) SIMUI.fxt = { target: arg }; else send(all[0]); break; }
+    case 'fxroom': { const tg = SIMUI.fxt && SIMUI.fxt.target; SIMUI.fxt = null; send(pick(x => x.t === 'fx' && x.target === tg && x.trash === +arg)); break; }
+    case 'fxapply': { const all = L.filter(x => x.t === 'fx' && x.target == null); if (all.length && all.every(x => x.trash != null)) SIMUI.fxt = { target: null }; else send(all.find(x => x.trash == null)); break; }   // a card played by its own effect onto five: one to trash first
+    case 'fxskip': send(pick(x => x.t === 'fxskip')); break;
+    case 'fxhand': send(pick(x => x.t === 'fxhand')); break;
+    case 'hop': { const a = L[+arg]; if (a && a.t === 'hand') send(a); break; }
+    case 'hdone': send(pick(x => x.t === 'handdone')); break;
+    case 'end': send(pick(x => x.t === 'end')); break;
+    case 'concede': simAct(simSeat(), { t: 'concede' }); break;
+  }
+  paintSim(); }
+$('#sim').addEventListener('click', e => { const b = e.target.closest('[data-sim]'); if (!b) return; if (SIMUI.pressed) { SIMUI.pressed = false; return; } simTap(b.dataset.sim); });
+/* the sheet's buttons: a move closes it first; a card, a trash or the log opens in it */
+$('#simSheet').addEventListener('click', e => { const b = e.target.closest('[data-sim]'); if (!b) return; const code = b.dataset.sim;
+  if (!/^(zoom|trash|log|menu|leave|sharelog|report)(:|$)/.test(code)) $('#simSheet').classList.remove('on'); simTap(code); });
+/* a new game's choices are kept as they change, and the two Leaders face each other at once */
+$('#sim').addEventListener('change', e => { const t = e.target, ds = SIMUI.legalDecks(); if (!t || !/^sim(D1|D2|Opp|First)$/.test(t.id)) return;
+  if (t.id === 'simD1') SIMUI.d1 = (ds[+t.value] || {}).id || null; if (t.id === 'simD2') SIMUI.d2 = (ds[+t.value] || {}).id || null;
+  if (t.id === 'simOpp') SIMUI.opp = t.value; if (t.id === 'simFirst') SIMUI.first = +t.value || 0; paintSim(); });
+/* hold a card to read it: the zoom opens, and the tap that ends the hold does nothing more */
+$('#simBoard').addEventListener('pointerdown', e => { const c = e.target.closest && e.target.closest('.sc[data-key]'); clearTimeout(SIMUI.press); SIMUI.pressed = false; if (!c) return;
+  SIMUI.press = setTimeout(() => { SIMUI.pressed = true; simSheetOpen('zoom', c.dataset.key); }, 450); });
+['pointerup', 'pointercancel', 'pointerleave'].forEach(t => $('#simBoard').addEventListener(t, () => clearTimeout(SIMUI.press)));
+$('#simBoard').addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('.sc')) e.preventDefault(); });
+addEventListener('resize', () => { if (SIMUI.v && $('#sim').classList.contains('on')) { simFit(); simDecor(SIMUI.v); } });
 $('#simCurtain').addEventListener('click', () => { $('#simCurtain').classList.remove('on'); paintSim(); });
 
 /* ---- self-test (take 45) ------------------------------------------------
@@ -6292,7 +6815,7 @@ const DIAG = {
     const L = []; const line = (k, v) => L.push(`${k}: ${v}`);
     L.push(`OP TCG Hub diagnostics \u2014 take ${TAKE} \u2014 ${new Date().toISOString().slice(0, 16)}Z`);
     L.push('', '## app'); line('build', CAT.man.built_at || '?'); line('mode', MODE.cur); line('screen stack', NAV.stack.join(' > ') || '-');
-    line('boot stack', (NAV.bootStack || []).join(' > ') || 'none'); line('screens on', [...document.querySelectorAll('.screen.on')].map(e => e.id).join(',') || 'NONE'); line('overlays on', ['#askSheet', '#picker', '#rulesSheet', '#detail', '#tour', '#simCurtain'].filter(id => { const el = $(id); return el && el.classList && el.classList.contains('on'); }).join(',') || 'none'); line('splash', $('#splash') ? 'still in the page' : 'gone');
+    line('boot stack', (NAV.bootStack || []).join(' > ') || 'none'); line('screens on', [...document.querySelectorAll('.screen.on')].map(e => e.id).join(',') || 'NONE'); line('overlays on', ['#askSheet', '#picker', '#rulesSheet', '#simSheet', '#detail', '#tour', '#simCurtain'].filter(id => { const el = $(id); return el && el.classList && el.classList.contains('on'); }).join(',') || 'none'); line('splash', $('#splash') ? 'still in the page' : 'gone');
     line('currency', CUR.active() + (CAT.man.rates ? ` (rates ${CAT.man.rates.date}${CAT.man.rates.stale ? ', stale' : ''})` : ' (no rates)')); line('online', navigator.onLine); line('native', !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())); line('plugins', ['Camera', 'Filesystem', 'Share', 'LocalNotifications', 'Network', 'App', 'AdMob'].filter(n => PLATFORM.plugin(n)).join(', ') || 'none (browser)');
     line('ads', !CAT.man.ads ? 'none' : PLATFORM.adUnitsNote());
     L.push('', '## device'); line('ua', String(navigator.userAgent || '?').slice(0, 120)); line('viewport', `${typeof innerWidth === 'number' ? innerWidth + 'x' + innerHeight : '?'} @${devicePixelRatio || 1}`); line('language', navigator.language || '?'); line('tz', (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return '?'; } })());
@@ -6438,7 +6961,7 @@ async function runSelfTest() {
   window.VAULT = { get guidePage() { return guidePage; }, guideOpen, guideClose, guideGo, guideStart, guidePaint, GUIDE, topCard, dotJoin, curLabel, paintBinder, sealedKind, sealedWord, sealedRow, gameColours, distWords, feedLine, sourceLead, picturesLine, sealedCountLine, catalogueNote, setsWithCards, setCards, paintDevEarn, backArrow, closeSheet, setHomeTab, bulkLines, bulkSum, shownLines, signedMoney, pctNum, signedPct, dayText, momentText, fromShown, toShown, setTop, newestTop, paintSealedHero, ownBack, artBack, artUrl, artColours, largeOk, heroLeader, paintDeckHero, paintBack, stockPic, CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, setCond, toast, cameraVerdict, effectsLine, HUNT, targetLine, distLine, distShort, distRowLines, distFold, distFoldTap, distSummary, DISTF, paintDetailDist, distHistory, distHistTap, tlDay, tlWindow, gtsDue, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
                    cardPic, setPic, picBox, deckRow, paintHome, paintDecks, paintSearch, openDeck,
                    FILT, loadFilter, applyFilter, sortRows, blankFilter, activeCount,
-                   DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, THEME, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, simAct, simSeat, simReport, simHandLabel, RULEBOOK, RULES_DB, openRules, paintRules, rulesStatus, verNewer, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,
+                   DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, THEME, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, simAct, simSeat, simReport, simHandLabel, simTap, simSay, simAt, simSheetOpen, simPaced, simFit, RULEBOOK, RULES_DB, openRules, paintRules, rulesStatus, verNewer, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,
                    backupJson, scheduleBackup, backupHeld, restoreFromBackup, loadCatalogue, catalogueProblem, STORE, readJson, saveJson, BATCH,
                    PICKER, pickCurrency, MAXLOCK, bnTurn, commitOwn, importCsv, backupProblem, typedAmount, paintAlerts, localDay,
                    scan: { PLATFORM, detectQuad, parseRead, normaliseRead, starScore, makeVoter, identifyFrame, cropStar,
