@@ -2028,5 +2028,22 @@ const take125 = [
       const m = await page.evaluate(`(async () => { ${scanRig} rig.draw('two'); await wait(1500); const out = ${scanState}; return out; })()`);
       return { ok: /One card at a time/.test(m.hint) && m.count === 1 && !m.seen, ...m };
     } },
+  { name: 'more-last-backup-after-the-switch-to-play', run: async (page) => {
+      /* the owner's phone after the sideload-to-Play switch: Documents/OPTCGHub/backup-latest.json is the uninstalled
+         install's, and Android refuses this one a write of it (landmine 238). A stubbed Filesystem says so in Android's
+         words; the app's own scheduleBackup runs, and More shows what it did. */
+      const m = await page.evaluate(`(async () => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)); while (V.closeAnyOverlay()) {}
+        const disk = {}; window.__cap0 = window.Capacitor;
+        window.Capacitor = { Plugins: { Filesystem: { writeFile: async ({ path }) => { if (path === 'OPTCGHub/backup-latest.json') throw new Error('open failed: EACCES (Permission denied)'); disk[path] = 1; return { uri: 'x' }; },
+                                                      readFile: async () => { throw new Error('open failed: EACCES (Permission denied)'); } } } };
+        localStorage.removeItem('vault.docNames'); V.scheduleBackup('look'); await wait(700);
+        V.go('settings'); await wait(450);
+        const row = [...document.querySelectorAll('#setBody .row')].find(r => /Last backup/.test(r.textContent));
+        if (row) row.scrollIntoView({ block: 'center' }); await wait(300);
+        const out = { line: row ? row.textContent.replace(/\\s+/g, ' ').trim() : null, files: Object.keys(disk) };
+        if (window.__cap0 === undefined) delete window.Capacitor; else window.Capacitor = window.__cap0;
+        return out; })()`);
+      return { ok: !!m.line && !/Failed/.test(m.line) && /backup-latest-\d{8}-\d{6}\.json/.test(m.line), ...m };
+    } },
 ];
 export const STEPS = { 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };

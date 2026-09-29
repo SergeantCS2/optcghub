@@ -4356,10 +4356,12 @@ function scheduleBackup(reason) {
   clearTimeout(_backupTimer);
   _backupTimer = setTimeout(async () => {
     if (backupHeld()) { if (await PLATFORM.readBackup()) return; releaseBackupHold(); }   // a backup on file is kept until a restore
-    const where = await PLATFORM.backup(backupJson());
-    OWN.lastBackup = where ? { at: new Date().toISOString(), where, reason } : { failed: true, at: new Date().toISOString() };
+    let where = null, why = '';
+    try { where = await PLATFORM.backup(backupJson()); } catch (e) { why = String((e && e.message) || e); }
+    /* take 125: a failure keeps its reason -- Diagnostics and the self-test say it (landmine 238) */
+    OWN.lastBackup = where ? { at: new Date().toISOString(), where, reason } : { failed: true, at: new Date().toISOString(), why };
     saveJson('vault.lastBackup', OWN.lastBackup);
-    if (!where) toast('Backup failed — export your collection');
+    if (!where) { ERRS.push('backup', `backup failed: ${why}`, 'scheduleBackup'); toast('Backup failed — export your collection'); }
   }, 400);
 }
 /* take 115 (loose-production 4): a restore reads the file before it replaces anything -- this app's backup, each
@@ -4404,7 +4406,7 @@ async function restoreFromBackup() {
     raw = src === 'kept' ? kept : src === 'file' ? await PLATFORM.pickTextFile('.json,application/json') : raw;
     if (!raw) return toast('No backup chosen');
   } else if (!raw) {
-    toast('No backup of this install \u2014 choose one: Documents \u203a OPTCGHub \u203a backup-latest.json');
+    toast('No backup of this install \u2014 choose the newest file in Documents \u203a OPTCGHub');   // take 125: another install's latest can be backup-latest-<time>.json (landmine 238)
     raw = await PLATFORM.pickTextFile('.json,application/json');
     if (!raw) return toast('No backup chosen');
   }
@@ -5505,31 +5507,53 @@ const PLATFORM = {
   /* Backup to the public Documents folder, which SURVIVES UNINSTALL on Android
      11+ for files the app created (read from the plugin’s definitions.d.ts at
      take 15). PROTOCOL §9: this runs on every batch commit and every deck save,
-     and failure is shown, never swallowed. */
+     and failure is shown, never swallowed. Take 125: it returns where the backup
+     went, or throws with the reason (thrown away until take 125). */
   async backup(json) {
     const FS = this.plugin('Filesystem');
-    if (!FS) { try { localStorage.setItem('vault.backup', json); return 'browser storage'; } catch (e) { return null; } }
-    try {
-      const day = new Date().toISOString().slice(0, 10);
-      await FS.writeFile({ path: 'OPTCGHub/backup-latest.json', data: json, directory: 'DOCUMENTS', recursive: true, encoding: 'utf8' });
-      await FS.writeFile({ path: `OPTCGHub/backup-${day}.json`, data: json, directory: 'DOCUMENTS', recursive: true, encoding: 'utf8' });
-      return 'Documents/OPTCGHub';
-    } catch (e) { console.warn('backup failed', e); return null; }
+    if (!FS) { localStorage.setItem('vault.backup', json); return 'browser storage'; }
+    const latest = await this.writeOwnDoc('backup-latest.json', json);
+    /* the dated copy is the history: kept when it can be (on the day of a reinstall the name can be the old install's) */
+    const day = new Date().toISOString().slice(0, 10);
+    try { await FS.writeFile({ path: `OPTCGHub/backup-${day}.json`, data: json, directory: 'DOCUMENTS', recursive: true, encoding: 'utf8' }); }
+    catch (e) { ERRS.push('backup', `backup-${day}.json could not be written: ${e.message || e}`, 'backup'); }
+    return latest === 'backup-latest.json' ? 'Documents/OPTCGHub' : `Documents/OPTCGHub/${latest}`;
+  },
+  /* take 125 (landmine 238): a file in Documents is the install's that made it. The sideload install's
+     backup-latest.json outlived its uninstall, and the Play install could not write over it -- every backup
+     failed from the switch on, its reason thrown away (the owner's More, 29 Sept; A43's item 5, INFERRED at
+     take 115). A file this app keeps there is written under the name this install last wrote it to; when that
+     name cannot be written, a new one is made once -- backup-latest-20260929-170512.json -- and kept for the
+     next (vault.docNames: an Android backup that brings it to a later install is healed the same way).
+     Returns the name written; throws with both reasons when neither can be. */
+  async writeOwnDoc(base, json) {
+    const FS = this.plugin('Filesystem'), names = readJson('vault.docNames', {}, false);
+    const write = name => FS.writeFile({ path: `OPTCGHub/${name}`, data: json, directory: 'DOCUMENTS', recursive: true, encoding: 'utf8' });
+    const first = names[base] || base;
+    try { await write(first); return first; }
+    catch (e) {
+      const t = new Date(), p = n => String(n).padStart(2, '0');
+      const name = base.replace(/\.json$/, `-${t.getFullYear()}${p(t.getMonth() + 1)}${p(t.getDate())}-${p(t.getHours())}${p(t.getMinutes())}${p(t.getSeconds())}.json`);
+      try { await write(name); } catch (e2) { throw new Error(`${first}: ${e.message || e}; ${name}: ${e2.message || e2}`); }
+      saveJson('vault.docNames', { ...names, [base]: name });
+      ERRS.push('backup', `${first} could not be written (${e.message || e}); this install writes ${name} now`, 'writeOwnDoc');
+      return name;
+    }
   },
   /* take 115: what a restore replaced, beside the backups -- Restore offers the copy kept in storage; this one
      outlives an uninstall, and the file picker reaches it */
   async keepAside(json) {
     const FS = this.plugin('Filesystem'); if (!FS) return null;
-    try { await FS.writeFile({ path: 'OPTCGHub/backup-before-restore.json', data: json, directory: 'DOCUMENTS', recursive: true, encoding: 'utf8' }); return 'Documents/OPTCGHub'; }
-    catch (e) { console.warn('keep aside failed', e); return null; }
+    try { await this.writeOwnDoc('backup-before-restore.json', json); return 'Documents/OPTCGHub'; }
+    catch (e) { ERRS.push('backup', `the copy before a restore was not written: ${e.message || e}`, 'keepAside'); return null; }
   },
+  /* the latest backup this install wrote -- never a file another install left under the old name (take 125) */
   async readBackup() {
     const FS = this.plugin('Filesystem');
     if (!FS) return localStorage.getItem('vault.backup');
-    try {
-      const r = await FS.readFile({ path: 'OPTCGHub/backup-latest.json', directory: 'DOCUMENTS', encoding: 'utf8' });
-      return r.data;
-    } catch (e) { return null; }
+    const name = readJson('vault.docNames', {}, false)['backup-latest.json'] || 'backup-latest.json';
+    try { return (await FS.readFile({ path: `OPTCGHub/${name}`, directory: 'DOCUMENTS', encoding: 'utf8' })).data; }
+    catch (e) { return null; }
   },
   /* Take 34, landmine 110. A download link does NOTHING in Capacitor’s WebView:
      no DownloadListener is installed and a blob: URL has nowhere to go, so
@@ -6864,6 +6888,9 @@ const SELFTEST = {
     await check('Star template shipped', () => ({ ok: !!(CAT.star && CAT.star.box), note: CAT.star ? `threshold ${CAT.star.threshold}` : 'missing' }));
     await check('Fonts loaded', async () => { if (!document.fonts || !document.fonts.check) return null; await document.fonts.ready; const ok = document.fonts.check('16px "OPH Display"') && document.fonts.check('16px "OPH Body"'); return { ok, note: ok ? 'display + body' : 'a role face did not load' }; });
     await check('Storage writes and reads back', () => { const k = 'vault.selftest', v = String(Date.now()); localStorage.setItem(k, v); const ok = localStorage.getItem(k) === v; localStorage.removeItem(k); return { ok, note: ok ? 'localStorage round-trip' : 'mismatch' }; });
+    /* take 125 (landmine 238): the backups themselves -- the last one written, or why it was not; nothing is written here */
+    await check('Backups are being written', () => { const b = OWN.lastBackup; if (!b) return null;
+      return { ok: !b.failed, note: b.failed ? `failed ${momentText(b.at)}${b.why ? ': ' + b.why : ' (no reason was kept before take 125)'}` : `${momentText(b.at)} \u00b7 ${b.where}` }; });
     await check('Backup file round-trip (Filesystem)', async () => { const FS = PLATFORM.plugin('Filesystem'); if (!FS) return null; const path = 'selftest/probe.json', data = JSON.stringify({ t: Date.now() }); await FS.writeFile({ path, data, directory: 'CACHE', recursive: true, encoding: 'utf8' }); const r = await FS.readFile({ path, directory: 'CACHE', encoding: 'utf8' }); try { await FS.deleteFile({ path, directory: 'CACHE' }); } catch (e) {} return { ok: r.data === data, note: 'wrote, read, deleted in the app cache' }; });
     await check('Share sheet available', async () => { const SH = PLATFORM.plugin('Share'); if (!SH) return null; const r = await SH.canShare(); return { ok: !!r.value, note: r.value ? 'Share.canShare true' : 'canShare false' }; });
     await check('Camera reachable', async () => { if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return null; const d = (await navigator.mediaDevices.enumerateDevices()).filter(x => x.kind === 'videoinput'); return cameraVerdict(d, !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())); });

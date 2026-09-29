@@ -250,6 +250,7 @@ Start here. Do not read top to bottom.
 | Two reads agree on the wrong number | 235 |
 | An OCR measurement on the VM says the camera approach cannot work | 236 |
 | The look hangs at a scanner step | 237 |
+| "Last backup: Failed" on every backup, after a reinstall or the switch to Play | 238 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -3077,6 +3078,19 @@ Chromium.** The look's scanner steps hung ten minutes on it (take 125) and
 were killed with nothing in the log. The look now hands the app the stream as
 its camera (getUserMedia) and lets the app's own path play it; any await on a
 media promise in a harness is raced against a timeout.
+
+**238. A file in Documents is the install's that made it.** Android's shared
+storage gives each file to the install that created it; an uninstall leaves
+the file and takes the ownership, and the next install may neither write over
+it nor read it (`open failed: EACCES`). The sideload install's
+`Documents/OPTCGHub/backup-latest.json` outlived the switch to the Play build,
+and every backup from then on failed at its first write -- the dated copy
+never reached -- with the reason thrown away: More said "Failed" and nothing
+said why (the owner's screenshot, take 121, 29 Sept; take 115 had asked the
+question, INFERRED). A file the app keeps in shared storage is written under a
+name this install owns -- a new one made when the old name is refused, and
+kept -- and a write that fails keeps its reason. Take 125; smoke plants the
+refusal with Android's own words, and take 123's build fails it.
 
 
 ## §2 — Inherited from APEX ORV

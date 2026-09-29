@@ -41,7 +41,8 @@ what it handed on is A43.)
    121: the app is worldwide, so it is my next take, below), reproducible builds (a lockfile or pinned versions, and the
    nightly's AAB), a measurement of the app's data folder before any
    automatic-backup rule, and More's "Last backup" line after the
-   sideload-to-Play switch; A41's parts and the source; the take-100 look's
+   sideload-to-Play switch (answered take 125: it could not be written --
+   landmine 238); A41's parts and the source; the take-100 look's
    "tiny bit of work" (which picture, what).
 5. **D22** background stock checks; **D21** local stock for unserved zips;
    **D20** a crowd-report inbox. Each caps a Hunt feature until answered.
@@ -1494,7 +1495,12 @@ UI-AUDIT's open boxes; they are listed here once so nothing is lost.
    110's family): whether the Play install may overwrite
    `Documents/OPTCGHub/backup-latest.json` (and take 115's
    `backup-before-restore.json`) written by the sideload install. The proof
-   is More's "Last backup" line on the owner's phone.
+   is More's "Last backup" line on the owner's phone. *Answered take 125: it may
+   not.* The owner's More on take 121 said "Last backup: Failed" on every
+   backup; the file belongs to the uninstalled install (landmine 238). Each
+   file the app keeps there is now written under a name this install owns, and
+   a failure keeps its reason (HANDOFF take 125). The Fold's next backup is the
+   proof.
 6. **Which takes reached production** is not recorded after take 101. The
    owner uploads take-115's AAB after the merge (one upload per take,
    landmine 33).

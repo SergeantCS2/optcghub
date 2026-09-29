@@ -23,7 +23,8 @@ wherever it is in view instead of first looking for the card's outline, so
 foils, sleeves, toploaders, binder pages and cards on light surfaces now scan.
 It ignores the cards beside it, refuses a number the card's own name
 contradicts, picks an SP card's printing from its badge, and counts a card
-left in view only once.
+left in view only once. Backups work again after a reinstall or the switch to
+Play.
 
 **New at take 124:** The Sim is a real table now. Once a game is dealt it
 fills the screen, and Leave at the top forfeits and takes you back to the

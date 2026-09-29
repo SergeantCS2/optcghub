@@ -116,6 +116,46 @@ were measured in the session's scratch space and are not in the tree (landmine
   owner's frames, so its match to OpenCV holds. A guide not yet laid out (a
   size of 0) gave the view NaN edges; it is the whole frame now.
 
+### Backups -- the owner's More, 29 Sept: "Last backup: Failed", every time
+
+The owner, with a screenshot of More on take 121 (the Play build): "Backups/auto
+backups are failing ... wrap it into your take." Take 115 had written the
+question down (AGENDA A43, item 5, INFERRED): whether the Play install may
+write over `Documents/OPTCGHub/backup-latest.json`, which the sideload install
+made -- "the proof is More's Last backup line on the owner's phone". It is.
+
+- **Why (INFERRED from Android's scoped storage, PROVEN in the harness with
+  Android's own error):** a file in shared storage belongs to the install that
+  made it; an uninstall leaves the file and takes the ownership, and a new
+  install may neither write over it nor read it. `PLATFORM.backup` wrote
+  `backup-latest.json` first and the dated copy second, so the first write's
+  `EACCES` failed every backup from the switch on -- the dated copies too --
+  and the reason was thrown away (`console.warn`): More said "Failed" and
+  nothing said why. Landmine 238.
+- **The fix:** a file the app keeps in Documents (`backup-latest.json`,
+  `backup-before-restore.json`) is written under the name this install last
+  wrote it to; when that name cannot be written, a new one is made once --
+  `backup-latest-20260929-170512.json` -- kept in `vault.docNames` and written
+  from then on. An Android backup that carries the name to a later install is
+  healed the same way. Restore reads this install's latest, never the file
+  another install left. The dated copy is kept when it can be and no longer
+  decides whether the backup happened. A backup that fails says why: in
+  Diagnostics' last errors, in More's stored last backup, and in a new
+  self-test check, "Backups are being written" (it reads the last backup and
+  writes nothing, so it cannot go round the backup hold).
+- **What the owner sees:** More's Last backup line gives the time and the
+  new file's name, `Documents/OPTCGHub/backup-latest-….json`, instead of
+  "Failed". After a reinstall, Restore → Choose a file reaches every file in
+  Documents › OPTCGHub; the newest is the one to pick.
+- **Measured:** smoke's take-125 backup section -- a phone whose
+  `backup-latest.json` and `backup-before-restore.json` answer `open failed:
+  EACCES (Permission denied)` -- and the same checks on take 123's build
+  (the owner's take 121 has the same backup code): 5 of 5 fail there (the
+  owner's "Failed", reproduced), 5 of 5 pass here; with a control, a phone
+  that owns `backup-latest.json` writes it under its own name as before.
+  UNKNOWN until the owner's phone: that Android's refusal is the ownership one
+  and not another (the kept reason will say).
+
 ### Measured
 
 - **The stand-in for ML Kit.** ML Kit runs only on the phone. Tesseract, a
@@ -198,9 +238,12 @@ were measured in the session's scratch space and are not in the tree (landmine
 
 ### Tests
 
-- smoke 1,520 / 0 on the tree with take 124 and its follow-up merged (the
-  take-125 section: the lost dash, the quarters, the upright line, the name
-  refusal, the view, the looks, the hold); render 261 / 0 in Chrome (the take-10
+- smoke 1,530 / 0 on the tree with take 124 and its follow-up merged (the
+  take-125 sections: the lost dash, the quarters, the upright line, the name
+  refusal, the view, the looks, the hold; and the backups -- the refused name,
+  the name this install makes and keeps, Restore reading it, the reason kept,
+  the copy before a restore, a control that owns its file, a folder nothing
+  can be written to, and the self-test's FAIL and PASS); render 261 / 0 in Chrome (the take-10
   scanner section rewritten: the whole view to the recogniser, the neighbour
   quarters, several, no text, the outline believed and not, a toploader read,
   the near look's mapping, the glare look's locality, the star
@@ -217,10 +260,13 @@ were measured in the session's scratch space and are not in the tree (landmine
   are by design (a promo's dash kept; the control itself). Take 123's own
   render checks asserted the opposite of the new ones (a toploader refused, a
   code crop handed over).
-- The look, take 125: 8 of 8 at the Fold's two sizes -- the app's own
+- The look, take 125: 10 of 10 at the Fold's two sizes -- the app's own
   `startCamera` handed a canvas's stream, its own loop reading a drawn card on
   a light ground at once, counting it once over two and a half seconds, and
-  saying "One card at a time" to two.
+  saying "One card at a time" to two; and More after the switch to Play, a
+  stubbed Filesystem refusing `backup-latest.json` in Android's words: "Last
+  backup Sep 29, 6:02 PM · Documents/OPTCGHub/backup-latest-20260929-180256.json"
+  where the owner's phone said "Failed".
 
 ### For the owner -- testing steps and questions (his rule, take 94)
 
@@ -236,7 +282,9 @@ low light and a bright window -- each card upright in the frame.
    screenshot of the Review list is enough -- this is the one that matters.)
 5. Point at two cards at once: does it say "One card at a time"?
 6. More → Self-test → Run → Share the report: its OCR line.
-7. For the next take: photographs of one number's printings side by side
+7. More → Last backup, after one scan batch is added: a time and a file name,
+   not "Failed"? And the self-test's "Backups are being written": PASS?
+8. For the next take: photographs of one number's printings side by side
    (base, alternate art, manga or SP, where you own them).
 
 ### DEFERRED
