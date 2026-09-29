@@ -1,0 +1,84 @@
+{
+ "num": "ST01-004",
+ "name": "Sanji",
+ "text": "[DON!! x2] This Character gains [Rush]. (This card can attack on the turn in which it is played.)",
+ "text_fp": "7d4cd83269c88f54",
+ "fx_fp": "8d4636ff73edd1f3",
+ "reading": [
+  {
+   "t": "static",
+   "if": [
+    {
+     "c": "donx",
+     "n": 2
+    }
+   ],
+   "do": [
+    {
+     "a": "selfkw",
+     "k": "Rush",
+     "dur": "static"
+    }
+   ],
+   "raw": "[DON!! x2] This Character gains [Rush]. (This card can attack on the turn in which it is played.)"
+  }
+ ],
+ "rules": [
+  "8-3-2-3",
+  "10-1-1",
+  "3-7-4"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "with two DON!! given, it may attack the turn it is played",
+   "board": {
+    "p0": {
+     "chars": [
+      {
+       "card": "@",
+       "turn": 3,
+       "don": 2
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "attack",
+     "ref": 0,
+     "target": "leader"
+    }
+   ],
+   "expect": {
+    "phase": "battle"
+   }
+  },
+  {
+   "name": "with one, it may not",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "chars": [
+      {
+       "card": "@",
+       "turn": 3,
+       "don": 1
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "attack",
+     "ref": 0,
+     "target": "leader",
+     "refused": "no Rush"
+    }
+   ],
+   "expect": {
+    "phase": "main"
+   }
+  }
+ ]
+}

@@ -1,0 +1,154 @@
+{
+ "num": "ST01-011",
+ "name": "Brook",
+ "text": "[On Play] Give up to 2 rested DON!! cards to your Leader or 1 of your Characters.",
+ "text_fp": "22819bd52b2c7bf7",
+ "fx_fp": "1c7c70cd619a0ebf",
+ "reading": [
+  {
+   "t": "onplay",
+   "if": [],
+   "do": [
+    {
+     "a": "givedon",
+     "n": 2,
+     "upto": true
+    }
+   ],
+   "raw": "[On Play] Give up to 2 rested DON!! cards to your Leader or 1 of your Characters."
+  }
+ ],
+ "rules": [
+  "10-2-6",
+  "6-5-5-1",
+  "4-8"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "On Play: up to 2 rested DON!! to the Leader (the 2 it was paid with)",
+   "board": {
+    "p0": {
+     "hand": [
+      "@"
+     ],
+     "don": {
+      "active": 2
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "play",
+     "h": 0,
+     "expect": {
+      "queue": 1,
+      "p0.don.rested": 2
+     }
+    },
+    {
+     "t": "fx",
+     "target": "L"
+    }
+   ],
+   "expect": {
+    "p0.leader.don": 2,
+    "p0.don.rested": 0,
+    "power.p0.leader": 7000
+   }
+  },
+  {
+   "name": "...or to one Character, itself included",
+   "board": {
+    "p0": {
+     "hand": [
+      "@"
+     ],
+     "don": {
+      "active": 2,
+      "rested": 1
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "play",
+     "h": 0
+    },
+    {
+     "t": "fx",
+     "target": "m0"
+    }
+   ],
+   "expect": {
+    "p0.chars.0.don": 2,
+    "p0.don.rested": 1
+   }
+  },
+  {
+   "name": "to ONE card: the Leader's DON!! do not also land on a Character",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "hand": [
+      "@"
+     ],
+     "chars": [
+      {
+       "card": "ST01-003"
+      }
+     ],
+     "don": {
+      "active": 2,
+      "rested": 2
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "play",
+     "h": 0
+    },
+    {
+     "t": "fx",
+     "target": "L"
+    }
+   ],
+   "expect": {
+    "p0.leader.don": 2,
+    "p0.chars.0.don": 0,
+    "p0.chars.1.don": 0,
+    "p0.don.rested": 2
+   }
+  },
+  {
+   "name": "none chosen: nothing moves; and no active DON!! is ever given",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "hand": [
+      "@"
+     ],
+     "don": {
+      "active": 4
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "play",
+     "h": 0
+    },
+    {
+     "t": "fx",
+     "target": null
+    }
+   ],
+   "expect": {
+    "p0.leader.don": 0,
+    "p0.don.active": 2,
+    "p0.don.rested": 2
+   }
+  }
+ ]
+}

@@ -1,0 +1,278 @@
+{
+ "num": "ST01-001",
+ "name": "Monkey.D.Luffy",
+ "text": "[Activate: Main] [Once Per Turn] Give this Leader or 1 of your Characters up to 1 rested DON!! card.",
+ "text_fp": "dac65dcaaaa4fb85",
+ "fx_fp": "70f4ff93a3e9f344",
+ "reading": [
+  {
+   "t": "main",
+   "if": [
+    {
+     "c": "opt"
+    }
+   ],
+   "do": [
+    {
+     "a": "givedon",
+     "n": 1,
+     "upto": true
+    }
+   ],
+   "raw": "[Activate: Main] [Once Per Turn] Give this Leader or 1 of your Characters up to 1 rested DON!! card."
+  }
+ ],
+ "rules": [
+  "10-2-2",
+  "10-2-13",
+  "6-5-5-1",
+  "6-5-5-2",
+  "4-8"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "gives one rested DON!! to the Leader: +1000 on its own turn",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 0,
+      "rested": 2
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader",
+     "expect": {
+      "queue": 1
+     }
+    },
+    {
+     "t": "fx",
+     "target": "L"
+    }
+   ],
+   "expect": {
+    "p0.leader.don": 1,
+    "p0.don.rested": 1,
+    "power.p0.leader": 6000,
+    "queue": 0
+   }
+  },
+  {
+   "name": "...or to one of your Characters",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "chars": [
+      {
+       "card": "ST01-003"
+      }
+     ],
+     "don": {
+      "rested": 1
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": "m0"
+    }
+   ],
+   "expect": {
+    "p0.chars.0.don": 1,
+    "p0.leader.don": 0,
+    "p0.don.rested": 0
+   }
+  },
+  {
+   "name": "up to 1: none may be chosen, and nothing moves",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "rested": 2
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": null
+    }
+   ],
+   "expect": {
+    "p0.leader.don": 0,
+    "p0.don.rested": 2,
+    "queue": 0
+   }
+  },
+  {
+   "name": "once per turn: a second activation the same turn is refused",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "rested": 3
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": "L"
+    },
+    {
+     "t": "activate",
+     "ref": "leader",
+     "refused": "once per turn"
+    }
+   ],
+   "expect": {
+    "p0.leader.don": 1,
+    "p0.don.rested": 2
+   }
+  },
+  {
+   "name": "the owner's report: a second tap while the first waits is refused, and only one DON!! moves",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "rested": 3
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "activate",
+     "ref": "leader",
+     "refused": "resolve the effect first"
+    },
+    {
+     "t": "fx",
+     "target": "L"
+    },
+    {
+     "t": "activate",
+     "ref": "leader",
+     "refused": "once per turn"
+    }
+   ],
+   "expect": {
+    "p0.leader.don": 1,
+    "p0.don.rested": 2,
+    "p0.donDeck": 7
+   }
+  },
+  {
+   "name": "never an active DON!!, never one from the DON!! deck",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 2
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": "L"
+    }
+   ],
+   "expect": {
+    "p0.leader.don": 0,
+    "p0.don.active": 2,
+    "p0.donDeck": 8
+   }
+  },
+  {
+   "name": "offered again on the owner's next turn",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "rested": 2
+     }
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": "L"
+    },
+    {
+     "t": "end"
+    },
+    {
+     "s": 1,
+     "t": "end"
+    },
+    {
+     "t": "activate",
+     "ref": "leader",
+     "expect": {
+      "queue": 1
+     }
+    }
+   ]
+  },
+  {
+   "name": "not on the opponent's turn",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "rested": 2
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "end"
+    },
+    {
+     "s": 0,
+     "t": "activate",
+     "ref": "leader",
+     "refused": "not your decision"
+    }
+   ]
+  }
+ ],
+ "note": "The owner's report of take 121 ('you can add unlimited cards with ST01 Luffy'): the Leader's own line was by hand, the free tray had no limit, and Once Per Turn could be queued twice (landmines 212, 213)."
+}

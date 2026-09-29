@@ -1,0 +1,197 @@
+{
+ "num": "ST01-002",
+ "name": "Usopp",
+ "text": "[DON!! x2] [When Attacking] Your opponent cannot activate a [Blocker] Character that has 5000 or more power during this battle.\n[Trigger] Play this card.",
+ "text_fp": "641596ae687bb178",
+ "fx_fp": "ea909a3d953cacba",
+ "reading": [
+  {
+   "t": "attack",
+   "if": [
+    {
+     "c": "donx",
+     "n": 2
+    }
+   ],
+   "do": [
+    {
+     "a": "noblocker",
+     "dur": "battle",
+     "power": 5000,
+     "cmp": "more"
+    }
+   ],
+   "raw": "[DON!! x2] [When Attacking] Your opponent cannot activate a [Blocker] Character that has 5000 or more power during this battle."
+  },
+  {
+   "t": "trigger",
+   "if": [],
+   "do": [
+    {
+     "a": "playself"
+    }
+   ],
+   "raw": "[Trigger] Play this card."
+  }
+ ],
+ "rules": [
+  "10-2-5",
+  "8-3-2-3",
+  "7-1-2",
+  "10-1-5",
+  "10-1-5-3"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "When Attacking with two DON!!: a Blocker with 5000 power or more cannot block this battle; a weaker one still can",
+   "board": {
+    "p0": {
+     "chars": [
+      {
+       "card": "@",
+       "don": 2
+      }
+     ]
+    },
+    "p1": {
+     "chars": [
+      {
+       "card": "ST01-006"
+      },
+      {
+       "card": "OP11-046"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "attack",
+     "ref": 0,
+     "target": "leader"
+    },
+    {
+     "t": "fx",
+     "target": null
+    }
+   ],
+   "expect": {
+    "blockers": 1
+   }
+  },
+  {
+   "name": "with one DON!!, not offered: both may block",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "chars": [
+      {
+       "card": "@",
+       "don": 1
+      }
+     ]
+    },
+    "p1": {
+     "chars": [
+      {
+       "card": "ST01-006"
+      },
+      {
+       "card": "OP11-046"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "attack",
+     "ref": 0,
+     "target": "leader"
+    }
+   ],
+   "expect": {
+    "queue": 0,
+    "blockers": 2
+   }
+  },
+  {
+   "name": "[Trigger] Play this card: taken as damage, it is played for free",
+   "board": {
+    "active": 1,
+    "p0": {
+     "lifeCards": [
+      "@"
+     ]
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "s": 1,
+     "t": "attack",
+     "ref": "leader",
+     "target": "leader"
+    },
+    {
+     "s": 0,
+     "t": "noblock"
+    },
+    {
+     "s": 0,
+     "t": "resolve",
+     "expect": {
+      "queue": 1
+     }
+    },
+    {
+     "s": 0,
+     "t": "fx",
+     "target": null
+    }
+   ],
+   "expect": {
+    "p0.chars": 1,
+    "p0.hand": 0,
+    "p0.life": 0
+   }
+  },
+  {
+   "name": "its [Trigger] declined: it stays in hand, unplayed",
+   "must_not": true,
+   "board": {
+    "active": 1,
+    "p0": {
+     "lifeCards": [
+      "@"
+     ]
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "s": 1,
+     "t": "attack",
+     "ref": "leader",
+     "target": "leader"
+    },
+    {
+     "s": 0,
+     "t": "noblock"
+    },
+    {
+     "s": 0,
+     "t": "resolve"
+    },
+    {
+     "s": 0,
+     "t": "fxskip"
+    }
+   ],
+   "expect": {
+    "p0.chars": 0,
+    "p0.hand": 1
+   }
+  }
+ ]
+}

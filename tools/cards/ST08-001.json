@@ -1,0 +1,259 @@
+{
+ "num": "ST08-001",
+ "name": "Monkey.D.Luffy",
+ "text": "[Your Turn] When a Character is K.O.'d, give up to 1 rested DON!! card to this Leader.",
+ "text_fp": "0bd950162a1b3f08",
+ "fx_fp": "ced9fc848bbbdde7",
+ "reading": [
+  {
+   "t": "whenko",
+   "if": [
+    {
+     "c": "yourturn"
+    }
+   ],
+   "do": [
+    {
+     "a": "givedon",
+     "n": 1,
+     "who": "leader",
+     "upto": true
+    }
+   ],
+   "raw": "[Your Turn] When a Character is K.O.'d, give up to 1 rested DON!! card to this Leader."
+  }
+ ],
+ "rules": [
+  "10-2-1",
+  "10-2-11",
+  "6-5-5-1",
+  "4-8",
+  "3-7-6-1"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "a Character K.O.'d in battle on its turn: up to 1 rested DON!! to this Leader",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "rested": 1
+     }
+    },
+    "p1": {
+     "chars": [
+      {
+       "card": "ST01-003",
+       "rested": true
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "attack",
+     "ref": "leader",
+     "target": 0
+    },
+    {
+     "s": 1,
+     "t": "noblock"
+    },
+    {
+     "s": 1,
+     "t": "resolve",
+     "expect": {
+      "queue": 1,
+      "p1.chars": 0
+     }
+    },
+    {
+     "t": "fx",
+     "target": "L"
+    }
+   ],
+   "expect": {
+    "p0.leader.don": 1,
+    "p0.don.rested": 0,
+    "queue": 0
+   }
+  },
+  {
+   "name": "up to 1: none may be chosen, and nothing moves",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "rested": 1
+     }
+    },
+    "p1": {
+     "chars": [
+      {
+       "card": "ST01-003",
+       "rested": true
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "attack",
+     "ref": "leader",
+     "target": 0
+    },
+    {
+     "s": 1,
+     "t": "noblock"
+    },
+    {
+     "s": 1,
+     "t": "resolve"
+    },
+    {
+     "t": "fx",
+     "target": null
+    }
+   ],
+   "expect": {
+    "p0.leader.don": 0,
+    "p0.don.rested": 1,
+    "queue": 0
+   }
+  },
+  {
+   "name": "your turn only: a K.O. on the opponent's turn offers nothing",
+   "must_not": true,
+   "board": {
+    "turn": 4,
+    "active": 1,
+    "p0": {
+     "leader": "@",
+     "chars": [
+      {
+       "card": "ST01-003",
+       "rested": true
+      }
+     ],
+     "don": {
+      "rested": 1
+     }
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "s": 1,
+     "t": "attack",
+     "ref": "leader",
+     "target": 0
+    },
+    {
+     "s": 0,
+     "t": "noblock"
+    },
+    {
+     "s": 0,
+     "t": "resolve"
+    }
+   ],
+   "expect": {
+    "queue": 0,
+    "p0.chars": 0,
+    "p0.leader.don": 0
+   }
+  },
+  {
+   "name": "a Character trashed to make room is not K.O.'d (§3-7-6-1-1): nothing offered",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "chars": [
+      {
+       "card": "ST01-003"
+      },
+      {
+       "card": "ST01-003"
+      },
+      {
+       "card": "ST01-003"
+      },
+      {
+       "card": "ST01-003"
+      },
+      {
+       "card": "ST01-003"
+      }
+     ],
+     "hand": [
+      "ST01-003"
+     ],
+     "don": {
+      "active": 1,
+      "rested": 1
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "play",
+     "h": 0,
+     "trash": 0
+    }
+   ],
+   "expect": {
+    "queue": 0,
+    "p0.chars": 5,
+    "p0.trash": 1,
+    "p0.leader.don": 0
+   }
+  },
+  {
+   "name": "never an active DON!!: with none rested, none moves",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 2
+     }
+    },
+    "p1": {
+     "chars": [
+      {
+       "card": "ST01-003",
+       "rested": true
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "attack",
+     "ref": "leader",
+     "target": 0
+    },
+    {
+     "s": 1,
+     "t": "noblock"
+    },
+    {
+     "s": 1,
+     "t": "resolve"
+    },
+    {
+     "t": "fx",
+     "target": "L"
+    }
+   ],
+   "expect": {
+    "p0.leader.don": 0,
+    "p0.don.active": 2,
+    "queue": 0
+   }
+  }
+ ],
+ "note": "Take 122: the free tray stood in for this Leader until the review removed it; the timing written in words ('When a Character is K.O.'d') is now a trigger the engine fires after any K.O., by battle or by an effect."
+}

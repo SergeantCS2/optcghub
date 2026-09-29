@@ -151,6 +151,24 @@ def build(verbose=True):
         raise SystemExit("build_app: no <script id=\"app\"> block in src/app.html")
     js = m.group(1)
     html = src[:m.start()] + '<script src="app.js"></script>' + src[m.end():]
+    # take 122: the Sim's engine and opponent are their own file (src/sim.js), put where
+    # the source names them -- one script at runtime, one module to read and review
+    slot = re.search(r"/\* __SIM__[^*]*\*/\n", js)
+    if not slot or js.count("__SIM__") != 1:
+        raise SystemExit("build_app: src/app.html has no single __SIM__ slot for src/sim.js")
+    js = js[:slot.start()] + open(os.path.join(ROOT, "src", "sim.js"), encoding="utf-8").read() + js[slot.end():]
+    # take 122: the rules digest the Rules sheet searches and the Sim cites, built in so
+    # the sheet works offline and on a catalogue synced from another take
+    import rules as _rules
+    rulebook = _rules.load()
+    marker = "/* __RULEBOOK__ */ null"
+    if js.count(marker) != 1:
+        raise SystemExit("build_app: src/app.html has no single __RULEBOOK__ slot")
+    js = js.replace(marker, json.dumps({k: rulebook[k] for k in ("version", "date", "title", "url", "note", "sim_legend", "sections")},
+                                       ensure_ascii=False, separators=(",", ":")).replace("'", "\\u2019"))   # the shipped script curls its apostrophes (SPEC-110-47)
+    missing = _rules.uncited(js, rulebook)
+    if missing:
+        raise SystemExit("build_app: the app cites sections the rules digest does not hold (landmine 214): " + ", ".join(missing))
 
     # Inline the glyph sprite (assets/glyphs.svg) so <use href="#g-…"> resolves
     # with no request -- PROTOCOL §8. One file is the only source of every icon.
@@ -223,6 +241,12 @@ def build(verbose=True):
     # whole sentences the engine can run; everything else stays manual.
     import effects as fx
     cat["effects"], fxstats = fx.build(cat)
+    # take 122: the card proofs (tools/cards/), bound to the printings whose text and reading they
+    # were written on -- the app marks those effects proven, and a 'wrong' one is offered by hand
+    import cards as _cards
+    cat["proof"], proofrep = _cards.bind(cat, cat["effects"])
+    if proofrep["bad"]:
+        raise SystemExit("build_app: a card proof is malformed -- " + "; ".join(proofrep["bad"]))
     # A29, take 61: a legal deck on a fresh install, built from each ST set's
     # own printings and labelled as built, never as the retail product.
     import stockdecks as sd
@@ -233,7 +257,8 @@ def build(verbose=True):
     from hunt import roster as _roster
     cat["zips3"] = _roster.prefix_centroids(_roster.zcta())
     print(f"   effects: {fxstats['parsed']}/{fxstats['lines']} lines scripted ({100*fxstats['parsed']/max(1,fxstats['lines']):.1f}%), "
-          f"{fxstats['cards_full']} cards fully, {fxstats['cards_partial']} partly")
+          f"{fxstats['cards_full']} cards fully, {fxstats['cards_partial']} partly, {fxstats.get('hand', 0)} lines offered by hand")
+    print(f"   proofs: {proofrep['files']} files, {proofrep['bound']} printings bound" + (f"; stale (reopened): {', '.join(proofrep['stale'])}" if proofrep["stale"] else ""))
     raw = json.dumps(cat, separators=(",", ":")).encode()
     open(os.path.join(BUNDLE, "catalog.json"), "wb").write(raw)
     # The .gz goes OUTSIDE www/. Android's asset merger treats catalog.json and
@@ -278,7 +303,15 @@ def build(verbose=True):
     import rates as _rates
     man["rates"] = _rates.load()
     man["stock"] = len(cat["stock"])
-    man["effects"] = {"lines": fxstats["lines"], "scripted": fxstats["parsed"], "cards_full": fxstats["cards_full"], "cards_partial": fxstats["cards_partial"]}
+    man["effects"] = {"lines": fxstats["lines"], "scripted": fxstats["parsed"], "cards_full": fxstats["cards_full"], "cards_partial": fxstats["cards_partial"],
+                      "hand": fxstats.get("hand", 0), "proofs": proofrep["files"], "proven": sum(1 for v in cat["proof"].values() if v["v"] == "proven"),
+                      "wrong": sum(1 for v in cat["proof"].values() if v["v"] == "wrong"), "stale": proofrep["stale"]}
+    # take 122: the rules the Sim plays by, and what the official PDF says it is today -- the app's
+    # Check for updates reads rules.json from Pages, the road the prices take
+    rb = _rules.build(BUNDLE)
+    man["rules"] = {"version": rb["version"], "date": rb["date"], "official": rb["official"]}
+    o = rb["official"]
+    print(f"   rules: digest v{rb['version']}; official " + (f"v{o['version']} ({o['date']})" + (" -- NEWER: review the digest" if o.get("newer") else "") if o.get("version") else o.get("why", "?")))
     # What's new (take 53): the first "New at take N" paragraph of ci/RELEASE.md,
     # so a Play tester sees what changed without leaving the app. Read, not typed.
     rel = open(os.path.join(ROOT, "ci", "RELEASE.md"), encoding="utf8").read()

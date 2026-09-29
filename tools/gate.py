@@ -226,7 +226,7 @@ def check_icon_characters():
     halves, neither an emoji: the take-108 icons it removed, as escapes, passed);
     and the times sign as a button's whole face -- a remove drawn as a character
     -- is refused, while the times of a count stays."""
-    src = read("src", "app.html")
+    src = read("src", "app.html") + read("src", "sim.js")     # take 122: the Sim's engine is src/sim.js, inlined at build
     if not src:
         return
     keep_lines = lambda m: "\n" * m.group(0).count("\n")   # noqa: E731   a comment goes, its lines stay: "near line N" is the source's N
@@ -306,7 +306,7 @@ def check_stale_copy():
         ("carries no character art",             "take 109: the listing never said so, and the app shows card art (A29's correction)"),
         ("no character art, no publisher mark",  "take 109: card art is shown; marks stay out of the name, icon, splash and listing (V1-STATE)"),
     ]
-    files = ["src/app.html", "README.md", "ci/RELEASE.md", "docs/RUNBOOK.md", "docs/RUNBOOK-play.md",
+    files = ["src/app.html", "src/sim.js", "README.md", "ci/RELEASE.md", "docs/RUNBOOK.md", "docs/RUNBOOK-play.md",
              # take 109: the present-tense record that carried the old line; the append-only
              # history (HANDOFF, LANDMINES, AGENDA) keeps what it said and is not read here
              "docs/V1-STATE.md", "docs/NEW-SESSION-PROMPT.md", "docs/PROVISION.md", "docs/PLAY-LISTING.md",
@@ -555,6 +555,27 @@ def check_scrub():
         fail("scrub", r.stdout.strip())
 
 
+def check_sim():
+    """Take 122 (A23). The Sim proves itself, on the SHIPPED app: every card proof passes on every printing it
+    binds (tools/cardproof.mjs; the build's binding and the runner's must agree); self-play's sample finds no
+    violation -- the app's opponent, chaos with refused moves that must change nothing, and two apps kept in step
+    by moves alone -- and the auditor names every fault planted in it. Watched failing at take 122: the proofs on
+    take 121's app (123 of 200 scenarios), the auditor's eight plants, and this check's own probe below; the review's
+    self-play sweep (7,200 games) found three more faults in the engine, each now a check."""
+    if not os.path.exists(os.path.join(ROOT, "www", "app.js")):
+        return note("www/ not built -- the Sim's proofs and self-play were skipped")
+    for args, what in ((["tools/cardproof.mjs"], "card proofs"),
+                       (["tools/selfplay.mjs", "--games", "34", "--policy", "both"], "self-play"),
+                       (["tools/selfplay.mjs", "--games", "8", "--policy", "both", "--two-apps"], "two-app self-play"),
+                       (["tools/selfplay.mjs", "--selftest"], "the auditor's planted faults")):
+        r = subprocess.run(["node"] + args, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=900)
+        last = (r.stdout.strip().splitlines() or ["(no output)"])
+        if r.returncode:
+            fail("sim", f"{what} failed:\n  " + "\n  ".join(l for l in last if "FAIL" in l or "VIOLATION" in l or "NOT caught" in l)[:1500] + "\n  " + last[-1])
+        else:
+            note(f"{what}: {next((l.strip() for l in last if ' games (' in l), last[-1].strip())}")   # self-play's summary line, not its card tally
+
+
 def check_selftests():
     """Run the guards' own negative controls. A gate that trusts other guards
     without watching them fail is a gate with a hole in it."""
@@ -588,6 +609,10 @@ def check_selftests():
                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     if r.returncode:
         fail("selftest", "stockdecks.py guards did not all pass:\n" + r.stdout)
+    for tool in ("rules.py", "cards.py"):                    # take 122: the rules digest and the card proofs' binding
+        r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", tool), "--selftest"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        if r.returncode:
+            fail("selftest", f"{tool} negative controls did not all fire:\n" + r.stdout)
     r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "effects.py"), "--selftest"],
                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     if r.returncode:
@@ -659,6 +684,8 @@ def selftest():
             check_landmine_citations(); check_secrets(); check_render_receipt()
             check_workflow_copies(); check_offline(provision_hosts()); check_icon_characters(); check_stale_copy()
             check_ads()
+            if cat == "sim":
+                check_sim()
             fired = any(f.startswith(cat + ":") for f in FAILS) if cat else bool(FAILS)
             stray = [f for f in FAILS if cat and not f.startswith(cat + ":")]
         finally:
@@ -672,6 +699,13 @@ def selftest():
     # take 102 (landmine 139): the control of the controls. An unmutated copy must fire
     # NOTHING, else every "guard fires" below is the copy's own defect, not the guard.
     probe("control: an unmutated tree fires nothing", lambda t: None, expect=False)
+    # take 122: the Sim's proofs and self-play -- clean on the copy, and a proof that no longer holds is caught
+    probe("control: the Sim's proofs and self-play pass on the copy (take 122)", lambda t: None, "sim", expect=False)
+    def wrong_proof(t):
+        f = os.path.join(t, "tools", "cards", "ST01-007.json"); d = json.load(open(f, encoding="utf-8"))
+        d["scenarios"][0]["expect"]["p0.leader.don"] = 2          # Nami gives ONE rested DON!!
+        json.dump(d, open(f, "w", encoding="utf-8"))
+    probe("a card proof whose card does something else (take 122)", wrong_proof, "sim")
     # the mutation is a pattern, not the literal "take 2.*" it was from take 2 to 101: that
     # literal matched nothing after take 2, and the probe "fired" on the copy's own
     # failure instead (take 102, landmine 139)
@@ -806,6 +840,7 @@ if __name__ == "__main__":
     check_harness()
     check_secrets()
     check_render_receipt()
+    check_sim()
     check_scrub()
     check_selftests()
 

@@ -1,4 +1,217 @@
-# HANDOFF — through Take 121
+# HANDOFF — through Take 122
+
+## Take 122 — 2026-09-29 — the Sim's engine: rules v1.2.1, the audit's fixes, card proofs, self-play, a Rules button
+
+Opened before any code (PROTOCOL §6), from `main` at the nightly of 28 Sept
+(`1251c73`; Release take-121 present with its APK and AAB; the nightly
+`build`, run 76, green). Baseline rebuilt in full here: smoke 1372 passed,
+render 242 in Chrome, the gate green; effects 2189 of 7715 lines (28.4%).
+
+The owner: the Sim "hasn't been touched in a while, it's been a lower
+priority, but now that the rest of the app is solid, the SIM has dawdled
+behind. It doesn't even have pictures, it's extremely buggy ('you can add
+unlimited cards with ST01 Luffy, literally the first deck.) I want a full
+UI overhaul for the SIM, code review, rule review of the game itself and
+ensure we start amassing whatever sort of process you need to ensure all
+cards work as intended/how the rules read as the cards intend." With the
+Comprehensive Rules PDF and three simulators for reference. His answers to
+the plan's questions: **the code and features first, tested, then his own
+UI/UX pass with other skills** ("Tell me when we're ready for the UI");
+effects the app parses but no test has proven stay offered, **marked
+unproven**, with a way to report a misfire, and a card proven wrong drops
+to by hand; the board, when it comes, is **the real table**, private things
+shown only on that player's turn; later, two phones by a code or a QR with
+no accounts, and the app playing itself to check the rules and the cards.
+Mid-take: "Always have a rule button somewhere you can click in the app
+with a search function as well", and "We will work on the UI overhaul
+later but you are still free to make UI changes as you see fit."
+
+The UI rule of take 104 (refinement is the UI/UX session's) is set aside
+for the Sim on the owner's own word; the visual overhaul is still his pass.
+
+**The two review tools the owner named.** `npx skills add
+sediman-agent/OpenSkynet --skill thermos` found no skill of that name among
+the 271 in that repo (PROVEN: the installer's list; nothing was installed).
+`npx skills use https://github.com/cursor/plugins --skill
+thermo-nuclear-code-quality-review` was refused by the session's own safety
+check the first time and ran when the owner asked again; its instructions
+(read the whole of what is under review, name structural faults before
+local ones, fix at the root, prove each fix) were applied three times: to the
+take's own diff, to what the owner added mid-take, and -- the owner: "Don't
+just audit your changes, audit the SIM as a whole" -- to the whole Sim
+(below). Neither skill's files are in the tree.
+
+Later in the take the owner added: a **Check for updates** on the rules "like
+we have for the collection"; "cards use different wording for the same thing
+so we need to ensure we catch everything"; and "a system in which you can
+emulate the app/two apps to play against yourself ... however many games you
+need to get a proper audit". The code/QR game between two phones stays a
+future item (D18).
+
+### The Luffy report, traced (INFERRED from the code; the owner's symptom: "Leader ability repeats")
+
+- ST01-001's `[Activate: Main] [Once Per Turn] Give this Leader or 1 of
+  your Characters up to 1 rested DON!! card.` matched no template
+  (`effects.py` scripted only Nami's wording), so the Leader had no Main
+  button and was played by hand.
+- By hand meant the free row under the hand: *Draw*, *+1 DON!!* (from the
+  DON!! deck), *Life → hand*, *+1 Life*, and the tray's *Set active* --
+  no limit, no phase, no card, no log line. Any deck could draw itself out
+  or take all ten DON!! on turn one (landmine 212).
+- Once Per Turn was checked when an effect was offered and marked when it
+  was applied, so tapping Main twice queued two copies and both applied;
+  and it was keyed on a Character's place in the row, so one leaving play
+  reset the mark of every card after it (landmine 213). ST01 runs four
+  Nami, whose Main is exactly that DON!! effect.
+
+### What this take changes
+
+- **The engine is its own file**, `src/sim.js`, inlined into `app.js` at the
+  `__SIM__` marker; the board in `app.html` only draws its answers.
+- **One entry point.** `SIM.act(seat, move)` is the only way a game moves;
+  `who()` says whose decision it is, `legal(seat)` lists every move the engine
+  would accept, `replay(spec, moves)` rebuilds a game from its seed and moves
+  (the shuffle is the game's own, seeded). A move is a transaction: refused, it
+  changes nothing and is not recorded (landmine 216). The effect queue lives
+  in the engine, not on the screen.
+- **Rules v1.2.1**, each fix with a smoke check and a control: Life placed with
+  the deck's top card at the bottom; a given DON!! +1000 on its owner's turn
+  only, and back to the cost area rested when its card leaves; a sixth
+  Character trashes one of the five, a second Stage the first; "during this
+  battle" ends with the battle; rule processing after every move (an empty
+  deck is a defeat whenever it happens, both at once a draw); [Double Attack]
+  at 1 Life is not a defeat; [Counter]-only Events refused in the Main Phase;
+  [Unblockable], [Rush: Character] and "cannot activate [Blocker]" enforced; a
+  K.O. by an effect offers [On K.O.]; "N power or less" reads current power;
+  "up to" lets none be chosen; unknown ids never dealt; DON!! costs return
+  rested DON!! first.
+- **By hand, bounded** (landmine 212): every line no template runs is offered
+  at its timing, under its Once Per Turn; its tray has only the moves its own
+  words name, each logged. The free row is gone. Once Per Turn is keyed on
+  the card's instance and marked when activated (landmine 213).
+- **Card proofs** (`tools/cards/`, `tools/cards.py`, `tools/cardproof.mjs`):
+  scenarios per card number, bound by the build to the printings whose text and
+  reading they were written on -- an erratum or a parser change reopens a proof
+  by itself; the runner re-derives the binding in the app's own line split and
+  refuses a disagreement. Each has a must-not scenario. The offer panel marks a
+  line proven, unproven or by hand; a card proven wrong is offered by hand;
+  **Report** shares the offer, its reading and the game's seed and moves.
+- **Self-play** (`tools/selfplay.mjs`): seeded games over the ready-made
+  decks, the app's own opponent or a chaos policy that also sends moves the
+  engine must refuse; an auditor written apart from the engine reads every
+  move; each game is replayed at its end; `--two-apps` runs two copies of the
+  shipped app exchanging only moves (what two phones will do); `--selftest`
+  plants eight faults and each must be named.
+- **The Rules sheet**: a Rules button on every Prep & Play screen, a search
+  (a section number, or words), each section with what the Sim does about it,
+  and **Check for updates**, which reads the version Bandai publishes and a
+  newer digest from Pages (`tools/rules.py`; `docs/RULES.md` §6).
+- **The parser** (`tools/effects.py`): every spelling of a tag read as one
+  (landmine 217), two effects run together split, a closing note dropped, and
+  new whole-sentence templates -- Luffy's wording, "to this Leader", "cannot
+  activate [Blocker]", "other than this card", "When a Character is K.O.'d" as a
+  timing, a continuous effect that opens with its condition.
+  `tools/wording.py` groups the lines no template runs into families and flags
+  the ones a word or two from a template that runs.
+
+### The whole-Sim review
+
+| # | Found | Fixed | Held by |
+|---|---|---|---|
+| 1 | The Stage was an id beside two loose fields, with a made-up object in `at()`; every reader branched on it | the Stage is `inst()` like the Leader and the Characters | smoke: the Stage has its own uid; self-play: every card on the field has one |
+| 2 | Three stores of what effects changed; `P.mods` keyed by position and cleared only at the end of a turn | `P.mods` deleted; one store, `P.modl`, keyed by uid | smoke's plants use `modl`; `P.mods` is gone from the shape |
+| 3 | A Character with no uid was accepted everywhere through an `id:index` fallback -- landmine 213's shape again | every card on the field has a uid; the fallbacks are gone; smoke plants cards with `onField()` | self-play's uid audit, with a planted control |
+| 4 | Silent empty defaults on `modl`, `used` and `CAT.proof` hid a malformed state | removed; the catalogue has `effects` and `proof` from boot | a missing field throws where it is read |
+| 5 | One 60-line function drew all six states of the board | one painter per state | smoke's board sweep |
+| 6 | Nothing stopped the screen writing the game | outside `SIM` and `BOT` the app calls no engine write; the phone's self-test plays through `act()` | smoke, with a planted `SIM.giveDon` |
+| 7 | `cardproof.mjs` kept an adapter for take 121's API | deleted; take 121's measurement stays recorded below | -- |
+| 8 | Removing the free row left ST08-001 and ST09-001 with no way to play their Leaders (landmine 218) | "When a Character is K.O.'d" is a timing the engine fires; a continuous effect with its condition in words is read; any other continuous line is kept and the board says it is the player's | smoke and two new proofs, each with controls |
+| 9 | `docs/RULES.md` cited §7-1-3-2-x, which v1.2.1 does not have | §7-1-3-1-x; RULES.md rebased on v1.2.1 with §6, the Sim against the rules | -- |
+| 10 | Self-play, after the refactor: a by-hand "set a DON!! active" spent a budget no line has, so it never ran out, and two apps disagreed about the NaN it left | it spends the line's "set ... as active" | the auditor counts every tray's budget on its own (planted control); smoke |
+| 11 | Self-play: a queued effect offered a hand card an earlier effect had trashed, and a DON!! cost an earlier effect had spent (landmine 220) | an offer's choices and cost are read when it resolves | self-play, 7,200 games clean |
+| 12 | The look: Perona's by-hand "look at 5 ... top or bottom of the deck" offered hand and trash for the looked-at cards | where looked-at cards may go is the line's words too | smoke, watched failing on the build before |
+| 13 | The look: a cited section inside a refusal broke onto its own centred line (the link's full-width block style) | the citation sits in its sentence | the look's pictures |
+| 14 | `tools/wording.py`: "If your Leader has the {type} type" -- the newer brace spelling -- on 187 lines no template read | one clause, both brackets | parser controls, with a mismatched-bracket refusal |
+| 15 | Smoke's take-46 to take-51 games dealt unseeded; one check needed a DON!! left after a random play and failed on one run (landmine 221) | every game a test deals is seeded | smoke run three times, 1,417 each |
+
+### Measured
+
+- **Smoke 1,418 passed, 0 failed** (1,372 at the take's start; seeded now, the
+  same count run after run). **Render 242 in Chrome.** **The gate passed**, its
+  probes all firing.
+- **Effects: 2,421 of 7,720 lines scripted (31.4%)**, 1,339 cards fully and
+  795 partly; 5,401 lines kept by hand (continuous ones included). At the
+  take's start: 2,189 of 7,715 (28.4%). The catalogue 6.5 MB raw, 0.81 MB
+  gzipped.
+- **Card proofs: 11 cards, 55 printings, 219 scenarios, 0 failed.** Against
+  take 121's app, 123 of the first 200 scenarios failed (recorded before the
+  runner dropped its take-121 adapter). A build with the new K.O. timing and
+  the Life condition broken fails 4 of the new scenarios, must-nots included.
+- **Self-play, the review's sweep:** 4,000 games both ways (882,875 moves
+  audited, 37,564 illegal moves refused unchanged), 2,000 more chaos games
+  (533,673 moves) and 1,200 two-app games (264,814 moves): **0 violations**.
+  Before its three fixes the same sweep found 3 (rows 10 and 11); the
+  auditor's eight planted faults are each named. The gate runs 34 games both
+  ways, 8 two-app games and the plants: about 4 seconds.
+- **Rules:** the digest v1.2.1, 182 sections -- 162 enforced, 3 partial, 12 by
+  hand, 5 not modelled (RULES.md §6); the official PDF read at build time says
+  v1.2.1 (28 Aug 2026).
+- **The clean run (PROTOCOL §6b; the pipeline gained the proofs, the rules
+  and the parser's changes):** the tracked tree with this take's files copied
+  into an empty directory, `node_modules` linked, the pipeline from ingest (87
+  groups, 7,676 products fresh, hash coverage 100%): smoke 1,417 of 1,418
+  there, the one the `.gitignore` anchoring check that asks `git check-ignore`
+  of a copy that is not a repository (takes 120 and 121 met the same); after
+  `git init` in the copy, smoke 1,418/1,418, render 242 in Chrome, the gate
+  passed with the Sim's checks.
+- **The wording survey:** 2,050 families over 5,359 unscripted printing-lines;
+  614 families a word or two from a template that runs -- the worklist for
+  the next templates (`look/wording.md`, generated).
+
+### What I got wrong
+
+- I removed the free row (landmine 212) without listing what used it, and two
+  ready-made Leaders lost their only way to be played (landmine 218). The
+  whole-Sim review found it; the owner would have, on the first ST08 game.
+- I wrote the smoke guard "only act() moves a game" and it first fired on the
+  rules digest's own prose ("where": "SIM.apply ...") -- words, not calls.
+- My pass that restores escapes after the file tools (landmine 219) also
+  escaped a middle dot in HTML markup, where it showed as text; smoke caught it.
+- The look's first run read two headings through `innerText`, which the CSS
+  uppercases, and reported two false failures.
+
+### Ruled out
+
+- **A by-hand "apply" for continuous lines** (AGENDA A23): a continuous effect
+  applied once by hand is a number the board then shows as if it held.
+- **Keeping the take-121 adapter in the proof runner:** a second API to keep
+  alive for one measurement that is now recorded above.
+- **Loosening the auditor for "When ..." lines:** ST08's timing is a trigger
+  the engine fires, so the auditor's rules did not need an exception.
+
+### Tests
+
+- `node tools/smoke.mjs` -- the take-122 section and the review's guards:
+  only `act()` moves a game (with a planted `SIM.giveDon`), one store and one
+  card shape, the Stage a card, ST08-001 and ST09-001 with controls, a tray's
+  budget and a look's destinations bound by its words, the proof marks, the
+  Rules sheet and its Check for updates.
+- `node tools/cardproof.mjs` (and `--app DIR` against another build),
+  `node tools/selfplay.mjs [--games N] [--two-apps] [--selftest]`,
+  `python3 tools/effects.py --selftest` (77), `python3 tools/cards.py
+  --selftest`, `python3 tools/rules.py --selftest`, `python3 tools/wording.py
+  --selftest`, `python3 tools/gate.py --selftest`.
+- `node tools/look.mjs 122` -- 11 steps at both Fold sizes, 22 of 22.
+
+### DEFERRED
+
+- The visual overhaul of the Sim -- the playmat, the pictures, the zoom -- is the owner's UI/UX pass, after take 123
+  gives it `SIM.view(seat)` and the privacy rule.
+- Two phones by a code or a QR (D18, brought up to date this take): nothing is built.
+- A23's tail: modal "Choose one", top/bottom ordering, protection ("cannot be K.O.'d"), the opponent's hidden
+  choices, "at the start of the game / your turn / the Main Phase" -- each a mechanism of its own, each proven
+  through `tools/cards/` when it lands.
+
 
 ## Take 121 — 2026-09-28 — the store-linked AdMob app, and the groundwork for real ads
 

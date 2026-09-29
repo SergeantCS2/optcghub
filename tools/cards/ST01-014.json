@@ -1,0 +1,205 @@
+{
+ "num": "ST01-014",
+ "name": "Guard Point",
+ "text": "[Counter] Up to 1 of your Leader or Character cards gains +3000 power during this battle.\n[Trigger] Up to 1 of your Leader or Character cards gains +1000 power during this turn.",
+ "text_fp": "349506d7b3bccd2c",
+ "fx_fp": "02b1731b67ef3b64",
+ "reading": [
+  {
+   "t": "evcounter",
+   "if": [],
+   "do": [
+    {
+     "a": "power",
+     "n": 3000,
+     "who": "own",
+     "dur": "battle",
+     "upto": true
+    }
+   ],
+   "raw": "[Counter] Up to 1 of your Leader or Character cards gains +3000 power during this battle."
+  },
+  {
+   "t": "trigger",
+   "if": [],
+   "do": [
+    {
+     "a": "power",
+     "n": 1000,
+     "who": "own",
+     "dur": "turn",
+     "upto": true
+    }
+   ],
+   "raw": "[Trigger] Up to 1 of your Leader or Character cards gains +1000 power during this turn."
+  }
+ ],
+ "rules": [
+  "10-2-4",
+  "7-1-3-1-2",
+  "7-1-5",
+  "6-5-3-1",
+  "10-1-5"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "[Counter]: +3000 to the attacked Leader, and the attack is held",
+   "board": {
+    "active": 1,
+    "p0": {
+     "hand": [
+      "@"
+     ],
+     "don": {
+      "active": 1
+     }
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "s": 1,
+     "t": "attack",
+     "ref": "leader",
+     "target": "leader"
+    },
+    {
+     "s": 0,
+     "t": "noblock"
+    },
+    {
+     "s": 0,
+     "t": "cevent",
+     "h": 0,
+     "expect": {
+      "queue": 1,
+      "p0.don.active": 0
+     }
+    },
+    {
+     "s": 0,
+     "t": "fx",
+     "target": "L",
+     "expect": {
+      "power.p0.leader": 8000
+     }
+    },
+    {
+     "s": 0,
+     "t": "resolve"
+    }
+   ],
+   "expect": {
+    "p0.life": 4
+   }
+  },
+  {
+   "name": "'during this battle': the +3000 is gone when the battle ends, the same turn (take 121 kept it all turn)",
+   "must_not": true,
+   "board": {
+    "active": 1,
+    "p0": {
+     "hand": [
+      "@"
+     ],
+     "don": {
+      "active": 1
+     }
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "s": 1,
+     "t": "attack",
+     "ref": "leader",
+     "target": "leader"
+    },
+    {
+     "s": 0,
+     "t": "noblock"
+    },
+    {
+     "s": 0,
+     "t": "cevent",
+     "h": 0
+    },
+    {
+     "s": 0,
+     "t": "fx",
+     "target": "L"
+    },
+    {
+     "s": 0,
+     "t": "resolve"
+    }
+   ],
+   "expect": {
+    "power.p0.leader": 5000,
+    "turn": 3
+   }
+  },
+  {
+   "name": "not used in the Main Phase: it is a [Counter] Event",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "hand": [
+      "@"
+     ],
+     "don": {
+      "active": 1
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "play",
+     "h": 0,
+     "refused": "Counter Step"
+    }
+   ],
+   "expect": {
+    "p0.hand": 1
+   }
+  },
+  {
+   "name": "[Trigger]: +1000 to the Leader this turn",
+   "board": {
+    "active": 1,
+    "p0": {
+     "lifeCards": [
+      "@"
+     ]
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "s": 1,
+     "t": "attack",
+     "ref": "leader",
+     "target": "leader"
+    },
+    {
+     "s": 0,
+     "t": "noblock"
+    },
+    {
+     "s": 0,
+     "t": "resolve"
+    },
+    {
+     "s": 0,
+     "t": "fx",
+     "target": "L"
+    }
+   ],
+   "expect": {
+    "power.p0.leader": 6000,
+    "p0.trash": 1
+   }
+  }
+ ]
+}

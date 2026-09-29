@@ -1,0 +1,148 @@
+{
+ "num": "ST01-012",
+ "name": "Monkey.D.Luffy",
+ "text": "[DON!! x2] [When Attacking] Your opponent cannot activate [Blocker] during this battle.",
+ "text_fp": "bedbb5455408fd2e",
+ "fx_fp": "22ed34836bad3c8f",
+ "reading": [
+  {
+   "t": "attack",
+   "if": [
+    {
+     "c": "donx",
+     "n": 2
+    }
+   ],
+   "do": [
+    {
+     "a": "noblocker",
+     "dur": "battle"
+    }
+   ],
+   "raw": "[DON!! x2] [When Attacking] Your opponent cannot activate [Blocker] during this battle."
+  }
+ ],
+ "rules": [
+  "10-2-5",
+  "8-3-2-3",
+  "7-1-2",
+  "10-1-4"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "When Attacking with two DON!!: the opponent cannot activate [Blocker] in this battle",
+   "board": {
+    "p0": {
+     "chars": [
+      {
+       "card": "@",
+       "don": 2
+      }
+     ]
+    },
+    "p1": {
+     "chars": [
+      {
+       "card": "ST01-006"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "attack",
+     "ref": 0,
+     "target": "leader"
+    },
+    {
+     "t": "fx",
+     "target": null
+    }
+   ],
+   "expect": {
+    "blockers": 0
+   }
+  },
+  {
+   "name": "with one DON!!, it is not offered, and the Blocker may block",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "chars": [
+      {
+       "card": "@",
+       "don": 1
+      }
+     ]
+    },
+    "p1": {
+     "chars": [
+      {
+       "card": "ST01-006"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "attack",
+     "ref": 0,
+     "target": "leader"
+    }
+   ],
+   "expect": {
+    "queue": 0,
+    "blockers": 1
+   }
+  },
+  {
+   "name": "this battle only: the next attack may be blocked",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "chars": [
+      {
+       "card": "@",
+       "don": 2
+      }
+     ]
+    },
+    "p1": {
+     "chars": [
+      {
+       "card": "ST01-006"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "attack",
+     "ref": 0,
+     "target": "leader"
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "s": 1,
+     "t": "noblock"
+    },
+    {
+     "s": 1,
+     "t": "resolve"
+    },
+    {
+     "t": "attack",
+     "ref": "leader",
+     "target": "leader"
+    }
+   ],
+   "expect": {
+    "blockers": 1
+   }
+  }
+ ]
+}

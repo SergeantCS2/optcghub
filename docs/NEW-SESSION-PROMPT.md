@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 121.* Paste the block between the rules into a new session
+*Current as of take 122.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -84,6 +84,21 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   them in order with his results (his rule, take 94).
 
 **What is in flight when you arrive:**
+
+- **Take 122 -- the Sim's engine, on the owner's word the priority** (AGENDA
+  A23's take-122 section; HANDOFF take 122 has the whole-Sim review and every
+  measurement). The engine is `src/sim.js`; every move is one `SIM.act`, a
+  transaction; the rules are v1.2.1 behind a Rules button with search and
+  Check for updates on every Prep & Play screen; card proofs live in
+  `tools/cards/` and run on the shipped app; `tools/selfplay.mjs` plays the
+  Sim against itself (and two copies of it against each other) with an
+  auditor after every move; `tools/wording.py` finds the wording one
+  template away. The gate runs the proofs, a self-play sample both ways, two
+  apps, and the auditor's planted faults. Landmines 212-221. **Next,
+  yours:** take 123 -- `SIM.view(seat)` and the privacy rule, the board drawn
+  from `view()` and `legal()`, then tell the owner "ready for the UI"; his
+  UI/UX pass (the real table, the pictures) follows. D18 is his for two
+  phones.
 
 - **Take 121 -- the store-linked AdMob app, and the groundwork for real
   ads.** The build names `~9519036366` (the AdMob app linked to Play;
@@ -276,6 +291,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 122" and begin with PROTOCOL §0.
+Say "take 123" and begin with PROTOCOL §0.
 
 ---

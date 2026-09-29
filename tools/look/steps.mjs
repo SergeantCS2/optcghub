@@ -1718,4 +1718,93 @@ const take120 = [
     } },
   binderStep('dark-binder-on-the-fold'),
 ];
-export const STEPS = { 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
+/* ---- take 122 \u2014 the Sim's engine: Luffy once, by hand bounded, the sixth Character, the proof marks, the Rules sheet ----
+   A board is set through the engine (SIM.act) with a planted hand or field where a picture needs one; the taps the
+   owner would make are real clicks. The curtain between seats is lifted so the board itself is in the picture. */
+const simBoard = (js) => `(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('play', true); await ${pause}; V.go('sim'); await ${pause};
+  const S = V.SIM, stock = id => V.CAT.stock.find(d => d.id === id), num = n => V.CAT.rows.find(p => p.num === n && !p.sealed);
+  const deal = (a, b, seed) => { S.new({ ...a, name: 'You' }, { ...b, name: 'Player 2' }, 0, { seed }); S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' });
+    Object.assign(V.SIMUI, { sel: null, post: null, room: null, fxt: null, result: null }); };
+  ${js}
+  document.querySelector('#simCurtain').classList.remove('on'); V.paintSim(); window.scrollTo(0, 0); await ${pause};
+  const b = document.querySelector('#simBoard'); return { text: b.textContent, buttons: [...b.querySelectorAll('[data-sim]')].map(x => x.dataset.sim) }; })()`;
+const simRead = () => { const b = document.querySelector('#simBoard'); window.scrollTo(0, 0); return { text: b.textContent, buttons: [...b.querySelectorAll('[data-sim]')].map(x => x.dataset.sim) }; };
+const take122 = [
+  { name: 'sim-setup-with-the-rules-button', run: async (page, ctx) => {
+      await ctx.open();
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; V.MODE.set('play', true); await ${pause}; V.SIM.g = null; V.go('sim'); await ${pause}; window.scrollTo(0, 0);
+        const sec = document.querySelector('#sim'); return { on: ${screens}, rules: !!sec.querySelector('header [data-rules]'), setup: /New game/.test(document.querySelector('#simBoard').textContent) }; })()`);
+      await wait(300);
+      return { ok: m.on === 'sim' && m.rules && m.setup, ...m };
+    } },
+  { name: 'sim-st01-luffy-main-on-the-leader', run: async (page) => {
+      /* ST01 against ST02, seat 1's turn passed: Luffy's Main is on the Leader's line, with two rested DON!! to give */
+      const m = await page.evaluate(simBoard(`deal(stock('stock-st01'), stock('stock-st02'), 12); S.act(0, { t: 'end' }); S.act(1, { t: 'end' }); const P = S.P(0); P.don.rested += 2; P.don.active -= 2;`));
+      await wait(300);
+      return { ok: m.buttons.includes('fxmain:leader'), buttons: m.buttons.join(' ') };
+    } },
+  { name: 'sim-luffy-offer-marked-proven', run: async (page) => {
+      /* a real tap on Main: the offer says what the app will do, that a test proves it, and carries Report */
+      await page.click('#simBoard [data-sim="fxmain:leader"]'); await wait(500);
+      const m = await page.evaluate(simRead);
+      return { ok: /proven by a test/.test(m.text) && /The app will: \[Activate: Main\] once per turn/.test(m.text) && m.buttons.includes('fx:L') && m.buttons.includes('report'), buttons: m.buttons.filter(b => /^fx|report/.test(b)).join(' ') };
+    } },
+  { name: 'sim-luffy-once-then-refused-with-the-reason', run: async (page) => {
+      /* the DON!! lands on the Leader; the Main button is gone, and a second activation is refused with its section */
+      await page.click('#simBoard [data-sim="fx:L"]'); await wait(400);
+      const m = await page.evaluate(() => { const V = window.VAULT; const r = V.simAct(0, { t: 'activate', ref: 'leader' }); V.paintSim(); window.scrollTo(0, 0);
+        return { don: V.SIM.P(0).leader.don, why: r.why || '', main: !!document.querySelector('#simBoard [data-sim="fxmain:leader"]'), toast: document.querySelector('#toast').textContent }; });
+      await wait(200);
+      return { ok: m.don === 1 && !m.main && /once per turn/.test(m.why), ...m };
+    } },
+  { name: 'sim-sixth-character-choose-one-to-trash', run: async (page) => {
+      /* five Characters in play and a sixth played: the rules' choice (§3-7-6-1), not a refusal */
+      await page.evaluate(simBoard(`deal(stock('stock-st01'), stock('stock-st02'), 13); S.act(0, { t: 'end' }); S.act(1, { t: 'end' }); const P = S.P(0), k = num('ST01-003');
+        P.chars = [0, 1, 2, 3, 4].map(() => S.inst(k.id, 1)); P.hand = [k.id].concat(P.hand.slice(0, 3));`));
+      await page.click('#simBoard [data-sim="play:0"]'); await wait(500);
+      const m = await page.evaluate(simRead);
+      return { ok: /Five Characters/.test(m.text) && m.buttons.filter(b => /^room:/.test(b)).length === 5, room: m.buttons.filter(b => /^room:/.test(b)).join(' ') };
+    } },
+  { name: 'sim-by-hand-offered-at-its-timing', run: async (page) => {
+      /* a Character whose [On Play] no template runs: played, its line is offered by hand, marked so */
+      const m0 = await page.evaluate(simBoard(`deal(stock('stock-st01'), stock('stock-st02'), 14); S.act(0, { t: 'end' }); S.act(1, { t: 'end' });
+        const E = V.CAT.effects, id = +Object.keys(E).find(k => { const p = V.CAT.byId.get(+k); return p && p.type === 'Character' && !p.sealed && S.cost(p) <= 3 && E[k].length === 1 && E[k][0].hand && E[k][0].t === 'onplay' && Object.keys(S.handOps(E[k][0].raw)).length >= 1; });
+        S.P(0).hand[0] = id; window.__handCard = V.CAT.byId.get(id).num + ' ' + V.CAT.byId.get(id).name;`));
+      await page.click('#simBoard [data-sim="play:0"]'); await wait(500);
+      const m = await page.evaluate(simRead), card = await page.evaluate(() => window.__handCard);
+      return { ok: m.buttons.includes('fxhand') && m.buttons.includes('fxskip') && /by hand/.test(m.text), card, start: m0.buttons.length };
+    } },
+  { name: 'sim-by-hand-tray-names-only-its-moves', run: async (page) => {
+      await page.click('#simBoard [data-sim="fxhand"]'); await wait(500);
+      const m = await page.evaluate(simRead);
+      return { ok: m.buttons.includes('hdone') && /Only the moves its words name/.test(m.text), moves: m.buttons.filter(b => /^hop:/.test(b)).length };
+    } },
+  { name: 'sim-st08-when-a-character-is-ko', run: async (page) => {
+      /* ST08's Leader: its Leader K.O.s a rested Character, and "give up to 1 rested DON!! to this Leader" is offered, scripted */
+      const m = await page.evaluate(simBoard(`const d8 = stock('stock-st08'); if (d8) { deal(d8, stock('stock-st01'), 15); S.act(0, { t: 'end' }); S.act(1, { t: 'end' }); const P = S.P(0); P.don.rested += 1; P.don.active -= 1;
+        S.P(1).chars = [Object.assign(S.inst(num('ST01-003').id, 1), { rested: true })]; S.act(0, { t: 'attack', ref: 'leader', target: 0 });
+        for (let k = 0; k < 9 && S.g.queue.length; k++) S.act(S.who(), { t: 'fxskip' }); S.act(1, { t: 'noblock' }); S.act(1, { t: 'resolve' }); }`));
+      await wait(300);
+      return { ok: /When a Character is K\.O\./.test(m.text) && /The app will/.test(m.text) && m.buttons.includes('fx:L'), buttons: m.buttons.filter(b => /^fx/.test(b)).join(' ') };
+    } },
+  { name: 'sim-continuous-text-is-the-players', run: async (page) => {
+      /* a Character with a continuous line no template reads: the board says so beside its power */
+      const m = await page.evaluate(simBoard(`deal(stock('stock-st01'), stock('stock-st02'), 16); S.act(0, { t: 'end' }); S.act(1, { t: 'end' });
+        const E = V.CAT.effects, id = +Object.keys(E).find(k => { const p = V.CAT.byId.get(+k); return p && p.type === 'Character' && !p.sealed && E[k].some(e => e.hand && e.t === 'static'); });
+        S.P(0).chars = [S.inst(id, 1)];`));
+      await wait(300);
+      return { ok: /its continuous text is yours to apply/.test(m.text) };
+    } },
+  { name: 'rules-sheet-opened-at-a-section', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; V.openRules('7-1-4'); await ${pause}; const l = document.querySelector('#rulesList');
+        return { on: document.querySelector('#rulesSheet').classList.contains('on'), q: document.querySelector('#rulesQ').value, first: l.innerText.slice(0, 160) }; })()`);
+      await wait(300);
+      return { ok: m.on && m.q === '7-1-4' && /§7-1-4/.test(m.first), ...m };
+    } },
+  { name: 'rules-sheet-search-in-words', run: async (page) => {
+      await page.click('#rulesQ', { clickCount: 3 }); await page.keyboard.type('blocker'); await wait(500);
+      const m = await page.evaluate(() => ({ q: document.querySelector('#rulesQ').value, text: document.querySelector('#rulesList').innerText.slice(0, 200), sync: !!document.querySelector('#rulesSync') }));
+      return { ok: m.q === 'blocker' && /Blocker/.test(m.text) && m.sync, ...m };
+    } },
+];
+export const STEPS = { 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
