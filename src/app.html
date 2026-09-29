@@ -6340,7 +6340,8 @@ function simHandLabel(i, a) { const P = SIM.P(i), X = SIM.P(a.side === 1 ? 1 - i
     case 'rest': return `Rest ${at(a.ref)}${who}`; case 'active': return `Set ${at(a.ref)} active`; case 'activedon': return 'Set a DON!! active';
     case 'power': return `${a.v > 0 ? '+' : ''}${a.v} to ${at(a.ref)}${who}`; case 'tohand': return `${nm(X.chars[a.k].id)}${who} to hand`; case 'bottom': return `${nm(X.chars[a.k].id)}${who} to deck bottom`;
     case 'givedon': return `Give ${a.from} DON!! to ${nm(SIM.at(P, a.ref).id)}`; case 'adddon': return `Add a DON!!${a.rested ? ', rested' : ''}`; case 'returndon': return 'Return a DON!!';
-    case 'lifetohand': return 'Top Life to hand'; case 'decktolife': return 'Deck top to Life'; case 'mill': return 'Trash deck top';
+    case 'lifetohand': return a.end === 'bottom' ? 'Bottom Life to hand' : 'Top Life to hand'; case 'handtolife': return `${nm(P.hand[a.h])} to Life`;
+    case 'chartolife': return `${nm(P.chars[a.k].id)} to Life`; case 'opplifetrash': return 'Trash their Life'; case 'handtotop': return `${nm(P.hand[a.h])} to deck top`; case 'decktolife': return 'Deck top to Life'; case 'mill': return 'Trash deck top';
     case 'play': return `Play ${nm((a.zone === 'trash' ? P.trash : P.hand)[a.k])} from ${a.zone}${a.trash != null ? ', trash ' + nm(P.chars[a.trash].id) : ''}`;
     case 'look': return `Look at the top ${SIM.g.hand.left.look}`; case 'lookto': return `${nm(P.looking[a.k])} to ${a.to}`;
     default: return a.op; } }
@@ -6356,10 +6357,10 @@ function simOfferPanel(i, L) {
   else if (cur.hand) body = `<div class="row" style="gap:10px;margin-top:8px;flex-wrap:wrap"><button class="ghost go" data-sim="fxhand" style="flex:none">Resolve by hand</button><button class="ghost" data-sim="fxskip" style="flex:none">Skip</button><span class="note" style="margin:0">decline it</span>${report}</div>`;
   else { const d = cur.steps[cur.step]; const fx = L.filter(x => x.t === 'fx'); const T = SIM.targetsOf(cur), tg = T || []; const none = fx.some(x => x.target == null);
     const room = SIMUI.fxt != null ? fx.filter(x => x.target === SIMUI.fxt.target && x.trash != null) : [];
-    body = `<div class="note">The app will: ${esc(SIM.describe(cur.e))}</div>${cur.steps.length > 1 ? `<div class="note">step ${cur.step + 1} of ${cur.steps.length}${/^cost_/.test(d.a) ? ' \u2014 the cost; skipping declines the effect' : ''}</div>` : ''}
+    body = `<div class="note">The app will: ${esc(SIM.describe(cur.e))}</div>${cur.steps.length > 1 ? `<div class="note">step ${cur.step + 1} of ${cur.steps.length}${/^cost_/.test(d.a) ? (cur.step === 0 ? ' \u2014 the cost; skipping declines the effect' : ' \u2014 the cost, paid in full once begun') : ''}</div>` : ''}
       ${room.length ? `<div class="fgrp">Five Characters: trash one to make room (${simCite('§3-7-6-1')})</div>${room.map(x => `<button class="linkish" data-sim="fxroom:${x.trash}">Trash ${esc(SIM.card(P.chars[x.trash].id).name)}</button>`).join('')}`
       : (tg.length ? `<div class="fgrp">Choose</div>${tg.map(t => `<button class="linkish" data-sim="fx:${t.ref}">${esc(t.name)}</button>`).join('')}` : (T ? '<div class="note">No legal target for this step.</div>' : ''))}
-      <div class="row" style="gap:10px;margin-top:8px;flex-wrap:wrap">${none && !room.length ? `<button class="ghost go" data-sim="fxapply" style="flex:none">${tg.length ? 'Choose none' : 'Apply'}</button>` : ''}<button class="ghost" data-sim="fxskip" style="flex:none">Skip</button><span class="note" style="margin:0">decline it</span>${report}</div>`; }
+      <div class="row" style="gap:10px;margin-top:8px;flex-wrap:wrap">${none && !room.length ? `<button class="ghost go" data-sim="fxapply" style="flex:none">${tg.length ? 'Choose none' : 'Apply'}</button>` : ''}${L.some(x => x.t === 'fxskip') ? '<button class="ghost" data-sim="fxskip" style="flex:none">Skip</button><span class="note" style="margin:0">decline it</span>' : '<span class="note" style="margin:0">a cost begun is paid in full (' + simCite('§8-3') + ')</span>'}${report}</div>`; }
   return `<div class="panel" style="border-color:var(--brass)"><h3>${esc(nm)} \u2014 effect</h3><div class="note">${esc(cur.e.raw)}</div><div class="note" style="color:var(--accent-ink)">${badge}</div>${body}</div>`;
 }
 function simLog() { return `<div class="panel"><h3>Log</h3><div class="note">${SIM.g.log.slice(0, 8).map(esc).join('<br>') || '\u2014'}</div><button class="linkish" data-sim="sharelog" style="margin-top:6px">Share the log</button></div>`; }

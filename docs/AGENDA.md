@@ -2179,7 +2179,7 @@ in the future, the simulator.
   unscripted line in its family, the near-misses of a running template
   flagged, every unknown tag spelling listed), and "audit the SIM as a
   whole": the review of the whole engine and board is HANDOFF take 122's
-  table (landmines 215-221). The measurements are in HANDOFF take 122.
+  table (landmines 215-222). The measurements are in HANDOFF take 122.
 - **How the corpus grows, from here:** `node tools/cardproof.mjs --worklist`
   names the ready-made decks' unproven cards; `python3 tools/cards.py --new
   NUM` scaffolds one; `python3 tools/wording.py` names the wording one
@@ -2198,6 +2198,14 @@ in the future, the simulator.
   as the player's to apply, never folded into the power on screen. **Ruled out: the rules' own text in the app** -- the Rules
   button carries a digest in the app's words with the official section
   numbers, and links the official PDF (the owner may rule otherwise; D23).
+- **The ready-made decks' Leaders (take 122, after the first push):** every one
+  has a proof -- ten run from their text, seven by hand, held to their timing
+  and their tray. **Ruled out: a proof per card number.** ST03-001 has two
+  texts; a proof binds the printing a deck deals (`cards.py --new NUM --id`),
+  and the errata'd one stays unproven until proven (landmine 222).
+- **Untagged effect sentences** (ST30-001's "-2000 while you have a 7000
+  Character") are not effect lines yet: its own take, since taking them in
+  reopens every proof's text fingerprint.
 - **Next (take 123):** `SIM.view(seat)`, the privacy rule ("private things
   only on that player's turn") enforced by the engine, the board drawn from
   `view()` and `legal()`, and D18 brought up to date for two phones by a code

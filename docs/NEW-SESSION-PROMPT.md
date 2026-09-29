@@ -94,7 +94,7 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   Sim against itself (and two copies of it against each other) with an
   auditor after every move; `tools/wording.py` finds the wording one
   template away. The gate runs the proofs, a self-play sample both ways, two
-  apps, and the auditor's planted faults. Landmines 212-221. **Next,
+  apps, and the auditor's planted faults. Landmines 212-222. **Next,
   yours:** take 123 -- `SIM.view(seat)` and the privacy rule, the board drawn
   from `view()` and `legal()`, then tell the owner "ready for the UI"; his
   UI/UX pass (the real table, the pictures) follows. D18 is his for two

@@ -12,6 +12,7 @@ differently, reopens the proof by itself; it is reported stale, never counted.
 
     python3 tools/cards.py                  # the proofs and what they bind to
     python3 tools/cards.py --new ST01-007   # scaffold a proof from the current text and reading
+    python3 tools/cards.py --new ST03-001 --id 288266   # ...from that printing (a number with an errata'd text has two)
     python3 tools/cards.py --selftest       # controls: a changed text or parse binds nothing
 Called by build_app.py (`cat["proof"]`).
 """
@@ -96,12 +97,15 @@ def bind(cat, effects, proofs=None):
     return proof, report
 
 
-def scaffold(num, cat, effects):
-    """A new proof's frame: the text and reading of the number's cheapest printing, and empty scenarios to write."""
+def scaffold(num, cat, effects, pid=None):
+    """A new proof's frame: the text and reading of one printing -- the one named (take 122: a number can carry two texts,
+    an errata'd reprint beside the original; prove the one a deck deals), else the cheapest -- and empty scenarios to write."""
     C = {n: i for i, n in enumerate(cat["cols"])}
     rows = sorted((r for r in cat["rows"] if r[C["num"]] == num and not r[C["sealed"]]), key=lambda r: (r[C["market"]] or 9e9))
+    if pid is not None:
+        rows = [r for r in rows if str(r[C["id"]]) == str(pid)]
     if not rows:
-        raise SystemExit(f"no printing numbered {num}")
+        raise SystemExit(f"no printing numbered {num}" + (f" with id {pid}" if pid is not None else ""))
     r = rows[0]; pid = str(r[C["id"]])
     return {"num": num, "name": r[C["name"]], "text": "\n".join(effect_lines(r[C["text"]])), "text_fp": text_fp(r[C["text"]]),
             "fx_fp": fx_fp(effects.get(pid)), "reading": [e for e in effects.get(pid, [])], "rules": [], "verdict": "proven",
@@ -144,7 +148,8 @@ if __name__ == "__main__":
         if os.path.exists(out):
             raise SystemExit(f"{out} exists")
         os.makedirs(DIR, exist_ok=True)
-        json.dump(scaffold(num, cat, eff), open(out, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
+        pid = sys.argv[sys.argv.index("--id") + 1] if "--id" in sys.argv else None
+        json.dump(scaffold(num, cat, eff, pid), open(out, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
         print(f"  wrote {os.path.relpath(out, ROOT)} -- write its scenarios, then run node tools/cardproof.mjs"); raise SystemExit(0)
     proof, rep = bind(cat, eff)
     print(f"  {rep['files']} proofs, {rep['bound']} printings bound; stale: {rep['stale'] or 'none'}; refused: {rep['bad'] or 'none'}")

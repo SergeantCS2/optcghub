@@ -47,7 +47,7 @@ function audit(S, g, before, a, seat, head, book, deckSizes) {
     if (g.phase !== 'mulligan' && g.over === null && !P.deck.length && !P.looking.length) say(`seat ${k}: an empty deck and the game goes on (§9-2-1-2)`);
   });
   /* a by-hand tray spends what its line's words allow and no more (landmine 212): every budget a count, never below zero */
-  if (g.hand) for (const [k, v] of Object.entries(g.hand.left)) if (!(Array.isArray(v) || (Number.isFinite(v) && v >= 0))) say(`the by-hand tray's budget for ${k} is ${v} (landmine 212)`);
+  if (g.hand) for (const [k, v] of Object.entries(g.hand.left)) if (k !== '_' && !(Array.isArray(v) || (Number.isFinite(v) && v >= 0))) say(`the by-hand tray's budget for ${k} is ${v} (landmine 212)`);
   /* every card on the field is its own card: a uid each, none shared -- what applies to a card, and its Once Per Turn, follow it */
   const uids = g.players.flatMap(P => [P.leader, ...P.chars].concat(P.stage ? [P.stage] : []).map(o => o.uid));
   if (uids.some(u => !(u > 0)) || new Set(uids).size !== uids.length) say(`a card on the field without its own uid (${uids.join(',')})`);

@@ -19,10 +19,10 @@ everything.
 ---
 
 **New at take 122:** The Sim plays by the rules more closely. Once Per Turn
-means once per card, the ST01, ST08 and ST09 Leaders' own abilities run, and
-the free Draw and +1 DON!! buttons are gone: an effect the app cannot run is
-played by hand from its card, at its timing, with only the moves its words
-name. A sixth Character trashes one of your five. Each effect says whether a
+means once per card, ten ready-made decks' Leaders now use their own
+abilities, and the free Draw and +1 DON!! buttons are gone: an effect the app
+cannot run is played by hand from its card, at its timing, with only the moves
+its words name. A sixth Character trashes one of your five. Each effect says whether a
 test has proven it, with Report for a misfire, and a Rules button searches
 the rules and checks for a newer version.
 

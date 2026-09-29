@@ -27,6 +27,8 @@ COST = [
     (re.compile(r"^You may trash (\d) cards? from your hand:\s*"),                       lambda m: {"a": "cost_trashhand", "n": int(m[1])}),
     (re.compile(r"^DON!! -(\d) \([^)]*\):\s*"),                                          lambda m: {"a": "cost_returndon", "n": int(m[1])}),
     (re.compile(r"^You may rest this (?:Character|Leader):\s*"),                          lambda m: {"a": "cost_restself"}),
+    # take 122: the rest-DON!! symbol (§8-3-1-5), printed as "(N)" and its reminder; a second cost may follow it
+    (re.compile(r"^\((\d+)\) \(You may rest the specified number of DON!! cards in your cost area\.\):?\s*"), lambda m: {"a": "cost_restdon", "n": int(m[1])}),
 ]
 CONDS = {"Once Per Turn": ("opt", None), "Your Turn": ("yourturn", None), "Opponent's Turn": ("oppturn", None)}
 # The catalogue spells one tag several ways (take 122, measured): "[Activate:Main]" on 417 lines, "[DON!!x1]", "[DON!! X1]",
@@ -56,7 +58,7 @@ T = [
                                                                                                             lambda m: one({"a": "playfromhand", "type": m[1], "cost": int(m[2]) if m[2] else None, "power": int(m[3]) if m[3] else None})),
     (re.compile(r"^K\.O\. up to 1 of your opponent's (rested )?Characters with (\d+) power or less\.$"),  lambda m: one({"a": "ko", "who": "opp", "power": int(m[2]), "rested": bool(m[1])})),
     (re.compile(r"^K\.O\. up to 1 of your opponent's rested Characters with a cost of (\d+) or less\.$"),  lambda m: one({"a": "ko", "who": "opp", "cost": int(m[1]), "rested": True})),
-    (re.compile(r"^Return up to 1 Character with a cost of (\d+) or less to the owner's hand\.$"),        lambda m: one({"a": "bounce", "who": "any", "cost": int(m[1])})),
+    (re.compile(r"^Return (?:up to )?1 Character with a cost of (\d+) or less to the owner's hand\.$"),  lambda m: one({"a": "bounce", "who": "any", "cost": int(m[1])})),   # without "up to" the choice is owed (ST03-001's errata, take 122)
     (re.compile(r"^Place up to 1 Character with a cost of (\d+) or less at the bottom of the owner's deck\.$"), lambda m: one({"a": "bottom", "who": "any", "cost": int(m[1])})),
     (re.compile(r"^Add up to 1 DON!! card from your DON!! deck and set it as active\.$"),                 lambda m: one({"a": "adddon", "n": 1})),
     (re.compile(r"^Give up to 1 of your opponent's Characters -(\d+) power during this turn\.$"),        lambda m: one({"a": "power", "who": "opp", "n": -int(m[1]), "dur": "turn"})),
@@ -74,7 +76,7 @@ T = [
     (re.compile(r"^Trash (\d) cards? from the top of your deck\.$"),                                     lambda m: one({"a": "mill", "n": int(m[1])})),
     (re.compile(r"^Add (\d) cards? from the top of your Life cards to your hand\.$"),                    lambda m: one({"a": "lifetohand", "n": int(m[1])})),
     (re.compile(r"^Add up to 1 card from the top of your deck to the top of your Life cards\.$"),         lambda m: one({"a": "decktolife", "n": 1})),
-    (re.compile(r"^Set this Character as active\.$"),                                                     lambda m: one({"a": "selfactive"})),
+    (re.compile(r"^Set this (?:Character|Leader) as active\.$"),                                          lambda m: one({"a": "selfactive"})),   # the Leader: ST02-001 (take 122)
     (re.compile(r"^Draw (\d) cards?\.$"),                                                                   lambda m: one({"a": "draw", "n": int(m[1])})),
     (re.compile(r"^This (?:Leader|Character) gains \+(\d+) power (during this turn|until the start of your next turn|during this battle)\.$"),
                                                                                                             lambda m: one({"a": "selfpower", "n": int(m[1]), "dur": "nextturn" if m[2].startswith("until") else m[2].split()[-1]})),
@@ -86,18 +88,25 @@ T = [
     (re.compile(r"^Your opponent cannot activate (?:a )?\[Blocker\](?: Character that has (\d+) or (more|less) power)? during this (battle|turn)\.$"),
                                                                                                             lambda m: one(dict({"a": "noblocker", "dur": m[3]}, **({"power": int(m[1]), "cmp": m[2]} if m[1] else {})))),
     (re.compile(r"^K\.O\. up to 1 of your opponent's Characters with a cost of (\d+) or less\.$"),         lambda m: one({"a": "ko", "who": "opp", "cost": int(m[1])})),
+    (re.compile(r"^K\.O\. up to 1 of your opponent's Characters with a cost of 0\.$"),                    lambda m: one({"a": "ko", "who": "opp", "cost": 0})),       # ST06-001: "of 0" is 0 or less (a cost is never below 0, §1-3-6-2)
     (re.compile(r"^K\.O\. up to 1 of your opponent's Characters with (\d+) base power or less\.$"),        lambda m: one({"a": "ko", "who": "opp", "power": int(m[1])})),
     (re.compile(r"^Rest up to 1 of your opponent's (?:Characters|Leader or Characters?) with a cost of (\d+) or less\.$"),
                                                                                                             lambda m: one({"a": "rest", "who": "opp", "cost": int(m[1])})),
     (re.compile(r"^Rest up to 1 of your opponent's Characters\.$"),                                        lambda m: one({"a": "rest", "who": "opp"})),
     (re.compile(r"^Give up to (\d) rested DON!! cards? to your Leader or 1 of your Characters\.$"),         lambda m: one({"a": "givedon", "n": int(m[1])})),
     (re.compile(r"^Give this Leader or 1 of your Characters up to (\d) rested DON!! cards?\.$"),         lambda m: one({"a": "givedon", "n": int(m[1])})),     # ST01-001 (take 122)
+    (re.compile(r"^Give up to (\d) rested DON!! cards? to 1 of your Characters\.$"),                     lambda m: one({"a": "givedon", "n": int(m[1]), "who": "chars"})),   # ST21-001 (take 122)
     (re.compile(r"^Give up to (\d) rested DON!! cards? to (?:your|this) Leader\.$"),                    lambda m: one({"a": "givedon", "n": int(m[1]), "who": "leader"})),   # "this Leader": ST08-001 (take 122)
     (re.compile(r"^Set up to (\d) of your DON!! cards as active\.$"),                                       lambda m: one({"a": "activedon", "n": int(m[1])})),
     (re.compile(r"^Add up to 1 card from the top of your Life cards to your hand\.$"),                     lambda m: one({"a": "lifetohand", "n": 1})),
     (re.compile(r"^Return up to 1 of your opponent's Characters with a cost of (\d+) or less to the owner's hand\.$"),
                                                                                                             lambda m: one({"a": "bounce", "who": "opp", "cost": int(m[1])})),
     (re.compile(r"^Trash 1 card from your hand\.$"),                                                       lambda m: one({"a": "trashhand", "n": 1})),
+    # take 122: a type's Characters, all of them on the field now -- {type} is that type, "type" any type containing it (§2-4-3)
+    (re.compile(r"^All of your (?:\{([^}]+)\}|\"([^\"]+)\") type Characters gain \+(\d+) power during this turn\.$"),
+                                                                                                            lambda m: one(dict({"a": "powerall", "n": int(m[3]), "dur": "turn"}, **({"type": m[1]} if m[1] else {"typeq": m[2]})))),   # ST05-001
+    (re.compile(r"^Place up to 1 of your opponent's Characters with (\d+) power or less at the bottom of the owner's deck, and play up to 1 Character card with a cost of (\d+) or less from your hand\.$"),
+                                                                                                            lambda m: [{"a": "bottom", "who": "opp", "power": int(m[1])}, {"a": "playfromhand", "cost": int(m[2]), "type": None, "power": None}]),   # ST10-001
 ]
 # Leading clauses the engine can evaluate; the rest of the sentence must still match a template.
 IF = [
@@ -124,6 +133,19 @@ def when_of(s):
             rest = s[m.end():]
             return t, (rest[0].upper() + rest[1:] if rest else rest)
     return None, s
+
+
+def take_costs(s, cost):
+    """Every cost at the head of a sentence, in the order printed (§8-3-1-1): "(3) (...) You may trash 1 card from your hand: ..."."""
+    for _ in range(3):
+        for rx, mk in COST:
+            m = rx.match(s)
+            if m:
+                cost.append(mk(m)); s = s[m.end():]; s = s[0].upper() + s[1:] if s else s
+                break
+        else:
+            return s
+    return s
 
 
 def parse_line(line):
@@ -165,12 +187,7 @@ def parse_line(line):
     if s.startswith("/"):                           # "[On Play]/[When Attacking]" form
         return None
     cost = []
-    for rx, mk in COST:
-        m = rx.match(s)
-        if m:
-            cost.append(mk(m)); s = s[m.end():]
-            s = s[0].upper() + s[1:] if s else s
-            break
+    s = take_costs(s, cost)
     for rx, mk in IF:
         m = rx.match(s)
         if m:
@@ -178,12 +195,7 @@ def parse_line(line):
             s = s[0].upper() + s[1:] if s else s
             break
     if not cost:                                        # a cost may follow the condition: "If …, DON!! -1: …"
-        for rx, mk in COST:
-            m = rx.match(s)
-            if m:
-                cost.append(mk(m)); s = s[m.end():]
-                s = s[0].upper() + s[1:] if s else s
-                break
+        s = take_costs(s, cost)
     steps = template_steps(s)
     if steps is None:
         # N sentences, each a template on its own, a leading "Then, if …" a condition on that sentence's steps (takes 50, 51)
@@ -398,7 +410,13 @@ def selftest():
             "[DON!! x1] [When Attacking] Up to 1 of your Leader or Character cards other than this card gains +1000 power during this turn.",   # ST01-005
             "[Your Turn] When a Character is K.O.'d, give up to 1 rested DON!! card to this Leader.",                  # ST08-001: a timing in words (take 122)
             "[DON!! x1] [Opponent's Turn] If you have 2 or less Life cards, this Leader gains +1000 power.",           # ST09-001: a continuous effect with its condition
-            "[Trigger] If your Leader has the {Straw Hat Crew} type, play this card."]                                  # the {type} spelling of a Leader condition
+            "[Trigger] If your Leader has the {Straw Hat Crew} type, play this card.",                                 # the {type} spelling of a Leader condition
+            "[Activate: Main] [Once Per Turn] (3) (You may rest the specified number of DON!! cards in your cost area.) You may trash 1 card from your hand: Set this Leader as active.",   # ST02-001: two costs in a row
+            "[Activate:Main] [Once Per Turn] (3) (You may rest the specified number of DON!! cards in your cost area.) You may trash 1 card from your hand: K.O. up to 1 of your opponent's Characters with a cost of 0.",   # ST06-001
+            "[DON!! x1] [Activate: Main] [Once Per Turn] Give up to 2 rested DON!! cards to 1 of your Characters.",   # ST21-001
+            "[Activate:Main] [Once Per Turn] DON!! -3 (You may return the specified number of DON!! cards from your field to your DON!! deck.): All of your \"FILM\" type Characters gain +2000 power during this turn.",   # ST05-001
+            "[Activate:Main] [Once Per Turn] DON!! -3 (You may return the specified number of DON!! cards from your field to your DON!! deck.): Place up to 1 of your opponent's Characters with 3000 power or less at the bottom of the owner's deck, and play up to 1 Character card with a cost of 4 or less from your hand.",   # ST10-001
+            "[Activate: Main] [Once Per Turn] DON!! -4 (You may return the specified number of DON!! cards from your field to your DON!! deck.): Return 1 Character with a cost of 5 or less to the owner's hand."]   # ST03-001's errata: owed, not "up to"
     bad = ["[On Play] Draw 1 card and K.O. up to 1 of your opponent's Characters.",          # two actions: not a template
            "[On Play]/[When Attacking] Draw 1 card.",                                          # two triggers
            "[Blocker] (After your opponent declares an attack, you may rest this card to make it the new target of the attack.)",
@@ -413,7 +431,11 @@ def selftest():
            "[DON!! x2] This Character gains [Rush]. (This card can attack on the turn in which it is played.) Then, draw 1 card.",   # a note is dropped only at the END
            "[Your Turn] When your Leader is K.O.'d, give up to 1 rested DON!! card to this Leader.",                # take 122: only "a Character is K.O.'d" is a timing
            "If you have 2 or less Life cards, this Leader gains +1000 power during this turn.",                     # ...and a condition alone is no timing: a "this turn" needs one
-           "[Trigger] If your Leader has the {Straw Hat Crew] type, play this card."]                                  # mismatched brackets are no type
+           "[Trigger] If your Leader has the {Straw Hat Crew] type, play this card.",                                  # mismatched brackets are no type
+           "[On Play] K.O. up to 1 of your opponent's Characters with a cost of 3.",                                     # "a cost of 3" is exactly 3: only 0 reads as "or less"
+           "[Activate: Main] (3) (You may rest the specified number of DON!! cards in your cost area.) Draw 1 card and K.O. a Character.",   # a cost, then a sentence no template knows
+           "[On Play] All of your Characters gain +2000 power during this turn.",
+           "[On Play] Return 2 Characters with a cost of 5 or less to the owner's hand."]                                  # "1" or "up to 1" only                                           # every Character, no type: not this template
     ok = True
     for g in good:
         r = parse_line(g); print(f"  {'ok  ' if r else 'FAIL'}  parses: {g[:70]}"); ok &= bool(r)

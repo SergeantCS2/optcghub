@@ -13,7 +13,7 @@ for community convention (typical deck shapes), it is marked as such and is
 advice, not a rule.
 
 The app carries its own digest of the sections it plays by
-(`tools/rules/digest.json`, 182 sections in the app's words, never Bandai's
+(`tools/rules/digest.json`, 185 sections in the app's words, never Bandai's
 text): the Rules sheet on every Prep & Play screen searches it, and **Check for
 updates** there compares its version with the one Bandai publishes (take 122).
 
@@ -164,9 +164,9 @@ Leader, which forty-nine cards around it — to the person holding the cards.
 
 ## 6. The Sim against the rules (take 122)
 
-Each of the digest's 182 sections carries what the Sim does about it, and the
+Each of the digest's 185 sections carries what the Sim does about it, and the
 Rules sheet shows it under the section ("In the Sim: …"). At take 122:
-**162 enforced, 3 partial, 12 by hand, 5 not modelled.** Every refusal the
+**166 enforced, 3 partial, 11 by hand, 5 not modelled.** Every refusal the
 engine gives cites its section, and the build refuses a citation the digest
 does not hold (landmine 214).
 
@@ -198,7 +198,6 @@ from its seed and moves.
 | 8-1-3-3 | permanent effects | partial — "+N power" and a keyword while a condition holds (a condition in words included, ST09-001) run; any other continuous line is kept and the board says it is the player's to apply |
 | 8-1-3-4, 8-1-3-4-4 | replacement effects ("instead") | by hand |
 | 8-2 | invalid effects | by hand |
-| 8-3-1-5 | the rest-DON!! cost symbol | by hand |
 | 10-2-8 | [End of Your Opponent's Turn] | by hand, offered at its moment |
 | 10-2-16 | [On Your Opponent's Attack] | by hand, offered at its moment |
 | 11-1 | infinite loops | not modelled |
@@ -206,6 +205,9 @@ from its seed and moves.
 
 "By hand" never means "anything goes" (landmine 212): a line no template runs
 is offered at its timing under its Once Per Turn, and the tray it opens carries
-only the moves its own words name, each logged. A timing written in words is a
-timing too — "When a Character is K.O.'d" (ST08-001) fires after any K.O., by
-battle or by an effect, and never for a card trashed to make room (§3-7-6-1-1).
+only the moves its own words name -- whose cards, how many, for how long, from
+where -- each logged. A timing written in words is a timing too — "When a
+Character is K.O.'d" (ST08-001) fires after any K.O., by battle or by an
+effect, and never for a card trashed to make room (§3-7-6-1-1). Every Leader
+of the seventeen ready-made decks has a proof in `tools/cards/`: ten run
+from their text, seven by hand, each held to its timing and its tray.

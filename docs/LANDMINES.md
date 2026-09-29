@@ -234,6 +234,7 @@ Start here. Do not read top to bottom.
 | A `\uXXXX` in new code became the character itself | 219 |
 | The Sim offers a choice or a cost that it then refuses | 220 |
 | A test that passed for many takes fails after an unrelated change | 221 |
+| A proof binds a printing no deck deals | 222 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -2884,6 +2885,14 @@ got; one of them needed an active DON!! left after a random play, passed
 run after run from take 46, and failed on one run at take 122. Every game a
 test deals is seeded (the engine takes a seed since take 122), so a failure
 is the code's and happens every time.
+
+**222. A card number is not a text.** ST03-001 is printed with two texts: the
+original ("Return up to 1 Character") and a reprint with the errata ("Return
+1 Character", owed). A proof scaffolded from the cheapest printing bound the
+errata, which no ready-made deck deals, and ran nowhere the owner plays it.
+AGENTS rule 3 again, one layer down: a proof names its printing (`cards.py
+--new NUM --id ID`, the one the deck deals), binds that text, and leaves the
+other unproven until it is proven.
 
 ## §2 — Inherited from APEX ORV
 

@@ -1,0 +1,227 @@
+{
+ "num": "ST05-001",
+ "name": "Shanks",
+ "text": "[Activate:Main] [Once Per Turn] DON!! -3 (You may return the specified number of DON!! cards from your field to your DON!! deck.): All of your \"FILM\" type Characters gain +2000 power during this turn.",
+ "text_fp": "2285e2b15d9b156c",
+ "fx_fp": "ef3f5eab2b1137f6",
+ "reading": [
+  {
+   "t": "main",
+   "if": [
+    {
+     "c": "opt"
+    }
+   ],
+   "do": [
+    {
+     "a": "cost_returndon",
+     "n": 3
+    },
+    {
+     "a": "powerall",
+     "n": 2000,
+     "dur": "turn",
+     "typeq": "FILM"
+    }
+   ],
+   "raw": "[Activate:Main] [Once Per Turn] DON!! -3 (You may return the specified number of DON!! cards from your field to your DON!! deck.): All of your \"FILM\" type Characters gain +2000 power during this turn."
+  }
+ ],
+ "rules": [
+  "10-2-2",
+  "10-2-13",
+  "8-3-1-6",
+  "2-4-3-1"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "every FILM Character +2000, a Character without the type not",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 3
+     },
+     "chars": [
+      {
+       "card": "ST16-005"
+      },
+      {
+       "card": "OP01-012"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "fx",
+     "target": null
+    }
+   ],
+   "expect": {
+    "power.p0.0": 5000,
+    "power.p0.1": 4000,
+    "power.p0.leader": 5000,
+    "p0.donDeck": 10
+   }
+  },
+  {
+   "name": "...and it ends with the turn",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 3
+     },
+     "chars": [
+      {
+       "card": "ST16-005"
+      }
+     ]
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "fx",
+     "target": null,
+     "expect": {
+      "power.p0.0": 5000
+     }
+    },
+    {
+     "t": "end"
+    }
+   ],
+   "expect": {
+    "power.p0.0": 3000
+   }
+  },
+  {
+   "name": "a FILM Character played after it resolves is not raised",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 5
+     },
+     "chars": [
+      {
+       "card": "ST16-005"
+      }
+     ],
+     "hand": [
+      "ST16-005"
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "play",
+     "h": 0
+    }
+   ],
+   "expect": {
+    "power.p0.0": 5000,
+    "power.p0.1": 3000
+   }
+  },
+  {
+   "name": "not with 2 DON!! on the field",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 2
+     },
+     "chars": [
+      {
+       "card": "ST16-005"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader",
+     "refused": "cost cannot be paid"
+    }
+   ],
+   "expect": {
+    "power.p0.0": 3000
+   }
+  },
+  {
+   "name": "once per turn",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 6
+     },
+     "chars": [
+      {
+       "card": "ST16-005"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "activate",
+     "ref": "leader",
+     "refused": "once per turn"
+    }
+   ],
+   "expect": {
+    "power.p0.0": 5000
+   }
+  }
+ ],
+ "note": "Take 122: every one of your Characters with a type containing FILM, those on the field as it resolves, +2000 this turn."
+}

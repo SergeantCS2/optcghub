@@ -123,7 +123,7 @@ const SIM = {
   leave(X, k, to) { const c = X.chars.splice(k, 1)[0]; if (!c) return null;
     if (c.don) { X.don.rested += c.don; c.don = 0; }
     X.modl = X.modl.filter(m => m.key !== 'u' + c.uid);
-    if (to === 'hand') X.hand.push(c.id); else if (to === 'bottom') X.deck.push(c.id); else if (to === 'top') X.deck.unshift(c.id); else X.trash.push(c.id);
+    if (to === 'hand') X.hand.push(c.id); else if (to === 'bottom') X.deck.push(c.id); else if (to === 'top') X.deck.unshift(c.id); else if (to === 'life') X.life.unshift(c.id); else X.trash.push(c.id);
     return c; },
   /* "When a Character is K.O.'d" (take 122): the lines on either field that wait on a K.O. -- by battle or by an effect,
      never a card trashed to make room (§3-7-6-1-1) -- the turn player's first (§8-6-2) */
@@ -239,10 +239,13 @@ const SIM = {
   /* Can the first step's COST be paid at all? If not, the effect is not offered (§8-3-1-3). */
   fieldDon(P) { return P.don.active + P.don.rested + P.leader.don + P.chars.reduce((a, x) => a + x.don, 0); },
   canPay(i, ref, d) { const P = this.P(i); if (!d || !/^cost_/.test(d.a)) return true;
+    if (d.a === 'cost_restdon') return P.don.active >= d.n;
     if (d.a === 'cost_trashhand') return P.hand.length >= d.n;
     if (d.a === 'cost_returndon') return this.fieldDon(P) >= d.n;
     if (d.a === 'cost_restself') { const o = this.at(P, ref); return !!o && !o.rested; }
     return false; },
+  /* every cost at the head of a line, as printed and paid in order (§8-3-1-1): all of them payable, or the line is not offered (§8-3-1-3) */
+  costsPayable(i, ref, steps) { for (const d of steps || []) { if (!/^cost_/.test(d.a)) break; if (!this.canPay(i, ref, d)) return false; } return true; },
   /* the steps whose "up to" lets 0 be chosen (§4-8, §8-4-4-1): with no target the step does nothing */
   TARGETED: ['ko', 'rest', 'bounce', 'bottom', 'power', 'costmod', 'givedon', 'playfromhand', 'trashhand'],
   /* Targets are strings the board can put on a button: L = your Leader,
@@ -259,7 +262,7 @@ const SIM = {
     if (d.a === 'power' && d.who === 'prev') return null;   // the card the previous step chose
     if (d.a === 'costmod') return opp();
     if (d.a === 'power') return d.who === 'opp' ? opp() : [{ ref: 'L', name: this.card(P.leader.id).name }].concat(own()).filter(t => !d.notself || t.ref !== (src === 'leader' ? 'L' : 'm' + src));
-    if (d.a === 'givedon') return [{ ref: 'L', name: this.card(P.leader.id).name }].concat(d.who === 'leader' ? [] : P.chars.map((c, k) => ({ ref: 'm' + k, name: this.card(c.id).name })));
+    if (d.a === 'givedon') return (d.who === 'chars' ? [] : [{ ref: 'L', name: this.card(P.leader.id).name }]).concat(d.who === 'leader' ? [] : P.chars.map((c, k) => ({ ref: 'm' + k, name: this.card(c.id).name })));
     if (d.a === 'trashhand' || d.a === 'cost_trashhand') return P.hand.map((id, h) => ({ ref: 'h' + h, name: this.card(id).name }));
     if (d.a === 'playfromhand') return P.hand.map((id, h) => ({ id, h, p: this.card(id) })).filter(x => x.p && x.p.type === 'Character' && (d.cost == null || this.cost(x.p) <= d.cost) && (d.power == null || this.num(x.p.power) <= d.power) && (!d.type || (x.p.subtypes || '').split(/[;/]/).map(y => y.trim()).includes(d.type))).map(x => ({ ref: 'h' + x.h, name: x.p.name + ' (' + this.cost(x.p) + 'c)' }));
     if (d.a === 'search') { const types = d.types || (d.type ? [d.type] : null);
@@ -275,7 +278,7 @@ const SIM = {
     return this.fx(id).map((e, n) => ({ e, n })).filter(({ e }) => e.t === trigger)
       .filter(({ e }) => e.if.every(c => this.condOk(i, src, c)))
       .filter(({ e, n }) => !(e.if.some(c => c.c === 'opt') && this.used(i, { ref, cardId: id, n })))
-      .filter(({ e }) => this.canPay(i, ref, e.do[0]))
+      .filter(({ e }) => this.costsPayable(i, ref, e.do))
       .map(({ e, n }) => ({ i, e, n, ref, uid: src ? src.uid : null, cardId: id, fromLife: !!fromLife, hand: !!e.hand, steps: e.do, step: 0, targets: this.targetsFor(i, e.do[0], ref) })); },
   /* why a card's line is not offered now, in the rules' words: no such line, used this turn, a condition, a cost */
   whyNot(i, trigger, ref, n) { const P = this.P(i), src = this.at(P, ref); const lines = src ? this.fx(src.id).map((e, k) => ({ e, k })).filter(x => x.e.t === trigger && (n == null || x.k === n)) : [];
@@ -283,7 +286,7 @@ const SIM = {
     const { e, k } = lines[0];
     if (e.if.some(c => c.c === 'opt') && this.used(i, { ref, cardId: src.id, n: k })) return 'once per turn, and used this turn (§10-2-13)';
     const bad = e.if.find(c => !this.condOk(i, src, c)); if (bad) return `its condition is not met: ${this.describe({ t: trigger, if: [bad], do: [] }).replace(/^\[[^\]]*\] /, '').replace(/:\s*$/, '')} (§8-3-2)`;
-    if (!this.canPay(i, ref, e.do[0])) return 'its cost cannot be paid (§8-3-1-3)';
+    if (!this.costsPayable(i, ref, e.do)) return 'its cost cannot be paid (§8-3-1-3)';
     return 'not now (§10-2-2)'; },
   /* Runs the CURRENT step of an offer. Returns { ok, done, follow } -- follow
      is a list of new offers (a [Trigger] that activates an [On Play], the [On K.O.] of a Character an effect K.O.'d). */
@@ -347,6 +350,11 @@ const SIM = {
     noblocker(c) { this.mod(c.i, 'noblocker', null, c.d.dur, { noblk: { power: c.d.power, cmp: c.d.cmp } }); },
     decktolife(c) { if (c.P.deck.length) c.P.life.unshift(c.P.deck.shift()); },
     selfactive(c) { const o = this.at(c.P, c.offer.ref); if (o) o.rested = false; },
+    /* every one of your Characters of a type, those on the field as it resolves (§2-4-3: {type} is that type, a quoted part is within one of its types) */
+    powerall(c) { const typed = ch => { const ts = ((this.card(ch.id) || {}).subtypes || '').split(/[;/]/).map(t => t.trim()); return c.d.type ? ts.includes(c.d.type) : ts.some(t => t.includes(c.d.typeq)); };
+      c.P.chars.filter(typed).forEach(ch => this.mod(c.i, 'u' + ch.uid, c.d.n, c.d.dur)); },
+    /* §8-3-1-5: the rest-DON!! symbol -- that many active DON!! rested */
+    cost_restdon(c) { if (c.P.don.active < c.d.n) return { ok: false, why: 'not enough active DON!! to rest (§8-3-1-5)' }; c.P.don.active -= c.d.n; c.P.don.rested += c.d.n; },
     playself(c) { const P = c.P, o = c.offer, p = this.card(o.cardId); const h = P.hand.indexOf(o.cardId);
       if (h < 0) return { ok: false, why: 'that card is no longer in hand (§8-1-3-1-3)', gone: true };   // take 122: self-play found a card played twice
       P.hand.splice(h, 1); o.fromLife = false;
@@ -370,7 +378,9 @@ const SIM = {
     ['rest', /\brest (?:up to )?(\d+)?(?! of)/gi], ['active', /\bset (?:up to )?(\d+)?[^.]*?\bas active\b/gi], ['tohand', /\breturn (?:up to )?(\d+)?[^.]*?\bto (?:the owner['\u2019]s|your|their) hand\b/gi],
     ['bottom', /\bplace (?:up to )?(\d+)?[^.]*?\bat the bottom of (?:the owner['\u2019]s|your|their) deck\b/gi], ['givedon', /\bgive (?:[^.]*?\bup to )?(\d+)? ?(?:rested |active )?DON!!/gi],
     ['adddon', /\badd (?:up to )?(\d+)? ?DON!! cards? from your DON!! deck\b/gi], ['returndon', /\bDON!! [\u2212-](\d+)|\breturn (\d+)? ?DON!! cards? [^.]*?to (?:your|their) DON!! deck\b/gi],
-    ['lifetohand', /\badd (?:up to )?(\d+)? ?cards? from the top of your Life cards to your hand\b/gi], ['decktolife', /\bto the top of your Life cards\b/gi],
+    ['lifetohand', /\badd (?:up to )?(\d+)? ?cards? from the top (?:or bottom )?of your Life cards to your hand\b/gi], ['decktolife', /\bfrom the top of your deck to the top of your Life cards\b/gi],
+    ['handtolife', /\badd (?:up to )?(\d+)? ?cards? from your hand to the top of your Life cards\b/gi], ['chartolife', /\badd (?:up to )?(\d+)? of your Characters?[^.:]*?\bto the top of your Life cards\b/gi],
+    ['opplifetrash', /\btrash (?:up to )?(\d+)? of your opponent['\u2019]s Life cards?\b/gi], ['handtotop', /\bplace the revealed card at the top of your deck\b/gi],
     ['mill', /\btrash (\d+)? ?cards? from the top of your deck\b/gi], ['play', /\bplay (?:up to )?(\d+)?/gi], ['look', /\blook at (\d+)? ?cards? from the top of your deck\b/gi]],
   handOps(raw) { const txt = String(raw || '').replace(/^(\[[^\]]+\]\s*)+/, ''); const ops = {};
     for (const [op, rx] of this.HAND_OPS) for (const m of txt.matchAll(rx)) { const n = +(m[1] || m[2]) || 1; ops[op] = (ops[op] || 0) + (op === 'look' ? n : Math.min(n, 10)); }
@@ -381,23 +391,46 @@ const SIM = {
       if (rv) ops.lookhand = +rv[1] || 1;
       if (/\bbottom of (?:the|your) deck\b/i.test(txt)) ops.lookbottom = ops.look;
       if (/\btrash (?:the rest|them|the remaining|up to \d+ of them|\d+ of them)\b|\bthe rest (?:in|into) (?:the|your) trash\b/i.test(txt)) ops.looktrash = ops.look; }
+    /* whose cards, how long, from where -- the words say that too (take 122, the Leaders' proofs: a tray offered both sides whatever
+       the line said, a "+2000 until the start of your next turn" lasted the turn, "from your hand to the top of your Life" moved the
+       deck's top card). ops._ holds these bounds; everything else in ops is a count */
+    const side = cl => /opponent['\u2019]s/i.test(cl) ? 'opp' : /\b(?:your|this)\b/i.test(cl) ? 'own' : 'any';
+    /* a clause ends at a stop followed by a space: the dots of "K.O." and of "Monkey.D.Luffy" are inside it */
+    const nt = txt.replace(/K\.O\./g, 'K_O_'), ends = [...nt.matchAll(/[.:;](?=\s|$)/g)].map(m => m.index);
+    const clauseAt = k => { const a = ends.filter(e => e < k).pop(), b = ends.find(e => e >= k); return nt.slice(a == null ? 0 : a + 1, b == null ? undefined : b + 1); };
+    const B = {}, where = {}, join = (op, s) => { where[op] = where[op] && where[op] !== s ? 'any' : s; };
+    for (const [op, rx] of this.HAND_OPS) if (['ko', 'rest', 'tohand', 'bottom'].includes(op)) for (const m of txt.matchAll(rx)) join(op, side(clauseAt(m.index)));
+    if (ops.power) { for (const m of txt.matchAll(/([+\u2212-])(\d+) power\b/g)) join('power', side(clauseAt(m.index)));
+      B.dur = /until the start of your next turn/i.test(txt) ? 'nextturn' : /during this battle/i.test(txt) ? 'battle' : 'turn'; }
+    if (Object.keys(where).length) B.where = where;
+    if (ops.lifetohand && /from the top or bottom of your Life cards/i.test(txt)) B.lifebottom = true;
+    if (ops.givedon) { const m = txt.match(/\bgive [^.]*?DON!![^.]*/i), cl = m ? m[0] : '';
+      if (/\brested DON!!/i.test(cl)) B.donFrom = 'rested'; else if (/\bactive DON!!/i.test(cl)) B.donFrom = 'active';
+      B.giveTo = /Leader/.test(cl) && /Character/.test(cl) ? 'any' : /Leader/.test(cl) ? 'leader' : /Character/.test(cl) ? 'chars' : 'any'; }
+    if (Object.keys(B).length) ops._ = B;
     return ops; },
   /* the moves the open tray allows now, for the player who resolves it */
   handMoves(i) { const g = this.g, H = g.hand; if (!H || H.i !== i) return []; const P = this.P(i), O = this.P(1 - i), L = H.left, out = [];
-    const sides = [[0, P], [1, O]]; const refs = X => ['leader'].concat(X.chars.map((c, k) => k));
+    const B = L._ || {}, W = B.where || {}, refs = X => ['leader'].concat(X.chars.map((c, k) => k));
+    const on = op => [[0, P], [1, O]].filter(([s]) => !W[op] || W[op] === 'any' || W[op] === (s === 0 ? 'own' : 'opp'));
     if (L.draw > 0 && P.deck.length) out.push({ t: 'hand', op: 'draw' });
     if (L.trashhand > 0) P.hand.forEach((id, h) => out.push({ t: 'hand', op: 'trashhand', h }));
-    if (L.ko > 0) sides.forEach(([s, X]) => X.chars.forEach((c, k) => out.push({ t: 'hand', op: 'ko', side: s, k })));
-    if (L.rest > 0) sides.forEach(([s, X]) => refs(X).forEach(ref => { if (!this.at(X, ref).rested) out.push({ t: 'hand', op: 'rest', side: s, ref }); }));
+    if (L.ko > 0) on('ko').forEach(([s, X]) => X.chars.forEach((c, k) => out.push({ t: 'hand', op: 'ko', side: s, k })));
+    if (L.rest > 0) on('rest').forEach(([s, X]) => refs(X).forEach(ref => { if (!this.at(X, ref).rested) out.push({ t: 'hand', op: 'rest', side: s, ref }); }));
     if (L.active > 0) refs(P).forEach(ref => { if (this.at(P, ref).rested) out.push({ t: 'hand', op: 'active', side: 0, ref }); });
     if (L.active > 0 && P.don.rested > 0) out.push({ t: 'hand', op: 'activedon' });
-    if (Array.isArray(L.power)) [...new Set(L.power)].forEach(v => sides.forEach(([s, X]) => refs(X).forEach(ref => out.push({ t: 'hand', op: 'power', v, side: s, ref }))));
-    if (L.tohand > 0) sides.forEach(([s, X]) => X.chars.forEach((c, k) => out.push({ t: 'hand', op: 'tohand', side: s, k })));
-    if (L.bottom > 0) sides.forEach(([s, X]) => X.chars.forEach((c, k) => out.push({ t: 'hand', op: 'bottom', side: s, k })));
-    if (L.givedon > 0) refs(P).forEach(ref => { if (P.don.rested > 0) out.push({ t: 'hand', op: 'givedon', ref, from: 'rested' }); if (P.don.active > 0) out.push({ t: 'hand', op: 'givedon', ref, from: 'active' }); });
+    if (Array.isArray(L.power)) [...new Set(L.power)].forEach(v => on('power').forEach(([s, X]) => refs(X).forEach(ref => out.push({ t: 'hand', op: 'power', v, side: s, ref }))));
+    if (L.tohand > 0) on('tohand').forEach(([s, X]) => X.chars.forEach((c, k) => out.push({ t: 'hand', op: 'tohand', side: s, k })));
+    if (L.bottom > 0) on('bottom').forEach(([s, X]) => X.chars.forEach((c, k) => out.push({ t: 'hand', op: 'bottom', side: s, k })));
+    if (L.givedon > 0) refs(P).filter(ref => B.giveTo === 'leader' ? ref === 'leader' : B.giveTo === 'chars' ? ref !== 'leader' : true).forEach(ref => {
+      if (P.don.rested > 0 && B.donFrom !== 'active') out.push({ t: 'hand', op: 'givedon', ref, from: 'rested' }); if (P.don.active > 0 && B.donFrom !== 'rested') out.push({ t: 'hand', op: 'givedon', ref, from: 'active' }); });
     if (L.adddon > 0 && P.donDeck > 0) { out.push({ t: 'hand', op: 'adddon', rested: false }); out.push({ t: 'hand', op: 'adddon', rested: true }); }
     if (L.returndon > 0 && this.fieldDon(P) > 0) out.push({ t: 'hand', op: 'returndon' });
-    if (L.lifetohand > 0 && P.life.length) out.push({ t: 'hand', op: 'lifetohand' });
+    if (L.lifetohand > 0 && P.life.length) { out.push({ t: 'hand', op: 'lifetohand' }); if (B.lifebottom && P.life.length > 1) out.push({ t: 'hand', op: 'lifetohand', end: 'bottom' }); }
+    if (L.handtolife > 0) P.hand.forEach((id, h) => out.push({ t: 'hand', op: 'handtolife', h }));
+    if (L.chartolife > 0) P.chars.forEach((c, k) => out.push({ t: 'hand', op: 'chartolife', k }));
+    if (L.opplifetrash > 0 && O.life.length) out.push({ t: 'hand', op: 'opplifetrash' });
+    if (L.handtotop > 0) P.hand.forEach((id, h) => out.push({ t: 'hand', op: 'handtotop', h }));
     if (L.decktolife > 0 && P.deck.length) out.push({ t: 'hand', op: 'decktolife' });
     if (L.mill > 0 && P.deck.length) out.push({ t: 'hand', op: 'mill' });
     if (L.play > 0) [['hand', P.hand], ['trash', P.trash]].forEach(([z, list]) => list.forEach((id, k) => { const p = this.card(id); if (!p || !['Character', 'Stage'].includes(p.type)) return;
@@ -419,13 +452,18 @@ const SIM = {
     rest(c) { const o = this.at(c.X, c.a.ref); o.rested = true; return `rests ${c.nm(o.id)}`; },
     active(c) { const o = this.at(c.P, c.a.ref); o.rested = false; return `sets ${c.nm(o.id)} active`; },
     activedon(c) { c.P.don.rested--; c.P.don.active++; return 'sets a DON!! active'; },
-    power(c) { this.mod(c.xi, this.keyOf(c.X, c.a.ref), c.a.v, 'turn'); return `${c.a.v > 0 ? '+' : ''}${c.a.v} power to ${c.nm(this.at(c.X, c.a.ref).id)} this turn`; },
+    power(c) { const dur = (c.H.left._ || {}).dur || 'turn'; this.mod(c.xi, this.keyOf(c.X, c.a.ref), c.a.v, dur);
+      return `${c.a.v > 0 ? '+' : ''}${c.a.v} power to ${c.nm(this.at(c.X, c.a.ref).id)} ${{ turn: 'this turn', battle: 'this battle', nextturn: 'until the start of the next turn' }[dur]}`; },
     tohand(c) { const ch = this.leave(c.X, c.a.k, 'hand'); return `returns ${c.nm(ch.id)} to its owner\u2019s hand`; },
     bottom(c) { const ch = this.leave(c.X, c.a.k, 'bottom'); return `places ${c.nm(ch.id)} at the bottom of its owner\u2019s deck`; },
     givedon(c) { const o = this.at(c.P, c.a.ref); if (c.a.from === 'rested') c.P.don.rested--; else c.P.don.active--; o.don++; return `gives a ${c.a.from} DON!! to ${c.nm(o.id)}`; },
     adddon(c) { c.P.donDeck--; if (c.a.rested) c.P.don.rested++; else c.P.don.active++; return `adds a DON!! from the DON!! deck${c.a.rested ? ', rested' : ''}`; },
     returndon(c) { const P = c.P; if (P.don.rested) P.don.rested--; else if (P.don.active) P.don.active--; else if (P.leader.don) P.leader.don--; else P.chars.find(x => x.don).don--; P.donDeck++; return 'returns a DON!! to the DON!! deck'; },
-    lifetohand(c) { c.P.hand.push(c.P.life.shift()); return 'adds the top Life card to hand'; },
+    lifetohand(c) { c.P.hand.push(c.a.end === 'bottom' ? c.P.life.pop() : c.P.life.shift()); return `adds the ${c.a.end === 'bottom' ? 'bottom' : 'top'} Life card to hand`; },
+    handtolife(c) { c.P.life.unshift(c.P.hand.splice(c.a.h, 1)[0]); return 'adds a card from hand to the top of Life'; },   // face down: the log does not name it
+    chartolife(c) { const ch = this.leave(c.P, c.a.k, 'life'); return `adds ${c.nm(ch.id)} to the top of Life`; },
+    opplifetrash(c) { const O = this.P(1 - c.i), id = O.life.shift(); O.trash.push(id); return `trashes the top card of the opponent\u2019s Life (${c.nm(id)})`; },
+    handtotop(c) { const id = c.P.hand.splice(c.a.h, 1)[0]; c.P.deck.unshift(id); return `places ${c.nm(id)} at the top of the deck`; },
     decktolife(c) { c.P.life.unshift(c.P.deck.shift()); return 'adds the top of the deck to the top of Life'; },
     mill(c) { c.P.trash.push(c.P.deck.shift()); return 'trashes the top card of the deck'; },
     play(c) { const P = c.P, list = c.a.zone === 'trash' ? P.trash : P.hand; const id = list.splice(c.a.k, 1)[0];
@@ -453,7 +491,7 @@ const SIM = {
       const needRoom = ref => { const id = d.a === 'playself' ? o.cardId : (d.a === 'playfromhand' ? P.hand[+String(ref).slice(1)] : null); const p = id && this.card(id); return !!(p && p.type === 'Character' && P.chars.length >= 5); };
       tg.forEach(ref => { if (needRoom(ref)) P.chars.forEach((c, k) => out.push({ t: 'fx', target: ref, trash: k })); else out.push({ t: 'fx', target: ref }); });
       if ((!tg.length && d.a !== 'cost_trashhand') || (d.upto && this.TARGETED.includes(d.a))) { if (needRoom(null)) P.chars.forEach((c, k) => out.push({ t: 'fx', target: null, trash: k })); else out.push({ t: 'fx', target: null }); }
-      out.push({ t: 'fxskip' }); return out; }
+      if (!(o.step > 0 && /^cost_/.test(d.a))) out.push({ t: 'fxskip' }); return out; }   // a cost begun is paid in full (§8-3); one that no longer can be ends the line (above)
     if (g.phase === 'battle') { const b = g.battle;
       if (b.step === 'block') { this.blockers().forEach(x => out.push({ t: 'block', k: x.ref })); out.push({ t: 'noblock' }); return out; }
       this.counters().forEach(x => out.push({ t: 'counter', h: x.h })); this.counterEvents().forEach(x => out.push({ t: 'cevent', h: x.h })); out.push({ t: 'resolve' }); return out; }
@@ -510,7 +548,9 @@ const SIM = {
         const r = this.apply(i, o, a.target == null ? null : a.target, { trash: a.trash });
         if (!r.ok) { if (r.gone) { g.queue.shift(); this.log(`${this.card(o.cardId).name}: its card has left the field; the effect does not resolve (§8-1-3-1-3)`); return { ok: true, gone: true }; } return r; }
         if (r.done) { g.queue.shift(); if (r.follow && r.follow.length) g.queue.unshift(...r.follow); } return r; }
-      case 'fxskip': { const o = g.queue.shift(); if (!o) return refuse('no effect'); if (o.step > 0 || o.hand) this.log(`${this.card(o.cardId).name}: the rest is declined`); return { ok: true }; }
+      case 'fxskip': { const o0 = g.queue[0], d0 = o0 && o0.steps && o0.steps[o0.step];
+        if (o0 && !o0.hand && o0.step > 0 && d0 && /^cost_/.test(d0.a) && this.canPay(i, o0.uid != null ? this.refOf(P, o0.uid) : o0.ref, d0)) return refuse('a cost once begun is paid in full, in order (§8-3)');
+        const o = g.queue.shift(); if (!o) return refuse('no effect'); if (o.step > 0 || o.hand) this.log(`${this.card(o.cardId).name}: the rest is declined`); return { ok: true }; }
       case 'fxhand': { const o = g.queue[0]; if (!o || !o.hand || g.hand) return refuse('no by-hand effect');
         if (o.e.if.some(c => c.c === 'opt')) { if (this.used(i, o)) return refuse('once per turn, and used this turn (§10-2-13)'); this.markUsed(i, o); }
         g.hand = { i, cardId: o.cardId, raw: o.e.raw, left: this.handOps(o.e.raw), fromLife: o.fromLife };
@@ -545,7 +585,8 @@ const SIM = {
       case 'selfpower': return `this card +${d.n} power${dur(d)}`; case 'selfkw': return `this card gains [${d.k}]${dur(d)}`; case 'mill': return `trash the top ${d.n} of your deck`;
       case 'noblocker': return `your opponent cannot activate [Blocker]${d.power != null ? ` on a Character with ${d.power} power or ${d.cmp}` : ''}${dur(d)}`;
       case 'lifetohand': return `${d.n || 1} Life card${(d.n || 1) > 1 ? 's' : ''} to your hand`; case 'decktolife': return 'the top of your deck to the top of your Life'; case 'selfactive': return 'set this card active';
-      case 'givedon': return `give ${up(d)}${d.n} rested DON!! to your Leader${d.who === 'leader' ? '' : ' or 1 Character'}`; case 'activedon': return `set ${up(d)}${d.n} DON!! active`;
+      case 'givedon': return `give ${up(d)}${d.n} rested DON!! to ${d.who === 'chars' ? '1 of your Characters' : 'your Leader' + (d.who === 'leader' ? '' : ' or 1 Character')}`;
+      case 'powerall': return `+${d.n} power to every one of your ${d.type ? '{' + d.type + '}' : '"' + d.typeq + '"'} Characters${dur(d)}`; case 'cost_restdon': return `cost: rest ${d.n} active DON!!`; case 'activedon': return `set ${up(d)}${d.n} DON!! active`;
       case 'cost_trashhand': return `cost: trash ${d.n} from your hand`; case 'cost_returndon': return `cost: return ${d.n} DON!! to the DON!! deck`; case 'cost_restself': return 'cost: rest this card';
       default: return d.a; } };
     const st = (e.do || []).map(d => S(d) + (d.if ? ` (if ${d.if.map(C).join(', ')})` : ''));
@@ -567,11 +608,12 @@ const BOT = {
     if (g.queue.length) return this.effect(i, L); if (g.phase === 'battle') return this.defend(i, L); return this.main(i, L); },
   /* an offered effect: its first sensible target; a cost that would empty the hand declined */
   effect(i, L) { const g = SIM.g, P = SIM.P(i), o = g.queue[0]; if (g.hand) return { t: 'handdone' }; if (o.hand) return { t: 'fxskip' };
-    const d = o.steps[o.step]; if (d.a === 'cost_trashhand' && P.hand.length < 3) return { t: 'fxskip' };
+    const d = o.steps[o.step], skip = L.find(x => x.t === 'fxskip');
+    if (skip && o.step === 0 && o.steps.some(st => st.a === 'cost_trashhand') && P.hand.length < 3) return skip;   // decided before a cost is begun (§8-3)
     const hurts = ['ko', 'rest', 'bounce', 'bottom', 'costmod'].includes(d.a) || (d.a === 'power' && d.n < 0);
     const weakest = P.chars.length ? P.chars.map((c, k) => ({ k, p: SIM.power(i, k) })).sort((a, b) => a.p - b.p)[0].k : null;
     const fx = L.filter(x => x.t === 'fx' && (x.trash == null || x.trash === weakest));
-    return fx.find(x => x.target != null && (hurts ? /^o/.test(x.target) : !/^o/.test(x.target))) || fx.find(x => x.target == null) || { t: 'fxskip' }; },
+    return fx.find(x => x.target != null && (hurts ? /^o/.test(x.target) : !/^o/.test(x.target))) || fx.find(x => x.target == null) || skip || fx[0]; },
   /* block when a Character would die and a Blocker can take it; counter when the Leader would take damage at two Life or less */
   defend(i, L) { const b = SIM.g.battle, pw = SIM.battlePowers(), onLeader = SIM.locate().dref === 'leader';
     if (b.step === 'block') { const bl = L.find(x => x.t === 'block'); return !onLeader && pw.a >= pw.d && bl ? bl : { t: 'noblock' }; }

@@ -133,27 +133,36 @@ future item (D18).
 | 13 | The look: a cited section inside a refusal broke onto its own centred line (the link's full-width block style) | the citation sits in its sentence | the look's pictures |
 | 14 | `tools/wording.py`: "If your Leader has the {type} type" -- the newer brace spelling -- on 187 lines no template read | one clause, both brackets | parser controls, with a mismatched-bracket refusal |
 | 15 | Smoke's take-46 to take-51 games dealt unseeded; one check needed a DON!! left after a random play and failed on one run (landmine 221) | every game a test deals is seeded | smoke run three times, 1,417 each |
+| 16 | After the first push (the owner: "Continue"), the plan's last item: a proof for every ready-made deck's Leader. Five of the by-hand ones were one whole template away | scripted: ST02-001 and ST06-001 (the rest-DON!! cost symbol, and two costs in a row paid in order and in full, §8-3-1-1), ST05-001 (every Character of a type), ST10-001 (bottom one, play one), ST21-001 (DON!! to Characters only); and ST03-001's errata ("Return 1", owed) | parser controls (87); proofs with planted faults (15 scenarios fail on a build with four) |
+| 17 | The by-hand Leaders' proofs: a tray offered both sides' cards whatever the line said, its power lasted "this turn" whatever the line said, "from your hand to the top of your Life" moved the deck's top card, "top or bottom" of Life offered only the top, and three moves the words name did not exist (the opponent's Life to the trash, a Character to Life, the revealed card to the deck's top) | the tray reads whose cards, how long and from where from the line's own clause; the three moves exist | smoke, watched failing on the build before; seven by-hand proofs |
+| 18 | ST03-001 has two texts -- the original and an errata'd reprint -- and the proof's scaffold took the cheapest printing, the errata | `cards.py --new NUM --id ID` scaffolds from the printing a deck deals; the proof binds that text, and the other stays unproven until proven | the runner's binding cross-check |
 
 ### Measured
 
-- **Smoke 1,418 passed, 0 failed** (1,372 at the take's start; seeded now, the
+- **Smoke 1,419 passed, 0 failed** (1,372 at the take's start; seeded now, the
   same count run after run). **Render 242 in Chrome.** **The gate passed**, its
   probes all firing.
-- **Effects: 2,421 of 7,720 lines scripted (31.4%)**, 1,339 cards fully and
-  795 partly; 5,401 lines kept by hand (continuous ones included). At the
+- **Effects: 2,481 of 7,720 lines scripted (32.1%)**, 1,393 cards fully and
+  799 partly; 5,341 lines kept by hand (continuous ones included). At the
   take's start: 2,189 of 7,715 (28.4%). The catalogue 6.5 MB raw, 0.81 MB
   gzipped.
-- **Card proofs: 11 cards, 55 printings, 219 scenarios, 0 failed.** Against
+- **Card proofs: 25 cards, 85 printings, 346 scenarios, 0 failed** -- every
+  card of ST01 with an effect, and every Leader of the seventeen ready-made
+  decks (ten run from their text, seven by hand). On the build before the
+  Leader work, 45 of them fail. Against
   take 121's app, 123 of the first 200 scenarios failed (recorded before the
   runner dropped its take-121 adapter). A build with the new K.O. timing and
   the Life condition broken fails 4 of the new scenarios, must-nots included.
+- **Self-play after the Leader work:** the same sweep again, 7,200 games and
+  1,582,461 audited moves, 0 violations; each newly scripted Leader fired
+  hundreds of times in it.
 - **Self-play, the review's sweep:** 4,000 games both ways (882,875 moves
   audited, 37,564 illegal moves refused unchanged), 2,000 more chaos games
   (533,673 moves) and 1,200 two-app games (264,814 moves): **0 violations**.
   Before its three fixes the same sweep found 3 (rows 10 and 11); the
   auditor's eight planted faults are each named. The gate runs 34 games both
   ways, 8 two-app games and the plants: about 4 seconds.
-- **Rules:** the digest v1.2.1, 182 sections -- 162 enforced, 3 partial, 12 by
+- **Rules:** the digest v1.2.1, 185 sections -- 166 enforced, 3 partial, 11 by
   hand, 5 not modelled (RULES.md §6); the official PDF read at build time says
   v1.2.1 (28 Aug 2026).
 - **The clean run (PROTOCOL §6b; the pipeline gained the proofs, the rules
@@ -163,7 +172,9 @@ future item (D18).
   there, the one the `.gitignore` anchoring check that asks `git check-ignore`
   of a copy that is not a repository (takes 120 and 121 met the same); after
   `git init` in the copy, smoke 1,418/1,418, render 242 in Chrome, the gate
-  passed with the Sim's checks.
+  passed with the Sim's checks. Again after the Leader work (the parser and
+  `cards.py` changed): `git init` first this time, the pipeline from ingest,
+  smoke 1,419/1,419, render 242 in Chrome, the gate passed.
 - **The wording survey:** 2,050 families over 5,359 unscripted printing-lines;
   614 families a word or two from a template that runs -- the worklist for
   the next templates (`look/wording.md`, generated).
@@ -179,6 +190,11 @@ future item (D18).
   escaped a middle dot in HTML markup, where it showed as text; smoke caught it.
 - The look's first run read two headings through `innerText`, which the CSS
   uppercases, and reported two false failures.
+- The first ST03-001 proof was scaffolded from the cheapest printing, the
+  errata'd reprint, and bound a text the ready-made deck never deals; the
+  runner's failures on that one printing showed it (row 18).
+- One ST14-001 scenario asked for "no Main" after the turn had passed to the
+  opponent, whose Leader has one; the scenario was wrong, not the engine.
 
 ### Ruled out
 
@@ -205,6 +221,15 @@ future item (D18).
 
 ### DEFERRED
 
+- **Untagged effect sentences are not effect lines.** An effect printed with
+  no bracket tag at its start -- ST30-001's "If you have a Character with 7000
+  base power or more, give this Leader -2000 power." -- is left out of the line
+  split (`lines_of`, `SIM.lines`), so the board's "yours to apply" note names
+  only the tagged line. Taking such sentences in changes every proof's text
+  fingerprint and must tell a rule from TCGplayer's disclaimers; its own take.
+- By hand, a cost is the player's to pay: the tray bounds the moves, but a
+  "You may reveal ..." or a DON!! cost on a by-hand line is not checked, and a
+  Life card added face-up is not modelled (ST13-001).
 - The visual overhaul of the Sim -- the playmat, the pictures, the zoom -- is the owner's UI/UX pass, after take 123
   gives it `SIM.view(seat)` and the privacy rule.
 - Two phones by a code or a QR (D18, brought up to date this take): nothing is built.

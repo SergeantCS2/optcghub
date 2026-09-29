@@ -4729,7 +4729,7 @@ if (rc) { arena(rc, 3); const t = S.legal(0).filter(a => a.t === 'attack' && a.r
   ok('§10-1-6: [Rush: Character] attacks the turn it is played, and only Characters', t.length === 1 && t[0] === 1, JSON.stringify(t)); }
 /* an effect K.O. fires [On K.O.] (§10-2-17; take 121 never offered it) */
 const FXs = V.CAT.effects;
-const koFx = Object.keys(FXs).find(id => S.card(+id).type === 'Character' && FXs[id].some(e => !e.hand && e.t === 'onplay' && e.if.length === 0 && e.do.length === 1 && e.do[0].a === 'ko' && e.do[0].cost != null && !e.do[0].rested));
+const koFx = Object.keys(FXs).find(id => S.card(+id).type === 'Character' && FXs[id].some(e => !e.hand && e.t === 'onplay' && e.if.length === 0 && e.do.length === 1 && e.do[0].a === 'ko' && e.do[0].cost >= 2 && !e.do[0].rested));   // a cost line that reaches the planted cost-2 Character (take 122: "a cost of 0" is scripted now)
 const onko = Object.keys(FXs).find(id => S.card(+id).type === 'Character' && FXs[id].some(e => e.t === 'onko') && S.cost(S.card(+id)) <= 2);
 if (koFx && onko) { g = deal(st01, st02, 0, 7); S.act(0, { t: 'end' }); S.act(1, { t: 'end' });
   const P = S.P(0); P.hand = [+koFx]; P.don.active = 10 - P.don.rested; P.donDeck = 0; S.P(1).chars = [S.inst(+onko, 1)];
@@ -4765,6 +4765,11 @@ ok('...Luffy\'s words are one DON!! given; control: no draw, no DON!! from the d
 ok('...a look\'s cards go only where its words send them: "top or bottom" is the bottom (the rest back on top), never hand or trash; a search\'s reveal is one to hand (take 122\'s look: Perona was offered both)', (() => {
   const pe = S.handOps("[On Play] Look at 5 cards from the top of your deck and place them at the top or bottom of the deck in any order."), se = S.handOps("[On Play] Look at 5 cards from the top of your deck; reveal up to 1 {Straw Hat Crew} type card and add it to your hand. Then, place the rest at the bottom of your deck in any order."), tr = S.handOps("[On Play] Look at 3 cards from the top of your deck and trash them.");
   return pe.look === 5 && pe.lookbottom === 5 && !pe.lookhand && !pe.looktrash && se.lookhand === 1 && se.lookbottom === 5 && !se.looktrash && tr.looktrash === 3 && !tr.lookhand; })());
+ok('...whose cards, how long and from where are the words\' too: "your opponent\'s" is theirs, "a Character" either side\'s, "during this battle" the battle, "[Monkey.D.Luffy] cards" still yours; "from your hand to the top of your Life" is a hand card, never the deck\'s top; "your opponent\'s Life cards" theirs (take 122, the Leaders\' proofs)', (() => { try {
+  const k = S.handOps("[On Play] K.O. up to 1 of your opponent's Characters with a cost of 3 or less."), b = S.handOps("[On Play] Return up to 1 Character with a cost of 3 or less to the owner's hand."),
+    p = S.handOps("[When Attacking] Up to 1 of your Leader or Character cards gains +1000 power during this battle."), n = S.handOps("[Opponent's Turn] All of your [Portgas.D.Ace] and [Monkey.D.Luffy] cards gain +3000 power."),
+    l = S.handOps("[When Attacking] You may add 1 card from the top or bottom of your Life cards to your hand: If you have 2 or less Life cards, add up to 1 card from your hand to the top of your Life cards."), t = S.handOps("[Activate: Main] Trash up to 1 of your opponent's Life cards.");
+  return k._.where.ko === 'opp' && b._.where.tohand === 'any' && p._.dur === 'battle' && p._.where.power === 'own' && n._.where.power === 'own' && l.handtolife === 1 && !l.decktolife && l._.lifebottom === true && t.opplifetrash === 1; } catch (e) { return false; } })());
 ok('...and the free row is gone: no SIM.manual, no Draw (effect) button (take 121 drew without limit)', S.manual === undefined && !/data-sim="m:/.test(js) && !/Draw \(effect\)/.test(js));
 /* the review's guard: outside the engine and its opponent, the app moves a game only through act() -- a screen that wrote
    the game itself is how take 121's tray drew without limit, and how two copies of a game would drift apart */
