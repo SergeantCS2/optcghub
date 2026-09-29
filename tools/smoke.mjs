@@ -373,21 +373,20 @@ ok('...and the badge digits still run on harmlessly: EB04-024008, SPOP05-119SEC2
   ok('...a line without a place is taken at its word', nums([{ text: 'OP14-040', box: null }]).join() === 'OP14-040');
   ok('...and a line that is not a real number is not taken', nums([at('OP99-999', 800, 1300), at('Kuzan', 500, 1200)]).length === 0);
   ok('the place is the one MEASURED on the cards (CODE_AT: 84 % across, 95.2 % down)', SC.CODE_AT.x === 0.84 && SC.CODE_AT.y === 0.952);
-  /* a number that runs down the picture is on a card that is not upright in this look: a turned look's neighbour */
+  /* a number that runs down the picture is on a card that is not upright: a neighbour lying on its side (landmine 234) */
   const tall = (text, x, y) => ({ text, box: { x: x - 4, y: y - 30, w: 8, h: 60 } });
-  ok('a number whose line runs down the picture is not taken (a turned look turns the neighbours too)', nums([tall('OP14-040', 800, 1300)]).length === 0);
+  ok('a number whose line runs down the picture is not taken (a neighbour lying on its side)', nums([tall('OP14-040', 800, 1300)]).length === 0);
   ok('...control: the same number running across is', nums([at('OP14-040', 800, 1300)]).join() === 'OP14-040');
   /* the card's own words: OP10-046 is Kyros; the owner's close-up read OP10-040 twice */
   const read = lines => SC.codesIn({ text: lines.map(l => l.text).join('\n'), lines }, 1000, 1400).map(r => r.number).join();
   ok('a number the card\'s name contradicts is refused: OP10-040 read on a card that says Kyros (OP10-046, a digit away)', read([at('Kyros', 500, 1200), at('OP10-040', 800, 1300)]) === '');
   ok('...control: OP10-046 on the same card is read', read([at('Kyros', 500, 1200), at('OP10-046', 800, 1300)]) === 'OP10-046');
   ok('...control: OP10-040 with no name read is read (refused only on a contradiction, never corrected)', read([at('OP10-040', 800, 1300)]) === 'OP10-040');
-  ok('a number with its own name printed BELOW it is on a card upside down in this look, and is not taken', read([at('OP10-046', 800, 1300), at('Kyros', 500, 1350)]) === '');
-  ok('...control: its name above it, as an upright card prints it, and it is', read([at('Kyros', 500, 1250), at('OP10-046', 800, 1300)]) === 'OP10-046'); }
+ }
 /* the view the guide shows: object-fit: cover of the frame */
 { const r = SC.viewRect(1080, 1920, 300, 440);
   ok('the view is the middle of the frame the guide shows: the Fold\'s 1080 x 1920 in a 300 x 440 guide is 1080 x 1584 from y 168', [r.x, r.y, r.w, r.h].map(Math.round).join() === '0,168,1080,1584', JSON.stringify(r)); }
-ok('the looks: the whole view first, then the number\'s corner, the glare look, and both sides', SC.LOOKS.map(l => l.name).join() === 'whole,near,glare,left,right');
+ok('the looks: the whole view first, then the number\'s corner, then the glare look -- no turned looks (a card is scanned upright; landmine 234)', SC.LOOKS.map(l => l.name).join() === 'whole,near,glare');
 /* the vote, then the hold: a card left in view is counted once (landmine 16) */
 { const decisions = (v, seq, resetAfter) => { let n = 0; for (const x of seq) if (v.push(x)) { n++; if (resetAfter) v.reset(); } return n; };
   const stay = ['OP01-016', 'OP01-016', 'OP01-016', 'OP01-016', 'OP01-016', 'OP01-016', 'OP01-016', 'OP01-016'];

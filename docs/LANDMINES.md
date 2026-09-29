@@ -3049,6 +3049,11 @@ across. MEASURED take 125: the neighbours' numbers read on four of the owner's
 frames. Two rules close it, both geometry of an upright card: the number's line
 runs across (wider than twice its height), and the card's own name is printed
 above its number, never below.
+*Before take 125 shipped:* the turned looks went at the owner's word -- cards
+are scanned upright -- and with them the name-below rule, whose one catch was a
+neighbour a turned look turned over. The upright-line rule stays: the whole
+look read a sideways neighbour's number on one of the owner's frames too. On
+his 29 upright frames the turned looks had added nothing (23 right either way).
 
 **235. A misread lands a digit away, and repeats.** The owner's close-up of
 Kyros, OP10-046, read OP10-040 -- a valid number, an Event -- in two looks alike

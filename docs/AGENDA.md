@@ -16,7 +16,7 @@ what it handed on is A43.)
 
 **The owner's, gating everything else**
 0. **Take 125, the scanner (A2's take-125 section):** scan your cards on the
-   Fold -- sleeves, toploaders, binders, holo, sideways -- and answer the
+   Fold -- sleeves, toploaders, binders, holo, low light -- and answer the
    HANDOFF's take-125 questions; photographs of one number's printings side
    by side are the next take's measurement.
 1. **Merge take 115, then upload Release take-115's AAB** to the production
@@ -205,13 +205,16 @@ The one unproven assumption in the entire plan. Everything else is arithmetic.
 - **MEASURED:** take 123's stages read 0 of 15 of the owner's photographed
   frames -- the outline was the whole frame (landmine 232); `lastAccept` never
   set (landmine 233). The rebuilt stages (`src/scan.js`: the whole view to the
-  recogniser, five looks, the number on an upright card in the view and not
-  contradicted by its name) decide 37 of 48 frames right and 0 wrong, with a
+  recogniser, three looks, the number on an upright card in the view and not
+  contradicted by its name) decide 23 of 29 upright frames right and 0 wrong
+  (the 19 on their side: 0 wrong), with a
   camera-text reader standing in for ML Kit (INFERRED to carry to ML Kit).
-- **BUILT, not yet on the Fold:** the reads and their speed under ML Kit, a
-  card on its side, the SP badge auto-accepting (Okiku OP01-035's SP read on
+- **BUILT, not yet on the Fold:** the reads and their speed under ML Kit, the SP badge auto-accepting (Okiku OP01-035's SP read on
   the stand-in), a card counted once while it stays in view.
-- **Ruled out:** the card outline as the gate to the read (0 of 15, landmine
+- **Ruled out:** looks turned a quarter each way, for a card on its side (the
+  owner scans upright; on his 29 upright frames they added nothing, and they
+  were the only looks to read a neighbour's number -- landmine 234); the card
+  outline as the gate to the read (0 of 15, landmine
   232); Tesseract as the stand-in for ML Kit (1 of 15 in the whole view,
   landmine 236); the card's name as a one-read confirmation (680 of 64,428
   one-digit misreads would be confirmed, landmine 235); correcting a misread to

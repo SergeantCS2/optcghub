@@ -5838,10 +5838,11 @@ async function captureAndIdentify(v) {
   try {
     const r = v.getBoundingClientRect(), look = LOOKS[SCAN.look];
     const res = await identifyFrame(v, viewRect(v.videoWidth, v.videoHeight, r.width, r.height), look);
+    if (!SCAN.running) return;   // the screen closed while it read: nothing is added, and the camera is not started again behind another screen
     const number = res.stage === 'read' ? res.number : null;
     if (!number) SCAN.look = (SCAN.look + 1) % LOOKS.length;
     $('#guide').classList.toggle('seen', !!number);
-    drawCard(res, look, r);
+    drawCard(res, r);
     const voted = SCAN.voter.push(number);
     if (!number) { $('#camHint').textContent = SCAN_HINT[res.stage] || ''; return; }
     $('#camHint').textContent = voted || SCAN.voter.held === number ? '' : `Saw ${number} \u2014 hold still\u2026`;
@@ -5853,12 +5854,11 @@ async function captureAndIdentify(v) {
     else $('#camHint').textContent = `${voted} is not in the catalogue`;
   } finally { SCAN.busy = false; }
 }
-/* the card's outline on the guide: only an outline believed (the number sits where it says, stage 4), and
-   only from a look that did not turn the view -- the guide shows the view as it is */
-function drawCard(res, look, r) {
+/* the card's outline on the guide: only an outline believed (the number sits where it says, stage 4) */
+function drawCard(res, r) {
   const ov = $('#camOv'); ov.width = r.width; ov.height = r.height;
   const g = ov.getContext('2d'); g.clearRect(0, 0, ov.width, ov.height);
-  const q = res.card; if (!q || look.turn) return;
+  const q = res.card; if (!q) return;
   g.strokeStyle = '#f5c518'; g.lineWidth = 2.5;
   g.strokeRect(q.x * r.width, q.y * r.height, q.w * r.width, q.h * r.height);
 }
@@ -6968,7 +6968,7 @@ async function runSelfTest() {
                    backupJson, scheduleBackup, backupHeld, restoreFromBackup, loadCatalogue, catalogueProblem, STORE, readJson, saveJson, BATCH,
                    PICKER, pickCurrency, MAXLOCK, bnTurn, commitOwn, importCsv, backupProblem, typedAmount, paintAlerts, localDay,
                    scan: { PLATFORM, detectQuad, parseRead, normaliseRead, starScore, makeVoter, identifyFrame, cropStar,
-                           LOOKS, CODE_AT, viewRect, viewCanvas, lookCanvas, equalise, codesIn, cardAround, captureAndIdentify } };
+                           LOOKS, CODE_AT, viewRect, viewCanvas, lookCanvas, equalise, codesIn, cardAround, captureAndIdentify, SCAN } };
 })();
 </script>
 </body>

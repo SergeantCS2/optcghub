@@ -688,7 +688,6 @@ if (puppeteer) {
     const P = SC.LOOKS[1].part, Z = SC.LOOKS[1].zoom;
     out.near = await run(card, SC.LOOKS[1], c => [line('EB03-024', (180 + A.x * 280 - P.x * 640) * Z, (40 + A.y * 391 - P.y * 480) * Z, 120, 16)]);
     out.nearCtl = await run(card, SC.LOOKS[1], c => [line('EB03-024', 180 + A.x * 280, 40 + A.y * 391, 120, 16)]);   // the view's place, not the look's: no outline may be believed
-    out.turned = await run(card, SC.LOOKS[3], []);
     /* the glare look: grey, and local -- low-contrast print beside a shine gains what a whole-picture stretch cannot give it */
     /* a dim card face (a slow gradient, 40 to 72) with print 10 levels above it, and beside it a shine at 250 or more face */
     const face = shine => mk(256, 128, g => { for (let x = 0; x < 256; x++) { const v = x >= 128 && shine ? 250 : 40 + ((x & 127) >> 2); g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(x, 0, 1, 128); }
@@ -742,7 +741,6 @@ if (puppeteer) {
   ok('scanner: the near look hands over the number\'s corner at twice the size, and maps its place back (the outline believed)',
      scan.near.handed[0] === `${Math.round(0.7 * 640 * 2)}x${Math.round(0.5 * 480 * 2)}` && scan.near.stage === 'read' && scan.near.card === 180, JSON.stringify(scan.near));
   ok('scanner: ...control: a place not mapped back finds no outline', scan.nearCtl.stage === 'read' && scan.nearCtl.card === null, JSON.stringify(scan.nearCtl));
-  ok('scanner: a turned look hands over the view on its side', scan.turned.handed[0] === '480x640', JSON.stringify(scan.turned));
   ok('scanner: the glare look is grey and local -- faint print keeps its contrast with a shine beside it (the look\'s CLAHE matched OpenCV\'s to 1-2 levels, HANDOFF take 125)',
      scan.glare.grey && scan.glareGrey === true && scan.glare.clahe >= 0.8 * scan.glare.claheNoShine && scan.glare.clahe > scan.glare.stretch && scan.glareLook.handed[0] === '640x480', JSON.stringify({ glare: scan.glare, grey: scan.glareGrey }));
   ok('scanner: ...control: take 10\'s whole-picture stretch loses most of it to the shine', scan.glare.stretch <= 0.3 * scan.glare.stretchNoShine, JSON.stringify(scan.glare));
@@ -767,16 +765,21 @@ if (puppeteer) {
     let inView = true;
     SC.PLATFORM.hasOcr = () => true;
     SC.PLATFORM.ocr = async c => { const lines = inView ? [{ text: one, box: { x: 180 + A.x * 280 - 30, y: 40 + A.y * 391 - 4, w: 60, h: 8 } }] : []; return { text: lines.map(l => l.text).join('\n'), lines }; };
-    B.rows.length = 0; const counts = [];
+    B.rows.length = 0; const counts = [], wasRunning = SC.SCAN.running;
+    /* the Scan screen closed: a capture that finishes then adds nothing (take 125's audit) */
+    SC.SCAN.running = false; for (let i = 0; i < 3; i++) await SC.captureAndIdentify(v); const closed = B.rows.length;
+    SC.SCAN.running = true;   // the screen open, as startCamera leaves it
     for (let i = 0; i < 8; i++) { await SC.captureAndIdentify(v); counts.push(B.rows.length); }
     inView = false; for (let i = 0; i < 3; i++) { await SC.captureAndIdentify(v); counts.push(B.rows.length); }
     inView = true; for (let i = 0; i < 2; i++) { await SC.captureAndIdentify(v); counts.push(B.rows.length); }
+    SC.SCAN.running = wasRunning; SC.SCAN.voter.reset();
     SC.PLATFORM.ocr = realOcr; SC.PLATFORM.hasOcr = realHas; v.remove();
     B.rows.length = 0; B.rows.push(...kept); B.save();
-    return { one, counts };
+    return { one, counts, closed };
   });
   ok('scanner loop: a card left in view is counted once, however long it stays (landmine 16)', loop.counts.slice(0, 8).join() === '0,1,1,1,1,1,1,1', JSON.stringify(loop));
   ok('scanner loop: ...and counted again once it has left the view for three captures and come back', loop.counts.slice(8).join() === '1,1,1,1,2', JSON.stringify(loop));
+  ok('scanner loop: a capture that finishes after the Scan screen closed adds nothing (it would start the camera again behind another screen)', loop.closed === 0, JSON.stringify(loop));
 
   /* take 11: the filter sheet's apply button must be reachable without a
      scroll, or a collector with sixty sets never finds it. */

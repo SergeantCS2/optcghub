@@ -4,7 +4,7 @@
  * Each stage a plain function, so the harness drives them with synthetic
  * input and the only thing left unproven is the camera itself (A2):
  *
- *   the view the guide shows ─► a look (whole | near | glare | turned) ─► OCR: every line and its place
+ *   the view the guide shows ─► a look (whole | near | glare) ─► OCR: every line and its place
  *     ─► codesIn: the lines that are a real card number, printed on a card that is in the view
  *     ─► none | several | one number ─► the card: the quad, only where the number sits where the quad says
  *                                          └► the photo (the quad's warp, or the view at a card's shape)
@@ -36,17 +36,15 @@ const OCR_MAX = 1600;   // the longest side handed to the recogniser; the Fold's
    The video fills the guide with object-fit: cover, so the guide shows the middle of the frame;
    the parts cut off are not the collector's to answer for. A still photo is its own view. */
 function viewRect(sw, sh, ew, eh) {
+  if (!(ew > 0 && eh > 0)) return { x: 0, y: 0, w: sw, h: sh };   // a guide not laid out (mid-transition) shows nothing to crop to
   const s = Math.max(ew / sw, eh / sh), w = Math.min(sw, ew / s), h = Math.min(sh, eh / s);
   return { x: (sw - w) / 2, y: (sh - h) / 2, w, h };
 }
-/* the view as a canvas of at most OCR_MAX, turned a quarter each `turn` (+1 clockwise, -1 anti) */
-function viewCanvas(src, v, turn = 0) {
-  const s = Math.min(1, OCR_MAX / Math.max(v.w, v.h)), w = Math.round(v.w * s), h = Math.round(v.h * s);
-  const c = document.createElement('canvas');
-  c.width = turn ? h : w; c.height = turn ? w : h;
-  const g = c.getContext('2d', { willReadFrequently: true });
-  g.translate(c.width / 2, c.height / 2); g.rotate(turn * Math.PI / 2);
-  g.drawImage(src, v.x, v.y, v.w, v.h, -w / 2, -h / 2, w, h);
+/* the view as a canvas of at most OCR_MAX on its long side */
+function viewCanvas(src, v) {
+  const s = Math.min(1, OCR_MAX / Math.max(v.w, v.h)), c = document.createElement('canvas');
+  c.width = Math.round(v.w * s); c.height = Math.round(v.h * s);
+  c.getContext('2d', { willReadFrequently: true }).drawImage(src, v.x, v.y, v.w, v.h, 0, 0, c.width, c.height);
   return c;
 }
 
@@ -54,13 +52,14 @@ function viewCanvas(src, v, turn = 0) {
    One capture, one look. The live loop keeps a look while it reads and moves to the next when it
    does not. MEASURED take 125 on the owner's fifteen frames, the camera-text reader standing in for
    ML Kit (INFERRED to carry: ML Kit is built for camera text and is the stronger of the two):
-   whole alone 7 of 15; with near and glare, 12 of 15; take 123's stages 0. */
+   whole alone 7 of 15; with near and glare, 12 of 15; take 123's stages 0. Cards are scanned upright:
+   two looks turned a quarter each way read a card on its side and were the only looks to read a
+   neighbour's number, and went before take 125 shipped (the owner: sideways "will only
+   overcomplicate things"; landmine 234). */
 const LOOKS = [
   { name: 'whole' },
   { name: 'near', part: { x: 0.3, y: 0.5, w: 0.7, h: 0.5 }, zoom: 2 },   // the corner the number is printed in, twice the size
   { name: 'glare', even: true },    // local contrast: a foil's shine or a sleeve's no longer sets it for the number (landmine 10)
-  { name: 'left', turn: -1 },       // a card lying on its side
-  { name: 'right', turn: 1 },
 ];
 /* the canvas a look hands the recogniser, and how to map a place in it back onto the view's canvas */
 function lookCanvas(base, look) {
@@ -93,13 +92,17 @@ function equalise(c, tiles = 8, clip = 3) {
     for (let v = 0; v < 256; v++) { acc += hist[v] + over / 256; map[v] = Math.min(255, Math.round(acc * 255 / n)); }
     maps.push(map);
   }
-  const near = (f, n) => { f = Math.min(n - 1, Math.max(0, f - 0.5)); const a = Math.floor(f); return [a, Math.min(n - 1, a + 1), f - a]; };
+  /* the two tiles each column and each row blends, and how far between: worked out once, not per pixel */
+  const blend = (n, size) => { const a = new Int32Array(n), b = new Int32Array(n), f = new Float32Array(n);
+    for (let k = 0; k < n; k++) { const t = Math.min(tiles - 1, Math.max(0, (k + 0.5) / size - 0.5)); a[k] = Math.floor(t); b[k] = Math.min(tiles - 1, a[k] + 1); f[k] = t - a[k]; }
+    return { a, b, f }; };
+  const X = blend(W, tw), Y = blend(H, th);
   for (let y = 0; y < H; y++) {
-    const [ya, yb, wy] = near((y + 0.5) / th, tiles);
+    const ra = Y.a[y] * tiles, rb = Y.b[y] * tiles, wy = Y.f[y];
     for (let x = 0; x < W; x++) {
-      const [xa, xb, wx] = near((x + 0.5) / tw, tiles), v = L[y * W + x], i = (y * W + x) * 4;
-      const top = maps[ya * tiles + xa][v] * (1 - wx) + maps[ya * tiles + xb][v] * wx;
-      const bot = maps[yb * tiles + xa][v] * (1 - wx) + maps[yb * tiles + xb][v] * wx;
+      const v = L[y * W + x], i = (y * W + x) * 4, wx = X.f[x];
+      const top = maps[ra + X.a[x]][v] * (1 - wx) + maps[ra + X.b[x]][v] * wx;
+      const bot = maps[rb + X.a[x]][v] * (1 - wx) + maps[rb + X.b[x]][v] * wx;
       d[i] = d[i + 1] = d[i + 2] = top * (1 - wy) + bot * wy;
     }
   }
@@ -125,24 +128,17 @@ function parseRead(text) {
   const sp = /(^|[^A-Z])SP(?=[A-Z]{1,3}\d)/.test(norm) || /^SP/.test(norm);
   return { number: valid, raw: text, sp };
 }
-/* every line of a read that is a real card number, printed on a card that is upright in this look and in
-   the view, and not contradicted by the card's own words. A line without a place is taken at its word.
-   Upright: the line runs across (wider than twice its height). A turned look turns every card in it, so a
-   neighbour's number there runs down the picture and its place says nothing (MEASURED take 125: the turned
-   looks read three neighbours' numbers on the owner's upright photos until this). In the view: not in the
-   look's top or left quarter (CODE_AT). */
+/* every line of a read that is a real card number, printed on a card that is upright and in the view,
+   and not contradicted by the card's own words. A line without a place is taken at its word.
+   Upright: the line runs across (wider than twice its height) -- the places below assume an upright card,
+   and a card on its side beside the one in hand prints its number down the picture (MEASURED take 125: the
+   whole look read a sideways neighbour's number on one of the owner's frames until this; landmine 234).
+   In the view: not in the top or left quarter (CODE_AT). */
 function codesIn(read, w, h) {
   const onCard = b => !b || (b.w >= 2 * b.h && b.x + b.w / 2 >= w / 4 && b.y + b.h / 2 >= h / 4);
   const words = squash(read.text);
   return read.lines.map(l => ({ ...parseRead(l.text), box: l.box }))
-    .filter(r => r.number && onCard(r.box) && !misnamed(r.number, words) && !upsideDown(r, read.lines));
-}
-/* An upright card prints its name above its number. A line that is the number's own name, below it, is a
-   card upside down in this look -- a neighbour a turned look turned over (MEASURED take 125: the owner's
-   sideways Bonney, whose neighbour's number the other turn read) -- and its number is not taken. */
-function upsideDown(r, lines) {
-  const names = namesOf(r.number), mid = b => b.y + b.h / 2;
-  return !!r.box && lines.some(l => l.box && names.has(squash(l.text)) && mid(l.box) > mid(r.box));
+    .filter(r => r.number && onCard(r.box) && !misnamed(r.number, words));
 }
 /* A misread lands a digit away -- the owner's close-up of Kyros, OP10-046, read OP10-040 in two looks alike,
    so two reads can agree on it (MEASURED take 125). The name printed large on the card then belongs to the
@@ -250,7 +246,7 @@ function starScore(starCanvas) {
 /* ---- stage 6: one capture, start to finish ------------------------------
    Landmine 60: narrow ONLY on a sighting -- below the star's threshold is "nothing seen", never "plain". */
 async function identifyFrame(src, view, look = LOOKS[0]) {
-  const base = viewCanvas(src, view, look.turn);
+  const base = viewCanvas(src, view);
   const { canvas, toBase } = lookCanvas(base, look);
   const read = await PLATFORM.ocr(canvas);
   if (!read) return { stage: 'no-ocr' };
@@ -264,7 +260,7 @@ async function identifyFrame(src, view, look = LOOKS[0]) {
   const full = warpCanonical(base, q || fitCard(base));
   const sc = q ? starScore(cropStar(full)) : null;
   const face = hit.sp ? 'sp' : sc != null && sc >= CAT.star.threshold ? 'star' : null;
-  /* the outline believed, as fractions of the view the look turned (null when none is) */
+  /* the outline believed, as fractions of the view (null when none is) */
   const card = q && { x: q.x / base.width, y: q.y / base.height, w: q.w / base.width, h: q.h / base.height };
   return { stage: 'read', number: hit.number, face, full, card, raw: read.text };
 }

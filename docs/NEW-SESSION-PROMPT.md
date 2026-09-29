@@ -101,9 +101,10 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   was the whole frame on 14 of the owner's 15 photographs and its stages read
   0 of them (landmine 232); the whole view now goes to ML Kit, the number is
   picked out of its lines on a card upright in the look and in the view and
-  not contradicted by its own name, through five looks in turn, and the number
-  decided is held while it stays in view (landmines 232-237). 37 of 48 of the
-  owner's frames right, 0 wrong, with a camera-text reader standing in for ML
+  not contradicted by its own name, through three looks in turn (cards are
+  scanned upright), and the number
+  decided is held while it stays in view (landmines 232-237). 23 of 29 of the
+  owner's upright frames right, 0 wrong, with a camera-text reader standing in for ML
   Kit. The stages are `src/scan.js`. It carries take 124, merged into its
   branch at the owner's word. **Next, the owner's:** a scan on the Fold and the
   HANDOFF's questions. **Yours after it:** the printing from the picture (A2).
