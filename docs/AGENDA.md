@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 121.* Ranked by blocking-ness, not by interest.
+*Current as of take 122.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -74,8 +74,14 @@ what take 115 changed on screen.
    residential IP.
 3. **A41** -- waits on the owner's list of the parts and the source; then
    one take per source, measured on the runner first.
-4. **A23** the sim's tail -- modal effects, ordering, protection, the
-   opponent's hidden choices -- one mechanism per take, when wanted.
+4. **A23, the Sim -- the owner's priority from take 122.** Take 122 (in
+   flight): the audit's fixes and the whole-Sim review, the rules on v1.2.1
+   with Check for updates, card proofs, self-play (two apps included), the
+   wording families, the Rules button. Take 123: the view model and the privacy rule, then
+   "ready for the UI" to the owner, whose UI/UX pass (the real table, the
+   pictures) follows. After it: the tail -- modal effects, ordering,
+   protection, the opponent's hidden choices -- one mechanism per take,
+   each proven through `tools/cards/`.
 5. **A31** Collectr import, the day a real exported file exists.
 6. The standing offer: the release-notes trim.
 
@@ -2153,7 +2159,57 @@ in the future, the simulator.
 - **Open:** the tour needs a card for the modes; the icon and splash are
   Collect's palette (fine — the icon is the app, not a mode).
 
-## A23 — An OP TCG simulator · SCOPED take 24 · STEP (1) BOARD take 46 · STEP (2) EFFECTS takes 47–51 · STEP (3) OPPONENT take 55 · PHASE
+## A23 — An OP TCG simulator · SCOPED take 24 · STEP (1) BOARD take 46 · STEP (2) EFFECTS takes 47–51 · STEP (3) OPPONENT take 55 · THE AUDIT AND CARD PROOFS take 122 · PHASE
+
+- **Take 122 — the owner's priority: the engine right, the rules current,
+  every card provable.** The owner: the Sim "has dawdled behind", "extremely
+  buggy" (unlimited cards with ST01 Luffy); a code review, a rules review,
+  and a process that grows until every card works as its text reads; the
+  code and features first, then his own UI/UX pass. Built: the audit's fixes
+  (HANDOFF take 122 has the table; landmines 212-214), the rules digest on
+  Comprehensive Rules **v1.2.1 (28 Aug 2026)** behind a Rules button with
+  search, one entry point for every move (`SIM.act`) with a seeded shuffle
+  and a replayable action list, `SIM.legal()`, the card proofs
+  (`tools/cards/<number>.json`, run by `tools/cardproof.mjs` against the
+  shipped app, bound to each printing's text), and self-play
+  (`tools/selfplay.mjs`, an auditor after every action; `--two-apps` plays
+  two copies of the shipped app that exchange only moves, as two phones
+  will). Mid-take the owner added a Check for updates on the rules, "cards
+  use different wording for the same thing" (`tools/wording.py`: every
+  unscripted line in its family, the near-misses of a running template
+  flagged, every unknown tag spelling listed), and "audit the SIM as a
+  whole": the review of the whole engine and board is HANDOFF take 122's
+  table (landmines 215-222). The measurements are in HANDOFF take 122.
+- **How the corpus grows, from here:** `node tools/cardproof.mjs --worklist`
+  names the ready-made decks' unproven cards; `python3 tools/cards.py --new
+  NUM` scaffolds one; `python3 tools/wording.py` names the wording one
+  template away; a Report from the phone becomes a scenario with
+  `--from-report`; `node tools/selfplay.mjs --games N` is the audit after any
+  engine change (N as large as the change is wide; the gate runs 34 both
+  ways and 8 on two apps).
+- **Ruled out (take 122): proofs keyed on the card number.** A proof holds for
+  the printings whose text it was proven on (AGENTS §3); an errata'd reprint
+  or a parser change reopens it by itself. **Ruled out: a by-hand tray
+  outside any card** (landmine 212) -- a by-hand effect is offered at its
+  card's timing. **Ruled out: a by-hand "apply" for continuous lines** (the
+  review's first sketch for ST08/ST09, landmine 218) -- a continuous effect
+  applied once by hand is a number the board then shows as if it held; the
+  two Leaders were scripted instead, and any other continuous line is shown
+  as the player's to apply, never folded into the power on screen. **Ruled out: the rules' own text in the app** -- the Rules
+  button carries a digest in the app's words with the official section
+  numbers, and links the official PDF (the owner may rule otherwise; D23).
+- **The ready-made decks' Leaders (take 122, after the first push):** every one
+  has a proof -- ten run from their text, seven by hand, held to their timing
+  and their tray. **Ruled out: a proof per card number.** ST03-001 has two
+  texts; a proof binds the printing a deck deals (`cards.py --new NUM --id`),
+  and the errata'd one stays unproven until proven (landmine 222).
+- **Untagged effect sentences** (ST30-001's "-2000 while you have a 7000
+  Character") are not effect lines yet: its own take, since taking them in
+  reopens every proof's text fingerprint.
+- **Next (take 123):** `SIM.view(seat)`, the privacy rule ("private things
+  only on that player's turn") enforced by the engine, the board drawn from
+  `view()` and `legal()`, and D18 brought up to date for two phones by a code
+  or a QR with no accounts. Then the owner's UI pass.
 
 The owner wants an actual simulator inside Prep & Play, in the future. Scoped
 honestly:

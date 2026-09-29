@@ -1,0 +1,198 @@
+{
+ "num": "ST13-001",
+ "name": "Sabo",
+ "text": "[DON!! x1][Activate: Main][Once Per Turn] You may add 1 of your Characters with a cost of 3 or more and 7000 power or more to the top of your Life cards face-up: Up to 1 of your Characters gains +2000 power until the start of your next turn.",
+ "text_fp": "50634008fd1bbdbb",
+ "fx_fp": "97d170e1550eee4a",
+ "reading": [
+  {
+   "t": "main",
+   "if": [
+    {
+     "c": "donx",
+     "n": 1
+    },
+    {
+     "c": "opt"
+    }
+   ],
+   "do": [],
+   "hand": true,
+   "raw": "[DON!! x1][Activate: Main][Once Per Turn] You may add 1 of your Characters with a cost of 3 or more and 7000 power or more to the top of your Life cards face-up: Up to 1 of your Characters gains +2000 power until the start of your next turn."
+  }
+ ],
+ "rules": [
+  "10-2-2",
+  "10-2-9",
+  "10-2-13"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "a Character to the top of Life, then +2000 on one of yours, still there on the opponent's turn",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "leaderDon": 1,
+     "chars": [
+      {
+       "card": "EB01-018"
+      },
+      {
+       "card": "ST01-003"
+      }
+     ]
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fxhand"
+    },
+    {
+     "t": "hand",
+     "op": "chartolife",
+     "k": 0,
+     "expect": {
+      "p0.life": 5,
+      "p0.chars": 1
+     }
+    },
+    {
+     "t": "hand",
+     "op": "power",
+     "v": 2000,
+     "side": 0,
+     "ref": 0
+    },
+    {
+     "t": "handdone",
+     "expect": {
+      "power.p0.0": 5000
+     }
+    },
+    {
+     "t": "end"
+    }
+   ],
+   "expect": {
+    "power.p0.0": 5000
+   }
+  },
+  {
+   "name": "...and gone at the start of your next turn",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "leaderDon": 1,
+     "chars": [
+      {
+       "card": "ST01-003"
+      }
+     ]
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fxhand"
+    },
+    {
+     "t": "hand",
+     "op": "power",
+     "v": 2000,
+     "side": 0,
+     "ref": 0
+    },
+    {
+     "t": "handdone"
+    },
+    {
+     "t": "end"
+    },
+    {
+     "s": 1,
+     "t": "end"
+    }
+   ],
+   "expect": {
+    "power.p0.0": 3000
+   }
+  },
+  {
+   "name": "never on the opponent's Character",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "leaderDon": 1,
+     "chars": [
+      {
+       "card": "ST01-003"
+      }
+     ]
+    },
+    "p1": {
+     "chars": [
+      {
+       "card": "ST01-003"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fxhand"
+    },
+    {
+     "t": "hand",
+     "op": "power",
+     "v": 2000,
+     "side": 1,
+     "ref": 0,
+     "refused": "not a move this line names"
+    }
+   ],
+   "expect": {
+    "power.p1.0": 3000
+   }
+  },
+  {
+   "name": "once per turn, and not without a DON!! given",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "chars": [
+      {
+       "card": "ST01-003"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader",
+     "refused": "condition is not met"
+    }
+   ],
+   "expect": {
+    "queue": 0
+   }
+  }
+ ],
+ "note": "By hand (take 122): a Character of yours to the top of Life (face-up is not modelled), then +2000 on one of yours until the start of your next turn -- the tray's power used to last the turn only."
+}

@@ -1,0 +1,164 @@
+{
+ "num": "ST29-001",
+ "name": "Monkey.D.Luffy",
+ "text": "[When Attacking] If you have 2 or less Life cards, draw 1 card and trash 1 card from your hand.",
+ "text_fp": "1328b921da6b4dce",
+ "fx_fp": "4034d44bfc8d732a",
+ "reading": [
+  {
+   "t": "attack",
+   "if": [
+    {
+     "c": "life",
+     "max": 2
+    }
+   ],
+   "do": [
+    {
+     "a": "draw",
+     "n": 1
+    },
+    {
+     "a": "trashhand",
+     "n": 1
+    }
+   ],
+   "raw": "[When Attacking] If you have 2 or less Life cards, draw 1 card and trash 1 card from your hand."
+  }
+ ],
+ "rules": [
+  "10-2-5",
+  "8-3-2"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "at 2 Life, attacking: draw 1, then trash 1 from hand",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "life": 2,
+     "hand": [
+      "ST01-003"
+     ]
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "t": "attack",
+     "ref": "leader",
+     "target": "leader",
+     "expect": {
+      "queue": 1
+     }
+    },
+    {
+     "t": "fx",
+     "target": null,
+     "expect": {
+      "p0.hand": 2
+     }
+    },
+    {
+     "t": "fx",
+     "target": "h0"
+    }
+   ],
+   "expect": {
+    "p0.hand": 1,
+    "p0.trash": 1,
+    "queue": 0,
+    "phase": "battle"
+   }
+  },
+  {
+   "name": "the trash is not optional once the draw is made",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "life": 2,
+     "hand": [
+      "ST01-003"
+     ]
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "t": "attack",
+     "ref": "leader",
+     "target": "leader"
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "fx",
+     "target": null,
+     "refused": "choose a target"
+    }
+   ],
+   "expect": {
+    "p0.hand": 2,
+    "queue": 1
+   }
+  },
+  {
+   "name": "at 3 Life, nothing is offered",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "life": 3,
+     "hand": [
+      "ST01-003"
+     ]
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "t": "attack",
+     "ref": "leader",
+     "target": "leader"
+    }
+   ],
+   "expect": {
+    "queue": 0,
+    "p0.hand": 1
+   }
+  },
+  {
+   "name": "not when it is attacked: [When Attacking] is its own attack",
+   "must_not": true,
+   "board": {
+    "turn": 4,
+    "active": 1,
+    "p0": {
+     "leader": "@",
+     "life": 2,
+     "hand": [
+      "ST01-003"
+     ]
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "s": 1,
+     "t": "attack",
+     "ref": "leader",
+     "target": "leader"
+    }
+   ],
+   "expect": {
+    "queue": 0,
+    "p0.hand": 1
+   }
+  }
+ ],
+ "note": "Take 122: when attacking at 2 Life or less, draw 1 then trash 1 from hand."
+}

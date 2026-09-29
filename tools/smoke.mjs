@@ -13,6 +13,7 @@ import os from 'node:os';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
 import vm from 'node:vm';
+import { makeDom, boot } from './lib/appvm.mjs';
 import zlib from 'node:zlib';
 
 const ROOT = path.dirname(path.dirname(new URL(import.meta.url).pathname));
@@ -24,96 +25,23 @@ const ok = (name, cond, extra = '') => {
   else { fail++; console.log(`  FAIL  ${name}  ${extra}`); }
 };
 const section = s => console.log(`\n\u2500\u2500 ${s}`);
+/* take 122: the effects bundle carries by-hand lines beside the scripted ones; the template sections read the scripted ones */
+const scripted = E => Object.fromEntries(Object.entries(E).map(([k, L]) => [k, L.filter(e => !e.hand)]).filter(([, L]) => L.length));
 
-/* ---- a DOM small enough to read, real enough to run the app ------------- */
-function makeDom(html) {
-  const listeners = {};
-  const mk = (tag = 'div') => {
-    const el = {
-      tagName: tag.toUpperCase(), children: [], style: {}, dataset: {},
-      _cls: new Set(), _text: '', _html: '', value: '',
-      classList: {
-        add: (...c) => c.forEach(x => el._cls.add(x)),
-        remove: (...c) => c.forEach(x => el._cls.delete(x)),
-        toggle: (c, on) => on ? el._cls.add(c) : el._cls.delete(c),
-        contains: c => el._cls.has(c)
-      },
-      get className() { return [...el._cls].join(' '); },
-      set className(v) { el._cls = new Set(String(v).split(/\s+/).filter(Boolean)); },
-      get textContent() { return el._text; }, set textContent(v) { el._text = String(v); },
-      get innerHTML() { return el._html; }, set innerHTML(v) { el._html = String(v); },
-      appendChild: c => { el.children.push(c); return c; },
-      addEventListener: (t, f) => { (el._ev ||= {})[t] = f; },
-      removeEventListener: () => {},
-      setAttribute: (k, v) => { el.dataset['attr_' + k] = String(v); }, getAttribute: k => el.dataset['attr_' + k] ?? null,
-      querySelector: () => null, querySelectorAll: () => [],
-      closest: () => null, click: () => {}, focus: () => {}, select: () => {}, remove: () => {},
-      getContext: () => ctx2d, clientWidth: 360, width: 0, height: 0
-    };
-    return el;
-  };
-  const ctx2d = new Proxy({}, { get: () => () => ctx2d });
-  const byId = new Map();
-  /* the element keeps its tag, so a <section id> is a section here too (take 83: go() refuses non-screens) */
-  for (const m of html.matchAll(/<([a-zA-Z][\w-]*)\b[^>]*\bid="([\w-]+)"/g)) byId.set(m[2], mk(m[1]));
-  const doc = {
-    _ids: byId,
-    querySelector: s => s.startsWith('#') ? (byId.get(s.slice(1)) || mk()) : mk(),
-    getElementById: id => byId.get(id) || null,
-    querySelectorAll: () => [],
-    createElement: mk,
-    addEventListener: (t, f) => { (listeners[t] ||= []).push(f); },
-    removeEventListener: () => {},   // take 111: the ask sheet's cleanup calls it; a browser always has it
-    body: mk('body')
-  };
-  doc.body.appendChild = c => { if (c && c.id) byId.set(c.id, c); return c; };
-  return { doc, listeners };
-}
+/* the DOM stub and the boot live in tools/lib/appvm.mjs since take 122: the card proofs and self-play boot the shipped app the same way */
 
 /* ---- run --------------------------------------------------------------- */
-const html = fs.readFileSync(W('index.html'), 'utf8');
-const js = fs.readFileSync(W('app.js'), 'utf8');
+const APP = await boot();
+const { html, js, catalog, manifest, store, remote, ctx, doc, listeners } = APP;
 const pkg = fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8');   /* take 120: the plugin list the status bar needs */
-const catalog = JSON.parse(fs.readFileSync(W('bundle/catalog.json'), 'utf8'));
-const manifest = JSON.parse(fs.readFileSync(W('bundle/manifest.json'), 'utf8'));
 
 section('shipped artifact');
 ok('index.html references the built app.js', html.includes('src="app.js"'));
 ok('no unreplaced build token', !html.includes('__TAKE__') && !js.includes('__TAKE__'));
 
-const store = {};
-const remote = [];
-const ctx = {
-  console,
-  localStorage: {
-    getItem: k => store[k] ?? null,
-    setItem: (k, v) => { store[k] = String(v); },
-    removeItem: k => { delete store[k]; }
-  },
-  navigator: { vibrate: () => true },
-  location: { href: 'https://localhost/' },
-  URL, Blob: class { constructor(p) { this.p = p; } },
-  BigInt, Math, Date, JSON, Promise, setTimeout, clearTimeout, devicePixelRatio: 2,
-  AbortController,   // take 115: a browser has it; the fetch wrapper aborts at its deadline with it
-  fetch: async (u, o) => {
-    if (ctx._net) { const r = await ctx._net(String(u), o); if (r !== undefined) return r; }   // take 115: a section answers "Pages" itself; undefined falls through
-    remote.push(String(u));
-    if (String(u).includes('catalog.json')) return { json: async () => catalog };
-    if (String(u).includes('manifest.json')) return { json: async () => manifest };
-    throw new Error('unexpected fetch ' + u);
-  }
-};
-const { doc, listeners } = makeDom(html);
-ctx.document = doc;
-ctx._win = {}; ctx.addEventListener = (t, f) => { (ctx._win[t] ||= []).push(f); }; ctx.removeEventListener = () => {};
-ctx.history = { _s: [], pushState(st, _t, url) { this._s.push({ st, url }); }, back() { this._s.pop(); (ctx._win.popstate || []).forEach(f => f({})); } };
-ctx.window = ctx;
-ctx.scrollTo = () => {};   // take 105: the boot itself navigates now (landmine 140) and go() scrolls; a browser always has this
-vm.createContext(ctx);
-vm.runInContext(js, ctx, { filename: 'www/app.js' });
-await new Promise(r => setTimeout(r, 60));
-
 const V = ctx.VAULT;
+/* a card planted on the field is the engine's own shape, uid and all: what applies to it follows the uid (take 122's review) */
+const onField = (id, turn, rested = false, don = 0) => Object.assign(V.SIM.inst(id, turn), { rested, don });
 section('boot');
 ok('app exposed its internals', !!V);
 ok('catalogue loaded', V && V.CAT.ready);
@@ -778,7 +706,7 @@ ok('the play palette redefines the same tokens, not a second stylesheet',
 ok('each mode has its own nav, and hidden actually hides (landmine 98)',
    /id="navPlay" hidden/.test(html) && /id="navCollect"/.test(html) && /nav\[hidden\]\{display:none\}/.test(html));
 ok('Prep & Play holds Decks, Cards, Play and Sim', /data-go="decks"[\s\S]*data-go="cards"[\s\S]*data-go="play"[\s\S]*data-go="sim"/.test(html));
-ok('the Sim screen is the hot-seat board (take 46 replaced the placeholder)', /id="simBoard"/.test(html) && /id="simCurtain"/.test(html) && /rules by the app, effects by hand/.test(html));
+ok('the Sim screen is the hot-seat board (take 46 replaced the placeholder)', /id="simBoard"/.test(html) && /id="simCurtain"/.test(html) && /rules by the app \u00b7 effects from the text, or by hand/.test(html));   // take 122: the subtitle says what the Sim does now
 const P = V.PLAY;
 ok('the counter starts both players at 5 life, 0 DON!!, turn 1', P.p.every(x => x.life === 5 && x.don === 0) && P.turn === 1);
 P.p[0].life = 3; P.p[1].don = 4; P.p[1].given = 2;
@@ -1064,7 +992,7 @@ const mkDeck = name => { const d = V.DECKS.blank(); d.name = name;
     if (p.type === 'Leader') d.leader = p.id; else d.cards.push({ id: p.id, n: +m[1] }); } return d; };
 const dA = mkDeck('A'), dB = mkDeck('B');
 ok('the showcase deck is legal, so it is a fair fixture', V.legality(dA).problems.length === 0);
-let g = S.new(dA, dB, 0);
+let g = S.new(dA, dB, 0, { seed: 46 });   // take 122: every smoke game is seeded -- an unseeded deal made this section pass or fail with the hand
 ok('§5-2: fifty cards became a shuffled deck, five in hand, none in Life yet', g.players.every(P => P.deck.length === 45 && P.hand.length === 5 && P.life.length === 0));
 S.mulligan(0, true); S.mulligan(1, false);
 ok('§5-2-3: a mulligan is five back, five drawn, once', g.players[0].hand.length === 5 && g.players[0].deck.length === 45 - 5 && g.players[0].mulliganed === true);
@@ -1080,13 +1008,19 @@ S.endTurn();
 ok('§6-1: the second player draws one and gets 2 DON!! on turn two', g.turn === 2 && g.active === 1 && g.players[1].hand.length === 6 && g.players[1].don.active === 2);
 S.endTurn();
 ok('turn three: the first player refreshes to 3 DON!! and draws', g.turn === 3 && g.players[0].don.active === 3 && g.players[0].hand.length === 6);
-/* plant a known board: 5 characters refuses a sixth (§3) */
-P0.chars = [1, 2, 3, 4, 5].map(k => ({ id: P0.deck[k], rested: false, don: 0, turn: 1 }));
+/* plant a known board: five in play. Take 122: a sixth is not refused -- one of the five is trashed to make room,
+   a rule, not a K.O. (§3-7-6-1; landmine 214: take 46's refusal broke the rule) */
+P0.chars = [1, 2, 3, 4, 5].map(k => ({ ...S.inst(P0.deck[k], 1), don: k === 1 ? 2 : 0 }));
 P0.don.active = 10; const anyChar = P0.hand.findIndex(id => V.CAT.byId.get(id).type === 'Character');
-ok('§3: five Characters in play refuses a sixth', anyChar < 0 || (S.canPlay(0, anyChar).ok === false && /five Characters/.test(S.canPlay(0, anyChar).why)));
-P0.chars = [];
+if (anyChar >= 0) { const cp = S.canPlay(0, anyChar); const blind = S.play(0, anyChar);
+  ok('§3-7-6-1: with five in play a sixth may be played -- after choosing which of the five to trash', cp.ok && cp.full && blind.ok === false && blind.need === 'trash' && /§3-7-6-1/.test(blind.why) && P0.chars.length === 5);
+  const gone = P0.chars[0], tr0 = P0.trash.length, rested0 = P0.don.rested, id6 = P0.hand[anyChar]; const r6 = S.play(0, anyChar, { trash: 0 });
+  ok('...the chosen one goes to the trash, its given DON!! to the cost area rested (§6-5-5-4), and the new one is in play', r6.ok && P0.chars.length === 5 && P0.trash.length === tr0 + 1 && P0.trash.includes(gone.id) && P0.don.rested === rested0 + S.cost(V.CAT.byId.get(id6)) + 2 && P0.chars[4].id === id6 && /to make room/.test(g.log.join('\n')));
+  ok('...and it is not a K.O.: no [On K.O.] is offered for it (§3-7-6-1-1)', !g.queue.length && !/K\.O\.'d/.test(g.log[0] || '')); }
+P0.chars = []; P0.hand = P0.hand.filter(Boolean);
 /* pay and place */
-if (anyChar >= 0) { const before = P0.don.active; const p = V.CAT.byId.get(P0.hand[anyChar]); const r = S.play(0, anyChar);
+const anyChar1 = P0.hand.findIndex(id => V.CAT.byId.get(id).type === 'Character' && S.cost(V.CAT.byId.get(id)) <= P0.don.active);   // take 122: the block above played one; find another
+if (anyChar1 >= 0) { const before = P0.don.active; const p = V.CAT.byId.get(P0.hand[anyChar1]); const r = S.play(0, anyChar1);
   ok('playing a Character rests its cost in DON!! and puts it in play, marked with the turn', r.ok && P0.chars.length === 1 && P0.don.active === before - S.cost(p) && P0.chars[0].turn === 3); }
 ok('§10-1: a Character played this turn cannot attack without [Rush]', P0.chars.length === 0 || V.hasKw === undefined || S.canAttack(0, 0).ok === false);
 /* give DON!!: +1000 on your own turn only */
@@ -1095,35 +1029,35 @@ ok('§6-5-5: a given DON!! is +1000 power', S.power(0, 'leader') === lp + 1000 &
 ok('...and not on the other player\'s turn', S.giveDon(1, 'leader').ok === false);
 /* battle: the Leader attacks the Leader; a tie goes to the attacker (§7-1-4-1) */
 const P1 = g.players[1]; const L0 = V.CAT.byId.get(P0.leader.id), L1 = V.CAT.byId.get(P1.leader.id);
-P0.mods = {}; P1.mods = {}; P0.leader.don = 0; P0.leader.rested = false;
-const need = (parseInt(L1.power, 10) || 0) - (parseInt(L0.power, 10) || 0); if (need > 0) P0.mods.leader = need;   // make it exactly a tie
+P0.modl = []; P1.modl = []; P0.leader.don = 0; P0.leader.rested = false;
+const need = (parseInt(L1.power, 10) || 0) - (parseInt(L0.power, 10) || 0); if (need > 0) S.mod(0, 'leader', need, 'turn');   // make it exactly a tie
 const lifeBefore = P1.life.length, handBefore = P1.hand.length;
 ok('§7-1: the attack is declared, the attacker rests, the defender gets the block step', S.attack(0, 'leader', 'leader').ok && P0.leader.rested && g.phase === 'battle' && g.battle.step === 'block');
 S.noBlock(); const res = S.resolve();
 ok('§7-1-4-1: a tie is a hit; a Leader hit takes 1 damage — top Life card to hand', res.win && P1.life.length === lifeBefore - 1 && P1.hand.length === handBefore + 1 && res.life.length === 1);
 /* a rested Character can be attacked and is K.O.\'d; an active one cannot be targeted */
-P1.chars = [{ id: P1.deck[0], rested: true, don: 0, turn: 1 }, { id: P1.deck[1], rested: false, don: 0, turn: 1 }];
-P0.leader.rested = false; P0.mods.leader = 99999;
+P1.chars = [onField(P1.deck[0], 1, true), onField(P1.deck[1], 1)];
+P0.leader.rested = false; P0.modl = [{ key: 'leader', n: 99999, until: 'endturn' }];
 ok('§7-1: an active Character is not a legal target', S.attack(0, 'leader', 1).ok === false);
 S.attack(0, 'leader', 0); S.noBlock(); const ko = S.resolve();
 ok('a losing Character is K.O.\'d to the trash', ko.win && ko.ko && P1.chars.length === 1 && P1.trash.length >= 1);
 /* counter adds to the defender; a held attack does nothing */
-P0.leader.rested = false; P0.mods.leader = 0;
-const cc = P1.hand.findIndex(id => (parseInt(V.CAT.byId.get(id).counter, 10) || 0) > 0);
+P0.leader.rested = false; P0.modl = [];
+const cc =P1.hand.findIndex(id => (parseInt(V.CAT.byId.get(id).counter, 10) || 0) > 0);
 if (cc >= 0) { const plus = parseInt(V.CAT.byId.get(P1.hand[cc]).counter, 10); const d0 = S.power(1, 'leader'); S.attack(0, 'leader', 'leader'); S.noBlock(); S.counter(cc);
   ok('§7-1-3: a Counter card from hand is trashed and adds its value to the defender', S.battlePowers().d === d0 + plus && P1.trash.includes(P1.trash[P1.trash.length - 1]));
   const lb = P1.life.length; const held = S.resolve();
   ok('an attack below the defender\'s power is held: no damage', held.win === false && P1.life.length === lb); }
 /* defeat: damage with no Life */
-P1.life = []; P0.leader.rested = false; P0.mods.leader = 99999; S.attack(0, 'leader', 'leader'); S.noBlock(); S.resolve();
+P1.life = []; P0.leader.rested = false; P0.modl = [{ key: 'leader', n: 99999, until: 'endturn' }]; S.attack(0, 'leader', 'leader'); S.noBlock(); S.resolve();
 ok('§1-2-1-1: damage with no Life cards is the defeat', g.over === 0 && g.phase === 'over');
 S.g = null;
 }
 
 {
 section('take 47 — effects as data: parsed from the text, offered under conditions, applied under invariants');
-const FX = V.CAT.effects; const fxIds = Object.keys(FX);
-ok('the bundle carries scripted effects and the manifest counts them', fxIds.length >= 400 && manifest.effects && manifest.effects.scripted === fxIds.reduce((a, k) => a + FX[k].length, 0), JSON.stringify(manifest.effects));
+const FXALL = V.CAT.effects; const FX = scripted(FXALL); const fxIds = Object.keys(FX);
+ok('the bundle carries scripted effects and the manifest counts them', fxIds.length >= 400 && manifest.effects && manifest.effects.scripted === fxIds.reduce((a, k) => a + FX[k].length, 0) && manifest.effects.hand === Object.values(FXALL).reduce((a, L) => a + L.filter(e => e.hand).length, 0), JSON.stringify(manifest.effects));   // take 122: by-hand lines ride beside the scripted ones, counted apart
 ok('coverage is stated, not promised: the manifest counts every line, and most still stay manual', manifest.effects.scripted < manifest.effects.lines * 0.5 && manifest.effects.lines > 7000, `${manifest.effects.scripted}/${manifest.effects.lines}`);
 const find = (rx, t) => fxIds.map(k => [k, FX[k].find(e => rx.test(e.raw) && (!t || e.t === t))]).find(x => x[1]);
 const restCard = find(/^\[On Play\] Rest up to 1 of your opponent's Characters with a cost of (\d) or less\.$/);
@@ -1133,26 +1067,26 @@ const optCard = find(/^\[Activate: Main\] \[Once Per Turn\]/, 'main');
 ok('the templates found real cards for rest-with-cost, draw, DON!!x1 attack, and a once-per-turn Main', !!(restCard && drawCard && donxCard && optCard));
 const S = V.SIM; const PL4 = new Function('return ' + js.match(/function parseListLine\(raw\) \{[\s\S]*?\n\}/)[0])();
 const mk = () => { const d = V.DECKS.blank(); for (const raw of fs.readFileSync(path.join(ROOT, 'showcase', 'deck.txt'), 'utf8').split(/\r?\n/)) { const line = raw.trim(); if (!line || line.startsWith('#')) continue; const m = PL4(line); const num = m[2].toUpperCase(); const p = (V.CAT.byNum.get(num) || []).filter(x => x.num === num).sort((a, b) => (a.market || 9e9) - (b.market || 9e9))[0]; if (p.type === 'Leader') d.leader = p.id; else d.cards.push({ id: p.id, n: +m[1] }); } return d; };
-const g = S.new(mk(), mk(), 0); S.mulligan(0, false); S.mulligan(1, false); S.endTurn(); S.endTurn();   // turn 3, player 0, no first-turn ban
+const g = S.new(mk(), mk(), 0, { seed: 47 }); S.mulligan(0, false); S.mulligan(1, false); S.endTurn(); S.endTurn();   // turn 3, player 0, no first-turn ban
 const P0 = g.players[0], P1 = g.players[1];
 /* plant the rest-with-cost card in play and two opponent characters either side of its cost line */
 const rmax = +restCard[1].do[0].cost; const cheap = V.CAT.rows.find(p => p.type === 'Character' && S.cost(p) <= rmax), dear = V.CAT.rows.find(p => p.type === 'Character' && S.cost(p) > rmax);
-P0.chars = [{ id: +restCard[0], rested: false, don: 0, turn: 3 }]; P1.chars = [{ id: cheap.id, rested: false, don: 0, turn: 1 }, { id: dear.id, rested: false, don: 0, turn: 1 }];
+P0.chars = [onField(+restCard[0], 3)]; P1.chars = [onField(cheap.id, 1), onField(dear.id, 1)];
 let offers = S.offers(0, 'onplay', 0);
 ok('an [On Play] rest effect is offered with ONLY the targets its cost line allows (class 3: scope)', offers.length === 1 && offers[0].targets.length === 1 && offers[0].targets[0].ref === 'o0', JSON.stringify(offers.map(o => o.targets)));
 ok('negative control: applying it to the over-cost Character is refused', S.apply(0, offers[0], 'o1').ok === false);
 ok('applied to the legal one, that Character is rested and the act is logged', S.apply(0, offers[0], 'o0').ok && P1.chars[0].rested && /rest/.test(g.log[0]));
 /* DON!! x1: absent -> not offered; attached -> offered; +power this turn, gone at refresh (class 2: not always on) */
-P0.chars = [{ id: +donxCard[0], rested: false, don: 0, turn: 1 }];
+P0.chars = [onField(+donxCard[0], 1)];
 ok('a [DON!! x1] attack effect is NOT offered with no DON!! attached (class 2: never always-on)', S.offers(0, 'attack', 0).length === 0);
 P0.chars[0].don = 1; const before = S.power(0, 0); const o2 = S.offers(0, 'attack', 0);
 ok('...and IS offered with one attached; applied, the power rises by the stated amount', o2.length === 1 && S.apply(0, o2[0]).ok && S.power(0, 0) === before + donxCard[1].do[0].n);
 S.endTurn(); S.endTurn();
 ok('"during this turn" expires at the next refresh, and the given DON!! went home too (class 5: duration; §6-2)', S.power(0, 0) === parseInt(V.CAT.byId.get(+donxCard[0]).power, 10) && P0.chars[0].don === 0, `${S.power(0, 0)} vs base`);
 /* draw: the hand grows by one; Once Per Turn: the second activation is refused */
-P0.chars = [{ id: +drawCard[0], rested: false, don: 0, turn: 5 }]; const h0 = P0.hand.length; S.apply(0, S.offers(0, 'onplay', 0)[0]);
+P0.chars = [onField(+drawCard[0], 5)]; const h0 = P0.hand.length; S.apply(0, S.offers(0, 'onplay', 0)[0]);
 ok('[On Play] Draw 1 card draws exactly one', P0.hand.length === h0 + 1);
-P0.chars = [{ id: +optCard[0], rested: false, don: 0, turn: 5 }]; P0.don.rested = 2;
+P0.chars = [onField(+optCard[0], 5)]; P0.don.rested = 2;
 const m1 = S.offers(0, 'main', 0); const tgt = m1[0] && m1[0].targets ? m1[0].targets[0].ref : null; const r1 = m1.length ? S.apply(0, m1[0], tgt) : { ok: false };
 ok('[Activate: Main] [Once Per Turn] applies once...', r1.ok === true, JSON.stringify(m1.map(o => o.e.raw)));
 ok('...and is not offered again this turn (class 4: a limit, checked)', S.offers(0, 'main', 0).length === 0);
@@ -1163,7 +1097,7 @@ S.g = null;
 
 {
 section('take 48 — chains, continuous effects, follow-ons, search; the timings the board surfaces');
-const FX = V.CAT.effects; const fxIds = Object.keys(FX); const S = V.SIM;
+const FX = scripted(V.CAT.effects); const fxIds = Object.keys(FX); const S = V.SIM;
 ok('coverage grew by whole templates only, none of the refused controls admitted', manifest.effects.scripted > 1000 && manifest.effects.scripted < manifest.effects.lines * 0.5, JSON.stringify(manifest.effects));
 const find = (rx, t) => fxIds.map(k => [k, FX[k].find(e => rx.test(e.raw) && (!t || e.t === t))]).find(x => x[1]);
 const chain = find(/^\[On Play\] Draw (\d) cards? and trash (\d) cards? from your hand\.$/);
@@ -1174,16 +1108,16 @@ const search = find(/^\[On Play\] Look at (\d) cards from the top of your deck; 
 ok('real cards exist for each new shape: a chain, a continuous +power, "Play this card", "Activate this card\'s [On Play]", a search', !!(chain && stat && playself && activ && search), [chain, stat, playself, activ, search].map(x => !!x).join());
 const PL5 = new Function('return ' + js.match(/function parseListLine\(raw\) \{[\s\S]*?\n\}/)[0])();
 const mk = () => { const d = V.DECKS.blank(); for (const raw of fs.readFileSync(path.join(ROOT, 'showcase', 'deck.txt'), 'utf8').split(/\r?\n/)) { const line = raw.trim(); if (!line || line.startsWith('#')) continue; const m = PL5(line); const num = m[2].toUpperCase(); const p = (V.CAT.byNum.get(num) || []).filter(x => x.num === num).sort((a, b) => (a.market || 9e9) - (b.market || 9e9))[0]; if (p.type === 'Leader') d.leader = p.id; else d.cards.push({ id: p.id, n: +m[1] }); } return d; };
-const g = S.new(mk(), mk(), 0); S.mulligan(0, false); S.mulligan(1, false); S.endTurn(); S.endTurn();
+const g = S.new(mk(), mk(), 0, { seed: 48 }); S.mulligan(0, false); S.mulligan(1, false); S.endTurn(); S.endTurn();
 const P0 = g.players[0], P1 = g.players[1];
 /* chain: draw N, then trash one -- two steps, the second with hand targets */
-P0.chars = [{ id: +chain[0], rested: false, don: 0, turn: 3 }]; const h0 = P0.hand.length; const dn = chain[1].do[0].n;
+P0.chars = [onField(+chain[0], 3)]; const h0 = P0.hand.length; const dn = chain[1].do[0].n;
 let o = S.offers(0, 'onplay', 0)[0]; let r = S.apply(0, o, null);
 ok('a chained effect runs its first step (draw) and stops for the second (a hand target)', r.ok && !r.done && P0.hand.length === h0 + dn && o.targets.length === P0.hand.length && /^h\d/.test(o.targets[0].ref));
 r = S.apply(0, o, o.targets[0].ref);
 ok('...the second step trashes the chosen card and the chain is done', r.ok && r.done && P0.hand.length === h0 + dn - 1);
 /* continuous: +N power while [DON!! x1], read live, gone when the DON!! leaves */
-P0.chars = [{ id: +stat[0], rested: false, don: 0, turn: 3 }]; const base = parseInt(V.CAT.byId.get(+stat[0]).power, 10) || 0;
+P0.chars = [onField(+stat[0], 3)]; const base = parseInt(V.CAT.byId.get(+stat[0]).power, 10) || 0;
 ok('a continuous [DON!! x1] +power is NOT counted with no DON!! (class 2)', S.power(0, 0) === base);
 P0.chars[0].don = 1;
 ok('...and is counted, live, with one attached (base + 1000 + the effect)', S.power(0, 0) === base + 1000 + stat[1].do[0].n);
@@ -1196,7 +1130,7 @@ P0.hand.push(+activ[0]); const tr0 = P0.trash.length;
 o = S.offers(0, 'trigger', null, +activ[0], true)[0]; r = S.apply(0, o, null);
 ok('"Activate this card\'s [On Play] effect" follows on with that effect if it is scripted, and the Trigger card is trashed after (§10-2)', r.ok && r.done && P0.trash.includes(+activ[0]) && P0.trash.length === tr0 + 1 && !P0.hand.includes(+activ[0]));
 /* search: the top N are looked at, only the typed ones are offered, the rest go to the bottom in order */
-P0.chars = [{ id: +search[0], rested: false, don: 0, turn: 3 }]; const d = search[1].do[0]; const dty = (d.types || [d.type])[0];
+P0.chars = [onField(+search[0], 3)]; const d = search[1].do[0]; const dty = (d.types || [d.type])[0];
 const want = V.CAT.rows.find(p => p.type === 'Character' && (p.subtypes || '').split(/[;/]/).map(x => x.trim()).includes(dty) && p.name !== d.not);
 const filler = V.CAT.rows.find(p => p.type === 'Character' && !(p.subtypes || '').includes(dty));
 P0.deck = [filler.id, want.id, filler.id, filler.id, filler.id, filler.id, filler.id, 999]; const L = P0.deck.length; const hh = P0.hand.length;
@@ -1206,14 +1140,14 @@ r = S.apply(0, o, 'd1');
 while (!r.done) r = S.apply(0, o, null);   // the 'rest to the bottom' step (take 51 split it out)
 ok('...the chosen one goes to hand and the rest of the N go to the bottom, deck size intact', r.ok && P0.hand.length === hh + 1 && P0.deck.length === L - 1 && P0.deck[P0.deck.length - 1] === filler.id && (P0.looking || []).length === 0);
 /* the board's timings exist in code */
-ok('the board offers [End of Your Turn] before ending, [On Block] at the block, and [Trigger]/[On K.O.] on the defender\'s result screen',
-   /simOfferAll\(g\.active, 'endturn'\)/.test(js) && /simOffer\(g\.battle\.def, 'onblock', ref\)/.test(js) && /simOffer\(def, 'trigger', null, l\.id, true\)/.test(js) && /simOffer\(def, 'onko', null, res\.koId\)/.test(js) && /data-sim="post"/.test(js));
+ok('the board offers [End of Your Turn] before ending, [On Block] at the block, and [Trigger]/[On K.O.] on the defender\'s result screen (take 122: the engine queues them; the screen draws the queue)',
+   /on\(P, i, 'endturn'\)/.test(js) && /this\.offers\(i, 'onblock', a\.k\)/.test(js) && /this\.offers\(i, 'trigger', null, l\.id, true\)/.test(js) && /this\.offers\(i, 'onko', null, res\.koId\)/.test(js) && /data-sim="post"/.test(js));
 S.g = null;
 }
 
 {
 section('take 49 — costs before actions; Events at their two timings');
-const FX = V.CAT.effects; const fxIds = Object.keys(FX); const S = V.SIM;
+const FX = scripted(V.CAT.effects); const fxIds = Object.keys(FX); const S = V.SIM;
 const find = (rx, t) => fxIds.map(k => [k, FX[k].find(e => rx.test(e.raw) && (!t || e.t === t))]).find(x => x[1]);
 const trashCost = find(/^\[On Play\] You may trash 1 card from your hand: K\.O\. up to 1 of your opponent's Characters with a cost of (\d+) or less\.$/);
 const donCost = fxIds.map(k => [k, FX[k].find(e => e.do[0].a === 'cost_returndon' && e.do.length === 2 && ['onplay', 'main', 'attack'].includes(e.t) && ['draw', 'ko', 'rest', 'selfpower'].includes(e.do[1].a) && V.CAT.byId.get(+k).type === 'Character')]).find(x => x[1]);
@@ -1224,11 +1158,11 @@ const pfh = fxIds.map(k => [k, FX[k].find(e => e.t === 'onplay' && e.do[0].a ===
 ok('real cards exist for each: a trash cost, a DON!! cost, a rest-self cost, a [Main] Event, a [Counter] +power Event, play-from-hand', !!(trashCost && donCost && restCost && evMain && evCounter && pfh), [trashCost, donCost, restCost, evMain, evCounter, pfh].map(x => !!x).join());
 const PL6 = new Function('return ' + js.match(/function parseListLine\(raw\) \{[\s\S]*?\n\}/)[0])();
 const mk = () => { const d = V.DECKS.blank(); for (const raw of fs.readFileSync(path.join(ROOT, 'showcase', 'deck.txt'), 'utf8').split(/\r?\n/)) { const line = raw.trim(); if (!line || line.startsWith('#')) continue; const m = PL6(line); const num = m[2].toUpperCase(); const p = (V.CAT.byNum.get(num) || []).filter(x => x.num === num).sort((a, b) => (a.market || 9e9) - (b.market || 9e9))[0]; if (p.type === 'Leader') d.leader = p.id; else d.cards.push({ id: p.id, n: +m[1] }); } return d; };
-const g = S.new(mk(), mk(), 0); S.mulligan(0, false); S.mulligan(1, false); S.endTurn(); S.endTurn();
+const g = S.new(mk(), mk(), 0, { seed: 49 }); S.mulligan(0, false); S.mulligan(1, false); S.endTurn(); S.endTurn();
 const P0 = g.players[0], P1 = g.players[1];
 /* a trash cost: step one is the cost with hand targets; skipping it is declining */
-P0.chars = [{ id: +trashCost[0], rested: false, don: 0, turn: 3 }]; const kmax = +trashCost[1].do[1].cost;
-P1.chars = [{ id: V.CAT.rows.find(p => p.type === 'Character' && S.cost(p) <= kmax).id, rested: false, don: 0, turn: 1 }];
+P0.chars = [onField(+trashCost[0], 3)]; const kmax = +trashCost[1].do[1].cost;
+P1.chars = [onField(V.CAT.rows.find(p => p.type === 'Character' && S.cost(p) <= kmax).id, 1)];
 let o = S.offers(0, 'onplay', 0)[0]; const h0 = P0.hand.length, t0 = P0.trash.length;
 ok('the cost is the first step and its targets are the hand', o && o.steps[0].a === 'cost_trashhand' && o.targets.length === h0);
 let r = S.apply(0, o, o.targets[0].ref);
@@ -1238,13 +1172,13 @@ ok('...and the K.O. lands', r.ok && r.done && P1.chars.length === 0);
 P0.hand = [];
 ok('with an empty hand the trash-cost effect is not offered at all (the cost cannot be paid)', S.offers(0, 'onplay', 0).length === 0);
 /* a DON!! cost returns DON!! to the DON!! deck from the field, active first */
-P0.chars = [{ id: +donCost[0], rested: false, don: 0, turn: 3 }]; const dn = donCost[1].do[0].n; P0.don.active = 8; P0.don.rested = 2; P0.donDeck = 0; P1.chars = [{ id: V.CAT.rows.find(p => p.type === 'Character' && p.num && S.cost(p) <= 1).id, rested: true, don: 0, turn: 1 }];
+P0.chars = [onField(+donCost[0], 3)]; const dn = donCost[1].do[0].n; P0.don.active = 8; P0.don.rested = 2; P0.donDeck = 0; P1.chars = [onField(V.CAT.rows.find(p => p.type === 'Character' && p.num && S.cost(p) <= 1).id, 1, true)];
 o = S.offers(0, donCost[1].t, 0)[0]; r = S.apply(0, o, null);
-ok(`DON!! −${dn} returns that many DON!! to the DON!! deck, active first, then the action waits for its target`, r.ok && !r.done && P0.don.active === 8 - dn && P0.donDeck === dn && o.targets.length === 1);
+ok(`DON!! \u2212${dn} returns that many DON!! to the DON!! deck, rested first (take 122: the player picks, §8-3-1-6; rested ones cost nothing this turn), then the action waits for its target`, r.ok && !r.done && P0.don.rested === Math.max(0, 2 - dn) && P0.don.active === 8 - Math.max(0, dn - 2) && P0.donDeck === dn && o.targets.length === 1);
 P0.don.active = 0; P0.don.rested = 0; P0.leader.don = 0; P0.chars[0].don = 0; P0.used = {};
 ok('with no DON!! on the field it is not offered', S.offers(0, donCost[1].t, 0).length === 0);
 /* a rest-self cost rests the source; a rested source cannot pay */
-P0.chars = [{ id: +restCost[0], rested: false, don: 0, turn: 3 }]; P0.used = {}; P1.chars = [{ id: V.CAT.rows.find(p => p.type === 'Character' && p.num && S.cost(p) <= 1).id, rested: true, don: 0, turn: 1 }];
+P0.chars = [onField(+restCost[0], 3)]; P0.used = {}; P1.chars = [onField(V.CAT.rows.find(p => p.type === 'Character' && p.num && S.cost(p) <= 1).id, 1, true)];
 o = S.offers(0, restCost[1].t, 0)[0];
 ok('"You may rest this Character:" is offered while the Character is active', !!o && o.steps[0].a === 'cost_restself');
 r = S.apply(0, o, null);
@@ -1255,8 +1189,8 @@ ok('...and rested, it is not offered (negative control)', S.offers(0, restCost[1
 P0.hand = [+evMain[0]]; P0.don.active = 10;
 r = S.play(0, 0);
 ok('a [Main] Event is played for its cost and goes to the trash; its effect is then offered at the evmain timing', r.ok && P0.trash.includes(+evMain[0]) && S.offers(0, 'evmain', null, +evMain[0]).length === 1);
-P1.hand = [+evCounter[0]]; P1.don.active = 10; P1.chars = []; P0.chars = [{ id: V.CAT.rows.find(p => p.type === 'Character' && p.num).id, rested: false, don: 0, turn: 1 }];
-P0.mods.leader = 0; S.attack(0, 'leader', 'leader'); S.noBlock();
+P1.hand = [+evCounter[0]]; P1.don.active = 10; P1.chars = []; P0.chars = [onField(V.CAT.rows.find(p => p.type === 'Character' && p.num).id, 1)];
+P0.modl = []; S.attack(0, 'leader', 'leader'); S.noBlock();
 const ce = S.counterEvents();
 ok('in the counter step the defender is offered the [Counter] Event they can afford', ce.length === 1 && ce[0].h === 0);
 const d0 = S.power(1, 'leader'); r = S.playCounterEvent(0);
@@ -1266,7 +1200,7 @@ S.apply(1, off[0], 'L');
 ok('...applied to the Leader, the battle power rises by the stated amount', S.battlePowers().d === d0 + evCounter[1].do[0].n);
 S.resolve();
 /* play from hand: only Characters under the cost line; free */
-P0.chars = [{ id: +pfh[0], rested: false, don: 0, turn: 5 }]; const lim = pfh[1].do[0];
+P0.chars = [onField(+pfh[0], 5)]; const lim = pfh[1].do[0];
 const ty = lim.type; const has = p => !ty || (p.subtypes || '').split(/[;/]/).map(y => y.trim()).includes(ty);
 const under = p => (lim.cost == null || S.cost(p) <= lim.cost) && (lim.power == null || (parseInt(p.power, 10) || 0) <= lim.power);
 const okc = V.CAT.rows.find(p => p.type === 'Character' && p.num && under(p) && has(p)), big = V.CAT.rows.find(p => p.type === 'Character' && p.num && !under(p) && has(p)), evt = V.CAT.rows.find(p => p.type === 'Event' && p.num);
@@ -1280,7 +1214,7 @@ S.g = null;
 
 {
 section('take 50 — two sentences, "that card", and when a modifier ends');
-const FX = V.CAT.effects; const fxIds = Object.keys(FX); const S = V.SIM;
+const FX = scripted(V.CAT.effects); const fxIds = Object.keys(FX); const S = V.SIM;
 const find = (rx, t) => fxIds.map(k => [k, FX[k].find(e => rx.test(e.raw) && (!t || e.t === t))]).find(x => x[1]);
 const two = fxIds.map(k => [k, FX[k].find(e => e.do.length >= 2 && !/^cost_/.test(e.do[0].a) && /\. Then, |\. [A-Z]/.test(e.raw.replace(/^(\[[^\]]+\]\s*)+/, '')))]).find(x => x[1]);
 const that = fxIds.map(k => [k, FX[k].find(e => e.do.some(st => st.a === 'power' && st.who === 'prev') && e.do[0].a === 'power' && e.do[0].who === 'own')]).find(x => x[1]);
@@ -1288,25 +1222,25 @@ ok('real cards: a two-sentence chain and a "that card gains an additional" chain
 ok('a two-sentence effect is its two templates in order', two[1].do.length >= 2);
 const PL7 = new Function('return ' + js.match(/function parseListLine\(raw\) \{[\s\S]*?\n\}/)[0])();
 const mk = () => { const d = V.DECKS.blank(); for (const raw of fs.readFileSync(path.join(ROOT, 'showcase', 'deck.txt'), 'utf8').split(/\r?\n/)) { const line = raw.trim(); if (!line || line.startsWith('#')) continue; const m = PL7(line); const num = m[2].toUpperCase(); const p = (V.CAT.byNum.get(num) || []).filter(x => x.num === num).sort((a, b) => (a.market || 9e9) - (b.market || 9e9))[0]; if (p.type === 'Leader') d.leader = p.id; else d.cards.push({ id: p.id, n: +m[1] }); } return d; };
-const g = S.new(mk(), mk(), 0); S.mulligan(0, false); S.mulligan(1, false); S.endTurn(); S.endTurn();
+const g = S.new(mk(), mk(), 0, { seed: 50 }); S.mulligan(0, false); S.mulligan(1, false); S.endTurn(); S.endTurn();
 const P0 = g.players[0], P1 = g.players[1];
 /* "that card": the second step lands on the card the first step chose, and its own condition is read at that step */
-P0.chars = [{ id: +that[0], rested: false, don: 0, turn: 3 }]; P0.life = P0.life.slice(0, 5);
+P0.chars = [onField(+that[0], 3)]; P0.life = P0.life.slice(0, 5);
 let o = S.offers(0, that[1].t, 0)[0]; const stepIf = that[1].do.find(st => st.who === 'prev').if || [];
 const lp = S.power(0, 'leader'); let r = S.apply(0, o, 'L');
 ok('step one puts +N on the chosen card (the Leader here)', r.ok && !r.done && S.power(0, 'leader') === lp + that[1].do[0].n);
 const met = stepIf.every(c => S.condOk(0, P0.chars[0], c)); const lp2 = S.power(0, 'leader'); r = S.apply(0, o, null);
 ok('step two targets "that card" with no new choice, and applies only if its own condition holds NOW', r.ok && r.done && S.power(0, 'leader') === lp2 + (met ? that[1].do[1].n : 0), `condition met: ${met}`);
 /* durations: "during this turn" on the opponent's card ends at the END of this turn, not at their refresh */
-P1.chars = [{ id: V.CAT.rows.find(p => p.type === 'Character' && p.num).id, rested: false, don: 0, turn: 1 }];
-const base1 = S.power(1, 0); S.mod(1, P1.chars[0].id + ':0', -2000, 'turn');
+P1.chars = [onField(V.CAT.rows.find(p => p.type === 'Character' && p.num).id, 1)];
+const base1 = S.power(1, 0); S.mod(1, 'u' + P1.chars[0].uid, -2000, 'turn');
 ok('a -power "during this turn" on the opponent\'s card is live now', S.power(1, 0) === base1 - 2000);
 S.endTurn();
 ok('...and gone at the end of the turn, before the opponent even refreshes (the take-50 fix)', S.power(1, 0) === base1);
 /* "until the start of your next turn" persists through the opponent\'s turn and clears at the source\'s refresh */
 S.endTurn();   // back to player 0
-P0.chars = [{ id: V.CAT.rows.find(p => p.type === 'Character' && p.num).id, rested: false, don: 0, turn: 5 }]; const b0 = S.power(0, 0);
-S.mod(0, P0.chars[0].id + ':0', 3000, 'nextturn');
+P0.chars = [onField(V.CAT.rows.find(p => p.type === 'Character' && p.num).id, 5)]; const b0 = S.power(0, 0);
+S.mod(0, 'u' + P0.chars[0].uid, 3000, 'nextturn');
 ok('an until-your-next-turn bonus is live', S.power(0, 0) === b0 + 3000);
 S.endTurn();
 ok('...still live during the opponent\'s turn', S.power(0, 0) === b0 + 3000);
@@ -1317,10 +1251,10 @@ S.g = null;
 
 {
 section('take 51 — searches in every phrasing, keyword grants, cost changes, ids that follow the card');
-const FX = V.CAT.effects; const fxIds = Object.keys(FX); const S = V.SIM;
+const FX = scripted(V.CAT.effects); const fxIds = Object.keys(FX); const S = V.SIM;
 const actions = new Set(); for (const k of fxIds) for (const e of FX[k]) for (const st of e.do) actions.add(st.a);
-ok('every action the parser emits is one the engine handles (a name the engine lacks would run nothing, silently)', [...actions].every(a => new RegExp("d\\.a === '" + a + "'").test(js)), [...actions].filter(a => !new RegExp("d\\.a === '" + a + "'").test(js)).join());
-ok('no two actions share a name for different things (the take-51 collision: search-rest vs rest-a-character)', actions.has('restcards') && actions.has('rest') && /d\.a === 'restcards'/.test(js));
+ok('every action the parser emits is one the engine handles (a name the engine lacks would run nothing, silently)', [...actions].every(a => typeof S.DO[a] === 'function'), [...actions].filter(a => typeof S.DO[a] !== 'function').join());   // take 122: the handlers are the table SIM.DO
+ok('no two actions share a name for different things (the take-51 collision: search-rest vs rest-a-character)', actions.has('restcards') && actions.has('rest') && S.DO.restcards !== S.DO.rest);
 const find = (pred) => fxIds.map(k => [k, FX[k].find(pred)]).find(x => x[1]);
 const two = find(e => e.do[0].a === 'search' && ((e.do[0].types || []).length + (e.do[0].names || []).length) === 2);
 const named = find(e => e.do[0].a === 'search' && e.do[0].name);
@@ -1334,7 +1268,7 @@ const neg = find(e => e.do[0].a === 'power' && e.do[0].sign_inferred && e.if.len
 ok('real cards for each: two-type search, named search, trash-the-rest, cost-then-K.O., Rush grant on play, Double Attack when attacking, continuous Rush, the sign-inferred reduction', !!(two && named && trashRest && cm && koC && rushT && daT && rushS && neg), [two, named, trashRest, cm, koC, rushT, daT, rushS, neg].map(x => !!x).join());
 const PL8 = new Function('return ' + js.match(/function parseListLine\(raw\) \{[\s\S]*?\n\}/)[0])();
 const mk = () => { const d = V.DECKS.blank(); for (const raw of fs.readFileSync(path.join(ROOT, 'showcase', 'deck.txt'), 'utf8').split(/\r?\n/)) { const line = raw.trim(); if (!line || line.startsWith('#')) continue; const m = PL8(line); const num = m[2].toUpperCase(); const p = (V.CAT.byNum.get(num) || []).filter(x => x.num === num).sort((a, b) => (a.market || 9e9) - (b.market || 9e9))[0]; if (p.type === 'Leader') d.leader = p.id; else d.cards.push({ id: p.id, n: +m[1] }); } return d; };
-const g = S.new(mk(), mk(), 0); S.mulligan(0, false); S.mulligan(1, false); S.endTurn(); S.endTurn();
+const g = S.new(mk(), mk(), 0, { seed: 51 }); S.mulligan(0, false); S.mulligan(1, false); S.endTurn(); S.endTurn();
 const P0 = g.players[0], P1 = g.players[1];
 const sub = (p, t) => (p.subtypes || '').split(/[;/]/).map(x => x.trim()).includes(t);
 /* two-type search: either type is revealed, the excluded name is not */
@@ -1352,7 +1286,8 @@ const sub = (p, t) => (p.subtypes || '').split(/[;/]/).map(x => x.trim()).includ
 { P0.chars = [S.inst(+trashRest[0], 3)]; const n = trashRest[1].do[0].n; const x = V.CAT.rows.find(p => p.type === 'Character' && p.num && !(p.subtypes || '').includes((trashRest[1].do[0].types || ['~'])[0]));
   P0.deck = Array(n + 3).fill(x.id); const t0 = P0.trash.length, L = P0.deck.length; const o = S.offers(0, trashRest[1].t, 0)[0];
   let r = S.apply(0, o, null); while (!r.done) r = S.apply(0, o, null);
-  ok('"Trash the rest": the looked-at cards go to the trash, not the bottom', r.ok && P0.trash.length === t0 + n && P0.deck.length === L - n); }
+  ok('"Trash the rest": the looked-at cards go to the trash, not the bottom', r.ok && P0.trash.length === t0 + n && P0.deck.length === L - n);
+  P0.deck.push(...Array(20).fill(x.id)); }   // take 122: an empty deck is a defeat at once (§9-2-1-2), so the planted deck is kept deep for what follows
 /* cost change, then K.O. under the new cost */
 { const d0 = cm[1].do[0], d1 = koC[1].do[0]; const tgt = V.CAT.rows.find(p => p.type === 'Character' && p.num && S.cost(p) === d1.cost + 1);   // one over the K.O. line before the change
   P0.chars = [S.inst(+cm[0], 3), S.inst(+koC[0], 3)]; P1.chars = [S.inst(tgt.id, 1)];
@@ -1371,7 +1306,7 @@ const sub = (p, t) => (p.subtypes || '').split(/[;/]/).map(x => x.trim()).includ
   ok('with [Rush] granted for the turn, it can', S.canAttack(0, 0).ok === true && S.kwOf(0, 0).includes('Rush'), JSON.stringify(rushT[1].do));
   S.endTurn(); S.endTurn();
   ok('...and the grant is gone next turn', !S.kwOf(0, 0).includes('Rush') || (V.CAT.byId.get(+rushT[0]).kw || '').includes('Rush')); }
-{ P0.chars = [S.inst(+daT[0], 1)]; P0.mods = {}; P1.mods = {}; P1.chars = []; P1.life = P1.life.length >= 2 ? P1.life : P1.deck.splice(0, 2); const lb = P1.life.length;
+{ P0.chars = [S.inst(+daT[0], 1)]; P0.modl = []; P1.modl = []; P1.chars = []; P1.life = P1.life.length >= 2 ? P1.life : P1.deck.splice(0, 2); const lb = P1.life.length;
   const need = daT[1].if.find(c => c.c === 'donx'); P0.chars[0].don = need ? need.n : 1;
   S.mod(0, 'u' + P0.chars[0].uid, 99999, 'turn');
   S.attack(0, 0, 'leader'); S.noBlock(); const res = S.resolve();
@@ -1418,35 +1353,29 @@ section('take 55 — the opponent: whole games, bot against bot, with every card
 const S = V.SIM, B = V.BOT;
 const PL10 = new Function('return ' + js.match(/function parseListLine\(raw\) \{[\s\S]*?\n\}/)[0])();
 const mk = () => { const d = V.DECKS.blank(); for (const raw of fs.readFileSync(path.join(ROOT, 'showcase', 'deck.txt'), 'utf8').split(/\r?\n/)) { const line = raw.trim(); if (!line || line.startsWith('#')) continue; const m = PL10(line); const num = m[2].toUpperCase(); const p = (V.CAT.byNum.get(num) || []).filter(x => x.num === num).sort((a, b) => (a.market || 9e9) - (b.market || 9e9))[0]; if (p.type === 'Leader') d.leader = p.id; else d.cards.push({ id: p.id, n: +m[1] }); } return d; };
-/* deterministic shuffles for the test */
-let seed = 7; const _rnd = ctx.Math.random; ctx.Math.random = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
-const zones = P => P.deck.length + P.hand.length + P.life.length + P.trash.length + P.chars.length + (P.stage ? 1 : 0) + 1 + (P.looking || []).length;
+/* take 122: the engine shuffles with its own seed; both seats play through the one entry point (BOT.move -> SIM.act)
+   and the invariants are read after EVERY move, not once a turn */
+const zones = P => P.deck.length + P.hand.length + P.life.length + P.trash.length + P.chars.length + (P.stage != null ? 1 : 0) + 1 + P.looking.length;
 const donSum = P => P.don.active + P.don.rested + P.donDeck + P.leader.don + P.chars.reduce((a, c) => a + c.don, 0);
-const invariants = g => g.players.every(P => zones(P) === 51 && donSum(P) === 10 && P.chars.length <= 5 && P.don.active >= 0 && P.don.rested >= 0 && P.life.length >= 0);
-const playOne = (first) => {
-  const g = S.new(mk(), mk(), first); g.bot = 1;                      // player 1 is the bot; player 0 is driven by the same policy here
-  S.mulligan(0, false); S.mulligan(1, false);
-  let turns = 0, broke = null, actions = 0;
-  while (g.phase !== 'over' && turns < 90) {
-    if (!invariants(g)) { broke = `invariants at turn ${g.turn}: ` + g.players.map(P => `${zones(P)}/${donSum(P)}/${P.chars.length}`).join(' '); break; }
-    const i = g.active; g.bot = i;                                     // both seats play the bot's policy
-    let guard = 0, did;
-    do { did = B.step(); actions++;
-      if (g.phase === 'battle') { g.bot = g.battle.def; B.defend(); g.bot = i; const res = S.resolve(); if (res && g.phase !== 'over') { const def = 1 - i; g.bot = def; res.life.forEach(l => { if (!l.banished) B.offers(def, 'trigger', null, l.id, true); }); if (res.koId) B.offers(def, 'onko', null, res.koId); g.bot = i; } }
-    } while (g.phase === 'main' && g.active === i && did !== 'end' && guard++ < 40);
-    turns++;
-  }
-  return { g, turns, broke, actions };
-};
-const r1 = playOne(0), r2 = playOne(1);
+const invariants = g => g.players.every(P => zones(P) === 51 && donSum(P) === 10 && P.chars.length <= 5 && P.don.active >= 0 && P.don.rested >= 0);
+const playOne = (first, seed) => { const g = S.new(mk(), mk(), first, { seed }); let moves = 0, broke = null;
+  while (g.over === null && moves < 6000) { const w = S.who(); const a = B.move(w); if (!a) { broke = `no move for seat ${w} at turn ${g.turn} (${g.phase})`; break; } moves++;
+    if (!invariants(g)) { broke = `after move ${moves} (${JSON.stringify(a)}) at turn ${g.turn}: ` + g.players.map(P => `${zones(P)}/${donSum(P)}/${P.chars.length}`).join(' '); break; } }
+  return { g, turns: g.turn, broke, actions: moves }; };
+const r1 = playOne(0, 7), r2 = playOne(1, 8);
 ok('a bot-versus-bot game runs to a defeat, from either first player', r1.g.phase === 'over' && r2.g.phase === 'over', `${r1.turns} and ${r2.turns} turns; over=${r1.g.over},${r2.g.over}`);
-ok('every card was in exactly one zone every turn, DON!! summed to ten, never six Characters (class 4, as a running invariant)', !r1.broke && !r2.broke, r1.broke || r2.broke || '');
+ok('every card was in exactly one zone after every move, DON!! summed to ten, never six Characters (class 4, as a running invariant)', !r1.broke && !r2.broke, r1.broke || r2.broke || '');
 ok('the games were real games: attacks were declared and Life was taken', r1.g.log.some(l => /attacks/.test(l)) && r1.g.players.some(P => P.life.length < 5) && r1.actions > 20, String(r1.actions));
-ok('the winner is named by the log line the rules require (defeat by damage with no Life, or by an empty deck)', /defeat/.test(r1.g.log.find(l => /defeat/.test(l)) || ''));
-ctx.Math.random = _rnd;
-/* the board wiring: no curtain against the app, the human always on screen, the app defends at once */
-ok('against the app there is no curtain and the human\'s screen is always the one shown', /if \(SIM\.g && SIM\.g\.bot != null\) return; const c = \$\('#simCurtain'\)/.test(js) && /i = 1 - g\.bot;/.test(js));
-ok('the app defends the moment it is attacked, and its block/counter are shown before the human resolves', /if \(g\.bot === g\.battle\.def\) \{ BOT\.defend\(\); paintSim\(\); return; \}/.test(js) && /The app defends/.test(js));
+ok('the winner is named by the log line the rules require (defeat by damage with no Life, or by an empty deck)', r1.g.log.some(l => /defeat/.test(l)));
+/* a game is its seed and its moves (take 122): what a Report carries, and what two phones will exchange */
+const snap = g => JSON.stringify({ p: g.players, t: g.turn, a: g.active, o: g.over, ph: g.phase });
+const live1 = snap(r1.g), rp = S.replay(r1.g.spec, r1.g.actions);
+ok('a game is its seed and its moves: replayed, it ends in exactly the same state', rp.ok && snap(rp.g) === live1, rp.why || '');
+const cut = r1.g.actions.slice(); cut.splice(Math.floor(cut.length / 2), 1); const rc = S.replay(r1.g.spec, cut);
+ok('...control: with one move taken out, the replay does not end the same', !rc.ok || snap(rc.g) !== live1);
+/* the board wiring: no curtain against the app, the human always on screen, the app's block and counter shown before Resolve */
+ok('against the app there is no curtain and the human\'s screen is always the one shown', /if \(SIM\.g && SIM\.g\.bot != null\) return; const c = \$\('#simCurtain'\)/.test(js) && /if \(g\.bot != null\) return 1 - g\.bot;/.test(js));
+ok('the app defends the moment it is attacked, and its block/counter are shown before the human resolves', /g\.battle\.att !== g\.bot \? \['resolve'\] : \[\]/.test(js) && /The app defends/.test(js));
 ok('the setup offers the app as an opponent and says what it is', /never sees your hand/.test(js));
 S.g = null;
 }
@@ -2187,7 +2116,7 @@ V.RELF.open = new Set(); V.DISTF.open.clear(); V.HUNT.feed = null; V.RELALERTS.l
 
 section('take 98 — the take-97 look: Back from a sheet goes back (landmine 137), the most-valuable rows open, one splash colour, a toast that wraps, the decks fold, a condition tap that works');
 /* landmine 137: the card sheet is a screen; it must not be in the overlay list, and the handler's sequence must land on the previous screen */
-ok('closeAnyOverlay() lists overlays only: the sheets, the tour and the curtain — never the card sheet', /for \(const id of \['#picker', '#filters', '#leaderPick', '#printPick', '#tour', '#simCurtain'\]\)/.test(js) && !/for \(const id of \[[^\]]*'#detail'/.test(js));   // take 107 added the three sheets Back skipped
+ok('closeAnyOverlay() lists overlays only: the sheets (the Rules sheet since take 122), the tour and the curtain \u2014 never the card sheet', /for \(const id of \['#picker', '#filters', '#leaderPick', '#printPick', '#rulesSheet', '#tour', '#simCurtain'\]\)/.test(js) && !/for \(const id of \[[^\]]*'#detail'/.test(js));   // take 107 added the three sheets Back skipped
 if (V.guideClose) V.guideClose(false);   // take 116: the boot timer opened the guide inside this stub (its first await is above), and it is an overlay now: Back would close it first
 { const box98 = V.CAT.rows.find(p => V.SEALED.isProduct(p)); V.MODE.set('hunt', false); V.go('sealed'); V.openDetail(box98.id);
   const top0 = V.NAV.stack[V.NAV.stack.length - 1]; const closed = V.closeAnyOverlay(); const back = V.NAV.back(); const top1 = V.NAV.stack[V.NAV.stack.length - 1];
@@ -4231,15 +4160,15 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
     const shot = () => { V.paintSim(); boards.push(doc.getElementById('simBoard')._html); };
     holds(() => V.paintDecks()); holds(() => V.openDeck(dA.id)); const dkStats = (doc.getElementById('dkStats') || {})._html || '';
     holds(() => V.paintCards()); holds(() => V.paintPlay());
-    SIM4.g = null; SU.sel = null; SU.post = null; SU.result = null; SU.offer = null; holds(() => V.go('sim')); shot();
-    const g4 = SIM4.new(dA, dB, 0); SIM4.mulligan(0, false); SIM4.mulligan(1, false);
+    SIM4.g = null; SU.sel = null; SU.post = null; SU.result = null; holds(() => V.go('sim')); shot();
+    const g4 = SIM4.new(dA, dB, 0, { seed: 104 }); SIM4.mulligan(0, false); SIM4.mulligan(1, false);
     holds(() => SIM4.giveDon(0, 'leader')); SU.sel = { ref: 'leader' }; shot(); const mainBoard = boards[boards.length - 1];
-    SU.sel = null; SIM4.endTurn(); SIM4.endTurn(); const P0 = SIM4.P(0); P0.leader.rested = false; P0.mods = { leader: 0 };
+    SU.sel = null; SIM4.endTurn(); SIM4.endTurn(); const P0 = SIM4.P(0); P0.leader.rested = false; P0.modl = [];
     const att = holds(() => SIM4.attack(0, 'leader', 'leader')); shot(); const blockBoard = boards[boards.length - 1];
     holds(() => SIM4.noBlock()); shot(); const counterBoard = boards[boards.length - 1];
-    const res4 = holds(() => SIM4.resolve()); if (res4) { SU.result = res4; SU.post = { i: 1, att: 0 }; } shot(); const postBoard = boards[boards.length - 1];
-    SU.post = null; SU.result = null; SU.offer = { i: g4.active, list: [{ e: { raw: 'A4 probe: draw 1 card.' }, steps: [{ a: 'draw' }], step: 0, targets: null, ref: null, cardId: dA.leader }] }; shot(); const offerBoard = boards[boards.length - 1];
-    SU.offer = null; g4.phase = 'over'; g4.over = 0; shot();
+    const res4 = holds(() => SIM4.resolve()); if (res4) SU.post = { i: 1, att: 0, res: res4 }; shot(); const postBoard = boards[boards.length - 1];   // take 122: the post screen carries its result
+    SU.post = null; SU.result = null; g4.queue = [{ i: g4.active, e: { raw: 'A4 probe: draw 1 card.', t: 'onplay', if: [], do: [{ a: 'draw', n: 1 }] }, steps: [{ a: 'draw', n: 1 }], step: 0, targets: null, ref: null, cardId: dA.leader, hand: false }]; shot(); const offerBoard = boards[boards.length - 1];   // take 122: an offer waits in the engine's queue
+    g4.queue = []; g4.phase = 'over'; g4.over = 0; shot();
     /* take 115 (self-review): the Play screens' roots are read whether or not this block changed them -- an earlier
        section left the counter painted with the same markup, so its paint here was no change and never read */
     const read4 = ['dkList', 'dkRows', 'cdRes', 'plBoard'], rootHtml = k => (doc.getElementById(k) || {})._html || '';
@@ -4277,10 +4206,10 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
     ok('(the look) a Sim button beside a note that can grow keeps its width, in a row that wraps: Hand back, Skip (Hand back broke onto two lines at 411)', holdsWidth(js));
     ok('...control: the rows as A4 first wrote them are caught', !holdsWidth('<div class="row" style="margin-top:10px"><button class="ghost go" data-sim="post">Hand back</button><span class="note" style="margin:0">to X</span></div><div class="row" style="gap:10px;margin-top:8px"><button class="ghost" data-sim="fxskip">Skip</button><span class="note" style="margin:0">play it by hand</span></div>'));
     ok('...control: take 114\'s labels are caught', wordy('<button class="ghost go" data-sim="end">End turn \\u2014 pass the phone</button><button class="ghost go" data-sim="resolve">Resolve \\u2014 ${pw.a} vs ${pw.d}${pw.a >= pw.d ? \': hit\' : \': held\'}</button><button data-sim="block:1">Block with ${esc(x.name)}</button>').length === 2);
-    ok('...and what happens is said beside them, on the painted board: then pass the phone, then the counter step, who has hit, to whom the phone goes, play it by hand',
+    ok('...and what happens is said beside them, on the painted board: then pass the phone, then the counter step, who has hit, to whom the phone goes, decline it (take 122: Skip declines; Resolve by hand is its own button)',
        /data-sim="end">End turn<\/button><span class="note"[^>]*>then pass the phone<\/span>/.test(mainBoard) && /data-sim="noblock"[^>]*>No block<\/button><span class="note"[^>]*>then the counter step<\/span>/.test(blockBoard)
        && /data-sim="resolve"[^>]*>Resolve<\/button><span class="note"[^>]*>\d+ vs \d+: (?:hit|held)<\/span>/.test(counterBoard) && /data-sim="post"[^>]*>Hand back<\/button><span class="note"[^>]*>to [^<]+<\/span>/.test(postBoard)
-       && /data-sim="fxskip"[^>]*>Skip<\/button><span class="note"[^>]*>play it by hand<\/span>/.test(offerBoard), [mainBoard, blockBoard, counterBoard, postBoard, offerBoard].map(b => (b.match(/data-sim="(?:end|noblock|resolve|post|fxskip)"[^>]*>[^<]*<\/button>(?:<span[^>]*>[^<]*<\/span>)?/) || ['-'])[0]).join(' | '));
+       && /data-sim="fxskip"[^>]*>Skip<\/button><span class="note"[^>]*>decline it<\/span>/.test(offerBoard), [mainBoard, blockBoard, counterBoard, postBoard, offerBoard].map(b => (b.match(/data-sim="(?:end|noblock|resolve|post|fxskip)"[^>]*>[^<]*<\/button>(?:<span[^>]*>[^<]*<\/span>)?/) || ['-'])[0]).join(' | '));
 
     /* (SPEC-110-45) keywords one way: the deck's stats chips as the game and the tour write them, the Sim's reasons without
        brackets, a Trigger named plainly, the want list by its name */
@@ -4297,7 +4226,7 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
     holds(() => V.openDeck(dN.id)); const noneCss = doc.getElementById('dkLead').style.cssText;
     ok('(SPEC-109-41) a deck\'s Leader box is the card\'s own colours under its picture -- both of a two-colour Leader -- offline or when the picture fails; a deck with no Leader keeps the plain box',
        !!L2 && leadCss === `--a1:${ac[0]};--a2:${ac[1]}` && /var\(--c-/.test(ac[1]) && ac[0] !== ac[1] && noneCss === '' && ruleVal(css, '.dkhead .lead', 'background') === 'linear-gradient(160deg,var(--a1,var(--card2)),var(--a2,var(--card2)))', `${leadCss} | ${ruleVal(css, '.dkhead .lead', 'background')}`);
-    V.DECKS.list = keepDecks; SIM4.g = null; SU.sel = null; SU.post = null; SU.result = null; SU.offer = null; V.MODE.set('collect', false); V.go('home');
+    V.DECKS.list = keepDecks; SIM4.g = null; SU.sel = null; SU.post = null; SU.result = null; V.MODE.set('collect', false); V.go('home');
 
     /* (STAN-106-2) nothing under 12 px as the browser draws it: every <small>, <sub> and <sup> the app writes, sized by the rule
        that reaches it or by the browser's own "smaller" (the size of its parent over 1.2) -- the literal-px check above passed
@@ -4358,7 +4287,7 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
     const label4 = a => unesc((a.match(/aria-label="([^"]*)"/) || [, ''])[1]);
     const misread = t => buttons4(t).flatMap(b => b.g.map(g => [g, b])).filter(([g, b]) => (g === 'minus' && !/^One fewer|\bdown$/.test(label4(b.a))) || (g === 'close' && !/\bdata-close=/.test(b.a))
          || (g === 'trash' && !/^(?:Remove|Delete|Stop watching|Trash)\b/.test(label4(b.a)))).map(([g, b]) => `g-${g} on "${label4(b.a) || b.a.slice(0, 40)}"`);
-    const removers = ['data-want=', 'data-alrm=', 'data-sim="trashhand:', 'aria-label="Stop watching ${esc(a.name)}"', 'data-localdel='];
+    const removers = ['data-want=', 'data-alrm=', 'aria-label="Stop watching ${esc(a.name)}"', 'data-localdel='];   // take 122: the Sim's free trash button is gone (landmine 212)
     const drawn = t => removers.map(r => buttons4(t).filter(b => b.a.includes(r)).map(b => b.g.join('+')).join('/'));
     const times = t => (t.match(/>\s*(?:\u00d7|&times;|&#215;|&#x[dD]7;|\\u00[dD]7)\s*<\/button>/g) || []).length;
     ok('(SPEC-108-34, SPEC-108-37) one glyph per meaning: a want, an alert, a stock watch, a note and the Sim\'s trash are removed with g-trash; g-minus is only "one fewer", g-close only closes a sheet; no remove drawn as a times sign',
@@ -4746,6 +4675,154 @@ try {
   C.state.scan = keep.scan; C.state.deck = keep.deck; C.state.earned = keep.earned; V.MAXLOCK.until = keep.until;
   if (keep.max == null) ctx.localStorage.removeItem('vault.maxUntil'); else ctx.localStorage.setItem('vault.maxUntil', keep.max);
 }
+}
+{
+section('take 122 \u2014 the Sim on one entry point: the rules of v1.2.1, a move as a transaction, by hand bounded, the Rules sheet, proofs, Report');
+const S = V.SIM, R = V.CAT.rows;
+const st01 = V.CAT.stock.find(d => d.id === 'stock-st01'), st02 = V.CAT.stock[1];
+const snapG = () => JSON.stringify(S.g);
+/* decline whatever waits, for whoever it waits on -- bounded, and it stops at a refusal */
+const skipAll = () => { for (let k = 0; k < 30 && S.g.queue.length; k++) if (!S.act(S.who(), S.g.hand ? { t: 'handdone' } : { t: 'fxskip' }).ok) break; };
+const deal = (a, b, first, seed) => { const x = S.new(a, b, first, { seed }); S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' }); return x; };
+/* whose decision: the mulligan in order (§5-2-1-6); a move from the wrong seat refused and changing nothing */
+let g = S.new(st01, st02, 1, { seed: 3 });
+ok('the mulligan is decided first by the first player (§5-2-1-6): who() names them, legal() is keep or mulligan', S.who() === 1 && JSON.stringify(S.legal(1)) === '[{"t":"keep"},{"t":"mull"}]' && S.legal(0).length === 0);
+const s0 = snapG(); const early = S.act(0, { t: 'keep' });
+ok('...a move from the other seat is refused and changes nothing', early.ok === false && /not your decision/.test(early.why) && snapG() === s0);
+/* Life: the deck's top card goes to the BOTTOM of Life (§5-2-1-7, §2-9-2-1) */
+const top = g.players.map(P => P.deck.slice(0, S.num(S.card(P.leader.id).life) || 5));
+S.act(1, { t: 'keep' }); S.act(0, { t: 'keep' });
+ok('Life is placed with the deck\'s top card at the bottom (§5-2-1-7): life[0], the top, was the last one placed', g.players.every((P, k) => JSON.stringify(P.life) === JSON.stringify(top[k].slice().reverse())));
+ok('...control: take 121\'s top-first order is not this one', g.players.some((P, k) => top[k].length > 1 && JSON.stringify(P.life) !== JSON.stringify(top[k])));
+/* a move is a transaction: a refused one restores the game exactly */
+const P1 = S.P(1); const dear = P1.hand.findIndex(id => S.cost(S.card(id)) > P1.don.active);
+const s1 = snapG(); const refused = S.act(1, { t: 'play', h: dear });
+ok('a refused move changes nothing and is not recorded (a play it cannot pay for)', dear >= 0 && refused.ok === false && /costs/.test(refused.why) && snapG() === s1);
+/* DON!!: +1000 on the owner's turn only (§6-5-5-2) */
+S.act(1, { t: 'give', ref: 'leader' }); const L1 = S.card(P1.leader.id);
+ok('§6-5-5-2: a given DON!! is +1000 on its owner\'s turn', S.power(1, 'leader') === S.num(L1.power) + 1000);
+S.act(1, { t: 'end' });
+ok('...and nothing on the opponent\'s turn, while it is still given (take 121 counted it for the defender)', g.active === 0 && P1.leader.don === 1 && S.power(1, 'leader') === S.num(L1.power));
+/* deck-out is rule processing (§9-2-1-2), not a failed draw */
+S.P(0).deck.splice(0); S.act(0, { t: 'give', ref: 'leader' });
+ok('§9-2-1-2: an empty deck is a defeat at the next rule processing -- after any move, not only a draw', g.over === 1 && g.phase === 'over' && g.log.some(l => /no cards in the deck \u2014 defeat \(§9-2-1-2\)/.test(l)));
+g = deal(st01, st02, 0, 4); S.P(0).deck.splice(1); S.act(0, { t: 'end' });
+const alive = g.over === null; S.act(1, { t: 'end' });
+ok('...control: one card left is no defeat; drawing it empties the deck, and the game ends then', alive && g.over === 1 && S.P(0).deck.length === 0);
+/* a Character that leaves: its given DON!! go home rested (§6-5-5-4) */
+g = deal(st01, st02, 0, 5); S.act(0, { t: 'end' }); S.act(1, { t: 'end' }); S.act(0, { t: 'end' });   // seat 1's second turn: it may battle
+const plain = R.find(p => p.type === 'Character' && p.num && !S.lines(p.text).length && !(p.kw || '').length && S.num(p.power) === 3000);
+const D = S.P(0); D.chars = [Object.assign(S.inst(plain.id, 1), { don: 2, rested: true })]; D.donDeck -= 2; const r0 = D.don.rested;
+S.mod(1, 'leader', 99999, 'turn'); S.act(1, { t: 'attack', ref: 'leader', target: 0 }); skipAll(); S.act(0, { t: 'noblock' }); S.act(0, { t: 'resolve' });
+const tenEach = () => [0, 1].every(k => { const X = S.P(k); return X.don.active + X.don.rested + X.donDeck + X.leader.don + X.chars.reduce((a, c) => a + c.don, 0) === 10; });
+ok('§6-5-5-4: a K.O.\'d Character\'s two given DON!! come back to the cost area, rested (take 121 lost them)', D.chars.length === 0 && D.don.rested === r0 + 2 && tenEach());
+/* [Unblockable] and [Rush: Character] */
+const kws = p => (p.kw || '').split('|');
+const unb = R.find(p => p.type === 'Character' && kws(p).includes('Unblockable')), rc = R.find(p => p.type === 'Character' && kws(p).includes('Rush: Character') && !kws(p).includes('Rush'));
+const blk = R.find(p => p.type === 'Character' && p.kw === 'Blocker');
+const arena = (att, turnPlayed) => { deal(st01, st02, 0, 6); S.act(0, { t: 'end' }); S.act(1, { t: 'end' });
+  S.P(0).chars = [S.inst(att.id, turnPlayed)]; S.P(1).chars = [S.inst(blk.id, 1), Object.assign(S.inst(plain.id, 1), { rested: true })]; };
+if (unb && blk) { arena(unb, 1); S.act(0, { t: 'attack', ref: 0, target: 'leader' }); skipAll(); const n1 = S.blockers().length;
+  arena(plain, 1); S.act(0, { t: 'attack', ref: 0, target: 'leader' }); skipAll(); const n2 = S.blockers().length;
+  ok('§10-1-7: [Unblockable] leaves the defender no Blocker; control: the same board with a plain attacker has one', n1 === 0 && n2 === 1, `${n1}/${n2}`); }
+if (rc) { arena(rc, 3); const t = S.legal(0).filter(a => a.t === 'attack' && a.ref === 0).map(a => a.target);
+  ok('§10-1-6: [Rush: Character] attacks the turn it is played, and only Characters', t.length === 1 && t[0] === 1, JSON.stringify(t)); }
+/* an effect K.O. fires [On K.O.] (§10-2-17; take 121 never offered it) */
+const FXs = V.CAT.effects;
+const koFx = Object.keys(FXs).find(id => S.card(+id).type === 'Character' && FXs[id].some(e => !e.hand && e.t === 'onplay' && e.if.length === 0 && e.do.length === 1 && e.do[0].a === 'ko' && e.do[0].cost >= 2 && !e.do[0].rested));   // a cost line that reaches the planted cost-2 Character (take 122: "a cost of 0" is scripted now)
+const onko = Object.keys(FXs).find(id => S.card(+id).type === 'Character' && FXs[id].some(e => e.t === 'onko') && S.cost(S.card(+id)) <= 2);
+if (koFx && onko) { g = deal(st01, st02, 0, 7); S.act(0, { t: 'end' }); S.act(1, { t: 'end' });
+  const P = S.P(0); P.hand = [+koFx]; P.don.active = 10 - P.don.rested; P.donDeck = 0; S.P(1).chars = [S.inst(+onko, 1)];
+  S.act(0, { t: 'play', h: 0 }); const ko = S.legal(0).find(a => a.t === 'fx' && a.target === 'o0'); if (ko) S.act(0, ko);
+  ok('§10-2-17: a Character an effect K.O.s offers its [On K.O.] to its owner (take 121 skipped it)', !!ko && S.P(1).chars.length === 0 && g.queue.length >= 1 && g.queue[0].i === 1 && g.queue[0].e.t === 'onko' && S.who() === 1); skipAll(); }
+/* the Leaders the free tray stood in for: ST08-001's "When a Character is K.O.'d" and ST09-001's continuous +1000 with its condition */
+{ const lead = num => (V.CAT.byNum.get(num) || []).find(p => p.type === 'Leader' && p.num === num), L8 = lead('ST08-001'), L9 = lead('ST09-001');
+  const koBoard = (leaderId, att) => { deal({ ...st01, leader: leaderId }, { ...st02, leader: leaderId }, 0, 10); S.act(0, { t: 'end' }); S.act(1, { t: 'end' }); if (att === 1) S.act(0, { t: 'end' });
+    const A = S.P(att); S.P(1 - att).chars = [onField(plain.id, 1, true)]; A.don.rested += 1; A.don.active -= 1; S.mod(att, 'leader', 99999, 'turn');
+    S.act(att, { t: 'attack', ref: 'leader', target: 0 }); skipAll(); S.act(1 - att, { t: 'noblock' }); S.act(1 - att, { t: 'resolve' }); return S.g.queue.map(o => `${o.i}:${o.e.t}:${o.hand ? 'hand' : 'run'}`).join(); };
+  if (L8 && plain) { const q = koBoard(L8.id, 0); const d0 = S.P(0).leader.don; S.act(0, { t: 'fx', target: 'L' });
+    ok('ST08-001: a Character K.O.\'d on its turn offers "give up to 1 rested DON!! to this Leader", scripted, and it lands', q === '0:whenko:run' && S.P(0).leader.don === d0 + 1, q);
+    const q1 = koBoard(L8.id, 1);
+    ok('...control: [Your Turn] -- the same K.O. on the opponent\'s turn waits only on the opponent\'s Leader', q1 === '1:whenko:run', q1); skipAll(); }
+  if (L9) { deal({ ...st01, leader: L9.id }, st02, 0, 11); S.act(0, { t: 'end' }); const P = S.P(0), base = S.num(L9.power); P.leader.don = 1; P.donDeck -= 1;
+    const life = P.life.splice(2); const at2 = S.power(0, 'leader'); P.life.push(life.shift()); const at3 = S.power(0, 'leader'); P.life.pop(); P.leader.don = 0; const noDon = S.power(0, 'leader');
+    ok('ST09-001: [DON!! x1] [Opponent\'s Turn] at 2 Life or less the Leader is +1000; controls: at 3 Life, and with no DON!!, it is not', at2 === base + 1000 && at3 === base && noDon === base, `${at2}/${at3}/${noDon} of ${base}`); }
+  const un = Object.keys(FXs).find(id => FXs[id].some(e => e.hand && e.t === 'static'));
+  ok('a continuous line the app does not compute is kept, never offered, and the board says it is the player\'s to apply', !!un && S.unapplied(+un).length >= 1 && S.unapplied(st01.leader).length === 0 && /its continuous text is yours to apply/.test(js)); }
+/* one Stage: a new one trashes the old (§3-8-5-1) */
+const stg = R.filter(p => p.type === 'Stage' && p.num && S.cost(p) <= 2).slice(0, 2);
+if (stg.length === 2) { deal(st01, st02, 0, 8); const P = S.P(0); P.hand = [stg[0].id, stg[1].id]; P.don.active = 4; P.donDeck = 6;
+  S.act(0, { t: 'play', h: 0 }); skipAll(); S.act(0, { t: 'play', h: 0 }); skipAll();
+  ok('§3-8-5-1: a second Stage trashes the first', P.stage && P.stage.id === stg[1].id && P.trash.includes(stg[0].id));
+  ok('...and the Stage is a card like the others: its own uid, rested and set active as they are (the review: it was an id beside two loose fields)', P.stage.uid > 0 && P.stage.rested === false && S.refOf(P, P.stage.uid) === 'stage' && P.stageUid === undefined && P.stageRested === undefined); }
+/* by hand, bounded (landmine 212): the tray names only the moves the line's words name, as many as its numbers */
+ok('by hand: a line\'s words name its moves -- "Draw 2 cards" is two draws and nothing else', JSON.stringify(S.handOps('[On Play] Draw 2 cards.')) === '{"draw":2}');
+ok('...Luffy\'s words are one DON!! given; control: no draw, no DON!! from the deck, no Life', (() => { const o = S.handOps('[Activate: Main] [Once Per Turn] Give this Leader or 1 of your Characters up to 1 rested DON!! card.'); return o.givedon === 1 && !o.draw && !o.adddon && !o.lifetohand; })());
+{ deal(st01, st02, 0, 20); S.act(0, { t: 'end' }); S.act(1, { t: 'end' }); const P = S.P(0); P.don.rested += 2; P.don.active -= 2;
+  S.g.queue = [{ i: 0, e: { raw: '[On Play] Set up to 1 of your DON!! cards as active.', t: 'onplay', if: [], do: [], hand: true }, n: 0, ref: null, uid: null, cardId: st01.leader, fromLife: false, hand: true, steps: [], step: 0, targets: null }];
+  S.act(0, { t: 'fxhand' }); const one = S.act(0, { t: 'hand', op: 'activedon' }), left = S.legal(0).filter(a => a.op === 'activedon' || a.op === 'active').length;
+  ok('...a DON!! set active spends the line\'s one "set ... as active" (take 122\'s self-play: it spent a budget no line has, and never ran out); control: the first is allowed', one.ok && left === 0 && P.don.active === 2 && Number.isFinite(S.g.hand.left.active), `${left} left`); skipAll(); }
+ok('...a look\'s cards go only where its words send them: "top or bottom" is the bottom (the rest back on top), never hand or trash; a search\'s reveal is one to hand (take 122\'s look: Perona was offered both)', (() => {
+  const pe = S.handOps("[On Play] Look at 5 cards from the top of your deck and place them at the top or bottom of the deck in any order."), se = S.handOps("[On Play] Look at 5 cards from the top of your deck; reveal up to 1 {Straw Hat Crew} type card and add it to your hand. Then, place the rest at the bottom of your deck in any order."), tr = S.handOps("[On Play] Look at 3 cards from the top of your deck and trash them.");
+  return pe.look === 5 && pe.lookbottom === 5 && !pe.lookhand && !pe.looktrash && se.lookhand === 1 && se.lookbottom === 5 && !se.looktrash && tr.looktrash === 3 && !tr.lookhand; })());
+ok('...whose cards, how long and from where are the words\' too: "your opponent\'s" is theirs, "a Character" either side\'s, "during this battle" the battle, "[Monkey.D.Luffy] cards" still yours; "from your hand to the top of your Life" is a hand card, never the deck\'s top; "your opponent\'s Life cards" theirs (take 122, the Leaders\' proofs)', (() => { try {
+  const k = S.handOps("[On Play] K.O. up to 1 of your opponent's Characters with a cost of 3 or less."), b = S.handOps("[On Play] Return up to 1 Character with a cost of 3 or less to the owner's hand."),
+    p = S.handOps("[When Attacking] Up to 1 of your Leader or Character cards gains +1000 power during this battle."), n = S.handOps("[Opponent's Turn] All of your [Portgas.D.Ace] and [Monkey.D.Luffy] cards gain +3000 power."),
+    l = S.handOps("[When Attacking] You may add 1 card from the top or bottom of your Life cards to your hand: If you have 2 or less Life cards, add up to 1 card from your hand to the top of your Life cards."), t = S.handOps("[Activate: Main] Trash up to 1 of your opponent's Life cards.");
+  return k._.where.ko === 'opp' && b._.where.tohand === 'any' && p._.dur === 'battle' && p._.where.power === 'own' && n._.where.power === 'own' && l.handtolife === 1 && !l.decktolife && l._.lifebottom === true && t.opplifetrash === 1; } catch (e) { return false; } })());
+ok('...and the free row is gone: no SIM.manual, no Draw (effect) button (take 121 drew without limit)', S.manual === undefined && !/data-sim="m:/.test(js) && !/Draw \(effect\)/.test(js));
+/* the review's guard: outside the engine and its opponent, the app moves a game only through act() -- a screen that wrote
+   the game itself is how take 121's tray drew without limit, and how two copies of a game would drift apart */
+{ const s0 = js.indexOf('const SIM = {'), b0 = js.indexOf('const BOT = {'), e0 = js.indexOf('\n};', b0);
+  const outside = (js.slice(0, s0) + js.slice(e0)).replace(/"where":"[^"]*"/g, '');   // the rules digest names the engine's functions in its "where" text: words, not calls
+  const WRITES = ['draw', 'mulligan', 'placeLife', 'startTurn', 'endTurn', 'mod', 'play', 'room', 'placeStage', 'leave', 'giveDon', 'attack', 'track', 'block', 'noBlock', 'playCounterEvent', 'counter', 'resolve', 'endBattle', 'rules', 'apply', 'markUsed', 'handOp', 'step', 'restore', 'rec', 'queue', 'drain', 'shuffle', 'rand'];
+  const writes = src => [...src.matchAll(/\bSIM\.(\w+)\s*\(/g)].map(m => m[1]).filter(n => WRITES.includes(n));
+  ok('only act() moves a game: the board, Diagnostics and the rest of the app call no engine write (take 122\'s review)', s0 > 0 && b0 > s0 && e0 > b0 && writes(outside).length === 0 && WRITES.every(n => typeof S[n] === 'function'), writes(outside).join());
+  ok('...control: a planted SIM.giveDon outside the engine is named', writes(outside + '\nSIM.giveDon(0, "leader");').join() === 'giveDon'); }
+ok('one store of what effects change, and one shape for a card on the field: a player has modl, no mods, and a Stage that is a card or null (the review)', (() => { const p = S.player('probe', st01.leader, []); return Array.isArray(p.modl) && p.mods === undefined && p.stage === null && !('stageUid' in p) && !('stageRested' in p) && p.leader.uid > 0; })());
+/* the proof marks: proven, unproven, by hand; a printing proven wrong is offered by hand only */
+const provenId = +Object.keys(V.CAT.proof).find(id => V.CAT.proof[id].v === 'proven' && (FXs[id] || []).some(e => !e.hand));
+const unprovenId = +Object.keys(FXs).find(id => !V.CAT.proof[id] && FXs[id].some(e => !e.hand && e.t !== 'static'));
+const handId = +Object.keys(FXs).find(id => FXs[id].every(e => e.hand));
+ok('each offered line says what the app knows of it: proven by a test, scripted and unproven, or by hand', S.proofOf(provenId, FXs[provenId].find(e => !e.hand)) === 'proven' && S.proofOf(unprovenId, FXs[unprovenId].find(e => !e.hand)) === 'unproven' && S.proofOf(handId, FXs[handId][0]) === 'hand');
+V.CAT.proof[unprovenId] = { v: 'wrong', why: 'planted' }; const asWrong = S.fx(unprovenId); delete V.CAT.proof[unprovenId];
+ok('...a printing proven WRONG is offered by hand, with the reason; control: without the verdict it runs', asWrong.filter(e => e.t !== 'static').every(e => e.hand && e.wrong === 'planted') && S.fx(unprovenId).some(e => !e.hand));
+/* describe: what the app will do, in words */
+ok('describe() says what a line will do: Luffy\'s is one rested DON!!, to the Leader or a Character, once a turn', S.describe(FXs[String(st01.leader)][0]) === '[Activate: Main] once per turn: give up to 1 rested DON!! to your Leader or 1 Character');
+/* every section the app cites is one the Rules sheet holds (landmine 214) */
+const ids = new Set(V.RULEBOOK.sections.map(x => x.id)); const citesOf = t => [...new Set([...t.matchAll(/§(\d+(?:-\d+)*)/g)].map(m => m[1]))];
+const cited = citesOf(js);
+ok(`every section the shipped app cites is in the rules digest (${cited.length} cited, ${ids.size} in the digest, v${V.RULEBOOK.version})`, V.RULEBOOK.version === '1.2.1' && ids.size >= 150 && cited.length >= 40 && cited.every(c => ids.has(c)), cited.filter(c => !ids.has(c)).join());
+ok('...control: a planted §99-9 is caught', citesOf('x §99-9 y').some(c => !ids.has(c)));
+/* the Rules sheet: a button on every Prep & Play screen, a search, and Back closes it */
+const rbOn = ['decks', 'cards', 'play', 'sim'].filter(id => new RegExp(`<section id="${id}"[\\s\\S]*?<\\/header>`).exec(html)[0].includes('data-rules=""'));
+ok('a Rules button on every Prep & Play screen (the owner, take 122), drawn with its own symbol', rbOn.length === 4 && /<symbol id="g-rules" viewBox="0 0 24 24"/.test(html), rbOn.join());
+const f714 = V.RULES_DB.find('7-1-4');
+ok('the search reads a number as a section and its children, and words as all of them', f714.length >= 3 && f714.every(x => x.id === '7-1-4' || x.id.startsWith('7-1-4-')) && V.RULES_DB.find('blocker').length >= 3 && V.RULES_DB.find('opponent\u2019s turn').length >= 1 && V.RULES_DB.find("opponent's turn").length === V.RULES_DB.find('opponent\u2019s turn').length && V.RULES_DB.find('zzqq').length === 0);
+V.openRules('6-5-5'); const rl = doc.getElementById('rulesList')._html;
+ok('...opened at a section, it lists it with what the Sim does about it; Back closes the sheet first', doc.getElementById('rulesQ').value === '6-5-5' && /§6-5-5 Give DON!!/.test(rl) && /In the Sim: enforced/.test(rl) && doc.getElementById('rulesSheet').classList.contains('on') && V.closeAnyOverlay() && !doc.getElementById('rulesSheet').classList.contains('on'));
+/* Check for updates: a newer digest from Pages replaces the built-in one; an older one does not */
+{ const PAGES = 'https://pages.invalid/bundle/'; const u0 = V.CAT.man.updateUrl; V.CAT.man.updateUrl = PAGES; ctx.navigator.onLine = true;
+  const serve = d => async u => u === PAGES + 'rules.json' ? { ok: true, status: 200, json: async () => d } : undefined;
+  const newer = { ...V.RULEBOOK, version: '1.2.2', sections: V.RULEBOOK.sections.concat([{ id: '12-1', title: 'Probe', text: 'A new rule.', sim: 'enforced' }]), official: { version: '1.2.3', date: '2026-12-01', checked: '2026-12-02T00:00Z', newer: true } };
+  ctx._net = serve(newer); const up = await V.RULES_DB.sync();
+  ok('Check for updates: a newer digest from Pages replaces the built-in one on this phone, and says when Bandai has moved on again', up.ok && up.newer && V.RULES_DB.cur().version === '1.2.2' && /Bandai has published v1\.2\.3/.test(V.rulesStatus()) && /the Sim plays by v1\.2\.2/.test(V.rulesStatus()));
+  ok('...what the Sim does stays this build\'s: a section it has not reviewed says so', V.RULES_DB.simOf('12-1') === 'not reviewed for this version of the app' && V.RULES_DB.simOf('6-5-5-2') === 'enforced');
+  ctx.localStorage.removeItem('vault.rules'); ctx._net = serve({ ...V.RULEBOOK, version: '1.1.0', official: { version: '1.2.1', date: '2026-08-28' } }); const down = await V.RULES_DB.sync();
+  ok('...control: an older digest does not replace the built-in one', down.ok && !down.newer && V.RULES_DB.cur().version === '1.2.1' && ctx.localStorage.getItem('vault.rules') === null);
+  ctx._net = null; V.CAT.man.updateUrl = u0; ctx.localStorage.removeItem('vault.rulesOfficial'); V.RULES_DB.official = null; }
+/* Report: the offer, the parse, and the whole game as its seed and moves -- replayed, the same game */
+{ deal(st01, st01, 0, 9); S.act(0, { t: 'end' }); S.act(1, { t: 'end' });
+  S.P(0).don.rested = 2; S.P(0).don.active -= 2; S.act(0, { t: 'activate', ref: 'leader' }); const rep = JSON.parse(V.simReport()); const live = JSON.stringify(S.g.players);
+  const rr = S.replay(rep.spec, rep.actions);
+  ok('Report carries the effect, what the app made of it and the game as its seed and moves', rep.kind === 'optcghub-sim-report' && rep.offer.num === 'ST01-001' && rep.offer.parsed[0].a === 'givedon' && rep.offer.proof === 'proven' && rep.actions.length >= 5);
+  ok('...replayed from the Report, the moves rebuild the game (a planted board aside, which no move made)', rr.ok && rr.g.turn === 3 && rr.g.queue.length === 1 && rr.g.queue[0].cardId === st01.leader, live.length ? '' : ''); }
+/* concede (§1-2-3) */
+{ const x = deal(st01, st02, 0, 10); const r = S.act(1, { t: 'concede' });
+  ok('§1-2-3: a player may concede at any time, even on the other\'s turn; they lose at once', r.ok && x.over === 0 && x.phase === 'over' && x.log.some(l => /concedes \(§1-2-3\)/.test(l))); }
+/* expand: only printings the catalogue knows are dealt (legality counts the same list) */
+ok('expand() deals only printings the catalogue knows: 50 known and an unknown id deal 50', S.expand({ cards: [{ id: plain.id, n: 50 }, { id: 999999999, n: 3 }] }).length === 50);
+S.g = null;
 }
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

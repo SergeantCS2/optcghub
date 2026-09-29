@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 121.*
+*Current as of take 122.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -224,6 +224,17 @@ Start here. Do not read top to bottom.
 | AdMob "couldn't verify" the app; app-ads.txt not found, or "details don't match" | 209 |
 | AdMob's app for the build says "Add store"; the store-linked app is another ID | 210 |
 | The MAX ad grants a deck save and MAX stays shut; a reward lands on the wrong kind | 211 |
+| The Sim lets a player draw, add DON!! or add Life without limit | 212 |
+| A [Once Per Turn] effect applies twice; tapping its button again queues another copy | 213 |
+| The Sim refuses a play the rules allow (a sixth Character, a second Stage) | 214 |
+| Two copies of one game, fed the same moves, disagree | 215 |
+| A refused move leaves a change behind | 216 |
+| A card's effect or keyword is missing though its text has it | 217 |
+| A card that worked by hand has no way to be played after a fix | 218 |
+| A `\uXXXX` in new code became the character itself | 219 |
+| The Sim offers a choice or a cost that it then refuses | 220 |
+| A test that passed for many takes fails after an unrelated change | 221 |
+| A proof binds a printing no deck deals | 222 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -2787,6 +2798,101 @@ reward event read `'deck'` and granted a deck save, and MAX never opened (take
 waits on `show()`, and `onRewardedVideoAdFailedToShow` clears it. Read the
 native source, not only `definitions.d.ts`, when an order matters (landmine 73
 read the types).
+
+**212. A by-hand escape with no bounds is a second rules engine that enforces
+nothing.** The Sim's row under the hand (*Draw*, *+1 DON!!*, *Life → hand*,
+*+1 Life*) and the tray's *Set active* existed from take 46 so a player could
+act out an effect the app does not run. None had a limit, a phase, a card or a
+log line, so any deck could draw itself out, take all ten DON!! on turn one,
+or attack again and again, and the log never showed it. The owner found it
+with the first ready-made deck (take 122). A by-hand effect is still a card's
+effect: it is offered at that card's timing, under its Once Per Turn, with
+only the moves its line can need, each logged "by hand for <card>", and rule
+processing runs after every one.
+
+**213. [Once Per Turn] marked when applied and keyed on a row position.** The
+engine checked the mark when it OFFERED an effect and set it when the first
+step was APPLIED, so a second tap on Main before the first resolved queued a
+second copy, and both applied. The mark was keyed on the Character's index in
+the row, so a card leaving play moved every card after it onto an unmarked key
+(the record said "per card instance" from take 51; the code never was). §10-2-13:
+once per card, per turn. The mark is set when the effect is activated, keyed on
+the card's instance id (the Leader has one too), and checked again at apply.
+Found by the owner (take 122); the self-play auditor counts uses on its own.
+
+**214. A refusal can break a rule as surely as a permission.** "Five Characters
+already -- K.O. or trash one first" read as caution and was wrong for 76 takes:
+§3-7-6-1 lets a player with five trash one (a rule process, so no [On K.O.])
+and play the new one, and §3-8-5-1 does the same for a Stage. Every refusal
+the engine prints cites a section; the citation is checked against the rules'
+own text (the digest behind the Rules button), not against a memory of it.
+
+**215. A read that writes makes two copies of one game disagree.** `legal()`
+and `blockers()` found the battle's cards through `track()`, which stored
+where they were now -- so asking what was legal moved the battle's refs. One
+app never noticed; two apps fed the same moves (take 122's self-play,
+`--two-apps`, what two phones will do) held different games within a few
+hundred moves. A read is pure (`locate()`); only a move writes (`track()`), and
+the self-play compares both copies after every move.
+
+**216. A refusal that has already written is a permission in disguise.** A
+move could mark Once Per Turn, shift the effect queue or duplicate a card and
+THEN meet the check that refused it; the refusal was returned and the change
+stayed. Found by chaos self-play, which sends moves the engine must refuse and
+compares the game before and after. `SIM.act` is a transaction: a snapshot
+before, restored on any refusal, and the move is not recorded. The restore
+writes into the objects the game already has, so a caller holding `SIM.g` or a
+player still holds the game.
+
+**217. One tag, many spellings; two effects on one line.** The catalogue
+writes `[Activate:Main]` on 417 lines, `[DON!!x1]`, `[DON!! X1]`, `[On play]`,
+`[End of your Turn]`, and often runs two effects together (`... during this
+battle. [Trigger] Play this card.`). A parser keyed on one spelling and one
+effect per line never saw those effects -- ST01-002's [Trigger] was missing
+from the keywords as well as the effects. Every reader reads a tag through
+`canon_tag()` and a line through `lines_of()` (`SIM.lines()` in the app, which
+the card proofs cross-check); `tools/wording.py` lists any tag it does not know.
+
+**218. An escape hatch stands in for more than its bug.** Removing the Sim's
+free row (landmine 212) also removed the only way to act out two Leaders whose
+lines have no tag timing: ST08-001's "When a Character is K.O.'d" and ST09-001's
+continuous +1000 with a condition in words. Before removing a fallback, list
+what used it; here the review found them and scripted both, and a continuous
+line no template reads is now kept and the board says it is the player's.
+
+**219. The file tools write a `\uXXXX` escape as its character.** Text given to
+the session's Write and Edit tools has an escape (`\u` then `2014`) turned
+into the dash itself, while the shipped script keeps escapes (smoke reads the
+DON!! pips' escape in the source; the scrubber reads the source). This entry
+was bitten while it was written. An edit whose old text contains an
+escape keeps the new text's escapes as written. After any edit through those
+tools, run a pass that puts the escapes back in the lines the branch added --
+inside `<script>` only: the pass also turned the middle dot in the Sim's
+subtitle markup into its six-character escape, shown as text, and smoke's
+source check caught it.
+
+**220. A choice computed when an effect was queued is stale when it resolves.**
+An offer carried the targets and the payable cost it had when it was queued;
+an earlier effect in the same queue could trash that hand card or spend those
+DON!! first, and the engine then offered a move it would refuse. Found by the
+whole-Sim review's self-play sweep (landmine 216's shape, from the other
+side). An offer's choices and its cost are read when it resolves
+(`SIM.targetsOf`, `canPay` in `legal()`), never kept from when it was queued.
+
+**221. A test on an unseeded shuffle passes or fails with the hand.** Smoke's
+take-46 to take-51 sections dealt with `Math.random` and read the hand they
+got; one of them needed an active DON!! left after a random play, passed
+run after run from take 46, and failed on one run at take 122. Every game a
+test deals is seeded (the engine takes a seed since take 122), so a failure
+is the code's and happens every time.
+
+**222. A card number is not a text.** ST03-001 is printed with two texts: the
+original ("Return up to 1 Character") and a reprint with the errata ("Return
+1 Character", owed). A proof scaffolded from the cheapest printing bound the
+errata, which no ready-made deck deals, and ran nowhere the owner plays it.
+AGENTS rule 3 again, one layer down: a proof names its printing (`cards.py
+--new NUM --id ID`, the one the deck deals), binds that text, and leaves the
+other unproven until it is proven.
 
 ## §2 — Inherited from APEX ORV
 

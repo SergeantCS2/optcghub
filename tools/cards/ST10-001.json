@@ -1,0 +1,257 @@
+{
+ "num": "ST10-001",
+ "name": "Trafalgar Law",
+ "text": "[Activate:Main] [Once Per Turn] DON!! -3 (You may return the specified number of DON!! cards from your field to your DON!! deck.): Place up to 1 of your opponent's Characters with 3000 power or less at the bottom of the owner's deck, and play up to 1 Character card with a cost of 4 or less from your hand.",
+ "text_fp": "1641ede3c84849ea",
+ "fx_fp": "048f75a8bd30267a",
+ "reading": [
+  {
+   "t": "main",
+   "if": [
+    {
+     "c": "opt"
+    }
+   ],
+   "do": [
+    {
+     "a": "cost_returndon",
+     "n": 3
+    },
+    {
+     "a": "bottom",
+     "who": "opp",
+     "power": 3000,
+     "upto": true
+    },
+    {
+     "a": "playfromhand",
+     "cost": 4,
+     "type": null,
+     "power": null,
+     "upto": true
+    }
+   ],
+   "raw": "[Activate:Main] [Once Per Turn] DON!! -3 (You may return the specified number of DON!! cards from your field to your DON!! deck.): Place up to 1 of your opponent's Characters with 3000 power or less at the bottom of the owner's deck, and play up to 1 Character card with a cost of 4 or less from your hand."
+  }
+ ],
+ "rules": [
+  "10-2-2",
+  "10-2-13",
+  "8-3-1-6",
+  "4-8",
+  "3-7-6-1"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "bottoms an opponent's 3000-power Character and plays a cost-1 Character free",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 3
+     },
+     "hand": [
+      "ST01-003"
+     ]
+    },
+    "p1": {
+     "chars": [
+      {
+       "card": "ST01-003"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "fx",
+     "target": "o0",
+     "expect": {
+      "p1.chars": 0,
+      "p1.deck": 21
+     }
+    },
+    {
+     "t": "fx",
+     "target": "h0"
+    }
+   ],
+   "expect": {
+    "p0.chars": 1,
+    "p0.hand": 0,
+    "p0.don.active": 0,
+    "p0.donDeck": 10
+   }
+  },
+  {
+   "name": "up to, twice: none, then none, and nothing moves but the cost",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 3
+     },
+     "hand": [
+      "ST01-003"
+     ]
+    },
+    "p1": {
+     "chars": [
+      {
+       "card": "ST01-003"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "fx",
+     "target": null
+    }
+   ],
+   "expect": {
+    "p1.chars": 1,
+    "p0.hand": 1,
+    "p0.chars": 0,
+    "queue": 0
+   }
+  },
+  {
+   "name": "not a 4000-power Character",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 3
+     }
+    },
+    "p1": {
+     "chars": [
+      {
+       "card": "OP01-012"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "fx",
+     "target": "o0",
+     "refused": "not a legal target"
+    }
+   ],
+   "expect": {
+    "p1.chars": 1
+   }
+  },
+  {
+   "name": "not a cost-5 Character from hand",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 3
+     },
+     "hand": [
+      "EB01-018"
+     ]
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "fx",
+     "target": "h0",
+     "refused": "not a legal target"
+    }
+   ],
+   "expect": {
+    "p0.hand": 1,
+    "p0.chars": 0
+   }
+  },
+  {
+   "name": "once per turn",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 6
+     }
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "activate",
+     "ref": "leader",
+     "refused": "once per turn"
+    }
+   ],
+   "expect": {
+    "p0.don.active": 3
+   }
+  }
+ ],
+ "note": "Take 122: DON!! -3, then an opponent's Character of 3000 power or less to the bottom of its owner's deck, and a Character of cost 4 or less played from hand, free; each 'up to'."
+}

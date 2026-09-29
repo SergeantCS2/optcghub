@@ -278,6 +278,8 @@
   <!-- remove or discard (take 115): a want-list entry, an alert, a note, a stock watch, a card to the Sim's trash -- so the
        minus is only "one fewer" and the cross only closes a sheet: Lucide trash-2 (its notice is the metadata above) -->
   <symbol id="g-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+  <!-- the rules (take 122): Lucide book-open -- the Rules sheet, beside the gear on Prep & Play's screens -->
+  <symbol id="g-rules" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></symbol>
   <!-- one more: Lucide plus -->
   <symbol id="g-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
   <!-- done, chosen: Lucide check -->

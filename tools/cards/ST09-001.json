@@ -1,0 +1,170 @@
+{
+ "num": "ST09-001",
+ "name": "Yamato",
+ "text": "[DON!! x1] [Opponent's Turn] If you have 2 or less Life cards, this Leader gains +1000 power.",
+ "text_fp": "3d652ee8a58d8fd0",
+ "fx_fp": "f654da3904363532",
+ "reading": [
+  {
+   "t": "static",
+   "if": [
+    {
+     "c": "donx",
+     "n": 1
+    },
+    {
+     "c": "oppturn"
+    },
+    {
+     "c": "life",
+     "max": 2
+    }
+   ],
+   "do": [
+    {
+     "a": "selfpower",
+     "n": 1000,
+     "dur": "static"
+    }
+   ],
+   "raw": "[DON!! x1] [Opponent's Turn] If you have 2 or less Life cards, this Leader gains +1000 power."
+  }
+ ],
+ "rules": [
+  "10-2-9",
+  "10-2-12",
+  "7-1-4"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "the opponent's turn, its DON!! given, 2 Life: +1000 (and the DON!! itself counts for nothing on the opponent's turn)",
+   "board": {
+    "turn": 4,
+    "active": 1,
+    "p0": {
+     "leader": "@",
+     "leaderDon": 1,
+     "life": 2
+    }
+   },
+   "expect": {
+    "power.p0.leader": 6000
+   }
+  },
+  {
+   "name": "...at 1 Life too: 2 or less",
+   "board": {
+    "turn": 4,
+    "active": 1,
+    "p0": {
+     "leader": "@",
+     "leaderDon": 1,
+     "life": 1
+    }
+   },
+   "expect": {
+    "power.p0.leader": 6000
+   }
+  },
+  {
+   "name": "in battle: the opponent's 5000 Leader attack is held by 6000",
+   "board": {
+    "turn": 4,
+    "active": 1,
+    "p0": {
+     "leader": "@",
+     "leaderDon": 1,
+     "life": 2
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "s": 1,
+     "t": "attack",
+     "ref": "leader",
+     "target": "leader"
+    },
+    {
+     "s": 0,
+     "t": "noblock"
+    },
+    {
+     "s": 0,
+     "t": "resolve"
+    }
+   ],
+   "expect": {
+    "p0.life": 2
+   }
+  },
+  {
+   "name": "at 3 Life it is not +1000, and the same attack hits",
+   "must_not": true,
+   "board": {
+    "turn": 4,
+    "active": 1,
+    "p0": {
+     "leader": "@",
+     "leaderDon": 1,
+     "life": 3
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "s": 1,
+     "t": "attack",
+     "ref": "leader",
+     "target": "leader",
+     "expect": {
+      "power.p0.leader": 5000
+     }
+    },
+    {
+     "s": 0,
+     "t": "noblock"
+    },
+    {
+     "s": 0,
+     "t": "resolve"
+    }
+   ],
+   "expect": {
+    "p0.life": 2
+   }
+  },
+  {
+   "name": "without its DON!! it is not +1000",
+   "must_not": true,
+   "board": {
+    "turn": 4,
+    "active": 1,
+    "p0": {
+     "leader": "@",
+     "leaderDon": 0,
+     "life": 2
+    }
+   },
+   "expect": {
+    "power.p0.leader": 5000
+   }
+  },
+  {
+   "name": "on its own turn it is not +1000: only the given DON!! counts",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "leaderDon": 1,
+     "life": 2
+    }
+   },
+   "expect": {
+    "power.p0.leader": 6000
+   }
+  }
+ ],
+ "note": "Take 122: a continuous effect that opens with its condition ('If you have 2 or less Life cards, ...') is read by the parser; the power is computed on every read, never stored."
+}

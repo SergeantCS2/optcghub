@@ -1,0 +1,171 @@
+{
+ "num": "ST07-001",
+ "name": "Charlotte Linlin",
+ "text": "[DON!! x2] [When Attacking] You may add 1 card from the top or bottom of your Life cards to your hand: If you have 2 or less Life cards, add up to 1 card from your hand to the top of your Life cards.",
+ "text_fp": "77f84314cf8e650f",
+ "fx_fp": "97d170e1550eee4a",
+ "reading": [
+  {
+   "t": "attack",
+   "if": [
+    {
+     "c": "donx",
+     "n": 2
+    }
+   ],
+   "do": [],
+   "hand": true,
+   "raw": "[DON!! x2] [When Attacking] You may add 1 card from the top or bottom of your Life cards to your hand: If you have 2 or less Life cards, add up to 1 card from your hand to the top of your Life cards."
+  }
+ ],
+ "rules": [
+  "10-2-5",
+  "10-2-9",
+  "8-3-1-4"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "with 2 DON!! given, attacking: the bottom Life card to hand, then a hand card to the top of Life",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "leaderDon": 2,
+     "life": 3,
+     "hand": [
+      "ST01-003"
+     ]
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "t": "attack",
+     "ref": "leader",
+     "target": "leader",
+     "expect": {
+      "queue": 1,
+      "legal.fxhand": 1
+     }
+    },
+    {
+     "t": "fxhand"
+    },
+    {
+     "t": "hand",
+     "op": "lifetohand",
+     "end": "bottom",
+     "expect": {
+      "p0.life": 2,
+      "p0.hand": 2
+     }
+    },
+    {
+     "t": "hand",
+     "op": "handtolife",
+     "h": 0
+    },
+    {
+     "t": "handdone"
+    }
+   ],
+   "expect": {
+    "p0.life": 3,
+    "p0.hand": 1,
+    "p0.deck": 20,
+    "queue": 0
+   }
+  },
+  {
+   "name": "the hand card goes to Life, not the deck's top card",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "leaderDon": 2,
+     "life": 3,
+     "hand": [
+      "ST01-003"
+     ]
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "t": "attack",
+     "ref": "leader",
+     "target": "leader"
+    },
+    {
+     "t": "fxhand"
+    },
+    {
+     "t": "hand",
+     "op": "decktolife",
+     "refused": "not a move this line names"
+    }
+   ],
+   "expect": {
+    "p0.deck": 20,
+    "p0.life": 3
+   }
+  },
+  {
+   "name": "one Life card to hand, not two",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "leaderDon": 2,
+     "life": 3
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "t": "attack",
+     "ref": "leader",
+     "target": "leader"
+    },
+    {
+     "t": "fxhand"
+    },
+    {
+     "t": "hand",
+     "op": "lifetohand"
+    },
+    {
+     "t": "hand",
+     "op": "lifetohand",
+     "refused": "not a move this line names"
+    }
+   ],
+   "expect": {
+    "p0.life": 2
+   }
+  },
+  {
+   "name": "not with 1 DON!! given",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "leaderDon": 1,
+     "life": 3
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "t": "attack",
+     "ref": "leader",
+     "target": "leader"
+    }
+   ],
+   "expect": {
+    "queue": 0
+   }
+  }
+ ],
+ "note": "By hand (take 122): the tray takes a Life card from the top or the bottom, and puts a hand card on top of Life -- the take-121 tray moved the deck's top card instead."
+}

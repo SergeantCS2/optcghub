@@ -1,6 +1,6 @@
 # ROADMAP — OP TCG Hub
 
-*Current as of take 121.*
+*Current as of take 122.*
 
 An offline-first Android collection tracker and card scanner for the One Piece
 Card Game, built from TCGplayer catalogue data via TCGCSV. Play Store plus

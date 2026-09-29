@@ -1,0 +1,116 @@
+{
+ "num": "ST01-005",
+ "name": "Jinbe",
+ "text": "[DON!! x1] [When Attacking] Up to 1 of your Leader or Character cards other than this card gains +1000 power during this turn.",
+ "text_fp": "d63c5bd8ab3c1cd8",
+ "fx_fp": "bb8d2543e5673ce8",
+ "reading": [
+  {
+   "t": "attack",
+   "if": [
+    {
+     "c": "donx",
+     "n": 1
+    }
+   ],
+   "do": [
+    {
+     "a": "power",
+     "n": 1000,
+     "who": "own",
+     "dur": "turn",
+     "notself": true,
+     "upto": true
+    }
+   ],
+   "raw": "[DON!! x1] [When Attacking] Up to 1 of your Leader or Character cards other than this card gains +1000 power during this turn."
+  }
+ ],
+ "rules": [
+  "10-2-5",
+  "8-3-2-3",
+  "4-8"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "When Attacking with one DON!!: +1000 to the Leader, this turn",
+   "board": {
+    "p0": {
+     "chars": [
+      {
+       "card": "@",
+       "don": 1
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "attack",
+     "ref": 0,
+     "target": "leader",
+     "expect": {
+      "queue": 1
+     }
+    },
+    {
+     "t": "fx",
+     "target": "L"
+    }
+   ],
+   "expect": {
+    "power.p0.leader": 6000
+   }
+  },
+  {
+   "name": "not to itself: 'other than this card'",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "chars": [
+      {
+       "card": "@",
+       "don": 1
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "attack",
+     "ref": 0,
+     "target": "leader"
+    },
+    {
+     "t": "fx",
+     "target": "m0",
+     "refused": "not a legal target"
+    }
+   ]
+  },
+  {
+   "name": "no DON!! given: not offered",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "chars": [
+      {
+       "card": "@"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "attack",
+     "ref": 0,
+     "target": "leader"
+    }
+   ],
+   "expect": {
+    "queue": 0
+   }
+  }
+ ]
+}

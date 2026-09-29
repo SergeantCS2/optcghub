@@ -1,0 +1,219 @@
+{
+ "num": "ST06-001",
+ "name": "Sakazuki",
+ "text": "[Activate:Main] [Once Per Turn] (3) (You may rest the specified number of DON!! cards in your cost area.) You may trash 1 card from your hand: K.O. up to 1 of your opponent's Characters with a cost of 0.",
+ "text_fp": "f7b9dba272278f7f",
+ "fx_fp": "9049bb90cb3eb4fb",
+ "reading": [
+  {
+   "t": "main",
+   "if": [
+    {
+     "c": "opt"
+    }
+   ],
+   "do": [
+    {
+     "a": "cost_restdon",
+     "n": 3
+    },
+    {
+     "a": "cost_trashhand",
+     "n": 1
+    },
+    {
+     "a": "ko",
+     "who": "opp",
+     "cost": 0,
+     "upto": true
+    }
+   ],
+   "raw": "[Activate:Main] [Once Per Turn] (3) (You may rest the specified number of DON!! cards in your cost area.) You may trash 1 card from your hand: K.O. up to 1 of your opponent's Characters with a cost of 0."
+  }
+ ],
+ "rules": [
+  "10-2-2",
+  "10-2-13",
+  "8-3-1-1",
+  "8-3-1-5",
+  "4-8"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "rests 3, trashes 1, K.O.s an opponent's cost-0 Character",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 3
+     },
+     "hand": [
+      "ST01-003"
+     ]
+    },
+    "p1": {
+     "chars": [
+      {
+       "card": "OP15-074"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "fx",
+     "target": "h0"
+    },
+    {
+     "t": "fx",
+     "target": "o0"
+    }
+   ],
+   "expect": {
+    "p1.chars": 0,
+    "p1.trash": 1,
+    "p0.trash": 1,
+    "p0.don.rested": 3
+   }
+  },
+  {
+   "name": "not a cost-1 Character",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 3
+     },
+     "hand": [
+      "ST01-003"
+     ]
+    },
+    "p1": {
+     "chars": [
+      {
+       "card": "ST01-003"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "fx",
+     "target": "h0"
+    },
+    {
+     "t": "fx",
+     "target": "o0",
+     "refused": "not a legal target"
+    }
+   ],
+   "expect": {
+    "p1.chars": 1
+   }
+  },
+  {
+   "name": "not with 2 active DON!!",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 2
+     },
+     "hand": [
+      "ST01-003"
+     ]
+    },
+    "p1": {
+     "chars": [
+      {
+       "card": "OP15-074"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader",
+     "refused": "cost cannot be paid"
+    }
+   ],
+   "expect": {
+    "p1.chars": 1,
+    "p0.hand": 1
+   }
+  },
+  {
+   "name": "once per turn",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 6
+     },
+     "hand": [
+      "ST01-003",
+      "ST01-003"
+     ]
+    },
+    "p1": {
+     "chars": [
+      {
+       "card": "OP15-074"
+      },
+      {
+       "card": "OP15-074"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "fx",
+     "target": "h0"
+    },
+    {
+     "t": "fx",
+     "target": "o0"
+    },
+    {
+     "t": "activate",
+     "ref": "leader",
+     "refused": "once per turn"
+    }
+   ],
+   "expect": {
+    "p1.chars": 1
+   }
+  }
+ ],
+ "note": "Take 122: two costs in a row, then a K.O. of an opponent's Character of cost 0."
+}

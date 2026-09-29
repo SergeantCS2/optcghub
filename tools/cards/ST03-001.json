@@ -1,0 +1,227 @@
+{
+ "num": "ST03-001",
+ "name": "Crocodile",
+ "text": "[Activate: Main] [Once Per Turn] DON!! -4 (You may return the specified number of DON!! cards from your field to your DON!! deck.): Return up to 1 Character with a cost of 5 or less to the owner's hand.",
+ "text_fp": "8d3c1789b9d515fd",
+ "fx_fp": "35da144169444cae",
+ "reading": [
+  {
+   "t": "main",
+   "if": [
+    {
+     "c": "opt"
+    }
+   ],
+   "do": [
+    {
+     "a": "cost_returndon",
+     "n": 4
+    },
+    {
+     "a": "bounce",
+     "who": "any",
+     "cost": 5,
+     "upto": true
+    }
+   ],
+   "raw": "[Activate: Main] [Once Per Turn] DON!! -4 (You may return the specified number of DON!! cards from your field to your DON!! deck.): Return up to 1 Character with a cost of 5 or less to the owner's hand."
+  }
+ ],
+ "rules": [
+  "10-2-2",
+  "10-2-13",
+  "8-3-1-6",
+  "4-8"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "returns 4 DON!! to the DON!! deck, then an opponent's cost-1 Character to its owner's hand",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 4
+     }
+    },
+    "p1": {
+     "chars": [
+      {
+       "card": "ST01-003"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": null,
+     "expect": {
+      "p0.donDeck": 10,
+      "p0.don.active": 0
+     }
+    },
+    {
+     "t": "fx",
+     "target": "o0"
+    }
+   ],
+   "expect": {
+    "p1.chars": 0,
+    "p1.hand": 1,
+    "queue": 0
+   }
+  },
+  {
+   "name": "...or one of your own: the text says a Character, not an opponent's",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 4
+     },
+     "chars": [
+      {
+       "card": "ST01-003"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "fx",
+     "target": "m0"
+    }
+   ],
+   "expect": {
+    "p0.chars": 0,
+    "p0.hand": 1
+   }
+  },
+  {
+   "name": "not a cost-6 Character",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 4
+     }
+    },
+    "p1": {
+     "chars": [
+      {
+       "card": "EB01-041"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "fx",
+     "target": "o0",
+     "refused": "not a legal target"
+    }
+   ],
+   "expect": {
+    "p1.chars": 1
+   }
+  },
+  {
+   "name": "not with 3 DON!! on the field",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 3
+     }
+    },
+    "p1": {
+     "chars": [
+      {
+       "card": "ST01-003"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader",
+     "refused": "cost cannot be paid"
+    }
+   ],
+   "expect": {
+    "p0.don.active": 3,
+    "p1.chars": 1
+   }
+  },
+  {
+   "name": "once per turn",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 8
+     }
+    },
+    "p1": {
+     "chars": [
+      {
+       "card": "ST01-003"
+      },
+      {
+       "card": "ST01-003"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "fx",
+     "target": "o0"
+    },
+    {
+     "t": "activate",
+     "ref": "leader",
+     "refused": "once per turn"
+    }
+   ],
+   "expect": {
+    "p1.chars": 1,
+    "p0.don.active": 4
+   }
+  }
+ ],
+ "note": "Take 122: DON!! -4, then a Character of cost 5 or less -- either side's, as the text says 'a Character' -- to its owner's hand."
+}

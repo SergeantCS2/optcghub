@@ -1135,7 +1135,7 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
   <div class="arthero" id="dkHero" hidden></div>
   <header class="appbar">
     <div class="ab-text"><h1 class="ab-title">Decks</h1><p class="ab-sub" id="dkSub"></p></div>
-    <div class="ab-act"><button class="ghost go" id="dkNew">+ New deck</button><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
+    <div class="ab-act"><button class="ghost go" id="dkNew">+ New deck</button><button class="icb" data-rules="" aria-label="Rules"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-rules"/></svg></button><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
   </header>
   <div id="dkList"></div>
   <div id="dkStock"></div>
@@ -1224,7 +1224,7 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
 <section id="cards" class="screen">
   <header class="appbar">
     <div class="ab-text"><h1 class="ab-title">Cards</h1></div>
-    <div class="ab-act"><button class="ghost" id="cdForDeck">For this deck: off</button><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
+    <div class="ab-act"><button class="ghost" id="cdForDeck">For this deck: off</button><button class="icb" data-rules="" aria-label="Rules"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-rules"/></svg></button><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
   </header>
   <div class="search"><span><svg class="g" width="16" height="16"><use href="#g-spyglass"/></svg></span>
     <input id="cdq" aria-label="Search cards by name, number or text" placeholder="Name, number, or card text"></div>
@@ -1239,7 +1239,7 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
 <section id="play" class="screen">
   <header class="appbar">
     <div class="ab-text"><h1 class="ab-title">Play</h1></div>
-    <div class="ab-act"><button class="ghost" id="plReset">New game</button><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
+    <div class="ab-act"><button class="ghost" id="plReset">New game</button><button class="icb" data-rules="" aria-label="Rules"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-rules"/></svg></button><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
   </header>
   <div class="note" style="margin:2px 0 12px">Life and DON!! for a table game. Two Leaders, one phone. Nothing here is saved or sent.</div>
   <div id="plBoard"></div>
@@ -1253,8 +1253,8 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
 <!-- ============================ SIM (placeholder) ======================== -->
 <section id="sim" class="screen">
   <header class="appbar">
-    <div class="ab-text"><h1 class="ab-title">Sim</h1><p class="ab-sub">pass the phone · rules by the app, effects by hand</p></div>
-    <div class="ab-act"><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
+    <div class="ab-text"><h1 class="ab-title">Sim</h1><p class="ab-sub">rules by the app · effects from the text, or by hand</p></div>
+    <div class="ab-act"><button class="icb" data-rules="" aria-label="Rules"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-rules"/></svg></button><button class="icb" data-go="settings" aria-label="More"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-gear"/></svg></button></div>
   </header>
   <div id="simBoard"></div>
   <div id="simCurtain" class="curtain"></div>
@@ -1370,6 +1370,18 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
   </div>
 </div>
 
+<div class="sheet" id="rulesSheet">
+  <div class="sheetbody">
+    <div class="grab"></div>
+    <div class="sheethead"><h2>Rules</h2><button class="icb" data-close="rulesSheet" aria-label="Close"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-close"/></svg></button></div>
+    <div class="note" id="rulesSrc" style="margin:0 0 10px"></div>
+    <div class="search" style="margin-bottom:10px"><svg class="g" width="18" height="18" aria-hidden="true"><use href="#g-spyglass"/></svg>
+      <input id="rulesQ" placeholder="DON!!, Blocker, 7-1-4" aria-label="Search the rules"></div>
+    <div id="rulesList"></div>
+    <div class="row" style="gap:10px;margin-top:12px;flex-wrap:wrap"><button class="ghost" id="rulesSync">Check for updates</button><span class="note" id="rulesSyncNote" style="margin:0"></span></div>
+    <a class="linkish" id="rulesPdf" href="https://en.onepiece-cardgame.com/pdf/rule_comprehensive.pdf" target="_blank" rel="noopener" style="margin-top:8px;display:inline-block">The official rules (PDF) <svg class="g" width="14" height="14" aria-hidden="true"><use href="#g-external"/></svg></a>
+  </div>
+</div>
 <div class="sheet" id="leaderPick">
   <div class="sheetbody">
     <div class="grab"></div>
@@ -1676,7 +1688,7 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g,
 
 /* ---- catalogue --------------------------------------------------------- */
 const CAT = { rows: [], byId: new Map(), byNum: new Map(), sets: new Map(),
-              ng: {}, ngs: {}, man: {}, expectedFetches: 2, ready: false };
+              ng: {}, ngs: {}, man: {}, effects: {}, proof: {}, expectedFetches: 2, ready: false };
 
 const TREAT = {
   base: 'Base', alternate_art: 'Alternate Art', sp: 'SP', parallel: 'Parallel',
@@ -1743,7 +1755,7 @@ function indexCatalogue(cat) {
     if (!byNum.has(p.num)) byNum.set(p.num, []);
     byNum.get(p.num).push(p);
   }
-  return { ng: cat.ng, ngs: cat.ngs, valid: new Set(cat.valid_numbers || []), star: cat.star || null, effects: cat.effects || {},
+  return { ng: cat.ng, ngs: cat.ngs, valid: new Set(cat.valid_numbers || []), star: cat.star || null, effects: cat.effects || {}, proof: cat.proof || {},
     /* A29: stock decks ride in the bundle. They are DECKS, never cards owned --
        nothing here ever touches OWN, the portfolio, the export or the binder. */
     zips3: cat.zips3 || null,
@@ -2319,8 +2331,8 @@ function simReadiness(d) {
   const ids = (d.leader ? [d.leader] : []).concat(d.cards.map(c => c.id));
   const counts = { full: 0, part: 0, hand: 0, none: 0 }; const byName = { hand: [] };
   for (const id of ids) { const p = CAT.byId.get(id); if (!p) continue;
-    const lines = (p.text || '').split(/\n\s*\n|\n/).map(x => x.trim()).filter(x => x.startsWith('[') && !/^\[(Blocker|Rush|Double Attack|Banish|Unblockable|Trigger)\]\s*\(/.test(x));
-    const fx = (CAT.effects || {})[String(id)] || [];
+    const lines = SIM.lines(p.text);   // take 122: the one split the parser uses (it left [Rush: Character] reminders in, and missed merged lines)
+    const fx = ((CAT.effects || {})[String(id)] || []).filter(e => !e.hand);
     if (!lines.length) counts.none++; else if (fx.length >= lines.length) counts.full++; else if (fx.length) counts.part++; else { counts.hand++; if (byName.hand.length < 6 && !byName.hand.includes(p.name)) byName.hand.push(p.name); } }
   return { ...counts, total: ids.length, handNames: byName.hand };
 }
@@ -3298,7 +3310,7 @@ const NAV = { stack: [], silent: false,
    It heals the symptom and names the cause. */
 function screenWatchdog(trigger) {
   setTimeout(() => { const on = document.querySelector('.screen.on'); if (on) return;
-    const overlays = ['#askSheet', '#picker', '#filters', '#leaderPick', '#printPick', '#detail', '#tour', '#simCurtain', '#splash'].filter(id => { const el = $(id); return el && el.classList && el.classList.contains('on'); });
+    const overlays = ['#askSheet', '#picker', '#filters', '#leaderPick', '#printPick', '#rulesSheet', '#detail', '#tour', '#simCurtain', '#splash'].filter(id => { const el = $(id); return el && el.classList && el.classList.contains('on'); });
     ERRS.push('blank', `no screen on after ${trigger}; stack ${NAV.stack.join('>') || '-'}; overlays ${overlays.join(',') || 'none'}; mode ${MODE.cur}`, 'watchdog');
     NAV.silent = true; go(MODE.home[MODE.cur] || 'home'); NAV.silent = false; }, 60);
 }
@@ -3311,7 +3323,7 @@ function closeAnyOverlay() {
   /* take 107: Back left the filter, Leader and printing sheets open while the
      screen under them changed (PROVEN in Chrome: the filter sheet over Home,
      the Leader sheet over Decks). They are overlays; Back closes them first. */
-  for (const id of ['#picker', '#filters', '#leaderPick', '#printPick', '#tour', '#simCurtain']) { const el = $(id); if (el && el.classList.contains('on')) { if (id === '#picker') PICKER.dismiss(); else if (id === '#tour') guideClose(false); else el.classList.remove('on'); return true; } }   // take 115: a prompt on the picker answers no; take 116: the guide is an overlay by class; Back closes it unseen (landmine 201)
+  for (const id of ['#picker', '#filters', '#leaderPick', '#printPick', '#rulesSheet', '#tour', '#simCurtain']) { const el = $(id); if (el && el.classList.contains('on')) { if (id === '#picker') PICKER.dismiss(); else if (id === '#tour') guideClose(false); else el.classList.remove('on'); return true; } }   // take 115: a prompt on the picker answers no; take 116: the guide is an overlay by class; Back closes it unseen (landmine 201)
   return false;
 }
 /* take 107: the header’s back arrow is the phone’s Back, not a second route.
@@ -3357,6 +3369,7 @@ function go(id) {
 }
 document.addEventListener('click', e => {
   const g = e.target.closest('[data-go]'); if (g) go(g.dataset.go);
+  const rb = e.target.closest('[data-rules]'); if (rb) openRules(rb.dataset.rules);
   if (e.target.closest('[data-back]')) backArrow();
   const x = e.target.closest('[data-close]'); if (x) closeSheet(x.dataset.close);
 });
@@ -6181,451 +6194,221 @@ function paintSettings() {
   const sy = $('#syncBtn'); if (sy) sy.addEventListener('click', async () => { sy.disabled = true; await PLATFORM.refreshCatalogue(); sy.disabled = false; paintSettings(); });
 }
 
-/* ---- sim: the hot-seat board (A23 step 1, take 46) --------------------
-   The ENGINE owns what RULES.md §3 lists and nothing else: setup, mulligan,
-   Life, the five phases and their first-turn exceptions, cost, the five-
-   Character limit, giving DON!!, who may attack whom, the four battle steps
-   with Blocker and Counter, damage, K.O., the two defeats. Card EFFECTS are
-   played by hand through the manual tray. Every rule cites its section, and
-   every refusal says why: an honest "I don’t know this card’s text" beats a
-   guess about a game (AGENTS §4, the same rule as the scanner’s). */
-const SIM = {
-  g: null, uid: 0,
-  inst(id, turn) { return { id, rested: false, don: 0, turn, uid: ++this.uid }; },
-  keyOf(P, ref) { const o = ref === 'leader' ? P.leader : P.chars[ref]; return ref === 'leader' ? 'leader' : (o && o.uid != null ? 'u' + o.uid : (o ? o.id + ':' + ref : null)); },
-  shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; },
-  card(id) { return CAT.byId.get(id); },
-  expand(deck) { const ids = []; for (const c of deck.cards) for (let k = 0; k < c.n; k++) ids.push(c.id); return ids; },
-  /* §5-2: a legal deck each, shuffled, Leader face-up, five cards in hand.
-     Life is placed after the mulligan decision (§5-2-4). */
-  new(deckA, deckB, first = 0) {
-    const mk = (d, i) => ({ name: d.name || `Player ${i + 1}`, deckName: d.name, deck: this.shuffle(this.expand(d)), hand: [], life: [], trash: [],
-      leader: { id: d.leader, rested: false, don: 0 }, chars: [], stage: null, donDeck: 10, don: { active: 0, rested: 0 },
-      mulliganed: null, mods: {}, modl: [], taken: 0 });
-    this.g = { turn: 0, first, active: first, phase: 'mulligan', players: [mk(deckA, 0), mk(deckB, 1)], battle: null, log: [], over: null };
-    this.g.players.forEach((P, i) => this.draw(i, 5));
-    return this.g;
-  },
-  P(i) { return this.g.players[i]; },
-  log(m) { this.g.log.unshift(`T${this.g.turn} ${m}`); if (this.g.log.length > 60) this.g.log.pop(); },
-  draw(i, n = 1) { const P = this.P(i); for (let k = 0; k < n; k++) { if (!P.deck.length) { this.g.over = 1 - i; this.log(`${P.name} cannot draw — defeat (§1-2-1-1)`); return; } P.hand.push(P.deck.shift()); } },
-  /* §5-2-3: return all five, shuffle, redraw five, once. */
-  mulligan(i, yes) { const P = this.P(i); if (P.mulliganed !== null) return; P.mulliganed = !!yes;
-    if (yes) { P.deck.push(...P.hand); P.hand = []; this.shuffle(P.deck); this.draw(i, 5); this.log(`${P.name} mulligans`); }
-    if (this.g.players.every(x => x.mulliganed !== null)) { this.g.players.forEach((x, k) => this.placeLife(k)); this.startTurn(); } },
-  /* §5-2-4: Life cards, face-down, from the top of the deck, equal to the Leader’s Life. */
-  placeLife(i) { const P = this.P(i); const L = this.card(P.leader.id); const n = (L && this.num(L.life)) || 5; P.life = P.deck.splice(0, n); },
-  firstTurnOf(i) { return this.P(i).taken === 1; },
-  /* §6-1: Refresh → Draw → DON!! → Main. */
-  startTurn() { const g = this.g; g.turn++; const i = g.active; const P = this.P(i); P.taken++;
-    // §6-2 refresh: given DON!! return to the cost area; everything rested becomes active
-    let back = P.leader.don; P.leader.don = 0; P.leader.rested = false;
-    for (const c of P.chars) { back += c.don; c.don = 0; c.rested = false; }
-    P.don.active += P.don.rested + back; P.don.rested = 0; P.mods = {};
-    g.players.forEach(X => { X.modl = (X.modl || []).filter(m => m.until !== 'refresh:' + i); });   // 'until the start of your next turn' ends at that refresh
-    // §6-3 draw: not the first player on turn one
-    if (!(g.turn === 1 && i === g.first)) this.draw(i, 1);
-    if (g.over !== null) { g.phase = 'over'; return; }
-    // §6-4 DON!!: two from the DON!! deck; one on the first player’s first turn
-    const add = Math.min(P.donDeck, (g.turn === 1 && i === g.first) ? 1 : 2); P.donDeck -= add; P.don.active += add;
-    g.phase = 'main'; g.battle = null; this.log(`${P.name} — refresh, draw, +${add} DON!!`); },
-  /* §6-6 end, then the other player’s turn. */
-  endTurn() { const g = this.g; if (g.phase !== 'main') return false; this.log(`${this.P(g.active).name} ends the turn`);
-    g.players.forEach(X => { X.modl = (X.modl || []).filter(m => m.until !== 'endturn'); });      // 'during this turn' ends here, on BOTH sides (take 50)
-    g.active = 1 - g.active; this.startTurn(); return true; },
-  /* A timed modifier: key = 'leader' or '<id>:<k>', until = 'endturn' | 'refresh:<player>'. */
-  mod(i, key, n, dur, extra) { const P = this.P(i); P.modl = P.modl || []; P.modl.push(Object.assign({ key, n, until: dur === 'nextturn' ? 'refresh:' + i : (dur === 'permanent' ? 'never' : 'endturn') }, extra || {})); },
-  cost(p) { const c = parseInt(p.cost, 10); return isNaN(c) ? 0 : c; },
-  num(v) { const n = parseInt(v, 10); return isNaN(n) ? 0 : n; },     // the bundle’s power, counter and life are strings
-  power(i, ref) { const P = this.P(i); const o = ref === 'leader' ? P.leader : P.chars[ref]; if (!o) return 0; const p = this.card(o.id);
-    /* continuous effects (take 48): "+N power" while the condition holds, re-evaluated every read */
-    const stat = this.fx(o.id).filter(e => e.t === 'static' && e.do[0].a === 'selfpower' && e.if.every(c => this.condOk(i, o, c))).reduce((a, e) => a + e.do[0].n, 0);
-    const key = this.keyOf(P, ref);
-    return this.num(p.power) + 1000 * o.don + stat + (P.mods[key] || 0) + (P.mods[o.id + ':' + ref] || 0) + (P.modl || []).filter(m => m.key === key && m.n != null).reduce((a, m) => a + m.n, 0); },
-  /* Keywords the card has NOW: printed, granted while a condition holds, granted for a while (take 51). */
-  kwOf(i, ref) { const P = this.P(i); const o = ref === 'leader' ? P.leader : P.chars[ref]; if (!o) return []; const p = this.card(o.id); const key = this.keyOf(P, ref);
-    const printed = (p.kw || '').split('|').filter(Boolean);
-    const stat = this.fx(o.id).filter(e => e.t === 'static' && e.do[0].a === 'selfkw' && e.if.every(c => this.condOk(i, o, c))).map(e => e.do[0].k);
-    const timed = (P.modl || []).filter(m => m.key === key && m.kw).map(m => m.kw);
-    return printed.concat(stat, timed); },
-  has(i, ref, k) { return this.kwOf(i, ref).includes(k); },
-  /* Cost the card has NOW: printed, changed for the turn by an effect (take 51). */
-  effCost(X, k) { const c = X.chars[k]; if (!c) return 0; const key = c.uid != null ? 'u' + c.uid : c.id + ':' + k; return Math.max(0, this.cost(this.card(c.id)) + (X.modl || []).filter(m => m.key === key && m.cost != null).reduce((a, m) => a + m.cost, 0)); },
-  /* §6-5, §2-7: pay by resting active DON!!. Characters: five in play (§3). */
-  canPlay(i, h) { const g = this.g; if (g.phase !== 'main' || g.active !== i) return { ok: false, why: 'not your Main phase' };
-    const P = this.P(i), p = this.card(P.hand[h]); if (!p) return { ok: false, why: 'unknown card' };
-    if (p.type === 'Leader') return { ok: false, why: 'a Leader is not played from hand (§2-2)' };
-    const c = this.cost(p); if (P.don.active < c) return { ok: false, why: `costs ${c} DON!!, ${P.don.active} active (§2-7)` };
-    if (p.type === 'Character' && P.chars.length >= 5) return { ok: false, why: 'five Characters already — K.O. or trash one first (§3)' };
-    return { ok: true, cost: c }; },
-  play(i, h) { const v = this.canPlay(i, h); if (!v.ok) return v; const P = this.P(i); const id = P.hand.splice(h, 1)[0]; const p = this.card(id);
-    P.don.active -= v.cost; P.don.rested += v.cost;
-    if (p.type === 'Character') P.chars.push(this.inst(id, this.g.turn));
-    else if (p.type === 'Stage') { if (P.stage) P.trash.push(P.stage); P.stage = id; }
-    else P.trash.push(id);                                   // an Event resolves by hand, then goes to trash (§2-4)
-    this.log(`${P.name} plays ${p.name} (${v.cost})`); return { ok: true, card: p }; },
-  /* §6-5-5: give an active DON!! to your Leader or a Character, +1000, your turn only. */
-  giveDon(i, ref) { const g = this.g; if (g.phase !== 'main' || g.active !== i) return { ok: false, why: 'your turn only (§6-5-5)' };
-    const P = this.P(i); if (P.don.active < 1) return { ok: false, why: 'no active DON!!' }; const o = ref === 'leader' ? P.leader : P.chars[ref]; if (!o) return { ok: false, why: 'no such card' };
-    P.don.active--; o.don++; this.log(`${P.name} gives DON!! to ${this.card(o.id).name}`); return { ok: true }; },
-  /* §7-1: an active Leader or Character attacks the opponent’s Leader or a RESTED Character.
-     §6-5-6-1: nobody battles on their first turn. Rush lets a Character attack the turn it is played (§10-1). */
-  canAttack(i, ref) { const g = this.g; if (g.phase !== 'main' || g.active !== i) return { ok: false, why: 'your Main phase only' };
-    if (this.firstTurnOf(i)) return { ok: false, why: 'no battle on your first turn (§6-5-6-1)' };
-    const P = this.P(i); const o = ref === 'leader' ? P.leader : P.chars[ref]; if (!o) return { ok: false, why: 'no such card' };
-    if (o.rested) return { ok: false, why: 'already rested' };
-    if (ref !== 'leader' && o.turn === g.turn && !this.has(i, ref, 'Rush')) return { ok: false, why: 'played this turn and no Rush (§10-1)' };
-    return { ok: true }; },
-  targets(i) { const O = this.P(1 - i); const t = [{ ref: 'leader', name: this.card(O.leader.id).name }]; O.chars.forEach((c, k) => { if (c.rested) t.push({ ref: k, name: this.card(c.id).name }); }); return t; },
-  attack(i, ref, tref) { const v = this.canAttack(i, ref); if (!v.ok) return v; const O = this.P(1 - i);
-    if (tref !== 'leader' && !(O.chars[tref] && O.chars[tref].rested)) return { ok: false, why: 'only the Leader or a rested Character can be attacked (§7-1)' };
-    const P = this.P(i); const a = ref === 'leader' ? P.leader : P.chars[ref]; a.rested = true;
-    this.g.battle = { att: i, aref: ref, def: 1 - i, dref: tref, blocked: false, counter: 0, step: 'block' };
-    this.g.phase = 'battle'; this.log(`${P.name}: ${this.card(a.id).name} attacks ${tref === 'leader' ? this.card(O.leader.id).name : this.card(O.chars[tref].id).name}`); return { ok: true }; },
-  /* §7-1-2 block: the defender may activate ONE active [Blocker]; it becomes the target. */
-  blockers() { const b = this.g.battle; if (!b || b.step !== 'block') return []; const O = this.P(b.def);
-    return O.chars.map((c, k) => ({ k, c })).filter(x => !x.c.rested && this.has(b.def, x.k, 'Blocker') && x.k !== b.dref).map(x => ({ ref: x.k, name: this.card(x.c.id).name })); },
-  block(k) { const b = this.g.battle; if (!b || b.step !== 'block') return { ok: false }; const O = this.P(b.def); const c = O.chars[k];
-    if (!c || c.rested || !this.has(b.def, k, 'Blocker')) return { ok: false, why: 'not an active Blocker' };
-    c.rested = true; b.dref = k; b.blocked = true; b.step = 'counter'; this.log(`${O.name}: ${this.card(c.id).name} blocks`); return { ok: true }; },
-  noBlock() { const b = this.g.battle; if (b && b.step === 'block') b.step = 'counter'; },
-  /* §7-1-3 counter: trash a card with a Counter value from hand, +1000/+2000 to the defender. */
-  /* [Counter] Events (take 49): played from hand in the counter step for their cost, then their effect is offered. */
-  counterEvents() { const b = this.g.battle; if (!b || b.step !== 'counter') return []; const O = this.P(b.def);
-    return O.hand.map((id, h) => ({ h, p: this.card(id) })).filter(x => x.p && x.p.type === 'Event' && this.fx(x.p.id).some(e => e.t === 'evcounter') && this.cost(x.p) <= O.don.active).map(x => ({ h: x.h, name: x.p.name, cost: this.cost(x.p) })); },
-  playCounterEvent(h) { const b = this.g.battle; if (!b || b.step !== 'counter') return { ok: false }; const O = this.P(b.def); const p = this.card(O.hand[h]);
-    if (!p || p.type !== 'Event') return { ok: false, why: 'not an Event' }; const c = this.cost(p); if (O.don.active < c) return { ok: false, why: `costs ${c} DON!!` };
-    O.hand.splice(h, 1); O.don.active -= c; O.don.rested += c; O.trash.push(p.id); this.log(`${O.name} plays ${p.name} [Counter]`); return { ok: true, id: p.id }; },
-  counters() { const b = this.g.battle; if (!b || b.step !== 'counter') return []; const O = this.P(b.def);
-    return O.hand.map((id, h) => ({ h, p: this.card(id) })).filter(x => x.p && this.num(x.p.counter) > 0).map(x => ({ h: x.h, name: x.p.name, plus: this.num(x.p.counter) })); },
-  counter(h) { const b = this.g.battle; if (!b || b.step !== 'counter') return { ok: false }; const O = this.P(b.def); const p = this.card(O.hand[h]);
-    const plus = this.num(p && p.counter); if (!plus) return { ok: false, why: 'no Counter value' }; O.hand.splice(h, 1); O.trash.push(p.id); b.counter += plus; this.log(`${O.name} counters with ${p.name} (+${plus})`); return { ok: true }; },
-  battlePowers() { const b = this.g.battle; if (!b) return null; return { a: this.power(b.att, b.aref), d: this.power(b.def, b.dref) + b.counter }; },
-  /* §7-1-4 damage: attacker ≥ defender wins; a losing Leader takes damage, a losing Character is K.O.'d. */
-  resolve() { const g = this.g, b = g.battle; if (!b) return null; const { a, d } = this.battlePowers(); const A = this.P(b.att), O = this.P(b.def);
-    const att = this.card((b.aref === 'leader' ? A.leader : A.chars[b.aref]).id); const res = { win: a >= d, a, d, life: [], ko: null };
-    if (res.win) {
-      if (b.dref === 'leader') { const n = this.has(b.att, b.aref, 'Double Attack') ? 2 : 1;
-        for (let k = 0; k < n; k++) { if (!O.life.length) { g.over = b.att; this.log(`${O.name} takes damage with no Life — defeat (§1-2-1-1)`); break; }
-          const id = O.life.shift(); const lc = this.card(id); const banish = this.has(b.att, b.aref, 'Banish');
-          if (banish) O.trash.push(id); else O.hand.push(id);
-          res.life.push({ id, name: lc ? lc.name : '?', trigger: !!(lc && hasKw(lc, 'Trigger')), banished: banish }); } }
-      else { const c = O.chars.splice(b.dref, 1)[0]; O.trash.push(c.id); res.ko = this.card(c.id).name; res.koId = c.id; this.log(`${res.ko} is K.O.'d`); }
-    }
-    this.log(`${att.name} ${a} vs ${d}: ${res.win ? 'hit' : 'held'}`); g.battle = null; g.phase = g.over !== null ? 'over' : 'main'; return res; },
-  /* ---- effects (A23 step 2, take 47) -----------------------------------
-     Scripted at build time from the card’s own text, only whole sentences
-     the engine can run. offers() evaluates the tags the engine knows and
-     returns what may be applied NOW, with the legal targets computed by the
-     engine; apply() executes under the same invariants as everything else.
-     Everything not offered is the text and the tray. */
-  fx(id) { return CAT.effects[String(id)] || []; },
-  key(ref) { return ref === 'leader' ? 'leader' : String(ref); },
-  condOk(i, src, c) { const P = this.P(i), g = this.g; const L = this.card(P.leader.id);
-    if (c.c === 'donx') return (src ? src.don : 0) >= c.n;
-    if (c.c === 'opt') return true;                                    // checked against P.used in offers()
-    if (c.c === 'yourturn') return g.active === i;
-    if (c.c === 'oppturn') return g.active !== i;
-    if (c.c === 'opplife') return this.P(1 - i).life.length <= c.max;
-    if (c.c === 'donfield') return (P.don.active + P.don.rested + P.leader.don + P.chars.reduce((a, x) => a + x.don, 0)) >= c.min;
-    if (c.c === 'leadertype') return ((L && L.subtypes) || '').split(/[;/]/).map(x => x.trim()).includes(c.t);
-    if (c.c === 'leadername') return !!L && L.name === c.name;
-    if (c.c === 'life') return P.life.length <= c.max;
-    if (c.c === 'trash') return P.trash.length >= c.min;
-    if (c.c === 'donle') { const f = X => X.don.active + X.don.rested + X.leader.don + X.chars.reduce((a, x) => a + x.don, 0); return f(P) <= f(this.P(1 - i)); }
-    return false; },
-  /* Can the first step’s COST be paid at all? If not, the effect is not offered. */
-  fieldDon(P) { return P.don.active + P.don.rested + P.leader.don + P.chars.reduce((a, x) => a + x.don, 0); },
-  canPay(i, ref, d) { const P = this.P(i); if (!d || !/^cost_/.test(d.a)) return true;
-    if (d.a === 'cost_trashhand') return P.hand.length >= d.n;
-    if (d.a === 'cost_returndon') return this.fieldDon(P) >= d.n;
-    if (d.a === 'cost_restself') { const o = ref === 'leader' ? P.leader : P.chars[ref]; return !!o && !o.rested; }
-    return false; },
-  /* Targets are strings the board can put on a button: L = your Leader,
-     mK = your Character K, oK = the opponent’s Character K, hK = a hand
-     card, dK = the K-th card looked at from the top of the deck. */
-  targetsFor(i, d) { const O = this.P(1 - i), P = this.P(i);
-    const fit = (X, k) => { const c = X.chars[k], p = this.card(c.id); return (d.cost == null || this.effCost(X, k) <= d.cost) && (d.power == null || this.num(p.power) <= d.power) && (!d.rested || c.rested); };
-    const opp = () => O.chars.map((c, k) => ({ ref: 'o' + k, name: this.card(c.id).name + ' (theirs)' })).filter((t, k) => fit(O, k));
-    const own = () => P.chars.map((c, k) => ({ ref: 'm' + k, name: this.card(c.id).name })).filter((t, k) => fit(P, k));
-    if (d.a === 'ko') return opp();
-    if (d.a === 'rest') return opp().filter(t => !O.chars[+t.ref.slice(1)].rested);
-    if (d.a === 'bounce' || d.a === 'bottom') return d.who === 'any' ? own().concat(opp()) : opp();
-    if (d.a === 'power' && d.who === 'prev') return null;   // the card the previous step chose
-    if (d.a === 'costmod') return opp();
-    if (d.a === 'power') return d.who === 'opp' ? opp() : [{ ref: 'L', name: this.card(P.leader.id).name }].concat(own());
-    if (d.a === 'givedon') return [{ ref: 'L', name: this.card(P.leader.id).name }].concat(P.chars.map((c, k) => ({ ref: 'm' + k, name: this.card(c.id).name })));
-    if (d.a === 'trashhand' || d.a === 'cost_trashhand') return P.hand.map((id, h) => ({ ref: 'h' + h, name: this.card(id).name }));
-    if (d.a === 'playfromhand') return P.hand.map((id, h) => ({ id, h, p: this.card(id) })).filter(x => x.p && x.p.type === 'Character' && (d.cost == null || this.cost(x.p) <= d.cost) && (d.power == null || this.num(x.p.power) <= d.power) && (!d.type || (x.p.subtypes || '').split(/[;/]/).map(y => y.trim()).includes(d.type))).map(x => ({ ref: 'h' + x.h, name: x.p.name + ' (' + this.cost(x.p) + 'c)' }));
-    if (d.a === 'search') { const types = d.types || (d.type ? [d.type] : null);
-      return P.deck.slice(0, d.n).map((id, k) => ({ id, k, p: this.card(id) })).filter(x => x.p
-        && ((!types && !d.names) || (types || []).some(t => (x.p.subtypes || '').split(/[;/]/).map(y => y.trim()).includes(t)) || (d.names || []).includes(x.p.name))
-        && (!d.name || x.p.name === d.name) && (!d.not || x.p.name !== d.not)
-        && (d.cost_max == null || this.cost(x.p) <= d.cost_max) && (d.cost_min == null || this.cost(x.p) >= d.cost_min)).map(x => ({ ref: 'd' + x.k, name: x.p.name + (x.p.type ? ' (' + x.p.type + ')' : '') })); }
-    return null; },
-  offers(i, trigger, ref, cardId, fromLife) { const P = this.P(i); const src = ref == null ? null : (ref === 'leader' ? P.leader : P.chars[ref]); const id = cardId || (src && src.id);
-    return this.fx(id).map((e, n) => ({ e, n })).filter(({ e }) => e.t === trigger)
-      .filter(({ e }) => e.if.every(c => this.condOk(i, src, c)))
-      .filter(({ e, n }) => !(e.if.some(c => c.c === 'opt') && (P.used || {})[`${this.key(ref)}:${n}:${this.g.turn}`]))
-      .filter(({ e }) => this.canPay(i, ref, e.do[0]))
-      .map(({ e, n }) => ({ i, e, n, ref, cardId: id, fromLife: !!fromLife, steps: e.do, step: 0, targets: this.targetsFor(i, e.do[0]) })); },
-  /* Runs the CURRENT step of an offer. Returns { ok, done, follow } -- follow
-     is a list of new offers (a [Trigger] that activates an [On Play]). */
-  apply(i, offer, target) { const P = this.P(i), O = this.P(1 - i), d = offer.steps[offer.step]; const need = offer.targets && offer.targets.length > 0;
-    /* a condition on the STEP is read now, not at the trigger (take 50): a false one skips the step */
-    if (d.if && !d.if.every(c => this.condOk(i, offer.ref == null ? null : (offer.ref === 'leader' ? P.leader : P.chars[offer.ref]), c))) {
-      this.log(`condition not met: ${d.if.map(c => c.c).join(',')}`); offer.step++; const done = offer.step >= offer.steps.length; if (!done) offer.targets = this.targetsFor(i, offer.steps[offer.step]); return { ok: true, done, follow: [] }; }
-    if (d.a === 'trashhand' && d.upto && target == null) { offer.step++; const done = offer.step >= offer.steps.length; if (!done) offer.targets = this.targetsFor(i, offer.steps[offer.step]); return { ok: true, done, follow: [] }; }
-    if (need && target == null) return { ok: false, why: 'choose a target' };
-    if (need && !offer.targets.some(t => t.ref === target)) return { ok: false, why: 'not a legal target for this effect' };
-    if (offer.step === 0 && offer.e.if.some(c => c.c === 'opt')) { P.used = P.used || {}; P.used[`${this.key(offer.ref)}:${offer.n}:${this.g.turn}`] = true; }
-    const side = t => (t && t[0] === 'o') ? O : P, idx = t => +String(t).slice(1);
-    const srcKey = () => this.keyOf(P, offer.ref);
-    let follow = [];
-    if (d.a === 'draw') this.draw(i, d.n);
-    else if (d.a === 'selfpower') { const k = srcKey(); if (k) this.mod(i, k, d.n, d.dur); }
-    else if (d.a === 'leaderpower') this.mod(i, 'leader', d.n, d.dur);
-    else if (d.a === 'power') { const tg = d.who === 'prev' ? offer.prev : target; if (tg == null) return { ok: false, why: 'no card chosen before' };
-      if (tg === 'L') this.mod(i, 'leader', d.n, d.dur); else { const X = side(tg), c = X.chars[idx(tg)]; if (!c) return { ok: false, why: 'that card is gone' }; this.mod(X === P ? i : 1 - i, c.uid != null ? 'u' + c.uid : c.id + ':' + idx(tg), d.n, d.dur); } }
-    else if (d.a === 'ko') { const c = O.chars.splice(idx(target), 1)[0]; O.trash.push(c.id); }
-    else if (d.a === 'rest') { O.chars[idx(target)].rested = true; }
-    else if (d.a === 'bounce') { const X = side(target); const c = X.chars.splice(idx(target), 1)[0]; X.hand.push(c.id); }
-    else if (d.a === 'bottom') { const X = side(target); const c = X.chars.splice(idx(target), 1)[0]; X.deck.push(c.id); }
-    else if (d.a === 'givedon') { const o = target === 'L' ? P.leader : P.chars[idx(target)]; const n = Math.min(d.n, P.don.rested); P.don.rested -= n; o.don += n; }
-    else if (d.a === 'activedon') { const n = Math.min(d.n, P.don.rested); P.don.rested -= n; P.don.active += n; }
-    else if (d.a === 'lifetohand') { for (let k = 0; k < (d.n || 1); k++) if (P.life.length) P.hand.push(P.life.shift()); }
-    else if (d.a === 'trashhand') { const id = P.hand.splice(idx(target), 1)[0]; if (id) P.trash.push(id); }
-    else if (d.a === 'search') { const top = P.deck.splice(0, d.n); if (target != null) { const k = idx(target); P.hand.push(top.splice(k, 1)[0]); } P.looking = (P.looking || []).concat(top); }
-    else if (d.a === 'restcards') { const rest = P.looking || []; P.looking = []; if (d.to === 'trash') P.trash.push(...rest); else P.deck.push(...rest); }
-    else if (d.a === 'adddon') { const n = Math.min(d.n, P.donDeck); P.donDeck -= n; if (d.rested) P.don.rested += n; else P.don.active += n; }
-    else if (d.a === 'costmod') { const X = side(target), c = X.chars[idx(target)]; this.mod(X === P ? i : 1 - i, c.uid != null ? 'u' + c.uid : c.id + ':' + idx(target), null, d.dur, { cost: d.n }); }
-    else if (d.a === 'selfkw') { const k = srcKey(); if (k) this.mod(i, k, null, d.dur, { kw: d.k }); }
-    else if (d.a === 'mill') { P.trash.push(...P.deck.splice(0, d.n)); }
-    else if (d.a === 'decktolife') { if (P.deck.length) P.life.unshift(P.deck.shift()); }
-    else if (d.a === 'selfactive') { const o = offer.ref === 'leader' ? P.leader : P.chars[offer.ref]; if (o) o.rested = false; }
-    else if (d.a === 'playself') { const p = this.card(offer.cardId); const h = P.hand.indexOf(offer.cardId);
-      if (p.type === 'Character' && P.chars.length >= 5) return { ok: false, why: 'five Characters already (§3)' };
-      if (h >= 0) P.hand.splice(h, 1);
-      if (p.type === 'Character') { P.chars.push(this.inst(offer.cardId, this.g.turn)); offer.ref = P.chars.length - 1; offer.fromLife = false; follow = this.offers(i, 'onplay', offer.ref); }
-      else if (p.type === 'Stage') { if (P.stage) P.trash.push(P.stage); P.stage = offer.cardId; offer.fromLife = false; }
-      else P.trash.push(offer.cardId); }
-    else if (d.a === 'activate') { follow = this.offers(i, d.t, offer.ref != null ? offer.ref : null, offer.ref != null ? null : offer.cardId); }
-    else if (d.a === 'cost_trashhand') { const id = P.hand.splice(idx(target), 1)[0]; if (!id) return { ok: false, why: 'nothing to trash' }; P.trash.push(id); }
-    else if (d.a === 'cost_returndon') { let n = d.n; if (this.fieldDon(P) < n) return { ok: false, why: 'not enough DON!! on the field' };
-      const take = (k, v) => { const t = Math.min(n, v); n -= t; return t; }; P.don.active -= take(0, P.don.active); P.don.rested -= take(0, P.don.rested); P.leader.don -= take(0, P.leader.don); for (const c of P.chars) c.don -= take(0, c.don); P.donDeck += d.n; }
-    else if (d.a === 'cost_restself') { const o = offer.ref === 'leader' ? P.leader : P.chars[offer.ref]; if (!o || o.rested) return { ok: false, why: 'already rested' }; o.rested = true; }
-    else if (d.a === 'playfromhand') { if (P.chars.length >= 5) return { ok: false, why: 'five Characters already (§3)' }; const id = P.hand.splice(idx(target), 1)[0]; P.chars.push(this.inst(id, this.g.turn)); follow = this.offers(i, 'onplay', P.chars.length - 1); }
-    else return { ok: false, why: 'unknown action' };
-    const nm = offer.ref === 'leader' ? this.card(P.leader.id).name : (offer.ref != null && P.chars[offer.ref] ? this.card(P.chars[offer.ref].id).name : (this.card(offer.cardId) || {}).name || 'a card');
-    this.log(`${nm}: ${d.a}${target ? ' \u2192 ' + target : ''} (${offer.e.raw.replace(/^(\[[^\]]+\]\s*)+/, '').slice(0, 60)})`);
-    if (target != null) offer.prev = target;
-    offer.step++; const done = offer.step >= offer.steps.length;
-    if (!done) offer.targets = this.targetsFor(i, offer.steps[offer.step]);
-    if (done && P.looking && P.looking.length) { P.deck.push(...P.looking); P.looking = []; }
-    /* a [Trigger] card that was activated instead of kept goes to the trash afterwards (§10-2) */
-    if (done && offer.fromLife) { const h = P.hand.indexOf(offer.cardId); if (h >= 0) { P.hand.splice(h, 1); P.trash.push(offer.cardId); } }
-    return { ok: true, done, follow }; },
-  /* The manual tray: what a card’s TEXT does, done by hand and logged. */
-  manual: {
-    draw(i) { SIM.draw(i, 1); SIM.log(`${SIM.P(i).name} draws (effect)`); },
-    trashChar(i, k) { const P = SIM.P(i); const c = P.chars.splice(k, 1)[0]; if (c) { P.trash.push(c.id); SIM.log(`${SIM.card(c.id).name} to trash (effect)`); } },
-    toHand(i, k) { const P = SIM.P(i); const c = P.chars.splice(k, 1)[0]; if (c) { P.hand.push(c.id); SIM.log(`${SIM.card(c.id).name} returns to hand (effect)`); } },
-    rest(i, ref, rested) { const P = SIM.P(i); const o = ref === 'leader' ? P.leader : P.chars[ref]; if (o) o.rested = rested; },
-    power(i, ref, delta) { const P = SIM.P(i); const key = SIM.keyOf(P, ref); if (!key) return; P.mods[key] = (P.mods[key] || 0) + delta; SIM.log(`${delta > 0 ? '+' : ''}${delta} power this turn (effect)`); },
-    don(i, delta) { const P = SIM.P(i); if (delta > 0) { const n = Math.min(P.donDeck, delta); P.donDeck -= n; P.don.active += n; } else { const n = Math.min(P.don.active, -delta); P.don.active -= n; P.donDeck += n; } },
-    life(i, delta) { const P = SIM.P(i); if (delta > 0 && P.deck.length) P.life.push(P.deck.shift()); if (delta < 0 && P.life.length) P.hand.push(P.life.shift()); SIM.log(`Life ${delta > 0 ? '+' : ''}${delta} (effect)`); },
-    trashHand(i, h) { const P = SIM.P(i); const id = P.hand.splice(h, 1)[0]; if (id) P.trash.push(id); }
-  }
-};
-
-/* ---- sim: the opponent (A23 step 3, take 55) ------------------------------
-   Legal and stupid, on purpose. It uses the same engine calls a player does,
-   reads only what is face-up to it, and takes one action per step so the
-   human sees each move. It never reads the opponent’s hand or deck. */
-const BOT = {
-  is(i) { return SIM.g && SIM.g.bot === i; },
-  /* apply an offered effect to its first legal target; skip an offer with a cost it would rather not pay */
-  offers(i, trigger, ref, cardId, fromLife) {
-    let list = SIM.offers(i, trigger, ref, cardId, fromLife);
-    for (let guard = 0; list.length && guard < 20; guard++) {
-      const o = list.shift();
-      if (o.steps[0].a === 'cost_trashhand' && SIM.P(i).hand.length < 3) continue;   // do not empty the hand for it
-      let r = SIM.apply(i, o, o.targets && o.targets.length ? o.targets[0].ref : null);
-      while (r.ok && !r.done) r = SIM.apply(i, o, o.targets && o.targets.length ? o.targets[0].ref : null);
-      if (r.ok && r.follow && r.follow.length) list = r.follow.concat(list);
-    } },
-  /* one action of the bot’s Main phase; returns what it did, or 'end' */
-  step() { const g = SIM.g; const i = g.bot; if (!g || g.phase !== 'main' || g.active !== i) return null; const P = SIM.P(i), O = SIM.P(1 - i);
-    // 1. play the dearest affordable Character (or Stage), while there is room
-    if (P.chars.length < 5) { let best = -1, bc = -1;
-      P.hand.forEach((id, h) => { const p = SIM.card(id); if (!p || (p.type !== 'Character' && p.type !== 'Stage')) return; const v = SIM.canPlay(i, h); if (v.ok && SIM.cost(p) > bc) { bc = SIM.cost(p); best = h; } });
-      if (best >= 0) { const r = SIM.play(i, best); if (r.ok) { if (r.card.type === 'Character') this.offers(i, 'onplay', P.chars.length - 1); else this.offers(i, 'onplay', null, r.card.id); return 'play'; } } }
-    // 2. give spare DON!! to the Leader
-    if (P.don.active > 0 && !this.donGiven) { const n = P.don.active; for (let k = 0; k < n; k++) SIM.giveDon(i, 'leader'); this.donGiven = true; return 'don'; }
-    // 3. attack with everything that may: a rested opponent Character it can K.O. first, else the Leader
-    if (!SIM.firstTurnOf(i)) { const refs = ['leader'].concat(P.chars.map((c, k) => k));
-      for (const ref of refs) { if (!SIM.canAttack(i, ref).ok) continue; const pw = SIM.power(i, ref);
-        // the Leader always goes for the Leader (games must end); a Character K.O.s a rested Character it can beat, else the Leader
-        const rested = ref === 'leader' ? [] : O.chars.map((c, k) => ({ k, pw: SIM.power(1 - i, k) })).filter(x => O.chars[x.k].rested && x.pw <= pw).sort((a, b) => b.pw - a.pw);
-        const tref = rested.length ? rested[0].k : 'leader';
-        const r = SIM.attack(i, ref, tref); if (r.ok) { this.offers(i, 'attack', ref); return 'attack'; } } }
-    // 4. nothing left: end
-    this.donGiven = false; this.offers(i, 'endturn', 'leader'); P.chars.forEach((c, k) => this.offers(i, 'endturn', k)); SIM.endTurn(); return 'end'; },
-  /* the bot as defender: block when a Character would die and a Blocker can take it; counter when the Leader would take damage at low Life */
-  defend() { const g = SIM.g, b = g.battle; if (!b || g.bot !== b.def) return; const i = b.def;
-    if (b.step === 'block') { const pw = SIM.battlePowers(); const bl = SIM.blockers();
-      if (b.dref !== 'leader' && pw.a >= pw.d && bl.length) { const r = SIM.block(bl[0].ref); if (r.ok) this.offers(i, 'onblock', bl[0].ref); } else SIM.noBlock(); }
-    if (b.step === 'counter') { for (let guard = 0; guard < 6; guard++) { const pw = SIM.battlePowers(); if (pw.a < pw.d) break;
-        const stakes = b.dref === 'leader' && SIM.P(i).life.length <= 2; const cs = SIM.counters().sort((a, c) => c.plus - a.plus);
-        if (!stakes || !cs.length) break; SIM.counter(cs[0].h); } } },
-  mulligan(i) { SIM.mulligan(i, false); }
-};
+/* ---- rules (take 122) ----------------------------------------------------
+   The Comprehensive Rules as the app knows them: a digest in the app's own
+   words under the official section numbers (tools/rules/digest.json), built
+   in so it works offline, searchable, each section saying what the Sim does
+   about it. Check for updates reads rules.json from Pages -- the build reads
+   the official PDF's version there -- and a newer digest's text replaces the
+   built-in one on this phone. What the Sim does is this build's: a section a
+   newer digest adds says it is not reviewed for this version of the app. */
+const RULEBOOK = /* __RULEBOOK__ */ null;
+function verNewer(a, b) { const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number); for (let k = 0; k < 3; k++) if ((x[k] || 0) !== (y[k] || 0)) return (x[k] || 0) > (y[k] || 0); return false; }
+const RULES_DB = {
+  official: readJson('vault.rulesOfficial', null, false),
+  cur() { const s = readJson('vault.rules', null, false); return s && Array.isArray(s.sections) && s.version && verNewer(s.version, RULEBOOK.version) ? s : RULEBOOK; },
+  simOf(id) { const s = RULEBOOK.sections.find(x => x.id === id); return s ? s.sim : 'not reviewed for this version of the app'; },
+  find(q) { const norm = x => String(x || '').toLowerCase().replace(/\u2019/g, "'"); const t = norm(q).trim().replace(/^\u00a7/, ''); const all = this.cur().sections; if (!t) return all;
+    if (/^\d+(-\d+)*$/.test(t)) return all.filter(s => s.id === t || s.id.startsWith(t + '-'));
+    const words = t.split(/\s+/); return all.filter(s => { const hay = norm(`${s.id} ${s.title} ${s.text}`); return words.every(w => hay.includes(w)); }); },
+  async sync() { const base = CAT.man.updateUrl; if (!base) return { ok: false, why: 'Sync is not configured' }; if (!navigator.onLine) return { ok: false, why: 'No connection' };
+    try { const r = await fetch(base + 'rules.json', { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status); const d = await r.json();
+      if (!d || !Array.isArray(d.sections) || !d.version) throw new Error('not a rules file');
+      this.official = Object.assign({ at: new Date().toISOString() }, d.official || {}); saveJson('vault.rulesOfficial', this.official);
+      const newer = verNewer(d.version, this.cur().version);
+      if (newer) saveJson('vault.rules', { version: d.version, date: d.date, title: d.title, url: d.url, note: d.note, sections: d.sections });
+      return { ok: true, newer, version: d.version }; }
+    catch (e) { ERRS.push('rules', `the rules check failed: ${e.message || e}`, 'rules'); return { ok: false, why: `Could not check \u2014 ${e.message || e}` }; } } };
+function rulesStatus() { const b = RULES_DB.cur(), o = RULES_DB.official;
+  const own = `The app\u2019s digest of the Comprehensive Rules v${b.version} (${dayText(b.date, { year: true })}); the official text governs, and card text beats the rules.`;
+  if (!o || !o.version) return own + (o && o.why ? ` The last check could not read the official PDF (${esc(o.why)}).` : '');
+  return own + (verNewer(o.version, b.version) ? ` <b>Bandai has published v${esc(o.version)}${o.date ? ' (' + dayText(o.date, { year: true }) + ')' : ''}</b>; the Sim plays by v${b.version} until an update reviews it.` : ` The official PDF is v${esc(o.version)} too (checked ${dayText(String(o.checked || '').slice(0, 10))}).`); }
+function paintRules(q) { const list = RULES_DB.find(q); $('#rulesSrc').innerHTML = rulesStatus();
+  $('#rulesList').innerHTML = list.length ? list.map(s => `<div class="row" id="rule-${s.id}"><div class="nm"><b>\u00a7${s.id} ${esc(s.title)}</b><span style="display:block">${esc(s.text)}</span><span class="note" style="display:block">In the Sim: ${esc(RULES_DB.simOf(s.id))}</span></div></div>`).join('')
+    : `<div class="note">No section says \u201c${esc(q)}\u201d. Try a keyword ([Blocker]), a word (Life) or a number (6-5-5).</div>`; }
+function openRules(id) { const q = id || ''; $('#rulesQ').value = q; paintRules(q); $('#rulesSheet').classList.add('on'); }
+$('#rulesQ').addEventListener('input', e => paintRules(e.target.value));
+$('#rulesSync').addEventListener('click', async () => { const n = $('#rulesSyncNote'); n.textContent = 'Checking\u2026'; const r = await RULES_DB.sync();
+  n.textContent = r.ok ? (r.newer ? `Updated to v${r.version}.` : `Up to date (v${RULES_DB.cur().version}).`) : r.why; paintRules($('#rulesQ').value); });
+/* __SIM__ -- the engine and the opponent live in src/sim.js (take 122); build_app.py puts them here */
 /* ---- sim: the screen ----------------------------------------------------
-   One column, one player at a time, the curtain between them. A card on the
-   board is its catalogue line: name · cost · power · counter · keywords. */
-const SIMUI = { sel: null, result: null, menu: null, offer: null, post: null, afterOffer: null, pre: null,
+   One column, one player at a time, the curtain between them. The board is
+   drawn from the engine's answers -- whose decision (SIM.who()), which moves
+   (SIM.legal()) -- and every tap is one SIM.act() (take 122). A card on the
+   board is its catalogue line: name \u00b7 cost \u00b7 power \u00b7 counter \u00b7 keywords; the
+   table itself is the owner's UI/UX pass. */
+const SIMUI = { sel: null, post: null, pre: null, room: null, fxt: null, result: null,
   legalDecks() { return DECKS.all().filter(d => d.leader && legality(d).problems.length === 0); } };
 function simCard(id, extra = '', noPower = false) {
   const p = CAT.byId.get(id); if (!p) return `<span class="note">unknown</span>`;
-  const kw = (p.kw || '').split('|').filter(k => ['Rush', 'Blocker', 'Double Attack', 'Banish', 'Trigger', 'Unblockable'].includes(k));
+  const kw = (p.kw || '').split('|').filter(k => ['Rush', 'Rush: Character', 'Blocker', 'Double Attack', 'Banish', 'Trigger', 'Unblockable'].includes(k));
   if (extra && /\u2022kw:/.test(extra)) { extra.match(/\u2022kw:([^\u2022]*)/)[1].split(',').filter(Boolean).forEach(k => { if (!kw.includes(k)) kw.push(k + '*'); }); extra = extra.replace(/\u2022kw:[^\u2022]*\u2022/, ''); }
   const dots = gameColours(p).map(c => `<i style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:3px;vertical-align:1px;background:var(--c-${CCLASS[c]})"></i>`).join('');
   const bits = [p.cost != null ? p.cost + 'c' : '', (!noPower && p.power) ? p.power : '', p.counter ? '+' + p.counter : '', kw.length ? esc(kw.join(', ')) : '', String(extra || '').replace(/^\s*\u00b7\s*/, '')].filter(Boolean);
   return `<b>${dots}${esc(p.name)}</b> <span class="note">${bits.join(' \u00b7 ')}</span>`;
 }
-/* Against the app there is nothing to hide: no curtain, the bot just moves. */
-function simBotRun() { const g = SIM.g; if (!g || g.bot == null) return; let guard = 0;
-  while (g.phase === 'main' && g.active === g.bot && !SIMUI.offer && guard++ < 40) { const did = BOT.step(); if (did === 'attack') { BOT.defendIfBot(); if (g.phase === 'battle') return; } if (did === 'end' || did == null) break; }
-  if (g.phase === 'battle' && g.battle.def === g.bot) { BOT.defend(); } }
-BOT.defendIfBot = () => { const g = SIM.g; if (g.phase === 'battle' && g.battle.def === g.bot) BOT.defend(); };
+/* a section number in the Sim's words opens it in the Rules sheet */
+function simCite(text) { return esc(text).replace(/§(\d+(?:-\d+)*)/g, (m, id) => `<button class="linkish" data-rules="${id}" style="display:inline;width:auto;padding:0;min-height:0;font:inherit;font-weight:650">§${id}</button>`); }
+/* whose screen: the defender reading a result, the human against the app, else whoever the game waits on */
+function simSeat() { const g = SIM.g; if (SIMUI.post) return SIMUI.post.i; if (g.bot != null) return 1 - g.bot; const w = SIM.who(); return w == null ? g.active : w; }
+function simWhy() { const g = SIM.g; if (g.phase === 'mulligan') return 'keep or mulligan'; if (g.queue.length) return 'an effect to resolve';
+  if (g.phase === 'battle') return 'an attack is coming \u2014 block or counter'; return `turn ${g.turn}`; }
+/* Against the app there is nothing to hide: no curtain, the app just moves. The human's attack stops before
+   the damage, so its block and counter are on screen when the human taps Resolve. */
+function simBotRun() { const g = SIM.g; if (!g || g.bot == null) return;
+  for (let guard = 0; SIM.who() === g.bot && guard < 400; guard++) if (!BOT.move(g.bot, g.phase === 'battle' && g.battle.att !== g.bot ? ['resolve'] : [])) break; }
 function simCurtain(text, sub) { if (SIM.g && SIM.g.bot != null) return; const c = $('#simCurtain'); c.innerHTML = `<div class="big" style="font-size:var(--fs-head);margin-bottom:8px">Hand the phone to</div><h2 style="font-size:var(--fs-hero);margin:0 0 12px">${esc(text)}</h2><div class="note">${esc(sub || 'tap when you have it')}</div>`; c.classList.add('on'); }
-function paintSim() {
-  const box = $('#simBoard'); const g = SIM.g;
-
-  if (!g) {                                                    // setup
+/* one tap, one act; then the hand-over the rules imply: a new decider means the curtain (or the app's move) */
+function simAct(i, a) { const g = SIM.g, before = SIM.who(); const r = SIM.act(i, a);
+  if (!r.ok) { if (r.why) toast(r.why); return r; }
+  SIMUI.sel = null; SIMUI.room = null; SIMUI.fxt = null;
+  if (a.t === 'resolve') { if (g.bot != null && i === g.bot) SIMUI.result = r.res; else SIMUI.post = { i, att: 1 - i, res: r.res }; }
+  simAfter(before); return r; }
+function simAfter(before) { const g = SIM.g; if (!g || g.over !== null || SIMUI.post) return; if (g.bot != null) return simBotRun();
+  const w = SIM.who(); if (w != null && w !== before) simCurtain(SIM.P(w).name, simWhy()); }
+/* The board is one painter per state of the game (take 122's review split the one function that drew all of them):
+   each returns its markup from the engine's answers and paints nothing else. */
+function paintSim() { const box = $('#simBoard'), g = SIM.g;
+  if (!g) { box.innerHTML = simSetupHtml(); return; }
+  if (g.over !== null) { box.innerHTML = simOverHtml(); return; }
+  if (g.phase === 'mulligan') { box.innerHTML = simMulliganHtml(); return; }
+  const i = simSeat(), L = SIM.who() === i ? SIM.legal(i) : [];
+  const offer = L.length && g.queue.length ? simOfferPanel(i, L) : '';
+  if (SIMUI.post) box.innerHTML = simPostHtml(offer);
+  else if (g.phase === 'battle') box.innerHTML = simBattleHtml(i, L, offer);
+  else box.innerHTML = simTableHtml(i, L, offer); }
+const simCan = (L, pred) => L.some(pred);
+function simPips(X) { const given = X.leader.don + X.chars.reduce((a, c) => a + c.don, 0); return `<span title="DON!!: ${X.don.active} active, ${X.don.rested} rested, ${given} given, ${X.donDeck} in the DON!! deck" style="letter-spacing:1px">${'\u25cf'.repeat(X.don.active)}<span style="opacity:.35">${'\u25cf'.repeat(X.don.rested)}</span><span style="color:var(--accent-ink)">${'\u25cf'.repeat(given)}</span><span style="opacity:.18">${'\u25cb'.repeat(X.donDeck)}</span></span>`; }
+function simHead(X, mine) { return `<div class="row" style="gap:8px;flex-wrap:wrap"><b>${esc(X.name)}</b><span class="note">Life <b>${X.life.length}</b> \u00b7 Deck ${X.deck.length} \u00b7 Hand ${X.hand.length} \u00b7 Trash ${X.trash.length}${mine ? '' : ' \u00b7 ' + (X.chars.length) + ' in play'}</span></div><div class="note" style="margin-top:2px">DON!! ${simPips(X)}</div>`; }
+/* a Leader or Character line with the buttons legal() allows for it */
+function simUnit(L, X, xi, ref, mine) { const o = SIM.at(X, ref), pw = SIM.power(xi, ref), can = pred => simCan(L, pred), un = SIM.unapplied(o.id);
+  const granted = SIM.kwOf(xi, ref).filter(k => !((CAT.byId.get(o.id) || {}).kw || '').split('|').includes(k));
+  const marked = mine && SIMUI.sel && SIMUI.sel.ref === ref;
+  return `<div class="row" style="gap:8px;align-items:center;opacity:${o.rested ? .55 : 1}${marked ? ';outline:1px solid var(--brass);border-radius:var(--r-md);padding:2px 6px' : ''}"><div class="nm">${simCard(o.id, `\u2022kw:${granted.join(',')}\u2022 \u00b7 <b>${pw}</b>${o.don ? ' (+' + o.don + ' DON!!)' : ''}${o.rested ? ' \u00b7 rested' : ''}${un.length ? ` \u00b7 <span title="${esc(un.map(e => e.raw).join(' '))}">its continuous text is yours to apply</span>` : ''}`, true)}</div>
+    ${mine && can(x => x.t === 'activate' && x.ref === ref) ? `<button class="ghost go" data-sim="fxmain:${ref}">Main</button>` : ''}
+    ${mine && can(x => x.t === 'give' && x.ref === ref) ? `<button class="ghost" data-sim="give:${ref}" title="+1000 on your turn">+DON</button>` : ''}
+    ${mine && can(x => x.t === 'attack' && x.ref === ref) ? `<button class="ghost" data-sim="attack:${ref}">Attack</button>` : ''}
+    ${!mine && SIMUI.sel && can(x => x.t === 'attack' && x.ref === SIMUI.sel.ref && x.target === ref) ? `<button class="ghost go" data-sim="target:${ref}">Target</button>` : ''}</div>`; }
+function simStage(L, X, mine) { return X.stage ? `<div class="row" style="gap:8px"><div class="nm"><span class="note">Stage:</span> ${simCard(X.stage.id)}${X.stage.rested ? ' <span class="note">rested</span>' : ''}</div>${mine && simCan(L, x => x.t === 'activate' && x.ref === 'stage') ? '<button class="ghost go" data-sim="fxmain:stage">Main</button>' : ''}</div>` : ''; }
+function simResult(res) { return res ? `<div class="panel" style="border-color:var(--brass)"><h3>${res.gone ? 'Ended' : (res.win ? 'Hit' : 'Held')} \u2014 ${res.a} vs ${res.d}</h3>${res.ko ? `<div class="note">${esc(res.ko)} K.O.\u2019d</div>` : ''}${res.life.map(l => `<div class="note">Life card ${l.banished ? 'banished' : 'to hand'}: <b>${esc(l.name)}</b></div>`).join('')}</div>` : ''; }
+function simSetupHtml() {
     const ds = SIMUI.legalDecks();
-    box.innerHTML = `<div class="panel"><h3>New game</h3>
-      <div class="note">Two players, one phone. The app keeps the rules \u2014 phases, DON!!, cost, the five-Character limit, who may attack whom, block, counter, damage, Life, defeat. <b>Card effects are yours to play by hand</b> (the ${G('more', 14)} menu on a card): the app does not read card text and will not guess at it.</div>
+    return `<div class="panel"><h3>New game</h3>
+      <div class="note">Two players, one phone. The app keeps the rules of the Comprehensive Rules v${SIM.RULES} \u2014 phases, DON!!, cost, the Character and Stage limits, who may attack whom, block, counter, damage, Life, defeat. Card effects the app understands run from their text; every other effect is offered at its moment for you to resolve <b>by hand</b>, with only the moves its words name.</div>
       ${ds.length ? `<div class="fgrp">Player 1 deck</div><select id="simD1" aria-label="Player 1 deck">${ds.map((d, i) => `<option value="${i}" ${d.id === SIMUI.pre ? 'selected' : ''}>${esc(d.name || 'Untitled')}</option>`).join('')}</select>
       <div class="fgrp">Player 2 deck</div><select id="simD2" aria-label="Player 2 deck">${ds.map((d, i) => `<option value="${i}" ${i === Math.min(1, ds.length - 1) ? 'selected' : ''}>${esc(d.name || 'Untitled')}</option>`).join('')}</select>
       <div class="fgrp">Opponent</div><select id="simOpp" aria-label="Opponent"><option value="human">A friend \u2014 pass the phone</option><option value="bot">The app \u2014 legal and not clever; it never sees your hand</option></select>
-      <div class="fgrp">Goes first (rock-paper-scissors is yours, \u00a75-2-2)</div><select id="simFirst" aria-label="Who goes first"><option value="0">Player 1</option><option value="1">Player 2</option></select>
+      <div class="fgrp">Goes first (rock-paper-scissors is yours, §5-2-1-4)</div><select id="simFirst" aria-label="Who goes first"><option value="0">Player 1</option><option value="1">Player 2</option></select>
       <div class="row" style="margin-top:14px"><button class="ghost go" data-sim="start" style="padding:10px 18px">Deal</button></div>`
-      : `<div class="note" style="margin-top:10px">No legal deck yet \u2014 build one in <b>Decks</b> (a Leader and exactly fifty cards) and it appears here.</div>`}</div>`;
-    return;
-  }
-  let i = SIMUI.post ? SIMUI.post.i : (g.phase === 'battle' && !(SIMUI.offer && SIMUI.offer.i === g.active) ? g.battle.def : g.active);
-  if (g.bot != null && !SIMUI.post && !(g.phase === 'battle')) i = 1 - g.bot;    // the human’s screen, always, against the app
-  const P = SIM.P(i), O = SIM.P(1 - i);
-  const pips = X => { const given = X.leader.don + X.chars.reduce((a, c) => a + c.don, 0); return `<span title="DON!!: ${X.don.active} active, ${X.don.rested} rested, ${given} given, ${X.donDeck} in the DON!! deck" style="letter-spacing:1px">${'\u25cf'.repeat(X.don.active)}<span style="opacity:.35">${'\u25cf'.repeat(X.don.rested)}</span><span style="color:var(--accent-ink)">${'\u25cf'.repeat(given)}</span><span style="opacity:.18">${'\u25cb'.repeat(X.donDeck)}</span></span>`; };
-  const head = (X, mine) => `<div class="row" style="gap:8px;flex-wrap:wrap"><b>${esc(X.name)}</b><span class="note">Life <b>${X.life.length}</b> \u00b7 Deck ${X.deck.length} \u00b7 Hand ${X.hand.length}${mine ? '' : ' \u00b7 ' + (X.chars.length) + ' in play'}</span></div><div class="note" style="margin-top:2px">DON!! ${pips(X)}</div>`;
-  const unit = (X, xi, ref, mine) => { const o = ref === 'leader' ? X.leader : X.chars[ref]; const pw = SIM.power(xi, ref);
-    const open = mine && SIMUI.menu === String(ref);
-    const granted = SIM.kwOf(xi, ref).filter(k => !((CAT.byId.get(o.id) || {}).kw || '').split('|').includes(k));
-    const marked = mine && SIMUI.sel && SIMUI.sel.ref === ref;
-    return `<div class="row" style="gap:8px;align-items:center;opacity:${o.rested ? .55 : 1}${marked ? ';outline:1px solid var(--brass);border-radius:var(--r-md);padding:2px 6px' : ''}"><div class="nm">${simCard(o.id, `\u2022kw:${granted.join(',')}\u2022 \u00b7 <b>${pw}</b>${o.don ? ' (+' + o.don + ' DON!!)' : ''}${o.rested ? ' \u00b7 rested' : ''}`, true)}</div>
-      ${mine && g.phase === 'main' && SIM.offers(xi, 'main', ref).length ? `<button class="ghost go" data-sim="fxmain:${ref}">Main</button>` : ''}
-      ${mine && g.phase === 'main' ? `<button class="ghost" data-sim="give:${ref}" title="+1000">+DON</button><button class="ghost" data-sim="attack:${ref}">Attack</button><button class="ghost${open ? ' go' : ''}" data-sim="menu:${ref}" aria-label="Actions" aria-expanded="${!!open}">${G('more', 18)}</button>` : ''}
-      ${!mine && SIMUI.sel && g.phase === 'main' && (ref === 'leader' || o.rested) ? `<button class="ghost go" data-sim="target:${ref}">Target</button>` : ''}</div>
-      ${open ? `<div class="row" style="gap:6px;flex-wrap:wrap;padding-left:8px"><span class="note" style="width:100%">Effects, by hand (\u00a710):</span><button class="ghost" data-sim="mp:${ref}:1000">+1000 this turn</button><button class="ghost" data-sim="mp:${ref}:-1000">\u22121000</button><button class="ghost" data-sim="mr:${ref}">${o.rested ? 'Set active' : 'Rest'}</button>${ref === 'leader' ? '' : `<button class="ghost" data-sim="mk:${ref}">K.O.</button><button class="ghost" data-sim="mh:${ref}">To hand</button>`}</div>` : ''}`; };
-  if (g.phase === 'over') { box.innerHTML = `<div class="panel"><h3>${esc(SIM.P(g.over).name)} wins</h3><div class="note">${esc(g.log[0] || '')}</div><div class="row" style="margin-top:12px"><button class="ghost go" data-sim="new">New game</button></div></div>${simLog()}`; return; }
-  if (g.phase === 'mulligan') {
-    const who = g.players.findIndex(x => x.mulliganed === null); const order = [g.first, 1 - g.first]; const cur = g.bot != null ? 1 - g.bot : order.find(k => g.players[k].mulliganed === null);
-    const M = SIM.P(cur);
-    box.innerHTML = `<div class="panel"><h3>${esc(M.name)} \u2014 keep or mulligan? (\u00a75-2-3)</h3>
+      : `<div class="note" style="margin-top:10px">No legal deck yet \u2014 build one in <b>Decks</b> (a Leader and exactly fifty cards) and it appears here.</div>`}</div>`; }
+function simOverHtml() { const g = SIM.g;
+  return `<div class="panel"><h3>${g.over === -1 ? 'A draw \u2014 both lose at once (§9-2-1)' : esc(SIM.P(g.over).name) + ' wins'}</h3><div class="note">${esc(g.log[0] || '')}</div><div class="row" style="margin-top:12px"><button class="ghost go" data-sim="new">New game</button></div></div>${simLog()}`; }
+function simMulliganHtml() { const g = SIM.g, cur = g.bot != null ? 1 - g.bot : SIM.who(), M = SIM.P(cur);
+  return `<div class="panel"><h3>${esc(M.name)} \u2014 keep or mulligan?</h3><div class="note">Redraw once, the first player deciding first (${simCite('§5-2-1-6')}).</div>
       <div class="note">Leader: ${simCard(M.leader.id)}</div><div class="fgrp">Your hand</div>${M.hand.map(id => `<div class="row"><div class="nm">${simCard(id)}</div></div>`).join('')}
-      <div class="row" style="gap:10px;margin-top:12px"><button class="ghost go" data-sim="keep:${cur}">Keep</button><button class="ghost" data-sim="mull:${cur}">Mulligan (once)</button></div></div>`;
-    return;
-  }
-  if (g.phase === 'battle' && SIMUI.offer && SIMUI.offer.i === g.active) { box.innerHTML = simOfferPanel() + simLog(); return; }
-  if (g.phase === 'battle' && g.bot === g.battle.def) { const pw = SIM.battlePowers(); const b = g.battle; box.innerHTML = `${simOfferPanel()}<div class="panel"><h3>The app defends</h3><div class="note">${b.blocked ? 'It blocked.' : 'No block.'}${b.counter ? ' Countered +' + b.counter + '.' : ''} ${pw.a} vs ${pw.d}${pw.a >= pw.d ? ': hit' : ': held'}</div><div class="row" style="margin-top:10px"><button class="ghost go" data-sim="resolve">Resolve</button></div></div>${simLog()}`; return; }
-  if (g.phase === 'battle') {
-    const b = g.battle; const pw = SIM.battlePowers(); const A = SIM.P(b.att); const att = CAT.byId.get((b.aref === 'leader' ? A.leader : A.chars[b.aref]).id);
-    const tgt = b.dref === 'leader' ? CAT.byId.get(P.leader.id) : CAT.byId.get(P.chars[b.dref].id);
-    box.innerHTML = `${simOfferPanel()}<div class="panel"><h3>${esc(P.name)} is attacked</h3>
-      <div class="row"><div class="nm">${simCard(att.id, '', true)}<span style="display:block">attacks with <strong>${pw.a}</strong></span></div></div>
-      <div class="row"><div class="nm">${simCard(tgt.id, '', true)}<span style="display:block">defends with <strong>${pw.d}</strong>${b.counter ? ' (counters +' + b.counter + ')' : ''}${b.blocked ? ' \u00b7 blocking' : ''}</span></div></div>
-      ${b.step === 'block' ? `<div class="fgrp">Block step (\u00a77-1-2)</div>${SIM.blockers().map(x => `<button class="linkish" data-sim="block:${x.ref}">Block with ${esc(x.name)}</button>`).join('') || '<div class="note">No active Blocker</div>'}<button class="ghost" data-sim="noblock" style="margin-top:8px">No block</button><span class="note" style="margin-left:8px">then the counter step</span>`
-      : `<div class="fgrp">Counter step (\u00a77-1-3)</div>${SIM.counters().map(x => `<button class="linkish" data-sim="counter:${x.h}">Counter with ${esc(x.name)} (+${x.plus})</button>`).join('') || '<div class="note">No Counter cards in hand</div>'}${SIM.counterEvents().map(x => `<button class="linkish" data-sim="cev:${x.h}">Play ${esc(x.name)} (${x.cost} DON!!)</button>`).join('')}<div class="note" style="margin-top:6px">[Counter] Events and other effects: play them by hand, then adjust with ${G('more', 14)} if needed.</div><button class="ghost go" data-sim="resolve" style="margin-top:8px">Resolve</button><span class="note" style="margin-left:8px">${pw.a} vs ${pw.d}${pw.a >= pw.d ? ': hit' : ': held'}</span>`}
-    </div>${simLog()}`;
-    return;
-  }
-  if (SIMUI.post) { const res = SIMUI.result || { win: false, a: 0, d: 0, life: [] };
-    box.innerHTML = `<div class="panel" style="border-color:var(--brass)"><h3>${res.win ? 'Hit' : 'Held'} \u2014 ${res.a} vs ${res.d}</h3>${res.ko ? `<div class="note">${esc(res.ko)} K.O.\u2019d</div>` : ''}${res.life.map(l => `<div class="note">Life card ${l.banished ? 'banished' : 'to hand'}: <b>${esc(l.name)}</b>${l.trigger && !SIMUI.offer ? ' \u2014 has a Trigger: play it by hand if you choose' : ''}</div>`).join('')}</div>
-      ${simOfferPanel()}${SIMUI.offer ? '' : `<div class="row" style="margin-top:10px;flex-wrap:wrap"><button class="ghost go" data-sim="post" style="flex:none">Hand back</button><span class="note" style="margin:0">to ${esc(SIM.P(SIMUI.post.att).name)}</span></div>`}${simLog()}`; return; }
-  const res = SIMUI.result; SIMUI.result = null;
-  box.innerHTML = `${simOfferPanel()}${res && i !== (g.battle ? g.battle.def : -1) ? `<div class="panel" style="border-color:var(--brass)"><h3>${res.win ? 'Hit' : 'Held'} \u2014 ${res.a} vs ${res.d}</h3>${res.ko ? `<div class="note">${esc(res.ko)} K.O.\u2019d</div>` : ''}${res.life.map(l => `<div class="note">Life card ${l.banished ? 'banished' : 'to hand'}: <b>${esc(l.name)}</b></div>`).join('')}</div>` : ''}
-    <div class="panel"><h3>Opponent</h3>${head(O, false)}<div style="margin-top:8px">${unit(O, 1 - i, 'leader', false)}${O.chars.map((c, k) => unit(O, 1 - i, k, false)).join('')}${O.stage ? `<div class="note">Stage: ${simCard(O.stage)}</div>` : ''}</div></div>
-    <div class="panel"><h3>${esc(P.name)} \u2014 turn ${g.turn}${SIMUI.sel ? ' \u00b7 <span style="color:var(--accent-ink)">choose a target</span>' : ''}${g.bot != null && g.active === g.bot ? ' \u00b7 <span class="note">the app is moving</span>' : ''}</h3>${head(P, true)}
-      <div style="margin-top:8px">${unit(P, i, 'leader', true)}${P.chars.map((c, k) => unit(P, i, k, true)).join('')}${P.stage ? `<div class="note">Stage: ${simCard(P.stage)}</div>` : ''}</div>
-      <div class="fgrp">Hand</div>${P.hand.map((id, h) => { const v = SIM.canPlay(i, h); return `<div class="row" style="gap:8px"><div class="nm">${simCard(id)}${v.ok ? '' : `<span style="display:block;color:var(--dim2);font-size:var(--fs-sm)">${esc(v.why)}</span>`}</div><button class="ghost${v.ok ? ' go' : ''}" data-sim="play:${h}" ${v.ok ? '' : 'disabled'}>Play</button><button class="ghost" data-sim="trashhand:${h}" aria-label="Trash this card (an effect)">${G('trash', 18)}</button></div>`; }).join('') || '<div class="note">empty</div>'}
-      <div class="row" style="gap:10px;margin-top:14px;flex-wrap:wrap"><button class="ghost go" data-sim="end">End turn</button><span class="note" style="margin:0">${g.bot != null ? 'then the app plays its turn' : 'then pass the phone'}</span>
-        <button class="ghost" data-sim="m:draw">Draw (effect)</button><button class="ghost" data-sim="m:don">+1 DON!! (effect)</button><button class="ghost" data-sim="m:life-">Life \u2192 hand (effect)</button><button class="ghost" data-sim="m:life+">+1 Life (effect)</button></div>
-    </div>${simLog()}`;
+      <div class="row" style="gap:10px;margin-top:12px"><button class="ghost go" data-sim="keep:${cur}">Keep</button><button class="ghost" data-sim="mull:${cur}">Mulligan (once)</button></div></div>`; }
+/* the defender reading a result, with any effect it set off, before the phone goes back */
+function simPostHtml(offer) {
+  return `${simResult(SIMUI.post.res)}${offer}${offer ? '' : `<div class="row" style="margin-top:10px;flex-wrap:wrap"><button class="ghost go" data-sim="post" style="flex:none">Hand back</button><span class="note" style="margin:0">to ${esc(SIM.P(SIMUI.post.att).name)}</span></div>`}${simLog()}`; }
+function simBattleHtml(i, L, offer) { const g = SIM.g, b = g.battle, pw = SIM.battlePowers(), A = SIM.P(b.att), D = SIM.P(b.def), at = SIM.locate();
+  const att = SIM.at(A, at.aref) || A.leader, tgt = SIM.at(D, at.dref) || D.leader;
+    const lines =`<div class="row"><div class="nm">${simCard(att.id, '', true)}<span style="display:block">attacks with <strong>${pw.a}</strong></span></div></div>
+      <div class="row"><div class="nm">${simCard(tgt.id, '', true)}<span style="display:block">defends with <strong>${pw.d}</strong>${b.counter ? ' (counters +' + b.counter + ')' : ''}${b.blocked ? ' \u00b7 blocking' : ''}</span></div></div>`;
+    if (g.bot != null && b.def === g.bot) return `${offer}<div class="panel"><h3>The app defends</h3>${lines}<div class="note">${b.blocked ? 'It blocked.' : 'No block.'}${b.counter ? ' Countered +' + b.counter + '.' : ''} ${pw.a} vs ${pw.d}${pw.a >= pw.d ? ': hit' : ': held'}</div><div class="row" style="margin-top:10px"><button class="ghost go" data-sim="resolve">Resolve</button></div></div>${simLog()}`;
+    if (i !== b.def || offer) return `${offer}<div class="panel"><h3>${esc(D.name)} is attacked</h3>${lines}</div>${simLog()}`;
+    return `<div class="panel"><h3>${esc(D.name)} is attacked</h3>${lines}
+      ${b.step === 'block' ? `<div class="fgrp">Block step (${simCite('§7-1-2')})</div>${L.filter(x => x.t === 'block').map(x => `<button class="linkish" data-sim="block:${x.k}">Block with ${esc(SIM.card(D.chars[x.k].id).name)}</button>`).join('') || `<div class="note">${at.aref != null && SIM.has(b.att, at.aref, 'Unblockable') ? 'The attacker is Unblockable' : 'No active Blocker'}</div>`}<button class="ghost" data-sim="noblock" style="margin-top:8px">No block</button><span class="note" style="margin-left:8px">then the counter step</span>`
+      : `<div class="fgrp">Counter step (${simCite('§7-1-3')})</div>${L.filter(x => x.t === 'counter').map(x => { const p = SIM.card(D.hand[x.h]); return `<button class="linkish" data-sim="counter:${x.h}">Counter with ${esc(p.name)} (+${SIM.num(p.counter)})</button>`; }).join('') || '<div class="note">No Counter cards in hand</div>'}${L.filter(x => x.t === 'cevent').map(x => { const p = SIM.card(D.hand[x.h]); return `<button class="linkish" data-sim="cev:${x.h}">Play ${esc(p.name)} (${SIM.cost(p)} DON!!)</button>`; }).join('')}<button class="ghost go" data-sim="resolve" style="margin-top:8px">Resolve</button><span class="note" style="margin-left:8px">${pw.a} vs ${pw.d}${pw.a >= pw.d ? ': hit' : ': held'}</span>`}
+    </div>${simLog()}`; }
+/* the table on the seat's Main Phase: the opponent's field, then the seat's field, hand and turn buttons */
+function simTableHtml(i, L, offer) { const g = SIM.g, P = SIM.P(i), O = SIM.P(1 - i), can = pred => simCan(L, pred);
+  const field = (X, xi, mine) => ['leader'].concat(X.chars.map((c, k) => k)).map(ref => simUnit(L, X, xi, ref, mine)).join('') + simStage(L, X, mine);
+  const res = SIMUI.result; SIMUI.result = null; const endOk = can(x => x.t === 'end');
+  const room = SIMUI.room ? `<div class="panel" style="border-color:var(--brass)"><h3>Five Characters</h3><div class="note">Choose one to trash to make room (${simCite('§3-7-6-1')}) \u2014 a rule, not a K.O.</div>${P.chars.map((c, k) => `<button class="linkish" data-sim="room:${k}">Trash ${esc(SIM.card(c.id).name)}</button>`).join('')}<button class="ghost" data-sim="roomx" style="margin-top:8px">Cancel</button></div>` : '';
+  return `${offer}${room}${simResult(res)}
+    <div class="panel"><h3>Opponent</h3>${simHead(O, false)}<div style="margin-top:8px">${field(O, 1 - i, false)}</div></div>
+    <div class="panel"><h3>${esc(P.name)} \u2014 turn ${g.turn}${SIMUI.sel ? ' \u00b7 <span style="color:var(--accent-ink)">choose a target</span>' : ''}${g.bot != null && g.active === g.bot ? ' \u00b7 <span class="note">the app is moving</span>' : ''}</h3>${simHead(P, true)}
+      <div style="margin-top:8px">${field(P, i, true)}</div>
+      <div class="fgrp">Hand</div>${P.hand.map((id, h) => { const v = SIM.canPlay(i, h), ok = can(x => x.t === 'play' && x.h === h); return `<div class="row" style="gap:8px"><div class="nm">${simCard(id)}${v.ok ? (v.full ? `<span style="display:block;color:var(--dim2);font-size:var(--fs-sm)">five in play: trash one to play it (${simCite('§3-7-6-1')})</span>` : '') : `<span style="display:block;color:var(--dim2);font-size:var(--fs-sm)">${simCite(v.why)}</span>`}</div><button class="ghost${ok ? ' go' : ''}" data-sim="play:${h}" ${ok ? '' : 'disabled'}>Play</button></div>`; }).join('') || '<div class="note">empty</div>'}
+      <div class="row" style="gap:10px;margin-top:14px;flex-wrap:wrap"><button class="ghost go" data-sim="end"${endOk ? '' : ' disabled'}>End turn</button><span class="note" style="margin:0">${g.bot != null ? 'then the app plays its turn' : 'then pass the phone'}</span>
+        <button class="ghost" data-sim="concede">Concede</button><span class="note" style="margin:0">you lose (${simCite('§1-2-3')})</span></div>
+    </div>${simLog()}`; }
+/* the move a by-hand tray button makes, in a few words */
+function simHandLabel(i, a) { const P = SIM.P(i), X = SIM.P(a.side === 1 ? 1 - i : i), nm = id => esc((SIM.card(id) || {}).name || '?'), at = ref => nm(SIM.at(X, ref).id), who = a.side === 1 ? ' (theirs)' : '';
+  switch (a.op) {
+    case 'draw': return 'Draw 1'; case 'trashhand': return `Trash ${nm(P.hand[a.h])} from hand`; case 'ko': return `K.O. ${nm(X.chars[a.k].id)}${who}`;
+    case 'rest': return `Rest ${at(a.ref)}${who}`; case 'active': return `Set ${at(a.ref)} active`; case 'activedon': return 'Set a DON!! active';
+    case 'power': return `${a.v > 0 ? '+' : ''}${a.v} to ${at(a.ref)}${who}`; case 'tohand': return `${nm(X.chars[a.k].id)}${who} to hand`; case 'bottom': return `${nm(X.chars[a.k].id)}${who} to deck bottom`;
+    case 'givedon': return `Give ${a.from} DON!! to ${nm(SIM.at(P, a.ref).id)}`; case 'adddon': return `Add a DON!!${a.rested ? ', rested' : ''}`; case 'returndon': return 'Return a DON!!';
+    case 'lifetohand': return a.end === 'bottom' ? 'Bottom Life to hand' : 'Top Life to hand'; case 'handtolife': return `${nm(P.hand[a.h])} to Life`;
+    case 'chartolife': return `${nm(P.chars[a.k].id)} to Life`; case 'opplifetrash': return 'Trash their Life'; case 'handtotop': return `${nm(P.hand[a.h])} to deck top`; case 'decktolife': return 'Deck top to Life'; case 'mill': return 'Trash deck top';
+    case 'play': return `Play ${nm((a.zone === 'trash' ? P.trash : P.hand)[a.k])} from ${a.zone}${a.trash != null ? ', trash ' + nm(P.chars[a.trash].id) : ''}`;
+    case 'look': return `Look at the top ${SIM.g.hand.left.look}`; case 'lookto': return `${nm(P.looking[a.k])} to ${a.to}`;
+    default: return a.op; } }
+function simOfferPanel(i, L) {
+  const g = SIM.g, cur = g.queue[0]; if (!cur) return ''; const P = SIM.P(i);
+  const src = cur.ref == null ? null : SIM.at(P, cur.ref); const nm = src ? CAT.byId.get(src.id).name : (cur.cardId ? CAT.byId.get(cur.cardId).name : 'Effect');
+  const pf = SIM.proofOf(cur.cardId, cur.e); const badge = { proven: 'proven by a test', unproven: 'the app runs it; no test has proven it yet', hand: 'by hand \u2014 the app does not run this line', wrong: `by hand \u2014 the app\u2019s version was proven wrong${cur.e.wrong && cur.e.wrong !== 'proven wrong' ? ': ' + esc(cur.e.wrong) : ''}` }[pf];
+  const report = `<button class="linkish" data-sim="report" style="margin-left:auto">Report</button>`;
+  let body;
+  if (g.hand) { const moves = L.map((a, k) => ({ a, k })).filter(x => x.a.t === 'hand');
+    body = `<div class="note">Only the moves its words name, each logged.</div>${moves.map(x => `<button class="linkish" data-sim="hop:${x.k}">${simHandLabel(i, x.a)}</button>`).join('') || '<div class="note">No move to make \u2014 its effect is yours to apply as the text says.</div>'}
+      <div class="row" style="gap:10px;margin-top:8px;flex-wrap:wrap"><button class="ghost go" data-sim="hdone" style="flex:none">Done</button>${report}</div>`; }
+  else if (cur.hand) body = `<div class="row" style="gap:10px;margin-top:8px;flex-wrap:wrap"><button class="ghost go" data-sim="fxhand" style="flex:none">Resolve by hand</button><button class="ghost" data-sim="fxskip" style="flex:none">Skip</button><span class="note" style="margin:0">decline it</span>${report}</div>`;
+  else { const d = cur.steps[cur.step]; const fx = L.filter(x => x.t === 'fx'); const T = SIM.targetsOf(cur), tg = T || []; const none = fx.some(x => x.target == null);
+    const room = SIMUI.fxt != null ? fx.filter(x => x.target === SIMUI.fxt.target && x.trash != null) : [];
+    body = `<div class="note">The app will: ${esc(SIM.describe(cur.e))}</div>${cur.steps.length > 1 ? `<div class="note">step ${cur.step + 1} of ${cur.steps.length}${/^cost_/.test(d.a) ? (cur.step === 0 ? ' \u2014 the cost; skipping declines the effect' : ' \u2014 the cost, paid in full once begun') : ''}</div>` : ''}
+      ${room.length ? `<div class="fgrp">Five Characters: trash one to make room (${simCite('§3-7-6-1')})</div>${room.map(x => `<button class="linkish" data-sim="fxroom:${x.trash}">Trash ${esc(SIM.card(P.chars[x.trash].id).name)}</button>`).join('')}`
+      : (tg.length ? `<div class="fgrp">Choose</div>${tg.map(t => `<button class="linkish" data-sim="fx:${t.ref}">${esc(t.name)}</button>`).join('')}` : (T ? '<div class="note">No legal target for this step.</div>' : ''))}
+      <div class="row" style="gap:10px;margin-top:8px;flex-wrap:wrap">${none && !room.length ? `<button class="ghost go" data-sim="fxapply" style="flex:none">${tg.length ? 'Choose none' : 'Apply'}</button>` : ''}${L.some(x => x.t === 'fxskip') ? '<button class="ghost" data-sim="fxskip" style="flex:none">Skip</button><span class="note" style="margin:0">decline it</span>' : '<span class="note" style="margin:0">a cost begun is paid in full (' + simCite('§8-3') + ')</span>'}${report}</div>`; }
+  return `<div class="panel" style="border-color:var(--brass)"><h3>${esc(nm)} \u2014 effect</h3><div class="note">${esc(cur.e.raw)}</div><div class="note" style="color:var(--accent-ink)">${badge}</div>${body}</div>`;
 }
-function simOfferPanel() {
-  const o = SIMUI.offer; if (!o || !o.list.length) return '';
-  const cur = o.list[0]; const P = SIM.P(o.i); const src = cur.ref == null ? null : (cur.ref === 'leader' ? P.leader : P.chars[cur.ref]);
-  const nm = src ? CAT.byId.get(src.id).name : (cur.cardId ? CAT.byId.get(cur.cardId).name : 'Effect');
-  return `<div class="panel" style="border-color:var(--brass)"><h3>${esc(nm)} \u2014 effect</h3><div class="note">${esc(cur.e.raw)}</div>
-    ${cur.steps.length > 1 ? `<div class="note">step ${cur.step + 1} of ${cur.steps.length}${/^cost_/.test(cur.steps[cur.step].a) ? ' \u2014 the cost; skipping declines the effect' : ''}</div>` : ''}
-    ${cur.targets && cur.targets.length ? `<div class="fgrp">Choose</div>${cur.targets.map(t => `<button class="linkish" data-sim="fx:${t.ref}">${esc(t.name)}</button>`).join('')}` : (cur.targets && !cur.targets.length ? '<div class="note">No legal target for this step.</div>' : '')}
-    <div class="row" style="gap:10px;margin-top:8px;flex-wrap:wrap">${!(cur.targets && cur.targets.length) || cur.steps[cur.step].upto ? `<button class="ghost go" data-sim="fxapply" style="flex:none">${cur.targets ? (cur.steps[cur.step].upto ? 'Trash none' : 'Continue') : 'Apply'}</button>` : ''}<button class="ghost" data-sim="fxskip" style="flex:none">Skip</button><span class="note" style="margin:0">play it by hand</span></div></div>`;
-}
-function simOffer(i, trigger, ref, cardId, fromLife) { const list = SIM.offers(i, trigger, ref, cardId, fromLife); if (!list.length) return false; SIMUI.offer = SIMUI.offer && SIMUI.offer.i === i ? { i, list: SIMUI.offer.list.concat(list) } : { i, list }; return true; }
-function simOfferAll(i, trigger) { const P = SIM.P(i); let any = simOffer(i, trigger, 'leader'); P.chars.forEach((c, k) => { if (simOffer(i, trigger, k)) any = true; }); return any; }
-/* What happens once an offer list empties: the end of the turn that was
-   waiting on [End of Your Turn], or the hand-over the attack step delayed. */
-function simAfterOffers() { const g = SIM.g; if (!g || SIMUI.offer) return;
-  if (SIMUI.afterOffer === 'endTurn') { SIMUI.afterOffer = null; const who = 1 - g.active; SIM.endTurn(); SIMUI.sel = null; if (g.phase !== 'over') simCurtain(SIM.P(who).name, `turn ${g.turn}`); if (g.bot != null) simBotRun(); }
-  if (SIMUI.afterOffer === 'toDefender' && g.phase === 'battle') { SIMUI.afterOffer = null; if (g.bot === g.battle.def) BOT.defend(); else simCurtain(SIM.P(g.battle.def).name, 'an attack is coming \u2014 block or counter'); } }
 function simLog() { return `<div class="panel"><h3>Log</h3><div class="note">${SIM.g.log.slice(0, 8).map(esc).join('<br>') || '\u2014'}</div><button class="linkish" data-sim="sharelog" style="margin-top:6px">Share the log</button></div>`; }
-function simLogText() { const g = SIM.g; if (!g) return ''; const P = i => g.players[i]; return [`OP TCG Hub sim \u2014 take ${TAKE}`, `${P(0).name} (${CAT.byId.get(P(0).leader.id)?.name}) vs ${P(1).name} (${CAT.byId.get(P(1).leader.id)?.name}), turn ${g.turn}`, '', ...g.log.slice().reverse()].join('\n'); }
+function simLogText() { const g = SIM.g; if (!g) return ''; const P = i => g.players[i]; return [`OP TCG Hub sim \u2014 take ${TAKE} \u2014 rules v${SIM.RULES}`, `${P(0).name} (${CAT.byId.get(P(0).leader.id)?.name}) vs ${P(1).name} (${CAT.byId.get(P(1).leader.id)?.name}), turn ${g.turn}`, '', ...g.log.slice().reverse()].join('\n'); }
+/* Report (take 122): the effect on screen, what the app made of it, and the whole game as its seed and moves --
+   enough to replay it exactly and turn it into a proof (tools/cardproof.mjs --from-report). Shared by the
+   player's own hand, never sent anywhere else (PROTOCOL §9). */
+function simReport() { const g = SIM.g, o = g.queue[0]; const p = o && SIM.card(o.cardId);
+  return JSON.stringify({ kind: 'optcghub-sim-report', v: 1, take: TAKE, rules: SIM.RULES, spec: g.spec, actions: g.actions,
+    offer: o ? { cardId: o.cardId, num: p && p.num, name: p && p.name, t: o.e.t, raw: o.e.raw, parsed: o.e.do, proof: SIM.proofOf(o.cardId, o.e), step: o.step } : null,
+    log: g.log.slice(0, 30) }, null, 1); }
+function simShare(title, text) { if (navigator.share) navigator.share({ title, text }).catch(() => {}); else { try { navigator.clipboard.writeText(text); toast('Copied'); } catch (e) { toast('Copy failed'); } } }
 $('#sim').addEventListener('click', e => {
-  const b = e.target.closest('[data-sim]'); if (!b) return; const [act, arg] = b.dataset.sim.split(':'); const g = SIM.g; let g2;
-  const ref = arg === 'leader' ? 'leader' : (arg == null ? null : +arg);
-  const say = r => { if (r && r.ok === false && r.why) toast(r.why); };
+  const b = e.target.closest('[data-sim]'); if (!b) return; const [act, arg] = b.dataset.sim.split(':'); const g = SIM.g;
+  const ref = arg === 'leader' || arg === 'stage' ? arg : (arg == null ? null : +arg);
   if (act === 'start') { const ds = SIMUI.legalDecks(); const d1 = ds[+$('#simD1').value], d2 = ds[+$('#simD2').value]; const first = +$('#simFirst').value;
     const bot = $('#simOpp') && $('#simOpp').value === 'bot';
-    SIM.new({ ...d1, name: 'You' + (d1.name ? ' \u2014 ' + d1.name : '') }, { ...d2, name: (bot ? 'The app' : 'Player 2') + (d2.name ? ' \u2014 ' + d2.name : '') }, first);
-    if (bot) { g2 = SIM.g; g2.bot = 1; if (first === 1) { /* the bot keeps; the human decides first anyway */ } BOT.mulligan(1); if (!g2.players[0].mulliganed && false) {} paintSim(); return; }
-    simCurtain(SIM.P(first).name, 'keep or mulligan first'); paintSim(); return; }
-  if (act === 'new') { SIM.g = null; SIMUI.sel = null; SIMUI.offer = null; SIMUI.post = null; SIMUI.result = null; paintSim(); return; }
-  if (act === 'sharelog') { const t = simLogText(); if (navigator.share) navigator.share({ title: 'OP TCG Hub game log', text: t }).catch(() => {}); else { try { navigator.clipboard.writeText(t); toast('Copied'); } catch (e) { toast('Copy failed'); } } return; }
-  if (act === 'keep' || act === 'mull') { SIM.mulligan(ref, act === 'mull'); const next = g.players.findIndex(x => x.mulliganed === null);
-    if (g.bot != null) { simBotRun(); paintSim(); return; }
-    simCurtain(next >= 0 ? SIM.P(next).name : SIM.P(g.active).name, next >= 0 ? 'keep or mulligan' : 'turn 1'); paintSim(); return; }
-  if (act === 'play') { const r = SIM.play(g.active, ref); say(r); if (r.ok && r.card.type === 'Character') simOffer(g.active, 'onplay', SIM.P(g.active).chars.length - 1); else if (r.ok && r.card.type === 'Event') simOffer(g.active, 'evmain', null, r.card.id); else if (r.ok) simOffer(g.active, 'onplay', null, r.card.id); paintSim(); return; }
-  if (act === 'cev') { const r = SIM.playCounterEvent(ref); say(r); if (r.ok) simOffer(g.battle.def, 'evcounter', null, r.id); paintSim(); return; }
-  if (act === 'fxmain') { simOffer(g.active, 'main', ref); paintSim(); return; }
-  if (act === 'fx' || act === 'fxapply') { const o = SIMUI.offer; if (!o) return; const cur = o.list[0]; const r = SIM.apply(o.i, cur, act === 'fx' ? arg : null); say(r);
-    if (r.ok && r.done) { o.list.shift(); if (r.follow && r.follow.length) o.list.unshift(...r.follow); if (!o.list.length) SIMUI.offer = null; } simAfterOffers(); paintSim(); return; }
-  if (act === 'fxskip') { const o = SIMUI.offer; if (o) { o.list.shift(); if (!o.list.length) SIMUI.offer = null; } simAfterOffers(); paintSim(); return; }
-  if (act === 'post') { const bn = SIMUI.post && SIMUI.post.botNext; SIMUI.post = null; if (bn) { simBotRun(); paintSim(); return; } simCurtain(SIM.P(g.battle ? g.battle.att : 1 - g.active).name, 'the attack is resolved'); paintSim(); return; }
-  if (act === 'trashhand') { SIM.manual.trashHand(g.active, ref); paintSim(); return; }
-  if (act === 'give') { say(SIM.giveDon(g.active, ref)); paintSim(); return; }
-  if (act === 'attack') { const v = SIM.canAttack(g.active, ref); if (!v.ok) { toast(v.why); return; } SIMUI.sel = SIMUI.sel && SIMUI.sel.ref === ref ? null : { ref }; paintSim(); return; }
-  if (act === 'target') { const aref = SIMUI.sel.ref; const r = SIM.attack(g.active, aref, ref); SIMUI.sel = null; if (!r.ok) { toast(r.why); paintSim(); return; }
-    /* §7-1-1 attack step: [When Attacking] resolves before the defender’s window, on the attacker’s screen */
-    if (simOffer(g.active, 'attack', aref)) { SIMUI.afterOffer = 'toDefender'; paintSim(); return; }
-    if (g.bot === g.battle.def) { BOT.defend(); paintSim(); return; }
-    simCurtain(SIM.P(g.battle.def).name, 'an attack is coming \u2014 block or counter'); paintSim(); return; }
-  if (act === 'block') { const r = SIM.block(ref); say(r); if (r.ok) simOffer(g.battle.def, 'onblock', ref); paintSim(); return; }
-  if (act === 'noblock') { SIM.noBlock(); paintSim(); return; }
-  if (act === 'counter') { say(SIM.counter(ref)); paintSim(); return; }
-  if (act === 'resolve') { const def = g.battle.def, att = g.battle.att; const res = SIM.resolve(); SIMUI.result = res;
-    if (g.phase === 'over') { paintSim(); return; }
-    if (g.bot === def) { res.life.forEach(l => { if (!l.banished) BOT.offers(def, 'trigger', null, l.id, true); }); if (res.koId) BOT.offers(def, 'onko', null, res.koId); paintSim(); return; }
-    SIMUI.post = { i: def, att }; res.life.forEach(l => { if (!l.banished) simOffer(def, 'trigger', null, l.id, true); }); if (res.koId) simOffer(def, 'onko', null, res.koId);
-    if (g.bot === att) { SIMUI.post = { i: def, att, botNext: true }; }
-    paintSim(); return; }
-  if (act === 'end') { if (simOfferAll(g.active, 'endturn')) { SIMUI.afterOffer = 'endTurn'; paintSim(); return; } const who = 1 - g.active; SIM.endTurn(); SIMUI.sel = null; if (g.phase !== 'over') simCurtain(SIM.P(who).name, `turn ${g.turn}`); if (g.bot != null) simBotRun(); paintSim(); return; }
-  if (act === 'menu') { SIMUI.menu = SIMUI.menu === String(ref) ? null : String(ref); paintSim(); return; }
-  if (act === 'mp') { const parts = b.dataset.sim.split(':'); SIM.manual.power(g.active, parts[1] === 'leader' ? 'leader' : +parts[1], +parts[2]); paintSim(); return; }
-  if (act === 'mr') { const P = SIM.P(g.active); const o = ref === 'leader' ? P.leader : P.chars[ref]; SIM.manual.rest(g.active, ref, !o.rested); paintSim(); return; }
-  if (act === 'mk') { SIM.manual.trashChar(g.active, ref); SIMUI.menu = null; paintSim(); return; }
-  if (act === 'mh') { SIM.manual.toHand(g.active, ref); SIMUI.menu = null; paintSim(); return; }
-  if (act === 'm') { const i = g.active; if (arg === 'draw') SIM.manual.draw(i); if (arg === 'don') SIM.manual.don(i, 1); if (arg === 'life-') SIM.manual.life(i, -1); if (arg === 'life+') SIM.manual.life(i, 1); paintSim(); return; }
+    SIM.new({ ...d1, name: 'You' + (d1.name ? ' \u2014 ' + d1.name : '') }, { ...d2, name: (bot ? 'The app' : 'Player 2') + (d2.name ? ' \u2014 ' + d2.name : '') }, first, bot ? { bot: 1 } : {});
+    Object.assign(SIMUI, { sel: null, post: null, room: null, fxt: null, result: null });
+    if (bot) simBotRun(); else simCurtain(SIM.P(SIM.who()).name, 'keep or mulligan first'); paintSim(); return; }
+  if (act === 'new') { SIM.g = null; Object.assign(SIMUI, { sel: null, post: null, room: null, fxt: null, result: null }); paintSim(); return; }
+  if (act === 'sharelog') { simShare('OP TCG Hub game log', simLogText()); return; }
+  if (act === 'report') { simShare('OP TCG Hub \u2014 a Sim effect report', simReport()); return; }
+  const i = act === 'resolve' && g.bot != null && g.phase === 'battle' && g.battle.def === g.bot ? g.bot : SIM.who();
+  if (act === 'keep' || act === 'mull') simAct(ref, { t: act });
+  else if (act === 'play') { const v = SIM.canPlay(i, ref); if (v.ok && v.full) SIMUI.room = { h: ref }; else simAct(i, { t: 'play', h: ref }); }
+  else if (act === 'room') { const h = SIMUI.room && SIMUI.room.h; SIMUI.room = null; if (h != null) simAct(i, { t: 'play', h, trash: ref }); }
+  else if (act === 'roomx') SIMUI.room = null;
+  else if (act === 'give') simAct(i, { t: 'give', ref });
+  else if (act === 'fxmain') simAct(i, { t: 'activate', ref });
+  else if (act === 'attack') { const v = SIM.canAttack(i, ref); if (!v.ok) { toast(v.why); return; } SIMUI.sel = SIMUI.sel && SIMUI.sel.ref === ref ? null : { ref }; }
+  else if (act === 'target') { const aref = SIMUI.sel && SIMUI.sel.ref; SIMUI.sel = null; if (aref != null) simAct(i, { t: 'attack', ref: aref, target: ref }); }
+  else if (act === 'block') simAct(i, { t: 'block', k: ref });
+  else if (act === 'noblock') simAct(i, { t: 'noblock' });
+  else if (act === 'counter') simAct(i, { t: 'counter', h: ref });
+  else if (act === 'cev') simAct(i, { t: 'cevent', h: ref });
+  else if (act === 'resolve') simAct(i, { t: 'resolve' });
+  else if (act === 'fx') { const L = SIM.legal(i); const tg = arg; if (L.some(x => x.t === 'fx' && x.target === tg && x.trash != null)) SIMUI.fxt = { target: tg }; else simAct(i, { t: 'fx', target: tg }); }
+  else if (act === 'fxroom') { const tg = SIMUI.fxt && SIMUI.fxt.target; SIMUI.fxt = null; simAct(i, { t: 'fx', target: tg, trash: ref }); }
+  else if (act === 'fxapply') simAct(i, { t: 'fx', target: null });
+  else if (act === 'fxskip') simAct(i, { t: 'fxskip' });
+  else if (act === 'fxhand') simAct(i, { t: 'fxhand' });
+  else if (act === 'hop') { const a = SIM.legal(i)[ref]; if (a && a.t === 'hand') simAct(i, a); }
+  else if (act === 'hdone') simAct(i, { t: 'handdone' });
+  else if (act === 'end') simAct(i, { t: 'end' });
+  else if (act === 'concede') simAct(simSeat(), { t: 'concede' });
+  else if (act === 'post') { const before = SIMUI.post.i; SIMUI.post = null; simAfter(before); }
+  paintSim();
 });
 $('#simCurtain').addEventListener('click', () => { $('#simCurtain').classList.remove('on'); paintSim(); });
 
@@ -6653,11 +6436,11 @@ const DIAG = {
     const L = []; const line = (k, v) => L.push(`${k}: ${v}`);
     L.push(`OP TCG Hub diagnostics \u2014 take ${TAKE} \u2014 ${new Date().toISOString().slice(0, 16)}Z`);
     L.push('', '## app'); line('build', CAT.man.built_at || '?'); line('mode', MODE.cur); line('screen stack', NAV.stack.join(' > ') || '-');
-    line('boot stack', (NAV.bootStack || []).join(' > ') || 'none'); line('screens on', [...document.querySelectorAll('.screen.on')].map(e => e.id).join(',') || 'NONE'); line('overlays on', ['#askSheet', '#picker', '#detail', '#tour', '#simCurtain'].filter(id => { const el = $(id); return el && el.classList && el.classList.contains('on'); }).join(',') || 'none'); line('splash', $('#splash') ? 'still in the page' : 'gone');
+    line('boot stack', (NAV.bootStack || []).join(' > ') || 'none'); line('screens on', [...document.querySelectorAll('.screen.on')].map(e => e.id).join(',') || 'NONE'); line('overlays on', ['#askSheet', '#picker', '#rulesSheet', '#detail', '#tour', '#simCurtain'].filter(id => { const el = $(id); return el && el.classList && el.classList.contains('on'); }).join(',') || 'none'); line('splash', $('#splash') ? 'still in the page' : 'gone');
     line('currency', CUR.active() + (CAT.man.rates ? ` (rates ${CAT.man.rates.date}${CAT.man.rates.stale ? ', stale' : ''})` : ' (no rates)')); line('online', navigator.onLine); line('native', !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())); line('plugins', ['Camera', 'Filesystem', 'Share', 'LocalNotifications', 'Network', 'App', 'AdMob'].filter(n => PLATFORM.plugin(n)).join(', ') || 'none (browser)');
     line('ads', !CAT.man.ads ? 'none' : PLATFORM.adUnitsNote());
     L.push('', '## device'); line('ua', String(navigator.userAgent || '?').slice(0, 120)); line('viewport', `${typeof innerWidth === 'number' ? innerWidth + 'x' + innerHeight : '?'} @${devicePixelRatio || 1}`); line('language', navigator.language || '?'); line('tz', (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return '?'; } })());
-    L.push('', '## catalogue'); line('cards', CAT.man.cards); line('printings', CAT.rows.length); line('pictures', picturesLine()); line('prices dated', (CAT.man.source_updated_at || '?').slice(0, 10)); line('history days', (CAT.days || []).length + (CAT.days && CAT.days.length ? ` (${CAT.days[0]}..${CAT.days[CAT.days.length - 1]})` : '')); line('catalogue copy', CAT.man.fromDisk ? 'synced on this phone' : 'the one that came with the app' + (CAT.refused ? ` (${CAT.refused})` : '')); line('sealed products', sealedCountLine()); line('stock decks', (CAT.stock || []).length); line('effects scripted', CAT.man.effects ? effectsLine(CAT.man.effects, Object.keys(CAT.effects || {}).length) : '?');
+    L.push('', '## catalogue'); line('cards', CAT.man.cards); line('printings', CAT.rows.length); line('pictures', picturesLine()); line('prices dated', (CAT.man.source_updated_at || '?').slice(0, 10)); line('history days', (CAT.days || []).length + (CAT.days && CAT.days.length ? ` (${CAT.days[0]}..${CAT.days[CAT.days.length - 1]})` : '')); line('catalogue copy', CAT.man.fromDisk ? 'synced on this phone' : 'the one that came with the app' + (CAT.refused ? ` (${CAT.refused})` : '')); line('sealed products', sealedCountLine()); line('stock decks', (CAT.stock || []).length); line('effects scripted', CAT.man.effects ? effectsLine(CAT.man.effects, Object.keys(CAT.effects || {}).filter(id => CAT.effects[id].some(e => !e.hand)).length) : '?'); line('effects proven', CAT.man.effects && CAT.man.effects.proofs != null ? `${CAT.man.effects.proven} printings proven, ${CAT.man.effects.wrong} proven wrong, from ${CAT.man.effects.proofs} proofs; ${CAT.man.effects.hand} lines by hand` + (CAT.man.effects.stale && CAT.man.effects.stale.length ? `; reopened: ${CAT.man.effects.stale.join(', ')}` : '') : '?'); line('rules', RULEBOOK ? `v${RULES_DB.cur().version}` + (RULES_DB.official && RULES_DB.official.version ? `, official v${RULES_DB.official.version}` : '') : '?');
     L.push('', '## sync'); line('update url', CAT.man.updateUrl || 'NOT SET'); line('manifest', await this.probe(CAT.man.updateUrl ? CAT.man.updateUrl + 'manifest.json' : null));
     L.push('', '## hunt'); line('zip', HUNT.zip || '(none)'); line('served', JSON.stringify(HUNT.served())); line('radius', LOCAL.radius); line('feed url', HUNT.url() || 'NOT SET');
     for (const f of ['feed.json', 'history.json', 'stores.json', 'events.json', 'shops.json', 'zcta.json']) line('  ' + f, await this.probe(HUNT.url() ? HUNT.url().replace(/feed\.json$/, f) : null));
@@ -6715,12 +6498,15 @@ const SELFTEST = {
       if (!a || !u.scan || !u.deck || !u.max) return { ok: false, note: 'no ad units in the manifest' };
       if (!a.test || ![a.scan, a.deck].every(x => String(x).startsWith(T))) return { ok: false, note: 'a real unit where every older install reads it (ads.scan, ads.deck)' };
       return { ok: true, note: PLATFORM.adUnitsNote() }; });
-    await check('Sim: scripted effects loaded and one offers correctly', () => { const n = Object.keys(CAT.effects || {}).length; if (!n) return { ok: false, note: 'no effects in the bundle' };
-      const k = Object.keys(CAT.effects).find(id => CAT.effects[id].some(e => e.t === 'onplay' && e.if.length === 0 && e.do.length === 1 && e.do[0].a === 'draw'));
+    await check('Sim: scripted effects loaded and one offers correctly', () => { const n = Object.keys(CAT.effects || {}).filter(id => CAT.effects[id].some(e => !e.hand)).length; if (!n) return { ok: false, note: 'no effects in the bundle' };
+      const k = Object.keys(CAT.effects).find(id => ['Character', 'Stage'].includes((CAT.byId.get(+id) || {}).type) && CAT.effects[id].some(e => e.t === 'onplay' && e.if.length === 0 && e.do.length === 1 && e.do[0].a === 'draw'));
       if (!k) return { ok: false, note: `${n} cards scripted, no plain [On Play] draw among them` };
-      const P = { name: 'probe', deck: [1, 2, 3], hand: [], life: [], trash: [], leader: { id: +k, rested: false, don: 0 }, chars: [{ id: +k, rested: false, don: 0, turn: 1, uid: 1 }], stage: null, donDeck: 10, don: { active: 0, rested: 0 }, mods: {}, modl: [], taken: 1 };
-      const saved = SIM.g; SIM.g = { turn: 1, first: 0, active: 0, phase: 'main', players: [P, JSON.parse(JSON.stringify(P))], battle: null, log: [], over: null };
-      try { const o = SIM.offers(0, 'onplay', 0); const r = o.length ? SIM.apply(0, o[0], null) : null; return { ok: !!(r && r.ok && P.hand.length === o[0].steps[0].n), note: `${n} cards scripted; ${CAT.byId.get(+k)?.name} drew ${P.hand.length}` }; }
+      /* played and resolved through SIM.act, the one way a move is made (take 122), on a probe game put back after */
+      const saved = SIM.g, cost = SIM.cost(CAT.byId.get(+k)); const P = SIM.player('probe', +k, [1, 2, 3]); P.taken = 1; P.hand = [+k]; P.don.active = cost; P.donDeck -= cost;
+      SIM.blank([P, SIM.player('probe 2', +k, [1, 2, 3])]);
+      try { const played = SIM.act(0, { t: 'play', h: 0 }); while (SIM.g.queue.length && !(SIM.g.queue[0].steps[0] && SIM.g.queue[0].steps[0].a === 'draw')) SIM.act(0, { t: 'fxskip' });
+        const o = SIM.g.queue[0], r = o ? SIM.act(0, { t: 'fx', target: null }) : null;
+        return { ok: !!(played.ok && r && r.ok && P.hand.length === o.steps[0].n), note: `${n} cards scripted; ${CAT.byId.get(+k)?.name} drew ${P.hand.length}` }; }
       finally { SIM.g = saved; } });
     await check('Sync URL answers', async () => { const base = CAT.man.updateUrl; if (!base) return { ok: false, note: 'not configured' }; if (!navigator.onLine) return null; const r = await fetch(base + 'manifest.json', { cache: 'no-store' }); const m = r.ok ? await r.json() : null; return { ok: !!(m && m.source_updated_at), note: m ? `Pages has prices from ${m.source_updated_at.slice(0, 10)}` : `HTTP ${r.status}` }; });
     this.last = { at: new Date().toISOString(), take: TAKE, checks: out };
@@ -6796,7 +6582,7 @@ async function runSelfTest() {
   window.VAULT = { get guidePage() { return guidePage; }, guideOpen, guideClose, guideGo, guideStart, guidePaint, GUIDE, topCard, dotJoin, curLabel, paintBinder, sealedKind, sealedWord, sealedRow, gameColours, distWords, feedLine, sourceLead, picturesLine, sealedCountLine, catalogueNote, setsWithCards, setCards, paintDevEarn, backArrow, closeSheet, setHomeTab, bulkLines, bulkSum, shownLines, signedMoney, pctNum, signedPct, dayText, momentText, fromShown, toShown, setTop, newestTop, paintSealedHero, ownBack, artBack, artUrl, artColours, largeOk, heroLeader, paintDeckHero, paintBack, stockPic, CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, setCond, toast, cameraVerdict, effectsLine, HUNT, targetLine, distLine, distShort, distRowLines, distFold, distFoldTap, distSummary, DISTF, paintDetailDist, distHistory, distHistTap, tlDay, tlWindow, gtsDue, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
                    cardPic, setPic, picBox, deckRow, paintHome, paintDecks, paintSearch, openDeck,
                    FILT, loadFilter, applyFilter, sortRows, blankFilter, activeCount,
-                   DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, THEME, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,
+                   DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, THEME, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, simAct, simSeat, simReport, simHandLabel, RULEBOOK, RULES_DB, openRules, paintRules, rulesStatus, verNewer, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,
                    backupJson, scheduleBackup, backupHeld, restoreFromBackup, loadCatalogue, catalogueProblem, STORE, readJson, saveJson, BATCH,
                    PICKER, pickCurrency, MAXLOCK, bnTurn, commitOwn, importCsv, backupProblem, typedAmount, paintAlerts, localDay,
                    scan: { PLATFORM, detectQuad, parseRead, normaliseRead, starScore,

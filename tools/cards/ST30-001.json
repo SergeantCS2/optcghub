@@ -1,0 +1,67 @@
+{
+ "num": "ST30-001",
+ "name": "Luffy & Ace",
+ "text": "[Opponent's Turn] All of your [Portgas.D.Ace] and [Monkey.D.Luffy] cards gain +3000 power.",
+ "text_fp": "150df098f1f5e4bc",
+ "fx_fp": "97d170e1550eee4a",
+ "reading": [
+  {
+   "t": "static",
+   "if": [
+    {
+     "c": "oppturn"
+    }
+   ],
+   "do": [],
+   "hand": true,
+   "raw": "[Opponent's Turn] All of your [Portgas.D.Ace] and [Monkey.D.Luffy] cards gain +3000 power."
+  }
+ ],
+ "rules": [
+  "8-1-3-3",
+  "10-2-12"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "never offered, on either turn",
+   "must_not": true,
+   "board": {
+    "turn": 4,
+    "active": 1,
+    "p0": {
+     "leader": "@"
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "s": 1,
+     "t": "attack",
+     "ref": "leader",
+     "target": "leader",
+     "expect": {
+      "queue": 0
+     }
+    }
+   ],
+   "expect": {
+    "queue": 0
+   }
+  },
+  {
+   "name": "the power shown is the printed one: the app does not guess the continuous parts",
+   "board": {
+    "turn": 4,
+    "active": 1,
+    "p0": {
+     "leader": "@"
+    }
+   },
+   "expect": {
+    "power.p0.leader": 6000
+   }
+  }
+ ],
+ "note": "By hand (take 122): both of its effects are continuous and no template reads them; the untagged first sentence is not yet an effect line at all (AGENDA A23). Never offered; the power shown leaves them out."
+}

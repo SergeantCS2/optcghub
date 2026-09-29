@@ -1,4 +1,4 @@
-# OP TCG Hub — take 121
+# OP TCG Hub — take 122
 
 ## Installing — read this first
 
@@ -17,6 +17,14 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 122:** The Sim plays by the rules more closely. Once Per Turn
+means once per card, ten ready-made decks' Leaders now use their own
+abilities, and the free Draw and +1 DON!! buttons are gone: an effect the app
+cannot run is played by hand from its card, at its timing, with only the moves
+its words name. A sixth Character trashes one of your five. Each effect says whether a
+test has proven it, with Report for a misfire, and a Rules button searches
+the rules and checks for a newer version.
 
 **New at take 121:** Watching the ad for all-time history (MAX) now opens it;
 before, it gave you a deck save instead. An ad that cannot be shown now says

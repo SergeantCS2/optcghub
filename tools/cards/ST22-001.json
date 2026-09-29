@@ -1,0 +1,134 @@
+{
+ "num": "ST22-001",
+ "name": "Ace & Newgate",
+ "text": "[Activate: Main] [Once Per Turn] You may reveal 1 card with a type including \"Whitebeard Pirates\" from your hand: Draw 1 card and place the revealed card at the top of your deck.",
+ "text_fp": "0b83834e23842601",
+ "fx_fp": "97d170e1550eee4a",
+ "reading": [
+  {
+   "t": "main",
+   "if": [
+    {
+     "c": "opt"
+    }
+   ],
+   "do": [],
+   "hand": true,
+   "raw": "[Activate: Main] [Once Per Turn] You may reveal 1 card with a type including \"Whitebeard Pirates\" from your hand: Draw 1 card and place the revealed card at the top of your deck."
+  }
+ ],
+ "rules": [
+  "10-2-2",
+  "10-2-13"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "by hand at its Main: draw 1, then the revealed card to the top of the deck",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "hand": [
+      "OP02-003"
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fxhand"
+    },
+    {
+     "t": "hand",
+     "op": "draw",
+     "expect": {
+      "p0.hand": 2,
+      "p0.deck": 19
+     }
+    },
+    {
+     "t": "hand",
+     "op": "handtotop",
+     "h": 0
+    },
+    {
+     "t": "handdone"
+    }
+   ],
+   "expect": {
+    "p0.hand": 1,
+    "p0.deck": 20,
+    "queue": 0
+   }
+  },
+  {
+   "name": "one draw, not two",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "hand": [
+      "OP02-003"
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fxhand"
+    },
+    {
+     "t": "hand",
+     "op": "draw"
+    },
+    {
+     "t": "hand",
+     "op": "draw",
+     "refused": "not a move this line names"
+    }
+   ],
+   "expect": {
+    "p0.hand": 2
+   }
+  },
+  {
+   "name": "once per turn",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "hand": [
+      "OP02-003"
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fxhand"
+    },
+    {
+     "t": "handdone"
+    },
+    {
+     "t": "activate",
+     "ref": "leader",
+     "refused": "once per turn"
+    }
+   ],
+   "expect": {
+    "queue": 0
+   }
+  }
+ ],
+ "note": "By hand (take 122): draw 1, and the revealed card to the top of the deck -- a move the tray did not have before."
+}
