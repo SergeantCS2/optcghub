@@ -243,6 +243,7 @@ Start here. Do not read top to bottom.
 | A check's verdict is `undefined`, and the thing it checks passes | 228 |
 | A row of cards sized to fit breaks a card early onto the next row | 229 |
 | A browser test taps a card and another card answers | 230 |
+| Rows the app folded come apart with no code change; a check finds "0 decks" | 231 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -2995,6 +2996,18 @@ held hand card at its centre -- under the next card, which took the click
 (Playwright named the intercepting element). A person taps the strip of the
 card they can see; render measures that strip as the card's 44 px square, and
 the look clicks inside it.
+
+**231. A set's name is TCGCSV's text, not the set.** On 29 Sept, between take
+124's own ingest and its PR's first check, TCGCSV renamed all 44 starter-deck
+groups -- "Starter Deck 31: RED Monkey.D.Luffy" to "ST-31: Starter Deck 31 RED
+Monkey.D.Luffy", "Super Pre-Release Starter Deck 1: Straw Hat Crew" to "ST-01:
+Starter Deck 1 Straw Hat Crew (Super Pre-Release Edition)" -- with every id,
+code and date unchanged. Releases knew a starter deck by `/^Starter Deck/` on
+its name (take 97), so the six ST31-ST36 rows the owner had asked to see as one
+came back, on a branch that never touched Releases, and smoke's own check,
+reading the name the same way, found "0 decks". A set is known by its code
+(the catalogue takes it from the cards' printed numbers), with the words as
+the fallback; smoke renames the run's sets and the fold must hold.
 
 ## §2 — Inherited from APEX ORV
 

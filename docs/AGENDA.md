@@ -1683,7 +1683,10 @@ errors) and named, in his words:
 1. **"Starter decks flood the release page"** — their own section on
    Releases, grouped by release day. → take 97. *(built take 97: a run of
    two or more starter decks on one day is one row with a fold — on
-   Upcoming, Recent and the distributor's list)*
+   Upcoming, Recent and the distributor's list; take 124: known by the set's
+   code, not its name, after TCGCSV renamed every starter deck and the rows
+   came apart — landmine 231. **Ruled out:** the new name's "ST-" prefix as
+   the test, one more wording TCGCSV can change)*
 2. **"NM, LP, MP, HP, DMG don't do anything if they're buttons — they
    shouldn't show on boxes"** — the condition segment on a sealed
    product's sheet; unexplained on a card's. → take 95: hidden on sealed,

@@ -255,17 +255,44 @@ NEW-SESSION-PROMPT and SIM-UI §7.
   and the owner's testing rule, §8 the table); landmines 225-230, notes on 30,
   214 and 219; AGENDA A23; the owner's testing rule in NEW-SESSION-PROMPT.
 
+### The PR's first check, and the data under it
+
+The runner's first `check` on the PR (run 36624640603) failed in smoke: 1,494
+passed, 3 failed, all take 97's Releases fold ("undefined: 0 decks"). This take
+never touched Releases. TCGCSV renamed all 44 starter-deck groups at about 19:20
+UTC on 29 Sept, after the session's ingest and before the runner's (source
+20:05 UTC): "Starter Deck 31: RED Monkey.D.Luffy" is now "ST-31: Starter Deck 31
+RED Monkey.D.Luffy", and the four Super Pre-Release decks likewise. Ids, codes
+and dates are unchanged (PROVEN: the cached groups against TCGCSV's, 87 of 87).
+Releases knew a starter deck by `/^Starter Deck/` on its name, so the six
+ST31-ST36 rows the owner asked to see as one (take 97) came back. `main` carries
+the same line and meets the same data at its next nightly (INFERRED).
+
+- **The fix:** a starter deck is a set whose code is ST and a number (the
+  catalogue takes a set's code from its cards' printed numbers), with "Starter
+  Deck" anywhere in the name as the fallback (landmine 231). Nothing else in the
+  app or the pipeline reads a set's name for what it is: the Sealed kinds and a
+  set's kind read the word "deck" anywhere, and Hunt folds the name's words in.
+- **Its checks, watched failing first:** smoke finds the run by its code; the
+  run renamed as before 29 Sept, and with no "Starter Deck" in its names, is
+  still one row; the control, neither the code nor the words, comes apart. On
+  the unfixed build with today's data: 1,495 passed, 4 failed (the run, the
+  rename, the fold, the search). On the fix: 1,499 passed, 0 failed; render
+  246 in Chrome, the folded row opening on a click.
+
 ### Measured
 
-- **Smoke 1,497 passed, 0 failed** (1,437 at the take's start). **Render 246
-  in Chrome** (242). **The look, take 124: 68 of 68 steps** at four sizes --
+- **Smoke 1,499 passed, 0 failed** on TCGCSV's data of 29 Sept, 20:05 UTC
+  (1,437 at the take's start; 1,497 before the rename's two checks). **Render
+  246 in Chrome** (242). **The look, take 124: 72 of 72 steps** at four sizes --
   the Fold's cover 411 x 960 and open 749 x 832 (MEASURED sizes), a phone 360
   x 780 and a tablet 1280 x 800 (INFERRED) -- a game against the app through
   real clicks (deal, mulligan, select, play, the app's turn a beat at a time,
   aim, the line, Resolve, the burst), a long press to zoom, the log, an effect's
   choices, the curtain, Leave's question, Forfeit & leave back to the app, the
-  end, and each Leader's red back caught as it turns over. Pictures through
-  Node: 643 fetched, 102 refused by the host. Smoke, render and the look ran on
+  end, and each Leader's red back caught as it turns over; then Releases, the
+  day of ST31-ST36 as one row folded and opened by a click. Pictures through
+  Node: 718 fetched, 120 refused by the host. Smoke, render and the look ran on
   the final build.
 - **The screen, used** (MEASURED in this VM's Chromium, a game against the
   app after the mulligan, a first hand of 5 and one of 8; the first table of
@@ -351,6 +378,9 @@ NEW-SESSION-PROMPT and SIM-UI §7.
 - The plan said a UI pass leaves the engine unchanged (SIM-UI §7 as take 123
   wrote it). The owner's testing rule found nine faults in it; they are fixed
   here.
+- My first look step for Releases turned Hunt on before saying its zip had
+  been asked: the first visit's zip sheet took the click, and the step timed
+  out (take 110's steps set `NAV.zipAsked` first; this one does now).
 
 ### Ruled out
 
@@ -393,7 +423,7 @@ NEW-SESSION-PROMPT and SIM-UI §7.
   placeholder picture (reprints as the control).
 - `node tools/render.mjs` -- the table in Chrome: the full screen, the fit,
   every control 44 px.
-- `node tools/look.mjs 124` -- 17 steps at four sizes, 68 of 68.
+- `node tools/look.mjs 124` -- 18 steps at four sizes, 72 of 72.
 - `node tools/selfplay.mjs --selftest` -- twelve plants, each named; the
   twelfth a view that copies the result's names to both seats. Then the
   rulebook's fifteen, each named by it alone: three DON!! a turn, a draw on the
@@ -414,6 +444,9 @@ NEW-SESSION-PROMPT and SIM-UI §7.
 - `node tools/render.mjs` -- the backs as Chrome draws them; the screen used at
   four sizes (the foot within 24 px of the screen's, a first hand whole on the
   screen, each card's own strip 44 px; take 124's first hand as the control).
+- `node tools/smoke.mjs` -- Releases after TCGCSV's rename (landmine 231): the
+  run of starter decks found by its code, renamed twice and still one row;
+  neither the code nor the words as the control.
 
 ### DEFERRED
 
@@ -452,6 +485,9 @@ NEW-SESSION-PROMPT and SIM-UI §7.
   line parsed with one would be declinable only at its start.
 - **A by-hand automatic line keeps its Skip:** the player resolves it, and the
   app cannot hold them to its words.
+- **Releases on the tablet** (the UI/UX session's): at 1280 x 800 a box wider
+  than the list's column stands behind the top of the list (the look's
+  `18-releases-...` picture). Not this take's; seen in passing.
 
 ## Take 123 — 2026-09-29 — the Sim ready for the UI pass: one view per seat, private things kept by the engine
 

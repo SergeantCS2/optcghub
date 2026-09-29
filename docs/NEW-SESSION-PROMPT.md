@@ -114,8 +114,11 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   of self-play over every pairing of the ready-made decks and random legal
   decks; with it the take found nine faults in the engine (an automatic
   effect could be declined, a used [Trigger] kept, looked-at cards left out of
-  the deck, and five more) and fixed each with a check. `docs/SIM-UI.md` §7
-  and §8; landmines 225-230. **Next, the owner's:** the look on the Fold (the
+  the deck, and five more) and fixed each with a check. The PR's first check
+  met TCGCSV's rename of every starter deck ("ST-31: Starter Deck 31 ...") and
+  Releases' fold came apart; a starter deck is now known by its code, ST and a
+  number (landmine 231). `docs/SIM-UI.md` §7 and §8; landmines 225-231.
+  **Next, the owner's:** the look on the Fold (the
   pace, the vibration, the long press, the fit) and his word on the card
   back. **Yours after it:** HANDOFF take 124's DEFERRED -- the host's
   placeholder across the app first -- then A23's tail, one mechanism per

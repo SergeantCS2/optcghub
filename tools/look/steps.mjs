@@ -1969,6 +1969,22 @@ const take124 = [
         out = { over: S.g.over, text: (document.querySelector('#simBoard .tb-over h3') || {}).textContent || '', win: !!document.querySelector('#simBoard .tb-win img') };`));
       return { ok: m.over === 0 && /wins/.test(m.text), over: m.over, text: m.text, win: m.win };
     } },
+  { name: 'releases-a-day-of-starter-decks-one-row-again', run: async (page, ctx) => {
+      /* TCGCSV renamed every starter deck on 29 Sept ("ST-31: Starter Deck 31 RED Monkey.D.Luffy") and take 97's fold came
+         apart; a starter deck is known by its code now (landmine 231). The day's run is one row, shot folded; a real click opens it */
+      const before = await page.evaluate(async () => { const V = window.VAULT; V.NAV.zipAsked = true; V.MODE.set('hunt', true); V.RELF.open = new Set(); V.go('releases'); V.paintReleases(); await new Promise(r => setTimeout(r, 300));
+        while (V.closeAnyOverlay()) {}   /* Hunt asks for a zip on its first visit; the sheet is not this step's subject (as take 110's steps) */
+        const f = document.querySelector('#relList [data-relfold]:not([data-relfold^="d:"])'); if (f) { f.closest('.rel').scrollIntoView({ block: 'start' }); window.scrollBy(0, -70); }
+        const day = f ? f.dataset.relfold : ''; const run = [...V.CAT.sets.values()].filter(s => s.pub === day && /^ST-?\d/i.test(s.abbr || ''));
+        const h = document.querySelector('#relList').innerHTML;
+        return { fold: !!f, day, decks: run.length, rows: run.filter(s => h.includes('data-browse-set="' + s.id + '"')).length, names: run.slice(0, 2).map(s => s.name), label: f ? f.textContent.trim() : '' }; });
+      const shot = await ctx.shot('18a-releases-the-starter-decks-one-row');
+      if (before.fold) await page.click(`#relList [data-relfold="${before.day}"]`); await wait(300);
+      const after = await page.evaluate((day) => { const V = window.VAULT; const h = document.querySelector('#relList').innerHTML;
+        const run = [...V.CAT.sets.values()].filter(s => s.pub === day && /^ST-?\d/i.test(s.abbr || ''));
+        return { rows: run.filter(s => h.includes('data-browse-set="' + s.id + '"')).length, hide: /Hide the decks/.test(h) }; }, before.day);
+      return { ok: before.fold && before.decks >= 2 && before.rows === 1 && after.rows === before.decks && after.hide, shot, ...before, after };
+    } },
 ];
 take124.viewports = ['cover', 'inner', 'phone', 'tablet'];
 export const STEPS = { 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };

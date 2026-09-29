@@ -29,7 +29,9 @@ a time so you can watch. The rules are kept more closely too: an automatic
 effect such as [On Play] always resolves (an "up to" still lets you choose
 none), a [Trigger] you use goes to the trash, and cards an effect looks at go
 back where they were. Made for phones, both Fold screens and tablets. Against
-the app, its Life cards are no longer named when they go to its hand.
+the app, its Life cards are no longer named when they go to its hand. And
+Releases shows a day's starter decks as one row again, after TCGplayer
+renamed them.
 
 **New at take 123:** Under the hood of the Sim: the board now draws only what
 the player whose turn it is may see -- the other hand, both Lives and both

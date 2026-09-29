@@ -2073,9 +2073,18 @@ const today97 = new Date().toISOString().slice(0, 10); const days97 = d => Math.
 ok('the band: within a week, a month, three months, further or past', V.relBand(0) === 'cd1' && V.relBand(7) === 'cd1' && V.relBand(8) === 'cd2' && V.relBand(30) === 'cd2' && V.relBand(31) === 'cd3' && V.relBand(90) === 'cd3' && V.relBand(91) === 'cd4' && V.relBand(-1) === 'cd4');
 V.MODE.set('hunt', false); V.HUNT.feed = null; V.RELF.open = new Set(); V.RELALERTS.list = []; V.paintReleases();
 const r97 = ctx.document.getElementById('relList').innerHTML;
-const decks97 = [...V.CAT.sets.values()].filter(s => s.pub && /^Starter Deck/i.test(s.name)); const byDay = {}; for (const s of decks97) (byDay[s.pub] ||= []).push(s);
+/* take 124: a starter deck by its code, the words as the fallback -- TCGCSV renamed every one on 29 Sept ("Starter Deck 31:
+   RED Monkey.D.Luffy" to "ST-31: Starter Deck 31 RED Monkey.D.Luffy") and the first word no longer said so (landmine 231) */
+const deck97 = s => /^ST-?\d/i.test(s.abbr || '') || /\bStarter Deck\b/i.test(s.name || '');
+const decks97 = [...V.CAT.sets.values()].filter(s => s.pub && deck97(s)); const byDay = {}; for (const s of decks97) (byDay[s.pub] ||= []).push(s);
 const runDay = Object.keys(byDay).find(d => byDay[d].length >= 2); const run = byDay[runDay] || [];
 ok('a run of starter decks on one release day is ONE row naming the range and the count, its decks folded away (the six ST31–ST36 rows the owner saw)', !!runDay && new RegExp('Starter decks [^<]*' + run[0].abbr + '[^<]*' + run[run.length - 1].abbr).test(r97) && new RegExp(run.length + ' starter decks, one release day').test(r97) && !new RegExp('data-browse-set="' + run[1].id + '"').test(r97) && new RegExp('data-relfold="' + runDay + '"').test(r97), `${runDay}: ${run.length} decks`);
+/* take 124: the fold keys on the set's code, never its name -- the run under names with no "Starter Deck" in them is still one
+   row; with neither the code nor the words it is not folded (the control: the check can see a run come apart) */
+const folded97 = () => { V.RELF.open = new Set(); V.paintReleases(); const h = ctx.document.getElementById('relList').innerHTML; return !!runDay && new RegExp('data-relfold="' + runDay + '"').test(h) && !new RegExp('data-browse-set="' + run[1].id + '"').test(h); };
+const renamed97 = (f) => { const was = run.map(s => [s.name, s.abbr]); run.forEach((s, i) => f(s, i)); try { return folded97(); } finally { run.forEach((s, i) => { s.name = was[i][0]; s.abbr = was[i][1]; }); V.paintReleases(); } };
+ok('the run stays one row whatever TCGCSV names its sets: named as before 29 Sept, and named without the words (landmine 231)', renamed97((s, i) => { s.name = `Starter Deck ${31 + i}: Deck ${i}`; }) && renamed97((s, i) => { s.name = `Deck ${i} of the run`; }), `${run.length} decks on ${runDay}`);
+ok('control: a run with neither an ST code nor the words is not folded', !!runDay && !renamed97((s, i) => { s.name = `Deck ${i} of the run`; s.abbr = `XX${i}`; }));
 const single = Object.keys(byDay).find(d => byDay[d].length === 1); const one = single && byDay[single][0];
 ok('control: a single starter deck on its day stays its own row', !one || new RegExp('data-browse-set="' + one.id + '"').test(r97), String(one && one.abbr));
 V.RELF.open.add(runDay); V.paintReleases(); const r97b = ctx.document.getElementById('relList').innerHTML;
@@ -2085,7 +2094,7 @@ V.RELF.open = new Set(); V.paintReleases(); const r97c = ctx.document.getElement
 const upcoming97 = [...V.CAT.sets.values()].filter(s => s.pub && s.pub >= today97);
 /* take 115 (self-review): rows, not sets -- starter decks that share a day are one row (its first deck's), and since take 115
    a group is listed as soon as it lists a product, so ST39-ST44 on one day would have turned these two red */
-const rows97 = upcoming97.filter(s => new RegExp('data-browse-set="' + s.id + '"').test(r97c) || !(/^Starter Deck/i.test(s.name) && new RegExp('data-relfold="' + s.pub + '"').test(r97c)));
+const rows97 = upcoming97.filter(s => new RegExp('data-browse-set="' + s.id + '"').test(r97c) || !(deck97(s) && new RegExp('data-relfold="' + s.pub + '"').test(r97c)));
 ok('every upcoming row\'s countdown carries the band of its distance, and a recent row carries the past band', rows97.every(s => new RegExp('data-browse-set="' + s.id + '"[\\s\\S]*?<span class="note ' + V.relBand(days97(s.pub)) + '">').test(r97c)) && /<span class="note cd4">\d+ days ago<\/span>/.test(r97c), `${rows97.length} upcoming rows of ${upcoming97.length} sets`);
 ok('every upcoming row and group has Remind me and Calendar beside Details; a recent one has Details only', count97(r97c, /data-relalert="/g) >= rows97.length && count97(r97c, /data-relcal="/g) === count97(r97c, /data-relalert="/g) && (() => { const rec = r97c.slice(r97c.indexOf('<h3>Recent</h3>')); return !/data-relalert=/.test(rec) && /Details <svg[^>]*><use href="#g-external"/.test(rec); })());
 /* the reminder: on, the day before, once; off */
