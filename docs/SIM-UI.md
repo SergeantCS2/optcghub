@@ -1,24 +1,32 @@
 # SIM-UI — the contract the Sim's UI pass builds against
 
-*Current as of take 123.*
+*Current as of take 124.*
 
-For the owner's UI/UX pass of the Sim (Prep & Play → Sim): the playmat, the
-pictures, the zoom. Takes 122 and 123 made the game underneath right, provable
-and private; this page is what a new board may rely on, what it must not do,
-and what will tell it when it has. The engine is `src/sim.js`; the board today
-is the painters in `src/app.html` (`paintSim` and the `sim…Html` functions),
-drawn from the same view a new board would use.
+For the Sim's board (Prep & Play → Sim). Takes 122 and 123 made the game
+underneath right, provable and private; take 124 drew it as a table -- the
+playmat, the pictures, the zoom -- on the owner's word that the session make
+the UI pass. This page is what a board may rely on, what it must not do, and
+what will tell it when it has. The engine is `src/sim.js`; the board is the
+painters in `src/app.html` -- every function between `const SIM_PAINTERS` and
+`const SIM_PAINTERS_END` -- and the controller after them (`paintSim`,
+`simTap`, `simBotRun`, `simFit`, the motion).
 
 ---
 
 ## 1. The one rule
 
 **A board draws from `SIM.view(seat)` and moves only through
-`SIM.act(seat, move)`.** It never reads `SIM.g` or a player's arrays, and never
-writes the game. Two checks hold this: smoke fails if any painter reads the
-engine's state (take 123), and fails if anything outside the engine calls one
-of its writing functions (take 122). A board built this way cannot show a card
-its seat may not see, because it is never handed one.
+`SIM.act(seat, move)`.** It never reads `SIM.g` or a player's arrays, never
+writes the game, and **never paints what `act()` returns**: that return is
+the mover's, and a battle's `res` names the defender's Life card (take 124's
+audit found take 123's board painting it to the human against the app; the
+view's `last` is the result as each seat may see it). Three checks hold this:
+smoke fails if any painter reads the engine's state or a stored result (take
+123; since take 124 every function between the painters' two markers, no list
+to forget one on), fails if anything outside the engine calls one of its
+writing functions (take 122), and the tap handler takes every move from the
+view it painted (take 124). A board built this way cannot show a card its seat
+may not see, because it is never handed one.
 
 ## 2. The API
 
@@ -27,7 +35,7 @@ its seat may not see, because it is never handed one.
 | `SIM.new(deckA, deckB, first, { seed, bot })` | Deals a game: two legal decks, who goes first (0 or 1), an optional seed (the shuffle is the game's own) and `bot: 1` to play against the app |
 | `SIM.who()` | The seat whose decision the game waits on, or `null` when it is over |
 | `SIM.view(seat)` | Everything that seat may see, and its legal moves (§3) — a read: calling it changes nothing |
-| `SIM.act(seat, move)` | The only way a game moves. Returns `{ ok: true }` or `{ ok: false, why }` — `why` cites its rule section (`§x-y`), which the Rules sheet opens. A refused move changes nothing |
+| `SIM.act(seat, move)` | The only way a game moves. Returns `{ ok: true }` or `{ ok: false, why }` — `why` cites its rule section (`§x-y`), which the Rules sheet opens. A refused move changes nothing. What it returns is the mover's: a board shows results from `view.last`, never from here |
 | `SIM.replay(spec, moves)` | Rebuilds a game from `g.spec` and `g.actions` — the Report and a two-phone game are this |
 | `BOT.move(seat)` | The app's opponent makes one legal move for that seat |
 | `openRules(section)` | Opens the Rules sheet at a section (`simCite(text)` turns every `§x-y` in a sentence into that link) |
@@ -41,7 +49,12 @@ trashes are most of it late in a game):
 - **Top level:** `seat`, `turn`, `phase` (`mulligan` / `main` / `battle` /
   `over`), `active` (whose turn), `first`, `over` (the winning seat, `-1` for a
   draw, else `null`), `who` (whose decision), `bot` (the app's seat or `null`),
-  `rules` (`1.2.1`), `take`, `log` (newest first; public).
+  `rules` (`1.2.1`), `take`, `log` (newest first; public; an effect's step in
+  words and its target by name when public, since take 124), `last` (the last
+  battle's result as this seat may see it, or `null`: `n` numbers it, `turn`,
+  `att`, `def`, `a`, `d`, `win`, `gone`, `ko`, and `life` -- each Life card
+  that left: its `name`, `id` and `trigger` for its owner only, or for both
+  when [Banish] trashed it face up; to the other seat `{ id: null, name: null }`).
 - **`me` and `them`** — the two sides, the same shape: `seat`, `name`,
   `leader`, `chars` (in order; a Character's index is its `ref`), `stage`
   (or `null`), `hand` (**`me` only**; `them.hand` is `null`), `handCount`,
@@ -66,7 +79,9 @@ trashes are most of it late in a game):
 - **`offer`** — the effect the game waits on (or `null`): `seat` (who
   decides), `hidden`, `cardId`, `name`, `t`, `raw`, `hand` (by hand), `proof`,
   `wrong`, `does`, `step` / `steps`, `cost` (this step is a cost), `choices`
-  (the targets — **the deciding seat only**, else `null`), `queued`. When
+  (the targets — **the deciding seat only**, else `null`; since take 124 a
+  hand card's or a searched deck card's carries its `face`, the others are
+  found on the table by their ref), `queued`. When
   `hidden` is true — the other seat's [Trigger] from Life, not yet used —
   only `seat`, `t` and `queued` are filled: its player may still add the card
   to hand without revealing it (§10-1-5).
@@ -90,7 +105,7 @@ Always one of `view.legal`, sent back as it is. Their shapes:
 | `counter` / `cevent` | `h` | the Counter Step |
 | `resolve` | — | the Damage Step; the result comes back as `res` |
 | `fx` | `target` (or `null` for none / no target), `trash` | apply the offer's step |
-| `fxskip` | — | decline (never offered once a cost is begun, §8-3) |
+| `fxskip` | — | decline -- only a line that says "you may", begins with a cost, a [Trigger], an [Activate: Main] before it begins, or a by-hand line; an automatic effect resolves in full, its "up to" letting none be chosen (§8-1-3-1; take 124). Offered alone when a cost begun can no longer be paid (§8-3-1-3) |
 | `fxhand`, `hand`, `handdone` | `hand` carries `op` and its fields | the by-hand tray |
 | `end`, `concede` | — | end the turn; concede (§1-2-3) |
 
@@ -131,10 +146,9 @@ draw their own seat's view from the same seed and moves.
 - Pictures hot-linked, never cached or bundled (landmines 26, 28), falling
   back to the card's colours (`art.ground`) when they fail.
 - Back closes a sheet before it leaves a screen.
-- One piece of copy is the pass's to fix: the log and some headings use the
-  player's name as the subject, so against the app they read "You ends the
-  turn" (`SIM.log` in `src/sim.js`, e.g. `endTurn`). The log is public and in
-  the view; changing its words changes no rule.
+- The log speaks to the human in the second person against the app ("You
+  end the turn"; the engine writes "You ends" -- `simSay` turns it, with each
+  seat by its short name; take 124).
 
 ## 7. What will tell the pass it broke something
 
@@ -143,13 +157,63 @@ draw their own seat's view from the same seed and moves.
   checks (pips, battle lines, the Rules button, the three-word labels).
 - `node tools/render.mjs` — the board draws in real Chrome.
 - `node tools/look.mjs N` — a step list per take in `tools/look/steps.mjs`;
-  take 122's and 123's click through the board at both Fold sizes.
+  take 122's and 123's click through the board at both Fold sizes, take
+  124's through a whole game against the app at four (the Fold's two, a
+  phone, a tablet: a list's `viewports`).
 - `node tools/selfplay.mjs` and `node tools/cardproof.mjs` — the engine and
-  the cards, unchanged by a UI pass; if either moves, the pass touched the
-  engine.
+  the cards; a UI pass leaves them as they are, and if either moves, the pass
+  touched the engine. Since take 124 self-play carries **the rulebook**
+  (`tools/lib/rulebook.mjs`): the auditor's own model of the game, written
+  from the rules, which at every decision lists the moves the rules allow
+  against `legal()` and after every move builds the game the rules say
+  follows and names the first place the engine's differs. Its decks are every
+  pairing of the ready-made decks in turn with random legal decks, and the
+  card's words check reads every scripted step against its card's text.
+- **The owner's rule for testing the Sim** (take 124): "Test all starter decks
+  and as many random/arbitrary decks (that are still legal), after every turn
+  ends audit all moves against the rules and all card they played and ensure
+  the actions they did with the card is legal per the cards rules and game
+  rules." A take that touches the Sim runs a sweep of thousands of games of
+  both before it ships (`--games 2000`, both policies, and `--two-apps`), and
+  fixes what the rulebook names, each fix with a check.
 - `python3 tools/gate.py` — all of the above, and the scrubber.
 
-## 8. Not in the engine yet (A23's tail)
+## 8. The table (take 124)
+
+- **The layout.** Once a game is dealt it fills the screen: the mode tabs, the
+  Sim's header and the nav step aside (the owner), and the table's top bar
+  carries **Leave** (forfeit and back to the app, asking first), whose turn it
+  is, the Rules, the log and the menu. Two halves, the other seat's mirrored
+  across the band: the five Character places in front; Life (sideways),
+  Stage, the Leader in the middle, Trash, Deck behind; the cost area of DON!!.
+  Under the table, the hand and the dock for the selected card's moves; from
+  640 px the table takes the whole height and the hand and the dock share a
+  column beside it, from 1000 px a side panel holds the zoom and the log.
+- **Sizes** are fractions of `--cw`, one card's width, which `simFit()` solves
+  from the space (two trial sizes give the table's height as a line in it);
+  the hand then takes all the space left for it -- every card at once at the
+  largest size that fits, held like a hand where whole cards side by side
+  would be small, each card keeping a strip of its own (44 px, two fifths of
+  the card) -- and past that scrolls.
+- **Pictures:** each card's hot-linked picture over its own colours; a picture
+  shared by cards of different names is the host's placeholder and is not
+  drawn (`SIM.placeholderPic`). **Card backs** are the app icon's card back
+  (`g-cardart` in the sprite) at the owner's word -- landmine 30's exception
+  for the icon, extended; the own-rose fallback swaps it -- in the game's
+  colours (the owner): a deck's blue, a Leader's red (each Leader turns over
+  from it the first time it shows), a DON!! card's white in black.
+- **Moves:** a tap selects a card and the dock lists exactly the view's legal
+  moves that name it; what the table asks now -- a target, a Blocker, a
+  counter, an effect's choice, one of five to trash -- is lit on the card it
+  names, carrying that move's own word. The app's moves come one a beat where
+  the browser can draw them (`simPaced()`), at once under reduced motion.
+- **Held by:** smoke's take-124 section (every legal move has its control on
+  the table in the states a board meets, with a planted move as its control;
+  the painted board against the app names no card the app alone may see; the
+  felt is Prep & Play's dark palette value for value), render's table checks
+  (44 px, fits the phone, the nav aside), and the look at four sizes.
+
+## 9. Not in the engine yet (A23's tail)
 
 Modal "Choose one", ordering cards (top or bottom in any order), protection
 ("cannot be K.O.'d"), a Life card face up, effect sentences with no tag at

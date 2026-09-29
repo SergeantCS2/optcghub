@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 123.* Ranked by blocking-ness, not by interest.
+*Current as of take 124.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -78,11 +78,16 @@ what take 115 changed on screen.
    PR #47): the audit's fixes and the whole-Sim review, the rules on v1.2.1
    with Check for updates, card proofs for ST01 and every ready-made Leader,
    self-play (two apps included), the wording families, the Rules button.
-   Take 123: the view model and the privacy rule, and `docs/SIM-UI.md` --
-   **ready for the UI.** Next is the owner's UI/UX pass (the real table, the
-   pictures, the zoom), built on `docs/SIM-UI.md`. After it: the tail --
-   modal effects, ordering, protection, the opponent's hidden choices -- one
-   mechanism per take, each proven through `tools/cards/`.
+   Take 123: the view model and the privacy rule, and `docs/SIM-UI.md`.
+   Take 124: the table -- the UI pass, handed to the session by the owner:
+   the playmat of pictures, the zoom, the full screen, Leave, the icon's card
+   backs in the game's colours (`docs/SIM-UI.md` §8), and the rulebook with
+   random legal decks, whose nine finds in the engine are fixed. Every Sim
+   take now runs that sweep (the owner's rule). Next: the owner's look on the Fold, then
+   HANDOFF take 124's DEFERRED (the host's placeholder across the app
+   first), then the tail -- modal effects, ordering, protection, the
+   opponent's hidden choices -- one mechanism per take, each proven through
+   `tools/cards/`.
 5. **A31** Collectr import, the day a real exported file exists.
 6. The standing offer: the release-notes trim.
 
@@ -2216,6 +2221,37 @@ in the future, the simulator.
   board that hides the other hand with CSS or a curtain still holds it in the
   page; the view a seat is handed never contains what that seat may not see,
   so a redesigned board cannot show it by mistake. Then the owner's UI pass.
+- **Take 124 -- the table (the owner handed the Sim's UI pass to the
+  session).** An audit of take 123 first (HANDOFF take 124's table: a battle
+  result that named the app's Life card to the human past the view, the log's
+  "You ends" and engine codes, the app's turn in one tap, a handler that
+  re-derived legality, faces for hand and deck choices, a painter guard that
+  read a list), each fixed with its check. Then the board as a playmat: both
+  halves with the cards' hot-linked pictures, Life, Deck, Trash, Stage and
+  DON!! drawn as the table has them, a tap for a card's moves, targets lit on
+  the table, the effect panel, the zoom, the log, motion, the app's moves one
+  at a time; phones, the Fold's two screens and tablets. The owner, mid-take:
+  the game fills the screen (the mode tabs, the Sim's header and the nav step
+  aside), Leave forfeits and goes back to the app, and the card backs are the
+  app icon's (landmine 30's exception for the icon, extended on his word).
+  **Ruled out (take 124):** privacy by the screen again (a painter redacting
+  `res`): the view carries the result as its seat may see it; a fan of
+  overlapping hand cards (each card keeps a 44 px square of its own, take
+  108); a constant card size (`simFit` solves it from the space). Two of the
+  plan's lines the owner overruled: the header kept over the table (take
+  107's one header stays on every other screen) and the app's own wheel as
+  the card back. The owner again, mid-take: the backs in the game's colours
+  (a deck's blue, a Leader's red, a DON!! card's white in black), the screen
+  used as fully as it can be, and his rule for testing the Sim -- every
+  ready-made deck and random legal decks, every move and every card audited
+  against the rules. The rulebook (`tools/lib/rulebook.mjs`), a second model of
+  the game from the rules, now holds every self-play move to them; with random
+  decks it found nine faults in the engine, each fixed with a check (HANDOFF
+  take 124). **Ruled out (take 124, the rulebook):** auditing only at a turn's
+  end (each move is checked as it is made, and a turn's end is a move); the
+  engine's own `legal()` as the auditor's; Skip on automatic effects
+  (§8-1-3-1). Next: HANDOFF take 124's DEFERRED -- the host's placeholder
+  across the app, drag, sounds, the owner's Fold check -- then the tail.
 
 The owner wants an actual simulator inside Prep & Play, in the future. Scoped
 honestly:

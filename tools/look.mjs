@@ -29,7 +29,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { STEPS, VIEWPORTS, CONTROLS, PROBES, OWNER_TZ } from './look/steps.mjs';
+import { STEPS, VIEWPORTS, SIZES, CONTROLS, PROBES, OWNER_TZ } from './look/steps.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const WWW = path.join(ROOT, 'www');
@@ -107,11 +107,12 @@ async function main() {
   const { srv, url } = await serve(WWW);
   const browser = await pw.chromium.launch({ args: ['--no-sandbox', '--disable-dev-shm-usage'] });
   const report = [];
-  const names = which === 'both' ? Object.keys(VIEWPORTS) : [which];
   const steps = selftest ? [...CONTROLS, ...PROBES] : STEPS[take];
+  /* take 124: a take's step list may ask for more sizes than the Fold's two (steps.viewports, from SIZES) */
+  const names = which === 'both' ? (steps.viewports || Object.keys(VIEWPORTS)) : [which];
   try {
     for (const vp of names) {
-      const v = VIEWPORTS[vp]; if (!v) { console.log(`look: no viewport '${vp}' (have: ${Object.keys(VIEWPORTS).join(', ')})`); process.exit(2); }
+      const v = SIZES[vp]; if (!v) { console.log(`look: no viewport '${vp}' (have: ${Object.keys(SIZES).join(', ')})`); process.exit(2); }
       /* take 115: every page in the owner's zone, MEASURED (steps.mjs) -- a day or a clock in a picture is the one his phone shows */
       const page = await browser.newPage({ viewport: { width: v.width, height: v.height }, deviceScaleFactor: v.dpr, timezoneId: OWNER_TZ });
       if (PROXY) await page.route(PICTURES, async route => {

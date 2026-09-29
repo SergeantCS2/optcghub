@@ -1344,8 +1344,8 @@ const mk = () => { const d = V.DECKS.blank(); for (const raw of fs.readFileSync(
 const sr = V.simReadiness(mk());
 ok('sim-readiness counts every card of the deck into exactly one bucket', sr.total === 14 && sr.full + sr.part + sr.hand + sr.none === sr.total, JSON.stringify(sr));
 ok('...and names the by-hand cards for the player', Array.isArray(sr.handNames) && sr.handNames.length <= 6);
-ok('the deck screen has the panel and the Play in Sim button; the sim preselects that deck', /id="dkSim"/.test(html) && /id="dkPlaySim"/.test(js) && /SIMUI\.pre = dkCur\.id/.test(js) && /d\.id === SIMUI\.pre \? 'selected'/.test(js));
-ok('the board draws DON!! as pips and colour dots on card lines', /'\\u25cf'\.repeat\(d\.active\)/.test(js) && /background:var\(--c-\$\{CCLASS\[col\]\}\)/.test(js));   // take 123: the pips and dots read the seat's view (X.don, c.colours)
+ok('the deck screen has the panel and the Play in Sim button; the sim preselects that deck', /id="dkSim"/.test(html) && /id="dkPlaySim"/.test(js) && /SIMUI\.pre = dkCur\.id/.test(js) && /findIndex\(x => x\.d\.id === \(SIMUI\.d1 \|\| SIMUI\.pre\)\)/.test(js));   // take 124: the choice made on the setup screen first, then the deck the Deck screen sent
+ok('the board draws DON!! as tokens -- active upright, rested turned -- and a card whose picture fails in its own colours (take 124; pips and dots to take 123)', /`<i class="tk">\$\{G\('don', 14\)\}<\/i>`\.repeat\(d\.active\)/.test(js) && /`<i class="tk r">\$\{G\('don', 14\)\}<\/i>`\.repeat\(d\.rested\)/.test(js) && /var\(--c-\$\{CCLASS\[cs\[0\]\]\}\)/.test(js));   // the tokens and colours read the seat's view (X.don, c.colours)
 }
 
 {
@@ -1375,7 +1375,7 @@ const cut = r1.g.actions.slice(); cut.splice(Math.floor(cut.length / 2), 1); con
 ok('...control: with one move taken out, the replay does not end the same', !rc.ok || snap(rc.g) !== live1);
 /* the board wiring: no curtain against the app, the human always on screen, the app's block and counter shown before Resolve */
 ok('against the app there is no curtain and the human\'s screen is always the one shown', /if \(SIM\.g && SIM\.g\.bot != null\) return; const c = \$\('#simCurtain'\)/.test(js) && /if \(g\.bot != null\) return 1 - g\.bot;/.test(js));
-ok('the app defends the moment it is attacked, and its block/counter are shown before the human resolves', /g\.battle\.att !== g\.bot \? \['resolve'\] : \[\]/.test(js) && /The app defends/.test(js));
+ok('the app defends the moment it is attacked, and its block/counter are shown before the human resolves', /SIM\.g\.battle\.att !== SIM\.g\.bot \? \['resolve'\] : \[\]/.test(js) && /The app defends/.test(js));   // take 124: read as the app's moves come, one a beat
 ok('the setup offers the app as an opponent and says what it is', /never sees your hand/.test(js));
 S.g = null;
 }
@@ -2116,7 +2116,7 @@ V.RELF.open = new Set(); V.DISTF.open.clear(); V.HUNT.feed = null; V.RELALERTS.l
 
 section('take 98 — the take-97 look: Back from a sheet goes back (landmine 137), the most-valuable rows open, one splash colour, a toast that wraps, the decks fold, a condition tap that works');
 /* landmine 137: the card sheet is a screen; it must not be in the overlay list, and the handler's sequence must land on the previous screen */
-ok('closeAnyOverlay() lists overlays only: the sheets (the Rules sheet since take 122), the tour and the curtain \u2014 never the card sheet', /for \(const id of \['#picker', '#filters', '#leaderPick', '#printPick', '#rulesSheet', '#tour', '#simCurtain'\]\)/.test(js) && !/for \(const id of \[[^\]]*'#detail'/.test(js));   // take 107 added the three sheets Back skipped
+ok('closeAnyOverlay() lists overlays only: the sheets (the Rules sheet since take 122, the table\'s sheet since take 124), the tour and the curtain \u2014 never the card sheet', /for \(const id of \['#picker', '#filters', '#leaderPick', '#printPick', '#rulesSheet', '#simSheet', '#tour', '#simCurtain'\]\)/.test(js) && !/for \(const id of \[[^\]]*'#detail'/.test(js));   // take 107 added the three sheets Back skipped
 if (V.guideClose) V.guideClose(false);   // take 116: the boot timer opened the guide inside this stub (its first await is above), and it is an overlay now: Back would close it first
 { const box98 = V.CAT.rows.find(p => V.SEALED.isProduct(p)); V.MODE.set('hunt', false); V.go('sealed'); V.openDetail(box98.id);
   const top0 = V.NAV.stack[V.NAV.stack.length - 1]; const closed = V.closeAnyOverlay(); const back = V.NAV.back(); const top1 = V.NAV.stack[V.NAV.stack.length - 1];
@@ -4167,7 +4167,7 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
     const att = holds(() => SIM4.attack(0, 'leader', 'leader')); shot(); const blockBoard = boards[boards.length - 1];
     holds(() => SIM4.noBlock()); shot(); const counterBoard = boards[boards.length - 1];
     const res4 = holds(() => SIM4.resolve()); if (res4) SU.post = { i: 1, att: 0, res: res4 }; shot(); const postBoard = boards[boards.length - 1];   // take 122: the post screen carries its result
-    SU.post = null; SU.result = null; g4.queue = [{ i: g4.active, e: { raw: 'A4 probe: draw 1 card.', t: 'onplay', if: [], do: [{ a: 'draw', n: 1 }] }, steps: [{ a: 'draw', n: 1 }], step: 0, targets: null, ref: null, cardId: dA.leader, hand: false }]; shot(); const offerBoard = boards[boards.length - 1];   // take 122: an offer waits in the engine's queue
+    SU.post = null; SU.result = null; g4.queue = [{ i: g4.active, e: { raw: 'You may draw 1 card. (A4 probe)', t: 'onplay', if: [], do: [{ a: 'draw', n: 1 }] }, steps: [{ a: 'draw', n: 1 }], step: 0, targets: null, ref: null, cardId: dA.leader, hand: false }]; shot(); const offerBoard = boards[boards.length - 1];   // take 122: an offer waits in the engine's queue; take 124: one the player may decline, since an automatic one has no Skip (§8-1-3-1)
     g4.queue = []; g4.phase = 'over'; g4.over = 0; shot();
     /* take 115 (self-review): the Play screens' roots are read whether or not this block changed them -- an earlier
        section left the counter painted with the same markup, so its paint here was no change and never read */
@@ -4178,8 +4178,8 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
        brassHits.length === 0 && read4.every(k => rootHtml(k).length > 0) && /class="panel plpanel"/.test(rootHtml('plBoard')) && boards.length === 7 && att && att.ok === true && /is attacked/.test(blockBoard) && /Counter step/.test(counterBoard), brassHits.slice(0, 4).join(' | ') || `${painted.length} painted, roots ${read4.map(k => k + ' ' + rootHtml(k).length).join(', ')}, attack ${JSON.stringify(att)}`);
     ok('...control: a class that set the fill colour on text would be listed -- take 117 moved the last one, .dline, to --accent-ink, so the list is empty by design and a planted class is the proof',
        brassCls.length === 0 && topRules(css + '\n.probe117{color:var(--brass)}').filter(r => /(?:^|;)\s*color\s*:\s*var\(--brass\)/.test(r.body)).flatMap(r => r.sels).includes('.probe117'));
-    ok('...the two it had -- "choose a target" and the given DON!! -- are --accent-ink now (#E0553D was 4.25:1 on Play\'s card)',
-       /<span style="color:var\(--accent-ink\)">choose a target<\/span>/.test(mainBoard) && /<span style="color:var\(--accent-ink\)">\u25cf/.test(mainBoard));
+    ok('...the two it had: "choose a target" is --accent-ink, and the given DON!! is now a chip in a DON!! card\'s white and black -- black ink on white in a black border (the owner, take 124), not text in the fill (#E0553D was 4.25:1 on Play\'s card)',
+       /<span style="color:var\(--accent-ink\)">choose a target<\/span>/.test(mainBoard) && /<span class="dn">\+1<\/span>/.test(mainBoard) && /\n\.sc \.dn\{[^}]*background:linear-gradient\(180deg,#FFFFFF,#ECE9E1\);border:1\.5px solid #0A0A0A;\n  color:#0A0A0A;/.test(css));
     ok('...control: take 114\'s span and a Hunt line are caught', brassText('<h3>X \u00b7 <span style="color:var(--brass)">choose a target</span></h3>').length === 1 && brassText('<button class="dline">GTS</button>').length === (brassCls.includes('dline') ? 1 : 0) && brassText('<i style="border-color:var(--brass)">x</i>').length === 0);
 
     /* (SPEC-110-46) the Sim's buttons are three words at most, what happens said beside them as take 110 did the Play counter:
@@ -4201,9 +4201,9 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
       ok('...control: take 114\'s slider, tabs with no selected state, is caught', !marks('<button data-mode="collect" class="on" role="tab">Collect</button><button data-mode="play" role="tab">', "$$('#modeSlider button').forEach(b => b.classList.toggle('on', b.dataset.mode === m));")); }
     /* the take-115 look: "Hand back" broke onto two lines at 411 px (110 x 65), squeezed by the note beside it, which names a
        deck and can be long; a button beside a note that can grow keeps its width, and the row wraps instead */
-    const holdsWidth = t => /<div class="row" style="[^"]*flex-wrap:wrap[^"]*"><button class="ghost go" data-sim="post" style="flex:none">Hand back<\/button>/.test(t)
-      && /<div class="row" style="[^"]*flex-wrap:wrap[^"]*">[\s\S]{0,400}?<button class="ghost" data-sim="fxskip" style="flex:none">Skip<\/button>/.test(t);
-    ok('(the look) a Sim button beside a note that can grow keeps its width, in a row that wraps: Hand back, Skip (Hand back broke onto two lines at 411)', holdsWidth(js));
+    const goRule = /\n\.tb-go\{display:flex;flex-wrap:wrap;/.test(css) && /\n\.tb-go > \.ghost\{flex:none;white-space:nowrap\}/.test(css);   // take 124: one rule for every such row on the table
+    const holdsWidth = t => /<div class="tb-go"><button class="ghost go" data-sim="post">Hand back<\/button>/.test(t) && /<div class="tb-go">[\s\S]{0,400}?<button class="ghost" data-sim="fxskip">Skip<\/button>/.test(t);
+    ok('(the look) a Sim button beside a note that can grow keeps its width, in a row that wraps: Hand back, Skip, painted (Hand back broke onto two lines at 411)', goRule && holdsWidth(postBoard + offerBoard), (postBoard.match(/data-sim="post"[^>]*>/) || ['no Hand back'])[0]);
     ok('...control: the rows as A4 first wrote them are caught', !holdsWidth('<div class="row" style="margin-top:10px"><button class="ghost go" data-sim="post">Hand back</button><span class="note" style="margin:0">to X</span></div><div class="row" style="gap:10px;margin-top:8px"><button class="ghost" data-sim="fxskip">Skip</button><span class="note" style="margin:0">play it by hand</span></div>'));
     ok('...control: take 114\'s labels are caught', wordy('<button class="ghost go" data-sim="end">End turn \\u2014 pass the phone</button><button class="ghost go" data-sim="resolve">Resolve \\u2014 ${pw.a} vs ${pw.d}${pw.a >= pw.d ? \': hit\' : \': held\'}</button><button data-sim="block:1">Block with ${esc(x.name)}</button>').length === 2);
     ok('...and what happens is said beside them, on the painted board: then pass the phone, then the counter step, who has hit, to whom the phone goes, decline it (take 122: Skip declines; Resolve by hand is its own button)',
@@ -4469,7 +4469,7 @@ section('take 117 — the owner\'s polish: starter decks once, the strips readab
   const offScale = [...cssPart.matchAll(/font-size:(\d+(?:\.\d+)?)px/g)].map(m => +m[1]).filter(v => ![12, 13, 14, 15, 16, 18, 26, 34, 44].includes(v));
   ok('every font-size in the stylesheet is on the token scale (25 literals were off it at take 114)', offScale.length === 0, offScale.join(','));
   ok('the placeholder rule is declared once, and the distributor line\'s text uses the ink token', (html.match(/\.search input::placeholder\{/g) || []).length === 1 && /\.dline\{[^}]*color:var\(--accent-ink\)\}/.test(html) && !/\.dline\{[^}]*color:var\(--brass\)/.test(html));
-  ok('the Sim\'s opponent line says "in play", not "char"', / in play'/.test(js) && !/' char'/.test(js));
+  ok('the Sim\'s opponent strip counts its hand in words ("5 in hand"), never "char" (take 124: the table draws the Characters, so "in play" left with the rows)', /\$\{X\.handCount\} in hand<\/span>/.test(js) && !/' char'/.test(js));
   V.go('home'); }
 
 
@@ -4594,7 +4594,7 @@ section('take 120 — the UI series wrapped up: the binder on the open Fold, the
     else ok('...live: every product in this catalogue has a market price (nothing to open)', true); }
   ok('a day in a mixed distributor line never breaks (no-break spaces, as every day since take 112)', /\\u00b7 mixed \\u00b7 release \$\{esc\(nbsp\(dayText\(rel\)\)\)\}/.test(js));
   /* take 123: the board draws a card as the view hands it -- simCard(att), not simCard(att.id) */
-  ok('the Sim\'s battle lines: the card without its power, then "attacks with 5000" on a line of its own in a strong, not a block <b> (it read "5000attacks with")', /\$\{simCard\(att, '', true\)\}<span style="display:block">attacks with <strong>\$\{pw\.a\}<\/strong><\/span>/.test(js) && /\$\{simCard\(tgt, '', true\)\}<span style="display:block">defends with <strong>\$\{pw\.d\}<\/strong>/.test(js) && !/<span>attacks with <b>/.test(js));
+  ok('the Sim\'s battle: the two powers across the middle of the table, each its own number, the attacker\'s then the defender\'s with its counters (take 124; take 120 fixed "5000attacks with")', /<span class="tb-clash" aria-label="\$\{b\.powers\.a\} against \$\{b\.powers\.d\}"><b>\$\{b\.powers\.a\}<\/b>\$\{G\('sword', 18\)\}<b>\$\{b\.powers\.d\}<\/b>/.test(js) && !/<span>attacks with <b>/.test(js));
   ok('a deck row\'s second line wraps (at 411 px the ellipsis cut the keyword tags), and a set\'s name wraps in Home\'s half-width panel on the open Fold', /\n\.dkrow \.n > span\{font-size:var\(--fs-cap\);color:var\(--dim\);display:block;white-space:normal\}/.test(css) && /\n#setDone \.row \.nm b\{white-space:normal\}/.test(css));
   ok('...control: the nowrap line planted back is caught', !/\n\.dkrow \.n > span\{font-size:var\(--fs-cap\);color:var\(--dim\);display:block;white-space:normal\}/.test(css.replace('display:block;white-space:normal}', 'display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}')));
   ok('a Sealed row names its kind in the singular ("Box", not "Boxes"; "Sealed product" for the rest)', /out\.push\(sealedRow\(p, esc\(sealedWord\(p\)\), tl, byDist\)\);/.test(js) && !/sealedKind\(p\)\[1\]/.test(js) && /\['other', 'Other', 'Sealed product'\]/.test(js));
@@ -4880,15 +4880,302 @@ ok('the moves and an effect\'s choices go to the seat deciding only', v0.legal.l
      fields.every(k => k in c && k in L) && c.ref === 0 && L.ref === 'leader' && (c.art === null || /^https:\/\//.test(c.art.thumb)) && Array.isArray(L.lines) && L.lines.every(x => x.does && x.proof), fields.filter(k => !(k in c)).join());
   P0.chars = []; }
 /* the painters draw from the view alone */
-{ const PAINTERS = ['simCard', 'simPips', 'simHead', 'simUnit', 'simStage', 'simResult', 'simOverHtml', 'simMulliganHtml', 'simPostHtml', 'simBattleHtml', 'simTableHtml', 'simHandLabel', 'simOfferPanel', 'simLog'];
+{ /* take 124: the painters are every function between the two markers the build keeps (SIM_PAINTERS ... SIM_PAINTERS_END), so a painter
+     added to the table is read with no list to forget it on (take 123 named fourteen); a painter may not hold a result act() returned */
+  const from = js.indexOf("const SIM_PAINTERS = 'begin'"), to = js.indexOf("const SIM_PAINTERS_END = 'end'"), names = t => [...t.matchAll(/(?:^|\n)function (\w+)\(/g)].map(m => m[1]);
+  const PAINTERS = from > 0 && to > from ? names(js.slice(from, to)) : [];
   const body = name => { const i = js.indexOf('function ' + name + '('); if (i < 0) return null; const j = js.slice(i + 9).search(/\n(?:function |const |\$\(|\/\*)/); return js.slice(i, j < 0 ? undefined : i + 9 + j); };
-  const READS = /\bSIM\.(?:g\b|P\(|at\(|power\(|kwOf\(|card\(|canPlay\(|targetsOf\(|describe\(|proofOf\(|battlePowers\(|locate\(|has\(|unapplied\(|legal\()|\.players\b|CAT\.byId/;
+  const READS = /\bSIM\.(?:g\b|P\(|at\(|power\(|kwOf\(|card\(|canPlay\(|targetsOf\(|describe\(|proofOf\(|battlePowers\(|locate\(|has\(|unapplied\(|legal\(|act\()|\.players\b|CAT\.byId|\bSIMUI\.(?:result\b|post\.res\b)/;
   const bad = PAINTERS.filter(n => !body(n) || READS.test(body(n)));
-  ok('every painter of the board draws from the view its seat is handed, never from the engine\'s state (take 123: a redesigned board cannot show what the seat was never given)', bad.length === 0, bad.join());
-  ok('...control: a painter that reads SIM.P is named', READS.test(body('simHead') + ' SIM.P(1).hand'));
+  ok(`every painter of the board -- the ${PAINTERS.length} functions between the table\'s two markers -- draws from the view its seat is handed, never from the engine\'s state (take 123: a redesigned board cannot show what the seat was never given)`, PAINTERS.length >= 25 && ['simTableHtml', 'simOfferPanel', 'simDockHtml', 'simZoomHtml', 'simResultHtml'].every(n => PAINTERS.includes(n)) && bad.length === 0, bad.join() || String(PAINTERS.length));
+  ok('...control: a painter that reads SIM.P is named, and one planted between the markers is found', READS.test(body('simDockHtml') + ' SIM.P(1).hand') && names(js.slice(from, to) + '\nfunction simProbe(v) { return SIM.P(1).hand; }\n').includes('simProbe'));
+  ok('...control: take 123\'s result painter, reading what act() returned, is named', READS.test("function simPostHtml(v, offer) { return `${simResult(SIMUI.post.res)}${offer}`; }") && READS.test('function simTableHtml(v) { const res = SIMUI.result; }'));
   ok('two people on one phone are Player 1 and Player 2, never "You" (take 123\'s look: Player 2 read its opponent as You); against the app the human is You', /name: \(bot \? 'You' : 'Player 1'\)/.test(js) && /name: \(bot \? 'The app' : 'Player 2'\)/.test(js));
   ok('...and paintSim hands every painter the one view: SIM.view(simSeat())', /v = SIM\.g \? SIM\.view\(simSeat\(\)\) : null/.test(js)); }
 S.g = null;
+}
+{
+section('take 124 — the table: the Sim drawn as a playmat from the view alone; the audit of take 123 (a result named past the view, the log\'s words, the app\'s turn in one tap, moves only from the painted view)');
+const S = V.SIM, B = V.BOT, SU = V.SIMUI, stock = id => V.CAT.stock.find(d => d.id === id);
+const board = () => doc.getElementById('simBoard')._html, sheet = () => doc.getElementById('simSheetBody')._html;
+const escH = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const fresh = () => Object.assign(SU, { sel: null, focus: null, post: null, room: null, fxt: null, busy: false, hurry: false, sheet: null, seen: 0 });
+V.MODE.set('play', false); V.go('sim');
+
+/* the audit's row 1: a battle's result, per seat -- through the board's own taps, against the app */
+S.new({ ...stock('stock-st01'), name: 'You' }, { ...stock('stock-st02'), name: 'The app' }, 0, { seed: 3, bot: 1 }); fresh(); V.paintSim();
+V.simTap('keep:0'); V.simTap('end');   // here the app keeps and plays its turn at once: no frame clock, as with reduced motion
+const turn3 = S.g.turn === 3 && S.who() === 0;
+V.simTap('attack:leader'); V.simTap('target:leader');   // the app defends at once and holds Resolve for the human's tap
+const held = !!S.g.battle && S.who() === 1 && S.g.battle.step === 'counter', lcId = S.P(1).life[0], hand0 = S.P(1).hand.slice();
+V.simTap('resolve');
+const lcName = S.card(lcId).name, copies = h => h.filter(x => x === lcId).length, toHand = copies(S.P(1).hand) === copies(hand0) + 1, v0 = S.view(0), v1 = S.view(1);   // a printing id, and the app may hold another copy of it
+const hides = v => !!v.last && v.last.life.length > 0 && v.last.life.every(l => l.id === null && l.name === null && l.trigger === false);
+ok('a battle\'s result is in each seat\'s view as that seat may see it: the Life card that went to the app\'s hand is named in the app\'s view and not in the human\'s (the audit\'s row 1; §3-10, §10-1-5)',
+   turn3 && held && toHand && hides(v0) && v1.last.life[0].name === lcName && v0.last.n === v1.last.n && v0.last.win === true, JSON.stringify({ turn3, held, toHand, v0: v0.last, v1: v1.last && v1.last.life }));
+ok('...control: a view that copies what act() returned -- what take 123\'s board painted -- is caught', !hides(Object.assign(JSON.parse(JSON.stringify(v0)), { last: Object.assign({}, v0.last, { life: [{ id: lcId, name: lcName, banished: false, trigger: false }] }) })));
+{ const keep = S.g.last; S.g.last = { n: 90, turn: S.g.turn, att: 0, def: 1, a: 6000, d: 5000, win: true, ko: null, life: [{ id: lcId, name: 'Probe', trigger: true, banished: false }, { id: lcId, name: 'Probe B', trigger: false, banished: true }] };
+  const a = S.view(0).last.life, d = S.view(1).last.life; S.g.last = keep;
+  ok('...a [Banish]ed Life card, trashed face up, is named to both; a [Trigger] is its owner\'s to know (§10-1-3, §10-1-5)', a[0].name === null && a[0].trigger === false && a[1].name === 'Probe B' && d[0].name === 'Probe' && d[0].trigger === true && d[1].name === 'Probe B', JSON.stringify({ a, d })); }
+/* ...and on the table the human is shown only what it may see: the board painted after that hit, with the log and both trashes
+   open, names no card only the app may see -- the Life card that went to its hand, and names no real card on this board carries
+   planted in its hand, Life and deck (take 123's way) */
+const pub = new Set([v0.me, v0.them].flatMap(X => [X.leader, X.stage, ...X.chars, ...X.trash].filter(Boolean).map(c => c.name)).concat(v0.me.hand.map(c => c.name)));
+const seenNames = new Set(), pool = V.CAT.rows.filter(p => p.type === 'Character' && !p.sealed && p.num && !pub.has(p.name) && p.name !== lcName && !seenNames.has(p.name) && seenNames.add(p.name)).slice(0, 15).map(p => p.id);
+const P1 = S.P(1), keepP1 = { hand: P1.hand, life: P1.life, deck: P1.deck };
+P1.hand = pool.slice(0, 5).concat(P1.hand.filter(id => id === lcId)); P1.life = pool.slice(5, 10); P1.deck = pool.slice(10, 15);
+const painted = () => { V.paintSim(); let t = board(); for (const k of ['log', 'menu']) { V.simSheetOpen(k); t += sheet(); } for (const s of [0, 1]) { V.simSheetOpen('trash', String(s)); t += sheet(); } doc.getElementById('simSheet').classList.remove('on'); SU.sheet = null; return t; };
+const secret = [lcName].filter(n => !pub.has(n)).concat(pool.map(id => S.card(id).name)), named = t => secret.filter(n => t.includes(escH(n)) || t.includes(n));
+const onTable = painted();
+ok('...and on the table: the human\'s board after that hit -- the mat, the hand, the dock, the log and both trashes -- names no card only the app may see (its hand, Life and deck planted with names no card on the board carries, and the Life card that went to its hand)',
+   secret.length === 16 && named(onTable).length === 0 && /Monkey\.D\.Luffy 5000 vs 5000: hit/.test(onTable), named(onTable).join() || String(secret.length));
+ok('...control: take 123\'s result line, painted from act()\'s return ("Life card to hand: <b>name</b>"), is caught', named(onTable + `<div class="note">Life card to hand: <b>${escH(lcName)}</b></div>`).length === 1);
+Object.assign(P1, keepP1);
+/* the audit's row 2: against the app the log speaks to the human in the second person (docs/SIM-UI.md named "You ends the turn") */
+const wrongYou = t => (t.match(/\bYou (?:activates|gives|plays|ends|mulligans|trashes|concedes|has|adds|counters|takes)\b/g) || []);
+ok('against the app the table says the human\'s lines in the second person -- "You end the turn", never "You ends" -- on the ticker, in the log and the shared log (the audit\'s row 2)',
+   V.simSay('T3 You ends the turn') === 'T3 You end the turn' && V.simSay('T4 You activates Monkey.D.Luffy', true) === 'You activate Monkey.D.Luffy' && V.simSay('T2 You has no cards in the deck — defeat (§9-2-1-2)') === 'T2 You have no cards in the deck — defeat (§9-2-1-2)'
+   && V.simSay('T5 The app ends the turn') === 'T5 The app ends the turn' && S.g.log.some(l => /^T\d+ You (?:activates|ends|plays|gives)\b/.test(l)) && wrongYou(onTable).length === 0 && wrongYou(V.simLogText()).length === 0, wrongYou(onTable + V.simLogText()).join());
+ok('...control: the engine\'s own lines, as take 123 painted them, are caught', wrongYou(S.g.log.join('\n')).length > 0);
+/* the audit's row 3: the log says each step in words, and names a target only when it is public */
+{ const WORDY = ['draw', 'power', 'ko', 'rest', 'bounce', 'bottom', 'search', 'mill', 'activate'], CODES = Object.keys(S.DO).filter(k => !WORDY.includes(k));
+  const coded = l => new RegExp(`\\b(?:${CODES.join('|')})\\b|: (?:${WORDY.join('|')})(?: \\u2192| \\u2014| \\(|$)|\\u2192 (?:L|[mohd]\\d+)(?![\\w'])|condition not met`).test(l);
+  let lines = 0; const bad = [];
+  for (const [a, b, seed] of [['stock-st01', 'stock-st10', 7], ['stock-st02', 'stock-st08', 8], ['stock-st05', 'stock-st06', 9], ['stock-st03', 'stock-st09', 10]]) {
+    S.new(stock(a), stock(b), 0, { seed }); for (let k = 0; k < 3000 && S.who() != null; k++) if (!B.move(S.who())) break; for (const l of S.g.log) { lines++; if (coded(l)) bad.push(l); } }
+  ok('the log says an effect\'s step in the words the offer panel uses, and its target by name when the target is public -- never the engine\'s code or a raw reference ("givedon → L", "cost_returndon", "playfromhand → h5"; the audit\'s row 3)', lines > 400 && bad.length === 0, `${bad.length} of ${lines}: ${bad.slice(0, 2).join(' | ')}`);
+  ok('...control: take 123\'s lines are caught, and the new ones are not', ['T9 Monkey.D.Luffy: givedon → L (Give this Leader or 1 of your Characters up to 1 rested DON!)', 'T6 Trafalgar Law: playfromhand — none chosen', 'T6 Trafalgar Law: bottom → o2 (DON!! -3 (You may return the specified number of DON!! cards)', 'T4 condition not met: donx,opt', 'T4 Nami: rest → o0 (Rest up to 1)'].every(coded)
+     && !['T12 Uta: rest up to 1 opponent’s Character (cost 5 or less) → Sengoku', 'T4 Koby: cost: rest this card', 'T5 Nami: give up to 1 rested DON!! to your Leader or 1 Character → Monkey.D.Luffy'].some(coded)); }
+{ /* a step applied is logged as describe() says it, with its target's name taken before the step moves it */
+  const FXs = V.CAT.effects, koId = +Object.keys(FXs).find(id => S.card(+id).type === 'Character' && FXs[id].some(e => !e.hand && e.t === 'onplay' && e.if.length === 0 && e.do.length === 1 && e.do[0].a === 'ko' && e.do[0].cost >= 2 && !e.do[0].rested));
+  const g = S.new(stock('stock-st01'), stock('stock-st02'), 0, { seed: 12 }); S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' });
+  const vic = S.P(1).deck.find(id => S.card(id).type === 'Character' && S.cost(S.card(id)) <= 2) || S.P(1).deck[0];
+  S.P(0).chars = [onField(koId, 1)]; S.P(1).chars = [onField(vic, 1)]; g.queue = S.offers(0, 'onplay', 0).slice(0, 1);
+  const d = g.queue[0] && g.queue[0].steps[0], r = g.queue[0] ? S.act(0, { t: 'fx', target: 'o0' }) : { ok: false };
+  ok('...an applied step\'s line is its words and its target\'s name: "<card>: K.O. up to 1 opponent’s Character (cost 2 or less) → <the one K.O.’d>"', r.ok && g.log.some(l => l === `T${g.turn} ${S.card(koId).name}: ${S.stepText(d)} → ${S.card(vic).name}`), g.log.slice(0, 3).join(' | '));
+  S.g = null; }
+/* the audit's row 6: an effect's choice of a hand card or a card looked at from the deck carries its face, for the deciding seat only */
+{ const FX = V.CAT.effects, sid = +Object.keys(FX).find(id => S.card(+id).type === 'Character' && FX[id].some(e => !e.hand && e.t === 'onplay' && e.if.length === 0 && e.do[0].a === 'search'));
+  S.new(stock('stock-st01'), stock('stock-st02'), 0, { seed: 31 }); S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' });
+  S.P(0).chars = [onField(sid, 1)]; S.g.queue = S.offers(0, 'onplay', 0).slice(0, 1);
+  /* the top of the deck holds a card the search may take: the first printing its own filter accepts, put on top */
+  for (const p of V.CAT.rows) { if ((S.view(0).offer.choices || []).length) break; if (!p.sealed && p.type !== 'Leader') S.P(0).deck[0] = p.id; }
+  const a = S.view(0).offer, b = S.view(1).offer, deckTop = S.P(0).deck.slice(0, 10);
+  const faced = (list, ids) => list.length > 0 && list.every(c => /^[dh]\d+$/.test(c.ref) && !!c.face && c.face.id === ids[+c.ref.slice(1)] && !!c.face.name && 'art' in c.face);
+  ok('an effect\'s choices from the top of the deck carry each card\'s face, in the searcher\'s view only (the audit\'s row 6)', !!a && Array.isArray(a.choices) && faced(a.choices, deckTop) && b && b.choices === null, JSON.stringify(a && a.choices && a.choices.slice(0, 2)));
+  S.g.queue = [{ i: 0, e: { raw: 'probe: trash 1 card from your hand', t: 'onplay', if: [], do: [{ a: 'trashhand', n: 1 }] }, steps: [{ a: 'trashhand', n: 1 }], step: 0, targets: null, ref: null, cardId: S.P(0).leader.id, hand: false, n: 0 }];
+  const h = S.view(0).offer;
+  ok('...and a hand card\'s choice carries its face too; a card on the field is found on the table by its ref', !!h && h.choices.length === S.P(0).hand.length && faced(h.choices, S.P(0).hand), JSON.stringify(h && h.choices.slice(0, 1)));
+  ok('...control: take 123\'s choices, a ref and a name alone, are caught by the same test', !faced([{ ref: 'd0', name: 'x' }, { ref: 'd1', name: 'y' }], [0, 0]));
+  S.g = null; }
+/* the audit's row 5: the handler sends back only moves from the view it painted -- nothing in it asks the engine what is legal */
+{ const at = js.indexOf('function simTap('), tap = js.slice(at, js.indexOf('\n$(', at)), asks = t => (t.match(/\bSIM\.(?:legal|canPlay|canAttack|targetsOf)\(/g) || []);
+  ok('the tap handler finds every move in the view the board painted (SIMUI.v.legal) and sends it back as it is: no engine read decides what is legal (the audit\'s row 5)', at > 0 && /const v = SIMUI\.v; if \(!v\) return;/.test(tap) && /const L = v\.legal, pick = f => L\.find\(f\)/.test(tap) && asks(tap).length === 0, asks(tap).join());
+  ok('...control: take 123\'s handler lines are caught', asks("else if (act === 'play') { const v = SIM.canPlay(i, ref); } else if (act === 'hop') { const a = SIM.legal(i)[ref]; } const v = SIM.canAttack(i, ref);").length === 3); }
+/* every legal move has its control on the table: for a game in each state a board meets, the table is painted in each of its
+   own modes (a card selected, an attacker aiming, a sixth Character's choice, an effect's) and every move in the view's legal
+   list must be one the painted board can send (docs/SIM-UI.md: "A board offers exactly these") */
+{ const codes = () => new Set([...board().matchAll(/data-sim="([^"]+)"/g)].map(m => m[1]));
+  const reach = () => { const v = S.view(V.simSeat()), got = new Set(), add = () => codes().forEach(c => got.add(c));
+    fresh(); V.paintSim(); add();
+    for (const k of ['L', 'S', ...v.me.chars.map((c, i) => 'm' + i), ...(v.me.hand || []).map((c, h) => 'h' + h)]) { SU.focus = k; V.paintSim(); add(); } SU.focus = null;
+    for (const ref of new Set(v.legal.filter(x => x.t === 'attack').map(x => x.ref))) { SU.sel = { ref }; V.paintSim(); add(); } SU.sel = null;
+    for (const h of new Set(v.legal.filter(x => x.t === 'play' && x.trash != null).map(x => x.h))) { SU.room = { h }; V.paintSim(); add(); } SU.room = null;
+    for (const tg of new Set(v.legal.filter(x => x.t === 'fx' && x.trash != null).map(x => x.target))) { SU.fxt = { target: tg }; V.paintSim(); add(); } SU.fxt = null;
+    V.paintSim(); return { v, got }; };
+  const need = (a, v) => { switch (a.t) {
+    case 'keep': case 'mull': return [`${a.t}:${v.seat}`]; case 'play': return a.trash == null ? [`play:${a.h}`] : [`play:${a.h}`, `room:${a.trash}`];
+    case 'give': return [`give:${a.ref}`]; case 'activate': return [`fxmain:${a.ref}`]; case 'attack': return [`attack:${a.ref}`, `target:${a.target}`];
+    case 'block': return [`block:${a.k}`]; case 'noblock': return ['noblock']; case 'counter': return [`counter:${a.h}`]; case 'cevent': return [`cev:${a.h}`]; case 'resolve': return ['resolve'];
+    case 'fx': { const first = a.target == null ? 'fxapply' : `fx:${a.target}`; return a.trash == null ? [first] : [first, `fxroom:${a.trash}`]; }
+    case 'fxskip': return ['fxskip']; case 'fxhand': return ['fxhand']; case 'hand': return [`hop:${v.legal.indexOf(a)}`]; case 'handdone': return ['hdone']; case 'end': return ['end']; }
+    return ['?' + a.t]; };
+  const unreached = ({ v, got }) => v.legal.filter(a => !need(a, v).every(c => got.has(c)) && !(a.t === 'activate' && [...got].some(c => c.startsWith(`fxmain:${a.ref}.`))));
+  const deal = seed => { S.new(stock('stock-st01'), stock('stock-st02'), 0, { seed }); fresh(); };
+  const states = {}, kinds = new Set(), missed = [];
+  const probe = name => { const r = reach(); r.v.legal.forEach(a => kinds.add(a.t)); states[name] = r.v.legal.length; unreached(r).forEach(a => missed.push(name + ' ' + JSON.stringify(a))); return r; };
+  deal(41); probe('mulligan'); S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' }); S.act(0, { t: 'end' }); S.act(1, { t: 'end' });
+  { const P = S.P(0), n = V.CAT.rows.find(p => p.num === 'ST01-006' && !p.sealed) || V.CAT.rows.find(p => p.type === 'Character' && !p.sealed && S.cost(p) <= 1);
+    P.don.active = 6; P.don.rested = 2; P.chars = [onField(n.id, 1)]; P.hand = P.hand.slice(0, 5); probe('main'); }
+  { const P = S.P(0), k = V.CAT.rows.find(p => p.num === 'ST01-003' && !p.sealed); P.chars = [0, 1, 2, 3, 4].map(() => onField(k.id, 1)); P.hand = [k.id].concat(P.hand.slice(0, 2)); P.don.active = 6; probe('five in play'); }
+  { const P = S.P(0), O = S.P(1), bl = V.CAT.rows.find(p => p.type === 'Character' && !p.sealed && (p.kw || '').split('|').includes('Blocker') && S.num(p.power) >= 1000);
+    O.chars = [onField(bl.id, 1)]; P.chars = []; S.act(0, { t: 'attack', ref: 'leader', target: 'leader' }); for (let k = 0; k < 9 && S.g.queue.length; k++) S.act(S.who(), { t: 'fxskip' }); probe('block step');
+    S.act(1, { t: 'noblock' }); const ctr = V.CAT.rows.find(p => p.type === 'Character' && !p.sealed && S.num(p.counter) > 0); O.hand = [ctr.id].concat(O.hand.slice(0, 3)); probe('counter step');
+    S.act(1, { t: 'resolve' }); for (let k = 0; k < 9 && S.g.queue.length; k++) S.act(S.who(), { t: 'fxskip' }); }
+  { const FX = V.CAT.effects, gid = +Object.keys(FX).find(id => S.card(+id).type === 'Character' && FX[id].some(e => !e.hand && e.t === 'onplay' && e.if.length === 0 && e.do[0].a === 'power' && e.do[0].who !== 'opp' && e.do[0].who !== 'prev'));
+    S.P(S.g.active).chars = [onField(gid, 1)]; S.g.queue = S.offers(S.g.active, 'onplay', 0).slice(0, 1); probe('an effect with choices on the table'); S.g.queue = []; }
+  { const E = V.CAT.effects, hid = +Object.keys(E).find(k => { const p = V.CAT.byId.get(+k); return p && p.type === 'Character' && !p.sealed && E[k].length === 1 && E[k][0].hand && E[k][0].t === 'onplay' && Object.keys(S.handOps(E[k][0].raw)).length >= 2; });
+    S.P(S.g.active).chars = [onField(hid, 1)]; S.g.queue = S.offers(S.g.active, 'onplay', 0).slice(0, 1); probe('a by-hand line offered'); S.act(S.who(), { t: 'fxhand' }); probe('a by-hand tray'); }
+  const want = ['keep', 'mull', 'play', 'give', 'activate', 'attack', 'block', 'noblock', 'counter', 'resolve', 'fx', 'fxskip', 'fxhand', 'hand', 'handdone', 'end'];
+  ok(`every legal move has its control on the table, in ${Object.keys(states).length} states a board meets -- ${want.filter(t => kinds.has(t)).length} kinds of move among them -- each sent as the view names it (docs/SIM-UI.md: "A board offers exactly these")`,
+     missed.length === 0 && want.every(t => kinds.has(t)), missed.slice(0, 3).join(' | ') || `missing kinds: ${want.filter(t => !kinds.has(t)).join()} ${JSON.stringify(states)}`);
+  { deal(41); S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' }); const r = reach(); r.v.legal.push({ t: 'give', ref: 7 });
+    ok('...control: a legal move the table draws no control for is named', unreached(r).some(a => a.t === 'give' && a.ref === 7)); }
+  S.g = null; fresh(); }
+/* the audit's row 4: the app's moves one a beat where the browser can draw them; at once where it cannot (reduced motion, a
+   harness), as take 123 did every time */
+{ S.new({ ...stock('stock-st01'), name: 'You' }, { ...stock('stock-st02'), name: 'The app' }, 1, { seed: 5, bot: 1 }); fresh();
+  B.move(1); S.act(0, { t: 'keep' }); S.P(1).don.active = 6;   // the app's first turn with DON!! to spend: several moves to watch
+  const n0 = S.g.actions.length, wait = ms => new Promise(r => setTimeout(r, ms)); ctx.requestAnimationFrame = f => setTimeout(f, 16); SU.pace = 15;
+  V.simBotRun(); const n1 = S.g.actions.length; await wait(14); const n2 = S.g.actions.length;
+  for (let k = 0; k < 400 && SU.busy; k++) await wait(20);
+  const n3 = S.g.actions.length, paced = V.simPaced(); delete ctx.requestAnimationFrame; SU.pace = 650;
+  ok('the app plays its turn a move a beat, each painted, where the browser can draw it -- none inside the tap, one after the first beat, the rest after it (the audit\'s row 4)', paced && n1 === n0 && n2 === n0 + 1 && n3 >= n0 + 3 && !SU.busy && S.who() === 0, JSON.stringify({ n0, n1, n2, n3, busy: SU.busy }));
+  S.new({ ...stock('stock-st01'), name: 'You' }, { ...stock('stock-st02'), name: 'The app' }, 1, { seed: 5, bot: 1 }); fresh(); B.move(1); S.act(0, { t: 'keep' }); S.P(1).don.active = 6;
+  const m0 = S.g.actions.length; V.simBotRun();
+  ok('...control: with no frame clock (reduced motion, a harness) the same turn is played inside the call, as take 123 always did', !V.simPaced() && S.g.actions.length === n3 - n0 + m0 && S.who() === 0, `${S.g.actions.length - m0} moves`);
+  S.g = null; fresh(); }
+/* the table itself */
+{ S.new({ ...stock('stock-st01'), name: 'Player 1' }, { ...stock('stock-st02'), name: 'Player 2' }, 0, { seed: 21 }); fresh();
+  S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' }); S.act(0, { t: 'end' }); S.act(1, { t: 'end' });
+  const P = S.P(0), k = V.CAT.rows.find(p => p.num === 'ST01-013' && !p.sealed); P.chars = [onField(k.id, 1, true, 2)]; P.trash = [P.hand.pop()];
+  V.paintSim(); const t = board(), v = S.view(0), mine = [v.me.leader, ...v.me.chars, ...v.me.hand], theirs = [v.them.leader];
+  const pics = [...mine, ...theirs].filter(c => c.art).every(c => t.includes(`src="${escH(c.art.thumb)}"`));
+  ok('the table draws both halves: five Character places each, the Leader in the middle of each back row, Life and Deck as counts, the Trash with its newest card, DON!! as tokens, the other hand as backs',
+     (t.match(/<div class="tb-row front">/g) || []).length === 2 && (t.match(/<div class="tb-row back">/g) || []).length === 2 && new RegExp(`aria-label="${v.me.lifeCount} Life"`).test(t) && new RegExp(`aria-label="Deck, ${v.me.deckCount} cards"`).test(t)
+     && /data-sim="trash:0" aria-label="Trash, 1 card"/.test(t) && (t.match(/<i class="tk"><svg class="g"[^>]*><use href="#g-don"\/><\/svg><\/i>/g) || []).length === v.me.don.active + v.them.don.active && new RegExp(`aria-label="${v.them.handCount} cards in hand">${'<i></i>'.repeat(v.them.handCount)}`).test(t), t.slice(0, 160));
+  ok('...every card on it is its hot-linked picture over its own colours, and a rested one with DON!! says so upright (the power, "+2")', pics && /<button class="sc[^"]*\brest\b[^"]*" data-sim="card:m0" data-key="m0" data-uid="\d+" aria-label="[^"]*rested, 2 DON!! given[^"]*">/.test(t) && /<span class="dn">\+2<\/span>/.test(t) && mine.every(c => t.includes(`--a1:${(c.art && c.art.ground[0]) || ''}`)), String(pics));
+  ok('...the other hand is backs and a count: none of its cards is on the table', S.P(1).hand.every(id => !t.includes(`src="${escH(S.face(id).art ? S.face(id).art.thumb : '#none')}"`) || [v.them.leader, ...v.them.chars, ...v.them.trash, ...mine].some(c => c.id === id)));
+  ok('...and the header\'s subtitle says whose turn it is while the setup\'s words say what the Sim does', doc.getElementById('simSub').textContent === 'turn 3 · Player 1’s turn');
+  /* the zoom: a card at its largest with each line's mark and what the app does; a card whose continuous text is the player's */
+  V.simSheetOpen('zoom', 'L'); const z = sheet();
+  ok('the zoom shows the card large (its large picture), its words, each line\'s mark and what the app will do, and its moves', z.includes(`src="${escH(v.me.leader.art.large)}"`) && /proven by a test|the app runs it; no test has proven it yet/.test(z) && /The app will: /.test(z) && /class="zm-name">Monkey\.D\.Luffy</.test(z), z.slice(0, 200));
+  const E = V.CAT.effects, st = +Object.keys(E).find(id => { const p = V.CAT.byId.get(+id); return p && p.type === 'Character' && !p.sealed && E[id].some(e => e.hand && e.t === 'static'); });
+  P.chars.push(onField(st, 1)); SU.focus = 'm1'; V.paintSim(); const y = board(); V.simSheetOpen('zoom', 'm1'); const yz = sheet();
+  ok('a card whose continuous text the app does not compute says so: a gold corner on the card, "yours to apply" in the dock with the power said to be without it, and the line in the zoom (docs/SIM-UI.md, what the pass keeps)',
+     /<span class="ya"><span class="vh">its continuous text is yours to apply<\/span><\/span>/.test(y) && /its continuous text is yours to apply; the power shown is without it/.test(y) && /<div class="why">Yours to apply: /.test(yz), y.slice(0, 80));
+  ok('...control: a card with none -- the Leader, whose lines the app runs -- has no corner', !/class="ya"/.test((y.match(/<button[^>]*data-key="L"[\s\S]*?<\/button>/) || [''])[0]) && v.me.leader.unapplied.length === 0);
+  doc.getElementById('simSheet').classList.remove('on'); SU.sheet = null; SU.focus = null;
+  S.g = null; fresh(); V.paintSim(); ok('...control: with no game the subtitle says what the Sim does', /^rules by the app/.test(doc.getElementById('simSub').textContent)); }
+/* the felt: the table's palette is Prep & Play's dark one, value for value, in both themes */
+{ const css = (html.match(/<style>([\s\S]*?)<\/style>/) || ['', ''])[1], block = (sel, from) => { const i = css.indexOf(sel, from); return i < 0 ? '' : css.slice(i, css.indexOf('}', i)); };
+  const toks = b => Object.fromEntries([...b.matchAll(/--([\w-]+):(#[0-9A-Fa-f]{6})/g)].map(m => [m[1], m[2].toUpperCase()]));
+  const playDark = toks(block(':root[data-mode="play"]{')), table = toks(block('#simBoard.table{')), same = ['bg', 'card', 'card2', 'line', 'fg', 'dim', 'dim2', 'brass', 'accent-ink', 'line-strong'];
+  const lum = hx => { const [r, g, b] = [1, 3, 5].map(i => parseInt(hx.slice(i, i + 2), 16) / 255).map(c => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+  ok('the table\'s felt is Prep & Play\'s dark palette in both themes, value for value, so the contrast the palette checks measure holds on it; its own grounds carry the text at 4.5:1 or more', same.every(k => table[k] && table[k] === playDark[k]) && ['mat', 'mat2'].every(g => ['fg', 'dim'].every(k => ratio(table[k], table[g]) >= 4.5)),
+     same.filter(k => table[k] !== playDark[k]).join() || ['mat', 'mat2'].map(g => `${g} ${ratio(table.dim, table[g]).toFixed(2)}`).join());
+  ok('...control: a value that drifted from the palette is caught', !same.every(k => ({ ...table, dim: '#777777' })[k] === playDark[k]));
+  ok('the nav steps aside while a game is on the Sim\'s screen, and from 900 px the table leaves the phone column', /\n:root:has\(#sim\.screen\.on #simBoard\.table\) nav\{display:none\}/.test(css) && /body:has\(#sim\.screen\.on #simBoard\.table\)\{max-width:none\}/.test(css)); }
+/* the owner, mid-take: the game fills the screen once dealt; Leave forfeits and brings the app back; the card backs are the icon's */
+{ const css = (html.match(/<style>([\s\S]*?)<\/style>/) || ['', ''])[1];
+  ok('once a game is dealt it fills the screen: the mode tabs, the Sim\'s header and the nav step aside, and the table carries the status bar\'s inset itself (the owner, take 124)',
+     /\n:root:has\(#sim\.screen\.on #simBoard\.table\) \.modebar\{display:none\}/.test(css) && /\n#sim\.screen:has\(#simBoard\.table\) > \.appbar\{display:none\}/.test(css) && /\n#sim\.screen:has\(#simBoard\.table\)\{padding-top:var\(--sat\);/.test(css) && /\n:root:has\(#sim\.screen\.on #simBoard\.table\) nav\{display:none\}/.test(css));
+  S.new({ ...stock('stock-st01'), name: 'Player 1 — Red' }, { ...stock('stock-st02'), name: 'Player 2 — Green' }, 0, { seed: 61 }); fresh(); S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' }); V.paintSim();
+  const t = board(), top = (t.match(/<div class="tb-top">[\s\S]*?<\/div>/) || [''])[0];
+  ok('...its top bar carries Leave, whose turn it is, the Rules (on every Prep & Play screen, take 122), the log and the menu', /data-sim="leave"/.test(top) && /<b>Turn 1<\/b> · Player 1’s turn/.test(top) && /data-rules=""/.test(top) && /data-sim="log"/.test(top) && /data-sim="menu"/.test(top), top.slice(0, 200));
+  const g = S.g; V.simTap('leave'); const ask = sheet(), askOn = doc.getElementById('simSheet').classList.contains('on');
+  V.simTap('leavenow');
+  ok('Leave asks first, then forfeits the game for the seat on screen (§1-2-3) and closes the table: the app\'s screens come back with the setup',
+     askOn && /Leaving forfeits this game: Player 1 loses/.test(ask) && /data-sim="leavenow">Forfeit &amp; leave<\/button>|data-sim="leavenow">Forfeit & leave<\/button>/.test(ask) && g.over === 1 && /concedes \(§1-2-3\)/.test(g.log[0]) && S.g === null && !/class="tb-top"/.test(board()) && /New game/.test(board()), JSON.stringify({ askOn, over: g.over, log: g.log[0] }));
+  ok('...control: "Keep playing" is the sheet\'s close, not a move -- the game goes on', /<button class="ghost" data-close="simSheet">Keep playing<\/button>/.test(ask));
+  /* the card backs: the icon's card-back emblem, from the sprite, in the game's colours (the owner, twice this take) */
+  const rule = sel => (css.match(new RegExp('\\n' + sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\{([^}]*)\\}')) || ['', ''])[1];
+  const hexOf = (r, k) => ((r.match(new RegExp('(?:^|;)' + k + ':(#[0-9A-Fa-f]{6})')) || [])[1] || '#000000').toUpperCase();
+  const rgbOf = hx => [1, 3, 5].map(i => parseInt(hx.slice(i, i + 2), 16) / 255);
+  const hue = hx => { const [r, g, b] = rgbOf(hx), mx = Math.max(r, g, b), d = mx - Math.min(r, g, b); if (!d) return -1; const h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return (h * 60 + 360) % 360; };
+  const light = hx => { const [r, g, b] = rgbOf(hx).map(c => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const blue = hx => hue(hx) >= 205 && hue(hx) <= 245, red = hx => hue(hx) >= 345 || (hue(hx) >= 0 && hue(hx) <= 12);
+  const deckBack = r => blue(hexOf(r, 'background')) && blue(hexOf(r, '--f1')) && blue(hexOf(r, '--f2')) && light(hexOf(r, 'background')) < light(hexOf(r, '--f2'));
+  const sb = rule('.sb'), ld = rule('.sb.ld'), dn = rule('.sb.dn'), tk = rule('.tk');
+  ok('every card back on the table is the app icon\'s card back -- the sprite\'s g-cardart -- in the game\'s colours (the owner, take 124: "The darker blue for normal cards, white for don, red for leaders. Change the borders to match. For don, black border"): the deck\'s, Life\'s and the other hand\'s deep blue in a darker blue border',
+     /<symbol id="g-cardart" viewBox="115\.9 39\.9 268\.3 384\.3" fill="none">/.test(html) && /<use href="#g-cardart"\/>/.test(js) && (html.match(/<symbol id="g-cardart"[\s\S]*?<\/symbol>/) || [''])[0].split('currentColor').length > 40 && deckBack(sb) && /background:radial-gradient\(circle at 50% 46%,#2555AD,#112B69 80%\);border:2px solid #0B1B45/.test(rule('.tb-hb i')),
+     `frame ${hexOf(sb, 'background')} ${hue(hexOf(sb, 'background')).toFixed(0)}°, face ${hexOf(sb, '--f1')}`);
+  ok('...a Leader\'s back red in a darker red border; a DON!! card\'s back white in a black border, and a DON!! face up white in black too, as is the given DON!! on a card',
+     red(hexOf(ld, 'background')) && red(hexOf(ld, '--f1')) && light(hexOf(ld, 'background')) < light(hexOf(ld, '--f1')) && light(hexOf(dn, 'background')) < 0.01 && light(hexOf(dn, '--f1')) > 0.9 && light(hexOf(dn, 'color')) < 0.02
+     && /background:linear-gradient\(160deg,#FFFFFF,#ECE9E1\);\n  box-shadow:inset 0 0 0 1\.5px #0A0A0A,/.test(tk) && /color:#0A0A0A/.test(rule('.tk svg.g')));
+  ok('...control: take 124\'s first backs -- the icon\'s own purple on a pale face, the gold DON!! token -- are not the game\'s colours',
+     !deckBack('background:#8552b8;color:#8552b8;--cbk:#F6F1E4;--f1:#F6F1E4;--f2:#F6F1E4') && !deckBack('background:#8552B8;--f1:#8552B8;--f2:#8552B8') && light('#F6C48D') < 0.9 && !red('#8552B8'));
+  ok('the backs are drawn where the game has them face down: the deck and Life blue, the DON!! deck a stack of white backs beside the cost area, and a Leader not yet shown red (the setup, the reveal)',
+     /simBack\('lf', /.test(js) && /simBack\('', `top:/.test(js) && /simBack\('dn', `left:/.test(js) && /simBack\('ld rv'\)/.test(js) && /x\.face \? simFace\(x\.face, true\) : simBack\('ld'\)/.test(js));
+  /* the reveal: each Leader turns over from its red back the first time it shows in a game, once */
+  S.new({ ...stock('stock-st01'), name: 'Player 1 — Red' }, { ...stock('stock-st02'), name: 'Player 2 — Green' }, 0, { seed: 62 }); fresh(); SU.shown = new Set(); V.paintSim();
+  const mullShown = [...SU.shown]; S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' }); V.paintSim(); const tableShown = [...SU.shown].sort(); V.paintSim();
+  ok('each Leader turns over from its red back the first time it shows in a game -- the mulligan shows the deciding seat\'s, the table the other -- and never again', mullShown.join() === String(S.g.first) && tableShown.join() === '0,1' && SU.shown.size === 2, JSON.stringify({ mullShown, tableShown }));
+  ok('...control: a new game is dealt with none shown yet (Deal resets it)', /Object\.assign\(SIMUI, \{ sel: null, focus: null, post: null, room: null, fxt: null, seen: 0, hurry: false, shown: new Set\(\) \}\)/.test(js));
+  /* a picture shared by cards of different names is the host's placeholder: such a card is drawn in its colours */
+  const rows = V.CAT.rows.filter(p => p.hash && !p.sealed), by = new Map(); rows.forEach(p => by.set(p.hash, (by.get(p.hash) || new Set()).add(p.name)));
+  const shared = [...by].filter(([h, n]) => n.size > 1).map(([h]) => h), ph = rows.find(p => shared.includes(p.hash)), real = rows.find(p => p.img && !shared.includes(p.hash));
+  ok(`a card whose picture is the host's placeholder -- a picture shared by cards of different names (${shared.length} such, ${rows.filter(p => shared.includes(p.hash)).length} printings today) -- is drawn in its own colours, like a card with no picture`, (!ph || S.face(ph.id).art === null) && !!real && S.face(real.id).art !== null, ph ? ph.num + ' ' + ph.name : 'none today');
+  ok('...control: the rule reads names, so reprints of one card sharing their art keep it', (() => { const same = [...by].find(([h, n]) => n.size === 1 && rows.filter(p => p.hash === h).length > 1); return !same || S.face(rows.find(p => p.hash === same[0]).id).art !== null; })());
+  S.g = null; fresh(); }
+/* the owner, mid-take: "after every turn ends audit all moves against the rules and all card they played" -- the rulebook
+   (tools/lib/rulebook.mjs) and random legal decks found what the ready-made decks never dealt; each fix is a scenario here, on
+   the shipped engine, with the engine as it was planted as its control */
+{ const E = V.CAT.effects, byId = id => V.CAT.byId.get(+id), body = raw => String(raw).replace(/^(\s*\[[^\]]+\]\s*)+/, '').replace(/\([^)]*\)/g, '');
+  const lineWhere = pred => { for (const [id, L] of Object.entries(E)) { const p = byId(id); if (!p || p.sealed || p.type !== 'Character') continue; const n = L.findIndex(e => !e.hand && pred(e)); if (n >= 0) return { id: +id, n, e: L[n] }; } return null; };
+  const deal = () => { S.new({ ...stock('stock-st01'), name: 'Player 1' }, { ...stock('stock-st02'), name: 'Player 2' }, 0, { seed: 70 }); S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' }); return S.g; };
+  const put = (i, id) => { const c = S.inst(id, S.g.turn - 1); S.P(i).chars.push(c); return S.P(i).chars.length - 1; };
+  /* 1. an automatic effect resolves in full (§8-1-3-1): no Skip; an "up to" still lets none be chosen */
+  deal(); const auto = lineWhere(e => e.t === 'onplay' && e.do.length === 1 && e.do[0].a === 'draw' && !/^\s*you may\b/i.test(body(e.raw)) && !e.if.length);
+  const may = lineWhere(e => e.t === 'onplay' && /^\s*you may\b/i.test(body(e.raw)) && !e.if.length && !/^cost_(restdon|returndon|restself)$/.test(e.do[0].a));
+  let k = put(0, auto.id); S.g.queue = S.offers(0, 'onplay', k); const L1 = S.legal(0), refused = S.act(0, { t: 'fxskip' });
+  S.g.queue = []; k = put(0, may.id); S.g.queue = S.offers(0, 'onplay', k); const L2 = S.legal(0);
+  ok(`an automatic effect is not the player's to decline (§8-1-3-1): ${byId(auto.id).name}'s "${body(auto.e.raw).slice(0, 30)}" offers no Skip and act refuses one; a line that says "you may" can still be declined`,
+     !L1.some(x => x.t === 'fxskip') && L1.some(x => x.t === 'fx') && refused.ok === false && /§8-1-3-1/.test(refused.why) && L2.some(x => x.t === 'fxskip'), JSON.stringify({ L1, why: refused.why }));
+  { const d = S.declinable; S.declinable = () => true; S.g.queue = S.offers(0, 'onplay', put(0, auto.id)); const planted = S.legal(0).some(x => x.t === 'fxskip'); S.declinable = d; S.g.queue = [];
+    ok('...control: take 123\'s engine, where every line could be declined, offers the Skip', planted); }
+  { S.g.queue = S.offers(0, 'onplay', put(0, auto.id)); fresh(); V.paintSim(); const bAuto = board(); S.g.queue = S.offers(0, 'onplay', put(0, may.id)); fresh(); V.paintSim(); const bMay = board(); S.g.queue = [];
+    ok('...and the effect panel says so where Skip was: "it resolves in full" with the rule\'s section; a "you may" line keeps Skip', /<span class="note">it resolves in full \(<button class="linkish" data-rules="8-1-3-1"/.test(bAuto) && !/data-sim="fxskip"/.test(bAuto) && /data-sim="fxskip">Skip<\/button>/.test(bMay), (bAuto.match(/<div class="tb-go">[\s\S]{0,300}/) || [''])[0]); }
+  /* 2. a [Trigger] used is trashed however its last step went -- none chosen included (§10-1-5-3) */
+  deal(); const trig = lineWhere(e => e.t === 'trigger' && e.do.length === 1 && e.do[0].a === 'ko' && e.do[0].upto);
+  const trigRun = plant => { deal(); S.P(1).chars = []; S.P(0).hand.push(trig.id); S.g.queue = S.offers(0, 'trigger', null, trig.id, true); const f = S.finish; if (plant) S.finish = function () {};
+    const r = S.act(0, { t: 'fx', target: null }); S.finish = f; return { ok: r.ok, inHand: S.P(0).hand.includes(trig.id), inTrash: S.P(0).trash.includes(trig.id) }; };
+  const tr = trigRun(false), trPlant = trigRun(true);
+  ok(`a [Trigger] used with no target chosen is trashed after it, not kept in hand (§10-1-5-3): ${byId(trig.id).name} (the rulebook's find: take 123 kept it)`, tr.ok && !tr.inHand && tr.inTrash, JSON.stringify(tr));
+  ok('...control: an engine that ends it without finishing -- take 123\'s path for "none chosen" -- keeps the card in hand', trPlant.inHand && !trPlant.inTrash);
+  /* 3. what a step sets off while its effect still resolves waits its turn, not dropped (§8-6): a K.O. that is not the last step, of
+     a card with an [On K.O.] */
+  const koed = lineWhere(e => e.t === 'onko' && !e.if.length), koFirst = { id: auto.id };   // a K.O. then a draw: the steps as effects.py writes them, the card a Character's
+  const follows = plant => { deal(); S.P(1).chars = []; put(1, koed.id); k = put(0, koFirst.id); const steps = [{ a: 'ko', who: 'opp', upto: true }, { a: 'draw', n: 1 }];
+    S.g.queue = [{ i: 0, e: { t: 'onplay', if: [], do: steps, raw: '[On Play] K.O. up to 1 of your opponent\'s Characters. Then, draw 1 card. (take 124 probe)' }, n: 9, ref: k, uid: S.P(0).chars[k].uid, cardId: koFirst.id, fromLife: false, hand: false, steps, step: 0 }];
+    const ko = S.DO.ko; if (plant) S.DO.ko = function (c) { ko.call(this, c); return {}; };
+    const r = S.act(0, { t: 'fx', target: 'o0' }); S.DO.ko = ko; return { ok: r.ok, queued: S.g.queue.map(o => S.card(o.cardId).name + ' ' + o.e.t) }; };
+  const fw = koed ? follows(false) : null, fwPlant = koed ? follows(true) : null;
+  ok(`a card K.O.'d by a step that is not its effect's last still has its [On K.O.] offered, after the effect it came from (§8-6; take 123 dropped it): a K.O. then a draw, of ${koed ? byId(koed.id).name : '?'}`,
+     !!fw && fw.ok && fw.queued.length === 2 && fw.queued[1] === `${byId(koed.id).name} onko`, JSON.stringify(fw));
+  ok('...control: an engine that drops what a step sets off (take 123\'s, unless the step was the last) queues no [On K.O.]', !!fwPlant && !fwPlant.queued.some(x => /onko$/.test(x)));
+  /* 4. an effect whose card left before it began does not activate, and leaves the queue by itself (§8-1-3-1-3); one begun
+     resolves in full though its card leaves -- the rulebook's Sogeking, who returns himself and still draws */
+  deal(); const selfBounce = lineWhere(e => e.t === 'onplay' && e.do[0].a === 'bounce' && e.do[0].who === 'any' && e.do[1] && e.do[1].a === 'draw' && !e.if.length && !e.do[0].if);
+
+  k = put(0, auto.id); S.g.queue = S.offers(0, 'onplay', k); S.leave(S.P(0), k, 'hand'); S.drain(); const purged = S.g.queue.length === 0 && /does not activate \(§8-1-3-1-3\)/.test(S.g.log[0]);
+  { deal(); k = put(0, auto.id); S.g.queue = S.offers(0, 'onplay', k); S.leave(S.P(0), k, 'hand'); const dr = S.drain; S.drain = function () { const g = this.g; if (g.over !== null || g.queue.length) return; return dr.call(this); };   // take 123's drain: it returned at once with anything queued
+    S.drain(); S.drain = dr; const kept = S.g.queue.length === 1;
+    ok(`an effect whose card left the field before it began leaves the queue by itself, with no move asked for it (§8-1-3-1-3; the rulebook's find: take 123 offered its targets and took any move as its end)`, purged, S.g.log.slice(0, 2).join(' | '));
+    ok('...control: take 123\'s drain, returning while anything was queued, left it waiting', kept); }
+  const soge = plant => { deal(); S.P(0).hand = S.P(0).hand.slice(0, 3); k = put(0, selfBounce.id); S.g.queue = S.offers(0, 'onplay', k); const ap = S.apply;
+    if (plant) S.apply = function (i, o, t, opts) { if (o.uid != null && this.refOf(this.P(i), o.uid) == null) return { ok: false, why: 'gone', gone: true }; return ap.call(this, i, o, t, opts); };
+    const r1 = S.act(0, { t: 'fx', target: null }); S.leave(S.P(0), S.refOf(S.P(0), S.g.queue[0].uid), 'hand'); const h1 = S.P(0).hand.length, r2 = S.act(0, { t: 'fx', target: null }); S.apply = ap; return { r1: r1.ok, r2: r2.ok, drew: S.P(0).hand.length - h1 }; };
+  const sg = selfBounce ? soge(false) : null, sgPlant = selfBounce ? soge(true) : null;
+  ok(`an effect begun resolves in full though its own card has left the field: ${selfBounce ? byId(selfBounce.id).name : '?'} returned to hand after its first step still draws 2 (§8-1-3-1-3 is about activating; the rulebook's find, through a by-hand move)`, !!sg && sg.r1 && sg.r2 && sg.drew === 2, JSON.stringify(sg));
+  ok('...control: take 123\'s apply, which dropped the rest once the card had left, draws nothing', !!sgPlant && sgPlant.drew === 0, JSON.stringify(sgPlant));
+  /* 5. "that card" with none chosen before is no card: El Thor's second +2000 does nothing, and the game goes on */
+  const thor = Object.entries(E).map(([id, L]) => ({ id: +id, n: L.findIndex(e => !e.hand && e.do.length === 2 && e.do[1].a === 'power' && e.do[1].who === 'prev') })).find(x => x.n >= 0);
+  const lives2 = () => { S.P(0).life = S.P(0).life.slice(0, 2); S.P(1).life = S.P(1).life.slice(0, 2); };   // the second step's condition holds, whichever Life it reads
+  deal(); lives2(); S.g.queue = S.offers(0, 'evcounter', null, thor.id); const t1 = S.act(0, { t: 'fx', target: null }), L5 = S.legal(0), t2 = S.act(0, { t: 'fx', target: null });
+  ok(`"that card" with no card chosen before is no card: ${byId(thor.id).name}'s second +2000 resolves as nothing and the effect ends (the rulebook's random decks: take 123 offered the move and refused it -- a game that could not go on once declining was ruled out)`,
+     t1.ok && L5.length === 1 && t2.ok && S.g.queue.length === 0 && /none chosen/.test(S.g.log[0]), JSON.stringify({ t1, L5, t2, log: S.g.log[0] }));
+  { const ap = S.apply; S.apply = function (i, o, t, opts) { const d = o.steps[o.step]; if (d && d.a === 'power' && d.who === 'prev' && o.prev == null && (!d.if || d.if.every(c => this.condOk(i, null, c)))) return { ok: false, why: 'no card chosen before' }; return ap.call(this, i, o, t, opts); };   // take 123's way with "that card"
+    deal(); lives2(); S.g.queue = S.offers(0, 'evcounter', null, thor.id); S.act(0, { t: 'fx', target: null }); const planted = S.act(0, { t: 'fx', target: null }); S.apply = ap;
+    ok('...control: take 123\'s engine refused that move, the only one it offered', planted.ok === false && /no card chosen before/.test(planted.why)); }
+  /* 5b. a target the step never offered is refused before its condition is read (the final sweep: Radical Beam!!'s second step,
+     its condition false, took the Leader as a target) */
+  { const odd = plant => { deal(); S.P(0).life = S.P(0).life.slice(0, 5); S.g.queue = S.offers(0, 'evcounter', null, thor.id); S.act(0, { t: 'fx', target: null }); const ap = S.apply;
+      if (plant) S.apply = function (i, o, t, opts) { const d = o.steps[o.step]; return ap.call(this, i, o, d && d.if && !d.if.every(c => this.condOk(i, null, c)) ? null : t, opts); };   // the condition read first: the target never looked at
+      const r = S.act(0, { t: 'fx', target: 'L' }); S.apply = ap; return r; };
+    const r = odd(false), rp = odd(true);
+    ok(`a target a step never offered is refused whatever its condition (the final sweep, chaos: ${byId(thor.id).name}'s second step, its condition false, took one)`, r.ok === false && /not a legal target/.test(r.why), JSON.stringify(r));
+    ok('...control: the condition read before the target, as it was, accepts the move', rp.ok === true); }
+  /* 6. the by-hand tray's Once Per Turn follows its card, not the place it had: a Character before it leaves, and the line is still used */
+  const byHandOpt = Object.entries(E).map(([id, L]) => ({ id: +id, n: L.findIndex(e => e.hand && e.t === 'main' && e.if.length && e.if.every(c => c.c === 'opt')), p: byId(id) })).find(x => x.n >= 0 && x.p && x.p.type === 'Character' && !x.p.sealed);
+  const opt6 = plant => { deal(); S.P(0).chars = []; put(0, auto.id); const kk = put(0, byHandOpt.id), uid = S.P(0).chars[kk].uid; S.g.queue = S.offers(0, 'main', kk); S.leave(S.P(0), 0, 'hand');
+    const rf = S.refOf; if (plant) S.refOf = function (X, u) { return u === uid && this.g.hand == null && this.g.queue.length ? 1 : rf.call(this, X, u); };   // take 123: the place it had when it was queued
+    S.act(0, { t: 'fxhand' }); S.act(0, { t: 'handdone' }); S.refOf = rf; return S.offers(0, 'main', S.refOf(S.P(0), uid)).length === 0; };
+  ok(`a by-hand line's [Once Per Turn] is spent on its own card when a Character before it has left: ${byHandOpt ? byHandOpt.p.name : '?'} (two apps named it resolved twice)`, !!byHandOpt && opt6(false));
+  ok('...control: the tray reading the place the card had (take 123) spends another card\'s and leaves this one unused', !!byHandOpt && !opt6(true));
+  S.g = null; }
+V.MODE.set('collect', false); V.go('home');
 }
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
