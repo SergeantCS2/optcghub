@@ -359,7 +359,7 @@ ok('three different reads never vote',
 /* the platform seam: no recogniser here, and the app must SAY so */
 ok('no OCR in this environment, and the scanner knows it', SC.PLATFORM.hasOcr() === false);
 
-section('take 125 — the scanner reads the number where the recogniser finds it (A2; landmines 16, 225-227)');
+section('take 125 — the scanner reads the number where the recogniser finds it (A2; landmines 16, 231-234)');
 /* a lost dash: every OCR slip of it (a dot, another width of dash, a gap) is stripped by normaliseRead */
 ok('a number whose dash is lost is read: OP09.118SEC, OP09 118, OP09–118',
    ['OP09.118SEC', 'OP09 118', 'OP09–118'].every(t => pr(t).number === 'OP09-118'), JSON.stringify(['OP09.118SEC', 'OP09 118', 'OP09–118'].map(t => pr(t).number)));
@@ -2114,7 +2114,7 @@ const today97 = new Date().toISOString().slice(0, 10); const days97 = d => Math.
 ok('the band: within a week, a month, three months, further or past', V.relBand(0) === 'cd1' && V.relBand(7) === 'cd1' && V.relBand(8) === 'cd2' && V.relBand(30) === 'cd2' && V.relBand(31) === 'cd3' && V.relBand(90) === 'cd3' && V.relBand(91) === 'cd4' && V.relBand(-1) === 'cd4');
 V.MODE.set('hunt', false); V.HUNT.feed = null; V.RELF.open = new Set(); V.RELALERTS.list = []; V.paintReleases();
 const r97 = ctx.document.getElementById('relList').innerHTML;
-const decks97 = [...V.CAT.sets.values()].filter(s => s.pub && /^Starter Deck/i.test(s.name)); const byDay = {}; for (const s of decks97) (byDay[s.pub] ||= []).push(s);
+const decks97 = [...V.CAT.sets.values()].filter(s => s.pub && /Starter Deck/i.test(s.name));   /* take 125: the names gained an "ST-09: " prefix upstream (landmine 237) */ const byDay = {}; for (const s of decks97) (byDay[s.pub] ||= []).push(s);
 const runDay = Object.keys(byDay).find(d => byDay[d].length >= 2); const run = byDay[runDay] || [];
 ok('a run of starter decks on one release day is ONE row naming the range and the count, its decks folded away (the six ST31–ST36 rows the owner saw)', !!runDay && new RegExp('Starter decks [^<]*' + run[0].abbr + '[^<]*' + run[run.length - 1].abbr).test(r97) && new RegExp(run.length + ' starter decks, one release day').test(r97) && !new RegExp('data-browse-set="' + run[1].id + '"').test(r97) && new RegExp('data-relfold="' + runDay + '"').test(r97), `${runDay}: ${run.length} decks`);
 const single = Object.keys(byDay).find(d => byDay[d].length === 1); const one = single && byDay[single][0];

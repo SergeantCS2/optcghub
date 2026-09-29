@@ -9,7 +9,7 @@
  *     ─► none | several | one number ─► the card: the quad, only where the number sits where the quad says
  *                                          └► the photo (the quad's warp, or the view at a card's shape)
  *                                          └► the face: the SP badge in the line, or the star on a trusted warp
- *     ─► vote (2 of 3, the decided number held while it stays in view) ─► resolve ─► auto | picker   [app.html]
+ *     ─► vote (2 of 3, the decided number held while it stays in view) ─► [the live loop, app.html] resolve ─► auto | picker
  *
  * Take 125: the number is found by the recogniser, not by the card outline. Take 10's outline was
  * a box round every pixel brighter than the frame's mean; on the owner's fifteen photographs of
@@ -260,11 +260,13 @@ async function identifyFrame(src, view, look = LOOKS[0]) {
   if (!numbers.length) return { stage: 'no-read', raw: read.text };
   if (numbers.length > 1) return { stage: 'several', numbers, raw: read.text };
   const hit = hits.find(r => r.sp) || hits[0];
-  const card = cardAround(base, hit.box && toBase(hit.box));
-  const full = warpCanonical(base, card || fitCard(base));
-  const sc = card ? starScore(cropStar(full)) : null;
+  const q = cardAround(base, hit.box && toBase(hit.box));
+  const full = warpCanonical(base, q || fitCard(base));
+  const sc = q ? starScore(cropStar(full)) : null;
   const face = hit.sp ? 'sp' : sc != null && sc >= CAT.star.threshold ? 'star' : null;
-  return { stage: 'read', number: hit.number, face, full, card, base, raw: read.text };
+  /* the outline believed, as fractions of the view the look turned (null when none is) */
+  const card = q && { x: q.x / base.width, y: q.y / base.height, w: q.w / base.width, h: q.h / base.height };
+  return { stage: 'read', number: hit.number, face, full, card, raw: read.text };
 }
 
 /* ---- stage 7: temporal voting -------------------------------------------

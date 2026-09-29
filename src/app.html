@@ -5262,7 +5262,7 @@ ${foot(s, s.name)}</div>`;
   /* take 97 (A38 item 1): a run of two or more starter decks on one day is ONE
      row -- the range, the count, the date -- with a fold to the decks; a single
      starter deck stays a row; a booster set is the release and is never folded */
-  const isDeck = s => /^Starter Deck/i.test(s.name || '');
+  const isDeck = s => /Starter Deck/i.test(s.name || '');   // take 125 (landmine 237): TCGCSV named them "Starter Deck 9 Yamato", then "ST-09: Starter Deck 9 Yamato" (29 Sept)
   const grouped = list => { const out = []; for (let i = 0; i < list.length; i++) { const s = list[i]; if (!isDeck(s)) { out.push(s); continue; }
       const run = [s]; while (i + 1 < list.length && isDeck(list[i + 1]) && list[i + 1].pub === s.pub) run.push(list[++i]);
       out.push(run.length > 1 ? { group: true, pub: s.pub, sets: run, id: s.id, name: `Starter decks ${run[0].abbr || ''}\u2013${run[run.length - 1].abbr || ''}` } : s); } return out; };
@@ -5838,7 +5838,7 @@ async function captureAndIdentify(v) {
     const number = res.stage === 'read' ? res.number : null;
     if (!number) SCAN.look = (SCAN.look + 1) % LOOKS.length;
     $('#guide').classList.toggle('seen', !!number);
-    drawCard(res.card && !look.turn ? res : null, r);
+    drawCard(res, look, r);
     const voted = SCAN.voter.push(number);
     if (!number) { $('#camHint').textContent = SCAN_HINT[res.stage] || ''; return; }
     $('#camHint').textContent = voted || SCAN.voter.held === number ? '' : `Saw ${number} \u2014 hold still\u2026`;
@@ -5850,14 +5850,14 @@ async function captureAndIdentify(v) {
     else $('#camHint').textContent = `${voted} is not in the catalogue`;
   } finally { SCAN.busy = false; }
 }
-/* the card's outline on the guide, only when the number sits where the outline says (stage 4) */
-function drawCard(res, r) {
+/* the card's outline on the guide: only an outline believed (the number sits where it says, stage 4), and
+   only from a look that did not turn the view -- the guide shows the view as it is */
+function drawCard(res, look, r) {
   const ov = $('#camOv'); ov.width = r.width; ov.height = r.height;
   const g = ov.getContext('2d'); g.clearRect(0, 0, ov.width, ov.height);
-  if (!res) return;
-  const k = r.width / res.base.width, q = res.card;
+  const q = res.card; if (!q || look.turn) return;
   g.strokeStyle = '#f5c518'; g.lineWidth = 2.5;
-  g.strokeRect(q.x * k, q.y * k, q.w * k, q.h * k);
+  g.strokeRect(q.x * r.width, q.y * r.height, q.w * r.width, q.h * r.height);
 }
 function flashHit() {
   const g = $('#guide'); g.classList.remove('seen'); g.classList.add('hit');

@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 124.*
+*Current as of take 125.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -243,6 +243,13 @@ Start here. Do not read top to bottom.
 | A check's verdict is `undefined`, and the thing it checks passes | 228 |
 | A row of cards sized to fit breaks a card early onto the next row | 229 |
 | A browser test taps a card and another card answers | 230 |
+| Scanner reads nothing, or takes 10-20 s, on a sleeve, toploader, binder or light ground | **231** |
+| The same card is counted again while it stays in view | 232, 16 |
+| A scan names the card next to the one in hand | 233 |
+| Two reads agree on the wrong number | 234 |
+| An OCR measurement on the VM says the camera approach cannot work | 235 |
+| The look hangs at a scanner step | 236 |
+| A check about set names goes red on a fresh ingest only | 237 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -382,6 +389,7 @@ the holder's edge is the higher-contrast one. Sleeved and toploadered cards must
 be in the Phase 0 sample; testing on loose base cards produces a false-positive
 feasibility result. The owner's most valuable card is in a toploader in his own
 screenshots.
+*Take 125:* the outline no longer gates the read -- the number is found by the recogniser wherever it is (landmine 231), so a card in a toploader is read; its outline is still not believed there, so no star is looked for and its photo is the view at a card's shape.
 
 **15. Bench light is not shop light.** Every accuracy figure carries the lighting
 it was measured under. A number from a desk lamp is not evidence about a card
@@ -391,6 +399,7 @@ shop table or a convention hall.
 should produce one row with quantity 4, with a visible `×4` badge so a runaway
 double-count is catchable. An 800 ms cooldown after each accept stops the same
 card being counted twice while the hand moves.
+*Take 125:* the 800 ms cooldown was never set (landmine 232). The number decided is now held while it stays in view and let go after three captures that do not read it; a playset still counts four as the hand swaps the cards.
 
 **17. The scan loop is the product; 1.5 s per card is the budget.** If bulk
 scanning is slower than typing card numbers, the feature has failed and the
@@ -439,6 +448,7 @@ label occlusion, card recessed behind thick acrylic. They also have their own
 pricing that TCGCSV does not carry. Manual entry with grader, grade and cert
 number; consider reading the cert barcode later. Do not let the scanner attempt
 them and produce a plausible wrong answer.
+*Take 125, at the owner's word (he asked for slabs to scan):* a slabbed card's number is read like any card's and it enters the batch ungraded; the grader, grade and cert are the collector's to set on the card's page. A number on the label sits above the card and so, with the slab filling the view, in its top quarter, where it is not taken (INFERRED). Reading the label stays deferred, and no slab photograph has been measured (UNKNOWN).
 
 **26. Card art is copyrighted and this app never hosts it.** Bandai, Shueisha,
 Toei and Viz own it. The pipeline downloads images inside the CI runner, computes
@@ -2995,6 +3005,71 @@ held hand card at its centre -- under the next card, which took the click
 (Playwright named the intercepting element). A person taps the strip of the
 card they can see; render measures that strip as the card's 44 px square, and
 the look clicks inside it.
+
+**231. A card outline that is every bright pixel is the whole frame.** Take 10's
+detector boxed every pixel brighter than 1.18 x the frame's mean and accepted
+the box at ±22 % of a card's aspect. On a couch, a carpet, a binder or any
+sleeve's glint there is a bright pixel at every edge, and a portrait frame's
+0.56-0.83 passes the aspect test: the "card" was the frame on 14 of the owner's
+15 photographs and nothing on the 15th, the code crop cut from it was the
+frame's corner, and the scanner read 0 of 15 (MEASURED take 125). It had been
+proven once, on two plain cards on a dark table in a dark room -- the one
+ground it works on. Take 125 finds the number with the recogniser, which finds
+text anywhere, and believes the outline only where the number sits on it. A
+stage a later stage depends on is measured on the ground the collector uses,
+not the one it was proven on.
+
+**232. A cooldown that is never set is not a cooldown.** `SCAN.lastAccept` was
+compared against for 115 takes and assigned by nothing, and the loop reset its
+vote after each decision: a card left in view was decided again every two
+reads -- four times in eight (the smoke control, take 125). Landmine 16's
+800 ms was written down and never ran. Take 125 holds the number decided until
+three captures in a row do not read it: counted in captures, so a picker's wait
+is not the card leaving. A guard's variable is grepped for its writer, not only
+its reader.
+
+**233. A turned look turns the neighbours too.** To read a card lying on its
+side the view is turned a quarter; an upright neighbour then lies on its side,
+and a reader that reads vertical text finds its number anywhere -- past the
+top and left quarters that keep a neighbour out, which assume an upright card.
+Turned the other way, a sideways neighbour is upside down and its number reads
+across. MEASURED take 125: the neighbours' numbers read on four of the owner's
+frames. Two rules close it, both geometry of an upright card: the number's line
+runs across (wider than twice its height), and the card's own name is printed
+above its number, never below.
+
+**234. A misread lands a digit away, and repeats.** The owner's close-up of
+Kyros, OP10-046, read OP10-040 -- a valid number, an Event -- in two looks alike
+(MEASURED take 125, the stand-in reader). Two agreeing reads of a still card are
+not independent: the vote of landmine 65 removes noise, not a glint that sits on
+the 6. The card's name does not: a read is refused when the words name a card
+one digit from it and not its own. Refused, never corrected -- a name in an
+effect's text is not the card's. Using the name the other way, to accept on one
+read, would have confirmed 680 of 64,428 one-digit misreads (318 by the true
+card's own words, 362 by a shared name; MEASURED over the catalogue).
+
+**235. A stand-in recogniser has to be the same kind of reader.** ML Kit runs
+only on the phone. Tesseract, a document reader, found 1 of 15 numbers in the
+whole view -- it missed the clean Shanks Leader -- and would have said the
+approach cannot work. RapidOCR, a camera-text detector and reader like ML Kit,
+found 7 with no help and 12 with the looks. A proxy measures only what it shares
+with the thing it stands in for; say which, and label the result INFERRED.
+
+**236. `video.play()` on a canvas's stream never settles in headless
+Chromium.** The look's scanner steps hung ten minutes on it (take 125) and
+were killed with nothing in the log. The look now hands the app the stream as
+its camera (getUserMedia) and lets the app's own path play it; any await on a
+media promise in a harness is raced against a timeout.
+
+**237. A set's name is TCGCSV's to change, on any day.** Between the morning's
+ingest and the evening's on 29 Sept 2026 the starter decks' groups were renamed
+from "Starter Deck 9 Yamato" to "ST-09: Starter Deck 9 Yamato" (the manifest's
+`source_updated_at` 20:05 UTC). Releases found a starter deck by
+`/^Starter Deck/`, so the six ST31-ST36 decks stopped folding into one row, and
+smoke's take-97 checks went red on a fresh ingest only -- the same code was
+green on the cached one an hour before (MEASURED take 125). Match what a name
+says (`/Starter Deck/`), not where it starts, and read a red that only a fresh
+ingest shows as the data moving before the code.
 
 ## §2 — Inherited from APEX ORV
 

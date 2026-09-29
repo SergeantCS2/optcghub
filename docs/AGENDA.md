@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 124.* Ranked by blocking-ness, not by interest.
+*Current as of take 125.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -15,6 +15,10 @@ each item got where it is; this block is what to do next. (Rewritten at take
 what it handed on is A43.)
 
 **The owner's, gating everything else**
+0. **Take 125, the scanner (A2's take-125 section):** scan your cards on the
+   Fold -- sleeves, toploaders, binders, holo, sideways -- and answer the
+   HANDOFF's take-125 questions; photographs of one number's printings side
+   by side are the next take's measurement.
 1. **Merge take 115, then upload Release take-115's AAB** to the production
    track. The app is LIVE on Google Play since 24 Sept 2026
    (`play.google.com/store/apps/details?id=com.optcghub.app`); every merged
@@ -58,6 +62,8 @@ unticked boxes and A43's UI part; the session prompt's section for it says
 what take 115 changed on screen.
 
 **Mine, in order**
+00. **A2, the printing from the picture** (its take-125 section), on the
+   owner's scan results and photographs.
 0. **The consent flow, then D11's units (take 121's follow-on):** UMP before
    `initialize` and before any load, setting `PLATFORM._canRequestAds` from
    its `canRequestAds` (take 121's builds never set it, so they never load a
@@ -136,7 +142,7 @@ data legally?
 - **Open:** nothing blocking. Watch TCGCSV's availability — it is one person's
   Patreon-supported service, which is A9.
 
-## A2 — Camera and OCR path on the Fold · **PROVEN ON THE DEVICE take 16** · sleeves/foils/toploaders still to measure
+## A2 — Camera and OCR path on the Fold · **PROVEN ON THE DEVICE take 16** · rebuilt take 125 on the owner's photographs; the Fold's reads and speed still to measure
 
 The one unproven assumption in the entire plan. Everything else is arithmetic.
 
@@ -193,6 +199,35 @@ The one unproven assumption in the entire plan. Everything else is arithmetic.
   analysing every frame (fewer, larger round trips), or write a thin native
   plugin that does detect → crop → OCR entirely on the Android side and returns
   only the string. The second is a day's work and keeps the whole stack.
+
+### Take 125 — the number found by the recogniser (the owner's word: "greatly overhaul the scanning tool")
+
+- **MEASURED:** take 123's stages read 0 of 15 of the owner's photographed
+  frames -- the outline was the whole frame (landmine 231); `lastAccept` never
+  set (landmine 232). The rebuilt stages (`src/scan.js`: the whole view to the
+  recogniser, five looks, the number on an upright card in the view and not
+  contradicted by its name) decide 37 of 48 frames right and 0 wrong, with a
+  camera-text reader standing in for ML Kit (INFERRED to carry to ML Kit).
+- **BUILT, not yet on the Fold:** the reads and their speed under ML Kit, a
+  card on its side, the SP badge auto-accepting (Okiku OP01-035's SP read on
+  the stand-in), a card counted once while it stays in view.
+- **Ruled out:** the card outline as the gate to the read (0 of 15, landmine
+  231); Tesseract as the stand-in for ML Kit (1 of 15 in the whole view,
+  landmine 235); the card's name as a one-read confirmation (680 of 64,428
+  one-digit misreads would be confirmed, landmine 234); correcting a misread to
+  the named number (an effect's text names other cards); the art hash from a
+  photo as an auto-accept this take (right printing nearest in 5 of 6, but a
+  4 % crop error flips a parallel to its base, and none cleared ≤ 8 / gap 13);
+  a hand-rolled outline finder this take (6 of 10 right; PROTOCOL §3 names
+  OpenCV.js).
+- **Next, the owner's:** scan his cards on the Fold (the HANDOFF's questions),
+  and photographs of printings side by side -- the same number in base,
+  alternate art, manga, SP -- for the next take.
+- **Next, mine:** the printing from the picture -- an outline from the number
+  (or OpenCV.js), the star looked for from the number's line, the art hash
+  against the siblings, each measured on those photographs before anything
+  auto-accepts; then one recogniser per session if the Fold's speed asks for
+  it (the plugin builds one per call).
 
 ## A3 — Stack · DECIDED take 1 · RE-EXAMINED take 11 with the constraints lifted
 

@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 124.* Paste the block between the rules into a new session
+*Current as of take 125.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -95,6 +95,18 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   them in order with his results (his rule, take 94).
 
 **What is in flight when you arrive:**
+
+- **Take 125 -- the scanner reads the number where the recogniser finds it**
+  (AGENDA A2's take-125 section; HANDOFF take 125). Take 123's card outline
+  was the whole frame on 14 of the owner's 15 photographs and its stages read
+  0 of them (landmine 231); the whole view now goes to ML Kit, the number is
+  picked out of its lines on a card upright in the look and in the view and
+  not contradicted by its own name, through five looks in turn, and the number
+  decided is held while it stays in view (landmines 231-236). 37 of 48 of the
+  owner's frames right, 0 wrong, with a camera-text reader standing in for ML
+  Kit. The stages are `src/scan.js`. It carries take 124, merged into its
+  branch at the owner's word. **Next, the owner's:** a scan on the Fold and the
+  HANDOFF's questions. **Yours after it:** the printing from the picture (A2).
 
 - **Take 124 -- the table** (AGENDA A23; HANDOFF take 124). The owner handed
   the Sim's UI pass to the session. An audit of take 123 came first: a
@@ -336,6 +348,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 125" and begin with PROTOCOL §0.
+Say "take 126" and begin with PROTOCOL §0.
 
 ---

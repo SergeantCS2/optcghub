@@ -668,7 +668,7 @@ if (puppeteer) {
     const line = (text, cx, cy, w = 60, h = 8) => ({ text, box: { x: cx - w / 2, y: cy - h / 2, w, h } });
     const onCard = text => line(text, 180 + A.x * 280, 40 + A.y * 391);
     const run = async (src, look, lines) => { answer = typeof lines === 'function' ? lines : () => lines; handed.length = 0;
-      const r = await SC.identifyFrame(src, whole, look); return { stage: r.stage, number: r.number, face: r.face, card: r.card ? Math.round(r.card.x) : null,
+      const r = await SC.identifyFrame(src, whole, look); return { stage: r.stage, number: r.number, face: r.face, card: r.card ? Math.round(r.card.x * 640) : null,   // the outline as fractions of the view
         numbers: r.numbers, handed: handed.map(c => c.width + 'x' + c.height), full: r.full ? r.full.width + 'x' + r.full.height : null }; };
     out.card = await run(card, SC.LOOKS[0], [line('Nefeltari Vivi', 320, 380, 120, 12), onCard('SP EB03-024 SR 4')]);
     const g0 = V.resolve(out.card.number || 'x', { face: out.card.face });

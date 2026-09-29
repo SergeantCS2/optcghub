@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 124
+# V1-STATE — what exists, as of take 125
 
-*Current as of take 124.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 125.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -69,7 +69,7 @@ since 24 Sept 2026.
 
 | area | what | verified by |
 |---|---|---|
-| Scanner | quad detect → warp → code crop → OCR → catalogue check → face (SP text / star template) → 3-frame vote → confidence gate → auto or picker; batch persists; likelihood-ordered picker | render.mjs pixel stages, smoke parse/vote, star port 30/30 vs Python (takes 10, 16) |
+| Scanner | *take 125:* the view the guide shows → a look (whole, the number's corner at 2x, CLAHE for glare, turned either way) → OCR's lines → the numbers on a card upright in the look, in the view (CODE_AT, MEASURED on 51 card pictures) and not contradicted by its own name → one number or "several" → the outline only where the number sits on it → face (SP text on the number's line / star template on a believed outline) → 2-of-3 vote, the number held while in view → confidence gate → auto or picker; batch persists; likelihood-ordered picker; the stages are src/scan.js | render.mjs pixel stages and the live loop end to end, smoke parse/vote/hold/rules, star port 30/30 vs Python (takes 10, 16); the owner's 48 frames with a camera-text reader standing in for ML Kit: 37 right, 0 wrong (take 125); take 123's stages read 0 of 15 of them |
 | Catalogue | 6,862 cards + 658 sealed, 87 sets, from TCGCSV cat 68; keywords extracted (line-start rule); cleaned text; 3 days of price history, growing nightly | pipeline gate, validate.py 6 guards with negative controls |
 | Values | market/low/high per printing; deltas labelled with the horizon they measured, never "yesterday" across a missed night (take 58); Market Movers; chart from snapshots (record) or history (estimate, dashed, purchase-date-aware) | smoke arithmetic vs the catalogue's own deltas |
 | Collection | portfolios, conditions, graded, cost basis, favourites, bulk actions, filter/sort sheet (two scopes; the set chips returned nothing from take 11 to 89 — fixed take 90, landmine 126), a picture beside every card and set in every list (take 93; the grid, the sheet, the binder and the checklist had them since take 12), export CSV **via the share sheet on a device** (take 34, landmine 110), a self-contained share page (8.12, take 42), import CSV, auto-backup to Documents on every save, restore with a file-picker fallback; a card's sheet is a screen the phone's Back returns from (take 98, landmine 137 — from take 81 to 97 Back from a sheet left no screen on and the watchdog put Home back), its condition segment updates in place and says what it records (take 98), Home's most-valuable rows open the card (take 98) | smoke 255, render 51; **export/restore not yet seen on a phone** |
@@ -205,7 +205,7 @@ reproductions, outside the harness).
 
 | item | why | where |
 |---|---|---|
-| Scanner field half — foils, sleeves, toploaders, the star region | needs the owner's cards under a phone camera | A2, RELEASE.md |
+| Scanner field half — ML Kit's reads and speed on the Fold; the printing from the picture (base / alternate art / manga) | the rebuilt stages (take 125) are measured on the owner's photographs with a stand-in reader; the art hash and an outline from the number are measured and deferred | A2's take-125 section |
 | First test-ad impression | needs a phone | A17 |
 | First notification | needs a phone | 8.5 |
 | Export and restore on the Fold | share sheet and file picker are INFERRED from the plugin definitions until seen | landmine 110 |
@@ -241,6 +241,10 @@ a value. Nothing scanned is ever discarded.
 - 3,918 printings (57%) are visually indistinguishable from a sibling (take 3)
 - Star detector: threshold 0.61, recall 64.6%, 0 false positives on 133, margin +0.36 (take 7)
 - OCR on clean renders: 53% read, 51% correct, 2% wrong with the catalogue check (take 7)
+- The number's line sits 0.950-0.958 down and 0.817-0.853 across a card, on 51 CDN pictures of 17 numbers (take 125)
+- Take 123's stages on the owner's photographed frames: 0 of 15; take 125's: 37 of 48 right, 0 wrong (a camera-text stand-in for ML Kit)
+- A photo's art hash: the owned printing nearest in 5 of 6, but a 4 % crop error flips a parallel to its base (take 125)
+- The card's name as a one-read confirmation would confirm 680 of 64,428 one-digit misreads (take 125)
 - Dearest-first puts a promo on top for 49.8% of ambiguous numbers (take 16)
 - All 165 dual-colour cards are Leaders (take 13)
 - Naive `[Rush]` matching over-counts by 4× (take 12)

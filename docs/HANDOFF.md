@@ -1,4 +1,243 @@
-# HANDOFF — through Take 124
+# HANDOFF — through Take 125
+
+## Take 125 — 2026-09-29 — the scanner reads the number where the recogniser finds it (A2)
+
+**Written after the code, not before it (PROTOCOL §6) -- the first thing this
+take got wrong.** The owner asked for the scanner overhaul while the Prep & Play
+session was building its own take; the number this take would carry waited on
+that session's push (it became take 124, merged into this branch as the owner
+asked), and the measurement ran first. A provisional entry should have been
+opened anyway.
+
+The owner: "we need to greatly overhaul the scanning tool. Some cards have a
+holo effect or could be in a slab ... I for instance cannot get the kuzan in my
+picture provided to scan at all ... Even when the card does scan, it takes a
+long time to be recognized, up to 10-20s." Then: "we shouldn't be building this
+per card I provide you, there's thousands of one piece cards ... robust ...
+under hard lighting and low lighting", and "almost always the scanner couldn't
+identify between alt art, SP or normal ... it never auto selected the card
+itself". No UI change unless one is needed. He sent 25 photographs of his own
+cards (binders, sleeves, toploaders, a couch, a carpet, sideways shots); they
+were measured in the session's scratch space and are not in the tree (landmine
+26).
+
+### What was measured before anything changed
+
+- **Take 123's stages read 0 of 15 of the owner's frames** (MEASURED: the shipped
+  `detectQuad` and `cropCode` in Chrome on frames cut from his first four
+  photographs, each crop read by Tesseract). The outline was the whole frame on
+  14 and nothing on the 15th: it is the bounding box of every pixel brighter
+  than 1.18 x the frame's mean, and a couch, a carpet or one glint off a sleeve
+  puts a bright pixel at every edge; a portrait frame's aspect (0.56-0.83)
+  passes its ±22 % test. The code crop cut from that "card" is the frame's
+  bottom-right corner. Landmine 231. This is the 10-20 s: every capture waited
+  for the outline and read the wrong place; the take-16 proof was two plain
+  cards on a dark table in a dark room, the one ground it works on.
+- **`SCAN.lastAccept` was never written** (grep; the 800 ms cooldown of
+  landmine 16 never ran), and the loop reset the vote after each decision: a
+  card left in view was counted again every two reads. Landmine 232.
+- **The plugin builds a new recogniser on every call** and closes it after
+  (read off `TextRecognition.java` in @capacitor-mlkit/text-recognition 8.2.1);
+  its result carries every line with its bounding box (`blocks -> lines ->
+  boundingBox`, read off `definitions.d.ts`), which take 10 threw away.
+
+### What this take changes
+
+- **The number is found by the recogniser, not by the outline.** The view the
+  guide shows (object-fit: cover of the frame, at most 1600 px on its long
+  side -- the Fold's 1080 x 1920 is not scaled) goes to ML Kit whole;
+  `PLATFORM.ocr` returns `{ text, lines: [{ text, box }] }`; `codesIn` takes
+  each line that is a real card number (the catalogue check, landmine 65) on
+  a card that is:
+  - **upright in the look** -- the line runs across, wider than twice its
+    height;
+  - **in the view** -- not in the look's top or left quarter: the number sits
+    84 % across and 95.2 % down every card (`CODE_AT`, MEASURED below), so a
+    card whose number is there is mostly out of the view;
+  - **not contradicted by its own words** -- refused when the text names a
+    card one digit from the number and not the number's own card (landmine
+    234), and refused when the number's own name line lies below it (an
+    upright card prints its name above its number; landmine 233).
+  Two different numbers on cards in view are "several", never a guess: the
+  hint says "One card at a time -- more than one number in view".
+- **Five looks, in turn** (`LOOKS`): the whole view; the number's corner
+  (the view's lower right, x 0.3-1, y 0.5-1) at twice the size; the glare look
+  (CLAHE on the luminance, 8 x 8 tiles, clip 3, grey -- landmine 10 named it
+  before take 10); and the view turned a quarter each way, for a card lying on
+  its side. The live loop keeps a look while it reads and moves to the next
+  after one that does not.
+- **The live loop** captures one frame after another while Scan is up (no
+  350 ms wait for a still outline), pauses while the picker is open, and votes
+  two agreeing reads of three (landmine 65, unchanged). **The number decided is
+  held** while it stays in view and let go after three captures that do not
+  read it (`makeVoter`'s third argument): a card left in view is counted once,
+  a picker answered is not asked again, and a playset still counts four as the
+  hand swaps the cards.
+- **The SP badge** is read on the number's own line (landmine 61) -- it now
+  reads, because the line is found where it is.
+- **The outline** (take 10's detector, unchanged) is believed only when the
+  number sits where it would on that card -- within 2 % down and 10 % across
+  of `CODE_AT`. Only then is the star looked for (landmine 64: its box has no
+  room for a guess) and the gold outline drawn on the guide; otherwise the
+  photo kept with the scan is the view at a card's shape. The guide's border
+  turns gold when a number is read, green on a hit, as before.
+- **A lost dash is put back**: `OP09.118`, `OP09 118`, `OP09–118` read
+  OP09-118 where two set digits and three card digits make the number; a promo
+  keeps its dash (`P084` is no read). `tools/config.py` carries the same form.
+- **The photo from the gallery** gets every look until one reads, or says
+  "More than one card number in that photo -- crop it to one card".
+- **The stages are `src/scan.js`**, put in `app.js` by `build_app.py` at a
+  `__SCAN__` slot as `src/sim.js` is; the gate's icon and phrase checks and the
+  scrubber read it. The temporary file for each read is deleted without
+  waiting on it. `contrastStretch` and `cropCode` are gone (the stretch before
+  the star was a linear map its zero-mean unit-variance step undoes; render
+  shows the same score either way).
+- **Found by the look, fixed:** the toast "1 scanned card waiting -- tap Review
+  to add them" fired on the first card of every session (the resume check ran
+  at the first paint that found rows, which was the paint after the first
+  accept). It fires once, at the Scan screen's first paint, only for a batch
+  left from before. The only other words that change on screen are the two
+  new messages above.
+- **Found by the full run, fixed (not a scanner change):** TCGCSV renamed the
+  starter decks' groups this evening ("Starter Deck 9 Yamato" became "ST-09:
+  Starter Deck 9 Yamato"), and Releases found a starter deck by a name that
+  starts "Starter Deck": on a fresh ingest the six ST31-ST36 decks stopped
+  folding into one row and smoke's take-97 checks went red (green an hour
+  before on the cached ingest). It matches "Starter Deck" anywhere in the name
+  now -- the same 38 sets as before the rename; the Ultra Decks stay apart.
+  Landmine 237. Tonight's nightly on `main` would have gone red on it.
+- **The review of this take's own diff** (the code-quality skill the owner
+  named): the outline is handed to the screen as fractions of the view, not as
+  the stage's own canvas, and whether to draw it is `drawCard`'s question; the
+  diagram names where the vote lives. Kept, and said: the three lists of the
+  app's source files (build, gate, scrubber) take `src/scan.js` beside
+  `src/sim.js` as take 122 did -- one canonical list is a later take's.
+
+### Measured
+
+- **The stand-in for ML Kit.** ML Kit runs only on the phone. Tesseract, a
+  document reader, found 1 of 15 codes in the whole view -- it missed the
+  clean Shanks Leader -- so it measures nothing about a camera-text reader
+  (landmine 235). RapidOCR (PP-OCR's detector and recogniser, a camera-text
+  reader like ML Kit, in a scratch venv) is the stand-in; INFERRED that ML Kit
+  does at least as well, since camera text is what it is built for.
+- **Where the number is: 51 card pictures** at the CDN (every treatment of 17
+  numbers, SP, manga, wanted poster, reprints, 500-716 px wide): the number's
+  line centre 0.950-0.958 down (median 0.952), 0.817-0.853 across (median
+  0.838; the SP badge's line starts further left); one wanted poster's line
+  merged with its type line (0.585). The pictures were discarded after.
+- **The shipped code on 48 frames** (the owner's 25 photographs as simulated
+  phone frames, his seven sideways shots also turned upright as he asked, and
+  ten turned the other way): each look rendered by the app in Chrome, each
+  read by the stand-in, the number picked by the app's own `codesIn`, the
+  loop's policy replayed. **37 decided right, 0 wrong, 11 no read**; 62
+  single-look reads, 0 wrong. The no-reads: three soft carpet shots from a
+  low-resolution photograph, Vivi's dark gold frame, the gold SEC Bonney
+  (three frames), Kyros's close-up (refused, below), Law OP12-073 on its side
+  one way, Okiku turned the other way.
+- **Before the upright-line and name rules**, the same frames gave 8 wrong
+  single-look reads on 6 frames: a turned look read the neighbour above or
+  beside (Okiku read as the Zoro & Sanji above it, Robin as the Caesar above
+  it, two Bonneys as the Law beside them), and Kyros's close-up read OP10-040
+  in two looks alike (landmines 233, 234). A 15-frame run had shown 0 wrong
+  and was believed a run too early (what this take got wrong, 3).
+- **SP**: Okiku's SP badge read on its line (OP01-035 has seven printings, one
+  SP): that scan auto-accepts the SP.
+- **The glare look against OpenCV**: `equalise` against
+  `cv2.createCLAHE(3.0, (8, 8))` on the same 48 views: mean absolute
+  difference 1.0-1.8 levels.
+- **Take 123's first 15 frames through the looks**: 0 of 15 before, 11 of 15
+  now, 0 wrong.
+
+### Ruled out, with the measurement
+
+- **The card's name as a one-frame confirmation** (a number and its card's
+  name read together accepted at once): of 64,428 one-digit misreads between
+  valid numbers, 318 would be "confirmed" by words on the true card and 362
+  share a name (MEASURED over the catalogue). The vote stays two reads; the
+  name is used only to refuse.
+- **Correcting a misread to the named number**: a name in an effect's text is
+  not the card's. Refused, never corrected.
+- **The art hash from a photo, this take** (landmine 45's open question, first
+  measured): on six of the owner's cards cropped by a number-anchored edge
+  finder, the owned printing was nearest in 5 of 6 (Shanks parallel 9 vs base
+  26, Roger alternate art 15 vs base 24, Kyros parallel 20 vs 33), but a crop
+  4 % off put Shanks's base nearer than its parallel, Nami's alternate art
+  and base were 26 and 28, and none cleared resolve()'s ≤ 8 / gap 13. The
+  finder itself was right on 6 of 10 cards (Ace and Caesar wrong). Deferred
+  as the next take's, with the owner's photographs of printings side by side.
+- **A hand-rolled outline finder in this take**: the same measurement; PROTOCOL
+  §3 names OpenCV.js for it.
+
+### What this take got wrong
+
+1. The HANDOFF entry after the code (above).
+2. My own key named the owner's Kuzan OP16-083 (it is OP16-063, read off the
+   catalogue): one run scored the stand-in's right read as a miss.
+3. "0 wrong on 15 frames" was believed before the other 23 were run; the
+   turned looks' neighbour reads showed only on the larger set.
+4. The first render check of the glare look asserted a 4x gain on a drawn
+   pattern, a number never measured; CLAHE's gain is bounded by its clip
+   limit. The check now asserts what CLAHE is for -- the same contrast with a
+   shine beside it -- with a whole-picture stretch as its control, and the
+   fidelity to OpenCV is the measurement above.
+5. The look hung ten minutes on `video.play()` (landmine 236).
+
+### Tests
+
+- smoke 1,520 / 0 on the merged tree (1,460 on this take alone; the take-125
+  section: the lost dash, the quarters, the upright line, the name refusals,
+  the view, the looks, the hold); render 261 / 0 in Chrome (the take-10
+  scanner section rewritten: the whole view to the recogniser, the neighbour
+  quarters, several, no text, the outline believed and not, a toploader read,
+  the near look's mapping, a turned look, the glare look's locality, the star
+  unchanged without the stretch, and the live loop end to end -- a card left
+  in view counted once, and again after it leaves).
+- **Watched to fail on take 123's build** (`boot({ app })` on the saved
+  take-123 `www/`): 8 of the 10 new smoke checks fail there; the two that pass
+  are by design (a promo's dash kept; the control itself). Take 123's own
+  render checks asserted the opposite of the new ones (a toploader refused, a
+  code crop handed over).
+- The look, take 125: 8 of 8 at the Fold's two sizes -- the app's own
+  `startCamera` handed a canvas's stream, its own loop reading a drawn card on
+  a light ground at once, counting it once over two and a half seconds, and
+  saying "One card at a time" to two.
+
+### For the owner -- testing steps and questions (his rule, take 94)
+
+Install take 125, open Scan with the set chip on Any, and scan the way you
+did before -- sleeves, toploaders, a binder page, holo cards, a light couch,
+low light and a bright window, one card lying on its side.
+
+1. Of ten cards scanned, how many were added, and about how long did each
+   take from pointing the camera to the green flash?
+2. Hold one card still in view for five seconds: is it counted once?
+3. Your SP Okiku (OP01-035): is it added as the SP without the picker?
+4. A card lying on its side: is it read?
+5. Was any card added as the wrong card, or as the card beside it? (A
+   screenshot of the Review list is enough -- this is the one that matters.)
+6. Point at two cards at once: does it say "One card at a time"?
+7. More → Self-test → Run → Share the report: its OCR line.
+8. For the next take: photographs of one number's printings side by side
+   (base, alternate art, manga or SP, where you own them).
+
+### DEFERRED
+
+- **The printing from the picture** (base, alternate art, manga): the outline
+  from the number (or OpenCV.js), the star looked for from the number's line,
+  and the art hash against the siblings -- each measured on the owner's own
+  photographs of printings side by side before any auto-accept (AGENDA A2).
+- **ML Kit on the Fold** is UNKNOWN until the owner scans: reads, speed per
+  capture, and whether it reads a card on its side itself.
+- **One recogniser for the session**: the plugin builds one per call; a patch
+  in `ci/apk.sh` waits on the Fold's speed report.
+- **A slab's label** (grader, grade, cert): a slabbed card's number is read
+  like any card's now and it is added ungraded; the grade is the collector's
+  to set on the card's page (landmine 25's note).
+- **The picker's order from the picture** follows the printing-from-the-picture
+  take.
+- **A card read by its name when its number is not** (Vivi's gold frame, the
+  gold SEC Bonney): the name leads to many printings; not this take.
 
 ## Take 124 — 2026-09-29 — the table: the Sim's board redrawn as a playmat of the cards' pictures, on an audited take 123
 
