@@ -5261,8 +5261,11 @@ function paintReleases() {
 ${foot(s, s.name)}</div>`;
   /* take 97 (A38 item 1): a run of two or more starter decks on one day is ONE
      row -- the range, the count, the date -- with a fold to the decks; a single
-     starter deck stays a row; a booster set is the release and is never folded */
-  const isDeck = s => /Starter Deck/i.test(s.name || '');   // take 125 (landmine 237): TCGCSV named them "Starter Deck 9 Yamato", then "ST-09: Starter Deck 9 Yamato" (29 Sept)
+     starter deck stays a row; a booster set is the release and is never folded.
+     Take 124: a starter deck by its code, ST and a number (the catalogue takes it from the cards' own numbers), the
+     words as the fallback -- TCGCSV renamed every one on 29 Sept, "Starter Deck 31: RED Monkey.D.Luffy" to "ST-31:
+     Starter Deck 31 RED Monkey.D.Luffy", and the six rows came back (landmine 231) */
+  const isDeck = s => /^ST-?\d/i.test(s.abbr || '') || /\bStarter Deck\b/i.test(s.name || '');
   const grouped = list => { const out = []; for (let i = 0; i < list.length; i++) { const s = list[i]; if (!isDeck(s)) { out.push(s); continue; }
       const run = [s]; while (i + 1 < list.length && isDeck(list[i + 1]) && list[i + 1].pub === s.pub) run.push(list[++i]);
       out.push(run.length > 1 ? { group: true, pub: s.pub, sets: run, id: s.id, name: `Starter decks ${run[0].abbr || ''}\u2013${run[run.length - 1].abbr || ''}` } : s); } return out; };

@@ -30,14 +30,14 @@ were measured in the session's scratch space and are not in the tree (landmine
   than 1.18 x the frame's mean, and a couch, a carpet or one glint off a sleeve
   puts a bright pixel at every edge; a portrait frame's aspect (0.56-0.83)
   passes its ±22 % test. The code crop cut from that "card" is the frame's
-  bottom-right corner. Landmine 231. This is the 10-20 s: every capture waited
+  bottom-right corner. Landmine 232. This is the 10-20 s: every capture waited
   for the outline and read the wrong place; the take-16 proof was two plain
   cards on a dark table in a dark room, the one ground it works on.
 - **`SCAN.lastAccept` was never written** (grep; the 800 ms cooldown of
   landmine 16 never ran), and the loop reset the vote after each decision: a
-  card left in view was counted again every two reads. Landmine 232.
+  card left in view was counted again every two reads. Landmine 233.
 - **The plugin builds a new recogniser on every call** and closes it after
-  (read off `TextRecognition.java` in @capacitor-mlkit/text-recognition 8.2.1);
+  (read off `TextRecognition.java` in capacitor-mlkit/text-recognition 8.2.1);
   its result carries every line with its bounding box (`blocks -> lines ->
   boundingBox`, read off `definitions.d.ts`), which take 10 threw away.
 
@@ -56,8 +56,8 @@ were measured in the session's scratch space and are not in the tree (landmine
     card whose number is there is mostly out of the view;
   - **not contradicted by its own words** -- refused when the text names a
     card one digit from the number and not the number's own card (landmine
-    234), and refused when the number's own name line lies below it (an
-    upright card prints its name above its number; landmine 233).
+    235), and refused when the number's own name line lies below it (an
+    upright card prints its name above its number; landmine 234).
   Two different numbers on cards in view are "several", never a guess: the
   hint says "One card at a time -- more than one number in view".
 - **Five looks, in turn** (`LOOKS`): the whole view; the number's corner
@@ -98,14 +98,16 @@ were measured in the session's scratch space and are not in the tree (landmine
   accept). It fires once, at the Scan screen's first paint, only for a batch
   left from before. The only other words that change on screen are the two
   new messages above.
-- **Found by the full run, fixed (not a scanner change):** TCGCSV renamed the
-  starter decks' groups this evening ("Starter Deck 9 Yamato" became "ST-09:
-  Starter Deck 9 Yamato"), and Releases found a starter deck by a name that
-  starts "Starter Deck": on a fresh ingest the six ST31-ST36 decks stopped
-  folding into one row and smoke's take-97 checks went red (green an hour
-  before on the cached ingest). It matches "Starter Deck" anywhere in the name
-  now -- the same 38 sets as before the rename; the Ultra Decks stay apart.
-  Landmine 237. Tonight's nightly on `main` would have gone red on it.
+- **Found by the full run (not a scanner change), fixed by take 124:** TCGCSV
+  renamed the starter decks' groups this evening ("Starter Deck 9 Yamato"
+  became "ST-09: Starter Deck 9 Yamato"), and Releases found a starter deck by
+  a name that starts "Starter Deck": on a fresh ingest the six ST31-ST36 decks
+  stopped folding into one row and smoke's take-97 checks went red (green an
+  hour before on the cached ingest). This take matched the words anywhere; the
+  Prep & Play session found the same rename on take 124's PR and fixed it by
+  the deck's code (`ST` and a number, the words as the fallback), with a check
+  that renames the run's sets -- merged here, and this take's own fix dropped
+  for it. Landmine 231 is that finding.
 - **The review of this take's own diff** (the code-quality skill the owner
   named): the outline is handed to the screen as fractions of the view, not as
   the stage's own canvas, and whether to draw it is `drawCard`'s question; the
@@ -118,7 +120,7 @@ were measured in the session's scratch space and are not in the tree (landmine
 - **The stand-in for ML Kit.** ML Kit runs only on the phone. Tesseract, a
   document reader, found 1 of 15 codes in the whole view -- it missed the
   clean Shanks Leader -- so it measures nothing about a camera-text reader
-  (landmine 235). RapidOCR (PP-OCR's detector and recogniser, a camera-text
+  (landmine 236). RapidOCR (PP-OCR's detector and recogniser, a camera-text
   reader like ML Kit, in a scratch venv) is the stand-in; INFERRED that ML Kit
   does at least as well, since camera text is what it is built for.
 - **Where the number is: 51 card pictures** at the CDN (every treatment of 17
@@ -139,7 +141,7 @@ were measured in the session's scratch space and are not in the tree (landmine
   single-look reads on 6 frames: a turned look read the neighbour above or
   beside (Okiku read as the Zoro & Sanji above it, Robin as the Caesar above
   it, two Bonneys as the Law beside them), and Kyros's close-up read OP10-040
-  in two looks alike (landmines 233, 234). A 15-frame run had shown 0 wrong
+  in two looks alike (landmines 234, 235). A 15-frame run had shown 0 wrong
   and was believed a run too early (what this take got wrong, 3).
 - **SP**: Okiku's SP badge read on its line (OP01-035 has seven printings, one
   SP): that scan auto-accepts the SP.
@@ -181,11 +183,12 @@ were measured in the session's scratch space and are not in the tree (landmine
    limit. The check now asserts what CLAHE is for -- the same contrast with a
    shine beside it -- with a whole-picture stretch as its control, and the
    fidelity to OpenCV is the measurement above.
-5. The look hung ten minutes on `video.play()` (landmine 236).
+5. The look hung ten minutes on `video.play()` (landmine 237).
 
 ### Tests
 
-- smoke 1,520 / 0 on the merged tree (1,460 on this take alone; the take-125
+- smoke 1,522 / 0 on the tree with take 124 and its follow-up merged (1,460
+  on this take alone; the take-125
   section: the lost dash, the quarters, the upright line, the name refusals,
   the view, the looks, the hold); render 261 / 0 in Chrome (the take-10
   scanner section rewritten: the whole view to the recogniser, the neighbour
@@ -494,17 +497,44 @@ NEW-SESSION-PROMPT and SIM-UI §7.
   and the owner's testing rule, §8 the table); landmines 225-230, notes on 30,
   214 and 219; AGENDA A23; the owner's testing rule in NEW-SESSION-PROMPT.
 
+### The PR's first check, and the data under it
+
+The runner's first `check` on the PR (run 36624640603) failed in smoke: 1,494
+passed, 3 failed, all take 97's Releases fold ("undefined: 0 decks"). This take
+never touched Releases. TCGCSV renamed all 44 starter-deck groups at about 19:20
+UTC on 29 Sept, after the session's ingest and before the runner's (source
+20:05 UTC): "Starter Deck 31: RED Monkey.D.Luffy" is now "ST-31: Starter Deck 31
+RED Monkey.D.Luffy", and the four Super Pre-Release decks likewise. Ids, codes
+and dates are unchanged (PROVEN: the cached groups against TCGCSV's, 87 of 87).
+Releases knew a starter deck by `/^Starter Deck/` on its name, so the six
+ST31-ST36 rows the owner asked to see as one (take 97) came back. `main` carries
+the same line and meets the same data at its next nightly (INFERRED).
+
+- **The fix:** a starter deck is a set whose code is ST and a number (the
+  catalogue takes a set's code from its cards' printed numbers), with "Starter
+  Deck" anywhere in the name as the fallback (landmine 231). Nothing else in the
+  app or the pipeline reads a set's name for what it is: the Sealed kinds and a
+  set's kind read the word "deck" anywhere, and Hunt folds the name's words in.
+- **Its checks, watched failing first:** smoke finds the run by its code; the
+  run renamed as before 29 Sept, and with no "Starter Deck" in its names, is
+  still one row; the control, neither the code nor the words, comes apart. On
+  the unfixed build with today's data: 1,495 passed, 4 failed (the run, the
+  rename, the fold, the search). On the fix: 1,499 passed, 0 failed; render
+  246 in Chrome, the folded row opening on a click.
+
 ### Measured
 
-- **Smoke 1,497 passed, 0 failed** (1,437 at the take's start). **Render 246
-  in Chrome** (242). **The look, take 124: 68 of 68 steps** at four sizes --
+- **Smoke 1,499 passed, 0 failed** on TCGCSV's data of 29 Sept, 20:05 UTC
+  (1,437 at the take's start; 1,497 before the rename's two checks). **Render
+  246 in Chrome** (242). **The look, take 124: 72 of 72 steps** at four sizes --
   the Fold's cover 411 x 960 and open 749 x 832 (MEASURED sizes), a phone 360
   x 780 and a tablet 1280 x 800 (INFERRED) -- a game against the app through
   real clicks (deal, mulligan, select, play, the app's turn a beat at a time,
   aim, the line, Resolve, the burst), a long press to zoom, the log, an effect's
   choices, the curtain, Leave's question, Forfeit & leave back to the app, the
-  end, and each Leader's red back caught as it turns over. Pictures through
-  Node: 643 fetched, 102 refused by the host. Smoke, render and the look ran on
+  end, and each Leader's red back caught as it turns over; then Releases, the
+  day of ST31-ST36 as one row folded and opened by a click. Pictures through
+  Node: 718 fetched, 120 refused by the host. Smoke, render and the look ran on
   the final build.
 - **The screen, used** (MEASURED in this VM's Chromium, a game against the
   app after the mulligan, a first hand of 5 and one of 8; the first table of
@@ -590,6 +620,9 @@ NEW-SESSION-PROMPT and SIM-UI §7.
 - The plan said a UI pass leaves the engine unchanged (SIM-UI §7 as take 123
   wrote it). The owner's testing rule found nine faults in it; they are fixed
   here.
+- My first look step for Releases turned Hunt on before saying its zip had
+  been asked: the first visit's zip sheet took the click, and the step timed
+  out (take 110's steps set `NAV.zipAsked` first; this one does now).
 
 ### Ruled out
 
@@ -632,7 +665,7 @@ NEW-SESSION-PROMPT and SIM-UI §7.
   placeholder picture (reprints as the control).
 - `node tools/render.mjs` -- the table in Chrome: the full screen, the fit,
   every control 44 px.
-- `node tools/look.mjs 124` -- 17 steps at four sizes, 68 of 68.
+- `node tools/look.mjs 124` -- 18 steps at four sizes, 72 of 72.
 - `node tools/selfplay.mjs --selftest` -- twelve plants, each named; the
   twelfth a view that copies the result's names to both seats. Then the
   rulebook's fifteen, each named by it alone: three DON!! a turn, a draw on the
@@ -653,6 +686,9 @@ NEW-SESSION-PROMPT and SIM-UI §7.
 - `node tools/render.mjs` -- the backs as Chrome draws them; the screen used at
   four sizes (the foot within 24 px of the screen's, a first hand whole on the
   screen, each card's own strip 44 px; take 124's first hand as the control).
+- `node tools/smoke.mjs` -- Releases after TCGCSV's rename (landmine 231): the
+  run of starter decks found by its code, renamed twice and still one row;
+  neither the code nor the words as the control.
 
 ### DEFERRED
 
@@ -691,6 +727,9 @@ NEW-SESSION-PROMPT and SIM-UI §7.
   line parsed with one would be declinable only at its start.
 - **A by-hand automatic line keeps its Skip:** the player resolves it, and the
   app cannot hold them to its words.
+- **Releases on the tablet** (the UI/UX session's): at 1280 x 800 a box wider
+  than the list's column stands behind the top of the list (the look's
+  `18-releases-...` picture). Not this take's; seen in passing.
 
 ## Take 123 — 2026-09-29 — the Sim ready for the UI pass: one view per seat, private things kept by the engine
 

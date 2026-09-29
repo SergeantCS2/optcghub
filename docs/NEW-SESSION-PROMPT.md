@@ -99,10 +99,10 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
 - **Take 125 -- the scanner reads the number where the recogniser finds it**
   (AGENDA A2's take-125 section; HANDOFF take 125). Take 123's card outline
   was the whole frame on 14 of the owner's 15 photographs and its stages read
-  0 of them (landmine 231); the whole view now goes to ML Kit, the number is
+  0 of them (landmine 232); the whole view now goes to ML Kit, the number is
   picked out of its lines on a card upright in the look and in the view and
   not contradicted by its own name, through five looks in turn, and the number
-  decided is held while it stays in view (landmines 231-236). 37 of 48 of the
+  decided is held while it stays in view (landmines 232-237). 37 of 48 of the
   owner's frames right, 0 wrong, with a camera-text reader standing in for ML
   Kit. The stages are `src/scan.js`. It carries take 124, merged into its
   branch at the owner's word. **Next, the owner's:** a scan on the Fold and the
@@ -126,8 +126,11 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   of self-play over every pairing of the ready-made decks and random legal
   decks; with it the take found nine faults in the engine (an automatic
   effect could be declined, a used [Trigger] kept, looked-at cards left out of
-  the deck, and five more) and fixed each with a check. `docs/SIM-UI.md` §7
-  and §8; landmines 225-230. **Next, the owner's:** the look on the Fold (the
+  the deck, and five more) and fixed each with a check. The PR's first check
+  met TCGCSV's rename of every starter deck ("ST-31: Starter Deck 31 ...") and
+  Releases' fold came apart; a starter deck is now known by its code, ST and a
+  number (landmine 231). `docs/SIM-UI.md` §7 and §8; landmines 225-231.
+  **Next, the owner's:** the look on the Fold (the
   pace, the vibration, the long press, the fit) and his word on the card
   back. **Yours after it:** HANDOFF take 124's DEFERRED -- the host's
   placeholder across the app first -- then A23's tail, one mechanism per

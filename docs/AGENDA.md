@@ -203,8 +203,8 @@ The one unproven assumption in the entire plan. Everything else is arithmetic.
 ### Take 125 — the number found by the recogniser (the owner's word: "greatly overhaul the scanning tool")
 
 - **MEASURED:** take 123's stages read 0 of 15 of the owner's photographed
-  frames -- the outline was the whole frame (landmine 231); `lastAccept` never
-  set (landmine 232). The rebuilt stages (`src/scan.js`: the whole view to the
+  frames -- the outline was the whole frame (landmine 232); `lastAccept` never
+  set (landmine 233). The rebuilt stages (`src/scan.js`: the whole view to the
   recogniser, five looks, the number on an upright card in the view and not
   contradicted by its name) decide 37 of 48 frames right and 0 wrong, with a
   camera-text reader standing in for ML Kit (INFERRED to carry to ML Kit).
@@ -212,9 +212,9 @@ The one unproven assumption in the entire plan. Everything else is arithmetic.
   card on its side, the SP badge auto-accepting (Okiku OP01-035's SP read on
   the stand-in), a card counted once while it stays in view.
 - **Ruled out:** the card outline as the gate to the read (0 of 15, landmine
-  231); Tesseract as the stand-in for ML Kit (1 of 15 in the whole view,
-  landmine 235); the card's name as a one-read confirmation (680 of 64,428
-  one-digit misreads would be confirmed, landmine 234); correcting a misread to
+  232); Tesseract as the stand-in for ML Kit (1 of 15 in the whole view,
+  landmine 236); the card's name as a one-read confirmation (680 of 64,428
+  one-digit misreads would be confirmed, landmine 235); correcting a misread to
   the named number (an effect's text names other cards); the art hash from a
   photo as an auto-accept this take (right printing nearest in 5 of 6, but a
   4 % crop error flips a parallel to its base, and none cleared ≤ 8 / gap 13);
@@ -1718,7 +1718,10 @@ errors) and named, in his words:
 1. **"Starter decks flood the release page"** — their own section on
    Releases, grouped by release day. → take 97. *(built take 97: a run of
    two or more starter decks on one day is one row with a fold — on
-   Upcoming, Recent and the distributor's list)*
+   Upcoming, Recent and the distributor's list; take 124: known by the set's
+   code, not its name, after TCGCSV renamed every starter deck and the rows
+   came apart — landmine 231. **Ruled out:** the new name's "ST-" prefix as
+   the test, one more wording TCGCSV can change)*
 2. **"NM, LP, MP, HP, DMG don't do anything if they're buttons — they
    shouldn't show on boxes"** — the condition segment on a sealed
    product's sheet; unexplained on a card's. → take 95: hidden on sealed,
