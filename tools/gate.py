@@ -100,7 +100,7 @@ def check_docs_complete():
     REQUIRED = ["AGENDA.md", "HANDOFF.md", "LANDMINES.md", "PROTOCOL.md",
                 "PROVISION.md", "ROADMAP.md", "RULES.md", "RUNBOOK.md",
                 "RUNBOOK-play.md", "DECISIONS-OPEN.md", "PLAY-LISTING.md",
-                "V1-STATE.md", "NEW-SESSION-PROMPT.md"]
+                "V1-STATE.md", "NEW-SESSION-PROMPT.md", "SIM-UI.md"]   # take 123: the Sim's contract with the UI pass
     for fn in REQUIRED:
         path = os.path.join(DOCS, fn)
         if not os.path.exists(path):

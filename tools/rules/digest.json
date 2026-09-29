@@ -271,7 +271,7 @@
    "title": "Deck",
    "text": "Face-down; nobody looks at or reorders it unless told. Several cards moved from it move one at a time. Shuffling puts it in random order.",
    "sim": "enforced",
-   "where": "SIM.shuffle"
+   "where": "SIM.shuffle; SIM.view (both decks are counts)"
   },
   {
    "id": "3-3",
@@ -284,7 +284,7 @@
    "title": "Hand",
    "text": "Secret to the other player; you may look at and reorder your own.",
    "sim": "enforced",
-   "where": "paintSim (the other hand is a count)"
+   "where": "SIM.view (the other hand is a count; take 123)"
   },
   {
    "id": "3-5",
@@ -368,7 +368,8 @@
    "id": "3-10",
    "title": "Life area",
    "text": "Secret and face-down; nobody looks or reorders. A card leaving Life comes from the top unless told otherwise. A card added face-up is open.",
-   "sim": "enforced"
+   "sim": "enforced",
+   "where": "SIM.view (both Lives are counts; take 123)"
   },
   {
    "id": "4-4",
@@ -1078,7 +1079,7 @@
    "title": "[Trigger]",
    "text": "On taking damage, reveal the Life card and use its [Trigger] instead of adding it to hand, or add it to hand without revealing. A used [Trigger] card is trashed afterwards.",
    "sim": "enforced",
-   "where": "SIM.act('resolve'), SIM.apply"
+   "where": "SIM.act('resolve'), SIM.apply; SIM.view (the other seat sees only that a [Trigger] waits; take 123)"
   },
   {
    "id": "10-1-5-3",

@@ -1723,7 +1723,7 @@ const take120 = [
    owner would make are real clicks. The curtain between seats is lifted so the board itself is in the picture. */
 const simBoard = (js) => `(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('play', true); await ${pause}; V.go('sim'); await ${pause};
   const S = V.SIM, stock = id => V.CAT.stock.find(d => d.id === id), num = n => V.CAT.rows.find(p => p.num === n && !p.sealed);
-  const deal = (a, b, seed) => { S.new({ ...a, name: 'You' }, { ...b, name: 'Player 2' }, 0, { seed }); S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' });
+  const deal = (a, b, seed) => { S.new({ ...a, name: 'Player 1' }, { ...b, name: 'Player 2' }, 0, { seed }); S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' });
     Object.assign(V.SIMUI, { sel: null, post: null, room: null, fxt: null, result: null }); };
   ${js}
   document.querySelector('#simCurtain').classList.remove('on'); V.paintSim(); window.scrollTo(0, 0); await ${pause};
@@ -1807,4 +1807,43 @@ const take122 = [
       return { ok: m.q === 'blocker' && /Blocker/.test(m.text) && m.sync, ...m };
     } },
 ];
-export const STEPS = { 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
+/* ---- take 123 — one view per seat: the board draws only what the seat deciding may see ----
+   A hot-seat game ST01 against ST02, turn 3: the page is read for the other player's hand, before and after a real
+   hand-over through the curtain -- a hidden card must not be in the page at all, not merely out of sight. */
+const handNames = seat => `(() => { const S = window.VAULT.SIM; return S.P(${seat}).hand.map(id => S.card(id).name); })()`;
+/* the names on the table and in the trashes are public: a hand card that shares one (a Kid in hand, Kid the Leader) is no leak */
+const publicNames = `(() => { const S = window.VAULT.SIM; return S.g.players.flatMap(X => [X.leader, ...X.chars].concat(X.stage ? [X.stage] : []).map(o => S.card(o.id).name).concat(X.trash.map(id => S.card(id).name))); })()`;
+const boardHolds = names => `(() => { const t = document.querySelector('#simBoard').textContent; return ${JSON.stringify(names)}.filter(n => t.includes(n)); })()`;
+const take123 = [
+  { name: 'open', run: async (page, ctx) => { await ctx.open(); return { ok: true }; } },
+  { name: 'sim-seat-one-sees-its-own-hand-only', run: async (page) => {
+      await page.evaluate(simBoard(`deal(stock('stock-st01'), stock('stock-st02'), 21); S.act(0, { t: 'end' }); S.act(1, { t: 'end' });`));
+      const mine = await page.evaluate(handNames(0)), theirs = await page.evaluate(handNames(1));
+      const pub = await page.evaluate(publicNames), theirsOnly = theirs.filter(n => !mine.includes(n) && !pub.includes(n)), shown = await page.evaluate(boardHolds(mine)), leaked = await page.evaluate(boardHolds(theirsOnly));
+      return { ok: shown.length === mine.length && leaked.length === 0, mine: mine.length, shownOfMine: shown.length, leakedOfTheirs: leaked.join(', ') };
+    } },
+  { name: 'sim-end-turn-the-curtain', run: async (page) => {
+      /* a real tap on End turn: the curtain names the next player; nothing of either hand is on it */
+      await page.click('#simBoard [data-sim="end"]'); await wait(500);
+      const m = await page.evaluate(() => { const c = document.querySelector('#simCurtain'); return { on: c.classList.contains('on'), text: c.textContent.trim().slice(0, 80) }; });
+      return { ok: m.on && /Player 2/.test(m.text), ...m };
+    } },
+  { name: 'sim-seat-two-after-the-hand-over', run: async (page) => {
+      /* the tap that takes the phone: the board is now seat 2's view -- its hand, and seat 1's as a count */
+      await page.click('#simCurtain'); await wait(500);
+      const mine = await page.evaluate(handNames(1)), theirs = await page.evaluate(handNames(0));
+      const pub = await page.evaluate(publicNames), theirsOnly = theirs.filter(n => !mine.includes(n) && !pub.includes(n)), shown = await page.evaluate(boardHolds(mine)), leaked = await page.evaluate(boardHolds(theirsOnly));
+      await page.evaluate(() => window.scrollTo(0, 0));
+      return { ok: shown.length === mine.length && leaked.length === 0, mine: mine.length, shownOfMine: shown.length, leakedOfTheirs: leaked.join(', ') };
+    } },
+  { name: 'sim-the-defender-sees-the-battle-not-the-attackers-hand', run: async (page) => {
+      /* seat 2 attacks seat 1's Leader; the phone goes to the defender, whose board shows the battle and its own hand */
+      await page.evaluate(`(async () => { const V = window.VAULT, S = V.SIM; S.act(1, { t: 'attack', ref: 'leader', target: 'leader' }); for (let k = 0; k < 9 && S.g.queue.length; k++) S.act(S.who(), { t: 'fxskip' });
+        document.querySelector('#simCurtain').classList.remove('on'); V.paintSim(); window.scrollTo(0, 0); await ${pause}; })()`);
+      const mine = await page.evaluate(handNames(0)), theirs = await page.evaluate(handNames(1));
+      const pub = await page.evaluate(publicNames), theirsOnly = theirs.filter(n => !mine.includes(n) && !pub.includes(n)), leaked = await page.evaluate(boardHolds(theirsOnly));
+      const m = await page.evaluate(() => ({ text: document.querySelector('#simBoard').textContent.slice(0, 160), block: !!document.querySelector('#simBoard [data-sim="noblock"]') }));
+      return { ok: m.block && leaked.length === 0 && /is attacked/.test(m.text), leakedOfTheirs: leaked.join(', '), block: m.block };
+    } },
+];
+export const STEPS = { 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };

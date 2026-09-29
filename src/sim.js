@@ -463,7 +463,7 @@ const SIM = {
     handtolife(c) { c.P.life.unshift(c.P.hand.splice(c.a.h, 1)[0]); return 'adds a card from hand to the top of Life'; },   // face down: the log does not name it
     chartolife(c) { const ch = this.leave(c.P, c.a.k, 'life'); return `adds ${c.nm(ch.id)} to the top of Life`; },
     opplifetrash(c) { const O = this.P(1 - c.i), id = O.life.shift(); O.trash.push(id); return `trashes the top card of the opponent\u2019s Life (${c.nm(id)})`; },
-    handtotop(c) { const id = c.P.hand.splice(c.a.h, 1)[0]; c.P.deck.unshift(id); return `places ${c.nm(id)} at the top of the deck`; },
+    handtotop(c) { const id = c.P.hand.splice(c.a.h, 1)[0]; c.P.deck.unshift(id); return 'places a card from hand at the top of the deck'; },   // unrevealed: hand to deck, never shown (take 123)
     decktolife(c) { c.P.life.unshift(c.P.deck.shift()); return 'adds the top of the deck to the top of Life'; },
     mill(c) { c.P.trash.push(c.P.deck.shift()); return 'trashes the top card of the deck'; },
     play(c) { const P = c.P, list = c.a.zone === 'trash' ? P.trash : P.hand; const id = list.splice(c.a.k, 1)[0];
@@ -501,6 +501,40 @@ const SIM = {
     refs.concat(P.stage != null ? ['stage'] : []).forEach(ref => this.offers(i, 'main', ref).forEach(o => out.push({ t: 'activate', ref, n: o.n })));
     refs.forEach(ref => { if (this.canAttack(i, ref).ok) this.targets(i, ref).forEach(t => out.push({ t: 'attack', ref, target: t.ref })); });
     out.push({ t: 'end' }); return out; },
+  /* ---- the view a seat is handed (take 123) ---------------------------------
+     Everything a board draws, and nothing its seat may not see. Public: the fields, the trashes, DON!!, the battle,
+     the effect resolving, the log. Private, and kept out by the engine rather than hidden by the screen: the other
+     hand (a count, §3-4), both Lives and both decks (counts: nobody looks at a Life card, §3-10, or a deck, §3-2), the cards being
+     looked at (only to the player looking), an effect's choices and the moves (only to the player deciding). A
+     redesigned board draws from this and cannot show what it was never given. docs/SIM-UI.md is the contract. */
+  face(id, extra) { const p = this.card(id) || {}, art = typeof artUrl === 'function' && p.img;
+    return Object.assign({ id, num: p.num || null, name: p.name || '?', type: p.type || null, cost: p.cost != null ? this.cost(p) : null, printedPower: p.power != null ? this.num(p.power) : null,
+      counter: this.num(p.counter) || null, kw: (p.kw || '').split('|').filter(Boolean), colours: typeof gameColours === 'function' ? gameColours(p) : [], text: p.text || '',
+      art: art ? { thumb: artUrl(p), large: artUrl(p, 'large'), ground: artColours(p) } : null }, extra || {}); },
+  /* a card on the field, as its owner and the opponent both see it */
+  onField(xi, ref) { const X = this.P(xi), o = this.at(X, ref), unit = ref !== 'stage', kw = unit ? this.kwOf(xi, ref) : [], f = this.face(o.id);
+    return Object.assign(f, { uid: o.uid, seat: xi, ref, rested: o.rested, don: o.don, turn: o.turn, power: unit ? this.power(xi, ref) : null, keywords: kw, granted: kw.filter(k => !f.kw.includes(k)),
+      unapplied: this.unapplied(o.id).map(e => e.raw), lines: this.fx(o.id).map(e => ({ t: e.t, raw: e.raw, does: this.describe(e), proof: this.proofOf(o.id, e) })) }); },
+  view(seat) { const g = this.g; if (!g) return null; const who = this.who();
+    const side = xi => { const X = this.P(xi), mine = xi === seat, given = X.leader.don + X.chars.reduce((a, c) => a + c.don, 0);
+      return { seat: xi, name: X.name, leader: this.onField(xi, 'leader'), chars: X.chars.map((c, k) => this.onField(xi, k)), stage: X.stage ? this.onField(xi, 'stage') : null,
+        hand: mine ? X.hand.map((id, h) => this.face(id, { h, play: this.canPlay(xi, h) })) : null, handCount: X.hand.length,
+        lifeCount: X.life.length, deckCount: X.deck.length, trash: X.trash.map(id => this.face(id)),
+        looking: mine ? X.looking.map(id => this.face(id)) : null, lookingCount: X.looking.length,
+        don: { active: X.don.active, rested: X.don.rested, given, deck: X.donDeck }, mulliganed: X.mulliganed, taken: X.taken, lost: X.lost }; };
+    const b = g.battle, at = b && this.locate(), o = g.queue[0], d = o && o.steps[o.step];
+    /* a [Trigger] not yet used is still a face-down Life card to the other seat: its player may add it to hand without
+       revealing it (§10-1-5), so the other seat is told only that the game waits on a [Trigger] */
+    const shut = !!(o && o.fromLife && o.step === 0 && o.i !== seat);
+    return { v: 1, take: TAKE, rules: this.RULES, seat, turn: g.turn, phase: g.phase, active: g.active, first: g.first, over: g.over, who, bot: g.bot != null ? g.bot : null,
+      me: side(seat), them: side(1 - seat),
+      battle: b ? { att: b.att, def: b.def, step: b.step, blocked: b.blocked, counter: b.counter, powers: this.battlePowers(),
+        attacker: at.aref != null ? this.onField(b.att, at.aref) : null, target: at.dref != null ? this.onField(b.def, at.dref) : null, unblockable: at.aref != null && this.has(b.att, at.aref, 'Unblockable') } : null,
+      offer: shut ? { seat: o.i, hidden: true, cardId: null, name: null, t: o.e.t, raw: null, hand: null, proof: null, wrong: null, does: null, step: null, steps: null, cost: null, choices: null, queued: g.queue.length }
+        : o ? { seat: o.i, hidden: false, cardId: o.cardId, name: (this.card(o.cardId) || {}).name || 'Effect', t: o.e.t, raw: o.e.raw, hand: !!o.hand, proof: this.proofOf(o.cardId, o.e), wrong: o.e.wrong || null,
+        does: this.describe(o.e), step: o.step, steps: o.steps.length, cost: !!(d && /^cost_/.test(d.a)), choices: o.i === seat && !o.hand ? this.targetsOf(o) : null, queued: g.queue.length } : null,
+      tray: g.hand ? (g.hand.i === seat ? { mine: true, cardId: g.hand.cardId, raw: g.hand.raw, left: JSON.parse(JSON.stringify(g.hand.left)) } : { mine: false, cardId: g.hand.cardId, raw: g.hand.raw }) : null,
+      legal: who === seat ? this.legal(seat) : [], log: g.log.slice() }; },
   /* the ONE way a move is made. A move is a transaction: refused, the game is restored exactly as it was and the
      move is not recorded -- so a refusal changes nothing by construction, and two copies of a game fed the same
      moves stay the same game (take 122: self-play found a refused move that had already marked Once Per Turn) */
@@ -550,7 +584,7 @@ const SIM = {
         if (r.done) { g.queue.shift(); if (r.follow && r.follow.length) g.queue.unshift(...r.follow); } return r; }
       case 'fxskip': { const o0 = g.queue[0], d0 = o0 && o0.steps && o0.steps[o0.step];
         if (o0 && !o0.hand && o0.step > 0 && d0 && /^cost_/.test(d0.a) && this.canPay(i, o0.uid != null ? this.refOf(P, o0.uid) : o0.ref, d0)) return refuse('a cost once begun is paid in full, in order (§8-3)');
-        const o = g.queue.shift(); if (!o) return refuse('no effect'); if (o.step > 0 || o.hand) this.log(`${this.card(o.cardId).name}: the rest is declined`); return { ok: true }; }
+        const o = g.queue.shift(); if (!o) return refuse('no effect'); if (o.fromLife && !o.step) this.log(`${this.P(o.i).name} adds the Life card to hand without revealing it (§10-1-5)`); else if (o.step > 0 || o.hand) this.log(`${this.card(o.cardId).name}: the rest is declined`); return { ok: true }; }
       case 'fxhand': { const o = g.queue[0]; if (!o || !o.hand || g.hand) return refuse('no by-hand effect');
         if (o.e.if.some(c => c.c === 'opt')) { if (this.used(i, o)) return refuse('once per turn, and used this turn (§10-2-13)'); this.markUsed(i, o); }
         g.hand = { i, cardId: o.cardId, raw: o.e.raw, left: this.handOps(o.e.raw), fromLife: o.fromLife };
