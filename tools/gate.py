@@ -226,7 +226,7 @@ def check_icon_characters():
     halves, neither an emoji: the take-108 icons it removed, as escapes, passed);
     and the times sign as a button's whole face -- a remove drawn as a character
     -- is refused, while the times of a count stays."""
-    src = read("src", "app.html") + read("src", "sim.js")     # take 122: the Sim's engine is src/sim.js, inlined at build
+    src = read("src", "app.html") + read("src", "sim.js") + read("src", "scan.js")   # take 122: the Sim's engine is src/sim.js; take 125: the scanner's stages src/scan.js; both inlined at build
     if not src:
         return
     keep_lines = lambda m: "\n" * m.group(0).count("\n")   # noqa: E731   a comment goes, its lines stay: "near line N" is the source's N
@@ -306,7 +306,7 @@ def check_stale_copy():
         ("carries no character art",             "take 109: the listing never said so, and the app shows card art (A29's correction)"),
         ("no character art, no publisher mark",  "take 109: card art is shown; marks stay out of the name, icon, splash and listing (V1-STATE)"),
     ]
-    files = ["src/app.html", "src/sim.js", "README.md", "ci/RELEASE.md", "docs/RUNBOOK.md", "docs/RUNBOOK-play.md",
+    files = ["src/app.html", "src/sim.js", "src/scan.js", "README.md", "ci/RELEASE.md", "docs/RUNBOOK.md", "docs/RUNBOOK-play.md",
              # take 109: the present-tense record that carried the old line; the append-only
              # history (HANDOFF, LANDMINES, AGENDA) keeps what it said and is not read here
              "docs/V1-STATE.md", "docs/NEW-SESSION-PROMPT.md", "docs/PROVISION.md", "docs/PLAY-LISTING.md",

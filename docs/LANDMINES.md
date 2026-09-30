@@ -245,6 +245,13 @@ Start here. Do not read top to bottom.
 | A browser test taps a card and another card answers | 230 |
 | Rows the app folded come apart with no code change; a check finds "0 decks" | 231 |
 | A planted fault goes unnamed after a change that did not touch its check | 232 |
+| Scanner reads nothing, or takes 10-20 s, on a sleeve, toploader, binder or light ground | **233** |
+| The same card is counted again while it stays in view | 234, 16 |
+| A scan names the card next to the one in hand | 235 |
+| Two reads agree on the wrong number | 236 |
+| An OCR measurement on the VM says the camera approach cannot work | 237 |
+| The look hangs at a scanner step | 238 |
+| "Last backup: Failed" on every backup, after a reinstall or the switch to Play | 239 |
 | A card's picture is wrong for good although the host has the right one, or a wrong picture never leaves | 240 |
 | A card is shown with another printing's picture: the right card, the wrong illustration | 241 |
 | A picture hash compared in the app differs from the pipeline's by a few bits | 242 |
@@ -387,6 +394,7 @@ the holder's edge is the higher-contrast one. Sleeved and toploadered cards must
 be in the Phase 0 sample; testing on loose base cards produces a false-positive
 feasibility result. The owner's most valuable card is in a toploader in his own
 screenshots.
+*Take 125:* the outline no longer gates the read -- the number is found by the recogniser wherever it is (landmine 233), so a card in a toploader is read; its outline is still not believed there, so no star is looked for and its photo is the view at a card's shape.
 
 **15. Bench light is not shop light.** Every accuracy figure carries the lighting
 it was measured under. A number from a desk lamp is not evidence about a card
@@ -396,6 +404,7 @@ shop table or a convention hall.
 should produce one row with quantity 4, with a visible `×4` badge so a runaway
 double-count is catchable. An 800 ms cooldown after each accept stops the same
 card being counted twice while the hand moves.
+*Take 125:* the 800 ms cooldown was never set (landmine 234). The number decided is now held while it stays in view and let go after three captures that do not read it; a playset still counts four as the hand swaps the cards.
 
 **17. The scan loop is the product; 1.5 s per card is the budget.** If bulk
 scanning is slower than typing card numbers, the feature has failed and the
@@ -444,6 +453,7 @@ label occlusion, card recessed behind thick acrylic. They also have their own
 pricing that TCGCSV does not carry. Manual entry with grader, grade and cert
 number; consider reading the cert barcode later. Do not let the scanner attempt
 them and produce a plausible wrong answer.
+*Take 125, at the owner's word (he asked for slabs to scan):* a slabbed card's number is read like any card's and it enters the batch ungraded; the grader, grade and cert are the collector's to set on the card's page. A number on the label sits above the card and so, with the slab filling the view, in its top quarter, where it is not taken (INFERRED). Reading the label stays deferred, and no slab photograph has been measured (UNKNOWN).
 
 **26. Card art is copyrighted and this app never hosts it.** Bandai, Shueisha,
 Toei and Viz own it. The pipeline downloads images inside the CI runner, computes
@@ -3021,6 +3031,79 @@ stream moved: the plant's forty games met eleven [Trigger]s, declined none, and
 the planted leak went unnamed -- the auditor looked broken and was not. Its
 games now decline every [Trigger] from Life. A plant forces the event it
 plants on; a sample that only may meet it is not a control.
+
+**233. A card outline that is every bright pixel is the whole frame.** Take 10's
+detector boxed every pixel brighter than 1.18 x the frame's mean and accepted
+the box at ±22 % of a card's aspect. On a couch, a carpet, a binder or any
+sleeve's glint there is a bright pixel at every edge, and a portrait frame's
+0.56-0.83 passes the aspect test: the "card" was the frame on 14 of the owner's
+15 photographs and nothing on the 15th, the code crop cut from it was the
+frame's corner, and the scanner read 0 of 15 (MEASURED take 125). It had been
+proven once, on two plain cards on a dark table in a dark room -- the one
+ground it works on. Take 125 finds the number with the recogniser, which finds
+text anywhere, and believes the outline only where the number sits on it. A
+stage a later stage depends on is measured on the ground the collector uses,
+not the one it was proven on.
+
+**234. A cooldown that is never set is not a cooldown.** `SCAN.lastAccept` was
+compared against for 115 takes and assigned by nothing, and the loop reset its
+vote after each decision: a card left in view was decided again every two
+reads -- four times in eight (the smoke control, take 125). Landmine 16's
+800 ms was written down and never ran. Take 125 holds the number decided until
+three captures in a row do not read it: counted in captures, so a picker's wait
+is not the card leaving. A guard's variable is grepped for its writer, not only
+its reader.
+
+**235. A turned look turns the neighbours too.** To read a card lying on its
+side the view is turned a quarter; an upright neighbour then lies on its side,
+and a reader that reads vertical text finds its number anywhere -- past the
+top and left quarters that keep a neighbour out, which assume an upright card.
+Turned the other way, a sideways neighbour is upside down and its number reads
+across. MEASURED take 125: the neighbours' numbers read on four of the owner's
+frames. Two rules close it, both geometry of an upright card: the number's line
+runs across (wider than twice its height), and the card's own name is printed
+above its number, never below.
+*Before take 125 shipped:* the turned looks went at the owner's word -- cards
+are scanned upright -- and with them the name-below rule, whose one catch was a
+neighbour a turned look turned over. The upright-line rule stays: the whole
+look read a sideways neighbour's number on one of the owner's frames too. On
+his 29 upright frames the turned looks had added nothing (23 right either way).
+
+**236. A misread lands a digit away, and repeats.** The owner's close-up of
+Kyros, OP10-046, read OP10-040 -- a valid number, an Event -- in two looks alike
+(MEASURED take 125, the stand-in reader). Two agreeing reads of a still card are
+not independent: the vote of landmine 65 removes noise, not a glint that sits on
+the 6. The card's name does not: a read is refused when the words name a card
+one digit from it and not its own. Refused, never corrected -- a name in an
+effect's text is not the card's. Using the name the other way, to accept on one
+read, would have confirmed 680 of 64,428 one-digit misreads (318 by the true
+card's own words, 362 by a shared name; MEASURED over the catalogue).
+
+**237. A stand-in recogniser has to be the same kind of reader.** ML Kit runs
+only on the phone. Tesseract, a document reader, found 1 of 15 numbers in the
+whole view -- it missed the clean Shanks Leader -- and would have said the
+approach cannot work. RapidOCR, a camera-text detector and reader like ML Kit,
+found 7 with no help and 12 with the looks. A proxy measures only what it shares
+with the thing it stands in for; say which, and label the result INFERRED.
+
+**238. `video.play()` on a canvas's stream never settles in headless
+Chromium.** The look's scanner steps hung ten minutes on it (take 125) and
+were killed with nothing in the log. The look now hands the app the stream as
+its camera (getUserMedia) and lets the app's own path play it; any await on a
+media promise in a harness is raced against a timeout.
+
+**239. A file in Documents is the install's that made it.** Android's shared
+storage gives each file to the install that created it; an uninstall leaves
+the file and takes the ownership, and the next install may neither write over
+it nor read it (`open failed: EACCES`). The sideload install's
+`Documents/OPTCGHub/backup-latest.json` outlived the switch to the Play build,
+and every backup from then on failed at its first write -- the dated copy
+never reached -- with the reason thrown away: More said "Failed" and nothing
+said why (the owner's screenshot, take 121, 29 Sept; take 115 had asked the
+question, INFERRED). A file the app keeps in shared storage is written under a
+name this install owns -- a new one made when the old name is refused, and
+kept -- and a write that fails keeps its reason. Take 125; smoke plants the
+refusal with Android's own words, and take 123's build fails it.
 
 **240. A picture hashed once is never fetched again.** The hash step fetches
 the printings it has never hashed and the misses; a printing with a hash is

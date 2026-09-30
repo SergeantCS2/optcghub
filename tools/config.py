@@ -40,7 +40,9 @@ MANIFEST = os.path.join(ROOT, "catalog", "manifest.json")
 # so a trailing \b never matches and a $ anchor never matches. The take-4 rig
 # carried the anchored form and MEASURED 3% read; the same crops with this form
 # read 53%. It was the instrument that was broken, not the idea.
-CODE_RE = r"(OP|ST|EB|PRB|LT|P)\d{0,2}-\d{3}"
+# Take 125: the app's form (src/scan.js) -- a lost dash is put back where two set
+# digits and three card digits make the number; a promo keeps its dash.
+CODE_RE = r"(?:OP|ST|EB|PRB|LT)\d{2}-?\d{3}|P-\d{3}"
 
 # A read that is not a real card number is a NO read, never a wrong one. The
 # catalogue knows all 2,825 valid numbers, so this check is free and it cut

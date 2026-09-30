@@ -696,28 +696,62 @@ if (puppeteer) {
      /rgb\(245, 203, 92\)/.test(wide.headColour), wide.headColour);   // take 118: the gold as text
   await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
 
-  /* ---- take 10: the scanner's pixel stages, in a real canvas ------------
-     Everything but the camera. A synthetic frame with a card-shaped bright
-     quad, an INJECTED recogniser returning exactly what take 7 measured ML Kit
-     and Tesseract return, and the committed star template. */
+  /* ---- take 10: the scanner's pixel stages, in a real canvas; rebuilt take 125 ----
+     Everything but the camera: synthetic frames, the committed star template and an
+     INJECTED recogniser that answers as the ML Kit plugin does -- { text, lines: [{ text,
+     box }] }, each box in the picture it was handed (the 8.2.1 definitions). A card on a
+     dark table, 280 x 391 at (180, 40) in 640 x 480: its number's line where CODE_AT puts it. */
   const scan = await page.evaluate(async () => {
-    const V = window.VAULT, SC = V.scan, out = {};
-    const injected = [];
+    const V = window.VAULT, SC = V.scan, out = {}, A = SC.CODE_AT;
+    const handed = []; let answer = () => [];
     const realOcr = SC.PLATFORM.ocr;
-    SC.PLATFORM.ocr = async c => { injected.push(c.width + 'x' + c.height); return 'SP EB03-024 SR 4'; };
+    SC.PLATFORM.ocr = async c => { handed.push(c); const lines = answer(c); return { text: lines.map(l => l.text).join('\n'), lines }; };
     const mk = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h;
                                  const g = c.getContext('2d'); draw(g); return c; };
-    const card = mk(640, 480, g => { g.fillStyle = '#000'; g.fillRect(0, 0, 640, 480);
-                                     g.fillStyle = '#eee'; g.fillRect(180, 40, 280, 391); });
-    const r1 = await SC.identifyFrame(card, 640, 480, {});
-    out.card = { stage: r1.stage, number: r1.number, face: r1.face, crop: injected[0] };
-    out.gate = V.resolve(r1.number || 'x', { face: r1.face });
-    out.gate = { verdict: out.gate.verdict, treat: out.gate.pick && out.gate.pick.treat };
-    const dark = mk(640, 480, g => { g.fillStyle = '#111'; g.fillRect(0, 0, 640, 480); });
-    out.dark = (await SC.identifyFrame(dark, 640, 480, {})).stage;
-    const tl = mk(640, 480, g => { g.fillStyle = '#000'; g.fillRect(0, 0, 640, 480);
-                                   g.fillStyle = '#eee'; g.fillRect(100, 40, 440, 400); });
-    out.toploader = (await SC.identifyFrame(tl, 640, 480, {})).stage;
+    const table = (g, x, y, w, h) => { g.fillStyle = '#000'; g.fillRect(0, 0, 640, 480); g.fillStyle = '#eee'; g.fillRect(x, y, w, h); };
+    const card = mk(640, 480, g => table(g, 180, 40, 280, 391));
+    const whole = { x: 0, y: 0, w: 640, h: 480 };
+    const line = (text, cx, cy, w = 60, h = 8) => ({ text, box: { x: cx - w / 2, y: cy - h / 2, w, h } });
+    const onCard = text => line(text, 180 + A.x * 280, 40 + A.y * 391);
+    const run = async (src, look, lines) => { answer = typeof lines === 'function' ? lines : () => lines; handed.length = 0;
+      const r = await SC.identifyFrame(src, whole, look); return { stage: r.stage, number: r.number, face: r.face, card: r.card ? Math.round(r.card.x * 640) : null,   // the outline as fractions of the view
+        numbers: r.numbers, handed: handed.map(c => c.width + 'x' + c.height), full: r.full ? r.full.width + 'x' + r.full.height : null }; };
+    out.card = await run(card, SC.LOOKS[0], [line('Nefeltari Vivi', 320, 380, 120, 12), onCard('SP EB03-024 SR 4')]);
+    const g0 = V.resolve(out.card.number || 'x', { face: out.card.face });
+    out.gate = { verdict: g0.verdict, treat: g0.pick && g0.pick.treat };
+    out.neighbour = await run(card, SC.LOOKS[0], [line('OP14-040 L 4', 400, 30)]);
+    out.neighbourLeft = await run(card, SC.LOOKS[0], [line('OP14-040 L 4', 60, 412)]);
+    out.neighbourCtl = await run(card, SC.LOOKS[0], [line('OP14-040 L 4', 400, 300)]);
+    out.several = await run(card, SC.LOOKS[0], [onCard('EB03-024'), line('OP14-040', 560, 300)]);
+    out.empty = await run(mk(640, 480, g => { g.fillStyle = '#111'; g.fillRect(0, 0, 640, 480); }), SC.LOOKS[0], []);
+    out.words = await run(card, SC.LOOKS[0], [line('Nefeltari Vivi', 320, 380, 120, 12)]);
+    /* the outline is believed only where the number sits on it: the same card, its number read mid-card */
+    out.astray = await run(card, SC.LOOKS[0], [line('EB03-024', 320, 240)]);
+    /* take 10 refused a toploader (landmine 14); its number is read now, and its outline is not believed */
+    const tl = mk(640, 480, g => { table(g, 100, 40, 440, 400); g.fillStyle = '#bbb'; g.fillRect(150, 60, 280, 370); });
+    out.toploader = await run(tl, SC.LOOKS[0], [line('EB03-024', 150 + A.x * 280, 60 + A.y * 370)]);
+    /* the near look: the number's corner at twice the size, its place mapped back onto the view */
+    const P = SC.LOOKS[1].part, Z = SC.LOOKS[1].zoom;
+    out.near = await run(card, SC.LOOKS[1], c => [line('EB03-024', (180 + A.x * 280 - P.x * 640) * Z, (40 + A.y * 391 - P.y * 480) * Z, 120, 16)]);
+    out.nearCtl = await run(card, SC.LOOKS[1], c => [line('EB03-024', 180 + A.x * 280, 40 + A.y * 391, 120, 16)]);   // the view's place, not the look's: no outline may be believed
+    /* the glare look: grey, and local -- low-contrast print beside a shine gains what a whole-picture stretch cannot give it */
+    /* a dim card face (a slow gradient, 40 to 72) with print 10 levels above it, and beside it a shine at 250 or more face */
+    const face = shine => mk(256, 128, g => { for (let x = 0; x < 256; x++) { const v = x >= 128 && shine ? 250 : 40 + ((x & 127) >> 2); g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(x, 0, 1, 128); }
+      g.fillStyle = 'rgb(255,255,255)'; g.globalAlpha = 0.05; for (let x = 8; x < 120; x += 16) g.fillRect(x, 40, 8, 48); g.globalAlpha = 1; });
+    const mean = (c, x0, y0, w, h) => { const d = c.getContext('2d').getImageData(x0, y0, w, h).data; let t = 0; for (let i = 0; i < d.length; i += 4) t += d[i]; return t / (d.length / 4); };
+    const print = c => mean(c, 24, 50, 8, 30) - mean(c, 24, 5, 8, 30);   // a bar of print against the face above it, same columns
+    const range = c => { const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let lo = 255, hi = 0; for (let i = 0; i < d.length; i += 4) { lo = Math.min(lo, d[i]); hi = Math.max(hi, d[i]); } return hi - lo; };
+    const spread = (c, x0, x1) => { const d = c.getContext('2d').getImageData(x0, 0, x1 - x0, c.height).data; let lo = 255, hi = 0, grey = true;
+      for (let i = 0; i < d.length; i += 4) { lo = Math.min(lo, d[i]); hi = Math.max(hi, d[i]); if (d[i] !== d[i + 1] || d[i] !== d[i + 2]) grey = false; } return { spread: hi - lo, grey }; };
+    const eq = SC.equalise(face(true)), eqDim = SC.equalise(face(false));
+    /* take 10's whole-picture stretch: the print's step scaled by 255 over the picture's own range */
+    out.glare = { clahe: Math.round(print(eq)), claheNoShine: Math.round(print(eqDim)), grey: spread(eq, 0, 256).grey,
+                  stretch: Math.round(print(face(true)) * 255 / range(face(true))), stretchNoShine: Math.round(print(face(false)) * 255 / range(face(false))),
+                  flat: spread(SC.equalise(mk(64, 64, g => { g.fillStyle = '#777'; g.fillRect(0, 0, 64, 64); })), 0, 64).spread };
+    out.glareLook = await run(card, SC.LOOKS[2], []);
+    out.glareGrey = handed.length ? spread(handed[0], 0, handed[0].width).grey : null;
+    /* the view: what object-fit: cover shows of the frame -- the Fold's portrait frame in the guide, and a landscape one */
+    out.view = [SC.viewRect(1080, 1920, 300, 440), SC.viewRect(1920, 1080, 300, 440)].map(r => [r.x, r.y, r.w, r.h].map(Math.round).join(','));
     SC.PLATFORM.ocr = realOcr;
     const T = V.CAT.star;
     const self = mk(T.w, T.h, g => { const im = g.createImageData(T.w, T.h);
@@ -725,26 +759,73 @@ if (puppeteer) {
         im.data[i*4] = im.data[i*4+1] = im.data[i*4+2] = v; im.data[i*4+3] = 255; }
       g.putImageData(im, 0, 0); });
     out.selfScore = SC.starScore(self);
+    /* take 125 dropped take 10's contrast stretch before the star: the same patch stretched to 0..255 scores the same */
+    const stretched = mk(T.w, T.h, g => { g.drawImage(self, 0, 0); const im = g.getImageData(0, 0, T.w, T.h), d = im.data; let lo = 255, hi = 0;
+      for (let i = 0; i < d.length; i += 4) { lo = Math.min(lo, d[i]); hi = Math.max(hi, d[i]); }
+      for (let i = 0; i < d.length; i += 4) d[i] = d[i + 1] = d[i + 2] = (d[i] - lo) * 255 / (hi - lo); g.putImageData(im, 0, 0); });
+    out.stretchedScore = SC.starScore(stretched);
     const flat = mk(T.w, T.h, g => { g.fillStyle = '#888'; g.fillRect(0, 0, T.w, T.h); });
     out.flatScore = SC.starScore(flat);
     out.threshold = T.threshold;
     out.hasOcr = SC.PLATFORM.hasOcr();
     return out;
   });
-  ok('scanner: a card-shaped bright quad is detected', scan.card.stage === 'read', scan.card.stage);
-  ok('scanner: the crop handed to OCR is the upscaled code strip',
-     /^\d{3}x1\d\d$/.test(scan.card.crop || ''), scan.card.crop);
-  ok('scanner: the injected read resolves to EB03-024', scan.card.number === 'EB03-024');
-  ok('scanner: the SP badge in the text sets face=sp', scan.card.face === 'sp');
-  ok('scanner: the gate auto-accepts the SP', scan.gate.verdict === 'auto' && scan.gate.treat === 'sp',
-     JSON.stringify(scan.gate));
-  ok('scanner: an empty frame is no-card, not a guess', scan.dark === 'no-card', scan.dark);
-  ok('scanner: a toploader-shaped quad is rejected (landmine 14)',
-     scan.toploader === 'no-card', scan.toploader);
+  ok('scanner: the whole view goes to the recogniser, not a crop cut from an outline', scan.card.handed[0] === '640x480', JSON.stringify(scan.card.handed));
+  ok('scanner: the number is picked out of the lines read, EB03-024, SP from its badge', scan.card.stage === 'read' && scan.card.number === 'EB03-024' && scan.card.face === 'sp', JSON.stringify(scan.card));
+  ok('scanner: the gate auto-accepts the SP', scan.gate.verdict === 'auto' && scan.gate.treat === 'sp', JSON.stringify(scan.gate));
+  ok('scanner: the outline is believed where the number sits on it, and the photo is the card warped', scan.card.card === 180 && scan.card.full === '500x700', JSON.stringify(scan.card));
+  ok('scanner: a number in the view\'s top quarter is a neighbour\'s, and is not read', scan.neighbour.stage === 'no-read', JSON.stringify(scan.neighbour));
+  ok('scanner: ...nor one in its left quarter', scan.neighbourLeft.stage === 'no-read', JSON.stringify(scan.neighbourLeft));
+  ok('scanner: ...control: the same number below and right of them is read', scan.neighbourCtl.stage === 'read' && scan.neighbourCtl.number === 'OP14-040', JSON.stringify(scan.neighbourCtl));
+  ok('scanner: two numbers on cards in view are several, never a guess', scan.several.stage === 'several' && scan.several.numbers.length === 2, JSON.stringify(scan.several));
+  ok('scanner: an empty frame is no text, not a guess', scan.empty.stage === 'no-text', JSON.stringify(scan.empty));
+  ok('scanner: words without a number are no read', scan.words.stage === 'no-read', JSON.stringify(scan.words));
+  ok('scanner: an outline the number does not sit on is not believed -- no star looked for, the photo the view at a card\'s shape',
+     scan.astray.stage === 'read' && scan.astray.card === null && scan.astray.face === null && scan.astray.full === '500x700', JSON.stringify(scan.astray));
+  ok('scanner: a card in a toploader is read (take 10 refused it, landmine 14); its outline is not believed',
+     scan.toploader.stage === 'read' && scan.toploader.number === 'EB03-024' && scan.toploader.card === null, JSON.stringify(scan.toploader));
+  ok('scanner: the near look hands over the number\'s corner at twice the size, and maps its place back (the outline believed)',
+     scan.near.handed[0] === `${Math.round(0.7 * 640 * 2)}x${Math.round(0.5 * 480 * 2)}` && scan.near.stage === 'read' && scan.near.card === 180, JSON.stringify(scan.near));
+  ok('scanner: ...control: a place not mapped back finds no outline', scan.nearCtl.stage === 'read' && scan.nearCtl.card === null, JSON.stringify(scan.nearCtl));
+  ok('scanner: the glare look is grey and local -- faint print keeps its contrast with a shine beside it (the look\'s CLAHE matched OpenCV\'s to 1-2 levels, HANDOFF take 125)',
+     scan.glare.grey && scan.glareGrey === true && scan.glare.clahe >= 0.8 * scan.glare.claheNoShine && scan.glare.clahe > scan.glare.stretch && scan.glareLook.handed[0] === '640x480', JSON.stringify({ glare: scan.glare, grey: scan.glareGrey }));
+  ok('scanner: ...control: take 10\'s whole-picture stretch loses most of it to the shine', scan.glare.stretch <= 0.3 * scan.glare.stretchNoShine, JSON.stringify(scan.glare));
+  ok('scanner: ...control: a flat patch stays flat', scan.glare.flat <= 2, String(scan.glare.flat));
+  ok('scanner: the view is the middle of the frame the guide shows (object-fit: cover)', scan.view[0] === '0,168,1080,1584' && scan.view[1] === '592,0,736,1080', JSON.stringify(scan.view));
   ok('star: the template recognises itself', scan.selfScore > 0.95, String(scan.selfScore));
+  ok('star: a patch stretched to 0..255 scores as it did unstretched (the stretch take 125 dropped was a no-op)', Math.abs(scan.stretchedScore - scan.selfScore) < 0.01, `${scan.stretchedScore} vs ${scan.selfScore}`);
   ok('star: a flat patch scores below threshold', scan.flatScore < scan.threshold,
      `${scan.flatScore} vs ${scan.threshold}`);
   ok('scanner: no recogniser in a browser, and it knows', scan.hasOcr === false);
+
+  /* take 125: the live loop end to end -- a card left in view is counted once (landmine 16: take 10's
+     800 ms cooldown was never set, and the loop reset its vote after every decision), and counted
+     again once it has left the view and come back */
+  const loop = await page.evaluate(async () => {
+    const V = window.VAULT, SC = V.scan, B = V.BATCH, A = SC.CODE_AT;
+    const one = [...V.CAT.byNum.entries()].find(([n, l]) => l.length === 1 && /^(OP|ST|EB)\d{2}-\d{3}$/.test(n))[0];
+    const kept = B.rows.slice(), realOcr = SC.PLATFORM.ocr, realHas = SC.PLATFORM.hasOcr;
+    const v = document.createElement('canvas'); v.width = 640; v.height = 480; v.style.cssText = 'position:fixed;left:0;top:0;width:320px;height:240px;visibility:hidden';
+    const g = v.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, 640, 480); g.fillStyle = '#eee'; g.fillRect(180, 40, 280, 391);
+    document.body.appendChild(v); v.videoWidth = 640; v.videoHeight = 480;
+    let inView = true;
+    SC.PLATFORM.hasOcr = () => true;
+    SC.PLATFORM.ocr = async c => { const lines = inView ? [{ text: one, box: { x: 180 + A.x * 280 - 30, y: 40 + A.y * 391 - 4, w: 60, h: 8 } }] : []; return { text: lines.map(l => l.text).join('\n'), lines }; };
+    B.rows.length = 0; const counts = [], wasRunning = SC.SCAN.running;
+    /* the Scan screen closed: a capture that finishes then adds nothing (take 125's audit) */
+    SC.SCAN.running = false; for (let i = 0; i < 3; i++) await SC.captureAndIdentify(v); const closed = B.rows.length;
+    SC.SCAN.running = true;   // the screen open, as startCamera leaves it
+    for (let i = 0; i < 8; i++) { await SC.captureAndIdentify(v); counts.push(B.rows.length); }
+    inView = false; for (let i = 0; i < 3; i++) { await SC.captureAndIdentify(v); counts.push(B.rows.length); }
+    inView = true; for (let i = 0; i < 2; i++) { await SC.captureAndIdentify(v); counts.push(B.rows.length); }
+    SC.SCAN.running = wasRunning; SC.SCAN.voter.reset();
+    SC.PLATFORM.ocr = realOcr; SC.PLATFORM.hasOcr = realHas; v.remove();
+    B.rows.length = 0; B.rows.push(...kept); B.save();
+    return { one, counts, closed };
+  });
+  ok('scanner loop: a card left in view is counted once, however long it stays (landmine 16)', loop.counts.slice(0, 8).join() === '0,1,1,1,1,1,1,1', JSON.stringify(loop));
+  ok('scanner loop: ...and counted again once it has left the view for three captures and come back', loop.counts.slice(8).join() === '1,1,1,1,2', JSON.stringify(loop));
+  ok('scanner loop: a capture that finishes after the Scan screen closed adds nothing (it would start the camera again behind another screen)', loop.closed === 0, JSON.stringify(loop));
 
   /* take 11: the filter sheet's apply button must be reachable without a
      scroll, or a collector with sixty sets never finds it. */

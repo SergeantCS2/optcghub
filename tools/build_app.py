@@ -165,11 +165,13 @@ def build(verbose=True):
     js = m.group(1)
     html = src[:m.start()] + '<script src="app.js"></script>' + src[m.end():]
     # take 122: the Sim's engine and opponent are their own file (src/sim.js), put where
-    # the source names them -- one script at runtime, one module to read and review
-    slot = re.search(r"/\* __SIM__[^*]*\*/\n", js)
-    if not slot or js.count("__SIM__") != 1:
-        raise SystemExit("build_app: src/app.html has no single __SIM__ slot for src/sim.js")
-    js = js[:slot.start()] + open(os.path.join(ROOT, "src", "sim.js"), encoding="utf-8").read() + js[slot.end():]
+    # the source names them -- one script at runtime, one module to read and review;
+    # take 125: the scanner's stages the same way (src/scan.js)
+    for name, module in (("__SIM__", "sim.js"), ("__SCAN__", "scan.js")):
+        slot = re.search(r"/\* " + name + r"[^*]*\*/\n", js)
+        if not slot or js.count(name) != 1:
+            raise SystemExit(f"build_app: src/app.html has no single {name} slot for src/{module}")
+        js = js[:slot.start()] + open(os.path.join(ROOT, "src", module), encoding="utf-8").read() + js[slot.end():]
     # take 122: the rules digest the Rules sheet searches and the Sim cites, built in so
     # the sheet works offline and on a catalogue synced from another take
     import rules as _rules

@@ -117,10 +117,25 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   japanese ... a black border" -- every DON!! card on the table reads ドン!!
   (`g-donjp`, the icon's own strokes) in a black frame; and "make it more
   human" -- a line's mark says who plays it ("Not checked yet", "Yours to
-  play", nothing on a proven line). **Take 125 is another session's** (PR
-  #50: the scanner reads the number, backups after the switch to Play), open
-  alongside this one; its landmines are 233-239, this take's 240-242.
-  Whichever merges second takes `main` in.
+  play", nothing on a proven line). Take 125, another session's, was open
+  alongside it and merged first (PR #50); this take took `main` in. Its
+  landmines are 233-239, this take's 240-242.
+
+- **Take 125 -- the scanner reads the number where the recogniser finds it**
+  (AGENDA A2's take-125 section; HANDOFF take 125). Take 123's card outline
+  was the whole frame on 14 of the owner's 15 photographs and its stages read
+  0 of them (landmine 233); the whole view now goes to ML Kit, the number is
+  picked out of its lines on a card upright in the look and in the view and
+  not contradicted by its own name, through three looks in turn (cards are
+  scanned upright), and the number
+  decided is held while it stays in view (landmines 233-238). 23 of 29 of the
+  owner's upright frames right, 0 wrong, with a camera-text reader standing in for ML
+  Kit. The stages are `src/scan.js`. It also mends the backups: after the
+  switch to Play every backup failed on a file the uninstalled sideload made
+  (landmine 239); each file is now written under a name this install owns, and
+  a failure keeps its reason. It carries take 124, merged into its
+  branch at the owner's word. **Next, the owner's:** a scan on the Fold and the
+  HANDOFF's questions. **Yours after it:** the printing from the picture (A2).
 
 - **Take 124 -- the table** (AGENDA A23; HANDOFF take 124). The owner handed
   the Sim's UI pass to the session. An audit of take 123 came first: a
@@ -370,6 +385,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 125" and begin with PROTOCOL §0.
+Say "take 126" and begin with PROTOCOL §0.
 
 ---
