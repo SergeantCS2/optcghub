@@ -100,7 +100,7 @@ def check_docs_complete():
     REQUIRED = ["AGENDA.md", "HANDOFF.md", "LANDMINES.md", "PROTOCOL.md",
                 "PROVISION.md", "ROADMAP.md", "RULES.md", "RUNBOOK.md",
                 "RUNBOOK-play.md", "DECISIONS-OPEN.md", "PLAY-LISTING.md",
-                "V1-STATE.md", "NEW-SESSION-PROMPT.md"]
+                "V1-STATE.md", "NEW-SESSION-PROMPT.md", "SIM-UI.md"]   # take 123: the Sim's contract with the UI pass
     for fn in REQUIRED:
         path = os.path.join(DOCS, fn)
         if not os.path.exists(path):
@@ -226,7 +226,7 @@ def check_icon_characters():
     halves, neither an emoji: the take-108 icons it removed, as escapes, passed);
     and the times sign as a button's whole face -- a remove drawn as a character
     -- is refused, while the times of a count stays."""
-    src = read("src", "app.html")
+    src = read("src", "app.html") + read("src", "sim.js") + read("src", "scan.js")   # take 122: the Sim's engine is src/sim.js; take 125: the scanner's stages src/scan.js; both inlined at build
     if not src:
         return
     keep_lines = lambda m: "\n" * m.group(0).count("\n")   # noqa: E731   a comment goes, its lines stay: "near line N" is the source's N
@@ -306,7 +306,7 @@ def check_stale_copy():
         ("carries no character art",             "take 109: the listing never said so, and the app shows card art (A29's correction)"),
         ("no character art, no publisher mark",  "take 109: card art is shown; marks stay out of the name, icon, splash and listing (V1-STATE)"),
     ]
-    files = ["src/app.html", "README.md", "ci/RELEASE.md", "docs/RUNBOOK.md", "docs/RUNBOOK-play.md",
+    files = ["src/app.html", "src/sim.js", "src/scan.js", "README.md", "ci/RELEASE.md", "docs/RUNBOOK.md", "docs/RUNBOOK-play.md",
              # take 109: the present-tense record that carried the old line; the append-only
              # history (HANDOFF, LANDMINES, AGENDA) keeps what it said and is not read here
              "docs/V1-STATE.md", "docs/NEW-SESSION-PROMPT.md", "docs/PROVISION.md", "docs/PLAY-LISTING.md",
@@ -403,6 +403,43 @@ def check_variant_keying():
     js = read("www", "app.js")
     if "byNum" in js and "byId" not in js:
         fail("variant-keying", "the app indexes by number but not by productId")
+
+
+def check_pictures():
+    """Take 126 (landmines 226, 240): the host's "Image Coming Soon" is no card's picture -- checked against the BUILT
+    bundle and the runner's sidecar. No picture hash ships on printings of two or more names (reprints of one card
+    share art under one name; one hash on 22 names was the placeholder, the picture of 22 starter-deck printings for
+    as long as they had been hashed); none ships within PH_NEAR bits of a placeholder hash on file; and a printing the
+    runner last saw serve the placeholder ships no hash, and no URL but the second host's."""
+    b = os.path.join(ROOT, "www", "bundle", "catalog.json")
+    if not os.path.exists(b):
+        return note("bundle not built — pictures check skipped")
+    import hashes as H
+    cat = json.load(open(b)); ci = cat["cols"].index
+    sealed, pid, name, img, hsh = ci("sealed"), ci("id"), ci("name"), ci("img"), ci("hash")
+    sp = os.path.join(ROOT, "catalog", "hashes.json")      # the probes' copies carry their own
+    raw = json.load(open(sp)) if os.path.exists(sp) else {}
+    ph, alt = H.ph_state(raw), set(str(x) for x in raw.get("alt", []))
+    cards = [r for r in cat["rows"] if not r[sealed] and r[hsh] is not None]
+    by = {}
+    for r in cards:
+        by.setdefault(r[hsh], set()).add(r[name])
+    shared = [sorted(ns) for ns in by.values() if len(ns) > 1]
+    if shared:
+        fail("pictures", f"{len(shared)} picture hash(es) ship on printings of two or more names -- the host's "
+                         f"placeholder, no card's picture (landmines 226, 240): {', '.join(shared[0][:4])}")
+    near = [r[pid] for r in cards if H.near_placeholder(H.from_sqlite(r[hsh]), ph["hashes"])]
+    if near:
+        fail("pictures", f"{len(near)} printing(s) ship a hash within {H.PH_NEAR} bits of a placeholder hash on file "
+                         f"(landmine 240): {near[:5]}")
+    ids = ph["cards"] | ph["sealed"]
+    bad = [r[pid] for r in cat["rows"] if str(r[pid]) in ids
+           and (r[hsh] is not None or (r[img] and not (str(r[pid]) in alt and r[img] == H.alt_url(r[pid]))))]
+    if bad:
+        fail("pictures", f"{len(bad)} printing(s) the runner saw serve the host's placeholder ship its picture or its "
+                         f"hash (landmine 240): {bad[:5]}")
+    note(f"pictures: {len(ids)} printing(s) the host serves its placeholder for ship none; "
+         f"{len(ph['hashes'])} placeholder hash(es) on file")
 
 
 def check_confidence_gate():
@@ -555,6 +592,31 @@ def check_scrub():
         fail("scrub", r.stdout.strip())
 
 
+def check_sim():
+    """Take 122 (A23). The Sim proves itself, on the SHIPPED app: every card proof passes on every printing it
+    binds (tools/cardproof.mjs; the build's binding and the runner's must agree); self-play's sample finds no
+    violation -- the app's opponent, chaos with refused moves that must change nothing, and two apps kept in step
+    by moves alone -- and the auditor names every fault planted in it. Watched failing at take 122: the proofs on
+    take 121's app (123 of 200 scenarios), the auditor's eight plants, and this check's own probe below; the review's
+    self-play sweep (7,200 games) found three more faults in the engine, each now a check. Take 124 (the owner: "Test all
+    starter decks and as many random/arbitrary decks (that are still legal), after every turn ends audit all moves against
+    the rules"): the sample deals ready-made pairings and random legal decks in turn, and the rulebook
+    (tools/lib/rulebook.mjs) holds every move to the rules' own model of the game, the card's words check every scripted
+    step to its text; their plants run in the selftest, each named."""
+    if not os.path.exists(os.path.join(ROOT, "www", "app.js")):
+        return note("www/ not built -- the Sim's proofs and self-play were skipped")
+    for args, what in ((["tools/cardproof.mjs"], "card proofs"),
+                       (["tools/selfplay.mjs", "--games", "34", "--policy", "both"], "self-play"),
+                       (["tools/selfplay.mjs", "--games", "8", "--policy", "both", "--two-apps"], "two-app self-play"),
+                       (["tools/selfplay.mjs", "--selftest"], "the auditor's planted faults")):
+        r = subprocess.run(["node"] + args, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=900)
+        last = (r.stdout.strip().splitlines() or ["(no output)"])
+        if r.returncode:
+            fail("sim", f"{what} failed:\n  " + "\n  ".join(l for l in last if "FAIL" in l or "VIOLATION" in l or "NOT caught" in l)[:1500] + "\n  " + last[-1])
+        else:
+            note(f"{what}: {next((l.strip() for l in last if ' games (' in l), last[-1].strip())}")   # self-play's summary line, not its card tally
+
+
 def check_selftests():
     """Run the guards' own negative controls. A gate that trusts other guards
     without watching them fail is a gate with a hole in it."""
@@ -588,6 +650,10 @@ def check_selftests():
                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     if r.returncode:
         fail("selftest", "stockdecks.py guards did not all pass:\n" + r.stdout)
+    for tool in ("rules.py", "cards.py"):                    # take 122: the rules digest and the card proofs' binding
+        r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", tool), "--selftest"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        if r.returncode:
+            fail("selftest", f"{tool} negative controls did not all fire:\n" + r.stdout)
     r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "effects.py"), "--selftest"],
                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     if r.returncode:
@@ -658,7 +724,9 @@ def selftest():
             check_docs_current(n); check_handoff(n); check_agenda()
             check_landmine_citations(); check_secrets(); check_render_receipt()
             check_workflow_copies(); check_offline(provision_hosts()); check_icon_characters(); check_stale_copy()
-            check_ads()
+            check_ads(); check_pictures()
+            if cat == "sim":
+                check_sim()
             fired = any(f.startswith(cat + ":") for f in FAILS) if cat else bool(FAILS)
             stray = [f for f in FAILS if cat and not f.startswith(cat + ":")]
         finally:
@@ -672,6 +740,13 @@ def selftest():
     # take 102 (landmine 139): the control of the controls. An unmutated copy must fire
     # NOTHING, else every "guard fires" below is the copy's own defect, not the guard.
     probe("control: an unmutated tree fires nothing", lambda t: None, expect=False)
+    # take 122: the Sim's proofs and self-play -- clean on the copy, and a proof that no longer holds is caught
+    probe("control: the Sim's proofs and self-play pass on the copy (take 122)", lambda t: None, "sim", expect=False)
+    def wrong_proof(t):
+        f = os.path.join(t, "tools", "cards", "ST01-007.json"); d = json.load(open(f, encoding="utf-8"))
+        d["scenarios"][0]["expect"]["p0.leader.don"] = 2          # Nami gives ONE rested DON!!
+        json.dump(d, open(f, "w", encoding="utf-8"))
+    probe("a card proof whose card does something else (take 122)", wrong_proof, "sim")
     # the mutation is a pattern, not the literal "take 2.*" it was from take 2 to 101: that
     # literal matched nothing after take 2, and the probe "fired" on the copy's own
     # failure instead (take 102, landmine 139)
@@ -730,6 +805,33 @@ def selftest():
         cat["rows"][0][ci] = "https://evil.example.com/product/1.jpg"
         json.dump(cat, open(b, "w"))
     probe("undeclared host in the bundle's img column (take 100)", bad_host, "offline")
+
+    # take 126 (landmines 226, 240): the host's placeholder, planted in the bundle and the sidecar a copy carries
+    def pics(t, same=False, near=None, served=False, blank=False):
+        b = os.path.join(t, "www", "bundle", "catalog.json"); cat = json.load(open(b)); ci = cat["cols"].index
+        import hashes as H
+        rows = [r for r in cat["rows"] if not r[ci("sealed")] and r[ci("hash")] is not None and r[ci("img")]]
+        hs = [H.from_sqlite(r[ci("hash")]) for r in rows]
+        # a card far from every other (15 bits and more), so the control's 7 bits cannot land near a reprint of it
+        a = next(r for k, r in enumerate(rows) if all(H.hamming(hs[k], x) >= 15 for j, x in enumerate(hs) if j != k))
+        o = next(r for r in rows if r[ci("name")] != a[ci("name")])
+        side = {"placeholder": {"hashes": [], "cards": [], "sealed": []}}
+        if same:
+            o[ci("hash")] = a[ci("hash")]                                   # one hash on two names
+        if near is not None:
+            side["placeholder"]["hashes"] = [H.to_sqlite(H.from_sqlite(a[ci("hash")]) ^ near)]
+        if served or blank:
+            side["placeholder"]["cards"] = [str(a[ci("id")])]
+            if blank:
+                a[ci("img")] = a[ci("hash")] = None                        # shipped as the build ships it
+        json.dump(cat, open(b, "w"))
+        os.makedirs(os.path.join(t, "catalog"), exist_ok=True)
+        json.dump(side, open(os.path.join(t, "catalog", "hashes.json"), "w"))
+    probe("pictures: one hash shipped on two names -- take 124's catalogue, 22 printings (take 126)", lambda t: pics(t, same=True), "pictures")
+    probe("pictures: a shipped hash 3 bits from a placeholder hash on file (take 126)", lambda t: pics(t, near=0b111), "pictures")
+    probe("pictures: a printing the runner saw serve the placeholder ships its URL and hash (take 126)", lambda t: pics(t, served=True), "pictures")
+    probe("control: a hash 7 bits from the placeholder's, and its printing shipped with no picture, pass (take 126)",
+          lambda t: pics(t, near=0x7F, blank=True), expect=False)
 
     # take 121 (landmines 209, 210): the synced ads block reaches every install
     def ads(t, live=None, consent=False, **top):
@@ -801,11 +903,13 @@ if __name__ == "__main__":
     check_no_condition_multiplier()
     check_offline(provision_hosts())
     check_variant_keying()
+    check_pictures()
     check_confidence_gate()
     check_catalogue()
     check_harness()
     check_secrets()
     check_render_receipt()
+    check_sim()
     check_scrub()
     check_selftests()
 

@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 121.* Ranked by blocking-ness, not by interest.
+*Current as of take 126.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -15,6 +15,10 @@ each item got where it is; this block is what to do next. (Rewritten at take
 what it handed on is A43.)
 
 **The owner's, gating everything else**
+0. **Take 125, the scanner (A2's take-125 section):** scan your cards on the
+   Fold -- sleeves, toploaders, binders, holo, low light -- and answer the
+   HANDOFF's take-125 questions; photographs of one number's printings side
+   by side are the next take's measurement.
 1. **Merge take 115, then upload Release take-115's AAB** to the production
    track. The app is LIVE on Google Play since 24 Sept 2026
    (`play.google.com/store/apps/details?id=com.optcghub.app`); every merged
@@ -40,7 +44,8 @@ what it handed on is A43.)
    121: the app is worldwide, so it is my next take, below), reproducible builds (a lockfile or pinned versions, and the
    nightly's AAB), a measurement of the app's data folder before any
    automatic-backup rule, and More's "Last backup" line after the
-   sideload-to-Play switch; A41's parts and the source; the take-100 look's
+   sideload-to-Play switch (answered take 125: it could not be written --
+   landmine 239); A41's parts and the source; the take-100 look's
    "tiny bit of work" (which picture, what).
 5. **D22** background stock checks; **D21** local stock for unserved zips;
    **D20** a crowd-report inbox. Each caps a Hunt feature until answered.
@@ -61,6 +66,8 @@ unticked boxes and A43's UI part; the session prompt's section for it says
 what take 115 changed on screen.
 
 **Mine, in order**
+00. **A2, the printing from the picture** (its take-125 section), on the
+   owner's scan results and photographs.
 0. **The consent flow, then D11's units (take 121's follow-on):** UMP before
    `initialize` and before any load, setting `PLATFORM._canRequestAds` from
    its `canRequestAds` (take 121's builds never set it, so they never load a
@@ -77,8 +84,31 @@ what take 115 changed on screen.
    residential IP.
 3. **A41** -- waits on the owner's list of the parts and the source; then
    one take per source, measured on the runner first.
-4. **A23** the sim's tail -- modal effects, ordering, protection, the
-   opponent's hidden choices -- one mechanism per take, when wanted.
+4. **A23, the Sim -- the owner's priority from take 122.** Take 122 (merged,
+   PR #47): the audit's fixes and the whole-Sim review, the rules on v1.2.1
+   with Check for updates, card proofs for ST01 and every ready-made Leader,
+   self-play (two apps included), the wording families, the Rules button.
+   Take 123: the view model and the privacy rule, and `docs/SIM-UI.md`.
+   Take 124: the table -- the UI pass, handed to the session by the owner:
+   the playmat of pictures, the zoom, the full screen, Leave, the icon's card
+   backs in the game's colours (`docs/SIM-UI.md` §8), and the rulebook with
+   random legal decks, whose nine finds in the engine are fixed. Every Sim
+   take now runs that sweep (the owner's rule). Then the owner's fourth word:
+   the table says the next action -- the turn's start, the next move, End
+   turn asking while something is left -- and a by-hand line is never passed
+   by where the rules make it happen (`docs/SIM-UI.md` §8). **Ruled out:**
+   applying a "you may" for the player; Draw and DON!! buttons; asking about
+   DON!! left active. Take 126 (A41): the host's "Image Coming Soon"
+   refused where pictures are fetched, so neither the Sim nor any other
+   screen draws it; on the owner's word mid-take the table draws a card
+   with no picture of its own with another printing's (the table only:
+   landmine 241), every DON!! card reads ドン!! in a black frame, and a
+   line's mark says who plays it. **Ruled out (take 126):** Collect
+   borrowing another printing's picture unlabelled (535 of 1,722 groups
+   hold two illustrations); a Japanese font for ドン!! (drawn as a
+   symbol). Next: the owner's look on the Fold, then the tail --
+   modal effects, ordering, protection, the opponent's hidden choices -- one
+   mechanism per take, each proven through `tools/cards/`.
 5. **A31** Collectr import, the day a real exported file exists.
 6. The standing offer: the release-notes trim.
 
@@ -127,7 +157,7 @@ data legally?
 - **Open:** nothing blocking. Watch TCGCSV's availability — it is one person's
   Patreon-supported service, which is A9.
 
-## A2 — Camera and OCR path on the Fold · **PROVEN ON THE DEVICE take 16** · sleeves/foils/toploaders still to measure
+## A2 — Camera and OCR path on the Fold · **PROVEN ON THE DEVICE take 16** · rebuilt take 125 on the owner's photographs; the Fold's reads and speed still to measure
 
 The one unproven assumption in the entire plan. Everything else is arithmetic.
 
@@ -184,6 +214,38 @@ The one unproven assumption in the entire plan. Everything else is arithmetic.
   analysing every frame (fewer, larger round trips), or write a thin native
   plugin that does detect → crop → OCR entirely on the Android side and returns
   only the string. The second is a day's work and keeps the whole stack.
+
+### Take 125 — the number found by the recogniser (the owner's word: "greatly overhaul the scanning tool")
+
+- **MEASURED:** take 123's stages read 0 of 15 of the owner's photographed
+  frames -- the outline was the whole frame (landmine 233); `lastAccept` never
+  set (landmine 234). The rebuilt stages (`src/scan.js`: the whole view to the
+  recogniser, three looks, the number on an upright card in the view and not
+  contradicted by its name) decide 23 of 29 upright frames right and 0 wrong
+  (the 19 on their side: 0 wrong), with a
+  camera-text reader standing in for ML Kit (INFERRED to carry to ML Kit).
+- **BUILT, not yet on the Fold:** the reads and their speed under ML Kit, the SP badge auto-accepting (Okiku OP01-035's SP read on
+  the stand-in), a card counted once while it stays in view.
+- **Ruled out:** looks turned a quarter each way, for a card on its side (the
+  owner scans upright; on his 29 upright frames they added nothing, and they
+  were the only looks to read a neighbour's number -- landmine 235); the card
+  outline as the gate to the read (0 of 15, landmine
+  233); Tesseract as the stand-in for ML Kit (1 of 15 in the whole view,
+  landmine 237); the card's name as a one-read confirmation (680 of 64,428
+  one-digit misreads would be confirmed, landmine 236); correcting a misread to
+  the named number (an effect's text names other cards); the art hash from a
+  photo as an auto-accept this take (right printing nearest in 5 of 6, but a
+  4 % crop error flips a parallel to its base, and none cleared ≤ 8 / gap 13);
+  a hand-rolled outline finder this take (6 of 10 right; PROTOCOL §3 names
+  OpenCV.js).
+- **Next, the owner's:** scan his cards on the Fold (the HANDOFF's questions),
+  and photographs of printings side by side -- the same number in base,
+  alternate art, manga, SP -- for the next take.
+- **Next, mine:** the printing from the picture -- an outline from the number
+  (or OpenCV.js), the star looked for from the number's line, the art hash
+  against the siblings, each measured on those photographs before anything
+  auto-accepts; then one recogniser per session if the Fold's speed asks for
+  it (the plugin builds one per call).
 
 ## A3 — Stack · DECIDED take 1 · RE-EXAMINED take 11 with the constraints lifted
 
@@ -1447,7 +1509,12 @@ UI-AUDIT's open boxes; they are listed here once so nothing is lost.
    110's family): whether the Play install may overwrite
    `Documents/OPTCGHub/backup-latest.json` (and take 115's
    `backup-before-restore.json`) written by the sideload install. The proof
-   is More's "Last backup" line on the owner's phone.
+   is More's "Last backup" line on the owner's phone. *Answered take 125: it may
+   not.* The owner's More on take 121 said "Last backup: Failed" on every
+   backup; the file belongs to the uninstalled install (landmine 239). Each
+   file the app keeps there is now written under a name this install owns, and
+   a failure keeps its reason (HANDOFF take 125). The Fold's next backup is the
+   proof.
 6. **Which takes reached production** is not recorded after take 101. The
    owner uploads take-115's AAB after the merge (one upload per take,
    landmine 33).
@@ -1577,9 +1644,23 @@ number have no picture at the first host, and the second host serves 1
 719824, new since take 100's 23) and 19 are sealed products; the sidecar
 counts every row without a number as "sealed" (landmine 162's family).
 
+*Take 126:* the missing pictures the app counted as pictures. TCGplayer
+serves one "Image Coming Soon" picture, 200 OK, for 22 card printings and
+one sealed product (PROVEN, every picture fetched 30 Sept); hashed once, it
+stayed their picture, because a hashed id is never fetched again (landmine
+240). The hash step now refuses it -- a card picture that is not
+card-shaped, or any picture within 6 bits of a placeholder hash on file --
+and retries those ids every night with the other misses; the build ships
+them no URL, so every screen draws them as it draws a card with no picture.
+
 **Ruled out:** hosting or caching any image; a source without terms
 the app can cite; shipping a URL the runner has not seen serve; a
-source keyed by card number standing in for a printing.
+source keyed by card number standing in for a printing. *Take 126:* a rule
+in the app to hide the placeholder where it is drawn (the Sim's since take
+124 -- it left the URL, the hash and the counts wrong everywhere else); a
+picture's shape as the test for a sealed product (sixteen real ones are
+landscape); a hash constant for the placeholder (the host can change its
+picture; the hashes on file are learned from it).
 
 ## A40 — The look: the session clicks through and screenshots every change before a take ships · OPENED take 99
 
@@ -1674,7 +1755,10 @@ errors) and named, in his words:
 1. **"Starter decks flood the release page"** — their own section on
    Releases, grouped by release day. → take 97. *(built take 97: a run of
    two or more starter decks on one day is one row with a fold — on
-   Upcoming, Recent and the distributor's list)*
+   Upcoming, Recent and the distributor's list; take 124: known by the set's
+   code, not its name, after TCGCSV renamed every starter deck and the rows
+   came apart — landmine 231. **Ruled out:** the new name's "ST-" prefix as
+   the test, one more wording TCGCSV can change)*
 2. **"NM, LP, MP, HP, DMG don't do anything if they're buttons — they
    shouldn't show on boxes"** — the condition segment on a sealed
    product's sheet; unexplained on a card's. → take 95: hidden on sealed,
@@ -2156,7 +2240,93 @@ in the future, the simulator.
 - **Open:** the tour needs a card for the modes; the icon and splash are
   Collect's palette (fine — the icon is the app, not a mode).
 
-## A23 — An OP TCG simulator · SCOPED take 24 · STEP (1) BOARD take 46 · STEP (2) EFFECTS takes 47–51 · STEP (3) OPPONENT take 55 · PHASE
+## A23 — An OP TCG simulator · SCOPED take 24 · STEP (1) BOARD take 46 · STEP (2) EFFECTS takes 47–51 · STEP (3) OPPONENT take 55 · THE AUDIT AND CARD PROOFS take 122 · PHASE
+
+- **Take 122 — the owner's priority: the engine right, the rules current,
+  every card provable.** The owner: the Sim "has dawdled behind", "extremely
+  buggy" (unlimited cards with ST01 Luffy); a code review, a rules review,
+  and a process that grows until every card works as its text reads; the
+  code and features first, then his own UI/UX pass. Built: the audit's fixes
+  (HANDOFF take 122 has the table; landmines 212-214), the rules digest on
+  Comprehensive Rules **v1.2.1 (28 Aug 2026)** behind a Rules button with
+  search, one entry point for every move (`SIM.act`) with a seeded shuffle
+  and a replayable action list, `SIM.legal()`, the card proofs
+  (`tools/cards/<number>.json`, run by `tools/cardproof.mjs` against the
+  shipped app, bound to each printing's text), and self-play
+  (`tools/selfplay.mjs`, an auditor after every action; `--two-apps` plays
+  two copies of the shipped app that exchange only moves, as two phones
+  will). Mid-take the owner added a Check for updates on the rules, "cards
+  use different wording for the same thing" (`tools/wording.py`: every
+  unscripted line in its family, the near-misses of a running template
+  flagged, every unknown tag spelling listed), and "audit the SIM as a
+  whole": the review of the whole engine and board is HANDOFF take 122's
+  table (landmines 215-222). The measurements are in HANDOFF take 122.
+- **How the corpus grows, from here:** `node tools/cardproof.mjs --worklist`
+  names the ready-made decks' unproven cards; `python3 tools/cards.py --new
+  NUM` scaffolds one; `python3 tools/wording.py` names the wording one
+  template away; a Report from the phone becomes a scenario with
+  `--from-report`; `node tools/selfplay.mjs --games N` is the audit after any
+  engine change (N as large as the change is wide; the gate runs 34 both
+  ways and 8 on two apps).
+- **Ruled out (take 122): proofs keyed on the card number.** A proof holds for
+  the printings whose text it was proven on (AGENTS §3); an errata'd reprint
+  or a parser change reopens it by itself. **Ruled out: a by-hand tray
+  outside any card** (landmine 212) -- a by-hand effect is offered at its
+  card's timing. **Ruled out: a by-hand "apply" for continuous lines** (the
+  review's first sketch for ST08/ST09, landmine 218) -- a continuous effect
+  applied once by hand is a number the board then shows as if it held; the
+  two Leaders were scripted instead, and any other continuous line is shown
+  as the player's to apply, never folded into the power on screen. **Ruled out: the rules' own text in the app** -- the Rules
+  button carries a digest in the app's words with the official section
+  numbers, and links the official PDF (the owner may rule otherwise; D23).
+- **The ready-made decks' Leaders (take 122, after the first push):** every one
+  has a proof -- ten run from their text, seven by hand, held to their timing
+  and their tray. **Ruled out: a proof per card number.** ST03-001 has two
+  texts; a proof binds the printing a deck deals (`cards.py --new NUM --id`),
+  and the errata'd one stays unproven until proven (landmine 222).
+- **Untagged effect sentences** (ST30-001's "-2000 while you have a 7000
+  Character") are not effect lines yet: its own take, since taking them in
+  reopens every proof's text fingerprint.
+- **Take 123 -- ready for the UI pass (done).** `SIM.view(seat)`, the
+  privacy rule ("private things only on that player's turn") kept by the
+  engine -- an unused [Trigger] and the log included (landmine 224) --
+  the board drawn from `view()` and `legal()` only, and
+  `docs/SIM-UI.md`, the contract the owner's UI pass builds against. D18 was
+  brought up to date at take 122. **Ruled out: privacy by the screen** -- a
+  board that hides the other hand with CSS or a curtain still holds it in the
+  page; the view a seat is handed never contains what that seat may not see,
+  so a redesigned board cannot show it by mistake. Then the owner's UI pass.
+- **Take 124 -- the table (the owner handed the Sim's UI pass to the
+  session).** An audit of take 123 first (HANDOFF take 124's table: a battle
+  result that named the app's Life card to the human past the view, the log's
+  "You ends" and engine codes, the app's turn in one tap, a handler that
+  re-derived legality, faces for hand and deck choices, a painter guard that
+  read a list), each fixed with its check. Then the board as a playmat: both
+  halves with the cards' hot-linked pictures, Life, Deck, Trash, Stage and
+  DON!! drawn as the table has them, a tap for a card's moves, targets lit on
+  the table, the effect panel, the zoom, the log, motion, the app's moves one
+  at a time; phones, the Fold's two screens and tablets. The owner, mid-take:
+  the game fills the screen (the mode tabs, the Sim's header and the nav step
+  aside), Leave forfeits and goes back to the app, and the card backs are the
+  app icon's (landmine 30's exception for the icon, extended on his word).
+  **Ruled out (take 124):** privacy by the screen again (a painter redacting
+  `res`): the view carries the result as its seat may see it; a fan of
+  overlapping hand cards (each card keeps a 44 px square of its own, take
+  108); a constant card size (`simFit` solves it from the space). Two of the
+  plan's lines the owner overruled: the header kept over the table (take
+  107's one header stays on every other screen) and the app's own wheel as
+  the card back. The owner again, mid-take: the backs in the game's colours
+  (a deck's blue, a Leader's red, a DON!! card's white in black), the screen
+  used as fully as it can be, and his rule for testing the Sim -- every
+  ready-made deck and random legal decks, every move and every card audited
+  against the rules. The rulebook (`tools/lib/rulebook.mjs`), a second model of
+  the game from the rules, now holds every self-play move to them; with random
+  decks it found nine faults in the engine, each fixed with a check (HANDOFF
+  take 124). **Ruled out (take 124, the rulebook):** auditing only at a turn's
+  end (each move is checked as it is made, and a turn's end is a move); the
+  engine's own `legal()` as the auditor's; Skip on automatic effects
+  (§8-1-3-1). Next: HANDOFF take 124's DEFERRED -- the host's placeholder
+  across the app, drag, sounds, the owner's Fold check -- then the tail.
 
 The owner wants an actual simulator inside Prep & Play, in the future. Scoped
 honestly:

@@ -1,4 +1,4 @@
-# OP TCG Hub — take 121
+# OP TCG Hub — take 126
 
 ## Installing — read this first
 
@@ -17,6 +17,63 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 126:** More cards in the Sim have pictures: a card whose own
+picture TCGplayer doesn't have is shown with the picture of another printing
+of the same card, so every card in the ready-made decks has one now. About
+two dozen cards -- Nami, Jinbe and Kaido from the first starter decks among
+them -- and one sealed product showed TCGplayer's "Image Coming Soon" as if
+it were their picture. The app now spots that picture and never shows it,
+checks those cards again every night, and elsewhere in the app draws them in
+their own colours with their number until the real picture exists. DON!!
+cards in the Sim read ドン!! in a black border, and an effect's note says
+who plays it: nothing when the app plays it, "Not checked yet" when the app
+plays it untested (tap Report if it goes wrong), "Yours to play" when it's
+yours.
+
+**New at take 125:** Scanning is rebuilt. The scanner reads the card's number
+wherever it is in view instead of first looking for the card's outline, so
+foils, sleeves, toploaders, binder pages and cards on light surfaces now scan.
+It ignores the cards beside it, refuses a number the card's own name
+contradicts, picks an SP card's printing from its badge, and counts a card
+left in view only once. Backups work again after a reinstall or the switch to
+Play.
+
+**New at take 124:** The Sim is a real table now. Once a game is dealt it
+fills the screen, and Leave at the top forfeits and takes you back to the
+app. Both sides of the playmat show the cards' pictures, with card backs in
+the game's colours -- blue for the deck, red for Leaders, white for DON!! --
+and your hand uses all the room the screen leaves. Tap a card to see what it
+can do: play, attack, give DON!!, use its ability, or zoom in to read it.
+Targets light up, attacks draw a line, and the app plays its turn one move at
+a time so you can watch. The rules are kept more closely too: an automatic
+effect such as [On Play] always resolves (an "up to" still lets you choose
+none), a [Trigger] you use goes to the trash, and cards an effect looks at go
+back where they were. Made for phones, both Fold screens and tablets. Against
+the app, its Life cards are no longer named when they go to its hand. The
+table tells you what comes next: your turn starts by showing the card you drew
+and the DON!! you got, the bar under your hand says what you can still do --
+play a card, attack, use an ability -- or that it is time to end your turn,
+and End turn asks first if an attack or a card to play is left. An effect the
+app cannot run for you is resolved by hand, never skipped, unless its words
+make it optional. And Releases shows a day's starter decks as one row again,
+after TCGplayer renamed them.
+
+**New at take 123:** Under the hood of the Sim: the board now draws only what
+the player whose turn it is may see -- the other hand, both Lives and both
+decks as counts -- from one view the engine hands it, ready for the Sim's
+redesign. Two people sharing the phone are now Player 1 and Player 2, so
+neither board calls the other player "You". A Life card with [Trigger] that
+its player chooses not to use now goes to hand unseen, as the rules say:
+the log no longer names it. Nothing else about how a game plays changes.
+
+**New at take 122:** The Sim plays by the rules more closely. Once Per Turn
+means once per card, ten ready-made decks' Leaders now use their own
+abilities, and the free Draw and +1 DON!! buttons are gone: an effect the app
+cannot run is played by hand from its card, at its timing, with only the moves
+its words name. A sixth Character trashes one of your five. Each effect says whether a
+test has proven it, with Report for a misfire, and a Rules button searches
+the rules and checks for a newer version.
 
 **New at take 121:** Watching the ad for all-time history (MAX) now opens it;
 before, it gave you a deck save instead. An ad that cannot be shown now says

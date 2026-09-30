@@ -145,15 +145,18 @@ def clean_text(html):
 
 def keywords(text):
     """-> set of keywords the card HAS (line-start), plus counter_event flag."""
+    # take 122: the catalogue runs two effects together on one line ("... this battle. [Trigger] Play this card.");
+    # a timing tag after a sentence's end starts a line here too -- the split effects.py parses with
+    from effects import NEWLINE_TAG, canon_tag
     have = set()
-    for line in clean_text(text).split("\n"):
+    for line in (part for raw in clean_text(text).split("\n") for part in NEWLINE_TAG.split(raw.strip())):
         line = line.strip()
         # strip leading condition/timing brackets in sequence: [DON!! x2] [When Attacking] ...
         while True:
             m = re.match(r"^\[([^\]]+)\]\s*", line)
             if not m:
                 break
-            kw = m.group(1).strip()
+            kw = canon_tag(m.group(1))                     # take 122: "[Activate:Main]" is [Activate: Main] (417 lines)
             base = re.sub(r"\s*x\d+$", " x", kw)          # [DON!! x2] -> "DON!! x"
             if kw in KEYWORD_EFFECTS or kw in TIMINGS:
                 have.add(kw)

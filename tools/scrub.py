@@ -57,7 +57,7 @@ FIXTURES = "tools/fixtures/"   # saved third-party responses: scanned, never rew
 
 
 def files_code(root=ROOT):
-    out = ["src/app.html"]
+    out = ["src/app.html", "src/sim.js", "src/scan.js"]     # take 122: the Sim's engine is its own source file; take 125: the scanner's stages
     for d in ("tools", "ci"):
         for dp, dirs, fs in os.walk(os.path.join(root, d)):
             dirs[:] = sorted(x for x in dirs if x not in ("__pycache__", "node_modules"))

@@ -13,6 +13,7 @@ import os from 'node:os';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
 import vm from 'node:vm';
+import { makeDom, boot } from './lib/appvm.mjs';
 import zlib from 'node:zlib';
 
 const ROOT = path.dirname(path.dirname(new URL(import.meta.url).pathname));
@@ -24,96 +25,23 @@ const ok = (name, cond, extra = '') => {
   else { fail++; console.log(`  FAIL  ${name}  ${extra}`); }
 };
 const section = s => console.log(`\n\u2500\u2500 ${s}`);
+/* take 122: the effects bundle carries by-hand lines beside the scripted ones; the template sections read the scripted ones */
+const scripted = E => Object.fromEntries(Object.entries(E).map(([k, L]) => [k, L.filter(e => !e.hand)]).filter(([, L]) => L.length));
 
-/* ---- a DOM small enough to read, real enough to run the app ------------- */
-function makeDom(html) {
-  const listeners = {};
-  const mk = (tag = 'div') => {
-    const el = {
-      tagName: tag.toUpperCase(), children: [], style: {}, dataset: {},
-      _cls: new Set(), _text: '', _html: '', value: '',
-      classList: {
-        add: (...c) => c.forEach(x => el._cls.add(x)),
-        remove: (...c) => c.forEach(x => el._cls.delete(x)),
-        toggle: (c, on) => on ? el._cls.add(c) : el._cls.delete(c),
-        contains: c => el._cls.has(c)
-      },
-      get className() { return [...el._cls].join(' '); },
-      set className(v) { el._cls = new Set(String(v).split(/\s+/).filter(Boolean)); },
-      get textContent() { return el._text; }, set textContent(v) { el._text = String(v); },
-      get innerHTML() { return el._html; }, set innerHTML(v) { el._html = String(v); },
-      appendChild: c => { el.children.push(c); return c; },
-      addEventListener: (t, f) => { (el._ev ||= {})[t] = f; },
-      removeEventListener: () => {},
-      setAttribute: (k, v) => { el.dataset['attr_' + k] = String(v); }, getAttribute: k => el.dataset['attr_' + k] ?? null,
-      querySelector: () => null, querySelectorAll: () => [],
-      closest: () => null, click: () => {}, focus: () => {}, select: () => {}, remove: () => {},
-      getContext: () => ctx2d, clientWidth: 360, width: 0, height: 0
-    };
-    return el;
-  };
-  const ctx2d = new Proxy({}, { get: () => () => ctx2d });
-  const byId = new Map();
-  /* the element keeps its tag, so a <section id> is a section here too (take 83: go() refuses non-screens) */
-  for (const m of html.matchAll(/<([a-zA-Z][\w-]*)\b[^>]*\bid="([\w-]+)"/g)) byId.set(m[2], mk(m[1]));
-  const doc = {
-    _ids: byId,
-    querySelector: s => s.startsWith('#') ? (byId.get(s.slice(1)) || mk()) : mk(),
-    getElementById: id => byId.get(id) || null,
-    querySelectorAll: () => [],
-    createElement: mk,
-    addEventListener: (t, f) => { (listeners[t] ||= []).push(f); },
-    removeEventListener: () => {},   // take 111: the ask sheet's cleanup calls it; a browser always has it
-    body: mk('body')
-  };
-  doc.body.appendChild = c => { if (c && c.id) byId.set(c.id, c); return c; };
-  return { doc, listeners };
-}
+/* the DOM stub and the boot live in tools/lib/appvm.mjs since take 122: the card proofs and self-play boot the shipped app the same way */
 
 /* ---- run --------------------------------------------------------------- */
-const html = fs.readFileSync(W('index.html'), 'utf8');
-const js = fs.readFileSync(W('app.js'), 'utf8');
+const APP = await boot();
+const { html, js, catalog, manifest, store, remote, ctx, doc, listeners } = APP;
 const pkg = fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8');   /* take 120: the plugin list the status bar needs */
-const catalog = JSON.parse(fs.readFileSync(W('bundle/catalog.json'), 'utf8'));
-const manifest = JSON.parse(fs.readFileSync(W('bundle/manifest.json'), 'utf8'));
 
 section('shipped artifact');
 ok('index.html references the built app.js', html.includes('src="app.js"'));
 ok('no unreplaced build token', !html.includes('__TAKE__') && !js.includes('__TAKE__'));
 
-const store = {};
-const remote = [];
-const ctx = {
-  console,
-  localStorage: {
-    getItem: k => store[k] ?? null,
-    setItem: (k, v) => { store[k] = String(v); },
-    removeItem: k => { delete store[k]; }
-  },
-  navigator: { vibrate: () => true },
-  location: { href: 'https://localhost/' },
-  URL, Blob: class { constructor(p) { this.p = p; } },
-  BigInt, Math, Date, JSON, Promise, setTimeout, clearTimeout, devicePixelRatio: 2,
-  AbortController,   // take 115: a browser has it; the fetch wrapper aborts at its deadline with it
-  fetch: async (u, o) => {
-    if (ctx._net) { const r = await ctx._net(String(u), o); if (r !== undefined) return r; }   // take 115: a section answers "Pages" itself; undefined falls through
-    remote.push(String(u));
-    if (String(u).includes('catalog.json')) return { json: async () => catalog };
-    if (String(u).includes('manifest.json')) return { json: async () => manifest };
-    throw new Error('unexpected fetch ' + u);
-  }
-};
-const { doc, listeners } = makeDom(html);
-ctx.document = doc;
-ctx._win = {}; ctx.addEventListener = (t, f) => { (ctx._win[t] ||= []).push(f); }; ctx.removeEventListener = () => {};
-ctx.history = { _s: [], pushState(st, _t, url) { this._s.push({ st, url }); }, back() { this._s.pop(); (ctx._win.popstate || []).forEach(f => f({})); } };
-ctx.window = ctx;
-ctx.scrollTo = () => {};   // take 105: the boot itself navigates now (landmine 140) and go() scrolls; a browser always has this
-vm.createContext(ctx);
-vm.runInContext(js, ctx, { filename: 'www/app.js' });
-await new Promise(r => setTimeout(r, 60));
-
 const V = ctx.VAULT;
+/* a card planted on the field is the engine's own shape, uid and all: what applies to it follows the uid (take 122's review) */
+const onField = (id, turn, rested = false, don = 0) => Object.assign(V.SIM.inst(id, turn), { rested, don });
 section('boot');
 ok('app exposed its internals', !!V);
 ok('catalogue loaded', V && V.CAT.ready);
@@ -430,6 +358,46 @@ ok('three different reads never vote',
 
 /* the platform seam: no recogniser here, and the app must SAY so */
 ok('no OCR in this environment, and the scanner knows it', SC.PLATFORM.hasOcr() === false);
+
+section('take 125 — the scanner reads the number where the recogniser finds it (A2; landmines 16, 233-236)');
+/* a lost dash: every OCR slip of it (a dot, another width of dash, a gap) is stripped by normaliseRead */
+ok('a number whose dash is lost is read: OP09.118SEC, OP09 118, OP09–118',
+   ['OP09.118SEC', 'OP09 118', 'OP09–118'].every(t => pr(t).number === 'OP09-118'), JSON.stringify(['OP09.118SEC', 'OP09 118', 'OP09–118'].map(t => pr(t).number)));
+ok('...a promo keeps its dash: P084 is no read, P-084 is', pr('P084').number === null && pr('P-084').number === 'P-084');
+ok('...and the badge digits still run on harmlessly: EB04-024008, SPOP05-119SEC2', pr('EB04-024008').number === 'EB04-024' && pr('SPOP05-119SEC2').sp === true);
+/* where a number may be: on a card in the view -- not in the top or left quarter (CODE_AT) */
+{ const at = (text, x, y) => ({ text, box: { x: x - 30, y: y - 4, w: 60, h: 8 } });
+  const nums = lines => SC.codesIn({ text: '', lines }, 1000, 1400).map(r => r.number);
+  ok('a number in the view\'s top quarter or left quarter is a neighbour\'s and is not taken', nums([at('OP14-040', 800, 200), at('OP10-002', 150, 1300)]).length === 0);
+  ok('...control: the same numbers where a card in view prints its own are taken', nums([at('OP14-040', 800, 1300), at('OP10-002', 700, 1300)]).join() === 'OP14-040,OP10-002');
+  ok('...a line without a place is taken at its word', nums([{ text: 'OP14-040', box: null }]).join() === 'OP14-040');
+  ok('...and a line that is not a real number is not taken', nums([at('OP99-999', 800, 1300), at('Kuzan', 500, 1200)]).length === 0);
+  ok('the place is the one MEASURED on the cards (CODE_AT: 84 % across, 95.2 % down)', SC.CODE_AT.x === 0.84 && SC.CODE_AT.y === 0.952);
+  /* a number that runs down the picture is on a card that is not upright: a neighbour lying on its side (landmine 235) */
+  const tall = (text, x, y) => ({ text, box: { x: x - 4, y: y - 30, w: 8, h: 60 } });
+  ok('a number whose line runs down the picture is not taken (a neighbour lying on its side)', nums([tall('OP14-040', 800, 1300)]).length === 0);
+  ok('...control: the same number running across is', nums([at('OP14-040', 800, 1300)]).join() === 'OP14-040');
+  /* the card's own words: OP10-046 is Kyros; the owner's close-up read OP10-040 twice */
+  const read = lines => SC.codesIn({ text: lines.map(l => l.text).join('\n'), lines }, 1000, 1400).map(r => r.number).join();
+  ok('a number the card\'s name contradicts is refused: OP10-040 read on a card that says Kyros (OP10-046, a digit away)', read([at('Kyros', 500, 1200), at('OP10-040', 800, 1300)]) === '');
+  ok('...control: OP10-046 on the same card is read', read([at('Kyros', 500, 1200), at('OP10-046', 800, 1300)]) === 'OP10-046');
+  ok('...control: OP10-040 with no name read is read (refused only on a contradiction, never corrected)', read([at('OP10-040', 800, 1300)]) === 'OP10-040');
+ }
+/* the view the guide shows: object-fit: cover of the frame */
+{ const r = SC.viewRect(1080, 1920, 300, 440);
+  ok('the view is the middle of the frame the guide shows: the Fold\'s 1080 x 1920 in a 300 x 440 guide is 1080 x 1584 from y 168', [r.x, r.y, r.w, r.h].map(Math.round).join() === '0,168,1080,1584', JSON.stringify(r)); }
+ok('the looks: the whole view first, then the number\'s corner, then the glare look -- no turned looks (a card is scanned upright; landmine 235)', SC.LOOKS.map(l => l.name).join() === 'whole,near,glare');
+/* the vote, then the hold: a card left in view is counted once (landmine 16) */
+{ const decisions = (v, seq, resetAfter) => { let n = 0; for (const x of seq) if (v.push(x)) { n++; if (resetAfter) v.reset(); } return n; };
+  const stay = ['OP01-016', 'OP01-016', 'OP01-016', 'OP01-016', 'OP01-016', 'OP01-016', 'OP01-016', 'OP01-016'];
+  ok('a card left in view for eight reads is decided once', decisions(SC.makeVoter(), stay) === 1);
+  ok('...control: a vote reset after each decision, as take 10\'s loop did, decides it four times', decisions(SC.makeVoter(), stay, true) === 4);
+  const v = SC.makeVoter();
+  ok('the number decided is held while it stays in view', v.push('OP01-016') === null && v.push('OP01-016') === 'OP01-016' && v.held === 'OP01-016' && v.push('OP01-016') === null);
+  ok('...two captures without it (a hand, a flicker) do not let it go', v.push(null) === null && v.push(null) === null && v.held === 'OP01-016' && v.push('OP01-016') === null);
+  ok('...three do, and the card back in view is decided again from two fresh reads', (v.push(null), v.push(null), v.push(null), v.held === null) && v.push('OP01-016') === null && v.push('OP01-016') === 'OP01-016');
+  ok('...another card while one is held is voted on as usual', v.push('OP01-017') === null && v.push('OP01-017') === 'OP01-017' && v.held === 'OP01-017'); }
+
 
 /* identifyFrame, the star detector and the quad detector need a REAL canvas
    with real pixels. This harness's DOM mock has neither -- getImageData
@@ -778,7 +746,7 @@ ok('the play palette redefines the same tokens, not a second stylesheet',
 ok('each mode has its own nav, and hidden actually hides (landmine 98)',
    /id="navPlay" hidden/.test(html) && /id="navCollect"/.test(html) && /nav\[hidden\]\{display:none\}/.test(html));
 ok('Prep & Play holds Decks, Cards, Play and Sim', /data-go="decks"[\s\S]*data-go="cards"[\s\S]*data-go="play"[\s\S]*data-go="sim"/.test(html));
-ok('the Sim screen is the hot-seat board (take 46 replaced the placeholder)', /id="simBoard"/.test(html) && /id="simCurtain"/.test(html) && /rules by the app, effects by hand/.test(html));
+ok('the Sim screen is the hot-seat board (take 46 replaced the placeholder)', /id="simBoard"/.test(html) && /id="simCurtain"/.test(html) && /rules by the app \u00b7 effects from the text, or by hand/.test(html));   // take 122: the subtitle says what the Sim does now
 const P = V.PLAY;
 ok('the counter starts both players at 5 life, 0 DON!!, turn 1', P.p.every(x => x.life === 5 && x.don === 0) && P.turn === 1);
 P.p[0].life = 3; P.p[1].don = 4; P.p[1].given = 2;
@@ -1036,10 +1004,11 @@ ok('offline, the sync check SKIPs rather than failing', by['Sync URL answers'].s
    parseRead never had). Exercise the comparison with an injected answer. */
 {
   const P = V.PLATFORM, hadOcr = P.hasOcr, ocr = P.ocr;
-  P.hasOcr = () => true; P.ocr = async () => 'OP01-016';
+  const said = text => async () => ({ text, lines: [{ text, box: null }] });   // take 125: the recogniser's answer is { text, lines }
+  P.hasOcr = () => true; P.ocr = said('OP01-016');
   const good = Object.fromEntries((await V.SELFTEST.run()).checks.map(c => [c.name, c]))['OCR reads a code the app drew (ML Kit)'];
   ok('the OCR self-test PASSES a correct read of the code it drew', good && good.s === 'PASS' && /OP01-016/.test(good.note), JSON.stringify(good));
-  P.ocr = async () => 'nothing like a code';
+  P.ocr = said('nothing like a code');
   const bad = Object.fromEntries((await V.SELFTEST.run()).checks.map(c => [c.name, c]))['OCR reads a code the app drew (ML Kit)'];
   ok('negative control: a wrong read FAILS it', bad && bad.s === 'FAIL', JSON.stringify(bad));
   P.hasOcr = hadOcr; P.ocr = ocr;
@@ -1064,7 +1033,7 @@ const mkDeck = name => { const d = V.DECKS.blank(); d.name = name;
     if (p.type === 'Leader') d.leader = p.id; else d.cards.push({ id: p.id, n: +m[1] }); } return d; };
 const dA = mkDeck('A'), dB = mkDeck('B');
 ok('the showcase deck is legal, so it is a fair fixture', V.legality(dA).problems.length === 0);
-let g = S.new(dA, dB, 0);
+let g = S.new(dA, dB, 0, { seed: 46 });   // take 122: every smoke game is seeded -- an unseeded deal made this section pass or fail with the hand
 ok('§5-2: fifty cards became a shuffled deck, five in hand, none in Life yet', g.players.every(P => P.deck.length === 45 && P.hand.length === 5 && P.life.length === 0));
 S.mulligan(0, true); S.mulligan(1, false);
 ok('§5-2-3: a mulligan is five back, five drawn, once', g.players[0].hand.length === 5 && g.players[0].deck.length === 45 - 5 && g.players[0].mulliganed === true);
@@ -1080,13 +1049,19 @@ S.endTurn();
 ok('§6-1: the second player draws one and gets 2 DON!! on turn two', g.turn === 2 && g.active === 1 && g.players[1].hand.length === 6 && g.players[1].don.active === 2);
 S.endTurn();
 ok('turn three: the first player refreshes to 3 DON!! and draws', g.turn === 3 && g.players[0].don.active === 3 && g.players[0].hand.length === 6);
-/* plant a known board: 5 characters refuses a sixth (§3) */
-P0.chars = [1, 2, 3, 4, 5].map(k => ({ id: P0.deck[k], rested: false, don: 0, turn: 1 }));
+/* plant a known board: five in play. Take 122: a sixth is not refused -- one of the five is trashed to make room,
+   a rule, not a K.O. (§3-7-6-1; landmine 214: take 46's refusal broke the rule) */
+P0.chars = [1, 2, 3, 4, 5].map(k => ({ ...S.inst(P0.deck[k], 1), don: k === 1 ? 2 : 0 }));
 P0.don.active = 10; const anyChar = P0.hand.findIndex(id => V.CAT.byId.get(id).type === 'Character');
-ok('§3: five Characters in play refuses a sixth', anyChar < 0 || (S.canPlay(0, anyChar).ok === false && /five Characters/.test(S.canPlay(0, anyChar).why)));
-P0.chars = [];
+if (anyChar >= 0) { const cp = S.canPlay(0, anyChar); const blind = S.play(0, anyChar);
+  ok('§3-7-6-1: with five in play a sixth may be played -- after choosing which of the five to trash', cp.ok && cp.full && blind.ok === false && blind.need === 'trash' && /§3-7-6-1/.test(blind.why) && P0.chars.length === 5);
+  const gone = P0.chars[0], tr0 = P0.trash.length, rested0 = P0.don.rested, id6 = P0.hand[anyChar]; const r6 = S.play(0, anyChar, { trash: 0 });
+  ok('...the chosen one goes to the trash, its given DON!! to the cost area rested (§6-5-5-4), and the new one is in play', r6.ok && P0.chars.length === 5 && P0.trash.length === tr0 + 1 && P0.trash.includes(gone.id) && P0.don.rested === rested0 + S.cost(V.CAT.byId.get(id6)) + 2 && P0.chars[4].id === id6 && /to make room/.test(g.log.join('\n')));
+  ok('...and it is not a K.O.: no [On K.O.] is offered for it (§3-7-6-1-1)', !g.queue.length && !/K\.O\.'d/.test(g.log[0] || '')); }
+P0.chars = []; P0.hand = P0.hand.filter(Boolean);
 /* pay and place */
-if (anyChar >= 0) { const before = P0.don.active; const p = V.CAT.byId.get(P0.hand[anyChar]); const r = S.play(0, anyChar);
+const anyChar1 = P0.hand.findIndex(id => V.CAT.byId.get(id).type === 'Character' && S.cost(V.CAT.byId.get(id)) <= P0.don.active);   // take 122: the block above played one; find another
+if (anyChar1 >= 0) { const before = P0.don.active; const p = V.CAT.byId.get(P0.hand[anyChar1]); const r = S.play(0, anyChar1);
   ok('playing a Character rests its cost in DON!! and puts it in play, marked with the turn', r.ok && P0.chars.length === 1 && P0.don.active === before - S.cost(p) && P0.chars[0].turn === 3); }
 ok('§10-1: a Character played this turn cannot attack without [Rush]', P0.chars.length === 0 || V.hasKw === undefined || S.canAttack(0, 0).ok === false);
 /* give DON!!: +1000 on your own turn only */
@@ -1095,35 +1070,35 @@ ok('§6-5-5: a given DON!! is +1000 power', S.power(0, 'leader') === lp + 1000 &
 ok('...and not on the other player\'s turn', S.giveDon(1, 'leader').ok === false);
 /* battle: the Leader attacks the Leader; a tie goes to the attacker (§7-1-4-1) */
 const P1 = g.players[1]; const L0 = V.CAT.byId.get(P0.leader.id), L1 = V.CAT.byId.get(P1.leader.id);
-P0.mods = {}; P1.mods = {}; P0.leader.don = 0; P0.leader.rested = false;
-const need = (parseInt(L1.power, 10) || 0) - (parseInt(L0.power, 10) || 0); if (need > 0) P0.mods.leader = need;   // make it exactly a tie
+P0.modl = []; P1.modl = []; P0.leader.don = 0; P0.leader.rested = false;
+const need = (parseInt(L1.power, 10) || 0) - (parseInt(L0.power, 10) || 0); if (need > 0) S.mod(0, 'leader', need, 'turn');   // make it exactly a tie
 const lifeBefore = P1.life.length, handBefore = P1.hand.length;
 ok('§7-1: the attack is declared, the attacker rests, the defender gets the block step', S.attack(0, 'leader', 'leader').ok && P0.leader.rested && g.phase === 'battle' && g.battle.step === 'block');
 S.noBlock(); const res = S.resolve();
 ok('§7-1-4-1: a tie is a hit; a Leader hit takes 1 damage — top Life card to hand', res.win && P1.life.length === lifeBefore - 1 && P1.hand.length === handBefore + 1 && res.life.length === 1);
 /* a rested Character can be attacked and is K.O.\'d; an active one cannot be targeted */
-P1.chars = [{ id: P1.deck[0], rested: true, don: 0, turn: 1 }, { id: P1.deck[1], rested: false, don: 0, turn: 1 }];
-P0.leader.rested = false; P0.mods.leader = 99999;
+P1.chars = [onField(P1.deck[0], 1, true), onField(P1.deck[1], 1)];
+P0.leader.rested = false; P0.modl = [{ key: 'leader', n: 99999, until: 'endturn' }];
 ok('§7-1: an active Character is not a legal target', S.attack(0, 'leader', 1).ok === false);
 S.attack(0, 'leader', 0); S.noBlock(); const ko = S.resolve();
 ok('a losing Character is K.O.\'d to the trash', ko.win && ko.ko && P1.chars.length === 1 && P1.trash.length >= 1);
 /* counter adds to the defender; a held attack does nothing */
-P0.leader.rested = false; P0.mods.leader = 0;
-const cc = P1.hand.findIndex(id => (parseInt(V.CAT.byId.get(id).counter, 10) || 0) > 0);
+P0.leader.rested = false; P0.modl = [];
+const cc =P1.hand.findIndex(id => (parseInt(V.CAT.byId.get(id).counter, 10) || 0) > 0);
 if (cc >= 0) { const plus = parseInt(V.CAT.byId.get(P1.hand[cc]).counter, 10); const d0 = S.power(1, 'leader'); S.attack(0, 'leader', 'leader'); S.noBlock(); S.counter(cc);
   ok('§7-1-3: a Counter card from hand is trashed and adds its value to the defender', S.battlePowers().d === d0 + plus && P1.trash.includes(P1.trash[P1.trash.length - 1]));
   const lb = P1.life.length; const held = S.resolve();
   ok('an attack below the defender\'s power is held: no damage', held.win === false && P1.life.length === lb); }
 /* defeat: damage with no Life */
-P1.life = []; P0.leader.rested = false; P0.mods.leader = 99999; S.attack(0, 'leader', 'leader'); S.noBlock(); S.resolve();
+P1.life = []; P0.leader.rested = false; P0.modl = [{ key: 'leader', n: 99999, until: 'endturn' }]; S.attack(0, 'leader', 'leader'); S.noBlock(); S.resolve();
 ok('§1-2-1-1: damage with no Life cards is the defeat', g.over === 0 && g.phase === 'over');
 S.g = null;
 }
 
 {
 section('take 47 — effects as data: parsed from the text, offered under conditions, applied under invariants');
-const FX = V.CAT.effects; const fxIds = Object.keys(FX);
-ok('the bundle carries scripted effects and the manifest counts them', fxIds.length >= 400 && manifest.effects && manifest.effects.scripted === fxIds.reduce((a, k) => a + FX[k].length, 0), JSON.stringify(manifest.effects));
+const FXALL = V.CAT.effects; const FX = scripted(FXALL); const fxIds = Object.keys(FX);
+ok('the bundle carries scripted effects and the manifest counts them', fxIds.length >= 400 && manifest.effects && manifest.effects.scripted === fxIds.reduce((a, k) => a + FX[k].length, 0) && manifest.effects.hand === Object.values(FXALL).reduce((a, L) => a + L.filter(e => e.hand).length, 0), JSON.stringify(manifest.effects));   // take 122: by-hand lines ride beside the scripted ones, counted apart
 ok('coverage is stated, not promised: the manifest counts every line, and most still stay manual', manifest.effects.scripted < manifest.effects.lines * 0.5 && manifest.effects.lines > 7000, `${manifest.effects.scripted}/${manifest.effects.lines}`);
 const find = (rx, t) => fxIds.map(k => [k, FX[k].find(e => rx.test(e.raw) && (!t || e.t === t))]).find(x => x[1]);
 const restCard = find(/^\[On Play\] Rest up to 1 of your opponent's Characters with a cost of (\d) or less\.$/);
@@ -1133,26 +1108,26 @@ const optCard = find(/^\[Activate: Main\] \[Once Per Turn\]/, 'main');
 ok('the templates found real cards for rest-with-cost, draw, DON!!x1 attack, and a once-per-turn Main', !!(restCard && drawCard && donxCard && optCard));
 const S = V.SIM; const PL4 = new Function('return ' + js.match(/function parseListLine\(raw\) \{[\s\S]*?\n\}/)[0])();
 const mk = () => { const d = V.DECKS.blank(); for (const raw of fs.readFileSync(path.join(ROOT, 'showcase', 'deck.txt'), 'utf8').split(/\r?\n/)) { const line = raw.trim(); if (!line || line.startsWith('#')) continue; const m = PL4(line); const num = m[2].toUpperCase(); const p = (V.CAT.byNum.get(num) || []).filter(x => x.num === num).sort((a, b) => (a.market || 9e9) - (b.market || 9e9))[0]; if (p.type === 'Leader') d.leader = p.id; else d.cards.push({ id: p.id, n: +m[1] }); } return d; };
-const g = S.new(mk(), mk(), 0); S.mulligan(0, false); S.mulligan(1, false); S.endTurn(); S.endTurn();   // turn 3, player 0, no first-turn ban
+const g = S.new(mk(), mk(), 0, { seed: 47 }); S.mulligan(0, false); S.mulligan(1, false); S.endTurn(); S.endTurn();   // turn 3, player 0, no first-turn ban
 const P0 = g.players[0], P1 = g.players[1];
 /* plant the rest-with-cost card in play and two opponent characters either side of its cost line */
 const rmax = +restCard[1].do[0].cost; const cheap = V.CAT.rows.find(p => p.type === 'Character' && S.cost(p) <= rmax), dear = V.CAT.rows.find(p => p.type === 'Character' && S.cost(p) > rmax);
-P0.chars = [{ id: +restCard[0], rested: false, don: 0, turn: 3 }]; P1.chars = [{ id: cheap.id, rested: false, don: 0, turn: 1 }, { id: dear.id, rested: false, don: 0, turn: 1 }];
+P0.chars = [onField(+restCard[0], 3)]; P1.chars = [onField(cheap.id, 1), onField(dear.id, 1)];
 let offers = S.offers(0, 'onplay', 0);
 ok('an [On Play] rest effect is offered with ONLY the targets its cost line allows (class 3: scope)', offers.length === 1 && offers[0].targets.length === 1 && offers[0].targets[0].ref === 'o0', JSON.stringify(offers.map(o => o.targets)));
 ok('negative control: applying it to the over-cost Character is refused', S.apply(0, offers[0], 'o1').ok === false);
 ok('applied to the legal one, that Character is rested and the act is logged', S.apply(0, offers[0], 'o0').ok && P1.chars[0].rested && /rest/.test(g.log[0]));
 /* DON!! x1: absent -> not offered; attached -> offered; +power this turn, gone at refresh (class 2: not always on) */
-P0.chars = [{ id: +donxCard[0], rested: false, don: 0, turn: 1 }];
+P0.chars = [onField(+donxCard[0], 1)];
 ok('a [DON!! x1] attack effect is NOT offered with no DON!! attached (class 2: never always-on)', S.offers(0, 'attack', 0).length === 0);
 P0.chars[0].don = 1; const before = S.power(0, 0); const o2 = S.offers(0, 'attack', 0);
 ok('...and IS offered with one attached; applied, the power rises by the stated amount', o2.length === 1 && S.apply(0, o2[0]).ok && S.power(0, 0) === before + donxCard[1].do[0].n);
 S.endTurn(); S.endTurn();
 ok('"during this turn" expires at the next refresh, and the given DON!! went home too (class 5: duration; §6-2)', S.power(0, 0) === parseInt(V.CAT.byId.get(+donxCard[0]).power, 10) && P0.chars[0].don === 0, `${S.power(0, 0)} vs base`);
 /* draw: the hand grows by one; Once Per Turn: the second activation is refused */
-P0.chars = [{ id: +drawCard[0], rested: false, don: 0, turn: 5 }]; const h0 = P0.hand.length; S.apply(0, S.offers(0, 'onplay', 0)[0]);
+P0.chars = [onField(+drawCard[0], 5)]; const h0 = P0.hand.length; S.apply(0, S.offers(0, 'onplay', 0)[0]);
 ok('[On Play] Draw 1 card draws exactly one', P0.hand.length === h0 + 1);
-P0.chars = [{ id: +optCard[0], rested: false, don: 0, turn: 5 }]; P0.don.rested = 2;
+P0.chars = [onField(+optCard[0], 5)]; P0.don.rested = 2;
 const m1 = S.offers(0, 'main', 0); const tgt = m1[0] && m1[0].targets ? m1[0].targets[0].ref : null; const r1 = m1.length ? S.apply(0, m1[0], tgt) : { ok: false };
 ok('[Activate: Main] [Once Per Turn] applies once...', r1.ok === true, JSON.stringify(m1.map(o => o.e.raw)));
 ok('...and is not offered again this turn (class 4: a limit, checked)', S.offers(0, 'main', 0).length === 0);
@@ -1163,7 +1138,7 @@ S.g = null;
 
 {
 section('take 48 — chains, continuous effects, follow-ons, search; the timings the board surfaces');
-const FX = V.CAT.effects; const fxIds = Object.keys(FX); const S = V.SIM;
+const FX = scripted(V.CAT.effects); const fxIds = Object.keys(FX); const S = V.SIM;
 ok('coverage grew by whole templates only, none of the refused controls admitted', manifest.effects.scripted > 1000 && manifest.effects.scripted < manifest.effects.lines * 0.5, JSON.stringify(manifest.effects));
 const find = (rx, t) => fxIds.map(k => [k, FX[k].find(e => rx.test(e.raw) && (!t || e.t === t))]).find(x => x[1]);
 const chain = find(/^\[On Play\] Draw (\d) cards? and trash (\d) cards? from your hand\.$/);
@@ -1174,16 +1149,16 @@ const search = find(/^\[On Play\] Look at (\d) cards from the top of your deck; 
 ok('real cards exist for each new shape: a chain, a continuous +power, "Play this card", "Activate this card\'s [On Play]", a search', !!(chain && stat && playself && activ && search), [chain, stat, playself, activ, search].map(x => !!x).join());
 const PL5 = new Function('return ' + js.match(/function parseListLine\(raw\) \{[\s\S]*?\n\}/)[0])();
 const mk = () => { const d = V.DECKS.blank(); for (const raw of fs.readFileSync(path.join(ROOT, 'showcase', 'deck.txt'), 'utf8').split(/\r?\n/)) { const line = raw.trim(); if (!line || line.startsWith('#')) continue; const m = PL5(line); const num = m[2].toUpperCase(); const p = (V.CAT.byNum.get(num) || []).filter(x => x.num === num).sort((a, b) => (a.market || 9e9) - (b.market || 9e9))[0]; if (p.type === 'Leader') d.leader = p.id; else d.cards.push({ id: p.id, n: +m[1] }); } return d; };
-const g = S.new(mk(), mk(), 0); S.mulligan(0, false); S.mulligan(1, false); S.endTurn(); S.endTurn();
+const g = S.new(mk(), mk(), 0, { seed: 48 }); S.mulligan(0, false); S.mulligan(1, false); S.endTurn(); S.endTurn();
 const P0 = g.players[0], P1 = g.players[1];
 /* chain: draw N, then trash one -- two steps, the second with hand targets */
-P0.chars = [{ id: +chain[0], rested: false, don: 0, turn: 3 }]; const h0 = P0.hand.length; const dn = chain[1].do[0].n;
+P0.chars = [onField(+chain[0], 3)]; const h0 = P0.hand.length; const dn = chain[1].do[0].n;
 let o = S.offers(0, 'onplay', 0)[0]; let r = S.apply(0, o, null);
 ok('a chained effect runs its first step (draw) and stops for the second (a hand target)', r.ok && !r.done && P0.hand.length === h0 + dn && o.targets.length === P0.hand.length && /^h\d/.test(o.targets[0].ref));
 r = S.apply(0, o, o.targets[0].ref);
 ok('...the second step trashes the chosen card and the chain is done', r.ok && r.done && P0.hand.length === h0 + dn - 1);
 /* continuous: +N power while [DON!! x1], read live, gone when the DON!! leaves */
-P0.chars = [{ id: +stat[0], rested: false, don: 0, turn: 3 }]; const base = parseInt(V.CAT.byId.get(+stat[0]).power, 10) || 0;
+P0.chars = [onField(+stat[0], 3)]; const base = parseInt(V.CAT.byId.get(+stat[0]).power, 10) || 0;
 ok('a continuous [DON!! x1] +power is NOT counted with no DON!! (class 2)', S.power(0, 0) === base);
 P0.chars[0].don = 1;
 ok('...and is counted, live, with one attached (base + 1000 + the effect)', S.power(0, 0) === base + 1000 + stat[1].do[0].n);
@@ -1196,7 +1171,7 @@ P0.hand.push(+activ[0]); const tr0 = P0.trash.length;
 o = S.offers(0, 'trigger', null, +activ[0], true)[0]; r = S.apply(0, o, null);
 ok('"Activate this card\'s [On Play] effect" follows on with that effect if it is scripted, and the Trigger card is trashed after (§10-2)', r.ok && r.done && P0.trash.includes(+activ[0]) && P0.trash.length === tr0 + 1 && !P0.hand.includes(+activ[0]));
 /* search: the top N are looked at, only the typed ones are offered, the rest go to the bottom in order */
-P0.chars = [{ id: +search[0], rested: false, don: 0, turn: 3 }]; const d = search[1].do[0]; const dty = (d.types || [d.type])[0];
+P0.chars = [onField(+search[0], 3)]; const d = search[1].do[0]; const dty = (d.types || [d.type])[0];
 const want = V.CAT.rows.find(p => p.type === 'Character' && (p.subtypes || '').split(/[;/]/).map(x => x.trim()).includes(dty) && p.name !== d.not);
 const filler = V.CAT.rows.find(p => p.type === 'Character' && !(p.subtypes || '').includes(dty));
 P0.deck = [filler.id, want.id, filler.id, filler.id, filler.id, filler.id, filler.id, 999]; const L = P0.deck.length; const hh = P0.hand.length;
@@ -1206,14 +1181,14 @@ r = S.apply(0, o, 'd1');
 while (!r.done) r = S.apply(0, o, null);   // the 'rest to the bottom' step (take 51 split it out)
 ok('...the chosen one goes to hand and the rest of the N go to the bottom, deck size intact', r.ok && P0.hand.length === hh + 1 && P0.deck.length === L - 1 && P0.deck[P0.deck.length - 1] === filler.id && (P0.looking || []).length === 0);
 /* the board's timings exist in code */
-ok('the board offers [End of Your Turn] before ending, [On Block] at the block, and [Trigger]/[On K.O.] on the defender\'s result screen',
-   /simOfferAll\(g\.active, 'endturn'\)/.test(js) && /simOffer\(g\.battle\.def, 'onblock', ref\)/.test(js) && /simOffer\(def, 'trigger', null, l\.id, true\)/.test(js) && /simOffer\(def, 'onko', null, res\.koId\)/.test(js) && /data-sim="post"/.test(js));
+ok('the board offers [End of Your Turn] before ending, [On Block] at the block, and [Trigger]/[On K.O.] on the defender\'s result screen (take 122: the engine queues them; the screen draws the queue)',
+   /on\(P, i, 'endturn'\)/.test(js) && /this\.offers\(i, 'onblock', a\.k\)/.test(js) && /this\.offers\(i, 'trigger', null, l\.id, true\)/.test(js) && /this\.offers\(i, 'onko', null, res\.koId\)/.test(js) && /data-sim="post"/.test(js));
 S.g = null;
 }
 
 {
 section('take 49 — costs before actions; Events at their two timings');
-const FX = V.CAT.effects; const fxIds = Object.keys(FX); const S = V.SIM;
+const FX = scripted(V.CAT.effects); const fxIds = Object.keys(FX); const S = V.SIM;
 const find = (rx, t) => fxIds.map(k => [k, FX[k].find(e => rx.test(e.raw) && (!t || e.t === t))]).find(x => x[1]);
 const trashCost = find(/^\[On Play\] You may trash 1 card from your hand: K\.O\. up to 1 of your opponent's Characters with a cost of (\d+) or less\.$/);
 const donCost = fxIds.map(k => [k, FX[k].find(e => e.do[0].a === 'cost_returndon' && e.do.length === 2 && ['onplay', 'main', 'attack'].includes(e.t) && ['draw', 'ko', 'rest', 'selfpower'].includes(e.do[1].a) && V.CAT.byId.get(+k).type === 'Character')]).find(x => x[1]);
@@ -1224,11 +1199,11 @@ const pfh = fxIds.map(k => [k, FX[k].find(e => e.t === 'onplay' && e.do[0].a ===
 ok('real cards exist for each: a trash cost, a DON!! cost, a rest-self cost, a [Main] Event, a [Counter] +power Event, play-from-hand', !!(trashCost && donCost && restCost && evMain && evCounter && pfh), [trashCost, donCost, restCost, evMain, evCounter, pfh].map(x => !!x).join());
 const PL6 = new Function('return ' + js.match(/function parseListLine\(raw\) \{[\s\S]*?\n\}/)[0])();
 const mk = () => { const d = V.DECKS.blank(); for (const raw of fs.readFileSync(path.join(ROOT, 'showcase', 'deck.txt'), 'utf8').split(/\r?\n/)) { const line = raw.trim(); if (!line || line.startsWith('#')) continue; const m = PL6(line); const num = m[2].toUpperCase(); const p = (V.CAT.byNum.get(num) || []).filter(x => x.num === num).sort((a, b) => (a.market || 9e9) - (b.market || 9e9))[0]; if (p.type === 'Leader') d.leader = p.id; else d.cards.push({ id: p.id, n: +m[1] }); } return d; };
-const g = S.new(mk(), mk(), 0); S.mulligan(0, false); S.mulligan(1, false); S.endTurn(); S.endTurn();
+const g = S.new(mk(), mk(), 0, { seed: 49 }); S.mulligan(0, false); S.mulligan(1, false); S.endTurn(); S.endTurn();
 const P0 = g.players[0], P1 = g.players[1];
 /* a trash cost: step one is the cost with hand targets; skipping it is declining */
-P0.chars = [{ id: +trashCost[0], rested: false, don: 0, turn: 3 }]; const kmax = +trashCost[1].do[1].cost;
-P1.chars = [{ id: V.CAT.rows.find(p => p.type === 'Character' && S.cost(p) <= kmax).id, rested: false, don: 0, turn: 1 }];
+P0.chars = [onField(+trashCost[0], 3)]; const kmax = +trashCost[1].do[1].cost;
+P1.chars = [onField(V.CAT.rows.find(p => p.type === 'Character' && S.cost(p) <= kmax).id, 1)];
 let o = S.offers(0, 'onplay', 0)[0]; const h0 = P0.hand.length, t0 = P0.trash.length;
 ok('the cost is the first step and its targets are the hand', o && o.steps[0].a === 'cost_trashhand' && o.targets.length === h0);
 let r = S.apply(0, o, o.targets[0].ref);
@@ -1238,13 +1213,13 @@ ok('...and the K.O. lands', r.ok && r.done && P1.chars.length === 0);
 P0.hand = [];
 ok('with an empty hand the trash-cost effect is not offered at all (the cost cannot be paid)', S.offers(0, 'onplay', 0).length === 0);
 /* a DON!! cost returns DON!! to the DON!! deck from the field, active first */
-P0.chars = [{ id: +donCost[0], rested: false, don: 0, turn: 3 }]; const dn = donCost[1].do[0].n; P0.don.active = 8; P0.don.rested = 2; P0.donDeck = 0; P1.chars = [{ id: V.CAT.rows.find(p => p.type === 'Character' && p.num && S.cost(p) <= 1).id, rested: true, don: 0, turn: 1 }];
+P0.chars = [onField(+donCost[0], 3)]; const dn = donCost[1].do[0].n; P0.don.active = 8; P0.don.rested = 2; P0.donDeck = 0; P1.chars = [onField(V.CAT.rows.find(p => p.type === 'Character' && p.num && S.cost(p) <= 1).id, 1, true)];
 o = S.offers(0, donCost[1].t, 0)[0]; r = S.apply(0, o, null);
-ok(`DON!! −${dn} returns that many DON!! to the DON!! deck, active first, then the action waits for its target`, r.ok && !r.done && P0.don.active === 8 - dn && P0.donDeck === dn && o.targets.length === 1);
+ok(`DON!! \u2212${dn} returns that many DON!! to the DON!! deck, rested first (take 122: the player picks, §8-3-1-6; rested ones cost nothing this turn), then the action waits for its target`, r.ok && !r.done && P0.don.rested === Math.max(0, 2 - dn) && P0.don.active === 8 - Math.max(0, dn - 2) && P0.donDeck === dn && o.targets.length === 1);
 P0.don.active = 0; P0.don.rested = 0; P0.leader.don = 0; P0.chars[0].don = 0; P0.used = {};
 ok('with no DON!! on the field it is not offered', S.offers(0, donCost[1].t, 0).length === 0);
 /* a rest-self cost rests the source; a rested source cannot pay */
-P0.chars = [{ id: +restCost[0], rested: false, don: 0, turn: 3 }]; P0.used = {}; P1.chars = [{ id: V.CAT.rows.find(p => p.type === 'Character' && p.num && S.cost(p) <= 1).id, rested: true, don: 0, turn: 1 }];
+P0.chars = [onField(+restCost[0], 3)]; P0.used = {}; P1.chars = [onField(V.CAT.rows.find(p => p.type === 'Character' && p.num && S.cost(p) <= 1).id, 1, true)];
 o = S.offers(0, restCost[1].t, 0)[0];
 ok('"You may rest this Character:" is offered while the Character is active', !!o && o.steps[0].a === 'cost_restself');
 r = S.apply(0, o, null);
@@ -1255,8 +1230,8 @@ ok('...and rested, it is not offered (negative control)', S.offers(0, restCost[1
 P0.hand = [+evMain[0]]; P0.don.active = 10;
 r = S.play(0, 0);
 ok('a [Main] Event is played for its cost and goes to the trash; its effect is then offered at the evmain timing', r.ok && P0.trash.includes(+evMain[0]) && S.offers(0, 'evmain', null, +evMain[0]).length === 1);
-P1.hand = [+evCounter[0]]; P1.don.active = 10; P1.chars = []; P0.chars = [{ id: V.CAT.rows.find(p => p.type === 'Character' && p.num).id, rested: false, don: 0, turn: 1 }];
-P0.mods.leader = 0; S.attack(0, 'leader', 'leader'); S.noBlock();
+P1.hand = [+evCounter[0]]; P1.don.active = 10; P1.chars = []; P0.chars = [onField(V.CAT.rows.find(p => p.type === 'Character' && p.num).id, 1)];
+P0.modl = []; S.attack(0, 'leader', 'leader'); S.noBlock();
 const ce = S.counterEvents();
 ok('in the counter step the defender is offered the [Counter] Event they can afford', ce.length === 1 && ce[0].h === 0);
 const d0 = S.power(1, 'leader'); r = S.playCounterEvent(0);
@@ -1266,7 +1241,7 @@ S.apply(1, off[0], 'L');
 ok('...applied to the Leader, the battle power rises by the stated amount', S.battlePowers().d === d0 + evCounter[1].do[0].n);
 S.resolve();
 /* play from hand: only Characters under the cost line; free */
-P0.chars = [{ id: +pfh[0], rested: false, don: 0, turn: 5 }]; const lim = pfh[1].do[0];
+P0.chars = [onField(+pfh[0], 5)]; const lim = pfh[1].do[0];
 const ty = lim.type; const has = p => !ty || (p.subtypes || '').split(/[;/]/).map(y => y.trim()).includes(ty);
 const under = p => (lim.cost == null || S.cost(p) <= lim.cost) && (lim.power == null || (parseInt(p.power, 10) || 0) <= lim.power);
 const okc = V.CAT.rows.find(p => p.type === 'Character' && p.num && under(p) && has(p)), big = V.CAT.rows.find(p => p.type === 'Character' && p.num && !under(p) && has(p)), evt = V.CAT.rows.find(p => p.type === 'Event' && p.num);
@@ -1280,7 +1255,7 @@ S.g = null;
 
 {
 section('take 50 — two sentences, "that card", and when a modifier ends');
-const FX = V.CAT.effects; const fxIds = Object.keys(FX); const S = V.SIM;
+const FX = scripted(V.CAT.effects); const fxIds = Object.keys(FX); const S = V.SIM;
 const find = (rx, t) => fxIds.map(k => [k, FX[k].find(e => rx.test(e.raw) && (!t || e.t === t))]).find(x => x[1]);
 const two = fxIds.map(k => [k, FX[k].find(e => e.do.length >= 2 && !/^cost_/.test(e.do[0].a) && /\. Then, |\. [A-Z]/.test(e.raw.replace(/^(\[[^\]]+\]\s*)+/, '')))]).find(x => x[1]);
 const that = fxIds.map(k => [k, FX[k].find(e => e.do.some(st => st.a === 'power' && st.who === 'prev') && e.do[0].a === 'power' && e.do[0].who === 'own')]).find(x => x[1]);
@@ -1288,25 +1263,25 @@ ok('real cards: a two-sentence chain and a "that card gains an additional" chain
 ok('a two-sentence effect is its two templates in order', two[1].do.length >= 2);
 const PL7 = new Function('return ' + js.match(/function parseListLine\(raw\) \{[\s\S]*?\n\}/)[0])();
 const mk = () => { const d = V.DECKS.blank(); for (const raw of fs.readFileSync(path.join(ROOT, 'showcase', 'deck.txt'), 'utf8').split(/\r?\n/)) { const line = raw.trim(); if (!line || line.startsWith('#')) continue; const m = PL7(line); const num = m[2].toUpperCase(); const p = (V.CAT.byNum.get(num) || []).filter(x => x.num === num).sort((a, b) => (a.market || 9e9) - (b.market || 9e9))[0]; if (p.type === 'Leader') d.leader = p.id; else d.cards.push({ id: p.id, n: +m[1] }); } return d; };
-const g = S.new(mk(), mk(), 0); S.mulligan(0, false); S.mulligan(1, false); S.endTurn(); S.endTurn();
+const g = S.new(mk(), mk(), 0, { seed: 50 }); S.mulligan(0, false); S.mulligan(1, false); S.endTurn(); S.endTurn();
 const P0 = g.players[0], P1 = g.players[1];
 /* "that card": the second step lands on the card the first step chose, and its own condition is read at that step */
-P0.chars = [{ id: +that[0], rested: false, don: 0, turn: 3 }]; P0.life = P0.life.slice(0, 5);
+P0.chars = [onField(+that[0], 3)]; P0.life = P0.life.slice(0, 5);
 let o = S.offers(0, that[1].t, 0)[0]; const stepIf = that[1].do.find(st => st.who === 'prev').if || [];
 const lp = S.power(0, 'leader'); let r = S.apply(0, o, 'L');
 ok('step one puts +N on the chosen card (the Leader here)', r.ok && !r.done && S.power(0, 'leader') === lp + that[1].do[0].n);
 const met = stepIf.every(c => S.condOk(0, P0.chars[0], c)); const lp2 = S.power(0, 'leader'); r = S.apply(0, o, null);
 ok('step two targets "that card" with no new choice, and applies only if its own condition holds NOW', r.ok && r.done && S.power(0, 'leader') === lp2 + (met ? that[1].do[1].n : 0), `condition met: ${met}`);
 /* durations: "during this turn" on the opponent's card ends at the END of this turn, not at their refresh */
-P1.chars = [{ id: V.CAT.rows.find(p => p.type === 'Character' && p.num).id, rested: false, don: 0, turn: 1 }];
-const base1 = S.power(1, 0); S.mod(1, P1.chars[0].id + ':0', -2000, 'turn');
+P1.chars = [onField(V.CAT.rows.find(p => p.type === 'Character' && p.num).id, 1)];
+const base1 = S.power(1, 0); S.mod(1, 'u' + P1.chars[0].uid, -2000, 'turn');
 ok('a -power "during this turn" on the opponent\'s card is live now', S.power(1, 0) === base1 - 2000);
 S.endTurn();
 ok('...and gone at the end of the turn, before the opponent even refreshes (the take-50 fix)', S.power(1, 0) === base1);
 /* "until the start of your next turn" persists through the opponent\'s turn and clears at the source\'s refresh */
 S.endTurn();   // back to player 0
-P0.chars = [{ id: V.CAT.rows.find(p => p.type === 'Character' && p.num).id, rested: false, don: 0, turn: 5 }]; const b0 = S.power(0, 0);
-S.mod(0, P0.chars[0].id + ':0', 3000, 'nextturn');
+P0.chars = [onField(V.CAT.rows.find(p => p.type === 'Character' && p.num).id, 5)]; const b0 = S.power(0, 0);
+S.mod(0, 'u' + P0.chars[0].uid, 3000, 'nextturn');
 ok('an until-your-next-turn bonus is live', S.power(0, 0) === b0 + 3000);
 S.endTurn();
 ok('...still live during the opponent\'s turn', S.power(0, 0) === b0 + 3000);
@@ -1317,10 +1292,10 @@ S.g = null;
 
 {
 section('take 51 — searches in every phrasing, keyword grants, cost changes, ids that follow the card');
-const FX = V.CAT.effects; const fxIds = Object.keys(FX); const S = V.SIM;
+const FX = scripted(V.CAT.effects); const fxIds = Object.keys(FX); const S = V.SIM;
 const actions = new Set(); for (const k of fxIds) for (const e of FX[k]) for (const st of e.do) actions.add(st.a);
-ok('every action the parser emits is one the engine handles (a name the engine lacks would run nothing, silently)', [...actions].every(a => new RegExp("d\\.a === '" + a + "'").test(js)), [...actions].filter(a => !new RegExp("d\\.a === '" + a + "'").test(js)).join());
-ok('no two actions share a name for different things (the take-51 collision: search-rest vs rest-a-character)', actions.has('restcards') && actions.has('rest') && /d\.a === 'restcards'/.test(js));
+ok('every action the parser emits is one the engine handles (a name the engine lacks would run nothing, silently)', [...actions].every(a => typeof S.DO[a] === 'function'), [...actions].filter(a => typeof S.DO[a] !== 'function').join());   // take 122: the handlers are the table SIM.DO
+ok('no two actions share a name for different things (the take-51 collision: search-rest vs rest-a-character)', actions.has('restcards') && actions.has('rest') && S.DO.restcards !== S.DO.rest);
 const find = (pred) => fxIds.map(k => [k, FX[k].find(pred)]).find(x => x[1]);
 const two = find(e => e.do[0].a === 'search' && ((e.do[0].types || []).length + (e.do[0].names || []).length) === 2);
 const named = find(e => e.do[0].a === 'search' && e.do[0].name);
@@ -1334,7 +1309,7 @@ const neg = find(e => e.do[0].a === 'power' && e.do[0].sign_inferred && e.if.len
 ok('real cards for each: two-type search, named search, trash-the-rest, cost-then-K.O., Rush grant on play, Double Attack when attacking, continuous Rush, the sign-inferred reduction', !!(two && named && trashRest && cm && koC && rushT && daT && rushS && neg), [two, named, trashRest, cm, koC, rushT, daT, rushS, neg].map(x => !!x).join());
 const PL8 = new Function('return ' + js.match(/function parseListLine\(raw\) \{[\s\S]*?\n\}/)[0])();
 const mk = () => { const d = V.DECKS.blank(); for (const raw of fs.readFileSync(path.join(ROOT, 'showcase', 'deck.txt'), 'utf8').split(/\r?\n/)) { const line = raw.trim(); if (!line || line.startsWith('#')) continue; const m = PL8(line); const num = m[2].toUpperCase(); const p = (V.CAT.byNum.get(num) || []).filter(x => x.num === num).sort((a, b) => (a.market || 9e9) - (b.market || 9e9))[0]; if (p.type === 'Leader') d.leader = p.id; else d.cards.push({ id: p.id, n: +m[1] }); } return d; };
-const g = S.new(mk(), mk(), 0); S.mulligan(0, false); S.mulligan(1, false); S.endTurn(); S.endTurn();
+const g = S.new(mk(), mk(), 0, { seed: 51 }); S.mulligan(0, false); S.mulligan(1, false); S.endTurn(); S.endTurn();
 const P0 = g.players[0], P1 = g.players[1];
 const sub = (p, t) => (p.subtypes || '').split(/[;/]/).map(x => x.trim()).includes(t);
 /* two-type search: either type is revealed, the excluded name is not */
@@ -1352,7 +1327,8 @@ const sub = (p, t) => (p.subtypes || '').split(/[;/]/).map(x => x.trim()).includ
 { P0.chars = [S.inst(+trashRest[0], 3)]; const n = trashRest[1].do[0].n; const x = V.CAT.rows.find(p => p.type === 'Character' && p.num && !(p.subtypes || '').includes((trashRest[1].do[0].types || ['~'])[0]));
   P0.deck = Array(n + 3).fill(x.id); const t0 = P0.trash.length, L = P0.deck.length; const o = S.offers(0, trashRest[1].t, 0)[0];
   let r = S.apply(0, o, null); while (!r.done) r = S.apply(0, o, null);
-  ok('"Trash the rest": the looked-at cards go to the trash, not the bottom', r.ok && P0.trash.length === t0 + n && P0.deck.length === L - n); }
+  ok('"Trash the rest": the looked-at cards go to the trash, not the bottom', r.ok && P0.trash.length === t0 + n && P0.deck.length === L - n);
+  P0.deck.push(...Array(20).fill(x.id)); }   // take 122: an empty deck is a defeat at once (§9-2-1-2), so the planted deck is kept deep for what follows
 /* cost change, then K.O. under the new cost */
 { const d0 = cm[1].do[0], d1 = koC[1].do[0]; const tgt = V.CAT.rows.find(p => p.type === 'Character' && p.num && S.cost(p) === d1.cost + 1);   // one over the K.O. line before the change
   P0.chars = [S.inst(+cm[0], 3), S.inst(+koC[0], 3)]; P1.chars = [S.inst(tgt.id, 1)];
@@ -1371,7 +1347,7 @@ const sub = (p, t) => (p.subtypes || '').split(/[;/]/).map(x => x.trim()).includ
   ok('with [Rush] granted for the turn, it can', S.canAttack(0, 0).ok === true && S.kwOf(0, 0).includes('Rush'), JSON.stringify(rushT[1].do));
   S.endTurn(); S.endTurn();
   ok('...and the grant is gone next turn', !S.kwOf(0, 0).includes('Rush') || (V.CAT.byId.get(+rushT[0]).kw || '').includes('Rush')); }
-{ P0.chars = [S.inst(+daT[0], 1)]; P0.mods = {}; P1.mods = {}; P1.chars = []; P1.life = P1.life.length >= 2 ? P1.life : P1.deck.splice(0, 2); const lb = P1.life.length;
+{ P0.chars = [S.inst(+daT[0], 1)]; P0.modl = []; P1.modl = []; P1.chars = []; P1.life = P1.life.length >= 2 ? P1.life : P1.deck.splice(0, 2); const lb = P1.life.length;
   const need = daT[1].if.find(c => c.c === 'donx'); P0.chars[0].don = need ? need.n : 1;
   S.mod(0, 'u' + P0.chars[0].uid, 99999, 'turn');
   S.attack(0, 0, 'leader'); S.noBlock(); const res = S.resolve();
@@ -1409,8 +1385,8 @@ const mk = () => { const d = V.DECKS.blank(); for (const raw of fs.readFileSync(
 const sr = V.simReadiness(mk());
 ok('sim-readiness counts every card of the deck into exactly one bucket', sr.total === 14 && sr.full + sr.part + sr.hand + sr.none === sr.total, JSON.stringify(sr));
 ok('...and names the by-hand cards for the player', Array.isArray(sr.handNames) && sr.handNames.length <= 6);
-ok('the deck screen has the panel and the Play in Sim button; the sim preselects that deck', /id="dkSim"/.test(html) && /id="dkPlaySim"/.test(js) && /SIMUI\.pre = dkCur\.id/.test(js) && /d\.id === SIMUI\.pre \? 'selected'/.test(js));
-ok('the board draws DON!! as pips and colour dots on card lines', /'\\u25cf'\.repeat\(X\.don\.active\)/.test(js) && /background:var\(--c-\$\{CCLASS\[c\]\}\)/.test(js));
+ok('the deck screen has the panel and the Play in Sim button; the sim preselects that deck', /id="dkSim"/.test(html) && /id="dkPlaySim"/.test(js) && /SIMUI\.pre = dkCur\.id/.test(js) && /findIndex\(x => x\.d\.id === \(SIMUI\.d1 \|\| SIMUI\.pre\)\)/.test(js));   // take 124: the choice made on the setup screen first, then the deck the Deck screen sent
+ok('the board draws DON!! as tokens -- active upright, rested turned; ドン!! since take 126 -- and a card whose picture fails in its own colours (take 124; pips and dots to take 123)', /`<i class="tk">\$\{G\('donjp', 14\)\}<\/i>`\.repeat\(d\.active\)/.test(js) && /`<i class="tk r">\$\{G\('donjp', 14\)\}<\/i>`\.repeat\(d\.rested\)/.test(js) && /var\(--c-\$\{CCLASS\[cs\[0\]\]\}\)/.test(js));   // the tokens and colours read the seat's view (X.don, c.colours)
 }
 
 {
@@ -1418,35 +1394,29 @@ section('take 55 — the opponent: whole games, bot against bot, with every card
 const S = V.SIM, B = V.BOT;
 const PL10 = new Function('return ' + js.match(/function parseListLine\(raw\) \{[\s\S]*?\n\}/)[0])();
 const mk = () => { const d = V.DECKS.blank(); for (const raw of fs.readFileSync(path.join(ROOT, 'showcase', 'deck.txt'), 'utf8').split(/\r?\n/)) { const line = raw.trim(); if (!line || line.startsWith('#')) continue; const m = PL10(line); const num = m[2].toUpperCase(); const p = (V.CAT.byNum.get(num) || []).filter(x => x.num === num).sort((a, b) => (a.market || 9e9) - (b.market || 9e9))[0]; if (p.type === 'Leader') d.leader = p.id; else d.cards.push({ id: p.id, n: +m[1] }); } return d; };
-/* deterministic shuffles for the test */
-let seed = 7; const _rnd = ctx.Math.random; ctx.Math.random = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
-const zones = P => P.deck.length + P.hand.length + P.life.length + P.trash.length + P.chars.length + (P.stage ? 1 : 0) + 1 + (P.looking || []).length;
+/* take 122: the engine shuffles with its own seed; both seats play through the one entry point (BOT.move -> SIM.act)
+   and the invariants are read after EVERY move, not once a turn */
+const zones = P => P.deck.length + P.hand.length + P.life.length + P.trash.length + P.chars.length + (P.stage != null ? 1 : 0) + 1 + P.looking.length;
 const donSum = P => P.don.active + P.don.rested + P.donDeck + P.leader.don + P.chars.reduce((a, c) => a + c.don, 0);
-const invariants = g => g.players.every(P => zones(P) === 51 && donSum(P) === 10 && P.chars.length <= 5 && P.don.active >= 0 && P.don.rested >= 0 && P.life.length >= 0);
-const playOne = (first) => {
-  const g = S.new(mk(), mk(), first); g.bot = 1;                      // player 1 is the bot; player 0 is driven by the same policy here
-  S.mulligan(0, false); S.mulligan(1, false);
-  let turns = 0, broke = null, actions = 0;
-  while (g.phase !== 'over' && turns < 90) {
-    if (!invariants(g)) { broke = `invariants at turn ${g.turn}: ` + g.players.map(P => `${zones(P)}/${donSum(P)}/${P.chars.length}`).join(' '); break; }
-    const i = g.active; g.bot = i;                                     // both seats play the bot's policy
-    let guard = 0, did;
-    do { did = B.step(); actions++;
-      if (g.phase === 'battle') { g.bot = g.battle.def; B.defend(); g.bot = i; const res = S.resolve(); if (res && g.phase !== 'over') { const def = 1 - i; g.bot = def; res.life.forEach(l => { if (!l.banished) B.offers(def, 'trigger', null, l.id, true); }); if (res.koId) B.offers(def, 'onko', null, res.koId); g.bot = i; } }
-    } while (g.phase === 'main' && g.active === i && did !== 'end' && guard++ < 40);
-    turns++;
-  }
-  return { g, turns, broke, actions };
-};
-const r1 = playOne(0), r2 = playOne(1);
+const invariants = g => g.players.every(P => zones(P) === 51 && donSum(P) === 10 && P.chars.length <= 5 && P.don.active >= 0 && P.don.rested >= 0);
+const playOne = (first, seed) => { const g = S.new(mk(), mk(), first, { seed }); let moves = 0, broke = null;
+  while (g.over === null && moves < 6000) { const w = S.who(); const a = B.move(w); if (!a) { broke = `no move for seat ${w} at turn ${g.turn} (${g.phase})`; break; } moves++;
+    if (!invariants(g)) { broke = `after move ${moves} (${JSON.stringify(a)}) at turn ${g.turn}: ` + g.players.map(P => `${zones(P)}/${donSum(P)}/${P.chars.length}`).join(' '); break; } }
+  return { g, turns: g.turn, broke, actions: moves }; };
+const r1 = playOne(0, 7), r2 = playOne(1, 8);
 ok('a bot-versus-bot game runs to a defeat, from either first player', r1.g.phase === 'over' && r2.g.phase === 'over', `${r1.turns} and ${r2.turns} turns; over=${r1.g.over},${r2.g.over}`);
-ok('every card was in exactly one zone every turn, DON!! summed to ten, never six Characters (class 4, as a running invariant)', !r1.broke && !r2.broke, r1.broke || r2.broke || '');
+ok('every card was in exactly one zone after every move, DON!! summed to ten, never six Characters (class 4, as a running invariant)', !r1.broke && !r2.broke, r1.broke || r2.broke || '');
 ok('the games were real games: attacks were declared and Life was taken', r1.g.log.some(l => /attacks/.test(l)) && r1.g.players.some(P => P.life.length < 5) && r1.actions > 20, String(r1.actions));
-ok('the winner is named by the log line the rules require (defeat by damage with no Life, or by an empty deck)', /defeat/.test(r1.g.log.find(l => /defeat/.test(l)) || ''));
-ctx.Math.random = _rnd;
-/* the board wiring: no curtain against the app, the human always on screen, the app defends at once */
-ok('against the app there is no curtain and the human\'s screen is always the one shown', /if \(SIM\.g && SIM\.g\.bot != null\) return; const c = \$\('#simCurtain'\)/.test(js) && /i = 1 - g\.bot;/.test(js));
-ok('the app defends the moment it is attacked, and its block/counter are shown before the human resolves', /if \(g\.bot === g\.battle\.def\) \{ BOT\.defend\(\); paintSim\(\); return; \}/.test(js) && /The app defends/.test(js));
+ok('the winner is named by the log line the rules require (defeat by damage with no Life, or by an empty deck)', r1.g.log.some(l => /defeat/.test(l)));
+/* a game is its seed and its moves (take 122): what a Report carries, and what two phones will exchange */
+const snap = g => JSON.stringify({ p: g.players, t: g.turn, a: g.active, o: g.over, ph: g.phase });
+const live1 = snap(r1.g), rp = S.replay(r1.g.spec, r1.g.actions);
+ok('a game is its seed and its moves: replayed, it ends in exactly the same state', rp.ok && snap(rp.g) === live1, rp.why || '');
+const cut = r1.g.actions.slice(); cut.splice(Math.floor(cut.length / 2), 1); const rc = S.replay(r1.g.spec, cut);
+ok('...control: with one move taken out, the replay does not end the same', !rc.ok || snap(rc.g) !== live1);
+/* the board wiring: no curtain against the app, the human always on screen, the app's block and counter shown before Resolve */
+ok('against the app there is no curtain and the human\'s screen is always the one shown', /if \(SIM\.g && SIM\.g\.bot != null\) return; const c = \$\('#simCurtain'\)/.test(js) && /if \(g\.bot != null\) return 1 - g\.bot;/.test(js));
+ok('the app defends the moment it is attacked, and its block/counter are shown before the human resolves', /SIM\.g\.battle\.att !== SIM\.g\.bot \? \['resolve'\] : \[\]/.test(js) && /The app defends/.test(js));   // take 124: read as the app's moves come, one a beat
 ok('the setup offers the app as an opponent and says what it is', /never sees your hand/.test(js));
 S.g = null;
 }
@@ -1591,7 +1561,8 @@ ok('the bottom bar is one bar in every mode: fixed height, near-black, items str
 ok('every screen title bar has the same minimum height', /\.appbar\{[^}]*min-height:56px/.test(html));   // take 107: the header, one per screen
 ok('the Portfolio label is a small caption above the name, which keeps the display face at the hero\'s size', /\.hero \.who \.cap\{[^}]*text-transform:uppercase/.test(html) && /<span class="cap">Collection<\/span><em id="pfName">/.test(html) && /\.hero \.who em\{[^}]*font-size:var\(--fs-head\)/.test(html));   // take 117: the token (26px)
 { const boxes = V.CAT.rows.filter(p => V.SEALED.isProduct(p));
-  ok('every sealed product carries a product photo url (343 of 343 today)', boxes.length > 300 && boxes.every(p => p.img));
+  const phSealed = new Set(((V.CAT.man.images || {}).placeholder_ids || []).map(Number));   // take 126: the host's "Image Coming Soon" ships no URL (landmine 240)
+  ok(`every sealed product carries a product photo url but those whose picture is the host's placeholder (${boxes.filter(p => phSealed.has(p.id)).length} today)`, boxes.length > 300 && boxes.every(p => p.img || phSealed.has(p.id)), String((boxes.find(p => !p.img && !phSealed.has(p.id)) || {}).id));
   const pic = V.productPic(boxes[0]);
   ok('a product picture is the take-12 display-only image -- lazy, hot-linked, retried once then removed on failure -- over a drawn tile that shows the set code', /<img class="ref" loading="lazy"/.test(pic) && /this\.remove\(\)/.test(pic) && /class="ph"/.test(pic) && /(tcgplayer-cdn|product-images)\.tcgplayer\.com/.test(pic));   // either declared host since take 100
   const np = V.productPic({ ...boxes[0], img: null });
@@ -2144,9 +2115,18 @@ const today97 = new Date().toISOString().slice(0, 10); const days97 = d => Math.
 ok('the band: within a week, a month, three months, further or past', V.relBand(0) === 'cd1' && V.relBand(7) === 'cd1' && V.relBand(8) === 'cd2' && V.relBand(30) === 'cd2' && V.relBand(31) === 'cd3' && V.relBand(90) === 'cd3' && V.relBand(91) === 'cd4' && V.relBand(-1) === 'cd4');
 V.MODE.set('hunt', false); V.HUNT.feed = null; V.RELF.open = new Set(); V.RELALERTS.list = []; V.paintReleases();
 const r97 = ctx.document.getElementById('relList').innerHTML;
-const decks97 = [...V.CAT.sets.values()].filter(s => s.pub && /^Starter Deck/i.test(s.name)); const byDay = {}; for (const s of decks97) (byDay[s.pub] ||= []).push(s);
+/* take 124: a starter deck by its code, the words as the fallback -- TCGCSV renamed every one on 29 Sept ("Starter Deck 31:
+   RED Monkey.D.Luffy" to "ST-31: Starter Deck 31 RED Monkey.D.Luffy") and the first word no longer said so (landmine 231) */
+const deck97 = s => /^ST-?\d/i.test(s.abbr || '') || /\bStarter Deck\b/i.test(s.name || '');
+const decks97 = [...V.CAT.sets.values()].filter(s => s.pub && deck97(s)); const byDay = {}; for (const s of decks97) (byDay[s.pub] ||= []).push(s);
 const runDay = Object.keys(byDay).find(d => byDay[d].length >= 2); const run = byDay[runDay] || [];
 ok('a run of starter decks on one release day is ONE row naming the range and the count, its decks folded away (the six ST31–ST36 rows the owner saw)', !!runDay && new RegExp('Starter decks [^<]*' + run[0].abbr + '[^<]*' + run[run.length - 1].abbr).test(r97) && new RegExp(run.length + ' starter decks, one release day').test(r97) && !new RegExp('data-browse-set="' + run[1].id + '"').test(r97) && new RegExp('data-relfold="' + runDay + '"').test(r97), `${runDay}: ${run.length} decks`);
+/* take 124: the fold keys on the set's code, never its name -- the run under names with no "Starter Deck" in them is still one
+   row; with neither the code nor the words it is not folded (the control: the check can see a run come apart) */
+const folded97 = () => { V.RELF.open = new Set(); V.paintReleases(); const h = ctx.document.getElementById('relList').innerHTML; return !!runDay && new RegExp('data-relfold="' + runDay + '"').test(h) && !new RegExp('data-browse-set="' + run[1].id + '"').test(h); };
+const renamed97 = (f) => { const was = run.map(s => [s.name, s.abbr]); run.forEach((s, i) => f(s, i)); try { return folded97(); } finally { run.forEach((s, i) => { s.name = was[i][0]; s.abbr = was[i][1]; }); V.paintReleases(); } };
+ok('the run stays one row whatever TCGCSV names its sets: named as before 29 Sept, and named without the words (landmine 231)', renamed97((s, i) => { s.name = `Starter Deck ${31 + i}: Deck ${i}`; }) && renamed97((s, i) => { s.name = `Deck ${i} of the run`; }), `${run.length} decks on ${runDay}`);
+ok('control: a run with neither an ST code nor the words is not folded', !!runDay && !renamed97((s, i) => { s.name = `Deck ${i} of the run`; s.abbr = `XX${i}`; }));
 const single = Object.keys(byDay).find(d => byDay[d].length === 1); const one = single && byDay[single][0];
 ok('control: a single starter deck on its day stays its own row', !one || new RegExp('data-browse-set="' + one.id + '"').test(r97), String(one && one.abbr));
 V.RELF.open.add(runDay); V.paintReleases(); const r97b = ctx.document.getElementById('relList').innerHTML;
@@ -2156,7 +2136,7 @@ V.RELF.open = new Set(); V.paintReleases(); const r97c = ctx.document.getElement
 const upcoming97 = [...V.CAT.sets.values()].filter(s => s.pub && s.pub >= today97);
 /* take 115 (self-review): rows, not sets -- starter decks that share a day are one row (its first deck's), and since take 115
    a group is listed as soon as it lists a product, so ST39-ST44 on one day would have turned these two red */
-const rows97 = upcoming97.filter(s => new RegExp('data-browse-set="' + s.id + '"').test(r97c) || !(/^Starter Deck/i.test(s.name) && new RegExp('data-relfold="' + s.pub + '"').test(r97c)));
+const rows97 = upcoming97.filter(s => new RegExp('data-browse-set="' + s.id + '"').test(r97c) || !(deck97(s) && new RegExp('data-relfold="' + s.pub + '"').test(r97c)));
 ok('every upcoming row\'s countdown carries the band of its distance, and a recent row carries the past band', rows97.every(s => new RegExp('data-browse-set="' + s.id + '"[\\s\\S]*?<span class="note ' + V.relBand(days97(s.pub)) + '">').test(r97c)) && /<span class="note cd4">\d+ days ago<\/span>/.test(r97c), `${rows97.length} upcoming rows of ${upcoming97.length} sets`);
 ok('every upcoming row and group has Remind me and Calendar beside Details; a recent one has Details only', count97(r97c, /data-relalert="/g) >= rows97.length && count97(r97c, /data-relcal="/g) === count97(r97c, /data-relalert="/g) && (() => { const rec = r97c.slice(r97c.indexOf('<h3>Recent</h3>')); return !/data-relalert=/.test(rec) && /Details <svg[^>]*><use href="#g-external"/.test(rec); })());
 /* the reminder: on, the day before, once; off */
@@ -2187,7 +2167,7 @@ V.RELF.open = new Set(); V.DISTF.open.clear(); V.HUNT.feed = null; V.RELALERTS.l
 
 section('take 98 — the take-97 look: Back from a sheet goes back (landmine 137), the most-valuable rows open, one splash colour, a toast that wraps, the decks fold, a condition tap that works');
 /* landmine 137: the card sheet is a screen; it must not be in the overlay list, and the handler's sequence must land on the previous screen */
-ok('closeAnyOverlay() lists overlays only: the sheets, the tour and the curtain — never the card sheet', /for \(const id of \['#picker', '#filters', '#leaderPick', '#printPick', '#tour', '#simCurtain'\]\)/.test(js) && !/for \(const id of \[[^\]]*'#detail'/.test(js));   // take 107 added the three sheets Back skipped
+ok('closeAnyOverlay() lists overlays only: the sheets (the Rules sheet since take 122, the table\'s sheet since take 124), the tour and the curtain \u2014 never the card sheet', /for \(const id of \['#picker', '#filters', '#leaderPick', '#printPick', '#rulesSheet', '#simSheet', '#tour', '#simCurtain'\]\)/.test(js) && !/for \(const id of \[[^\]]*'#detail'/.test(js));   // take 107 added the three sheets Back skipped
 if (V.guideClose) V.guideClose(false);   // take 116: the boot timer opened the guide inside this stub (its first await is above), and it is an overlay now: Back would close it first
 { const box98 = V.CAT.rows.find(p => V.SEALED.isProduct(p)); V.MODE.set('hunt', false); V.go('sealed'); V.openDetail(box98.id);
   const top0 = V.NAV.stack[V.NAV.stack.length - 1]; const closed = V.closeAnyOverlay(); const back = V.NAV.back(); const top1 = V.NAV.stack[V.NAV.stack.length - 1];
@@ -4231,15 +4211,15 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
     const shot = () => { V.paintSim(); boards.push(doc.getElementById('simBoard')._html); };
     holds(() => V.paintDecks()); holds(() => V.openDeck(dA.id)); const dkStats = (doc.getElementById('dkStats') || {})._html || '';
     holds(() => V.paintCards()); holds(() => V.paintPlay());
-    SIM4.g = null; SU.sel = null; SU.post = null; SU.result = null; SU.offer = null; holds(() => V.go('sim')); shot();
-    const g4 = SIM4.new(dA, dB, 0); SIM4.mulligan(0, false); SIM4.mulligan(1, false);
+    SIM4.g = null; SU.sel = null; SU.post = null; SU.result = null; holds(() => V.go('sim')); shot();
+    const g4 = SIM4.new(dA, dB, 0, { seed: 104 }); SIM4.mulligan(0, false); SIM4.mulligan(1, false);
     holds(() => SIM4.giveDon(0, 'leader')); SU.sel = { ref: 'leader' }; shot(); const mainBoard = boards[boards.length - 1];
-    SU.sel = null; SIM4.endTurn(); SIM4.endTurn(); const P0 = SIM4.P(0); P0.leader.rested = false; P0.mods = { leader: 0 };
+    SU.sel = null; SIM4.endTurn(); SIM4.endTurn(); const P0 = SIM4.P(0); P0.leader.rested = false; P0.modl = [];
     const att = holds(() => SIM4.attack(0, 'leader', 'leader')); shot(); const blockBoard = boards[boards.length - 1];
     holds(() => SIM4.noBlock()); shot(); const counterBoard = boards[boards.length - 1];
-    const res4 = holds(() => SIM4.resolve()); if (res4) { SU.result = res4; SU.post = { i: 1, att: 0 }; } shot(); const postBoard = boards[boards.length - 1];
-    SU.post = null; SU.result = null; SU.offer = { i: g4.active, list: [{ e: { raw: 'A4 probe: draw 1 card.' }, steps: [{ a: 'draw' }], step: 0, targets: null, ref: null, cardId: dA.leader }] }; shot(); const offerBoard = boards[boards.length - 1];
-    SU.offer = null; g4.phase = 'over'; g4.over = 0; shot();
+    const res4 = holds(() => SIM4.resolve()); if (res4) SU.post = { i: 1, att: 0, res: res4 }; shot(); const postBoard = boards[boards.length - 1];   // take 122: the post screen carries its result
+    SU.post = null; SU.result = null; g4.queue = [{ i: g4.active, e: { raw: 'You may draw 1 card. (A4 probe)', t: 'onplay', if: [], do: [{ a: 'draw', n: 1 }] }, steps: [{ a: 'draw', n: 1 }], step: 0, targets: null, ref: null, cardId: dA.leader, hand: false }]; shot(); const offerBoard = boards[boards.length - 1];   // take 122: an offer waits in the engine's queue; take 124: one the player may decline, since an automatic one has no Skip (§8-1-3-1)
+    g4.queue = []; g4.phase = 'over'; g4.over = 0; shot();
     /* take 115 (self-review): the Play screens' roots are read whether or not this block changed them -- an earlier
        section left the counter painted with the same markup, so its paint here was no change and never read */
     const read4 = ['dkList', 'dkRows', 'cdRes', 'plBoard'], rootHtml = k => (doc.getElementById(k) || {})._html || '';
@@ -4249,8 +4229,8 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
        brassHits.length === 0 && read4.every(k => rootHtml(k).length > 0) && /class="panel plpanel"/.test(rootHtml('plBoard')) && boards.length === 7 && att && att.ok === true && /is attacked/.test(blockBoard) && /Counter step/.test(counterBoard), brassHits.slice(0, 4).join(' | ') || `${painted.length} painted, roots ${read4.map(k => k + ' ' + rootHtml(k).length).join(', ')}, attack ${JSON.stringify(att)}`);
     ok('...control: a class that set the fill colour on text would be listed -- take 117 moved the last one, .dline, to --accent-ink, so the list is empty by design and a planted class is the proof',
        brassCls.length === 0 && topRules(css + '\n.probe117{color:var(--brass)}').filter(r => /(?:^|;)\s*color\s*:\s*var\(--brass\)/.test(r.body)).flatMap(r => r.sels).includes('.probe117'));
-    ok('...the two it had -- "choose a target" and the given DON!! -- are --accent-ink now (#E0553D was 4.25:1 on Play\'s card)',
-       /<span style="color:var\(--accent-ink\)">choose a target<\/span>/.test(mainBoard) && /<span style="color:var\(--accent-ink\)">\u25cf/.test(mainBoard));
+    ok('...the two it had: "choose a target" is --accent-ink, and the given DON!! is now a chip in a DON!! card\'s white and black -- black ink on white in a black border (the owner, take 124), not text in the fill (#E0553D was 4.25:1 on Play\'s card)',
+       /<span style="color:var\(--accent-ink\)">choose a target<\/span>/.test(mainBoard) && /<span class="dn">\+1<\/span>/.test(mainBoard) && /\n\.sc \.dn\{[^}]*background:linear-gradient\(180deg,#FFFFFF,#ECE9E1\);border:1\.5px solid #0A0A0A;\n  color:#0A0A0A;/.test(css));
     ok('...control: take 114\'s span and a Hunt line are caught', brassText('<h3>X \u00b7 <span style="color:var(--brass)">choose a target</span></h3>').length === 1 && brassText('<button class="dline">GTS</button>').length === (brassCls.includes('dline') ? 1 : 0) && brassText('<i style="border-color:var(--brass)">x</i>').length === 0);
 
     /* (SPEC-110-46) the Sim's buttons are three words at most, what happens said beside them as take 110 did the Play counter:
@@ -4272,15 +4252,15 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
       ok('...control: take 114\'s slider, tabs with no selected state, is caught', !marks('<button data-mode="collect" class="on" role="tab">Collect</button><button data-mode="play" role="tab">', "$$('#modeSlider button').forEach(b => b.classList.toggle('on', b.dataset.mode === m));")); }
     /* the take-115 look: "Hand back" broke onto two lines at 411 px (110 x 65), squeezed by the note beside it, which names a
        deck and can be long; a button beside a note that can grow keeps its width, and the row wraps instead */
-    const holdsWidth = t => /<div class="row" style="[^"]*flex-wrap:wrap[^"]*"><button class="ghost go" data-sim="post" style="flex:none">Hand back<\/button>/.test(t)
-      && /<div class="row" style="[^"]*flex-wrap:wrap[^"]*">[\s\S]{0,400}?<button class="ghost" data-sim="fxskip" style="flex:none">Skip<\/button>/.test(t);
-    ok('(the look) a Sim button beside a note that can grow keeps its width, in a row that wraps: Hand back, Skip (Hand back broke onto two lines at 411)', holdsWidth(js));
-    ok('...control: the rows as A4 first wrote them are caught', !holdsWidth('<div class="row" style="margin-top:10px"><button class="ghost go" data-sim="post">Hand back</button><span class="note" style="margin:0">to X</span></div><div class="row" style="gap:10px;margin-top:8px"><button class="ghost" data-sim="fxskip">Skip</button><span class="note" style="margin:0">play it by hand</span></div>'));
+    const goRule = /\n\.tb-go\{display:flex;flex-wrap:wrap;/.test(css) && /\n\.tb-go > \.ghost\{flex:none;white-space:nowrap\}/.test(css);   // take 124: one rule for every such row on the table
+    const holdsWidth = t => /<div class="tb-go"><button class="ghost go" data-sim="post">Hand back<\/button>/.test(t) && /<div class="tb-go">[\s\S]{0,400}?<button class="ghost" data-sim="fxskip">Decline<\/button>/.test(t);   // take 124: a decline named for what it does
+    ok('(the look) a Sim button beside a note that can grow keeps its width, in a row that wraps: Hand back, Decline, painted (Hand back broke onto two lines at 411)', goRule && holdsWidth(postBoard + offerBoard), (postBoard.match(/data-sim="post"[^>]*>/) || ['no Hand back'])[0]);
+    ok('...control: the rows as A4 first wrote them are caught', !holdsWidth('<div class="row" style="margin-top:10px"><button class="ghost go" data-sim="post">Hand back</button><span class="note" style="margin:0">to X</span></div><div class="row" style="gap:10px;margin-top:8px"><button class="ghost" data-sim="fxskip">Decline</button><span class="note" style="margin:0">play it by hand</span></div>'));
     ok('...control: take 114\'s labels are caught', wordy('<button class="ghost go" data-sim="end">End turn \\u2014 pass the phone</button><button class="ghost go" data-sim="resolve">Resolve \\u2014 ${pw.a} vs ${pw.d}${pw.a >= pw.d ? \': hit\' : \': held\'}</button><button data-sim="block:1">Block with ${esc(x.name)}</button>').length === 2);
-    ok('...and what happens is said beside them, on the painted board: then pass the phone, then the counter step, who has hit, to whom the phone goes, play it by hand',
+    ok('...and what happens is said beside them, on the painted board: then pass the phone, then the counter step, who has hit, to whom the phone goes, what a decline does (take 122: Resolve by hand is its own button; take 124: the decline of a "you may" line is Decline, "its words let you")',
        /data-sim="end">End turn<\/button><span class="note"[^>]*>then pass the phone<\/span>/.test(mainBoard) && /data-sim="noblock"[^>]*>No block<\/button><span class="note"[^>]*>then the counter step<\/span>/.test(blockBoard)
        && /data-sim="resolve"[^>]*>Resolve<\/button><span class="note"[^>]*>\d+ vs \d+: (?:hit|held)<\/span>/.test(counterBoard) && /data-sim="post"[^>]*>Hand back<\/button><span class="note"[^>]*>to [^<]+<\/span>/.test(postBoard)
-       && /data-sim="fxskip"[^>]*>Skip<\/button><span class="note"[^>]*>play it by hand<\/span>/.test(offerBoard), [mainBoard, blockBoard, counterBoard, postBoard, offerBoard].map(b => (b.match(/data-sim="(?:end|noblock|resolve|post|fxskip)"[^>]*>[^<]*<\/button>(?:<span[^>]*>[^<]*<\/span>)?/) || ['-'])[0]).join(' | '));
+       && /data-sim="fxskip"[^>]*>Decline<\/button><span class="note"[^>]*>its words let you<\/span>/.test(offerBoard), [mainBoard, blockBoard, counterBoard, postBoard, offerBoard].map(b => (b.match(/data-sim="(?:end|noblock|resolve|post|fxskip)"[^>]*>[^<]*<\/button>(?:<span[^>]*>[^<]*<\/span>)?/) || ['-'])[0]).join(' | '));
 
     /* (SPEC-110-45) keywords one way: the deck's stats chips as the game and the tour write them, the Sim's reasons without
        brackets, a Trigger named plainly, the want list by its name */
@@ -4297,7 +4277,7 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
     holds(() => V.openDeck(dN.id)); const noneCss = doc.getElementById('dkLead').style.cssText;
     ok('(SPEC-109-41) a deck\'s Leader box is the card\'s own colours under its picture -- both of a two-colour Leader -- offline or when the picture fails; a deck with no Leader keeps the plain box',
        !!L2 && leadCss === `--a1:${ac[0]};--a2:${ac[1]}` && /var\(--c-/.test(ac[1]) && ac[0] !== ac[1] && noneCss === '' && ruleVal(css, '.dkhead .lead', 'background') === 'linear-gradient(160deg,var(--a1,var(--card2)),var(--a2,var(--card2)))', `${leadCss} | ${ruleVal(css, '.dkhead .lead', 'background')}`);
-    V.DECKS.list = keepDecks; SIM4.g = null; SU.sel = null; SU.post = null; SU.result = null; SU.offer = null; V.MODE.set('collect', false); V.go('home');
+    V.DECKS.list = keepDecks; SIM4.g = null; SU.sel = null; SU.post = null; SU.result = null; V.MODE.set('collect', false); V.go('home');
 
     /* (STAN-106-2) nothing under 12 px as the browser draws it: every <small>, <sub> and <sup> the app writes, sized by the rule
        that reaches it or by the browser's own "smaller" (the size of its parent over 1.2) -- the literal-px check above passed
@@ -4358,7 +4338,7 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
     const label4 = a => unesc((a.match(/aria-label="([^"]*)"/) || [, ''])[1]);
     const misread = t => buttons4(t).flatMap(b => b.g.map(g => [g, b])).filter(([g, b]) => (g === 'minus' && !/^One fewer|\bdown$/.test(label4(b.a))) || (g === 'close' && !/\bdata-close=/.test(b.a))
          || (g === 'trash' && !/^(?:Remove|Delete|Stop watching|Trash)\b/.test(label4(b.a)))).map(([g, b]) => `g-${g} on "${label4(b.a) || b.a.slice(0, 40)}"`);
-    const removers = ['data-want=', 'data-alrm=', 'data-sim="trashhand:', 'aria-label="Stop watching ${esc(a.name)}"', 'data-localdel='];
+    const removers = ['data-want=', 'data-alrm=', 'aria-label="Stop watching ${esc(a.name)}"', 'data-localdel='];   // take 122: the Sim's free trash button is gone (landmine 212)
     const drawn = t => removers.map(r => buttons4(t).filter(b => b.a.includes(r)).map(b => b.g.join('+')).join('/'));
     const times = t => (t.match(/>\s*(?:\u00d7|&times;|&#215;|&#x[dD]7;|\\u00[dD]7)\s*<\/button>/g) || []).length;
     ok('(SPEC-108-34, SPEC-108-37) one glyph per meaning: a want, an alert, a stock watch, a note and the Sim\'s trash are removed with g-trash; g-minus is only "one fewer", g-close only closes a sheet; no remove drawn as a times sign',
@@ -4460,6 +4440,53 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
 }
 
 
+/* here, after take 115's backups and restores, and not beside the scanner's: its waits are real time, and early in
+   this run they let the boot's first-open guide open under sections that assume it has not */
+section('take 125 — a backup this install can write: the file an uninstalled install left is not its own (landmine 239)');
+await (async () => {
+  /* the phone after the sideload-to-Play switch: the old install's files are still in Documents/OPTCGHub, and Android
+     refuses this install a write -- or a read -- of them, with the message the Filesystem plugin passes on */
+  const disk = {}, notOurs = new Set(['OPTCGHub/backup-latest.json', 'OPTCGHub/backup-before-restore.json']);
+  const denied = () => { throw new Error('open failed: EACCES (Permission denied)'); };
+  const fsx = { writeFile: async ({ path: p, data }) => { if (notOurs.has(p)) denied(); disk[p] = data; return { uri: 'file:///storage/emulated/0/Documents/' + p }; },
+                readFile: async ({ path: p }) => { if (notOurs.has(p)) denied(); if (!(p in disk)) throw new Error('File does not exist.'); return { data: disk[p] }; } };
+  const cap0 = ctx.window.Capacitor, names0 = store['vault.docNames'], last0 = V.OWN.lastBackup, errs0 = V.ERRS.list.slice(), errsKey0 = store['vault.errs'];
+  ctx.window.Capacitor = { Plugins: { Filesystem: fsx } }; delete store['vault.docNames'];
+  let where = '', threw = '';
+  try { where = await V.PLATFORM.backup('{"app":"OP TCG Hub","items":[],"n":1}'); } catch (e) { threw = String(e.message || e); }
+  const own = Object.keys(disk).find(p => /^OPTCGHub\/backup-latest-\d{8}-\d{6}\.json$/.test(p));
+  ok('a backup-latest.json another install left cannot be written over, so the backup goes to a name this install makes -- and says which',
+     !threw && !!own && where === 'Documents/' + own, JSON.stringify({ where, threw, files: Object.keys(disk) }));
+  ok('...with the dated copy beside it', Object.keys(disk).some(p => /^OPTCGHub\/backup-\d{4}-\d{2}-\d{2}\.json$/.test(p)), JSON.stringify(Object.keys(disk)));
+  await V.PLATFORM.backup('{"app":"OP TCG Hub","items":[],"n":2}');
+  ok('...the next backup writes that same name, not a new one', Object.keys(disk).filter(p => /backup-latest-/.test(p)).length === 1 && JSON.parse(disk[own]).n === 2);
+  ok('...and Restore reads this install\'s latest, never the file the other install left', JSON.parse((await V.PLATFORM.readBackup()) || '{}').n === 2);
+  ok('...the reason is kept for Diagnostics, in Android\'s words', V.ERRS.list.some(e => e.kind === 'backup' && /backup-latest\.json could not be written \(open failed: EACCES/.test(e.msg)), JSON.stringify(V.ERRS.list.slice(0, 2)));
+  ok('the copy kept before a restore goes the same way', (await V.PLATFORM.keepAside('{"k":1}')) === 'Documents/OPTCGHub' && Object.keys(disk).some(p => /^OPTCGHub\/backup-before-restore-\d{8}-\d{6}\.json$/.test(p)));
+  /* control: a phone whose backup-latest.json is its own is written as before, under the plain name */
+  const disk2 = {}; ctx.window.Capacitor = { Plugins: { Filesystem: { writeFile: async ({ path: p, data }) => { disk2[p] = data; return { uri: 'x' }; } } } }; delete store['vault.docNames'];
+  const w2 = await V.PLATFORM.backup('{"n":3}');
+  ok('...control: an install that owns backup-latest.json writes it, under its own name, as before', w2 === 'Documents/OPTCGHub' && 'OPTCGHub/backup-latest.json' in disk2 && !Object.keys(disk2).some(p => /latest-\d/.test(p)), JSON.stringify(Object.keys(disk2)));
+  /* a folder nothing can be written to: the backup fails, and says why for both names */
+  ctx.window.Capacitor = { Plugins: { Filesystem: { writeFile: async () => { throw new Error('open failed: ENOSPC (No space left on device)'); } } } }; delete store['vault.docNames'];
+  let why = ''; try { await V.PLATFORM.backup('{}'); } catch (e) { why = String(e.message || e); }
+  ok('when no name can be written the backup fails, and its reason names both tries', /backup-latest\.json: open failed: ENOSPC/.test(why) && /backup-latest-\d{8}-\d{6}\.json: open failed: ENOSPC/.test(why), why);
+  /* the collection's own path: the failure and its reason reach the last-backup line and the self-test */
+  if (!V.backupHeld()) {
+    V.scheduleBackup('smoke'); await new Promise(r => setTimeout(r, 480));
+    const lb = V.OWN.lastBackup, st = Object.fromEntries((await V.SELFTEST.run()).checks.map(c => [c.name, c]))['Backups are being written'];
+    ok('a failed backup keeps its reason, and the self-test FAILs with it (take 121 said only "Failed")', !!lb && lb.failed === true && /ENOSPC/.test(lb.why || '') && st && st.s === 'FAIL' && /ENOSPC/.test(st.note), JSON.stringify({ lb, st }));
+    ctx.window.Capacitor = { Plugins: { Filesystem: fsx } }; delete store['vault.docNames'];
+    V.scheduleBackup('smoke'); await new Promise(r => setTimeout(r, 480));
+    const ok2 = Object.fromEntries((await V.SELFTEST.run()).checks.map(c => [c.name, c]))['Backups are being written'];
+    ok('...control: on the phone after the switch the backup is written, and the self-test PASSes naming the file', !V.OWN.lastBackup.failed && ok2 && ok2.s === 'PASS' && /backup-latest-\d{8}-\d{6}\.json/.test(ok2.note), JSON.stringify(ok2));
+  } else ok('precondition: no backup hold stands in the main app here', false, 'held');
+  if (names0 === undefined) delete store['vault.docNames']; else store['vault.docNames'] = names0;
+  V.OWN.lastBackup = last0; if (cap0 === undefined) delete ctx.window.Capacitor; else ctx.window.Capacitor = cap0;
+  V.ERRS.list = errs0; if (errsKey0 === undefined) delete store['vault.errs']; else store['vault.errs'] = errsKey0;   // no trace
+})();
+
+
 section('take 116 — the first-open experience: the opening screen and the guide share the listing\'s frame; four pages; Back closes the guide, Next pages it');
 { ok('the splash and the guide draw one scene: the listing\'s Prussian band, buff sky, ink and green, as literals on both', /#splash,#tour\{--t-prussian:#1f3d72;/.test(html) && /#splash\{[^}]*linear-gradient\(180deg,#1f3d72/.test(html) && /#tour\{[^}]*linear-gradient\(180deg,var\(--t-prussian\)/.test(html));
   ok('the opening screen carries the app\'s own icon file and the sea; the guide the same sea and, on its last page, the same icon', (html.match(/bundle\/icon\.svg/g) || []).length === 1 && (html.match(/class="gsea"/g) || []).length === 2 && (js.match(/bundle\/icon\.svg/g) || []).length === 1);
@@ -4540,7 +4567,7 @@ section('take 117 — the owner\'s polish: starter decks once, the strips readab
   const offScale = [...cssPart.matchAll(/font-size:(\d+(?:\.\d+)?)px/g)].map(m => +m[1]).filter(v => ![12, 13, 14, 15, 16, 18, 26, 34, 44].includes(v));
   ok('every font-size in the stylesheet is on the token scale (25 literals were off it at take 114)', offScale.length === 0, offScale.join(','));
   ok('the placeholder rule is declared once, and the distributor line\'s text uses the ink token', (html.match(/\.search input::placeholder\{/g) || []).length === 1 && /\.dline\{[^}]*color:var\(--accent-ink\)\}/.test(html) && !/\.dline\{[^}]*color:var\(--brass\)/.test(html));
-  ok('the Sim\'s opponent line says "in play", not "char"', / in play'/.test(js) && !/' char'/.test(js));
+  ok('the Sim\'s opponent strip counts its hand in words ("5 in hand"), never "char" (take 124: the table draws the Characters, so "in play" left with the rows)', /\$\{X\.handCount\} in hand<\/span>/.test(js) && !/' char'/.test(js));
   V.go('home'); }
 
 
@@ -4664,7 +4691,8 @@ section('take 120 — the UI series wrapped up: the binder on the open Fold, the
       ok(`...live: ${np.num || np.name} has no market price and its page says so, with no low\u2013high line`, /^No market price yet \u00b7 TCGplayer/.test(prov) && !/Low /.test(prov), prov.slice(0, 80)); }
     else ok('...live: every product in this catalogue has a market price (nothing to open)', true); }
   ok('a day in a mixed distributor line never breaks (no-break spaces, as every day since take 112)', /\\u00b7 mixed \\u00b7 release \$\{esc\(nbsp\(dayText\(rel\)\)\)\}/.test(js));
-  ok('the Sim\'s battle lines: the card without its power, then "attacks with 5000" on a line of its own in a strong, not a block <b> (it read "5000attacks with")', /\$\{simCard\(att\.id, '', true\)\}<span style="display:block">attacks with <strong>\$\{pw\.a\}<\/strong><\/span>/.test(js) && /\$\{simCard\(tgt\.id, '', true\)\}<span style="display:block">defends with <strong>\$\{pw\.d\}<\/strong>/.test(js) && !/<span>attacks with <b>/.test(js));
+  /* take 123: the board draws a card as the view hands it -- simCard(att), not simCard(att.id) */
+  ok('the Sim\'s battle: the two powers across the middle of the table, each its own number, the attacker\'s then the defender\'s with its counters (take 124; take 120 fixed "5000attacks with")', /<span class="tb-clash" aria-label="\$\{b\.powers\.a\} against \$\{b\.powers\.d\}"><b>\$\{b\.powers\.a\}<\/b>\$\{G\('sword', 18\)\}<b>\$\{b\.powers\.d\}<\/b>/.test(js) && !/<span>attacks with <b>/.test(js));
   ok('a deck row\'s second line wraps (at 411 px the ellipsis cut the keyword tags), and a set\'s name wraps in Home\'s half-width panel on the open Fold', /\n\.dkrow \.n > span\{font-size:var\(--fs-cap\);color:var\(--dim\);display:block;white-space:normal\}/.test(css) && /\n#setDone \.row \.nm b\{white-space:normal\}/.test(css));
   ok('...control: the nowrap line planted back is caught', !/\n\.dkrow \.n > span\{font-size:var\(--fs-cap\);color:var\(--dim\);display:block;white-space:normal\}/.test(css.replace('display:block;white-space:normal}', 'display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}')));
   ok('a Sealed row names its kind in the singular ("Box", not "Boxes"; "Sealed product" for the rest)', /out\.push\(sealedRow\(p, esc\(sealedWord\(p\)\), tl, byDist\)\);/.test(js) && !/sealedKind\(p\)\[1\]/.test(js) && /\['other', 'Other', 'Sealed product'\]/.test(js));
@@ -4746,6 +4774,634 @@ try {
   C.state.scan = keep.scan; C.state.deck = keep.deck; C.state.earned = keep.earned; V.MAXLOCK.until = keep.until;
   if (keep.max == null) ctx.localStorage.removeItem('vault.maxUntil'); else ctx.localStorage.setItem('vault.maxUntil', keep.max);
 }
+}
+{
+section('take 122 \u2014 the Sim on one entry point: the rules of v1.2.1, a move as a transaction, by hand bounded, the Rules sheet, proofs, Report');
+const S = V.SIM, R = V.CAT.rows;
+const st01 = V.CAT.stock.find(d => d.id === 'stock-st01'), st02 = V.CAT.stock[1];
+const snapG = () => JSON.stringify(S.g);
+/* decline whatever waits, for whoever it waits on -- bounded, and it stops at a refusal */
+const skipAll = () => { for (let k = 0; k < 30 && S.g.queue.length; k++) if (!S.act(S.who(), S.g.hand ? { t: 'handdone' } : { t: 'fxskip' }).ok) break; };
+const deal = (a, b, first, seed) => { const x = S.new(a, b, first, { seed }); S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' }); return x; };
+/* whose decision: the mulligan in order (§5-2-1-6); a move from the wrong seat refused and changing nothing */
+let g = S.new(st01, st02, 1, { seed: 3 });
+ok('the mulligan is decided first by the first player (§5-2-1-6): who() names them, legal() is keep or mulligan', S.who() === 1 && JSON.stringify(S.legal(1)) === '[{"t":"keep"},{"t":"mull"}]' && S.legal(0).length === 0);
+const s0 = snapG(); const early = S.act(0, { t: 'keep' });
+ok('...a move from the other seat is refused and changes nothing', early.ok === false && /not your decision/.test(early.why) && snapG() === s0);
+/* Life: the deck's top card goes to the BOTTOM of Life (§5-2-1-7, §2-9-2-1) */
+const top = g.players.map(P => P.deck.slice(0, S.num(S.card(P.leader.id).life) || 5));
+S.act(1, { t: 'keep' }); S.act(0, { t: 'keep' });
+ok('Life is placed with the deck\'s top card at the bottom (§5-2-1-7): life[0], the top, was the last one placed', g.players.every((P, k) => JSON.stringify(P.life) === JSON.stringify(top[k].slice().reverse())));
+ok('...control: take 121\'s top-first order is not this one', g.players.some((P, k) => top[k].length > 1 && JSON.stringify(P.life) !== JSON.stringify(top[k])));
+/* a move is a transaction: a refused one restores the game exactly */
+const P1 = S.P(1); const dear = P1.hand.findIndex(id => S.cost(S.card(id)) > P1.don.active);
+const s1 = snapG(); const refused = S.act(1, { t: 'play', h: dear });
+ok('a refused move changes nothing and is not recorded (a play it cannot pay for)', dear >= 0 && refused.ok === false && /costs/.test(refused.why) && snapG() === s1);
+/* DON!!: +1000 on the owner's turn only (§6-5-5-2) */
+S.act(1, { t: 'give', ref: 'leader' }); const L1 = S.card(P1.leader.id);
+ok('§6-5-5-2: a given DON!! is +1000 on its owner\'s turn', S.power(1, 'leader') === S.num(L1.power) + 1000);
+S.act(1, { t: 'end' });
+ok('...and nothing on the opponent\'s turn, while it is still given (take 121 counted it for the defender)', g.active === 0 && P1.leader.don === 1 && S.power(1, 'leader') === S.num(L1.power));
+/* deck-out is rule processing (§9-2-1-2), not a failed draw */
+S.P(0).deck.splice(0); S.act(0, { t: 'give', ref: 'leader' });
+ok('§9-2-1-2: an empty deck is a defeat at the next rule processing -- after any move, not only a draw', g.over === 1 && g.phase === 'over' && g.log.some(l => /no cards in the deck \u2014 defeat \(§9-2-1-2\)/.test(l)));
+g = deal(st01, st02, 0, 4); S.P(0).deck.splice(1); S.act(0, { t: 'end' });
+const alive = g.over === null; S.act(1, { t: 'end' });
+ok('...control: one card left is no defeat; drawing it empties the deck, and the game ends then', alive && g.over === 1 && S.P(0).deck.length === 0);
+/* a Character that leaves: its given DON!! go home rested (§6-5-5-4) */
+g = deal(st01, st02, 0, 5); S.act(0, { t: 'end' }); S.act(1, { t: 'end' }); S.act(0, { t: 'end' });   // seat 1's second turn: it may battle
+const plain = R.find(p => p.type === 'Character' && p.num && !S.lines(p.text).length && !(p.kw || '').length && S.num(p.power) === 3000);
+const D = S.P(0); D.chars = [Object.assign(S.inst(plain.id, 1), { don: 2, rested: true })]; D.donDeck -= 2; const r0 = D.don.rested;
+S.mod(1, 'leader', 99999, 'turn'); S.act(1, { t: 'attack', ref: 'leader', target: 0 }); skipAll(); S.act(0, { t: 'noblock' }); S.act(0, { t: 'resolve' });
+const tenEach = () => [0, 1].every(k => { const X = S.P(k); return X.don.active + X.don.rested + X.donDeck + X.leader.don + X.chars.reduce((a, c) => a + c.don, 0) === 10; });
+ok('§6-5-5-4: a K.O.\'d Character\'s two given DON!! come back to the cost area, rested (take 121 lost them)', D.chars.length === 0 && D.don.rested === r0 + 2 && tenEach());
+/* [Unblockable] and [Rush: Character] */
+const kws = p => (p.kw || '').split('|');
+const unb = R.find(p => p.type === 'Character' && kws(p).includes('Unblockable')), rc = R.find(p => p.type === 'Character' && kws(p).includes('Rush: Character') && !kws(p).includes('Rush'));
+const blk = R.find(p => p.type === 'Character' && p.kw === 'Blocker');
+const arena = (att, turnPlayed) => { deal(st01, st02, 0, 6); S.act(0, { t: 'end' }); S.act(1, { t: 'end' });
+  S.P(0).chars = [S.inst(att.id, turnPlayed)]; S.P(1).chars = [S.inst(blk.id, 1), Object.assign(S.inst(plain.id, 1), { rested: true })]; };
+if (unb && blk) { arena(unb, 1); S.act(0, { t: 'attack', ref: 0, target: 'leader' }); skipAll(); const n1 = S.blockers().length;
+  arena(plain, 1); S.act(0, { t: 'attack', ref: 0, target: 'leader' }); skipAll(); const n2 = S.blockers().length;
+  ok('§10-1-7: [Unblockable] leaves the defender no Blocker; control: the same board with a plain attacker has one', n1 === 0 && n2 === 1, `${n1}/${n2}`); }
+if (rc) { arena(rc, 3); const t = S.legal(0).filter(a => a.t === 'attack' && a.ref === 0).map(a => a.target);
+  ok('§10-1-6: [Rush: Character] attacks the turn it is played, and only Characters', t.length === 1 && t[0] === 1, JSON.stringify(t)); }
+/* an effect K.O. fires [On K.O.] (§10-2-17; take 121 never offered it) */
+const FXs = V.CAT.effects;
+const koFx = Object.keys(FXs).find(id => S.card(+id).type === 'Character' && FXs[id].some(e => !e.hand && e.t === 'onplay' && e.if.length === 0 && e.do.length === 1 && e.do[0].a === 'ko' && e.do[0].cost >= 2 && !e.do[0].rested));   // a cost line that reaches the planted cost-2 Character (take 122: "a cost of 0" is scripted now)
+const onko = Object.keys(FXs).find(id => S.card(+id).type === 'Character' && FXs[id].some(e => e.t === 'onko') && S.cost(S.card(+id)) <= 2);
+if (koFx && onko) { g = deal(st01, st02, 0, 7); S.act(0, { t: 'end' }); S.act(1, { t: 'end' });
+  const P = S.P(0); P.hand = [+koFx]; P.don.active = 10 - P.don.rested; P.donDeck = 0; S.P(1).chars = [S.inst(+onko, 1)];
+  S.act(0, { t: 'play', h: 0 }); const ko = S.legal(0).find(a => a.t === 'fx' && a.target === 'o0'); if (ko) S.act(0, ko);
+  ok('§10-2-17: a Character an effect K.O.s offers its [On K.O.] to its owner (take 121 skipped it)', !!ko && S.P(1).chars.length === 0 && g.queue.length >= 1 && g.queue[0].i === 1 && g.queue[0].e.t === 'onko' && S.who() === 1); skipAll(); }
+/* the Leaders the free tray stood in for: ST08-001's "When a Character is K.O.'d" and ST09-001's continuous +1000 with its condition */
+{ const lead = num => (V.CAT.byNum.get(num) || []).find(p => p.type === 'Leader' && p.num === num), L8 = lead('ST08-001'), L9 = lead('ST09-001');
+  const koBoard = (leaderId, att) => { deal({ ...st01, leader: leaderId }, { ...st02, leader: leaderId }, 0, 10); S.act(0, { t: 'end' }); S.act(1, { t: 'end' }); if (att === 1) S.act(0, { t: 'end' });
+    const A = S.P(att); S.P(1 - att).chars = [onField(plain.id, 1, true)]; A.don.rested += 1; A.don.active -= 1; S.mod(att, 'leader', 99999, 'turn');
+    S.act(att, { t: 'attack', ref: 'leader', target: 0 }); skipAll(); S.act(1 - att, { t: 'noblock' }); S.act(1 - att, { t: 'resolve' }); return S.g.queue.map(o => `${o.i}:${o.e.t}:${o.hand ? 'hand' : 'run'}`).join(); };
+  if (L8 && plain) { const q = koBoard(L8.id, 0); const d0 = S.P(0).leader.don; S.act(0, { t: 'fx', target: 'L' });
+    ok('ST08-001: a Character K.O.\'d on its turn offers "give up to 1 rested DON!! to this Leader", scripted, and it lands', q === '0:whenko:run' && S.P(0).leader.don === d0 + 1, q);
+    const q1 = koBoard(L8.id, 1);
+    ok('...control: [Your Turn] -- the same K.O. on the opponent\'s turn waits only on the opponent\'s Leader', q1 === '1:whenko:run', q1); skipAll(); }
+  if (L9) { deal({ ...st01, leader: L9.id }, st02, 0, 11); S.act(0, { t: 'end' }); const P = S.P(0), base = S.num(L9.power); P.leader.don = 1; P.donDeck -= 1;
+    const life = P.life.splice(2); const at2 = S.power(0, 'leader'); P.life.push(life.shift()); const at3 = S.power(0, 'leader'); P.life.pop(); P.leader.don = 0; const noDon = S.power(0, 'leader');
+    ok('ST09-001: [DON!! x1] [Opponent\'s Turn] at 2 Life or less the Leader is +1000; controls: at 3 Life, and with no DON!!, it is not', at2 === base + 1000 && at3 === base && noDon === base, `${at2}/${at3}/${noDon} of ${base}`); }
+  const un = Object.keys(FXs).find(id => FXs[id].some(e => e.hand && e.t === 'static'));
+  ok('a continuous line the app does not compute is kept, never offered, and the board says it is the player\'s to apply', !!un && S.unapplied(+un).length >= 1 && S.unapplied(st01.leader).length === 0 && /its continuous text is yours to apply/.test(js)); }
+/* one Stage: a new one trashes the old (§3-8-5-1) */
+const stg = R.filter(p => p.type === 'Stage' && p.num && S.cost(p) <= 2).slice(0, 2);
+if (stg.length === 2) { deal(st01, st02, 0, 8); const P = S.P(0); P.hand = [stg[0].id, stg[1].id]; P.don.active = 4; P.donDeck = 6;
+  S.act(0, { t: 'play', h: 0 }); skipAll(); S.act(0, { t: 'play', h: 0 }); skipAll();
+  ok('§3-8-5-1: a second Stage trashes the first', P.stage && P.stage.id === stg[1].id && P.trash.includes(stg[0].id));
+  ok('...and the Stage is a card like the others: its own uid, rested and set active as they are (the review: it was an id beside two loose fields)', P.stage.uid > 0 && P.stage.rested === false && S.refOf(P, P.stage.uid) === 'stage' && P.stageUid === undefined && P.stageRested === undefined); }
+/* by hand, bounded (landmine 212): the tray names only the moves the line's words name, as many as its numbers */
+ok('by hand: a line\'s words name its moves -- "Draw 2 cards" is two draws and nothing else', JSON.stringify(S.handOps('[On Play] Draw 2 cards.')) === '{"draw":2}');
+ok('...Luffy\'s words are one DON!! given; control: no draw, no DON!! from the deck, no Life', (() => { const o = S.handOps('[Activate: Main] [Once Per Turn] Give this Leader or 1 of your Characters up to 1 rested DON!! card.'); return o.givedon === 1 && !o.draw && !o.adddon && !o.lifetohand; })());
+{ deal(st01, st02, 0, 20); S.act(0, { t: 'end' }); S.act(1, { t: 'end' }); const P = S.P(0); P.don.rested += 2; P.don.active -= 2;
+  S.g.queue = [{ i: 0, e: { raw: '[On Play] Set up to 1 of your DON!! cards as active.', t: 'onplay', if: [], do: [], hand: true }, n: 0, ref: null, uid: null, cardId: st01.leader, fromLife: false, hand: true, steps: [], step: 0, targets: null }];
+  S.act(0, { t: 'fxhand' }); const one = S.act(0, { t: 'hand', op: 'activedon' }), left = S.legal(0).filter(a => a.op === 'activedon' || a.op === 'active').length;
+  ok('...a DON!! set active spends the line\'s one "set ... as active" (take 122\'s self-play: it spent a budget no line has, and never ran out); control: the first is allowed', one.ok && left === 0 && P.don.active === 2 && Number.isFinite(S.g.hand.left.active), `${left} left`); skipAll(); }
+ok('...a look\'s cards go only where its words send them: "top or bottom" is the bottom (the rest back on top), never hand or trash; a search\'s reveal is one to hand (take 122\'s look: Perona was offered both)', (() => {
+  const pe = S.handOps("[On Play] Look at 5 cards from the top of your deck and place them at the top or bottom of the deck in any order."), se = S.handOps("[On Play] Look at 5 cards from the top of your deck; reveal up to 1 {Straw Hat Crew} type card and add it to your hand. Then, place the rest at the bottom of your deck in any order."), tr = S.handOps("[On Play] Look at 3 cards from the top of your deck and trash them.");
+  return pe.look === 5 && pe.lookbottom === 5 && !pe.lookhand && !pe.looktrash && se.lookhand === 1 && se.lookbottom === 5 && !se.looktrash && tr.looktrash === 3 && !tr.lookhand; })());
+ok('...whose cards, how long and from where are the words\' too: "your opponent\'s" is theirs, "a Character" either side\'s, "during this battle" the battle, "[Monkey.D.Luffy] cards" still yours; "from your hand to the top of your Life" is a hand card, never the deck\'s top; "your opponent\'s Life cards" theirs (take 122, the Leaders\' proofs)', (() => { try {
+  const k = S.handOps("[On Play] K.O. up to 1 of your opponent's Characters with a cost of 3 or less."), b = S.handOps("[On Play] Return up to 1 Character with a cost of 3 or less to the owner's hand."),
+    p = S.handOps("[When Attacking] Up to 1 of your Leader or Character cards gains +1000 power during this battle."), n = S.handOps("[Opponent's Turn] All of your [Portgas.D.Ace] and [Monkey.D.Luffy] cards gain +3000 power."),
+    l = S.handOps("[When Attacking] You may add 1 card from the top or bottom of your Life cards to your hand: If you have 2 or less Life cards, add up to 1 card from your hand to the top of your Life cards."), t = S.handOps("[Activate: Main] Trash up to 1 of your opponent's Life cards.");
+  return k._.where.ko === 'opp' && b._.where.tohand === 'any' && p._.dur === 'battle' && p._.where.power === 'own' && n._.where.power === 'own' && l.handtolife === 1 && !l.decktolife && l._.lifebottom === true && t.opplifetrash === 1; } catch (e) { return false; } })());
+ok('...and the free row is gone: no SIM.manual, no Draw (effect) button (take 121 drew without limit)', S.manual === undefined && !/data-sim="m:/.test(js) && !/Draw \(effect\)/.test(js));
+/* the review's guard: outside the engine and its opponent, the app moves a game only through act() -- a screen that wrote
+   the game itself is how take 121's tray drew without limit, and how two copies of a game would drift apart */
+{ const s0 = js.indexOf('const SIM = {'), b0 = js.indexOf('const BOT = {'), e0 = js.indexOf('\n};', b0);
+  const outside = (js.slice(0, s0) + js.slice(e0)).replace(/"where":"[^"]*"/g, '');   // the rules digest names the engine's functions in its "where" text: words, not calls
+  const WRITES = ['draw', 'mulligan', 'placeLife', 'startTurn', 'endTurn', 'mod', 'play', 'room', 'placeStage', 'leave', 'giveDon', 'attack', 'track', 'block', 'noBlock', 'playCounterEvent', 'counter', 'resolve', 'endBattle', 'rules', 'apply', 'markUsed', 'handOp', 'step', 'restore', 'rec', 'queue', 'drain', 'shuffle', 'rand'];
+  const writes = src => [...src.matchAll(/\bSIM\.(\w+)\s*\(/g)].map(m => m[1]).filter(n => WRITES.includes(n));
+  ok('only act() moves a game: the board, Diagnostics and the rest of the app call no engine write (take 122\'s review)', s0 > 0 && b0 > s0 && e0 > b0 && writes(outside).length === 0 && WRITES.every(n => typeof S[n] === 'function'), writes(outside).join());
+  ok('...control: a planted SIM.giveDon outside the engine is named', writes(outside + '\nSIM.giveDon(0, "leader");').join() === 'giveDon'); }
+ok('one store of what effects change, and one shape for a card on the field: a player has modl, no mods, and a Stage that is a card or null (the review)', (() => { const p = S.player('probe', st01.leader, []); return Array.isArray(p.modl) && p.mods === undefined && p.stage === null && !('stageUid' in p) && !('stageRested' in p) && p.leader.uid > 0; })());
+/* the proof marks: proven, unproven, by hand; a printing proven wrong is offered by hand only */
+const provenId = +Object.keys(V.CAT.proof).find(id => V.CAT.proof[id].v === 'proven' && (FXs[id] || []).some(e => !e.hand));
+const unprovenId = +Object.keys(FXs).find(id => !V.CAT.proof[id] && FXs[id].some(e => !e.hand && e.t !== 'static'));
+const handId = +Object.keys(FXs).find(id => FXs[id].every(e => e.hand));
+ok('each offered line says what the app knows of it: proven by a test, scripted and unproven, or by hand', S.proofOf(provenId, FXs[provenId].find(e => !e.hand)) === 'proven' && S.proofOf(unprovenId, FXs[unprovenId].find(e => !e.hand)) === 'unproven' && S.proofOf(handId, FXs[handId][0]) === 'hand');
+V.CAT.proof[unprovenId] = { v: 'wrong', why: 'planted' }; const asWrong = S.fx(unprovenId); delete V.CAT.proof[unprovenId];
+ok('...a printing proven WRONG is offered by hand, with the reason; control: without the verdict it runs', asWrong.filter(e => e.t !== 'static').every(e => e.hand && e.wrong === 'planted') && S.fx(unprovenId).some(e => !e.hand));
+/* describe: what the app will do, in words */
+ok('describe() says what a line will do: Luffy\'s is one rested DON!!, to the Leader or a Character, once a turn', S.describe(FXs[String(st01.leader)][0]) === '[Activate: Main] once per turn: give up to 1 rested DON!! to your Leader or 1 Character');
+/* every section the app cites is one the Rules sheet holds (landmine 214) */
+const ids = new Set(V.RULEBOOK.sections.map(x => x.id)); const citesOf = t => [...new Set([...t.matchAll(/§(\d+(?:-\d+)*)/g)].map(m => m[1]))];
+const cited = citesOf(js);
+ok(`every section the shipped app cites is in the rules digest (${cited.length} cited, ${ids.size} in the digest, v${V.RULEBOOK.version})`, V.RULEBOOK.version === '1.2.1' && ids.size >= 150 && cited.length >= 40 && cited.every(c => ids.has(c)), cited.filter(c => !ids.has(c)).join());
+ok('...control: a planted §99-9 is caught', citesOf('x §99-9 y').some(c => !ids.has(c)));
+/* the Rules sheet: a button on every Prep & Play screen, a search, and Back closes it */
+const rbOn = ['decks', 'cards', 'play', 'sim'].filter(id => new RegExp(`<section id="${id}"[\\s\\S]*?<\\/header>`).exec(html)[0].includes('data-rules=""'));
+ok('a Rules button on every Prep & Play screen (the owner, take 122), drawn with its own symbol', rbOn.length === 4 && /<symbol id="g-rules" viewBox="0 0 24 24"/.test(html), rbOn.join());
+const f714 = V.RULES_DB.find('7-1-4');
+ok('the search reads a number as a section and its children, and words as all of them', f714.length >= 3 && f714.every(x => x.id === '7-1-4' || x.id.startsWith('7-1-4-')) && V.RULES_DB.find('blocker').length >= 3 && V.RULES_DB.find('opponent\u2019s turn').length >= 1 && V.RULES_DB.find("opponent's turn").length === V.RULES_DB.find('opponent\u2019s turn').length && V.RULES_DB.find('zzqq').length === 0);
+V.openRules('6-5-5'); const rl = doc.getElementById('rulesList')._html;
+ok('...opened at a section, it lists it with what the Sim does about it; Back closes the sheet first', doc.getElementById('rulesQ').value === '6-5-5' && /§6-5-5 Give DON!!/.test(rl) && /In the Sim: enforced/.test(rl) && doc.getElementById('rulesSheet').classList.contains('on') && V.closeAnyOverlay() && !doc.getElementById('rulesSheet').classList.contains('on'));
+/* Check for updates: a newer digest from Pages replaces the built-in one; an older one does not */
+{ const PAGES = 'https://pages.invalid/bundle/'; const u0 = V.CAT.man.updateUrl; V.CAT.man.updateUrl = PAGES; ctx.navigator.onLine = true;
+  const serve = d => async u => u === PAGES + 'rules.json' ? { ok: true, status: 200, json: async () => d } : undefined;
+  const newer = { ...V.RULEBOOK, version: '1.2.2', sections: V.RULEBOOK.sections.concat([{ id: '12-1', title: 'Probe', text: 'A new rule.', sim: 'enforced' }]), official: { version: '1.2.3', date: '2026-12-01', checked: '2026-12-02T00:00Z', newer: true } };
+  ctx._net = serve(newer); const up = await V.RULES_DB.sync();
+  ok('Check for updates: a newer digest from Pages replaces the built-in one on this phone, and says when Bandai has moved on again', up.ok && up.newer && V.RULES_DB.cur().version === '1.2.2' && /Bandai has published v1\.2\.3/.test(V.rulesStatus()) && /the Sim plays by v1\.2\.2/.test(V.rulesStatus()));
+  ok('...what the Sim does stays this build\'s: a section it has not reviewed says so', V.RULES_DB.simOf('12-1') === 'not reviewed for this version of the app' && V.RULES_DB.simOf('6-5-5-2') === 'enforced');
+  ctx.localStorage.removeItem('vault.rules'); ctx._net = serve({ ...V.RULEBOOK, version: '1.1.0', official: { version: '1.2.1', date: '2026-08-28' } }); const down = await V.RULES_DB.sync();
+  ok('...control: an older digest does not replace the built-in one', down.ok && !down.newer && V.RULES_DB.cur().version === '1.2.1' && ctx.localStorage.getItem('vault.rules') === null);
+  ctx._net = null; V.CAT.man.updateUrl = u0; ctx.localStorage.removeItem('vault.rulesOfficial'); V.RULES_DB.official = null; }
+/* Report: the offer, the parse, and the whole game as its seed and moves -- replayed, the same game */
+{ deal(st01, st01, 0, 9); S.act(0, { t: 'end' }); S.act(1, { t: 'end' });
+  S.P(0).don.rested = 2; S.P(0).don.active -= 2; S.act(0, { t: 'activate', ref: 'leader' }); const rep = JSON.parse(V.simReport()); const live = JSON.stringify(S.g.players);
+  const rr = S.replay(rep.spec, rep.actions);
+  ok('Report carries the effect, what the app made of it and the game as its seed and moves', rep.kind === 'optcghub-sim-report' && rep.offer.num === 'ST01-001' && rep.offer.parsed[0].a === 'givedon' && rep.offer.proof === 'proven' && rep.actions.length >= 5);
+  ok('...replayed from the Report, the moves rebuild the game (a planted board aside, which no move made)', rr.ok && rr.g.turn === 3 && rr.g.queue.length === 1 && rr.g.queue[0].cardId === st01.leader, live.length ? '' : ''); }
+/* concede (§1-2-3) */
+{ const x = deal(st01, st02, 0, 10); const r = S.act(1, { t: 'concede' });
+  ok('§1-2-3: a player may concede at any time, even on the other\'s turn; they lose at once', r.ok && x.over === 0 && x.phase === 'over' && x.log.some(l => /concedes \(§1-2-3\)/.test(l))); }
+/* expand: only printings the catalogue knows are dealt (legality counts the same list) */
+ok('expand() deals only printings the catalogue knows: 50 known and an unknown id deal 50', S.expand({ cards: [{ id: plain.id, n: 50 }, { id: 999999999, n: 3 }] }).length === 50);
+S.g = null;
+}
+{
+section('take 123 — one view per seat: what a board may draw, and nothing its seat may not see');
+const S = V.SIM, R = V.CAT.rows, stock = V.CAT.stock;
+const st01 = stock.find(d => d.id === 'stock-st01'), st02 = stock.find(d => d.id === 'stock-st02');
+S.new(st01, st02, 0, { seed: 31 }); S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' }); S.act(0, { t: 'end' }); S.act(1, { t: 'end' });
+const P0 = S.P(0), P1 = S.P(1), leaders = new Set([P0.leader.id, P1.leader.id].map(id => S.card(id).name));
+/* hidden cards: printings with names found nowhere else on this board, planted in each hand, Life, deck and look */
+const seenName = new Set(), pool = R.filter(p => p.type === 'Character' && !p.sealed && p.num && !leaders.has(p.name) && !seenName.has(p.name) && seenName.add(p.name)).slice(0, 33);
+const take = n => pool.splice(0, n).map(p => p.id);
+P0.hand = take(5); P0.life = take(5); P0.deck = take(5); P0.looking = take(1); P1.hand = take(5); P1.life = take(5); P1.deck = take(5); P0.trash = []; P1.trash = [];
+const cardOf = id => S.card(id), hide = ids => ids.map(cardOf);
+const leak = (view, hidden) => { const ids = new Set(), text = JSON.stringify(view);
+  (function walk(x) { if (x && typeof x === 'object') { if (typeof x.id === 'number') ids.add(x.id); if (typeof x.cardId === 'number') ids.add(x.cardId); Object.values(x).forEach(walk); } })(view);
+  return hidden.filter(p => ids.has(p.id) || text.includes(JSON.stringify(p.name)) || (view.log || []).some(l => l.includes(p.name))); };   // a name in a log sentence too
+const hidden0 = hide([...P1.hand, ...P0.life, ...P0.deck, ...P1.life, ...P1.deck]), hidden1 = hide([...P0.hand, ...P0.looking, ...P0.life, ...P0.deck, ...P1.life, ...P1.deck]);
+const g0 = JSON.stringify(S.g), v0 = S.view(0), v1 = S.view(1);
+ok('SIM.view is a read: two views change nothing in the game (landmine 215)', JSON.stringify(S.g) === g0);
+ok('a seat\'s view holds nothing it may not see: the other hand, both Lives and both decks are counts, and what one player looks at is theirs alone (the owner: "private things only show when it\'s that player\'s turn")',
+   leak(v0, hidden0).length === 0 && leak(v1, hidden1).length === 0 && v0.them.hand === null && v0.them.handCount === 5 && v1.me.lifeCount === 5 && v1.them.looking === null && v1.them.lookingCount === 1,
+   leak(v0, hidden0).concat(leak(v1, hidden1)).map(p => p.name).join());
+ok('...and its own: the seat\'s hand and what it looks at are in its view, each card whole', v0.me.hand.map(c => c.id).join() === P0.hand.join() && v0.me.looking[0].id === P0.looking[0] && v0.me.hand.every(c => c.name && c.colours && 'art' in c && c.play));
+const planted = JSON.parse(JSON.stringify(v0)); planted.them.hand = P1.hand.map(id => S.face(id));
+ok('...control: a view with the other hand planted in it is named, card by card', leak(planted, hidden0).length === 5);
+ok('the moves and an effect\'s choices go to the seat deciding only', v0.legal.length > 0 && v1.legal.length === 0 && v0.who === 0 && v1.who === 0);
+{ const FX = V.CAT.effects, sid = +Object.keys(FX).find(id => S.card(+id).type === 'Character' && FX[id].some(e => !e.hand && e.t === 'onplay' && e.if.length === 0 && e.do[0].a === 'search'));
+  P0.chars = [onField(sid, 3)]; P0.deck = take(5).concat(P0.deck); S.g.queue = S.offers(0, 'onplay', 0).slice(0, 1);
+  const a = S.view(0).offer, b = S.view(1).offer;
+  ok('...a search\'s choices are the top of the searcher\'s deck: in the searcher\'s view, and not the opponent\'s, who sees the effect but not the cards', !!a && Array.isArray(a.choices) && b && b.choices === null && b.raw === a.raw && leak(S.view(1), hide(P0.deck)).length === 0);
+  S.g.queue = []; P0.chars = []; }
+/* a [Trigger] not yet used is a face-down Life card to the other seat: its player may add it to hand without revealing it
+   (§10-1-5) -- the offer tells the attacker only that the game waits on a [Trigger], and a decline does not name it in the log */
+{ const FX = V.CAT.effects, onBoard = new Set([...P0.hand, ...P0.life, ...P0.deck, ...P0.looking, ...P1.hand, ...P1.life, ...P1.deck].map(id => S.card(id).name));
+  const tid = Object.keys(FX).map(Number).find(id => { const c = S.card(id); return c && c.type === 'Event' && !leaders.has(c.name) && !onBoard.has(c.name) && FX[id].some(e => e.t === 'trigger') && S.offers(1, 'trigger', null, id, true).length > 0; });
+  const tc = S.card(tid); P1.hand.push(tid); S.g.queue = S.offers(1, 'trigger', null, tid, true).slice(0, 1);
+  const a = S.view(0), b = S.view(1);
+  ok('a [Trigger] its player has not used is a face-down Life card to the attacker: the attacker\'s view says the game waits on a [Trigger] and holds neither the card nor its text (§10-1-5)',
+     !!tc && a.who === 1 && a.offer && a.offer.hidden === true && a.offer.t === 'trigger' && a.offer.cardId === null && a.offer.raw === null && leak(a, [tc]).length === 0, tc && leak(a, [tc]).map(p => p.name).join());
+  ok('...and the defender\'s view has it whole, to decide on', b.offer && b.offer.hidden === false && b.offer.cardId === tid && !!b.offer.raw && b.legal.some(x => x.t === 'fxskip'));
+  S.g.queue[0].fromLife = false; const c0 = leak(S.view(0), [tc]).length; S.g.queue[0].fromLife = true;
+  ok('...control: the same offer from a card in play is public, and the check names it', c0 === 1);
+  const r = S.act(1, { t: 'fxskip' });
+  ok('declined, the card goes to hand unrevealed: the log says a Life card was added to hand, not which (§10-1-5)', r.ok && P1.hand.includes(tid) && /without revealing it/.test(S.g.log[0]) && leak(S.view(0), [tc]).length === 0, S.g.log[0]);
+  const lg = JSON.parse(JSON.stringify(S.view(0))); lg.log.unshift(tc.name + ': the rest is declined');
+  ok('...control: a log line naming it is found', leak(lg, [tc]).length === 1);
+  P1.hand.splice(P1.hand.indexOf(tid), 1); S.g.queue = [];
+  const hid = P1.hand[0], say = S.HAND.handtotop.call(S, { i: 1, P: P1, X: P1, xi: 1, a: { op: 'handtotop', h: 0 }, H: {}, nm: id => S.card(id).name }); P1.deck.shift(); P1.hand.unshift(hid);
+  ok('by hand, a card put from hand on top of the deck is not named in the log: it is never revealed (take 123)', !!say && !say.includes(S.card(hid).name), say);
+  ok('...control: the sentence take 122 wrote, naming it, is found', `places ${S.card(hid).name} at the top of the deck`.includes(S.card(hid).name)); }
+/* the view carries what a playmat draws, so the UI pass needs nothing else (docs/SIM-UI.md) */
+{ P0.chars = [onField(st01.cards.map(c => c.id).find(id => S.card(id).type === 'Character'), 3)]; const v = S.view(0), c = v.me.chars[0], L = v.me.leader;
+  const fields = ['uid', 'seat', 'ref', 'id', 'num', 'name', 'cost', 'power', 'printedPower', 'rested', 'don', 'keywords', 'granted', 'kw', 'colours', 'art', 'text', 'lines', 'unapplied'];
+  ok('each card on the field carries what a playmat draws: its uid and ref (the move names it by), power now and printed, rested, DON!!, keywords, colours, its picture, its text and each line with what the app does and its proof mark',
+     fields.every(k => k in c && k in L) && c.ref === 0 && L.ref === 'leader' && (c.art === null || /^https:\/\//.test(c.art.thumb)) && Array.isArray(L.lines) && L.lines.every(x => x.does && x.proof), fields.filter(k => !(k in c)).join());
+  P0.chars = []; }
+/* the painters draw from the view alone */
+{ /* take 124: the painters are every function between the two markers the build keeps (SIM_PAINTERS ... SIM_PAINTERS_END), so a painter
+     added to the table is read with no list to forget it on (take 123 named fourteen); a painter may not hold a result act() returned */
+  const from = js.indexOf("const SIM_PAINTERS = 'begin'"), to = js.indexOf("const SIM_PAINTERS_END = 'end'"), names = t => [...t.matchAll(/(?:^|\n)function (\w+)\(/g)].map(m => m[1]);
+  const PAINTERS = from > 0 && to > from ? names(js.slice(from, to)) : [];
+  const body = name => { const i = js.indexOf('function ' + name + '('); if (i < 0) return null; const j = js.slice(i + 9).search(/\n(?:function |const |\$\(|\/\*)/); return js.slice(i, j < 0 ? undefined : i + 9 + j); };
+  const READS = /\bSIM\.(?:g\b|P\(|at\(|power\(|kwOf\(|card\(|canPlay\(|targetsOf\(|describe\(|proofOf\(|battlePowers\(|locate\(|has\(|unapplied\(|legal\(|act\()|\.players\b|CAT\.byId|\bSIMUI\.(?:result\b|post\.res\b)/;
+  const bad = PAINTERS.filter(n => !body(n) || READS.test(body(n)));
+  ok(`every painter of the board -- the ${PAINTERS.length} functions between the table\'s two markers -- draws from the view its seat is handed, never from the engine\'s state (take 123: a redesigned board cannot show what the seat was never given)`, PAINTERS.length >= 25 && ['simTableHtml', 'simOfferPanel', 'simDockHtml', 'simZoomHtml', 'simResultHtml'].every(n => PAINTERS.includes(n)) && bad.length === 0, bad.join() || String(PAINTERS.length));
+  ok('...control: a painter that reads SIM.P is named, and one planted between the markers is found', READS.test(body('simDockHtml') + ' SIM.P(1).hand') && names(js.slice(from, to) + '\nfunction simProbe(v) { return SIM.P(1).hand; }\n').includes('simProbe'));
+  ok('...control: take 123\'s result painter, reading what act() returned, is named', READS.test("function simPostHtml(v, offer) { return `${simResult(SIMUI.post.res)}${offer}`; }") && READS.test('function simTableHtml(v) { const res = SIMUI.result; }'));
+  ok('two people on one phone are Player 1 and Player 2, never "You" (take 123\'s look: Player 2 read its opponent as You); against the app the human is You', /name: \(bot \? 'You' : 'Player 1'\)/.test(js) && /name: \(bot \? 'The app' : 'Player 2'\)/.test(js));
+  ok('...and paintSim hands every painter the one view: SIM.view(simSeat())', /v = SIM\.g \? SIM\.view\(simSeat\(\)\) : null/.test(js)); }
+S.g = null;
+}
+{
+section('take 124 — the table: the Sim drawn as a playmat from the view alone; the audit of take 123 (a result named past the view, the log\'s words, the app\'s turn in one tap, moves only from the painted view)');
+const S = V.SIM, B = V.BOT, SU = V.SIMUI, stock = id => V.CAT.stock.find(d => d.id === id);
+const board = () => doc.getElementById('simBoard')._html, sheet = () => doc.getElementById('simSheetBody')._html;
+const escH = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const fresh = () => Object.assign(SU, { sel: null, focus: null, post: null, room: null, fxt: null, busy: false, hurry: false, sheet: null, seen: 0 });
+V.MODE.set('play', false); V.go('sim');
+
+/* the audit's row 1: a battle's result, per seat -- through the board's own taps, against the app */
+S.new({ ...stock('stock-st01'), name: 'You' }, { ...stock('stock-st02'), name: 'The app' }, 0, { seed: 3, bot: 1 }); fresh(); V.paintSim();
+V.simTap('keep:0'); V.simTap('end:now');   // here the app keeps and plays its turn at once: no frame clock, as with reduced motion (take 124: End turn asks while a card could be played; its sheet's End turn is end:now)
+const turn3 = S.g.turn === 3 && S.who() === 0;
+V.simTap('attack:leader'); V.simTap('target:leader');   // the app defends at once and holds Resolve for the human's tap
+const held = !!S.g.battle && S.who() === 1 && S.g.battle.step === 'counter', lcId = S.P(1).life[0], hand0 = S.P(1).hand.slice();
+V.simTap('resolve');
+const lcName = S.card(lcId).name, copies = h => h.filter(x => x === lcId).length, toHand = copies(S.P(1).hand) === copies(hand0) + 1, v0 = S.view(0), v1 = S.view(1);   // a printing id, and the app may hold another copy of it
+const hides = v => !!v.last && v.last.life.length > 0 && v.last.life.every(l => l.id === null && l.name === null && l.trigger === false);
+ok('a battle\'s result is in each seat\'s view as that seat may see it: the Life card that went to the app\'s hand is named in the app\'s view and not in the human\'s (the audit\'s row 1; §3-10, §10-1-5)',
+   turn3 && held && toHand && hides(v0) && v1.last.life[0].name === lcName && v0.last.n === v1.last.n && v0.last.win === true, JSON.stringify({ turn3, held, toHand, v0: v0.last, v1: v1.last && v1.last.life }));
+ok('...control: a view that copies what act() returned -- what take 123\'s board painted -- is caught', !hides(Object.assign(JSON.parse(JSON.stringify(v0)), { last: Object.assign({}, v0.last, { life: [{ id: lcId, name: lcName, banished: false, trigger: false }] }) })));
+{ const keep = S.g.last; S.g.last = { n: 90, turn: S.g.turn, att: 0, def: 1, a: 6000, d: 5000, win: true, ko: null, life: [{ id: lcId, name: 'Probe', trigger: true, banished: false }, { id: lcId, name: 'Probe B', trigger: false, banished: true }] };
+  const a = S.view(0).last.life, d = S.view(1).last.life; S.g.last = keep;
+  ok('...a [Banish]ed Life card, trashed face up, is named to both; a [Trigger] is its owner\'s to know (§10-1-3, §10-1-5)', a[0].name === null && a[0].trigger === false && a[1].name === 'Probe B' && d[0].name === 'Probe' && d[0].trigger === true && d[1].name === 'Probe B', JSON.stringify({ a, d })); }
+/* ...and on the table the human is shown only what it may see: the board painted after that hit, with the log and both trashes
+   open, names no card only the app may see -- the Life card that went to its hand, and names no real card on this board carries
+   planted in its hand, Life and deck (take 123's way) */
+const pub = new Set([v0.me, v0.them].flatMap(X => [X.leader, X.stage, ...X.chars, ...X.trash].filter(Boolean).map(c => c.name)).concat(v0.me.hand.map(c => c.name)));
+const seenNames = new Set(), pool = V.CAT.rows.filter(p => p.type === 'Character' && !p.sealed && p.num && !pub.has(p.name) && p.name !== lcName && !seenNames.has(p.name) && seenNames.add(p.name)).slice(0, 15).map(p => p.id);
+const P1 = S.P(1), keepP1 = { hand: P1.hand, life: P1.life, deck: P1.deck };
+P1.hand = pool.slice(0, 5).concat(P1.hand.filter(id => id === lcId)); P1.life = pool.slice(5, 10); P1.deck = pool.slice(10, 15);
+const painted = () => { V.paintSim(); let t = board(); for (const k of ['log', 'menu']) { V.simSheetOpen(k); t += sheet(); } for (const s of [0, 1]) { V.simSheetOpen('trash', String(s)); t += sheet(); } doc.getElementById('simSheet').classList.remove('on'); SU.sheet = null; return t; };
+const secret = [lcName].filter(n => !pub.has(n)).concat(pool.map(id => S.card(id).name)), named = t => secret.filter(n => t.includes(escH(n)) || t.includes(n));
+const onTable = painted();
+ok('...and on the table: the human\'s board after that hit -- the mat, the hand, the dock, the log and both trashes -- names no card only the app may see (its hand, Life and deck planted with names no card on the board carries, and the Life card that went to its hand)',
+   secret.length === 16 && named(onTable).length === 0 && /Monkey\.D\.Luffy 5000 vs 5000: hit/.test(onTable), named(onTable).join() || String(secret.length));
+ok('...control: take 123\'s result line, painted from act()\'s return ("Life card to hand: <b>name</b>"), is caught', named(onTable + `<div class="note">Life card to hand: <b>${escH(lcName)}</b></div>`).length === 1);
+Object.assign(P1, keepP1);
+/* the audit's row 2: against the app the log speaks to the human in the second person (docs/SIM-UI.md named "You ends the turn") */
+const wrongYou = t => (t.match(/\bYou (?:activates|gives|plays|ends|mulligans|trashes|concedes|has|adds|counters|takes)\b/g) || []);
+ok('against the app the table says the human\'s lines in the second person -- "You end the turn", never "You ends" -- on the ticker, in the log and the shared log (the audit\'s row 2)',
+   V.simSay('T3 You ends the turn') === 'T3 You end the turn' && V.simSay('T4 You activates Monkey.D.Luffy', true) === 'You activate Monkey.D.Luffy' && V.simSay('T2 You has no cards in the deck — defeat (§9-2-1-2)') === 'T2 You have no cards in the deck — defeat (§9-2-1-2)'
+   && V.simSay('T5 The app ends the turn') === 'T5 The app ends the turn' && S.g.log.some(l => /^T\d+ You (?:activates|ends|plays|gives)\b/.test(l)) && wrongYou(onTable).length === 0 && wrongYou(V.simLogText()).length === 0, wrongYou(onTable + V.simLogText()).join());
+ok('...control: the engine\'s own lines, as take 123 painted them, are caught', wrongYou(S.g.log.join('\n')).length > 0);
+/* the audit's row 3: the log says each step in words, and names a target only when it is public */
+{ const WORDY = ['draw', 'power', 'ko', 'rest', 'bounce', 'bottom', 'search', 'mill', 'activate'], CODES = Object.keys(S.DO).filter(k => !WORDY.includes(k));
+  const coded = l => new RegExp(`\\b(?:${CODES.join('|')})\\b|: (?:${WORDY.join('|')})(?: \\u2192| \\u2014| \\(|$)|\\u2192 (?:L|[mohd]\\d+)(?![\\w'])|condition not met`).test(l);
+  let lines = 0; const bad = [];
+  for (const [a, b, seed] of [['stock-st01', 'stock-st10', 7], ['stock-st02', 'stock-st08', 8], ['stock-st05', 'stock-st06', 9], ['stock-st03', 'stock-st09', 10]]) {
+    S.new(stock(a), stock(b), 0, { seed }); for (let k = 0; k < 3000 && S.who() != null; k++) if (!B.move(S.who())) break; for (const l of S.g.log) { lines++; if (coded(l)) bad.push(l); } }
+  ok('the log says an effect\'s step in the words the offer panel uses, and its target by name when the target is public -- never the engine\'s code or a raw reference ("givedon → L", "cost_returndon", "playfromhand → h5"; the audit\'s row 3)', lines > 400 && bad.length === 0, `${bad.length} of ${lines}: ${bad.slice(0, 2).join(' | ')}`);
+  ok('...control: take 123\'s lines are caught, and the new ones are not', ['T9 Monkey.D.Luffy: givedon → L (Give this Leader or 1 of your Characters up to 1 rested DON!)', 'T6 Trafalgar Law: playfromhand — none chosen', 'T6 Trafalgar Law: bottom → o2 (DON!! -3 (You may return the specified number of DON!! cards)', 'T4 condition not met: donx,opt', 'T4 Nami: rest → o0 (Rest up to 1)'].every(coded)
+     && !['T12 Uta: rest up to 1 opponent’s Character (cost 5 or less) → Sengoku', 'T4 Koby: cost: rest this card', 'T5 Nami: give up to 1 rested DON!! to your Leader or 1 Character → Monkey.D.Luffy'].some(coded)); }
+{ /* a step applied is logged as describe() says it, with its target's name taken before the step moves it */
+  const FXs = V.CAT.effects, koId = +Object.keys(FXs).find(id => S.card(+id).type === 'Character' && FXs[id].some(e => !e.hand && e.t === 'onplay' && e.if.length === 0 && e.do.length === 1 && e.do[0].a === 'ko' && e.do[0].cost >= 2 && !e.do[0].rested));
+  const g = S.new(stock('stock-st01'), stock('stock-st02'), 0, { seed: 12 }); S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' });
+  const vic = S.P(1).deck.find(id => S.card(id).type === 'Character' && S.cost(S.card(id)) <= 2) || S.P(1).deck[0];
+  S.P(0).chars = [onField(koId, 1)]; S.P(1).chars = [onField(vic, 1)]; g.queue = S.offers(0, 'onplay', 0).slice(0, 1);
+  const d = g.queue[0] && g.queue[0].steps[0], r = g.queue[0] ? S.act(0, { t: 'fx', target: 'o0' }) : { ok: false };
+  ok('...an applied step\'s line is its words and its target\'s name: "<card>: K.O. up to 1 opponent’s Character (cost 2 or less) → <the one K.O.’d>"', r.ok && g.log.some(l => l === `T${g.turn} ${S.card(koId).name}: ${S.stepText(d)} → ${S.card(vic).name}`), g.log.slice(0, 3).join(' | '));
+  S.g = null; }
+/* the audit's row 6: an effect's choice of a hand card or a card looked at from the deck carries its face, for the deciding seat only */
+{ const FX = V.CAT.effects, sid = +Object.keys(FX).find(id => S.card(+id).type === 'Character' && FX[id].some(e => !e.hand && e.t === 'onplay' && e.if.length === 0 && e.do[0].a === 'search'));
+  S.new(stock('stock-st01'), stock('stock-st02'), 0, { seed: 31 }); S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' });
+  S.P(0).chars = [onField(sid, 1)]; S.g.queue = S.offers(0, 'onplay', 0).slice(0, 1);
+  /* the top of the deck holds a card the search may take: the first printing its own filter accepts, put on top */
+  for (const p of V.CAT.rows) { if ((S.view(0).offer.choices || []).length) break; if (!p.sealed && p.type !== 'Leader') S.P(0).deck[0] = p.id; }
+  const a = S.view(0).offer, b = S.view(1).offer, deckTop = S.P(0).deck.slice(0, 10);
+  const faced = (list, ids) => list.length > 0 && list.every(c => /^[dh]\d+$/.test(c.ref) && !!c.face && c.face.id === ids[+c.ref.slice(1)] && !!c.face.name && 'art' in c.face);
+  ok('an effect\'s choices from the top of the deck carry each card\'s face, in the searcher\'s view only (the audit\'s row 6)', !!a && Array.isArray(a.choices) && faced(a.choices, deckTop) && b && b.choices === null, JSON.stringify(a && a.choices && a.choices.slice(0, 2)));
+  S.g.queue = [{ i: 0, e: { raw: 'probe: trash 1 card from your hand', t: 'onplay', if: [], do: [{ a: 'trashhand', n: 1 }] }, steps: [{ a: 'trashhand', n: 1 }], step: 0, targets: null, ref: null, cardId: S.P(0).leader.id, hand: false, n: 0 }];
+  const h = S.view(0).offer;
+  ok('...and a hand card\'s choice carries its face too; a card on the field is found on the table by its ref', !!h && h.choices.length === S.P(0).hand.length && faced(h.choices, S.P(0).hand), JSON.stringify(h && h.choices.slice(0, 1)));
+  ok('...control: take 123\'s choices, a ref and a name alone, are caught by the same test', !faced([{ ref: 'd0', name: 'x' }, { ref: 'd1', name: 'y' }], [0, 0]));
+  S.g = null; }
+/* the audit's row 5: the handler sends back only moves from the view it painted -- nothing in it asks the engine what is legal */
+{ const at = js.indexOf('function simTap('), tap = js.slice(at, js.indexOf('\n$(', at)), asks = t => (t.match(/\bSIM\.(?:legal|canPlay|canAttack|targetsOf)\(/g) || []);
+  ok('the tap handler finds every move in the view the board painted (SIMUI.v.legal) and sends it back as it is: no engine read decides what is legal (the audit\'s row 5)', at > 0 && /const v = SIMUI\.v; if \(!v\) return;/.test(tap) && /const L = v\.legal, pick = f => L\.find\(f\)/.test(tap) && asks(tap).length === 0, asks(tap).join());
+  ok('...control: take 123\'s handler lines are caught', asks("else if (act === 'play') { const v = SIM.canPlay(i, ref); } else if (act === 'hop') { const a = SIM.legal(i)[ref]; } const v = SIM.canAttack(i, ref);").length === 3); }
+/* every legal move has its control on the table: for a game in each state a board meets, the table is painted in each of its
+   own modes (a card selected, an attacker aiming, a sixth Character's choice, an effect's) and every move in the view's legal
+   list must be one the painted board can send (docs/SIM-UI.md: "A board offers exactly these") */
+{ const codes = () => new Set([...board().matchAll(/data-sim="([^"]+)"/g)].map(m => m[1]));
+  const reach = () => { const v = S.view(V.simSeat()), got = new Set(), add = () => codes().forEach(c => got.add(c));
+    fresh(); V.paintSim(); add();
+    for (const k of ['L', 'S', ...v.me.chars.map((c, i) => 'm' + i), ...(v.me.hand || []).map((c, h) => 'h' + h)]) { SU.focus = k; V.paintSim(); add(); } SU.focus = null;
+    for (const ref of new Set(v.legal.filter(x => x.t === 'attack').map(x => x.ref))) { SU.sel = { ref }; V.paintSim(); add(); } SU.sel = null;
+    for (const h of new Set(v.legal.filter(x => x.t === 'play' && x.trash != null).map(x => x.h))) { SU.room = { h }; V.paintSim(); add(); } SU.room = null;
+    for (const tg of new Set(v.legal.filter(x => x.t === 'fx' && x.trash != null).map(x => x.target))) { SU.fxt = { target: tg }; V.paintSim(); add(); } SU.fxt = null;
+    V.paintSim(); return { v, got }; };
+  const need = (a, v) => { switch (a.t) {
+    case 'keep': case 'mull': return [`${a.t}:${v.seat}`]; case 'play': return a.trash == null ? [`play:${a.h}`] : [`play:${a.h}`, `room:${a.trash}`];
+    case 'give': return [`give:${a.ref}`]; case 'activate': return [`fxmain:${a.ref}`]; case 'attack': return [`attack:${a.ref}`, `target:${a.target}`];
+    case 'block': return [`block:${a.k}`]; case 'noblock': return ['noblock']; case 'counter': return [`counter:${a.h}`]; case 'cevent': return [`cev:${a.h}`]; case 'resolve': return ['resolve'];
+    case 'fx': { const first = a.target == null ? 'fxapply' : `fx:${a.target}`; return a.trash == null ? [first] : [first, `fxroom:${a.trash}`]; }
+    case 'fxskip': return ['fxskip']; case 'fxhand': return ['fxhand']; case 'hand': return [`hop:${v.legal.indexOf(a)}`]; case 'handdone': return ['hdone']; case 'end': return ['end']; }
+    return ['?' + a.t]; };
+  const unreached = ({ v, got }) => v.legal.filter(a => !need(a, v).every(c => got.has(c)) && !(a.t === 'activate' && [...got].some(c => c.startsWith(`fxmain:${a.ref}.`))));
+  const deal = seed => { S.new(stock('stock-st01'), stock('stock-st02'), 0, { seed }); fresh(); };
+  const states = {}, kinds = new Set(), missed = [];
+  const probe = name => { const r = reach(); r.v.legal.forEach(a => kinds.add(a.t)); states[name] = r.v.legal.length; unreached(r).forEach(a => missed.push(name + ' ' + JSON.stringify(a))); return r; };
+  deal(41); probe('mulligan'); S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' }); S.act(0, { t: 'end' }); S.act(1, { t: 'end' });
+  { const P = S.P(0), n = V.CAT.rows.find(p => p.num === 'ST01-006' && !p.sealed) || V.CAT.rows.find(p => p.type === 'Character' && !p.sealed && S.cost(p) <= 1);
+    P.don.active = 6; P.don.rested = 2; P.chars = [onField(n.id, 1)]; P.hand = P.hand.slice(0, 5); probe('main'); }
+  { const P = S.P(0), k = V.CAT.rows.find(p => p.num === 'ST01-003' && !p.sealed); P.chars = [0, 1, 2, 3, 4].map(() => onField(k.id, 1)); P.hand = [k.id].concat(P.hand.slice(0, 2)); P.don.active = 6; probe('five in play'); }
+  { const P = S.P(0), O = S.P(1), bl = V.CAT.rows.find(p => p.type === 'Character' && !p.sealed && (p.kw || '').split('|').includes('Blocker') && S.num(p.power) >= 1000);
+    O.chars = [onField(bl.id, 1)]; P.chars = []; S.act(0, { t: 'attack', ref: 'leader', target: 'leader' }); for (let k = 0; k < 9 && S.g.queue.length; k++) S.act(S.who(), { t: 'fxskip' }); probe('block step');
+    S.act(1, { t: 'noblock' }); const ctr = V.CAT.rows.find(p => p.type === 'Character' && !p.sealed && S.num(p.counter) > 0); O.hand = [ctr.id].concat(O.hand.slice(0, 3)); probe('counter step');
+    S.act(1, { t: 'resolve' }); for (let k = 0; k < 9 && S.g.queue.length; k++) S.act(S.who(), { t: 'fxskip' }); }
+  { const FX = V.CAT.effects, gid = +Object.keys(FX).find(id => S.card(+id).type === 'Character' && FX[id].some(e => !e.hand && e.t === 'onplay' && e.if.length === 0 && e.do[0].a === 'power' && e.do[0].who !== 'opp' && e.do[0].who !== 'prev'));
+    S.P(S.g.active).chars = [onField(gid, 1)]; S.g.queue = S.offers(S.g.active, 'onplay', 0).slice(0, 1); probe('an effect with choices on the table'); S.g.queue = []; }
+  { const E = V.CAT.effects, hid = +Object.keys(E).find(k => { const p = V.CAT.byId.get(+k); return p && p.type === 'Character' && !p.sealed && E[k].length === 1 && E[k][0].hand && E[k][0].t === 'onplay' && Object.keys(S.handOps(E[k][0].raw)).length >= 2; });
+    S.P(S.g.active).chars = [onField(hid, 1)]; S.g.queue = S.offers(S.g.active, 'onplay', 0).slice(0, 1); probe('a by-hand line offered'); S.act(S.who(), { t: 'fxhand' }); probe('a by-hand tray'); }
+  const want = ['keep', 'mull', 'play', 'give', 'activate', 'attack', 'block', 'noblock', 'counter', 'resolve', 'fx', 'fxskip', 'fxhand', 'hand', 'handdone', 'end'];
+  ok(`every legal move has its control on the table, in ${Object.keys(states).length} states a board meets -- ${want.filter(t => kinds.has(t)).length} kinds of move among them -- each sent as the view names it (docs/SIM-UI.md: "A board offers exactly these")`,
+     missed.length === 0 && want.every(t => kinds.has(t)), missed.slice(0, 3).join(' | ') || `missing kinds: ${want.filter(t => !kinds.has(t)).join()} ${JSON.stringify(states)}`);
+  { deal(41); S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' }); const r = reach(); r.v.legal.push({ t: 'give', ref: 7 });
+    ok('...control: a legal move the table draws no control for is named', unreached(r).some(a => a.t === 'give' && a.ref === 7)); }
+  S.g = null; fresh(); }
+/* the audit's row 4: the app's moves one a beat where the browser can draw them; at once where it cannot (reduced motion, a
+   harness), as take 123 did every time */
+{ S.new({ ...stock('stock-st01'), name: 'You' }, { ...stock('stock-st02'), name: 'The app' }, 1, { seed: 5, bot: 1 }); fresh();
+  B.move(1); S.act(0, { t: 'keep' }); S.P(1).don.active = 6;   // the app's first turn with DON!! to spend: several moves to watch
+  const n0 = S.g.actions.length, wait = ms => new Promise(r => setTimeout(r, ms)); ctx.requestAnimationFrame = f => setTimeout(f, 16); SU.pace = 15;
+  V.simBotRun(); const n1 = S.g.actions.length; await wait(14); const n2 = S.g.actions.length;
+  for (let k = 0; k < 400 && SU.busy; k++) await wait(20);
+  const n3 = S.g.actions.length, paced = V.simPaced(); delete ctx.requestAnimationFrame; SU.pace = 650;
+  ok('the app plays its turn a move a beat, each painted, where the browser can draw it -- none inside the tap, one after the first beat, the rest after it (the audit\'s row 4)', paced && n1 === n0 && n2 === n0 + 1 && n3 >= n0 + 3 && !SU.busy && S.who() === 0, JSON.stringify({ n0, n1, n2, n3, busy: SU.busy }));
+  S.new({ ...stock('stock-st01'), name: 'You' }, { ...stock('stock-st02'), name: 'The app' }, 1, { seed: 5, bot: 1 }); fresh(); B.move(1); S.act(0, { t: 'keep' }); S.P(1).don.active = 6;
+  const m0 = S.g.actions.length; V.simBotRun();
+  ok('...control: with no frame clock (reduced motion, a harness) the same turn is played inside the call, as take 123 always did', !V.simPaced() && S.g.actions.length === n3 - n0 + m0 && S.who() === 0, `${S.g.actions.length - m0} moves`);
+  S.g = null; fresh(); }
+/* the table itself */
+{ S.new({ ...stock('stock-st01'), name: 'Player 1' }, { ...stock('stock-st02'), name: 'Player 2' }, 0, { seed: 21 }); fresh();
+  S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' }); S.act(0, { t: 'end' }); S.act(1, { t: 'end' });
+  const P = S.P(0), k = V.CAT.rows.find(p => p.num === 'ST01-013' && !p.sealed); P.chars = [onField(k.id, 1, true, 2)]; P.trash = [P.hand.pop()];
+  V.paintSim(); const t = board(), v = S.view(0), mine = [v.me.leader, ...v.me.chars, ...v.me.hand], theirs = [v.them.leader];
+  const pics = [...mine, ...theirs].filter(c => c.art).every(c => t.includes(`src="${escH(c.art.thumb)}"`));
+  ok('the table draws both halves: five Character places each, the Leader in the middle of each back row, Life and Deck as counts, the Trash with its newest card, DON!! as tokens, the other hand as backs',
+     (t.match(/<div class="tb-row front">/g) || []).length === 2 && (t.match(/<div class="tb-row back">/g) || []).length === 2 && new RegExp(`aria-label="${v.me.lifeCount} Life"`).test(t) && new RegExp(`aria-label="Deck, ${v.me.deckCount} cards"`).test(t)
+     && /data-sim="trash:0" aria-label="Trash, 1 card"/.test(t) && (t.match(/<i class="tk"><svg class="g"[^>]*><use href="#g-donjp"\/><\/svg><\/i>/g) || []).length === v.me.don.active + v.them.don.active && new RegExp(`aria-label="${v.them.handCount} cards in hand">${'<i></i>'.repeat(v.them.handCount)}`).test(t), t.slice(0, 160));
+  ok('...every card on it is its hot-linked picture over its own colours, and a rested one with DON!! says so upright (the power, "+2")', pics && /<button class="sc[^"]*\brest\b[^"]*" data-sim="card:m0" data-key="m0" data-uid="\d+" aria-label="[^"]*rested, 2 DON!! given[^"]*">/.test(t) && /<span class="dn">\+2<\/span>/.test(t) && mine.every(c => t.includes(`--a1:${(c.art && c.art.ground[0]) || ''}`)), String(pics));
+  ok('...the other hand is backs and a count: none of its cards is on the table', S.P(1).hand.every(id => !t.includes(`src="${escH(S.face(id).art ? S.face(id).art.thumb : '#none')}"`) || [v.them.leader, ...v.them.chars, ...v.them.trash, ...mine].some(c => c.id === id)));
+  ok('...and the header\'s subtitle says whose turn it is while the setup\'s words say what the Sim does', doc.getElementById('simSub').textContent === 'turn 3 · Player 1’s turn');
+  /* the zoom: a card at its largest with each line's mark and what the app does; a card whose continuous text is the player's */
+  V.simSheetOpen('zoom', 'L'); const z = sheet();
+  ok('the zoom shows the card large (its large picture), its words, what the app will do on each line -- a proven line unmarked since take 126 -- and its moves', z.includes(`src="${escH(v.me.leader.art.large)}"`) && !/proven by a test|no test has proven|Not checked yet/.test(z) && /The app will: /.test(z) && /class="zm-name">Monkey\.D\.Luffy</.test(z), z.slice(0, 200));
+  const E = V.CAT.effects, st = +Object.keys(E).find(id => { const p = V.CAT.byId.get(+id); return p && p.type === 'Character' && !p.sealed && E[id].some(e => e.hand && e.t === 'static'); });
+  P.chars.push(onField(st, 1)); SU.focus = 'm1'; V.paintSim(); const y = board(); V.simSheetOpen('zoom', 'm1'); const yz = sheet();
+  ok('a card whose continuous text the app does not compute says so: a gold corner on the card, "yours to apply" in the dock with the power said to be without it, and the line in the zoom (docs/SIM-UI.md, what the pass keeps)',
+     /<span class="ya"><span class="vh">its continuous text is yours to apply<\/span><\/span>/.test(y) && /its continuous text is yours to apply; the power shown is without it/.test(y) && /<div class="why">Yours to apply: /.test(yz), y.slice(0, 80));
+  ok('...control: a card with none -- the Leader, whose lines the app runs -- has no corner', !/class="ya"/.test((y.match(/<button[^>]*data-key="L"[\s\S]*?<\/button>/) || [''])[0]) && v.me.leader.unapplied.length === 0);
+  doc.getElementById('simSheet').classList.remove('on'); SU.sheet = null; SU.focus = null;
+  S.g = null; fresh(); V.paintSim(); ok('...control: with no game the subtitle says what the Sim does', /^rules by the app/.test(doc.getElementById('simSub').textContent)); }
+/* the felt: the table's palette is Prep & Play's dark one, value for value, in both themes */
+{ const css = (html.match(/<style>([\s\S]*?)<\/style>/) || ['', ''])[1], block = (sel, from) => { const i = css.indexOf(sel, from); return i < 0 ? '' : css.slice(i, css.indexOf('}', i)); };
+  const toks = b => Object.fromEntries([...b.matchAll(/--([\w-]+):(#[0-9A-Fa-f]{6})/g)].map(m => [m[1], m[2].toUpperCase()]));
+  const playDark = toks(block(':root[data-mode="play"]{')), table = toks(block('#simBoard.table{')), same = ['bg', 'card', 'card2', 'line', 'fg', 'dim', 'dim2', 'brass', 'accent-ink', 'line-strong'];
+  const lum = hx => { const [r, g, b] = [1, 3, 5].map(i => parseInt(hx.slice(i, i + 2), 16) / 255).map(c => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+  ok('the table\'s felt is Prep & Play\'s dark palette in both themes, value for value, so the contrast the palette checks measure holds on it; its own grounds carry the text at 4.5:1 or more', same.every(k => table[k] && table[k] === playDark[k]) && ['mat', 'mat2'].every(g => ['fg', 'dim'].every(k => ratio(table[k], table[g]) >= 4.5)),
+     same.filter(k => table[k] !== playDark[k]).join() || ['mat', 'mat2'].map(g => `${g} ${ratio(table.dim, table[g]).toFixed(2)}`).join());
+  ok('...control: a value that drifted from the palette is caught', !same.every(k => ({ ...table, dim: '#777777' })[k] === playDark[k]));
+  ok('the nav steps aside while a game is on the Sim\'s screen, and from 900 px the table leaves the phone column', /\n:root:has\(#sim\.screen\.on #simBoard\.table\) nav\{display:none\}/.test(css) && /body:has\(#sim\.screen\.on #simBoard\.table\)\{max-width:none\}/.test(css)); }
+/* the owner, mid-take: the game fills the screen once dealt; Leave forfeits and brings the app back; the card backs are the icon's */
+{ const css = (html.match(/<style>([\s\S]*?)<\/style>/) || ['', ''])[1];
+  ok('once a game is dealt it fills the screen: the mode tabs, the Sim\'s header and the nav step aside, and the table carries the status bar\'s inset itself (the owner, take 124)',
+     /\n:root:has\(#sim\.screen\.on #simBoard\.table\) \.modebar\{display:none\}/.test(css) && /\n#sim\.screen:has\(#simBoard\.table\) > \.appbar\{display:none\}/.test(css) && /\n#sim\.screen:has\(#simBoard\.table\)\{padding-top:var\(--sat\);/.test(css) && /\n:root:has\(#sim\.screen\.on #simBoard\.table\) nav\{display:none\}/.test(css));
+  S.new({ ...stock('stock-st01'), name: 'Player 1 — Red' }, { ...stock('stock-st02'), name: 'Player 2 — Green' }, 0, { seed: 61 }); fresh(); S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' }); V.paintSim();
+  const t = board(), top = (t.match(/<div class="tb-top">[\s\S]*?<\/div>/) || [''])[0];
+  ok('...its top bar carries Leave, whose turn it is, the Rules (on every Prep & Play screen, take 122), the log and the menu', /data-sim="leave"/.test(top) && /<b>Turn 1<\/b> · Player 1’s turn/.test(top) && /data-rules=""/.test(top) && /data-sim="log"/.test(top) && /data-sim="menu"/.test(top), top.slice(0, 200));
+  const g = S.g; V.simTap('leave'); const ask = sheet(), askOn = doc.getElementById('simSheet').classList.contains('on');
+  V.simTap('leavenow');
+  ok('Leave asks first, then forfeits the game for the seat on screen (§1-2-3) and closes the table: the app\'s screens come back with the setup',
+     askOn && /Leaving forfeits this game: Player 1 loses/.test(ask) && /data-sim="leavenow">Forfeit &amp; leave<\/button>|data-sim="leavenow">Forfeit & leave<\/button>/.test(ask) && g.over === 1 && /concedes \(§1-2-3\)/.test(g.log[0]) && S.g === null && !/class="tb-top"/.test(board()) && /New game/.test(board()), JSON.stringify({ askOn, over: g.over, log: g.log[0] }));
+  ok('...control: "Keep playing" is the sheet\'s close, not a move -- the game goes on', /<button class="ghost" data-close="simSheet">Keep playing<\/button>/.test(ask));
+  /* the card backs: the icon's card-back emblem, from the sprite, in the game's colours (the owner, twice this take) */
+  const rule = sel => (css.match(new RegExp('\\n' + sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\{([^}]*)\\}')) || ['', ''])[1];
+  const hexOf = (r, k) => ((r.match(new RegExp('(?:^|;)' + k + ':(#[0-9A-Fa-f]{6})')) || [])[1] || '#000000').toUpperCase();
+  const rgbOf = hx => [1, 3, 5].map(i => parseInt(hx.slice(i, i + 2), 16) / 255);
+  const hue = hx => { const [r, g, b] = rgbOf(hx), mx = Math.max(r, g, b), d = mx - Math.min(r, g, b); if (!d) return -1; const h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return (h * 60 + 360) % 360; };
+  const light = hx => { const [r, g, b] = rgbOf(hx).map(c => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const blue = hx => hue(hx) >= 205 && hue(hx) <= 245, red = hx => hue(hx) >= 345 || (hue(hx) >= 0 && hue(hx) <= 12);
+  const deckBack = r => blue(hexOf(r, 'background')) && blue(hexOf(r, '--f1')) && blue(hexOf(r, '--f2')) && light(hexOf(r, 'background')) < light(hexOf(r, '--f2'));
+  const sb = rule('.sb'), ld = rule('.sb.ld'), dn = rule('.sb.dn'), tk = rule('.tk');
+  ok('every card back on the table is the app icon\'s card back -- the sprite\'s g-cardart -- in the game\'s colours (the owner, take 124: "The darker blue for normal cards, white for don, red for leaders. Change the borders to match. For don, black border"): the deck\'s, Life\'s and the other hand\'s deep blue in a darker blue border',
+     /<symbol id="g-cardart" viewBox="115\.9 39\.9 268\.3 384\.3" fill="none">/.test(html) && /<use href="#g-cardart"\/>/.test(js) && (html.match(/<symbol id="g-cardart"[\s\S]*?<\/symbol>/) || [''])[0].split('currentColor').length > 40 && deckBack(sb) && /background:radial-gradient\(circle at 50% 46%,#2555AD,#112B69 80%\);border:2px solid #0B1B45/.test(rule('.tb-hb i')),
+     `frame ${hexOf(sb, 'background')} ${hue(hexOf(sb, 'background')).toFixed(0)}°, face ${hexOf(sb, '--f1')}`);
+  ok('...a Leader\'s back red in a darker red border; a DON!! card\'s back white in a black border, and a DON!! face up white in black too, as is the given DON!! on a card',
+     red(hexOf(ld, 'background')) && red(hexOf(ld, '--f1')) && light(hexOf(ld, 'background')) < light(hexOf(ld, '--f1')) && light(hexOf(dn, 'background')) < 0.01 && light(hexOf(dn, '--f1')) > 0.9 && light(hexOf(dn, 'color')) < 0.02
+     && /background:#FFFFFF;\n  border:max\(2px, calc\(var\(--cw\) \* \.028\)\) solid #0A0A0A;/.test(tk) && /color:#0A0A0A/.test(rule('.tk svg.g')));   // take 126: a frame of its own, not a 1.5px line
+  ok('...control: take 124\'s first backs -- the icon\'s own purple on a pale face, the gold DON!! token -- are not the game\'s colours',
+     !deckBack('background:#8552b8;color:#8552b8;--cbk:#F6F1E4;--f1:#F6F1E4;--f2:#F6F1E4') && !deckBack('background:#8552B8;--f1:#8552B8;--f2:#8552B8') && light('#F6C48D') < 0.9 && !red('#8552B8'));
+  ok('the backs are drawn where the game has them face down: the deck and Life blue, the DON!! deck a stack of white backs beside the cost area, and a Leader not yet shown red (the setup, the reveal)',
+     /simBack\('lf', /.test(js) && /simBack\('', `top:/.test(js) && /simBack\('dn', `left:/.test(js) && /simBack\('ld rv'\)/.test(js) && /x\.face \? simFace\(x\.face, true\) : simBack\('ld'\)/.test(js));
+  /* the reveal: each Leader turns over from its red back the first time it shows in a game, once */
+  S.new({ ...stock('stock-st01'), name: 'Player 1 — Red' }, { ...stock('stock-st02'), name: 'Player 2 — Green' }, 0, { seed: 62 }); fresh(); SU.shown = new Set(); V.paintSim();
+  const mullShown = [...SU.shown]; S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' }); V.paintSim(); const tableShown = [...SU.shown].sort(); V.paintSim();
+  ok('each Leader turns over from its red back the first time it shows in a game -- the mulligan shows the deciding seat\'s, the table the other -- and never again', mullShown.join() === String(S.g.first) && tableShown.join() === '0,1' && SU.shown.size === 2, JSON.stringify({ mullShown, tableShown }));
+  ok('...control: a new game is dealt with none shown yet, and no move made (Deal resets both; take 124)', /Object\.assign\(SIMUI, \{ sel: null, focus: null, post: null, room: null, fxt: null, seen: 0, hurry: false, shown: new Set\(\), acted: null \}\)/.test(js));
+  /* take 124 drew a card whose picture was the host's placeholder in its colours, by a rule of the Sim's; take 126 refuses the
+     placeholder where pictures are fetched, and its section checks the shipped catalogue and the Sim's pictures */
+  S.g = null; fresh(); }
+/* the owner, mid-take: "after every turn ends audit all moves against the rules and all card they played" -- the rulebook
+   (tools/lib/rulebook.mjs) and random legal decks found what the ready-made decks never dealt; each fix is a scenario here, on
+   the shipped engine, with the engine as it was planted as its control */
+{ const E = V.CAT.effects, byId = id => V.CAT.byId.get(+id), body = raw => String(raw).replace(/^(\s*\[[^\]]+\]\s*)+/, '').replace(/\([^)]*\)/g, '');
+  const lineWhere = pred => { for (const [id, L] of Object.entries(E)) { const p = byId(id); if (!p || p.sealed || p.type !== 'Character') continue; const n = L.findIndex(e => !e.hand && pred(e)); if (n >= 0) return { id: +id, n, e: L[n] }; } return null; };
+  const deal = () => { S.new({ ...stock('stock-st01'), name: 'Player 1' }, { ...stock('stock-st02'), name: 'Player 2' }, 0, { seed: 70 }); S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' }); return S.g; };
+  const put = (i, id) => { const c = S.inst(id, S.g.turn - 1); S.P(i).chars.push(c); return S.P(i).chars.length - 1; };
+  /* 1. an automatic effect resolves in full (§8-1-3-1): no Skip; an "up to" still lets none be chosen */
+  deal(); const auto = lineWhere(e => e.t === 'onplay' && e.do.length === 1 && e.do[0].a === 'draw' && !/^\s*you may\b/i.test(body(e.raw)) && !e.if.length);
+  const may = lineWhere(e => e.t === 'onplay' && /^\s*you may\b/i.test(body(e.raw)) && !e.if.length && !/^cost_(restdon|returndon|restself)$/.test(e.do[0].a));
+  let k = put(0, auto.id); S.g.queue = S.offers(0, 'onplay', k); const L1 = S.legal(0), refused = S.act(0, { t: 'fxskip' });
+  S.g.queue = []; k = put(0, may.id); S.g.queue = S.offers(0, 'onplay', k); const L2 = S.legal(0);
+  ok(`an automatic effect is not the player's to decline (§8-1-3-1): ${byId(auto.id).name}'s "${body(auto.e.raw).slice(0, 30)}" offers no Skip and act refuses one; a line that says "you may" can still be declined`,
+     !L1.some(x => x.t === 'fxskip') && L1.some(x => x.t === 'fx') && refused.ok === false && /§8-1-3-1/.test(refused.why) && L2.some(x => x.t === 'fxskip'), JSON.stringify({ L1, why: refused.why }));
+  { const d = S.declinable; S.declinable = () => true; S.g.queue = S.offers(0, 'onplay', put(0, auto.id)); const planted = S.legal(0).some(x => x.t === 'fxskip'); S.declinable = d; S.g.queue = [];
+    ok('...control: take 123\'s engine, where every line could be declined, offers the Skip', planted); }
+  { S.g.queue = S.offers(0, 'onplay', put(0, auto.id)); fresh(); V.paintSim(); const bAuto = board(); S.g.queue = S.offers(0, 'onplay', put(0, may.id)); fresh(); V.paintSim(); const bMay = board(); S.g.queue = [];
+    ok('...and the effect panel says so where Skip was: "it resolves in full" with the rule\'s section; a "you may" line keeps its decline, named Decline (take 124)', /<span class="note">it resolves in full \(<button class="linkish" data-rules="8-1-3-1"/.test(bAuto) && !/data-sim="fxskip"/.test(bAuto) && /data-sim="fxskip">(?:Decline|Don\u2019t pay)<\/button>/.test(bMay) /* a "you may" that begins with a cost is declined by not paying it */, (bAuto.match(/<div class="tb-go">[\s\S]{0,300}/) || [''])[0]); }
+  /* 2. a [Trigger] used is trashed however its last step went -- none chosen included (§10-1-5-3) */
+  deal(); const trig = lineWhere(e => e.t === 'trigger' && e.do.length === 1 && e.do[0].a === 'ko' && e.do[0].upto);
+  const trigRun = plant => { deal(); S.P(1).chars = []; S.P(0).hand.push(trig.id); S.g.queue = S.offers(0, 'trigger', null, trig.id, true); const f = S.finish; if (plant) S.finish = function () {};
+    const r = S.act(0, { t: 'fx', target: null }); S.finish = f; return { ok: r.ok, inHand: S.P(0).hand.includes(trig.id), inTrash: S.P(0).trash.includes(trig.id) }; };
+  const tr = trigRun(false), trPlant = trigRun(true);
+  ok(`a [Trigger] used with no target chosen is trashed after it, not kept in hand (§10-1-5-3): ${byId(trig.id).name} (the rulebook's find: take 123 kept it)`, tr.ok && !tr.inHand && tr.inTrash, JSON.stringify(tr));
+  ok('...control: an engine that ends it without finishing -- take 123\'s path for "none chosen" -- keeps the card in hand', trPlant.inHand && !trPlant.inTrash);
+  /* 3. what a step sets off while its effect still resolves waits its turn, not dropped (§8-6): a K.O. that is not the last step, of
+     a card with an [On K.O.] */
+  const koed = lineWhere(e => e.t === 'onko' && !e.if.length), koFirst = { id: auto.id };   // a K.O. then a draw: the steps as effects.py writes them, the card a Character's
+  const follows = plant => { deal(); S.P(1).chars = []; put(1, koed.id); k = put(0, koFirst.id); const steps = [{ a: 'ko', who: 'opp', upto: true }, { a: 'draw', n: 1 }];
+    S.g.queue = [{ i: 0, e: { t: 'onplay', if: [], do: steps, raw: '[On Play] K.O. up to 1 of your opponent\'s Characters. Then, draw 1 card. (take 124 probe)' }, n: 9, ref: k, uid: S.P(0).chars[k].uid, cardId: koFirst.id, fromLife: false, hand: false, steps, step: 0 }];
+    const ko = S.DO.ko; if (plant) S.DO.ko = function (c) { ko.call(this, c); return {}; };
+    const r = S.act(0, { t: 'fx', target: 'o0' }); S.DO.ko = ko; return { ok: r.ok, queued: S.g.queue.map(o => S.card(o.cardId).name + ' ' + o.e.t) }; };
+  const fw = koed ? follows(false) : null, fwPlant = koed ? follows(true) : null;
+  ok(`a card K.O.'d by a step that is not its effect's last still has its [On K.O.] offered, after the effect it came from (§8-6; take 123 dropped it): a K.O. then a draw, of ${koed ? byId(koed.id).name : '?'}`,
+     !!fw && fw.ok && fw.queued.length === 2 && fw.queued[1] === `${byId(koed.id).name} onko`, JSON.stringify(fw));
+  ok('...control: an engine that drops what a step sets off (take 123\'s, unless the step was the last) queues no [On K.O.]', !!fwPlant && !fwPlant.queued.some(x => /onko$/.test(x)));
+  /* 4. an effect whose card left before it began does not activate, and leaves the queue by itself (§8-1-3-1-3); one begun
+     resolves in full though its card leaves -- the rulebook's Sogeking, who returns himself and still draws */
+  deal(); const selfBounce = lineWhere(e => e.t === 'onplay' && e.do[0].a === 'bounce' && e.do[0].who === 'any' && e.do[1] && e.do[1].a === 'draw' && !e.if.length && !e.do[0].if);
+
+  k = put(0, auto.id); S.g.queue = S.offers(0, 'onplay', k); S.leave(S.P(0), k, 'hand'); S.drain(); const purged = S.g.queue.length === 0 && /does not activate \(§8-1-3-1-3\)/.test(S.g.log[0]);
+  { deal(); k = put(0, auto.id); S.g.queue = S.offers(0, 'onplay', k); S.leave(S.P(0), k, 'hand'); const dr = S.drain; S.drain = function () { const g = this.g; if (g.over !== null || g.queue.length) return; return dr.call(this); };   // take 123's drain: it returned at once with anything queued
+    S.drain(); S.drain = dr; const kept = S.g.queue.length === 1;
+    ok(`an effect whose card left the field before it began leaves the queue by itself, with no move asked for it (§8-1-3-1-3; the rulebook's find: take 123 offered its targets and took any move as its end)`, purged, S.g.log.slice(0, 2).join(' | '));
+    ok('...control: take 123\'s drain, returning while anything was queued, left it waiting', kept); }
+  const soge = plant => { deal(); S.P(0).hand = S.P(0).hand.slice(0, 3); k = put(0, selfBounce.id); S.g.queue = S.offers(0, 'onplay', k); const ap = S.apply;
+    if (plant) S.apply = function (i, o, t, opts) { if (o.uid != null && this.refOf(this.P(i), o.uid) == null) return { ok: false, why: 'gone', gone: true }; return ap.call(this, i, o, t, opts); };
+    const r1 = S.act(0, { t: 'fx', target: null }); S.leave(S.P(0), S.refOf(S.P(0), S.g.queue[0].uid), 'hand'); const h1 = S.P(0).hand.length, r2 = S.act(0, { t: 'fx', target: null }); S.apply = ap; return { r1: r1.ok, r2: r2.ok, drew: S.P(0).hand.length - h1 }; };
+  const sg = selfBounce ? soge(false) : null, sgPlant = selfBounce ? soge(true) : null;
+  ok(`an effect begun resolves in full though its own card has left the field: ${selfBounce ? byId(selfBounce.id).name : '?'} returned to hand after its first step still draws 2 (§8-1-3-1-3 is about activating; the rulebook's find, through a by-hand move)`, !!sg && sg.r1 && sg.r2 && sg.drew === 2, JSON.stringify(sg));
+  ok('...control: take 123\'s apply, which dropped the rest once the card had left, draws nothing', !!sgPlant && sgPlant.drew === 0, JSON.stringify(sgPlant));
+  /* 5. "that card" with none chosen before is no card: El Thor's second +2000 does nothing, and the game goes on */
+  const thor = Object.entries(E).map(([id, L]) => ({ id: +id, n: L.findIndex(e => !e.hand && e.do.length === 2 && e.do[1].a === 'power' && e.do[1].who === 'prev') })).find(x => x.n >= 0);
+  const lives2 = () => { S.P(0).life = S.P(0).life.slice(0, 2); S.P(1).life = S.P(1).life.slice(0, 2); };   // the second step's condition holds, whichever Life it reads
+  deal(); lives2(); S.g.queue = S.offers(0, 'evcounter', null, thor.id); const t1 = S.act(0, { t: 'fx', target: null }), L5 = S.legal(0), t2 = S.act(0, { t: 'fx', target: null });
+  ok(`"that card" with no card chosen before is no card: ${byId(thor.id).name}'s second +2000 resolves as nothing and the effect ends (the rulebook's random decks: take 123 offered the move and refused it -- a game that could not go on once declining was ruled out)`,
+     t1.ok && L5.length === 1 && t2.ok && S.g.queue.length === 0 && /none chosen/.test(S.g.log[0]), JSON.stringify({ t1, L5, t2, log: S.g.log[0] }));
+  { const ap = S.apply; S.apply = function (i, o, t, opts) { const d = o.steps[o.step]; if (d && d.a === 'power' && d.who === 'prev' && o.prev == null && (!d.if || d.if.every(c => this.condOk(i, null, c)))) return { ok: false, why: 'no card chosen before' }; return ap.call(this, i, o, t, opts); };   // take 123's way with "that card"
+    deal(); lives2(); S.g.queue = S.offers(0, 'evcounter', null, thor.id); S.act(0, { t: 'fx', target: null }); const planted = S.act(0, { t: 'fx', target: null }); S.apply = ap;
+    ok('...control: take 123\'s engine refused that move, the only one it offered', planted.ok === false && /no card chosen before/.test(planted.why)); }
+  /* 5b. a target the step never offered is refused before its condition is read (the final sweep: Radical Beam!!'s second step,
+     its condition false, took the Leader as a target) */
+  { const odd = plant => { deal(); S.P(0).life = S.P(0).life.slice(0, 5); S.g.queue = S.offers(0, 'evcounter', null, thor.id); S.act(0, { t: 'fx', target: null }); const ap = S.apply;
+      if (plant) S.apply = function (i, o, t, opts) { const d = o.steps[o.step]; return ap.call(this, i, o, d && d.if && !d.if.every(c => this.condOk(i, null, c)) ? null : t, opts); };   // the condition read first: the target never looked at
+      const r = S.act(0, { t: 'fx', target: 'L' }); S.apply = ap; return r; };
+    const r = odd(false), rp = odd(true);
+    ok(`a target a step never offered is refused whatever its condition (the final sweep, chaos: ${byId(thor.id).name}'s second step, its condition false, took one)`, r.ok === false && /not a legal target/.test(r.why), JSON.stringify(r));
+    ok('...control: the condition read before the target, as it was, accepts the move', rp.ok === true); }
+  /* 6. the by-hand tray's Once Per Turn follows its card, not the place it had: a Character before it leaves, and the line is still used */
+  const byHandOpt = Object.entries(E).map(([id, L]) => ({ id: +id, n: L.findIndex(e => e.hand && e.t === 'main' && e.if.length && e.if.every(c => c.c === 'opt')), p: byId(id) })).find(x => x.n >= 0 && x.p && x.p.type === 'Character' && !x.p.sealed);
+  const opt6 = plant => { deal(); S.P(0).chars = []; put(0, auto.id); const kk = put(0, byHandOpt.id), uid = S.P(0).chars[kk].uid; S.g.queue = S.offers(0, 'main', kk); S.leave(S.P(0), 0, 'hand');
+    const rf = S.refOf; if (plant) S.refOf = function (X, u) { return u === uid && this.g.hand == null && this.g.queue.length ? 1 : rf.call(this, X, u); };   // take 123: the place it had when it was queued
+    S.act(0, { t: 'fxhand' }); S.act(0, { t: 'handdone' }); S.refOf = rf; return S.offers(0, 'main', S.refOf(S.P(0), uid)).length === 0; };
+  ok(`a by-hand line's [Once Per Turn] is spent on its own card when a Character before it has left: ${byHandOpt ? byHandOpt.p.name : '?'} (two apps named it resolved twice)`, !!byHandOpt && opt6(false));
+  ok('...control: the tray reading the place the card had (take 123) spends another card\'s and leaves this one unused', !!byHandOpt && !opt6(true));
+  /* the owner's fourth word (take 124): "Ensure if there's an outstanding action, the player knows about it. The sim should tell the
+     player what the next action is, such as drawing a card, don etc. ... a user should never be able to skip drawing a card, don" --
+     the turn's start is the engine's and is said; the next action is said; End turn asks; nothing that must happen is skipped */
+  /* 7. the turn's start: never a move, and said as it was (take 124 logged "refresh, draw" where no card is drawn) */
+  { const said = (line, st) => new RegExp(`turn ${st.turn}: refresh, ${st.first ? 'no draw on the first turn \\(\u00a76-3-1\\)' : 'draw ' + st.drew}, \\+${st.don} DON!!$`).test(line);
+    S.new({ ...stock('stock-st01'), name: 'Player 1' }, { ...stock('stock-st02'), name: 'Player 2' }, 0, { seed: 70 }); const h0 = S.P(0).hand.length;
+    S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' }); const s1 = S.view(0).start, l1 = S.g.log[0], m1 = [...new Set(S.legal(0).map(x => x.t))], hand1 = S.P(0).hand.length, don1 = S.P(0).don.active;
+    const h1 = S.P(1).hand.length; S.act(0, { t: 'end' }); const s2 = S.view(1).start, s2o = S.view(0).start, l2 = S.g.log[0];
+    ok('a turn\'s start is the engine\'s, never a move to take or skip (the owner: "a user should never be able to skip drawing a card, don"): the first player\'s first turn draws none and adds 1 DON!!, the second player\'s draws 1 and adds 2 -- in both seats\' views, the log saying it as it was',
+       !!s1 && s1.i === 0 && s1.first && s1.drew === 0 && s1.don === 1 && hand1 === h0 && don1 === 1 && m1.every(t => ['play', 'give', 'activate', 'attack', 'end'].includes(t)) && said(l1, s1)
+       && !!s2 && s2.i === 1 && !s2.first && s2.drew === 1 && s2.don === 2 && S.P(1).hand.length === h1 + 1 && S.P(1).don.active === 2 && JSON.stringify(s2o) === JSON.stringify(s2) && said(l2, s2), JSON.stringify({ s1, l1, s2, l2, m1 }));
+    ok('...control: take 124\'s line on that first turn, "refresh, draw, +1 DON!!", is caught -- no card was drawn', (st => !said('Player 1 \u2014 refresh, draw, +1 DON!!', st) && !said('Player 1 \u2014 turn 1: refresh, draw 1, +1 DON!!', st) && said('Player 1 \u2014 turn 1: refresh, no draw on the first turn (\u00a76-3-1), +1 DON!!', st))({ turn: 1, first: true, drew: 0, don: 1 })); }
+  /* 8-10. against the app, through the table's own taps: the band says the turn's start until the first move; the dock says the next
+     action; End turn asks while an attack is left, and names it */
+  { const sayStart = h => /class="tb-tick tb-start"><b>Your turn 1<\/b> \u00b7 no draw on the first turn \u00b7 \+1\u00a0DON!!<\/span>/.test(h);
+    const sayNext = h => /<div class="tb-say tb-next">(?:<b>Next:<\/b> [^<]+, or End turn|<b>Nothing left to play or attack with<\/b> \u2014 End turn)/.test(h);
+    S.new({ ...stock('stock-st01'), name: 'You' }, { ...stock('stock-st02'), name: 'The app' }, 0, { seed: 3, bot: 1 }); fresh(); SU.acted = null; V.paintSim(); V.simTap('keep:0');
+    const b1 = board(); V.simTap('give:leader'); const b2 = board();
+    ok('the band says what the turn\'s start did -- "Your turn 1 \u00b7 no draw on the first turn \u00b7 +1 DON!!" -- until the first move of the turn, then the log again (take 124 had one log line, cut short on a phone)', sayStart(b1) && !/tb-start/.test(b2) && /class="tb-tick">You give/.test(b2), (b1.match(/<span class="tb-tick[^"]*">[\s\S]{0,120}/) || [''])[0] + ' | ' + (b2.match(/<span class="tb-tick[^"]*">[\s\S]{0,80}/) || [''])[0]);
+    ok('...control: take 124\'s band, the ticker alone, is caught', !sayStart('<span class="tb-tick">You \u2014 refresh, draw, +1 DON!!</span>'));
+    /* the owner, on the look: against the app End turn "doesn't need to say then the app plays" -- two on one phone keep "then pass
+       the phone" (the check of take 122's labels holds that) */
+    const endAlone = h => /data-sim="end">End turn<\/button><\/span>/.test(h) && !/then the app plays/.test(h);
+    ok('against the app, End turn stands alone -- no "then the app plays" under it (the owner)', endAlone(b1), (b1.match(/data-sim="end">[\s\S]{0,80}/) || [''])[0]);
+    ok('...control: take 124\'s band as the owner saw it, the note under End turn, is caught', !endAlone('<button class="ghost go" data-sim="end">End turn</button><span class="note">then the app plays</span></span>'));
+    ok('the dock says the next action in the Main Phase -- a card to play, who can attack, an ability -- or that only End turn is left, and on a first turn that no attack can be made (§6-5-6-1)', sayNext(b1) && sayNext(b2) && /no attacks on your first turn\./.test(b1), (b1.match(/<div class="tb-say tb-next">[\s\S]{0,160}/) || [''])[0]);
+    ok('...control: take 124\'s dock line, "Tap a card for its moves; hold it to read it.", is caught', !sayNext('<div class="tb-dock"><div class="tb-say">Tap a card for its moves; hold it to read it.</div></div>'));
+    V.simTap('end:now'); const t3 = S.g.turn, w3 = S.who(), b3 = board(), n3 = new Set(S.legal(0).filter(x => x.t === 'play').map(x => x.h)).size;
+    /* the owner, on the look: "it says play 5 cards, you won't always play 5 cards of course" -- cards each playable now are not all
+       playable together; the line names one card, or says "a card" (the lit ones) */
+    const noCount = h => !/play \d+ cards/.test(h) && (n3 >= 2 ? /<b>Next:<\/b> play a card,/.test(h) : true);
+    ok(`the next action never counts the cards to play: "play a card" where ${n3} can each be played now (the owner: "you won't always play 5 cards of course")`, n3 >= 2 && noCount(b3), (b3.match(/<div class="tb-say tb-next">[\s\S]{0,120}/) || [''])[0]);
+    ok('...control: the line the owner saw, "play 5 cards, give DON!! and attack with ...", is caught', !noCount('<div class="tb-say tb-next"><b>Next:</b> play 5 cards, give DON!! and attack with your Leader and Brook, or End turn.</div>'));
+    SU.sheet = null; V.simTap('end'); const asked = !!SU.sheet && SU.sheet.kind === 'endq', q = sheet(), still = S.g.turn === t3;
+    ok('End turn asks while an attack is left, and names it -- "Your Leader can attack" -- and the turn goes on until the question\'s End turn (the owner: "Ensure if there\'s an outstanding action, the player knows about it")',
+       t3 === 3 && w3 === 0 && /<b>Next:<\/b>[^<]*attack with your Leader/.test(b3) && asked && still && /<li>Your Leader can attack<\/li>/.test(q) && /data-sim="end:now">End turn<\/button>/.test(q) && /data-close="simSheet">Keep playing<\/button>/.test(q), JSON.stringify({ t3, w3, asked, still, q: q.slice(0, 200) }));
+    V.simTap('end:now'); const t5 = S.g.turn;
+    ok('...control: the same state, the one tap take 124 had (the question\'s End turn) ends the turn at once', t5 > t3, `turn ${t5}`);
+    S.g = null; fresh(); }
+  /* ...and with nothing left -- no card to play, no attacker, no ability (its [Activate: Main] lines taken away for the check) -- the dock
+     says so and End turn ends the turn at once, unasked */
+  { deal(); const P = S.P(0); P.leader.rested = true; P.chars = []; P.hand = []; P.stage = null; const of = S.offers; S.offers = function (i, t, ...r) { return t === 'main' ? [] : of.call(this, i, t, ...r); };
+    fresh(); SU.sheet = null; V.paintSim(); const b4 = board(), t = S.g.turn; V.simTap('end'); S.offers = of;
+    ok('...and with nothing left, the dock says so -- "Nothing left to play or attack with \u2014 End turn" -- and End turn ends the turn at once, unasked', /<b>Nothing left to play or attack with<\/b> \u2014 End turn/.test(b4) && S.g.turn > t && !SU.sheet, JSON.stringify({ t, now: S.g.turn, sheet: SU.sheet, dock: (b4.match(/<div class="tb-say tb-next">[\s\S]{0,120}/) || [''])[0] }));
+    S.g = null; fresh(); V.go('sim'); }
+  /* 11. a by-hand line is declined only where the rules let a line be: an [On Play] by hand that says neither "you may" nor a cost is
+     opened and done, never skipped (take 124 offered Skip on every by-hand line); the app opens its own and says it made no move; a
+     "you may" one keeps its decline; a [Trigger] from Life is added to hand instead (the owner: "technically optional to skip but why
+     would you skip") */
+  { const handWhere = (pred, anyType) => { for (const [id, L] of Object.entries(E)) { const p = byId(id); if (!p || p.sealed || (!anyType && p.type !== 'Character')) continue; const n = L.findIndex(e => e.hand && pred(e)); if (n >= 0) return { id: +id, n, e: L[n] }; } return null; };
+    const must = handWhere(e => e.t === 'onplay' && !/^\s*you may\b/i.test(body(e.raw)) && !/^[^.:]*:/.test(body(e.raw)) && !e.if.some(c => c.c === 'opt'));
+    const mayH = handWhere(e => e.t === 'onplay' && /^\s*you may\b/i.test(body(e.raw))), trigH = handWhere(e => e.t === 'trigger', true);
+    const offerOf = (id, t, kk) => S.offers(0, t, kk, t === 'trigger' ? id : undefined, t === 'trigger').filter(o => o.hand);
+    deal(); let kk = put(0, must.id); S.g.queue = offerOf(must.id, 'onplay', kk); const Lm = S.legal(0), rm = S.act(0, { t: 'fxskip' }); fresh(); V.paintSim(); const bm = board();
+    const a1 = V.BOT.choose(0, S.legal(0)); S.act(0, a1); const a2 = V.BOT.choose(0, S.legal(0)); S.act(0, a2); const lm = S.g.log[0];
+    ok(`a by-hand line the rules make happen is not the player's to pass by (§8-1-3-1): ${byId(must.id).name}'s "${body(must.e.raw).slice(0, 40)}" offers Resolve by hand alone, act refuses a Skip, the panel says it happens in full and the dock says to resolve it`,
+       Lm.length === 1 && Lm[0].t === 'fxhand' && rm.ok === false && /\u00a78-1-3-1/.test(rm.why) && /data-sim="fxhand">Resolve by hand<\/button><span class="note">it happens in full/.test(bm) && !/data-sim="fxskip"/.test(bm) && /<b>Next:<\/b> resolve [^<]+\u2019s effect by hand\./.test(bm), JSON.stringify({ Lm, why: rm.why }));
+    ok('...and the app opens its own and is done, the log saying no move was made -- it runs no by-hand words', a1.t === 'fxhand' && a2.t === 'handdone' && /: done by hand \u2014 no move made$/.test(lm), JSON.stringify({ a1, a2, lm }));
+    { const d = S.declinable; S.declinable = function (o) { return !!o.hand || d.call(this, o); }; deal(); S.g.queue = offerOf(must.id, 'onplay', put(0, must.id)); const planted = S.legal(0).some(x => x.t === 'fxskip'); S.declinable = d;
+      ok('...control: take 124\'s engine as it opened, every by-hand line declinable, offers the Skip', planted); }
+    deal(); S.g.queue = offerOf(mayH.id, 'onplay', put(0, mayH.id)); const Ly = S.legal(0); fresh(); V.paintSim(); const by = board();
+    deal(); S.P(0).hand.push(trigH.id); S.g.queue = offerOf(trigH.id, 'trigger', null); const Lt = S.legal(0); fresh(); V.paintSim(); const bt = board();
+    ok(`a by-hand line that says "you may" keeps its decline, named Decline (${byId(mayH.id).name}); a [Trigger] from Life by hand is added to hand instead, named Add to hand (${byId(trigH.id).name}, §10-1-5)`,
+       Ly.some(x => x.t === 'fxskip') && /data-sim="fxskip">Decline<\/button>/.test(by) && Lt.some(x => x.t === 'fxskip') && /data-sim="fxskip">Add to hand<\/button><span class="note">instead of its \[Trigger\]/.test(bt) && /<b>A \[Trigger\] from your Life:<\/b> use it, or add /.test(bt), JSON.stringify({ Ly, Lt })); }
+  /* 12. the other's turn, and this seat is asked: the top bar says "your move" and the dock is outlined -- the app attacks the human */
+  { S.new({ ...stock('stock-st01'), name: 'You' }, { ...stock('stock-st02'), name: 'The app' }, 1, { seed: 5, bot: 1 }); fresh(); SU.acted = null; V.simBotRun(); V.paintSim(); V.simTap('keep:0');
+    let guard = 0; while (S.g.over === null && !(S.g.battle && S.who() === 0) && guard++ < 6) { V.simTap('end:now'); if (S.g.phase === 'main' && S.who() === 0 && S.g.queue.length) break; }
+    const bb = board(), asked = !!S.g.battle && S.who() === 0 && S.g.active === 1;
+    const says = h => /<span class="tb-stat"><b>Turn \d+<\/b> \u00b7 your move<\/span>/.test(h) && /class="tb-dock you"/.test(h);
+    ok('in the other\'s turn, when the game waits on this seat -- the app attacks, block or not -- the top bar says "your move" and the dock is outlined', asked && says(bb), JSON.stringify({ turn: S.g.turn, battle: !!S.g.battle, who: S.who(), stat: (bb.match(/<span class="tb-stat">[\s\S]{0,60}/) || [''])[0] }));
+    ok('...control: take 124\'s top bar there, "The app is playing", is caught', !says('<span class="tb-stat"><b>Turn 3</b> \u00b7 The app is playing</span><div class="tb-dock">'));
+    S.g = null; fresh(); }
+  S.g = null; }
+
+section('take 126 — the host\'s "Image Coming Soon" is no card\'s picture; the Sim draws a card from another printing of it; DON!! cards read ドン!!; the marks in words a player reads');
+{ const rows = V.CAT.rows, im = V.CAT.man.images || {}, byId = id => V.CAT.byId.get(+id);
+  /* 1. the export: the printings whose picture the runner saw be the placeholder ship none (landmine 240) */
+  const phIds = new Set((im.placeholder_ids || []).map(Number)), phRows = rows.filter(p => phIds.has(p.id));
+  const sharedOf = rs => { const by = new Map(); rs.filter(p => p.hash != null && !p.sealed).forEach(p => by.set(p.hash, (by.get(p.hash) || new Set()).add(p.name))); return [...by].filter(([h, n]) => n.size > 1); };
+  ok(`the build ships no picture for a printing whose picture the runner saw be the host's "Image Coming Soon": ${phRows.length} printings today (${phRows.filter(p => !p.sealed).length} cards, ${phRows.filter(p => p.sealed).length} sealed), each with no URL and no hash; and no hash is left on two names (landmines 226, 240)`,
+     Array.isArray(im.placeholder_ids) && im.placeholder === phRows.length && phRows.every(p => p.img == null && p.hash == null) && sharedOf(rows).length === 0,
+     JSON.stringify({ placeholder: im.placeholder, ids: (im.placeholder_ids || []).length, shared: sharedOf(rows).length }));
+  const ph = phRows.find(p => !p.sealed), real = rows.find(p => !p.sealed && p.hash != null && p.img && ph && p.name !== ph.name);
+  ok('...control: take 124\'s catalogue -- one hash on two names, a URL on the placeholder\'s printing -- is caught', !ph || (sharedOf([{ ...ph, hash: 77, img: 'x' }, { ...real, hash: 77 }]).length === 1 && [{ ...ph, img: 'x' }].some(p => p.img != null)));
+  ok('...and Collect draws such a printing as it draws any card without a picture: its colours and its number, no picture, and no other printing\'s', !ph || (!/<img/.test(V.productPic(ph)) && /<img class="ref"/.test(V.productPic(real))), ph ? ph.num + ' ' + ph.name : 'none today');
+  const pl = V.picturesLine(im), pl23 = V.picturesLine({ ...im, placeholder: 23 }), pl124 = V.picturesLine({ ...im, placeholder: undefined });   // 23 planted: the line reads the count, whatever today's is
+  ok(`Diagnostics' pictures line counts the placeholder among the pictures the first host has not: "${pl.slice(0, 90)}..."`, pl23.includes('(23 of them the host’s “Image Coming Soon”, shipped with none)') && (!im.placeholder || pl.includes(`(${im.placeholder} of them the host’s “Image Coming Soon”, shipped with none)`)), pl23);
+  ok('...control: take 124\'s manifest, with no count of it, reads as it did', !/Image Coming Soon/.test(pl124) && /have no picture at the first host; /.test(pl124), pl124);
+  /* 2. the Sim: a card with no picture of its own is drawn with another printing's of the same card (the owner: "I'm noticing alot of
+     cards in the sim without pictures, ensure we do a sweep and ensure we get as many pictures as possible") */
+  const pic = p => typeof S.picOf === 'function' ? S.picOf(p) : (S.face(p.id).art ? p : null);   // a build before take 126 draws a card's own picture or none
+  const cards = rows.filter(p => !p.sealed && p.num), own = cards.filter(p => p.hash != null), none = cards.filter(p => p.hash == null);
+  const lent = none.filter(p => { const q = pic(p); return q && q.id !== p.id; }), bare = none.filter(p => !pic(p) || pic(p).id === p.id);
+  const sameCard = (p, q) => q.num === p.num && q.name === p.name && q.hash != null && !q.sealed;
+  const treatFirst = (p, q) => q.treat === p.treat || !cards.some(r => r.hash != null && r.num === p.num && r.name === p.name && r.treat === p.treat);
+  ok(`the Sim draws a card with its own picture when the runner saw it serve (${own.length} printings)`, own.length > 0 && own.every(p => { const a = S.face(p.id).art; return !!a && a.thumb === V.artUrl(p); }));
+  const lendOf = p => +((V.CAT.lend || {})[p.id]);
+  ok(`...and a card with none of its own with the picture of another printing of the same card that the build chose -- the same number and name, one the runner saw serve, the same treatment first, then the oldest (a real scan more often than a reprint's SAMPLE image): ${lent.length} of ${none.length} today, ${bare.length} left bare`,
+     lent.length > 0 && lent.every(p => { const q = pic(p), sibs = cards.filter(r => sameCard(p, r) && r.img && r.treat === q.treat); return sameCard(p, q) && treatFirst(p, q) && q.id === lendOf(p) && q.id === Math.min(...sibs.map(r => r.id)) && S.face(p.id).art.thumb === V.artUrl(q) && S.face(p.id).art.ground[0] === V.artColours(p)[0]; }),
+     lent.slice(0, 3).map(p => `${p.num} ${p.name} <- ${pic(p).id}`).join('; '));
+  ok('...and a card with no such printing is never drawn with another card\'s picture: its own URL, which the host may publish, or none', bare.every(p => { const q = pic(p); return !q || q.id === p.id; }), `${bare.length} bare`);
+  { const L = V.CAT.lend || {}, p = lent[0] || none[0], keep = L[p.id], other = rows.find(r => r.hash != null && r.img && !r.sealed && r.name !== p.name), unseenSib = rows.find(r => r.num === p.num && r.name === p.name && r.hash == null && r.id !== p.id && r.img);
+    L[p.id] = other.id; const q1 = pic(p); L[p.id] = unseenSib ? unseenSib.id : 0; const q2 = pic(p); L[p.id] = keep;
+    ok('...control: a map naming another card, or a printing of this one the runner never saw serve, is refused -- the table draws the card or nothing, never another card', !!p && (!q1 || q1.id !== other.id) && (!q2 || !unseenSib || q2.id !== unseenSib.id), JSON.stringify({ p: p && p.id, planted: other && other.id, q1: q1 && q1.id, q2: q2 && q2.id })); }
+  const dealt = [...new Set((V.CAT.stock || []).flatMap(d => [d.leader, ...d.cards.map(c => c.id)]))], unseen = dealt.filter(id => { const q = pic(byId(id)); return !q || q.hash == null; });
+  ok(`every card the ready-made decks deal is drawn with a picture the runner saw serve (${dealt.length} printings; take 124 drew Jinbe, Nami and Jewelry Bonney in their colours)`, dealt.length > 100 && unseen.length === 0, unseen.map(id => byId(id).num + ' ' + byId(id).name).join(', '));
+  ok('...control: take 124\'s rule -- a card\'s own picture or none -- leaves the placeholder\'s printings bare', !ph || !(ph.img && ph.hash != null), ph ? ph.num : 'none today');
+  /* 3. DON!! cards read ドン!! in a black frame (the owner: "For don, replace the image/icon with the DON japanese, not the !!. Give them a black border") */
+  const sym = (html.match(/<symbol id="g-donjp"[\s\S]*?<\/symbol>/) || [''])[0], css = (html.match(/<style>([\s\S]*?)<\/style>/) || ['', ''])[1];
+  S.new({ ...stock('stock-st01'), name: 'You' }, { ...stock('stock-st02'), name: 'The app' }, 0, { seed: 3, bot: 1 }); fresh(); V.paintSim(); V.simTap('keep:0'); V.simTap('end:now'); V.paintSim();
+  const t = board(), v = S.view(S.g.active), tks = (t.match(/<i class="tk( r)?"><svg class="g"[^>]*><use href="#g-donjp"\/><\/svg><\/i>/g) || []).length;
+  ok(`every DON!! card on the table -- the cost area's ${v.me.don.active + v.me.don.rested + v.them.don.active + v.them.don.rested}, and the DON!! decks' backs -- reads ドン!!, the icon's own strokes drawn as a symbol, and none reads the old "!!"`,
+     /viewBox="17 -15 212 304"/.test(sym) && (sym.match(/<path /g) || []).length === 10 && tks === v.me.don.active + v.me.don.rested + v.them.don.active + v.them.don.rested && tks > 0
+     && /<span class="sb dn"[^>]*><svg class="cb" aria-hidden="true"><use href="#g-donjp"\/><\/svg><\/span>/.test(t) && !/<i class="tk( r)?"><svg class="g"[^>]*><use href="#g-don"\/>/.test(t) && !/<span class="sb dn"[^>]*><svg class="cb" aria-hidden="true"><use href="#g-cardart"/.test(t), `${tks} DON!! cards`);
+  ok('...control: take 124\'s DON!! card, the "!!" glyph on white, is caught', /<i class="tk( r)?"><svg class="g"[^>]*><use href="#g-don"\/>/.test('<i class="tk"><svg class="g" width="14" height="14"><use href="#g-don"/></svg></i>'));
+  const rule = sel => (css.match(new RegExp('\\n' + sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\{([^}]*)\\}')) || ['', ''])[1];
+  ok('...each in a black frame of its own, a tenth of the card\'s width and never under 2px, where take 124 drew a 1.5px line; the DON!! deck\'s frame as wide', /background:#FFFFFF;/.test(rule('.tk')) && /border:max\(2px, calc\(var\(--cw\) \* \.028\)\) solid #0A0A0A/.test(rule('.tk')) && !/inset 0 0 0 1\.5px/.test(rule('.tk')) && /inset:max\(2px, calc\(var\(--cw\) \* \.028\)\)/.test(rule('.sb.dn::before')), rule('.tk'));   // the same width on every side: a percentage inset reads the height top and bottom
+  S.g = null; fresh();
+  /* 4. the marks say who plays a line, not what the tests know (the owner: "make it more human ... Right now it's clear that that's soley AI and for AI/the tests") */
+  ok('the effect\'s marks are a player\'s words: none of the tests\' ("proven by a test", "no test has proven it yet", "does not run this line", "proven wrong") is in the app', !/proven by a test|no test has proven|does not run this line|version was proven wrong/.test(js), (js.match(/proven by a test|no test has proven|does not run this line|version was proven wrong/) || [''])[0]);
+  const MK = (js.match(/const SIM_MARK = (\{[^}]*\});/) || [])[1], mk = MK ? Function('return ' + MK)() : {};
+  ok('...a line a proof has shown right is unmarked; one with no proof asks for a Report if the app gets it wrong; a line the app does not play, or got wrong, is "Yours to play"',
+     mk.proven === '' && mk.unproven === 'Not checked yet \u2014 if the app gets it wrong, tap Report' && /^Yours to play \u2014 the app can\u2019t do this one$/.test(mk.hand) && /^Yours to play \u2014/.test(mk.wrong), JSON.stringify(mk));
+  const FX = V.CAT.effects, unproven = +Object.keys(FX).find(id => { const q = byId(id); return q && q.type === 'Character' && !q.sealed && !V.CAT.proof[id] && FX[id].some(e => !e.hand && e.t === 'onplay'); });
+  const handC = +Object.keys(FX).find(id => { const q = byId(id); return q && q.type === 'Character' && !q.sealed && FX[id].length && FX[id].every(e => e.hand); });
+  S.new({ ...stock('stock-st01'), name: 'Player 1' }, { ...stock('stock-st02'), name: 'Player 2' }, 0, { seed: 70 }); S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' }); fresh();
+  S.P(S.g.active).chars.push(S.inst(unproven, S.g.turn - 1), S.inst(handC, S.g.turn - 1)); V.paintSim(); V.simSheetOpen('zoom', 'm0'); const zu = sheet(); V.simSheetOpen('zoom', 'm1'); const zh = sheet();
+  ok(`the zoom marks a line with no proof "Not checked yet" (${byId(unproven).name}) -- Report is the effect panel's -- and a by-hand line "Yours to play" (${byId(handC).name})`,
+     /<div class="note">Not checked yet<\/div><div class="note">The app will: /.test(zu) && !/tap Report/.test(zu) && /<div class="note">Yours to play \u2014 the app can\u2019t do this one<\/div>/.test(zh), zu.slice(zu.indexOf('zm-line'), zu.indexOf('zm-line') + 160));
+  S.g.queue = S.offers(S.g.active, 'onplay', 0).filter(o => !o.hand); V.paintSim(); const pb = board();
+  ok('...and the effect panel, when that line resolves, says it with its Report beside it', /<div class="note tb-mark">Not checked yet \u2014 if the app gets it wrong, tap Report<\/div>/.test(pb) && /data-sim="report">Report<\/button>/.test(pb), (pb.match(/tb-mark">[^<]*/) || ['no mark'])[0]);
+  S.g = null; fresh(); }
+V.MODE.set('collect', false); V.go('home');
 }
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

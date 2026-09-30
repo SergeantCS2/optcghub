@@ -1,0 +1,213 @@
+{
+ "num": "ST04-001",
+ "name": "Kaido",
+ "text": "[Activate: Main] [Once Per Turn] DON!! -7 (You may return the specified number of DON!! cards from your field to your DON!! deck.): Trash up to 1 of your opponent's Life cards.",
+ "text_fp": "5f7a68e67dc1f70b",
+ "fx_fp": "97d170e1550eee4a",
+ "reading": [
+  {
+   "t": "main",
+   "if": [
+    {
+     "c": "opt"
+    }
+   ],
+   "do": [],
+   "hand": true,
+   "raw": "[Activate: Main] [Once Per Turn] DON!! -7 (You may return the specified number of DON!! cards from your field to your DON!! deck.): Trash up to 1 of your opponent's Life cards."
+  }
+ ],
+ "rules": [
+  "10-2-2",
+  "10-2-13",
+  "8-3-1-6"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "offered by hand at its Main; the tray returns seven DON!! and trashes the top of the opponent's Life",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 7
+     }
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader",
+     "expect": {
+      "queue": 1,
+      "legal.fxhand": 1
+     }
+    },
+    {
+     "t": "fxhand",
+     "expect": {
+      "legal.hand": 2
+     }
+    },
+    {
+     "t": "hand",
+     "op": "opplifetrash"
+    },
+    {
+     "t": "hand",
+     "op": "returndon"
+    },
+    {
+     "t": "hand",
+     "op": "returndon"
+    },
+    {
+     "t": "hand",
+     "op": "returndon"
+    },
+    {
+     "t": "hand",
+     "op": "returndon"
+    },
+    {
+     "t": "hand",
+     "op": "returndon"
+    },
+    {
+     "t": "hand",
+     "op": "returndon"
+    },
+    {
+     "t": "hand",
+     "op": "returndon",
+     "expect": {
+      "legal.hand": 0
+     }
+    },
+    {
+     "t": "handdone"
+    }
+   ],
+   "expect": {
+    "p1.life": 3,
+    "p1.trash": 1,
+    "p0.donDeck": 10,
+    "p0.don.active": 0,
+    "queue": 0
+   }
+  },
+  {
+   "name": "one of the opponent's Life cards, never two",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 7
+     }
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fxhand"
+    },
+    {
+     "t": "hand",
+     "op": "opplifetrash"
+    },
+    {
+     "t": "hand",
+     "op": "opplifetrash",
+     "refused": "not a move this line names"
+    }
+   ],
+   "expect": {
+    "p1.life": 3
+   }
+  },
+  {
+   "name": "nothing its words do not name: no draw, no K.O.",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 7
+     }
+    },
+    "p1": {
+     "chars": [
+      {
+       "card": "ST01-003"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fxhand"
+    },
+    {
+     "t": "hand",
+     "op": "draw",
+     "refused": "not a move this line names"
+    },
+    {
+     "t": "hand",
+     "op": "ko",
+     "side": 1,
+     "k": 0,
+     "refused": "not a move this line names"
+    }
+   ],
+   "expect": {
+    "p0.hand": 0,
+    "p1.chars": 1
+   }
+  },
+  {
+   "name": "once per turn",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "don": {
+      "active": 7
+     }
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fxhand"
+    },
+    {
+     "t": "handdone"
+    },
+    {
+     "t": "activate",
+     "ref": "leader",
+     "refused": "once per turn"
+    }
+   ],
+   "expect": {
+    "queue": 0
+   }
+  }
+ ],
+ "note": "By hand (take 122): no template runs 'Trash up to 1 of your opponent's Life cards' yet. The proof holds its timing, its Once Per Turn and its tray: seven DON!! back and the top of the opponent's Life, nothing else."
+}

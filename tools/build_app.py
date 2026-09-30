@@ -84,13 +84,25 @@ def catalogue_json(db):
     # the second host's URL -- only when the runner's probe saw it serve (the
     # sidecar's `alt`, written by hashes.py, which runs before this step). Nothing
     # is guessed: an id outside `alt` keeps the URL TCGCSV gave it.
+    # Take 126 (landmine 240): a printing whose picture the runner last saw be the host's placeholder ("Image Coming
+    # Soon") ships no hash and no URL -- or the second host's, when that served the card -- so every screen draws it
+    # as it draws a card with no picture. The catalogue step loaded the hashes before hashes.py ran, so the sidecar's
+    # verdict of this run is applied here, not left to the next build.
     import hashes as _h
-    alt = _h.read_alt(); ci = cols.index("img"); n_alt = 0
+    alt = _h.read_alt(); ph = _h.read_placeholder(); ci, hi = cols.index("img"), cols.index("hash"); n_alt = n_ph = 0
     rows = [list(r) for r in rows]
     for r in rows:
-        u = _h.export_url(r[1], r[ci], alt) if r[ci] else r[ci]
-        if u != r[ci]:
-            r[ci] = u; n_alt += 1
+        u, h = _h.export_pic(r[1], r[ci], r[hi], alt, ph)
+        if str(r[1]) in ph and not u:
+            n_ph += 1
+        elif u != r[ci]:
+            n_alt += 1
+        r[ci], r[hi] = u, h
+    # Take 126: for the Sim's table only, the printing whose picture a card with none of its own is drawn with
+    # (hashes.lend_map: the same card's oldest printing the runner saw serve, the same treatment first). Collect never
+    # borrows (landmine 241).
+    fields = ("id", "num", "name", "treat", "hash", "img", "sealed")
+    lend = _h.lend_map([{k: r[cols.index(k)] for k in fields} for r in rows])
     ids = [r[1] for r in rows]
     if len(set(ids)) != len(ids):
         raise SystemExit(f"build_app: {len(ids)-len(set(ids))} duplicate printings "
@@ -129,7 +141,8 @@ def catalogue_json(db):
                     hist[pid][di] = round(m, 2)
     except Exception as e:                                # noqa: BLE001
         print(f"   note: price history not bundled: {e}")
-    return {"sets": sets, "cols": cols, "rows": rows, "ng": ng, "ngs": ngs, "alt_images": n_alt,
+    return {"sets": sets, "cols": cols, "rows": rows, "ng": ng, "ngs": ngs, "alt_images": n_alt, "placeholder_images": n_ph,
+            "lend": {str(k): v for k, v in sorted(lend.items())},
             "valid_numbers": valid, "star": star, "days": days, "hist": hist}
 
 
@@ -151,6 +164,26 @@ def build(verbose=True):
         raise SystemExit("build_app: no <script id=\"app\"> block in src/app.html")
     js = m.group(1)
     html = src[:m.start()] + '<script src="app.js"></script>' + src[m.end():]
+    # take 122: the Sim's engine and opponent are their own file (src/sim.js), put where
+    # the source names them -- one script at runtime, one module to read and review;
+    # take 125: the scanner's stages the same way (src/scan.js)
+    for name, module in (("__SIM__", "sim.js"), ("__SCAN__", "scan.js")):
+        slot = re.search(r"/\* " + name + r"[^*]*\*/\n", js)
+        if not slot or js.count(name) != 1:
+            raise SystemExit(f"build_app: src/app.html has no single {name} slot for src/{module}")
+        js = js[:slot.start()] + open(os.path.join(ROOT, "src", module), encoding="utf-8").read() + js[slot.end():]
+    # take 122: the rules digest the Rules sheet searches and the Sim cites, built in so
+    # the sheet works offline and on a catalogue synced from another take
+    import rules as _rules
+    rulebook = _rules.load()
+    marker = "/* __RULEBOOK__ */ null"
+    if js.count(marker) != 1:
+        raise SystemExit("build_app: src/app.html has no single __RULEBOOK__ slot")
+    js = js.replace(marker, json.dumps({k: rulebook[k] for k in ("version", "date", "title", "url", "note", "sim_legend", "sections")},
+                                       ensure_ascii=False, separators=(",", ":")).replace("'", "\\u2019"))   # the shipped script curls its apostrophes (SPEC-110-47)
+    missing = _rules.uncited(js, rulebook)
+    if missing:
+        raise SystemExit("build_app: the app cites sections the rules digest does not hold (landmine 214): " + ", ".join(missing))
 
     # Inline the glyph sprite (assets/glyphs.svg) so <use href="#g-…"> resolves
     # with no request -- PROTOCOL §8. One file is the only source of every icon.
@@ -223,6 +256,12 @@ def build(verbose=True):
     # whole sentences the engine can run; everything else stays manual.
     import effects as fx
     cat["effects"], fxstats = fx.build(cat)
+    # take 122: the card proofs (tools/cards/), bound to the printings whose text and reading they
+    # were written on -- the app marks those effects proven, and a 'wrong' one is offered by hand
+    import cards as _cards
+    cat["proof"], proofrep = _cards.bind(cat, cat["effects"])
+    if proofrep["bad"]:
+        raise SystemExit("build_app: a card proof is malformed -- " + "; ".join(proofrep["bad"]))
     # A29, take 61: a legal deck on a fresh install, built from each ST set's
     # own printings and labelled as built, never as the retail product.
     import stockdecks as sd
@@ -233,7 +272,8 @@ def build(verbose=True):
     from hunt import roster as _roster
     cat["zips3"] = _roster.prefix_centroids(_roster.zcta())
     print(f"   effects: {fxstats['parsed']}/{fxstats['lines']} lines scripted ({100*fxstats['parsed']/max(1,fxstats['lines']):.1f}%), "
-          f"{fxstats['cards_full']} cards fully, {fxstats['cards_partial']} partly")
+          f"{fxstats['cards_full']} cards fully, {fxstats['cards_partial']} partly, {fxstats.get('hand', 0)} lines offered by hand")
+    print(f"   proofs: {proofrep['files']} files, {proofrep['bound']} printings bound" + (f"; stale (reopened): {', '.join(proofrep['stale'])}" if proofrep["stale"] else ""))
     raw = json.dumps(cat, separators=(",", ":")).encode()
     open(os.path.join(BUNDLE, "catalog.json"), "wb").write(raw)
     # The .gz goes OUTSIDE www/. Android's asset merger treats catalog.json and
@@ -278,7 +318,15 @@ def build(verbose=True):
     import rates as _rates
     man["rates"] = _rates.load()
     man["stock"] = len(cat["stock"])
-    man["effects"] = {"lines": fxstats["lines"], "scripted": fxstats["parsed"], "cards_full": fxstats["cards_full"], "cards_partial": fxstats["cards_partial"]}
+    man["effects"] = {"lines": fxstats["lines"], "scripted": fxstats["parsed"], "cards_full": fxstats["cards_full"], "cards_partial": fxstats["cards_partial"],
+                      "hand": fxstats.get("hand", 0), "proofs": proofrep["files"], "proven": sum(1 for v in cat["proof"].values() if v["v"] == "proven"),
+                      "wrong": sum(1 for v in cat["proof"].values() if v["v"] == "wrong"), "stale": proofrep["stale"]}
+    # take 122: the rules the Sim plays by, and what the official PDF says it is today -- the app's
+    # Check for updates reads rules.json from Pages, the road the prices take
+    rb = _rules.build(BUNDLE)
+    man["rules"] = {"version": rb["version"], "date": rb["date"], "official": rb["official"]}
+    o = rb["official"]
+    print(f"   rules: digest v{rb['version']}; official " + (f"v{o['version']} ({o['date']})" + (" -- NEWER: review the digest" if o.get("newer") else "") if o.get("version") else o.get("why", "?")))
     # What's new (take 53): the first "New at take N" paragraph of ci/RELEASE.md,
     # so a Play tester sees what changed without leaving the app. Read, not typed.
     rel = open(os.path.join(ROOT, "ci", "RELEASE.md"), encoding="utf8").read()
@@ -322,13 +370,18 @@ def build(verbose=True):
                      "missing_sealed_ids": sorted(int(x) for x in raw_side.get("missing_sealed", [])),
                      "alt_served": len(raw_side.get("alt", [])),
                      "exported": cat.get("alt_images", 0),
+                     # take 126: the printings whose picture the runner saw be the host's "Image Coming Soon" -- shipped
+                     # with no picture (landmine 240); cards and sealed products, by id, for Diagnostics and the gate
+                     "placeholder": cat.get("placeholder_images", 0),
+                     "placeholder_ids": sorted(int(x) for k in ("cards", "sealed")
+                                               for x in (raw_side.get("placeholder") or {}).get(k, [])),
                      "measured": "missing_sealed" in raw_side,
                      # take 109 (A42): the large size as the runner measured it this run;
                      # the app asks for it only when it served (index.html, largeOk)
                      "large": raw_side.get("large") or {}}
     if verbose:
         im = man["images"]
-        print(f"   images: {im['exported']} rows carry the second host "
+        print(f"   images: {im['exported']} rows carry the second host, {im['placeholder']} ship no picture: the host's placeholder "
               f"({im['missing_cards']} cards and {im['missing_sealed']} sealed missing at the first; "
               f"{'measured' if im['measured'] else 'sealed images not yet measured on this sidecar'})")
         lg = im["large"]

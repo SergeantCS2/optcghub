@@ -1,6 +1,6 @@
 # OPEN DECISIONS — needed from the owner
 
-*Current as of take 121.* Everything else is decided and recorded in AGENDA.
+*Current as of take 126.* Everything else is decided and recorded in AGENDA.
 
 **D1 — App id and name. ANSWERED: registered with Play at the take-35 upload as `com.optcghub.app` / "OP TCG Hub", permanent.** *(original)* Proposed `com.optcghub.app` / "OP TCG Hub". Permanent
 once registered under developer verification and fixed from first Play upload
@@ -75,6 +75,15 @@ upload, and I re-cut it in ten minutes today. See A19.
 
 *Added take 79.*
 
+**D23 — The rules' own words in the app, or a digest (A23, take 122).** The
+owner asked for a Rules button with search. Take 122 ships a digest: every
+section of Comprehensive Rules v1.2.1 that play turns on, in the app's own
+words under Bandai's section numbers, searchable, with the official PDF one tap
+away (`en.onepiece-cardgame.com`). The PDF itself is Bandai's text; putting it
+inside the APK is bundling their document, the line card art stays behind
+(landmines 26, 28). If you want the official wording on screen, word for word,
+say so and it ships in the same sheet; otherwise the digest stays.
+
 **D22 — Stock checks while the app is closed.** Today a stock alert fires
 when the app is opened and the feed refreshes. A check with the app closed
 needs a background task: a Capacitor background runner (a new native
@@ -140,7 +149,29 @@ wifi or a hotspot needs no server; the internet does — a STUN server and a
 signalling relay. The ledger has said no server since take 1. Not now; on
 the record so the sim's transport is a decision and not a surprise.
 
-*Added take 33.*
+**Brought up to date at take 122** (the owner: two phones joined "by a code
+or a QR", no accounts now, perhaps later). What take 122 built makes the
+game itself ready: a game is its seed and its moves (`SIM.act`,
+`SIM.replay`), and two copies of the shipped app that exchange only moves
+stay the same game after every move (`tools/selfplay.mjs --two-apps`). What
+is still the owner's to decide:
+
+- **The wire.** A code or a QR can carry the first message (the seed and
+  the decks) between phones in one room; after that each move is a few
+  bytes. Same wifi or a hotspot needs no server; across the internet it
+  needs the relay above.
+- **Fairness.** Two phones that each hold the whole seed each know the
+  other's hand and the order of both decks: fine between friends, not
+  between strangers. A fair game needs either a server that deals (the
+  thing ruled out since take 1) or a commitment scheme -- each phone commits
+  to its own shuffle and reveals a card only as it is drawn -- which is
+  real cryptography work of its own.
+- **Accounts** change none of the above; they name the players.
+
+A yes to "friends in one room, trusting the seed" is enough to build the
+first version; anything wider is this decision.
+
+*Added take 33; brought up to date take 122.*
 
 **D16 — The named fonts (A26).** Luckiest Guy, Bangers, Open Sans and Nunito Sans ship as the four roles. If you want Impress BT, Anime Ace BB or Avenir Black themselves: buy the app-embed licence, drop the file into `assets/user/fonts/` as `display`, `comic` or `heavy` with its extension, and the next build uses it. Trebuchet MS cannot be shipped at all; Fira Sans is its free twin if you want a third plain face. Yes to the defaults as they are, or which files are coming?
 

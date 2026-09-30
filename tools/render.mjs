@@ -222,14 +222,100 @@ if (puppeteer) {
     for (const l of lines) { const [n, num] = l.split(' '); const p = V.candidates(num, null).slice().sort((a, b) => (a.market || 9e9) - (b.market || 9e9))[0]; if (p.type === 'Leader') d.leader = p.id; else d.cards.push({ id: p.id, n: +n }); }
     const skip = [...document.querySelectorAll('#tour button')].find(b => /skip/i.test(b.textContent)); if (skip) skip.click();
     V.MODE.set('play', false); document.querySelector('nav button[data-go="sim"]').click();
-    V.SIM.new(d, d, 0); V.SIM.g.bot = 1; V.SIM.g.players[1].name = 'The app'; V.SIM.mulligan(0, false); V.SIM.mulligan(1, false); V.paintSim();
-    const b = document.querySelector('#simBoard');
-    return { panels: b.querySelectorAll('.panel').length, hand: b.querySelectorAll('[data-sim^="play:"]').length, end: !!b.querySelector('[data-sim="end"]'), h: b.getBoundingClientRect().height, legal: V.legality(d).problems.length, vsApp: /The app/.test(b.textContent) };
+    V.SIM.new(d, d, 0, { seed: 1 }); V.SIM.g.bot = 1; V.SIM.g.players[1].name = 'The app'; V.SIM.mulligan(0, false); V.SIM.mulligan(1, false); V.paintSim();   // take 126: seeded -- an unseeded deal made take 124's End-turn check a flake
+    const b = document.querySelector('#simBoard'), r = b.getBoundingClientRect(), nav = document.querySelector('#navPlay'), shown = sel => { const e = document.querySelector(sel); return !!e && getComputedStyle(e).display !== 'none'; };
+    /* take 124: the table -- two halves across the band, the hand as whole cards, the dock; the nav aside; every control on it a
+       44 px square of its own (take 108's measure: its box, and the cross 21 px out from its centre landing on it) */
+    const ctl = [...b.querySelectorAll('button, select')].filter(e => { const q = e.getBoundingClientRect(); return q.width > 0 && q.height > 0; }), small = [];
+    for (const e of ctl) { e.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' }); const q = e.getBoundingClientRect();
+      /* take 124: a hand card held under the next one (the owner's "screen space") owns the strip up to it; its square is there */
+      const nx = e.parentElement && e.parentElement.classList.contains('tb-hand') ? e.nextElementSibling : null, nq = nx && nx.getBoundingClientRect();
+      const right = nq && Math.abs(nq.top - q.top) < q.height / 2 && nq.left < q.right ? nq.left : q.right, w = right - q.left, cx = q.left + w / 2, cy = q.top + q.height / 2;
+      const own = [[cx - 21, cy], [cx + 21, cy], [cx, cy - 21], [cx, cy + 21]].every(([x, y]) => { const t = document.elementFromPoint(x, y); return !!t && (t === e || e.contains(t)); });
+      if (w < 43.99 || q.height < 43.99 || !own) small.push(`${(e.dataset.sim || e.getAttribute('aria-label') || e.textContent).trim().slice(0, 24)} ${Math.round(w)}x${Math.round(q.height)}${own ? '' : ' covered'}`); }
+    window.scrollTo(0, 0);
+    return { halves: b.querySelectorAll('.tb-half').length, band: !!b.querySelector('.tb-band'), dock: !!b.querySelector('.tb-dock'), hand: b.querySelectorAll('.tb-hand .sc').length, end: !!b.querySelector('[data-sim="end"]'),
+      h: Math.round(r.height), bottom: Math.round(b.getBoundingClientRect().bottom), vh: innerHeight, cw: getComputedStyle(b).getPropertyValue('--cw').trim(), navShown: !!nav && getComputedStyle(nav).display !== 'none', tabsShown: shown('.modebar'), headerShown: shown('#sim > .appbar'), top: Math.round(r.top),
+      controls: ctl.length, small, legal: V.legality(d).problems.length, vsApp: /The app/.test(b.textContent), sideways: document.documentElement.scrollWidth > innerWidth + 0.5 };
   });
-  ok('the hot-seat board draws: opponent, player, log panels', sim.panels >= 3, JSON.stringify(sim));
-  ok('the hand is drawn as rows with Play buttons, and the turn can be ended', sim.hand === 5 && sim.end && sim.legal === 0);
-  ok('the board has real height on the phone viewport', sim.h > 600, String(sim.h));
+  ok('the Sim draws its table and the game fills the screen: two halves across the band, the dock; the mode tabs, the header and the nav stepped aside (take 124, the owner)', sim.halves === 2 && sim.band && sim.dock && !sim.navShown && !sim.tabsShown && !sim.headerShown && sim.top <= 60, JSON.stringify(sim));
+  ok('the hand is whole cards in a strip, and the turn can be ended', sim.hand === 5 && sim.end && sim.legal === 0, JSON.stringify(sim));
+  ok('the table fits the phone\'s screen: its cards sized from the space (--cw), its foot on the screen, nothing sideways', sim.h > 500 && sim.bottom <= sim.vh + 1 && /^\d+px$/.test(sim.cw) && parseInt(sim.cw, 10) >= 44 && !sim.sideways, JSON.stringify({ h: sim.h, bottom: sim.bottom, vh: sim.vh, cw: sim.cw }));
+  ok('every control on the table is a 44 px square of its own (take 108\'s measure)', sim.controls >= 10 && sim.small.length === 0, `${sim.small.length} of ${sim.controls}: ${sim.small.slice(0, 4).join(' | ')}`);
   ok('against the app, the board names the opponent as the app (take 55)', sim.vsApp === true);
+  /* take 124, the owner mid-take: the card backs in the game's colours, as Chrome draws them -- the deck's deep blue, the DON!!
+     deck's white in black, a DON!! face up white -- and "using the screen space as optimally as possible" at four sizes: the
+     table's foot at the screen's (24 px at most unused), all five cards of a first hand on the screen with a 44 px strip of
+     their own, nothing sideways; the control is take 124's first hand (one strip at 1.45 cards) on the same page */
+  const backs = await page.evaluate(() => { const b = document.querySelector('#simBoard'), rgb = s => (s.match(/\d+(\.\d+)?/g) || []).slice(0, 3).map(Number);
+    const hue = ([r, g, bl]) => { const mx = Math.max(r, g, bl), d = mx - Math.min(r, g, bl); if (!d) return -1; const h = mx === r ? ((g - bl) / d) % 6 : mx === g ? (bl - r) / d + 2 : (r - g) / d + 4; return (h * 60 + 360) % 360; };
+    const deck = b.querySelector('.me .stk.deck .sb'), dk = b.querySelector('.me .dkst .sb'), tk = b.querySelector('.me .tk');
+    return { deck: deck && hue(rgb(getComputedStyle(deck).backgroundColor)), face: deck && getComputedStyle(deck, '::before').backgroundImage.slice(0, 60),
+      dkFrame: dk && rgb(getComputedStyle(dk).backgroundColor), dkFace: dk && getComputedStyle(dk, '::before').backgroundImage.slice(0, 60), tk: tk && getComputedStyle(tk).backgroundColor }; });   // take 126: a white card in a frame, no gradient
+  ok('the card backs as Chrome draws them: the deck\'s back a deep blue, the DON!! deck\'s white in a black frame, a DON!! face up white (the owner, take 124)',
+     backs.deck >= 205 && backs.deck <= 245 && /radial-gradient/.test(backs.face || '') && backs.dkFrame && Math.max(...backs.dkFrame) <= 16 && /rgb\(255, 255, 255\)/.test(backs.dkFace || '') && /rgb\(255, 255, 255\)/.test(backs.tk || ''), JSON.stringify(backs));
+  /* take 126, the owner: "For don, replace the image/icon with the DON japanese, not the !!. Give them a black border" -- a DON!!
+     card face up as Chrome draws it, read back from the page's pixels (the review's method): its frame black all round, 2 px or
+     more; its face white, with ドン!!'s ink on it; the DON!! deck's backs carry the same symbol. The control hides the symbol. */
+  const donPix = async (css) => {
+    const r = await page.evaluate(c => { const tk = document.querySelector('#simBoard .me .tk:not(.r)') || document.querySelector('#simBoard .tk'); if (!tk) return null;
+      let st = document.getElementById('don126'); if (c && !st) { st = document.createElement('style'); st.id = 'don126'; document.head.appendChild(st); } if (st) st.textContent = c || '';
+      const q = tk.getBoundingClientRect(), cs = getComputedStyle(tk), u = tk.querySelector('use'), du = document.querySelector('#simBoard .dkst .sb use');
+      return { x: q.left, y: q.top, w: q.width, h: q.height, bw: parseFloat(cs.borderTopWidth), bc: cs.borderTopColor, bg: cs.backgroundColor, href: u && u.getAttribute('href'), dk: du && du.getAttribute('href') }; }, css || '');
+    if (!r) return null;
+    await new Promise(res => setTimeout(res, 80));
+    const b64 = await page.screenshot({ type: 'png', encoding: 'base64' });
+    return page.evaluate(async (b64, r) => { const im = new Image(); im.src = 'data:image/png;base64,' + b64; await im.decode();
+      const cv = new OffscreenCanvas(im.naturalWidth, im.naturalHeight), x = cv.getContext('2d'); x.drawImage(im, 0, 0);
+      const k = im.naturalWidth / innerWidth, d = x.getImageData(0, 0, cv.width, cv.height).data;
+      const px = (X, Y) => { const i = (Math.floor(Y * k) * cv.width + Math.floor(X * k)) * 4; return [d[i], d[i + 1], d[i + 2]]; }, dark = c => Math.max(...c) < 90;
+      let n = 0, ink = 0; const b = r.bw + 1;
+      for (let Y = r.y + b; Y < r.y + r.h - b; Y += 1 / k) for (let X = r.x + b; X < r.x + r.w - b; X += 1 / k) { n++; if (dark(px(X, Y))) ink++; }
+      const edge = [px(r.x + r.bw / 2, r.y + r.h / 2), px(r.x + r.w - r.bw / 2, r.y + r.h / 2), px(r.x + r.w / 2, r.y + r.bw / 2), px(r.x + r.w / 2, r.y + r.h - r.bw / 2)];
+      return { bw: r.bw, bc: r.bc, bg: r.bg, href: r.href, dk: r.dk, w: +r.w.toFixed(1), ink: +(ink / Math.max(1, n)).toFixed(3), edgeDark: edge.every(dark) }; }, b64, r);
+  };
+  const donP = await donPix(), donHid = await donPix('#simBoard .tk svg.g{visibility:hidden!important}'); await donPix('');
+  ok('a DON!! card face up as Chrome draws it, from its pixels (the owner, take 126): a black frame of 2 px or more all round, a white face with ドン!! inked on it, and the DON!! deck\'s backs carry the same symbol',
+     !!donP && donP.bw >= 2 && /rgb\(10, 10, 10\)/.test(donP.bc) && /rgb\(255, 255, 255\)/.test(donP.bg) && donP.href === '#g-donjp' && donP.dk === '#g-donjp' && donP.edgeDark && donP.ink >= 0.12 && donP.ink <= 0.6, JSON.stringify(donP));
+  ok('...control: the same card with its symbol hidden reads as a blank white face -- the ink measured is the symbol\'s', !!donHid && donHid.ink < 0.03 && donHid.edgeDark, JSON.stringify(donHid));
+  const spaceAt = async (vp) => { await page.setViewport(vp); await new Promise(r => setTimeout(r, 150));
+    return page.evaluate(() => { const V = window.VAULT; V.paintSim(); const b = document.querySelector('#simBoard'), sec = document.querySelector('#sim'), padB = parseFloat(getComputedStyle(sec).paddingBottom) || 0;
+      const measure = () => { const hand = b.querySelector('.tb-hand'), hr = hand.getBoundingClientRect(), cards = [...hand.querySelectorAll('.sc')];
+        const strips = cards.map((e, i) => { const q = e.getBoundingClientRect(), nx = cards[i + 1] && cards[i + 1].getBoundingClientRect(); return { q, w: (nx && Math.abs(nx.top - q.top) < q.height / 2 && nx.left < q.right ? nx.left : q.right) - q.left }; });
+        return { n: cards.length, shown: strips.filter(({ q }) => q.left >= hr.left - 1 && q.right <= hr.right + 1 && q.top >= 0 && q.bottom <= innerHeight + 0.5).length, strip: Math.round(Math.min(...strips.map(s => s.w))),
+          unused: Math.round(innerHeight - b.getBoundingClientRect().bottom - padB), sideways: document.documentElement.scrollWidth > innerWidth + 0.5, cw: getComputedStyle(b).getPropertyValue('--cw').trim(), hw: Math.round(cards[0].getBoundingClientRect().width) }; };
+      const now = measure(), hand = b.querySelector('.tb-hand');
+      /* the control: take 124's first hand on this page -- one strip, 1.45 cards wide where the width sets the card */
+      hand.classList.remove('fit'); hand.style.paddingLeft = hand.style.paddingRight = ''; hand.querySelectorAll('.sc').forEach(e => { e.style.marginLeft = ''; });
+      const cw = parseFloat(now.cw); b.style.setProperty('--hw', (innerWidth < 640 ? Math.floor(cw * 1.45) : Math.floor(cw * 1.12)) + 'px'); const old = measure(); V.paintSim();
+      return { now, old }; }); };
+  const space = {}; for (const [k, vp] of Object.entries({ phone: PHONE(360, 780), cover: FOLD.cover, inner: FOLD.inner, tablet: { width: 1280, height: 800, deviceScaleFactor: 2 } })) space[k] = await spaceAt(vp);
+  await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
+  ok('the table uses the screen at four sizes -- a phone, the Fold\'s two, a tablet: its foot within 24 px of the screen\'s, all of a first hand on the screen, each card with a 44 px strip of its own, nothing sideways (the owner, take 124)',
+     Object.values(space).every(({ now: s }) => s.unused >= 0 && s.unused <= 24 && s.n === 5 && s.shown === 5 && s.strip >= 44 && !s.sideways), JSON.stringify(Object.fromEntries(Object.entries(space).map(([k, v]) => [k, v.now]))));
+  ok('...control: take 124\'s first hand -- one strip -- leaves the Fold\'s cover 60 px or more unused, or hides part of the hand', space.cover.old.unused >= 60 || space.cover.old.shown < 5, JSON.stringify(space.cover.old));
+  /* take 124, the owner's fourth word ("The sim should tell the player what the next action is"): as Chrome lays them out at the four
+     sizes, the band's turn start whole in the room the band had (66 px; it was one log line, cut short on a phone), the dock's next
+     action in two lines at most (the dock's room, so the cards keep their size), and End turn's question with 44 px buttons */
+  const sayAt = async (vp) => { await page.setViewport(vp); await new Promise(r => setTimeout(r, 150));
+    return page.evaluate(async () => { const V = window.VAULT; V.SIMUI.acted = null; V.paintSim(); const b = document.querySelector('#simBoard'), band = b.querySelector('.tb-band'), st = b.querySelector('.tb-start'), nx = b.querySelector('.tb-next'), dock = b.querySelector('.tb-dock');
+      const whole = e => !!e && e.scrollWidth <= e.clientWidth + 1 && e.scrollHeight <= e.clientHeight + 1, lh = nx ? parseFloat(getComputedStyle(nx).lineHeight) : 1;
+      const out = { band: Math.round(band.getBoundingClientRect().height), start: whole(st), startText: st ? st.textContent : '', lines: nx ? Math.round(nx.getBoundingClientRect().height / lh) : 0, dock: Math.round(dock.getBoundingClientRect().height), wide: innerWidth >= 640, next: nx ? nx.textContent : '', unused: Math.round(innerHeight - b.getBoundingClientRect().bottom - (parseFloat(getComputedStyle(document.querySelector('#sim')).paddingBottom) || 0)) };   // the space check's own measure
+      /* a first hand with nothing to play at 1 DON!! is lent DON!! from the DON!! deck one at a time until the engine offers a card to
+         play (the ten stay ten), so End turn has something to ask about; given back after. Take 126: take 124 lent up to the cheapest
+         card's cost, and a hand whose cheapest card was one no Main Phase plays ([Counter] only) was lent nothing, End turn ended the
+         turn, and every size after it measured turn 2 -- 2 of 250 failing in one run of five, on an unseeded deal */
+      const P = V.SIM.P(0); let lend = 0;
+      while (!V.SIM.legal(0).some(a => a.t === 'play') && P.donDeck > 0 && lend < 10) { P.don.active += 1; P.donDeck -= 1; lend += 1; }
+      if (lend) V.paintSim();
+      V.simTap('end'); await new Promise(r => setTimeout(r, 60)); const sh = document.querySelector('#simSheet'), btn = sel => { const e = sh.querySelector(sel); if (!e) return 0; const q = e.getBoundingClientRect(); return Math.round(Math.min(q.width, q.height)); };
+      Object.assign(out, { asked: sh.classList.contains('on') && V.SIMUI.sheet && V.SIMUI.sheet.kind === 'endq', endBtn: btn('[data-sim="end:now"]'), keepBtn: btn('[data-close="simSheet"]'), items: sh.querySelectorAll('.tb-left li').length, turn: V.SIM.g.turn, lend });
+      sh.classList.remove('on'); V.SIMUI.sheet = null; if (lend && V.SIM.g.turn === 1) { P.don.active -= lend; P.donDeck += lend; } V.paintSim(); return out; }); };
+  const said = {}; for (const [k, vp] of Object.entries({ phone: PHONE(360, 780), cover: FOLD.cover, inner: FOLD.inner, tablet: { width: 1280, height: 800, deviceScaleFactor: 2 } })) said[k] = await sayAt(vp);
+  await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
+  ok('the table says the next action at four sizes: the turn\'s start whole in the band\'s own room ("Your turn 1 \u00b7 no draw on the first turn \u00b7 +1 DON!!"), the next action in the dock in two lines at most on a phone (in the hand\'s column from 640 px it takes the column\'s room, never the table\'s), the table still to the screen\'s foot (the owner, take 124)',
+     Object.values(said).every(x => x.start && /^Your turn 1 \u00b7 no draw on the first turn \u00b7 \+1\u00a0DON!!$/.test(x.startText) && x.band <= 70 && x.lines >= 1 && (x.wide || x.lines <= 2) && /^(Next: |Nothing left)/.test(x.next) && x.unused >= 0 && x.unused <= 24), JSON.stringify(said));
+  ok('End turn asks while a card can be played, in a sheet with End turn and Keep playing 44 px each, naming what is left -- and the turn goes on (the owner: "the player knows about it")', Object.values(said).every(x => x.asked && x.endBtn >= 44 && x.keepBtn >= 44 && x.items >= 1 && x.turn === 1), JSON.stringify(Object.fromEntries(Object.entries(said).map(([k, x]) => [k, { asked: x.asked, endBtn: x.endBtn, keepBtn: x.keepBtn, items: x.items, turn: x.turn }]))));
   const simShot = await page.screenshot({ encoding: 'base64', fullPage: false });
   fs.writeFileSync(path.join(ROOT, 'www', 'render-sim.png'), Buffer.from(simShot, 'base64'));
   await page.evaluate(() => { window.VAULT.SIM.g = null; window.VAULT.MODE.set('collect', false); document.querySelector('nav button[data-go="collection"]').click(); });
@@ -610,28 +696,62 @@ if (puppeteer) {
      /rgb\(245, 203, 92\)/.test(wide.headColour), wide.headColour);   // take 118: the gold as text
   await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
 
-  /* ---- take 10: the scanner's pixel stages, in a real canvas ------------
-     Everything but the camera. A synthetic frame with a card-shaped bright
-     quad, an INJECTED recogniser returning exactly what take 7 measured ML Kit
-     and Tesseract return, and the committed star template. */
+  /* ---- take 10: the scanner's pixel stages, in a real canvas; rebuilt take 125 ----
+     Everything but the camera: synthetic frames, the committed star template and an
+     INJECTED recogniser that answers as the ML Kit plugin does -- { text, lines: [{ text,
+     box }] }, each box in the picture it was handed (the 8.2.1 definitions). A card on a
+     dark table, 280 x 391 at (180, 40) in 640 x 480: its number's line where CODE_AT puts it. */
   const scan = await page.evaluate(async () => {
-    const V = window.VAULT, SC = V.scan, out = {};
-    const injected = [];
+    const V = window.VAULT, SC = V.scan, out = {}, A = SC.CODE_AT;
+    const handed = []; let answer = () => [];
     const realOcr = SC.PLATFORM.ocr;
-    SC.PLATFORM.ocr = async c => { injected.push(c.width + 'x' + c.height); return 'SP EB03-024 SR 4'; };
+    SC.PLATFORM.ocr = async c => { handed.push(c); const lines = answer(c); return { text: lines.map(l => l.text).join('\n'), lines }; };
     const mk = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h;
                                  const g = c.getContext('2d'); draw(g); return c; };
-    const card = mk(640, 480, g => { g.fillStyle = '#000'; g.fillRect(0, 0, 640, 480);
-                                     g.fillStyle = '#eee'; g.fillRect(180, 40, 280, 391); });
-    const r1 = await SC.identifyFrame(card, 640, 480, {});
-    out.card = { stage: r1.stage, number: r1.number, face: r1.face, crop: injected[0] };
-    out.gate = V.resolve(r1.number || 'x', { face: r1.face });
-    out.gate = { verdict: out.gate.verdict, treat: out.gate.pick && out.gate.pick.treat };
-    const dark = mk(640, 480, g => { g.fillStyle = '#111'; g.fillRect(0, 0, 640, 480); });
-    out.dark = (await SC.identifyFrame(dark, 640, 480, {})).stage;
-    const tl = mk(640, 480, g => { g.fillStyle = '#000'; g.fillRect(0, 0, 640, 480);
-                                   g.fillStyle = '#eee'; g.fillRect(100, 40, 440, 400); });
-    out.toploader = (await SC.identifyFrame(tl, 640, 480, {})).stage;
+    const table = (g, x, y, w, h) => { g.fillStyle = '#000'; g.fillRect(0, 0, 640, 480); g.fillStyle = '#eee'; g.fillRect(x, y, w, h); };
+    const card = mk(640, 480, g => table(g, 180, 40, 280, 391));
+    const whole = { x: 0, y: 0, w: 640, h: 480 };
+    const line = (text, cx, cy, w = 60, h = 8) => ({ text, box: { x: cx - w / 2, y: cy - h / 2, w, h } });
+    const onCard = text => line(text, 180 + A.x * 280, 40 + A.y * 391);
+    const run = async (src, look, lines) => { answer = typeof lines === 'function' ? lines : () => lines; handed.length = 0;
+      const r = await SC.identifyFrame(src, whole, look); return { stage: r.stage, number: r.number, face: r.face, card: r.card ? Math.round(r.card.x * 640) : null,   // the outline as fractions of the view
+        numbers: r.numbers, handed: handed.map(c => c.width + 'x' + c.height), full: r.full ? r.full.width + 'x' + r.full.height : null }; };
+    out.card = await run(card, SC.LOOKS[0], [line('Nefeltari Vivi', 320, 380, 120, 12), onCard('SP EB03-024 SR 4')]);
+    const g0 = V.resolve(out.card.number || 'x', { face: out.card.face });
+    out.gate = { verdict: g0.verdict, treat: g0.pick && g0.pick.treat };
+    out.neighbour = await run(card, SC.LOOKS[0], [line('OP14-040 L 4', 400, 30)]);
+    out.neighbourLeft = await run(card, SC.LOOKS[0], [line('OP14-040 L 4', 60, 412)]);
+    out.neighbourCtl = await run(card, SC.LOOKS[0], [line('OP14-040 L 4', 400, 300)]);
+    out.several = await run(card, SC.LOOKS[0], [onCard('EB03-024'), line('OP14-040', 560, 300)]);
+    out.empty = await run(mk(640, 480, g => { g.fillStyle = '#111'; g.fillRect(0, 0, 640, 480); }), SC.LOOKS[0], []);
+    out.words = await run(card, SC.LOOKS[0], [line('Nefeltari Vivi', 320, 380, 120, 12)]);
+    /* the outline is believed only where the number sits on it: the same card, its number read mid-card */
+    out.astray = await run(card, SC.LOOKS[0], [line('EB03-024', 320, 240)]);
+    /* take 10 refused a toploader (landmine 14); its number is read now, and its outline is not believed */
+    const tl = mk(640, 480, g => { table(g, 100, 40, 440, 400); g.fillStyle = '#bbb'; g.fillRect(150, 60, 280, 370); });
+    out.toploader = await run(tl, SC.LOOKS[0], [line('EB03-024', 150 + A.x * 280, 60 + A.y * 370)]);
+    /* the near look: the number's corner at twice the size, its place mapped back onto the view */
+    const P = SC.LOOKS[1].part, Z = SC.LOOKS[1].zoom;
+    out.near = await run(card, SC.LOOKS[1], c => [line('EB03-024', (180 + A.x * 280 - P.x * 640) * Z, (40 + A.y * 391 - P.y * 480) * Z, 120, 16)]);
+    out.nearCtl = await run(card, SC.LOOKS[1], c => [line('EB03-024', 180 + A.x * 280, 40 + A.y * 391, 120, 16)]);   // the view's place, not the look's: no outline may be believed
+    /* the glare look: grey, and local -- low-contrast print beside a shine gains what a whole-picture stretch cannot give it */
+    /* a dim card face (a slow gradient, 40 to 72) with print 10 levels above it, and beside it a shine at 250 or more face */
+    const face = shine => mk(256, 128, g => { for (let x = 0; x < 256; x++) { const v = x >= 128 && shine ? 250 : 40 + ((x & 127) >> 2); g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(x, 0, 1, 128); }
+      g.fillStyle = 'rgb(255,255,255)'; g.globalAlpha = 0.05; for (let x = 8; x < 120; x += 16) g.fillRect(x, 40, 8, 48); g.globalAlpha = 1; });
+    const mean = (c, x0, y0, w, h) => { const d = c.getContext('2d').getImageData(x0, y0, w, h).data; let t = 0; for (let i = 0; i < d.length; i += 4) t += d[i]; return t / (d.length / 4); };
+    const print = c => mean(c, 24, 50, 8, 30) - mean(c, 24, 5, 8, 30);   // a bar of print against the face above it, same columns
+    const range = c => { const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let lo = 255, hi = 0; for (let i = 0; i < d.length; i += 4) { lo = Math.min(lo, d[i]); hi = Math.max(hi, d[i]); } return hi - lo; };
+    const spread = (c, x0, x1) => { const d = c.getContext('2d').getImageData(x0, 0, x1 - x0, c.height).data; let lo = 255, hi = 0, grey = true;
+      for (let i = 0; i < d.length; i += 4) { lo = Math.min(lo, d[i]); hi = Math.max(hi, d[i]); if (d[i] !== d[i + 1] || d[i] !== d[i + 2]) grey = false; } return { spread: hi - lo, grey }; };
+    const eq = SC.equalise(face(true)), eqDim = SC.equalise(face(false));
+    /* take 10's whole-picture stretch: the print's step scaled by 255 over the picture's own range */
+    out.glare = { clahe: Math.round(print(eq)), claheNoShine: Math.round(print(eqDim)), grey: spread(eq, 0, 256).grey,
+                  stretch: Math.round(print(face(true)) * 255 / range(face(true))), stretchNoShine: Math.round(print(face(false)) * 255 / range(face(false))),
+                  flat: spread(SC.equalise(mk(64, 64, g => { g.fillStyle = '#777'; g.fillRect(0, 0, 64, 64); })), 0, 64).spread };
+    out.glareLook = await run(card, SC.LOOKS[2], []);
+    out.glareGrey = handed.length ? spread(handed[0], 0, handed[0].width).grey : null;
+    /* the view: what object-fit: cover shows of the frame -- the Fold's portrait frame in the guide, and a landscape one */
+    out.view = [SC.viewRect(1080, 1920, 300, 440), SC.viewRect(1920, 1080, 300, 440)].map(r => [r.x, r.y, r.w, r.h].map(Math.round).join(','));
     SC.PLATFORM.ocr = realOcr;
     const T = V.CAT.star;
     const self = mk(T.w, T.h, g => { const im = g.createImageData(T.w, T.h);
@@ -639,26 +759,73 @@ if (puppeteer) {
         im.data[i*4] = im.data[i*4+1] = im.data[i*4+2] = v; im.data[i*4+3] = 255; }
       g.putImageData(im, 0, 0); });
     out.selfScore = SC.starScore(self);
+    /* take 125 dropped take 10's contrast stretch before the star: the same patch stretched to 0..255 scores the same */
+    const stretched = mk(T.w, T.h, g => { g.drawImage(self, 0, 0); const im = g.getImageData(0, 0, T.w, T.h), d = im.data; let lo = 255, hi = 0;
+      for (let i = 0; i < d.length; i += 4) { lo = Math.min(lo, d[i]); hi = Math.max(hi, d[i]); }
+      for (let i = 0; i < d.length; i += 4) d[i] = d[i + 1] = d[i + 2] = (d[i] - lo) * 255 / (hi - lo); g.putImageData(im, 0, 0); });
+    out.stretchedScore = SC.starScore(stretched);
     const flat = mk(T.w, T.h, g => { g.fillStyle = '#888'; g.fillRect(0, 0, T.w, T.h); });
     out.flatScore = SC.starScore(flat);
     out.threshold = T.threshold;
     out.hasOcr = SC.PLATFORM.hasOcr();
     return out;
   });
-  ok('scanner: a card-shaped bright quad is detected', scan.card.stage === 'read', scan.card.stage);
-  ok('scanner: the crop handed to OCR is the upscaled code strip',
-     /^\d{3}x1\d\d$/.test(scan.card.crop || ''), scan.card.crop);
-  ok('scanner: the injected read resolves to EB03-024', scan.card.number === 'EB03-024');
-  ok('scanner: the SP badge in the text sets face=sp', scan.card.face === 'sp');
-  ok('scanner: the gate auto-accepts the SP', scan.gate.verdict === 'auto' && scan.gate.treat === 'sp',
-     JSON.stringify(scan.gate));
-  ok('scanner: an empty frame is no-card, not a guess', scan.dark === 'no-card', scan.dark);
-  ok('scanner: a toploader-shaped quad is rejected (landmine 14)',
-     scan.toploader === 'no-card', scan.toploader);
+  ok('scanner: the whole view goes to the recogniser, not a crop cut from an outline', scan.card.handed[0] === '640x480', JSON.stringify(scan.card.handed));
+  ok('scanner: the number is picked out of the lines read, EB03-024, SP from its badge', scan.card.stage === 'read' && scan.card.number === 'EB03-024' && scan.card.face === 'sp', JSON.stringify(scan.card));
+  ok('scanner: the gate auto-accepts the SP', scan.gate.verdict === 'auto' && scan.gate.treat === 'sp', JSON.stringify(scan.gate));
+  ok('scanner: the outline is believed where the number sits on it, and the photo is the card warped', scan.card.card === 180 && scan.card.full === '500x700', JSON.stringify(scan.card));
+  ok('scanner: a number in the view\'s top quarter is a neighbour\'s, and is not read', scan.neighbour.stage === 'no-read', JSON.stringify(scan.neighbour));
+  ok('scanner: ...nor one in its left quarter', scan.neighbourLeft.stage === 'no-read', JSON.stringify(scan.neighbourLeft));
+  ok('scanner: ...control: the same number below and right of them is read', scan.neighbourCtl.stage === 'read' && scan.neighbourCtl.number === 'OP14-040', JSON.stringify(scan.neighbourCtl));
+  ok('scanner: two numbers on cards in view are several, never a guess', scan.several.stage === 'several' && scan.several.numbers.length === 2, JSON.stringify(scan.several));
+  ok('scanner: an empty frame is no text, not a guess', scan.empty.stage === 'no-text', JSON.stringify(scan.empty));
+  ok('scanner: words without a number are no read', scan.words.stage === 'no-read', JSON.stringify(scan.words));
+  ok('scanner: an outline the number does not sit on is not believed -- no star looked for, the photo the view at a card\'s shape',
+     scan.astray.stage === 'read' && scan.astray.card === null && scan.astray.face === null && scan.astray.full === '500x700', JSON.stringify(scan.astray));
+  ok('scanner: a card in a toploader is read (take 10 refused it, landmine 14); its outline is not believed',
+     scan.toploader.stage === 'read' && scan.toploader.number === 'EB03-024' && scan.toploader.card === null, JSON.stringify(scan.toploader));
+  ok('scanner: the near look hands over the number\'s corner at twice the size, and maps its place back (the outline believed)',
+     scan.near.handed[0] === `${Math.round(0.7 * 640 * 2)}x${Math.round(0.5 * 480 * 2)}` && scan.near.stage === 'read' && scan.near.card === 180, JSON.stringify(scan.near));
+  ok('scanner: ...control: a place not mapped back finds no outline', scan.nearCtl.stage === 'read' && scan.nearCtl.card === null, JSON.stringify(scan.nearCtl));
+  ok('scanner: the glare look is grey and local -- faint print keeps its contrast with a shine beside it (the look\'s CLAHE matched OpenCV\'s to 1-2 levels, HANDOFF take 125)',
+     scan.glare.grey && scan.glareGrey === true && scan.glare.clahe >= 0.8 * scan.glare.claheNoShine && scan.glare.clahe > scan.glare.stretch && scan.glareLook.handed[0] === '640x480', JSON.stringify({ glare: scan.glare, grey: scan.glareGrey }));
+  ok('scanner: ...control: take 10\'s whole-picture stretch loses most of it to the shine', scan.glare.stretch <= 0.3 * scan.glare.stretchNoShine, JSON.stringify(scan.glare));
+  ok('scanner: ...control: a flat patch stays flat', scan.glare.flat <= 2, String(scan.glare.flat));
+  ok('scanner: the view is the middle of the frame the guide shows (object-fit: cover)', scan.view[0] === '0,168,1080,1584' && scan.view[1] === '592,0,736,1080', JSON.stringify(scan.view));
   ok('star: the template recognises itself', scan.selfScore > 0.95, String(scan.selfScore));
+  ok('star: a patch stretched to 0..255 scores as it did unstretched (the stretch take 125 dropped was a no-op)', Math.abs(scan.stretchedScore - scan.selfScore) < 0.01, `${scan.stretchedScore} vs ${scan.selfScore}`);
   ok('star: a flat patch scores below threshold', scan.flatScore < scan.threshold,
      `${scan.flatScore} vs ${scan.threshold}`);
   ok('scanner: no recogniser in a browser, and it knows', scan.hasOcr === false);
+
+  /* take 125: the live loop end to end -- a card left in view is counted once (landmine 16: take 10's
+     800 ms cooldown was never set, and the loop reset its vote after every decision), and counted
+     again once it has left the view and come back */
+  const loop = await page.evaluate(async () => {
+    const V = window.VAULT, SC = V.scan, B = V.BATCH, A = SC.CODE_AT;
+    const one = [...V.CAT.byNum.entries()].find(([n, l]) => l.length === 1 && /^(OP|ST|EB)\d{2}-\d{3}$/.test(n))[0];
+    const kept = B.rows.slice(), realOcr = SC.PLATFORM.ocr, realHas = SC.PLATFORM.hasOcr;
+    const v = document.createElement('canvas'); v.width = 640; v.height = 480; v.style.cssText = 'position:fixed;left:0;top:0;width:320px;height:240px;visibility:hidden';
+    const g = v.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, 640, 480); g.fillStyle = '#eee'; g.fillRect(180, 40, 280, 391);
+    document.body.appendChild(v); v.videoWidth = 640; v.videoHeight = 480;
+    let inView = true;
+    SC.PLATFORM.hasOcr = () => true;
+    SC.PLATFORM.ocr = async c => { const lines = inView ? [{ text: one, box: { x: 180 + A.x * 280 - 30, y: 40 + A.y * 391 - 4, w: 60, h: 8 } }] : []; return { text: lines.map(l => l.text).join('\n'), lines }; };
+    B.rows.length = 0; const counts = [], wasRunning = SC.SCAN.running;
+    /* the Scan screen closed: a capture that finishes then adds nothing (take 125's audit) */
+    SC.SCAN.running = false; for (let i = 0; i < 3; i++) await SC.captureAndIdentify(v); const closed = B.rows.length;
+    SC.SCAN.running = true;   // the screen open, as startCamera leaves it
+    for (let i = 0; i < 8; i++) { await SC.captureAndIdentify(v); counts.push(B.rows.length); }
+    inView = false; for (let i = 0; i < 3; i++) { await SC.captureAndIdentify(v); counts.push(B.rows.length); }
+    inView = true; for (let i = 0; i < 2; i++) { await SC.captureAndIdentify(v); counts.push(B.rows.length); }
+    SC.SCAN.running = wasRunning; SC.SCAN.voter.reset();
+    SC.PLATFORM.ocr = realOcr; SC.PLATFORM.hasOcr = realHas; v.remove();
+    B.rows.length = 0; B.rows.push(...kept); B.save();
+    return { one, counts, closed };
+  });
+  ok('scanner loop: a card left in view is counted once, however long it stays (landmine 16)', loop.counts.slice(0, 8).join() === '0,1,1,1,1,1,1,1', JSON.stringify(loop));
+  ok('scanner loop: ...and counted again once it has left the view for three captures and come back', loop.counts.slice(8).join() === '1,1,1,1,2', JSON.stringify(loop));
+  ok('scanner loop: a capture that finishes after the Scan screen closed adds nothing (it would start the camera again behind another screen)', loop.closed === 0, JSON.stringify(loop));
 
   /* take 11: the filter sheet's apply button must be reachable without a
      scroll, or a collector with sixty sets never finds it. */

@@ -1,0 +1,233 @@
+{
+ "num": "ST01-007",
+ "name": "Nami",
+ "text": "[Activate: Main] [Once Per Turn] Give up to 1 rested DON!! card to your Leader or 1 of your Characters.",
+ "text_fp": "e062611a8d1d35b6",
+ "fx_fp": "70f4ff93a3e9f344",
+ "reading": [
+  {
+   "t": "main",
+   "if": [
+    {
+     "c": "opt"
+    }
+   ],
+   "do": [
+    {
+     "a": "givedon",
+     "n": 1,
+     "upto": true
+    }
+   ],
+   "raw": "[Activate: Main] [Once Per Turn] Give up to 1 rested DON!! card to your Leader or 1 of your Characters."
+  }
+ ],
+ "rules": [
+  "10-2-2",
+  "10-2-13",
+  "10-2-13-2",
+  "6-5-5-1"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "gives one rested DON!! to the Leader",
+   "board": {
+    "p0": {
+     "chars": [
+      {
+       "card": "@"
+      }
+     ],
+     "don": {
+      "rested": 2
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": 0
+    },
+    {
+     "t": "fx",
+     "target": "L"
+    }
+   ],
+   "expect": {
+    "p0.leader.don": 1,
+    "p0.don.rested": 1
+   }
+  },
+  {
+   "name": "two Nami: once each (§10-2-13-2)",
+   "board": {
+    "p0": {
+     "chars": [
+      {
+       "card": "@"
+      },
+      {
+       "card": "@"
+      }
+     ],
+     "don": {
+      "rested": 3
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": 0
+    },
+    {
+     "t": "fx",
+     "target": "L"
+    },
+    {
+     "t": "activate",
+     "ref": 1
+    },
+    {
+     "t": "fx",
+     "target": "L"
+    }
+   ],
+   "expect": {
+    "p0.leader.don": 2,
+    "p0.don.rested": 1
+   }
+  },
+  {
+   "name": "once per turn: a second activation the same turn is refused",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "chars": [
+      {
+       "card": "@"
+      }
+     ],
+     "don": {
+      "rested": 3
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": 0
+    },
+    {
+     "t": "fx",
+     "target": "L"
+    },
+    {
+     "t": "activate",
+     "ref": 0,
+     "refused": "once per turn"
+    }
+   ],
+   "expect": {
+    "p0.leader.don": 1
+   }
+  },
+  {
+   "name": "a second tap while the first waits is refused (landmine 213)",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "chars": [
+      {
+       "card": "@"
+      }
+     ],
+     "don": {
+      "rested": 3
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": 0
+    },
+    {
+     "t": "activate",
+     "ref": 0,
+     "refused": "resolve the effect first"
+    },
+    {
+     "t": "fx",
+     "target": "L"
+    }
+   ],
+   "expect": {
+    "p0.leader.don": 1,
+    "p0.don.rested": 2
+   }
+  },
+  {
+   "name": "a Character leaving the row does not wipe Nami's mark (landmine 213: the mark was keyed on the row position)",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "chars": [
+      {
+       "card": "ST01-003"
+      },
+      {
+       "card": "ST01-003"
+      },
+      {
+       "card": "ST01-003"
+      },
+      {
+       "card": "ST01-003"
+      },
+      {
+       "card": "@"
+      }
+     ],
+     "hand": [
+      "ST01-003"
+     ],
+     "don": {
+      "active": 1,
+      "rested": 2
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": 4
+    },
+    {
+     "t": "fx",
+     "target": "L"
+    },
+    {
+     "t": "play",
+     "h": 0,
+     "trash": 0,
+     "expect": {
+      "p0.chars": 5,
+      "p0.chars.3.id": {
+       "not": 0
+      }
+     }
+    },
+    {
+     "t": "activate",
+     "ref": 3,
+     "refused": "once per turn"
+    }
+   ],
+   "expect": {
+    "p0.leader.don": 1
+   }
+  }
+ ]
+}

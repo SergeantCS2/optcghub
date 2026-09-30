@@ -1,0 +1,1270 @@
+{
+ "version": "1.2.1",
+ "date": "2026-08-28",
+ "title": "ONE PIECE CARD GAME Comprehensive Rules",
+ "url": "https://en.onepiece-cardgame.com/pdf/rule_comprehensive.pdf",
+ "note": "A digest in the app's own words under the official section numbers, read in full from the official PDF at take 122. The official text governs; card text beats these rules where they disagree (1-3-1).",
+ "sim_legend": {
+  "enforced": "the Sim keeps this rule",
+  "partial": "the Sim keeps part of it; the rest is by hand",
+  "by hand": "the players keep it; the Sim offers it or leaves it to them",
+  "not modelled": "the Sim does not model this yet",
+  "n/a": "not a rule of play"
+ },
+ "sections": [
+  {
+   "id": "1-1",
+   "title": "Players",
+   "text": "The game is for two players, head to head.",
+   "sim": "enforced",
+   "where": "SIM.new"
+  },
+  {
+   "id": "1-2",
+   "title": "Ending the game",
+   "text": "A player who meets a defeat condition loses and the other wins. Defeat is checked at the next rule processing.",
+   "sim": "enforced",
+   "where": "SIM.rules"
+  },
+  {
+   "id": "1-2-1-1",
+   "title": "The two defeat conditions",
+   "text": "You lose when your Leader takes damage while you have 0 Life cards, or when you have 0 cards in your deck.",
+   "sim": "enforced",
+   "where": "SIM.resolve, SIM.rules"
+  },
+  {
+   "id": "1-2-3",
+   "title": "Conceding",
+   "text": "Either player may concede at any time; they lose at once and no card can stop or force it.",
+   "sim": "enforced",
+   "where": "SIM.act('concede')"
+  },
+  {
+   "id": "1-2-5",
+   "title": "Winning or losing by a card",
+   "text": "Some cards make a player win or lose; that happens while the effect is processed.",
+   "sim": "by hand"
+  },
+  {
+   "id": "1-3-1",
+   "title": "Card text beats the rules",
+   "text": "When a card's text contradicts these rules, the card text wins.",
+   "sim": "by hand"
+  },
+  {
+   "id": "1-3-2",
+   "title": "Impossible actions",
+   "text": "An action that cannot be done is not done; of several actions, do as many as possible. Changing a card to the state it is already in does nothing.",
+   "sim": "enforced"
+  },
+  {
+   "id": "1-3-4",
+   "title": "Simultaneous choices",
+   "text": "When both players choose at once, the turn player chooses first.",
+   "sim": "enforced",
+   "where": "SIM.who"
+  },
+  {
+   "id": "1-3-5",
+   "title": "Choosing numbers",
+   "text": "A chosen number is a whole number of 0 or more; with no minimum, 0 may be chosen.",
+   "sim": "enforced"
+  },
+  {
+   "id": "1-3-6",
+   "title": "Numbers that change",
+   "text": "Numbers have no fractions. Power can go below 0; other numbers below 0 count as 0. A negative cost counts only inside its own calculation.",
+   "sim": "enforced",
+   "where": "SIM.effCost"
+  },
+  {
+   "id": "1-3-6-2",
+   "title": "Negative cost",
+   "text": "A cost made negative by an effect is 0 outside that calculation.",
+   "sim": "enforced",
+   "where": "SIM.effCost"
+  },
+  {
+   "id": "1-3-7",
+   "title": "Order of text",
+   "text": "Card effects are carried out in the order written.",
+   "sim": "enforced",
+   "where": "SIM.apply"
+  },
+  {
+   "id": "1-3-8",
+   "title": "Rest beats set active",
+   "text": "If an effect would rest a card and set it active at the same time, it is rested.",
+   "sim": "by hand"
+  },
+  {
+   "id": "1-3-9",
+   "title": "Cost and activation cost",
+   "text": "Cost is paid to play a card; an activation cost is paid to activate an effect.",
+   "sim": "enforced"
+  },
+  {
+   "id": "1-3-10",
+   "title": "Both players act",
+   "text": "When an effect makes both players act at the same time, the turn player acts first.",
+   "sim": "enforced"
+  },
+  {
+   "id": "2",
+   "title": "Card information",
+   "text": "What is printed on a card: name, category, colour, type, attribute, power, cost, text, Life, Counter, [Trigger], card number.",
+   "sim": "enforced"
+  },
+  {
+   "id": "2-1",
+   "title": "Card name",
+   "text": "A name in [ ] with no noun after it means cards with that name; part of a name in quotes means names containing it. Some cards take a name from their text.",
+   "sim": "partial",
+   "where": "effects.py search_steps"
+  },
+  {
+   "id": "2-2",
+   "title": "Card categories",
+   "text": "Five categories: Leader, Character, Event, Stage and DON!!. A Leader stays in the Leader area, Characters in the Character area, Stages in the Stage area; an Event is used from hand.",
+   "sim": "enforced"
+  },
+  {
+   "id": "2-3",
+   "title": "Colour",
+   "text": "Six colours: red, green, blue, purple, black and yellow. A card of several colours is every one of them.",
+   "sim": "enforced",
+   "where": "legality"
+  },
+  {
+   "id": "2-3-5",
+   "title": "Several colours",
+   "text": "A card of several colours counts as every one of them.",
+   "sim": "enforced",
+   "where": "legality"
+  },
+  {
+   "id": "2-4",
+   "title": "Type",
+   "text": "A card may have several types, split by a slash. A type in { } in text means cards of that type; part of a type in quotes means types containing it.",
+   "sim": "enforced",
+   "where": "SIM.targetsFor"
+  },
+  {
+   "id": "2-4-3",
+   "title": "A type in { }",
+   "text": "Text in { } brackets means cards with that type.",
+   "sim": "enforced",
+   "where": "effects.py (search, Leader condition, powerall)"
+  },
+  {
+   "id": "2-4-3-1",
+   "title": "Part of a type in quotes",
+   "text": "A part of a type in \" \" quotation marks means cards with a type containing that text.",
+   "sim": "enforced",
+   "where": "SIM.DO.powerall, effects.py search"
+  },
+  {
+   "id": "2-5",
+   "title": "Attribute",
+   "text": "Slash, Strike, Ranged, Special, Wisdom and ?. Only Leaders and Characters have one; an attribute in < > means cards with it.",
+   "sim": "not modelled"
+  },
+  {
+   "id": "2-6",
+   "title": "Power",
+   "text": "Only Leaders and Characters have power; effects can raise or lower it.",
+   "sim": "enforced",
+   "where": "SIM.power"
+  },
+  {
+   "id": "2-6-3",
+   "title": "Power can change",
+   "text": "Effects can make power higher or lower than printed; 'N power or less' reads the power the card has now.",
+   "sim": "enforced",
+   "where": "SIM.power, SIM.targetsFor"
+  },
+  {
+   "id": "2-7",
+   "title": "Cost",
+   "text": "To play a card from hand, reveal it and rest that many active DON!! in your cost area. An Event is then trashed and its effect resolves. Only Characters, Events and Stages have a cost.",
+   "sim": "enforced",
+   "where": "SIM.canPlay, SIM.play"
+  },
+  {
+   "id": "2-7-2",
+   "title": "Playing a Character",
+   "text": "Reveal it, rest active DON!! equal to its cost, then play it.",
+   "sim": "enforced",
+   "where": "SIM.play"
+  },
+  {
+   "id": "2-7-3",
+   "title": "Using an Event",
+   "text": "Reveal it, rest active DON!! equal to its cost, trash it, then activate and resolve its effect.",
+   "sim": "enforced",
+   "where": "SIM.play, SIM.act('play')"
+  },
+  {
+   "id": "2-8",
+   "title": "Card text",
+   "text": "A Leader's, Character's or Stage's text works only in its own area unless it says otherwise. Text resolves from the top. Words in ( ) explain and do not change play.",
+   "sim": "enforced"
+  },
+  {
+   "id": "2-9",
+   "title": "Life",
+   "text": "At the start, each player places Life cards equal to the Leader's Life from the top of the deck, face-down, without looking.",
+   "sim": "enforced",
+   "where": "SIM.placeLife"
+  },
+  {
+   "id": "2-9-2-1",
+   "title": "Life order",
+   "text": "The card that was on top of the deck goes to the bottom of the Life area.",
+   "sim": "enforced",
+   "where": "SIM.placeLife"
+  },
+  {
+   "id": "2-10",
+   "title": "Counter value",
+   "text": "The power a Character card in hand adds in the Counter Step. Only Characters have one; with several, only the highest applies.",
+   "sim": "enforced",
+   "where": "SIM.counters"
+  },
+  {
+   "id": "2-11",
+   "title": "[Trigger]",
+   "text": "An effect that can be used instead of adding the card to hand when it comes from Life on taking damage.",
+   "sim": "enforced",
+   "where": "SIM.act('resolve')"
+  },
+  {
+   "id": "2-14",
+   "title": "Card number",
+   "text": "No more than 4 cards with the same card number in a deck.",
+   "sim": "enforced",
+   "where": "legality"
+  },
+  {
+   "id": "2-14-2",
+   "title": "Four copies",
+   "text": "No more than 4 cards with the same card number in a deck.",
+   "sim": "enforced",
+   "where": "legality"
+  },
+  {
+   "id": "3-1",
+   "title": "The areas",
+   "text": "Deck, DON!! deck, hand, trash, Leader, Character, Stage, cost and Life areas. How many cards each holds is open to both players. 'The field' is the Leader, Character, Stage and cost areas.",
+   "sim": "enforced"
+  },
+  {
+   "id": "3-1-6",
+   "title": "A card that moves is a new card",
+   "text": "A card leaving the Character or Stage area becomes a new card wherever it goes; what applied to it does not follow. A DON!! that moves loses what applied to it.",
+   "sim": "enforced",
+   "where": "SIM.leave"
+  },
+  {
+   "id": "3-2",
+   "title": "Deck",
+   "text": "Face-down; nobody looks at or reorders it unless told. Several cards moved from it move one at a time. Shuffling puts it in random order.",
+   "sim": "enforced",
+   "where": "SIM.shuffle; SIM.view (both decks are counts)"
+  },
+  {
+   "id": "3-3",
+   "title": "DON!! deck",
+   "text": "Open, face-down; either player may look at it.",
+   "sim": "enforced"
+  },
+  {
+   "id": "3-4",
+   "title": "Hand",
+   "text": "Secret to the other player; you may look at and reorder your own.",
+   "sim": "enforced",
+   "where": "SIM.view (the other hand is a count; take 123)"
+  },
+  {
+   "id": "3-5",
+   "title": "Trash",
+   "text": "K.O.'d Characters and used Events go here, face-up, open to both; new cards go on top.",
+   "sim": "enforced"
+  },
+  {
+   "id": "3-6",
+   "title": "Leader area",
+   "text": "Your Leader is placed face-up at the start and never leaves by any rule or effect.",
+   "sim": "enforced"
+  },
+  {
+   "id": "3-6-1",
+   "title": "The Leader starts in play",
+   "text": "The Leader is placed face-up at the start of the game; it is never played from hand.",
+   "sim": "enforced",
+   "where": "SIM.canPlay"
+  },
+  {
+   "id": "3-7",
+   "title": "Character area",
+   "text": "Characters are played face-up and active unless told otherwise.",
+   "sim": "enforced"
+  },
+  {
+   "id": "3-7-4",
+   "title": "Played this turn",
+   "text": "A Character played this turn cannot attack unless an effect says it can ([Rush], [Rush: Character]).",
+   "sim": "enforced",
+   "where": "SIM.canAttack"
+  },
+  {
+   "id": "3-7-6",
+   "title": "Five Characters",
+   "text": "Up to 5 Characters can be in the Character area.",
+   "sim": "enforced"
+  },
+  {
+   "id": "3-7-6-1",
+   "title": "A sixth Character",
+   "text": "With 5 in play, to play another you reveal it, trash one of your 5, then play it. That trash is rule processing, not a K.O.: no effect applies.",
+   "sim": "enforced",
+   "where": "SIM.play, SIM.room"
+  },
+  {
+   "id": "3-7-6-1-1",
+   "title": "Trashing for room is a rule",
+   "text": "Trashing a Character to make room for a sixth is rule processing: no effect applies, and it is not a K.O.",
+   "sim": "enforced",
+   "where": "SIM.room"
+  },
+  {
+   "id": "3-8",
+   "title": "Stage area",
+   "text": "Stages are played face-up and active unless told otherwise.",
+   "sim": "enforced"
+  },
+  {
+   "id": "3-8-5",
+   "title": "One Stage",
+   "text": "Up to 1 Stage. To play a new one, reveal it, trash the old one, then play it.",
+   "sim": "enforced",
+   "where": "SIM.placeStage"
+  },
+  {
+   "id": "3-8-5-1",
+   "title": "A new Stage",
+   "text": "Playing a Stage with one already in play trashes the old one first.",
+   "sim": "enforced",
+   "where": "SIM.placeStage"
+  },
+  {
+   "id": "3-9",
+   "title": "Cost area",
+   "text": "DON!! are placed here, active unless told otherwise. It is open; you choose which DON!! pay a cost.",
+   "sim": "enforced"
+  },
+  {
+   "id": "3-10",
+   "title": "Life area",
+   "text": "Secret and face-down; nobody looks or reorders. A card leaving Life comes from the top unless told otherwise. A card added face-up is open.",
+   "sim": "enforced",
+   "where": "SIM.view (both Lives are counts; take 123)"
+  },
+  {
+   "id": "4-4",
+   "title": "Active and rested",
+   "text": "Cards on the field are active (upright) or rested (sideways). A given DON!! is neither.",
+   "sim": "enforced"
+  },
+  {
+   "id": "4-5",
+   "title": "Draw",
+   "text": "Add the top card of your deck to your hand without showing it. 'Draw up to X' lets you stop after any card.",
+   "sim": "enforced",
+   "where": "SIM.draw"
+  },
+  {
+   "id": "4-6",
+   "title": "Damage",
+   "text": "For each point of damage, the damaged player moves the top Life card to hand. A card with [Trigger] may be activated instead.",
+   "sim": "enforced",
+   "where": "SIM.resolve"
+  },
+  {
+   "id": "4-7",
+   "title": "Play a card",
+   "text": "Pay its cost and use it or put it into play from hand.",
+   "sim": "enforced"
+  },
+  {
+   "id": "4-8",
+   "title": "Up to X",
+   "text": "Choose any number from 0 to X, then resolve.",
+   "sim": "enforced",
+   "where": "effects.py upto, SIM.apply"
+  },
+  {
+   "id": "4-9",
+   "title": "Base power and base cost",
+   "text": "When several effects set a card's base power or base cost to different values, the highest applies.",
+   "sim": "not modelled"
+  },
+  {
+   "id": "4-10",
+   "title": "If and Then",
+   "text": "If an 'if' clause cannot be met, what follows it is not resolved. If a 'then' clause cannot be resolved, what follows it still can, unless an 'if' before it failed.",
+   "sim": "enforced",
+   "where": "SIM.apply (step conditions)"
+  },
+  {
+   "id": "4-11",
+   "title": "Remove",
+   "text": "Remove means move a card from its area to another area.",
+   "sim": "by hand"
+  },
+  {
+   "id": "5",
+   "title": "Game setup",
+   "text": "Decks are prepared (5-1) and the game is set up (5-2).",
+   "sim": "enforced"
+  },
+  {
+   "id": "5-1",
+   "title": "Leader, deck and DON!! deck",
+   "text": "Each player brings 1 Leader, a 50-card deck and a 10-card DON!! deck.",
+   "sim": "enforced",
+   "where": "legality"
+  },
+  {
+   "id": "5-1-2",
+   "title": "A deck",
+   "text": "Exactly 1 Leader, a 50-card deck of Characters, Events and Stages, and a 10-card DON!! deck.",
+   "sim": "enforced",
+   "where": "legality"
+  },
+  {
+   "id": "5-1-2-1",
+   "title": "What a deck holds",
+   "text": "Characters, Events and Stages only.",
+   "sim": "enforced",
+   "where": "legality"
+  },
+  {
+   "id": "5-1-2-2",
+   "title": "Colours",
+   "text": "Every card must share a colour with the Leader.",
+   "sim": "enforced",
+   "where": "legality"
+  },
+  {
+   "id": "5-1-2-3",
+   "title": "Copies",
+   "text": "No more than 4 cards with the same card number.",
+   "sim": "enforced",
+   "where": "legality"
+  },
+  {
+   "id": "5-1-2-4",
+   "title": "Cards that change deck building",
+   "text": "Effects about deck construction replace these rules; they are permanent effects that work during deck building.",
+   "sim": "not modelled"
+  },
+  {
+   "id": "5-2-1",
+   "title": "Before the game",
+   "text": "Check the decks, shuffle, place the Leaders, decide who goes first, draw 5 with one redraw each, place Life, and the first player begins.",
+   "sim": "enforced",
+   "where": "SIM.new, SIM.mulligan"
+  },
+  {
+   "id": "5-2-1-2",
+   "title": "Shuffle",
+   "text": "Each player shuffles thoroughly and places the deck face-down.",
+   "sim": "enforced",
+   "where": "SIM.new"
+  },
+  {
+   "id": "5-2-1-3",
+   "title": "Leaders",
+   "text": "Each player places their Leader face-up.",
+   "sim": "enforced"
+  },
+  {
+   "id": "5-2-1-4",
+   "title": "Who chooses",
+   "text": "Rock-paper-scissors or another fair way decides who chooses to go first or second.",
+   "sim": "by hand",
+   "where": "the setup screen"
+  },
+  {
+   "id": "5-2-1-5-1",
+   "title": "At the start of the game",
+   "text": "Leader effects that say 'At the start of the game' are processed now, the chooser's first.",
+   "sim": "not modelled"
+  },
+  {
+   "id": "5-2-1-6",
+   "title": "Opening hand and redraw",
+   "text": "Each player draws 5; starting with the first player, each may once return all 5, reshuffle and draw 5.",
+   "sim": "enforced",
+   "where": "SIM.mulligan, SIM.who"
+  },
+  {
+   "id": "5-2-1-7",
+   "title": "Life",
+   "text": "Each player places Life equal to the Leader's Life from the top of the deck, the deck's top card at the bottom of Life.",
+   "sim": "enforced",
+   "where": "SIM.placeLife"
+  },
+  {
+   "id": "5-2-1-8",
+   "title": "The first turn",
+   "text": "The first player begins their turn.",
+   "sim": "enforced"
+  },
+  {
+   "id": "6",
+   "title": "Game progression",
+   "text": "The turn player plays the five phases in order: Refresh, Draw, DON!!, Main, End.",
+   "sim": "enforced",
+   "where": "SIM.startTurn"
+  },
+  {
+   "id": "6-1",
+   "title": "A turn",
+   "text": "Refresh Phase, Draw Phase, DON!! Phase, Main Phase, End Phase.",
+   "sim": "enforced",
+   "where": "SIM.startTurn"
+  },
+  {
+   "id": "6-2",
+   "title": "Refresh Phase",
+   "text": "Effects 'until the start of your next turn' end; 'at the start of your turn' effects activate; given DON!! return to your cost area rested; then every rested card of yours is set active.",
+   "sim": "partial",
+   "where": "SIM.startTurn ('at the start of your turn' is by hand)"
+  },
+  {
+   "id": "6-2-1",
+   "title": "Until your next turn ends",
+   "text": "Effects lasting 'until the start of your next turn' end in your Refresh Phase.",
+   "sim": "enforced",
+   "where": "SIM.startTurn"
+  },
+  {
+   "id": "6-2-3",
+   "title": "Given DON!! come home",
+   "text": "DON!! given to your Leader and Characters return to your cost area, rested.",
+   "sim": "enforced",
+   "where": "SIM.startTurn"
+  },
+  {
+   "id": "6-2-4",
+   "title": "Everything stands up",
+   "text": "All your rested Leader, Characters, Stage and DON!! are set active.",
+   "sim": "enforced",
+   "where": "SIM.startTurn"
+  },
+  {
+   "id": "6-3",
+   "title": "Draw Phase",
+   "text": "Draw 1. The first player does not draw on their first turn.",
+   "sim": "enforced",
+   "where": "SIM.startTurn"
+  },
+  {
+   "id": "6-3-1",
+   "title": "Draw one",
+   "text": "The turn player draws 1; the first player skips it on their first turn.",
+   "sim": "enforced",
+   "where": "SIM.startTurn"
+  },
+  {
+   "id": "6-4",
+   "title": "DON!! Phase",
+   "text": "Place 2 DON!! from the DON!! deck in the cost area, face-up (1 for the first player's first turn; only what the DON!! deck has).",
+   "sim": "enforced",
+   "where": "SIM.startTurn"
+  },
+  {
+   "id": "6-4-1",
+   "title": "Two DON!!",
+   "text": "Place 2 DON!! face-up in the cost area; the first player places 1 on their first turn.",
+   "sim": "enforced",
+   "where": "SIM.startTurn"
+  },
+  {
+   "id": "6-4-2",
+   "title": "One left",
+   "text": "With 1 card in the DON!! deck, place 1.",
+   "sim": "enforced",
+   "where": "SIM.startTurn"
+  },
+  {
+   "id": "6-4-3",
+   "title": "None left",
+   "text": "With 0 cards in the DON!! deck, place none.",
+   "sim": "enforced",
+   "where": "SIM.startTurn"
+  },
+  {
+   "id": "6-5",
+   "title": "Main Phase",
+   "text": "In any order, as often as you like: play cards, activate effects, give DON!!, battle. Declare the end to go to the End Phase.",
+   "sim": "enforced",
+   "where": "SIM.legal"
+  },
+  {
+   "id": "6-5-2-1",
+   "title": "Ending the Main Phase",
+   "text": "Declaring the end of the Main Phase moves to the End Phase.",
+   "sim": "enforced",
+   "where": "SIM.act('end')"
+  },
+  {
+   "id": "6-5-3",
+   "title": "Play a card",
+   "text": "Pay the cost to play a Character or Stage, or to use an Event with [Main], from your hand.",
+   "sim": "enforced",
+   "where": "SIM.canPlay"
+  },
+  {
+   "id": "6-5-3-1",
+   "title": "What the Main Phase plays",
+   "text": "Characters, Stages, and Events marked [Main].",
+   "sim": "enforced",
+   "where": "SIM.canPlay"
+  },
+  {
+   "id": "6-5-4",
+   "title": "Activate an effect",
+   "text": "The turn player may activate [Main] and [Activate: Main] effects.",
+   "sim": "enforced",
+   "where": "SIM.act('activate')"
+  },
+  {
+   "id": "6-5-5",
+   "title": "Give DON!!",
+   "text": "Place an active DON!! from your cost area under your Leader or a Character. Do it as often as you can.",
+   "sim": "enforced",
+   "where": "SIM.giveDon"
+  },
+  {
+   "id": "6-5-5-1",
+   "title": "How to give",
+   "text": "One active DON!! from the cost area, under the Leader or a Character, still visible.",
+   "sim": "enforced",
+   "where": "SIM.giveDon"
+  },
+  {
+   "id": "6-5-5-2",
+   "title": "+1000 on your turn",
+   "text": "A Leader or Character gains 1000 power during your turn for each DON!! given to it. On the opponent's turn it gains nothing.",
+   "sim": "enforced",
+   "where": "SIM.power"
+  },
+  {
+   "id": "6-5-5-4",
+   "title": "A card that leaves",
+   "text": "When a card with given DON!! moves to another area, its DON!! go to the cost area, rested.",
+   "sim": "enforced",
+   "where": "SIM.leave"
+  },
+  {
+   "id": "6-5-6",
+   "title": "Battle",
+   "text": "Attack during the Main Phase (7).",
+   "sim": "enforced"
+  },
+  {
+   "id": "6-5-6-1",
+   "title": "No battle on a first turn",
+   "text": "Neither player can battle on their own first turn.",
+   "sim": "enforced",
+   "where": "SIM.canAttack"
+  },
+  {
+   "id": "6-6",
+   "title": "End Phase",
+   "text": "[End of Your Turn] effects resolve, then the other player's [End of Your Opponent's Turn]; each only once. Then what lasts 'this turn' ends, and the other player's turn begins.",
+   "sim": "enforced",
+   "where": "SIM.act('end'), SIM.endTurn"
+  },
+  {
+   "id": "6-6-1-1",
+   "title": "End Phase effects",
+   "text": "[End of Your Turn] and [End of Your Opponent's Turn] effects activate and resolve once each, the turn player's first, each player choosing their own order.",
+   "sim": "enforced",
+   "where": "SIM.act('end')"
+  },
+  {
+   "id": "6-6-1-1-2",
+   "title": "Whose End Phase effects first",
+   "text": "The turn player's [End of Your Turn] effects, then the other player's [End of Your Opponent's Turn] effects.",
+   "sim": "enforced",
+   "where": "SIM.act('end')"
+  },
+  {
+   "id": "6-6-1-3",
+   "title": "This turn ends",
+   "text": "Effects lasting 'during this turn' end, the turn player's first.",
+   "sim": "enforced",
+   "where": "SIM.endTurn"
+  },
+  {
+   "id": "7",
+   "title": "Attacks and battles",
+   "text": "An attack runs the Attack, Block, Counter and Damage Steps, then the battle ends.",
+   "sim": "enforced"
+  },
+  {
+   "id": "7-1",
+   "title": "Attacking",
+   "text": "In your Main Phase, rest your active Leader or an active Character to attack the opponent's Leader or one of their rested Characters. The battle then runs the Attack, Block, Counter and Damage Steps.",
+   "sim": "enforced",
+   "where": "SIM.attack"
+  },
+  {
+   "id": "7-1-1",
+   "title": "Attack Step",
+   "text": "Declare the attack by resting the attacker, choose the target, then [When Attacking] and [On Your Opponent's Attack] effects activate.",
+   "sim": "enforced",
+   "where": "SIM.act('attack')"
+  },
+  {
+   "id": "7-1-1-1",
+   "title": "The attacker rests",
+   "text": "Only an active Leader or Character attacks, and it is rested to do so.",
+   "sim": "enforced",
+   "where": "SIM.canAttack"
+  },
+  {
+   "id": "7-1-1-2",
+   "title": "The target",
+   "text": "The opponent's Leader, or one of their rested Characters.",
+   "sim": "enforced",
+   "where": "SIM.targets"
+  },
+  {
+   "id": "7-1-1-3",
+   "title": "Attack Step effects",
+   "text": "[When Attacking], 'when you attack', [On Your Opponent's Attack] and 'when attacked' effects activate.",
+   "sim": "enforced",
+   "where": "SIM.act('attack')"
+  },
+  {
+   "id": "7-1-1-4",
+   "title": "A card leaves in the Attack Step",
+   "text": "If the attacker or the target has left its area by the end of the Attack Step, skip to the end of the battle.",
+   "sim": "enforced",
+   "where": "SIM.track"
+  },
+  {
+   "id": "7-1-2",
+   "title": "Block Step",
+   "text": "The attacked player may activate one [Blocker] once in that battle; [On Block] effects then activate.",
+   "sim": "enforced",
+   "where": "SIM.blockers, SIM.block"
+  },
+  {
+   "id": "7-1-2-3",
+   "title": "A card leaves in the Block Step",
+   "text": "If the attacker or the target has left, skip to the end of the battle.",
+   "sim": "enforced",
+   "where": "SIM.track"
+  },
+  {
+   "id": "7-1-3",
+   "title": "Counter Step",
+   "text": "The attacked player may, as often as they like, trash Characters with a Counter value from hand to add that power for the battle, and pay for and use [Counter] Events.",
+   "sim": "enforced",
+   "where": "SIM.counter, SIM.playCounterEvent"
+  },
+  {
+   "id": "7-1-3-1-1",
+   "title": "Counter from hand",
+   "text": "Trash a Character with a Counter value from hand; its value is added to the Leader or 1 Character for the battle.",
+   "sim": "enforced",
+   "where": "SIM.counter"
+  },
+  {
+   "id": "7-1-3-1-2",
+   "title": "[Counter] Events",
+   "text": "Pay the Event's cost, trash it, and activate its [Counter] effect.",
+   "sim": "enforced",
+   "where": "SIM.playCounterEvent"
+  },
+  {
+   "id": "7-1-3-1-3",
+   "title": "A card leaves in the Counter Step",
+   "text": "If the attacker or the target has left, skip to the end of the battle.",
+   "sim": "enforced",
+   "where": "SIM.resolve"
+  },
+  {
+   "id": "7-1-4",
+   "title": "Damage Step",
+   "text": "If the attacker's power is equal or higher, it wins: a Leader takes 1 damage, a Character is K.O.'d. Otherwise nothing happens.",
+   "sim": "enforced",
+   "where": "SIM.resolve"
+  },
+  {
+   "id": "7-1-4-1",
+   "title": "Ties go to the attacker",
+   "text": "The attacker wins when its power is greater than or equal to the defender's.",
+   "sim": "enforced",
+   "where": "SIM.resolve"
+  },
+  {
+   "id": "7-1-4-1-1-1",
+   "title": "No Life when damage comes",
+   "text": "If the opponent has 0 Life when the damage is determined, the attacker wins the game.",
+   "sim": "enforced",
+   "where": "SIM.resolve"
+  },
+  {
+   "id": "7-1-4-1-1-2",
+   "title": "Taking the Life card",
+   "text": "With 1 or more Life, the top Life card goes to hand, or its [Trigger] is revealed and activated instead.",
+   "sim": "enforced",
+   "where": "SIM.resolve"
+  },
+  {
+   "id": "7-1-4-1-1-3",
+   "title": "Two damage",
+   "text": "With 2 or more damage ([Double Attack]), the Life step repeats that many times. At 1 Life the last card is taken and the game goes on.",
+   "sim": "enforced",
+   "where": "SIM.resolve"
+  },
+  {
+   "id": "7-1-5",
+   "title": "End of the Battle",
+   "text": "The battle ends; 'at the end of this battle' effects activate; effects lasting 'during this battle' end.",
+   "sim": "enforced",
+   "where": "SIM.endBattle"
+  },
+  {
+   "id": "8",
+   "title": "Activating and resolving effects",
+   "text": "The kinds of effect, their costs and conditions, and the order they resolve in.",
+   "sim": "enforced"
+  },
+  {
+   "id": "8-1",
+   "title": "Effects",
+   "text": "An effect is what a card's text and its cost command. 'May' and 'up to' let a player not use it; otherwise it must be used as far as possible.",
+   "sim": "enforced"
+  },
+  {
+   "id": "8-1-3-1",
+   "title": "Auto effects",
+   "text": "Activate once, by themselves, each time their timing happens: [On Play], [When Attacking], [On Block], [On K.O.], [End of Your Turn], [End of Your Opponent's Turn].",
+   "sim": "enforced",
+   "where": "SIM.offers"
+  },
+  {
+   "id": "8-1-3-1-3",
+   "title": "A card that moved",
+   "text": "An auto effect does not activate if its card moved to another area before it activated.",
+   "sim": "enforced",
+   "where": "SIM.apply (by instance)"
+  },
+  {
+   "id": "8-1-3-2",
+   "title": "Activate effects",
+   "text": "Used by the player in the Main Phase: [Activate: Main] and [Main].",
+   "sim": "enforced",
+   "where": "SIM.act('activate')"
+  },
+  {
+   "id": "8-1-3-3",
+   "title": "Permanent effects",
+   "text": "Always on while their conditions hold, such as '[DON!! x1] This Character gains +1000 power.'",
+   "sim": "partial",
+   "where": "SIM.power, SIM.kwOf, a condition in words included (ST09-001); a continuous line no template reads is kept and the board says it is the player's to apply (SIM.unapplied)"
+  },
+  {
+   "id": "8-1-3-4",
+   "title": "Replacement effects",
+   "text": "Effects that say 'instead'. The card that made the replacement first, then the turn player's, then the other player's; the same replacement never twice.",
+   "sim": "by hand"
+  },
+  {
+   "id": "8-1-3-4-4",
+   "title": "A replacement mid-effect",
+   "text": "A replacement replaces all of the processing it names; the rest of the text continues after it.",
+   "sim": "by hand"
+  },
+  {
+   "id": "8-1-4",
+   "title": "One-shot and continuous",
+   "text": "A one-shot effect finishes at once; a continuous one lasts for its stated time.",
+   "sim": "enforced",
+   "where": "SIM.mod"
+  },
+  {
+   "id": "8-2",
+   "title": "Valid and invalid effects",
+   "text": "An effect made invalid does not happen, asks no choice and takes no cost. Effects already resolved stay resolved.",
+   "sim": "by hand"
+  },
+  {
+   "id": "8-3",
+   "title": "Activation cost and conditions",
+   "text": "What comes before the colon is the activation cost, paid in order. A cost that cannot be paid in full cannot be paid at all. 'You may' costs can be declined, which declines the effect.",
+   "sim": "enforced",
+   "where": "SIM.canPay, SIM.apply"
+  },
+  {
+   "id": "8-3-1-1",
+   "title": "Several costs",
+   "text": "An activation cost of several actions is paid in order, from the first printed; once begun it is paid in full.",
+   "sim": "enforced",
+   "where": "SIM.costsPayable; act('fxskip') refused while a begun cost can be paid"
+  },
+  {
+   "id": "8-3-1-3",
+   "title": "A cost that cannot be paid",
+   "text": "If any of the activation cost cannot be paid, none of it is paid and the effect is not activated.",
+   "sim": "enforced",
+   "where": "SIM.canPay"
+  },
+  {
+   "id": "8-3-1-5",
+   "title": "The rest-DON!! symbol",
+   "text": "Rest that many active DON!! from your cost area.",
+   "sim": "enforced",
+   "where": "SIM.DO.cost_restdon; several costs in a row are paid in order and in full (SIM.costsPayable, act fxskip)"
+  },
+  {
+   "id": "8-3-1-6",
+   "title": "DON!! -X",
+   "text": "Return X DON!! from your Leader, Characters and cost area to your DON!! deck.",
+   "sim": "enforced",
+   "where": "SIM.DO.cost_returndon"
+  },
+  {
+   "id": "8-3-2",
+   "title": "Conditions",
+   "text": "[DON!! xX], [Your Turn], [Opponent's Turn] and the like must all be met; 'if' clauses too.",
+   "sim": "enforced",
+   "where": "SIM.condOk"
+  },
+  {
+   "id": "8-3-2-3",
+   "title": "[DON!! xX]",
+   "text": "Met while this card has X or more DON!! given to it.",
+   "sim": "enforced",
+   "where": "SIM.condOk"
+  },
+  {
+   "id": "8-4",
+   "title": "Activating and resolving",
+   "text": "Meet the conditions, name the effect (reveal it if from hand), pay the costs, activate, resolve. An Event is trashed first. Choices are made while resolving.",
+   "sim": "enforced",
+   "where": "SIM.act"
+  },
+  {
+   "id": "8-4-2",
+   "title": "An Event's effect",
+   "text": "Trash the Event, then carry out its effect.",
+   "sim": "enforced",
+   "where": "SIM.play"
+  },
+  {
+   "id": "8-4-4-1",
+   "title": "Choosing",
+   "text": "Choose as many as you can up to the number; with 'up to', 0 is allowed.",
+   "sim": "enforced",
+   "where": "SIM.apply"
+  },
+  {
+   "id": "8-4-5",
+   "title": "Moving to an open area",
+   "text": "Auto effects that trigger on a card moving activate only if it moved to an open area (such as [On K.O.]).",
+   "sim": "enforced"
+  },
+  {
+   "id": "8-6",
+   "title": "Order of resolution",
+   "text": "When both players' effects trigger together, the turn player's resolve first; effects triggered while resolving wait their turn in that order.",
+   "sim": "enforced",
+   "where": "SIM.queue, SIM.who"
+  },
+  {
+   "id": "8-6-2",
+   "title": "Triggers during damage",
+   "text": "Effects triggered during damage wait until all the damage is done; a [Trigger] may pause the damage to be revealed and used.",
+   "sim": "enforced",
+   "where": "SIM.act('resolve')"
+  },
+  {
+   "id": "9",
+   "title": "Rule processing",
+   "text": "What the rules do on their own the moment it happens: the defeat checks.",
+   "sim": "enforced",
+   "where": "SIM.rules"
+  },
+  {
+   "id": "9-1",
+   "title": "Rule processing",
+   "text": "Done automatically the moment its event happens, even in the middle of other actions.",
+   "sim": "enforced",
+   "where": "SIM.rules (after every act)"
+  },
+  {
+   "id": "9-2-1",
+   "title": "Defeat judgment",
+   "text": "Every player who meets a defeat condition loses; if both do, both lose.",
+   "sim": "enforced",
+   "where": "SIM.rules"
+  },
+  {
+   "id": "9-2-1-1",
+   "title": "Damage at 0 Life",
+   "text": "A Leader taking damage with 0 Life cards.",
+   "sim": "enforced",
+   "where": "SIM.resolve"
+  },
+  {
+   "id": "9-2-1-2",
+   "title": "An empty deck",
+   "text": "0 cards in the deck is a defeat at once, not only when a draw fails.",
+   "sim": "enforced",
+   "where": "SIM.rules"
+  },
+  {
+   "id": "10",
+   "title": "Keyword effects and keywords",
+   "text": "The keyword effects ([Rush], [Double Attack], [Banish], [Blocker], [Trigger], [Rush: Character], [Unblockable]) and the keywords of timing and condition.",
+   "sim": "enforced"
+  },
+  {
+   "id": "10-1-1",
+   "title": "[Rush]",
+   "text": "This Character can attack on the turn it is played.",
+   "sim": "enforced",
+   "where": "SIM.canAttack"
+  },
+  {
+   "id": "10-1-2",
+   "title": "[Double Attack]",
+   "text": "Damage this card deals to a Leader is 2.",
+   "sim": "enforced",
+   "where": "SIM.resolve"
+  },
+  {
+   "id": "10-1-3",
+   "title": "[Banish]",
+   "text": "Life cards this card's damage takes are trashed instead of going to hand, and their [Trigger] does not activate.",
+   "sim": "enforced",
+   "where": "SIM.resolve"
+  },
+  {
+   "id": "10-1-4",
+   "title": "[Blocker]",
+   "text": "When another of your cards is attacked, rest this card in the Block Step to become the new target.",
+   "sim": "enforced",
+   "where": "SIM.blockers"
+  },
+  {
+   "id": "10-1-4-1",
+   "title": "Blocking for another card",
+   "text": "A [Blocker] protects one of your other cards; it cannot block an attack on itself.",
+   "sim": "enforced",
+   "where": "SIM.blockers"
+  },
+  {
+   "id": "10-1-5",
+   "title": "[Trigger]",
+   "text": "On taking damage, reveal the Life card and use its [Trigger] instead of adding it to hand, or add it to hand without revealing. A used [Trigger] card is trashed afterwards.",
+   "sim": "enforced",
+   "where": "SIM.act('resolve'), SIM.apply; SIM.view (the other seat sees only that a [Trigger] waits; take 123)"
+  },
+  {
+   "id": "10-1-5-3",
+   "title": "After a [Trigger]",
+   "text": "The card is in no area while its [Trigger] resolves, then it is trashed unless told otherwise.",
+   "sim": "enforced",
+   "where": "SIM.apply, SIM.act('handdone')"
+  },
+  {
+   "id": "10-1-6",
+   "title": "[Rush: Character]",
+   "text": "This Character can attack Characters on the turn it is played.",
+   "sim": "enforced",
+   "where": "SIM.canAttack, SIM.targets"
+  },
+  {
+   "id": "10-1-7",
+   "title": "[Unblockable]",
+   "text": "The opponent cannot activate [Blocker] against this card's attack.",
+   "sim": "enforced",
+   "where": "SIM.blockers"
+  },
+  {
+   "id": "10-2",
+   "title": "Keywords",
+   "text": "K.O., the timings ([Activate: Main], [Main], [Counter], [When Attacking], [On Play], [End of Your Turn], [End of Your Opponent's Turn], [On Block], [On Your Opponent's Attack], [On K.O.]), the conditions ([DON!! xX], [Your Turn], [Opponent's Turn]), DON!! -X, [Once Per Turn] and Trash.",
+   "sim": "enforced"
+  },
+  {
+   "id": "10-2-1",
+   "title": "K.O.",
+   "text": "A Character trashed by losing a battle or by an effect that says K.O. [On K.O.] and 'cannot be K.O.'d' apply only to those; trashed any other way is not a K.O.",
+   "sim": "enforced",
+   "where": "SIM.resolve, SIM.DO.ko"
+  },
+  {
+   "id": "10-2-2",
+   "title": "[Activate: Main]",
+   "text": "Can be activated in your Main Phase, but not during a battle.",
+   "sim": "enforced",
+   "where": "SIM.act('activate')"
+  },
+  {
+   "id": "10-2-3",
+   "title": "[Main]",
+   "text": "Found on Events: used from hand in your Main Phase, not during a battle.",
+   "sim": "enforced",
+   "where": "SIM.canPlay"
+  },
+  {
+   "id": "10-2-4",
+   "title": "[Counter]",
+   "text": "Found on Events: used from hand in the Counter Step when your card is attacked. An effect cannot use it unless it says 'activate [Counter]'.",
+   "sim": "enforced",
+   "where": "SIM.counterEvents"
+  },
+  {
+   "id": "10-2-5",
+   "title": "[When Attacking]",
+   "text": "Activates when you declare an attack in your Attack Step.",
+   "sim": "enforced",
+   "where": "SIM.act('attack')"
+  },
+  {
+   "id": "10-2-6",
+   "title": "[On Play]",
+   "text": "Activates when the card is played.",
+   "sim": "enforced",
+   "where": "SIM.act('play')"
+  },
+  {
+   "id": "10-2-7",
+   "title": "[End of Your Turn]",
+   "text": "Activates in your End Phase.",
+   "sim": "enforced",
+   "where": "SIM.act('end')"
+  },
+  {
+   "id": "10-2-8",
+   "title": "[End of Your Opponent's Turn]",
+   "text": "Activates in your opponent's End Phase.",
+   "sim": "by hand",
+   "where": "SIM.act('end') offers it"
+  },
+  {
+   "id": "10-2-9",
+   "title": "[DON!! xX]",
+   "text": "A condition met while this card has X or more DON!! given to it.",
+   "sim": "enforced",
+   "where": "SIM.condOk"
+  },
+  {
+   "id": "10-2-10",
+   "title": "DON!! -X",
+   "text": "Return X DON!! from your Leader, Characters and cost area to your DON!! deck.",
+   "sim": "enforced",
+   "where": "SIM.DO.cost_returndon"
+  },
+  {
+   "id": "10-2-11",
+   "title": "[Your Turn]",
+   "text": "A condition met during your turn.",
+   "sim": "enforced",
+   "where": "SIM.condOk"
+  },
+  {
+   "id": "10-2-12",
+   "title": "[Opponent's Turn]",
+   "text": "A condition met during your opponent's turn.",
+   "sim": "enforced",
+   "where": "SIM.condOk"
+  },
+  {
+   "id": "10-2-13",
+   "title": "[Once Per Turn]",
+   "text": "The effect can be activated and resolved once a turn, once for each card that has it. A card that leaves the field and returns is a new card and may use it again. If its cost fails mid-payment, it is still used.",
+   "sim": "enforced",
+   "where": "SIM.optKey, SIM.apply, SIM.act"
+  },
+  {
+   "id": "10-2-13-4",
+   "title": "A card that returns",
+   "text": "A card that leaves the field after using its [Once Per Turn] effect and comes back is a different card and may use it again.",
+   "sim": "enforced",
+   "where": "SIM.optKey"
+  },
+  {
+   "id": "10-2-14",
+   "title": "Trash",
+   "text": "Choose a card from the hand and place it in the trash.",
+   "sim": "enforced"
+  },
+  {
+   "id": "10-2-15",
+   "title": "[On Block]",
+   "text": "Activates in the Block Step when you activate [Blocker].",
+   "sim": "enforced",
+   "where": "SIM.act('block')"
+  },
+  {
+   "id": "10-2-16",
+   "title": "[On Your Opponent's Attack]",
+   "text": "Activates when your opponent declares an attack, after [When Attacking] and the other Attack Step effects.",
+   "sim": "by hand",
+   "where": "SIM.act('attack') offers it"
+  },
+  {
+   "id": "10-2-17",
+   "title": "[On K.O.]",
+   "text": "When the card is K.O.'d on the field, the effect is activated there if its conditions are met; the card is trashed and the effect resolves from the trash.",
+   "sim": "enforced",
+   "where": "SIM.act('resolve'), SIM.DO.ko"
+  },
+  {
+   "id": "11-1",
+   "title": "Infinite loops",
+   "text": "If nobody can stop a loop, the game is a draw. If one player can, they say how many times it runs. If both can, the smaller number runs.",
+   "sim": "not modelled"
+  },
+  {
+   "id": "11-2",
+   "title": "Revealing cards",
+   "text": "A card moved from one secret area to another is always revealed.",
+   "sim": "by hand"
+  },
+  {
+   "id": "11-3",
+   "title": "Looking at secret areas",
+   "text": "Only the effect's player looks, the cards stay in their area while looked at, and cards not moved go back as they were.",
+   "sim": "enforced",
+   "where": "SIM.DO.search, SIM.act('handdone')"
+  },
+  {
+   "id": "11-3-2",
+   "title": "Looked-at cards stay put",
+   "text": "Cards being looked at remain in their area while looked at (a deck being searched is not empty).",
+   "sim": "enforced",
+   "where": "SIM.rules"
+  },
+  {
+   "id": "11-3-3",
+   "title": "Back as they were",
+   "text": "After looking, cards the text does not move go back to their area as they were.",
+   "sim": "enforced",
+   "where": "SIM.act('handdone')"
+  }
+ ]
+}

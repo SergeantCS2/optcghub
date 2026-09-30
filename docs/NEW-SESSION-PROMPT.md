@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 121.* Paste the block between the rules into a new session
+*Current as of take 126.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 121 takes by previous sessions. The repo is
+built across 126 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -52,13 +52,24 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
 - **UI design and refinement are a separate UI/UX session's (the owner,
   take 104).** Change the UI only when something is broken or off course,
   and say so in the HANDOFF; refinement, polish and layout are that
-  session's, not yours.
+  session's, not yours. The Sim's board is the exception: the owner handed
+  its UI pass to the session at take 124.
 - **The look, before a take ships (A40, take 99):** `node tools/look.mjs N`
   opens the built app in the VM's own Chromium and writes a PNG per step
   under `look/`. Read every PNG yourself, send them to the owner with one
   line of findings each, and mark the PR ready only after the owner's input
   or "go". Its two sizes are the Fold's, MEASURED (take 115): the cover 411 x
-  960 and the open screen 749 x 832, both at 2.625. The step list for the take lives in `tools/look/steps.mjs`.
+  960 and the open screen 749 x 832, both at 2.625. The step list for the take lives in `tools/look/steps.mjs`;
+  since take 124 a list may add a phone (360 x 780) and a tablet (1280 x
+  800) from the look's `SIZES` -- common sizes, INFERRED, not the owner's.
+- **Testing the Sim (the owner, take 124):** "Test all starter decks and as
+  many random/arbitrary decks (that are still legal), after every turn ends
+  audit all moves against the rules and all card they played." A take that
+  touches the Sim runs self-play's sweep before it ships -- thousands of games,
+  every pairing of the ready-made decks and random legal decks, both policies,
+  and two apps -- under the rulebook (`tools/lib/rulebook.mjs`, the auditor's
+  own model of the game), and fixes what it names, each fix with a check. The
+  gate runs a sample of the same (SIM-UI §7).
 - A note written after a take's PR has merged rides the next take's PR from
   the same branch (PROTOCOL §6 step 6) — never a PR of its own.
 - Seal with `bash tools/seal.sh --gate-only`, bare, never piped (landmine
@@ -84,6 +95,103 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   them in order with his results (his rule, take 94).
 
 **What is in flight when you arrive:**
+
+- **Take 126 -- the host's "Image Coming Soon" refused at the source**
+  (AGENDA A41; HANDOFF take 126). TCGplayer serves one placeholder picture,
+  200 OK, for 22 card printings and one sealed product; hashed once, it stayed
+  their picture, because the hash step never fetches a hashed printing again
+  (landmine 240). `tools/hashes.py` now judges a picture the night it is
+  fetched: a card picture that is not card-shaped, or any picture within 6
+  bits of a placeholder hash on file, is a miss, retried every night with the
+  other misses; the placeholder hashes are learned, never typed. The build
+  ships those printings no URL, so every screen draws them as it draws a card
+  with no picture; `SIM.placeholderPic` is gone with the data it read. Then
+  the owner's word mid-take, on take 124's table: "ensure we get as many
+  pictures as possible" -- `SIM.picOf` draws a card with no picture of its own
+  with another printing's of the same card, the build's choice (`lend`: the
+  oldest, a real scan more often than a reprint's SAMPLE image; 194 of 257;
+  the 63 left are EB05's and OP18's, not yet photographed), for the table
+  only, since one card's printings hold different illustrations (landmine
+  241); and the app's picture hashes turned out rounded by JSON.parse
+  (landmine 242, its fix a take of its own); "For don ... the DON
+  japanese ... a black border" -- every DON!! card on the table reads ドン!!
+  (`g-donjp`, the icon's own strokes) in a black frame; and "make it more
+  human" -- a line's mark says who plays it ("Not checked yet", "Yours to
+  play", nothing on a proven line). Take 125, another session's, was open
+  alongside it and merged first (PR #50); this take took `main` in. Its
+  landmines are 233-239, this take's 240-242.
+
+- **Take 125 -- the scanner reads the number where the recogniser finds it**
+  (AGENDA A2's take-125 section; HANDOFF take 125). Take 123's card outline
+  was the whole frame on 14 of the owner's 15 photographs and its stages read
+  0 of them (landmine 233); the whole view now goes to ML Kit, the number is
+  picked out of its lines on a card upright in the look and in the view and
+  not contradicted by its own name, through three looks in turn (cards are
+  scanned upright), and the number
+  decided is held while it stays in view (landmines 233-238). 23 of 29 of the
+  owner's upright frames right, 0 wrong, with a camera-text reader standing in for ML
+  Kit. The stages are `src/scan.js`. It also mends the backups: after the
+  switch to Play every backup failed on a file the uninstalled sideload made
+  (landmine 239); each file is now written under a name this install owns, and
+  a failure keeps its reason. It carries take 124, merged into its
+  branch at the owner's word. **Next, the owner's:** a scan on the Fold and the
+  HANDOFF's questions. **Yours after it:** the printing from the picture (A2).
+
+- **Take 124 -- the table** (AGENDA A23; HANDOFF take 124). The owner handed
+  the Sim's UI pass to the session. An audit of take 123 came first: a
+  battle's result named the app's Life card to the human past the view (the
+  board painted what `act()` returned), the log spoke in engine codes and
+  "You ends", the app's turn ran in one tap, the tap handler re-derived
+  legality and the painter guard read a list -- each fixed with a check
+  watched failing on take 123's build. Then the board as a table: the playmat
+  of hot-linked pictures, both halves mirrored, a tap for a card's legal
+  moves, targets lit on the table, the effect panel, the zoom, the log,
+  motion, the app's moves a beat at a time; the game fills the screen, Leave
+  forfeits and goes back, and the card backs are the icon's (`g-cardart`,
+  landmine 30's exception extended on the owner's word) in the game's colours
+  -- a deck's blue, a Leader's red, a DON!! card's white in black -- and the
+  hand takes all the screen left to it. On the owner's testing rule the
+  rulebook -- a second model of the game, from the rules -- checks every move
+  of self-play over every pairing of the ready-made decks and random legal
+  decks; with it the take found nine faults in the engine (an automatic
+  effect could be declined, a used [Trigger] kept, looked-at cards left out of
+  the deck, and five more) and fixed each with a check. The PR's first check
+  met TCGCSV's rename of every starter deck ("ST-31: Starter Deck 31 ...") and
+  Releases' fold came apart; a starter deck is now known by its code, ST and a
+  number (landmine 231). Then the owner's fourth word ("The sim should tell
+  the player what the next action is"): the band says what the turn's start
+  did, the dock says the next move or that only End turn is left, End turn
+  asks while an attack, a card to play or an ability is left, and a by-hand
+  line is declined only where the rules let a line be -- no Skip on an [On
+  Play] that must happen. `docs/SIM-UI.md` §7 and §8; landmines 225-232.
+  **Next, the owner's:** the look on the Fold (the
+  pace, the vibration, the long press, the fit) and his word on the card
+  back. **Yours after it:** HANDOFF take 124's DEFERRED -- the host's
+  placeholder across the app was take 126's -- then A23's tail, one mechanism
+  per take, each proven in `tools/cards/`.
+
+- **Take 123 -- the Sim ready for the UI pass** (AGENDA A23; HANDOFF take
+  123). `SIM.view(seat)` is everything a board draws and nothing its seat may
+  not see: the other hand, both Lives and both decks are counts, a look, an
+  unused [Trigger], an effect's choices and the legal moves go to the seat
+  deciding, and the log names no card that moved unrevealed -- kept by the
+  engine, not the screen. The board draws from it alone and moves only
+  through `SIM.act`; smoke fails a painter that reads the engine or a view
+  that leaks, and self-play audits both seats' views after every move.
+  `docs/SIM-UI.md` is the contract. Landmines 223-224. Merged (PR #48);
+  take 124 built the table on it. D18 (two phones) is the owner's to call.
+
+- **Take 122 -- the Sim's engine, on the owner's word the priority** (AGENDA
+  A23's take-122 section; HANDOFF take 122 has the whole-Sim review and every
+  measurement). The engine is `src/sim.js`; every move is one `SIM.act`, a
+  transaction; the rules are v1.2.1 behind a Rules button with search and
+  Check for updates on every Prep & Play screen; card proofs live in
+  `tools/cards/` and run on the shipped app; `tools/selfplay.mjs` plays the
+  Sim against itself (and two copies of it against each other) with an
+  auditor after every move; `tools/wording.py` finds the wording one
+  template away. The gate runs the proofs, a self-play sample both ways, two
+  apps, and the auditor's planted faults. Landmines 212-222. Merged (PR
+  #47); take 123 followed it.
 
 - **Take 121 -- the store-linked AdMob app, and the groundwork for real
   ads.** The build names `~9519036366` (the AdMob app linked to Play;
@@ -270,13 +378,14 @@ same take — the workflow files included, through the PR.
 hot-linked, display-only, and never drawn from scratch (landmines 26, 28;
 the owner's ruling at A42); put a character or a publisher mark in the
 app's name, icon, splash or store listing (landmines 30, 31; A16) -- the one
-exception is the icon card's printed emblem, the owner's pick at take 113; give
+exception is the icon card's printed emblem, the owner's pick at take 113,
+and the same card as the Sim's card back (take 124, his word); give
 the icon a themed (monochrome) variant -- the owner wants the one standard
 icon (take 113, landmine 171); gate scanning (A17); multiply condition into a price (PROTOCOL §10);
 send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 122" and begin with PROTOCOL §0.
+Say "take 126" and begin with PROTOCOL §0.
 
 ---

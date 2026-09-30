@@ -1,0 +1,84 @@
+{
+ "num": "ST01-013",
+ "name": "Roronoa Zoro",
+ "text": "[DON!! x1] This Character gains +1000 power.",
+ "text_fp": "e301aaf065d70078",
+ "fx_fp": "c435693c6d2d8a2a",
+ "reading": [
+  {
+   "t": "static",
+   "if": [
+    {
+     "c": "donx",
+     "n": 1
+    }
+   ],
+   "do": [
+    {
+     "a": "selfpower",
+     "n": 1000,
+     "dur": "static"
+    }
+   ],
+   "raw": "[DON!! x1] This Character gains +1000 power."
+  }
+ ],
+ "rules": [
+  "8-3-2-3",
+  "10-2-9",
+  "6-5-5-2",
+  "8-1-3-3"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "with one DON!! given, +1000 -- and the DON!!'s own +1000 on its turn",
+   "board": {
+    "p0": {
+     "chars": [
+      {
+       "card": "@",
+       "don": 1
+      }
+     ]
+    }
+   },
+   "expect": {
+    "power.p0.0": 7000
+   }
+  },
+  {
+   "name": "on the opponent's turn the DON!! adds nothing (§6-5-5-2), the [DON!! x1] +1000 still holds",
+   "board": {
+    "active": 1,
+    "p0": {
+     "chars": [
+      {
+       "card": "@",
+       "don": 1
+      }
+     ]
+    }
+   },
+   "expect": {
+    "power.p0.0": 6000
+   }
+  },
+  {
+   "name": "no DON!!, no +1000 (never always on)",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "chars": [
+      {
+       "card": "@"
+      }
+     ]
+    }
+   },
+   "expect": {
+    "power.p0.0": 5000
+   }
+  }
+ ]
+}

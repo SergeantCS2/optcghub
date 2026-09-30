@@ -1,0 +1,203 @@
+{
+ "num": "ST21-001",
+ "name": "Monkey.D.Luffy",
+ "text": "[DON!! x1] [Activate: Main] [Once Per Turn] Give up to 2 rested DON!! cards to 1 of your Characters.",
+ "text_fp": "e037b590977df9ff",
+ "fx_fp": "be70c6d74146c5a7",
+ "reading": [
+  {
+   "t": "main",
+   "if": [
+    {
+     "c": "donx",
+     "n": 1
+    },
+    {
+     "c": "opt"
+    }
+   ],
+   "do": [
+    {
+     "a": "givedon",
+     "n": 2,
+     "who": "chars",
+     "upto": true
+    }
+   ],
+   "raw": "[DON!! x1] [Activate: Main] [Once Per Turn] Give up to 2 rested DON!! cards to 1 of your Characters."
+  }
+ ],
+ "rules": [
+  "10-2-2",
+  "10-2-9",
+  "10-2-13",
+  "6-5-5-1",
+  "4-8"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "with a DON!! given, two rested DON!! to one of your Characters",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "leaderDon": 1,
+     "chars": [
+      {
+       "card": "ST01-003"
+      }
+     ],
+     "don": {
+      "rested": 2
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": "m0"
+    }
+   ],
+   "expect": {
+    "p0.chars.0.don": 2,
+    "p0.don.rested": 0,
+    "power.p0.0": 5000
+   }
+  },
+  {
+   "name": "with one rested, one moves",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "leaderDon": 1,
+     "chars": [
+      {
+       "card": "ST01-003"
+      }
+     ],
+     "don": {
+      "rested": 1,
+      "active": 2
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": "m0"
+    }
+   ],
+   "expect": {
+    "p0.chars.0.don": 1,
+    "p0.don.rested": 0,
+    "p0.don.active": 2
+   }
+  },
+  {
+   "name": "never to the Leader",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "leaderDon": 1,
+     "chars": [
+      {
+       "card": "ST01-003"
+      }
+     ],
+     "don": {
+      "rested": 2
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": "L",
+     "refused": "not a legal target"
+    }
+   ],
+   "expect": {
+    "p0.leader.don": 1,
+    "p0.don.rested": 2
+   }
+  },
+  {
+   "name": "not without a DON!! given to the Leader",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "chars": [
+      {
+       "card": "ST01-003"
+      }
+     ],
+     "don": {
+      "rested": 2
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader",
+     "refused": "condition is not met"
+    }
+   ],
+   "expect": {
+    "p0.don.rested": 2
+   }
+  },
+  {
+   "name": "once per turn",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "leaderDon": 1,
+     "chars": [
+      {
+       "card": "ST01-003"
+      }
+     ],
+     "don": {
+      "rested": 4
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": "m0"
+    },
+    {
+     "t": "activate",
+     "ref": "leader",
+     "refused": "once per turn"
+    }
+   ],
+   "expect": {
+    "p0.chars.0.don": 2,
+    "p0.don.rested": 2
+   }
+  }
+ ],
+ "note": "Take 122: with a DON!! given to the Leader, up to 2 rested DON!! to one of your Characters -- never to the Leader."
+}

@@ -1,0 +1,248 @@
+{
+ "num": "ST02-001",
+ "name": "Eustass\"Captain\"Kid",
+ "text": "[Activate: Main] [Once Per Turn] (3) (You may rest the specified number of DON!! cards in your cost area.) You may trash 1 card from your hand: Set this Leader as active.",
+ "text_fp": "a3926ea0402629c7",
+ "fx_fp": "dbdde7eba311e9fb",
+ "reading": [
+  {
+   "t": "main",
+   "if": [
+    {
+     "c": "opt"
+    }
+   ],
+   "do": [
+    {
+     "a": "cost_restdon",
+     "n": 3
+    },
+    {
+     "a": "cost_trashhand",
+     "n": 1
+    },
+    {
+     "a": "selfactive"
+    }
+   ],
+   "raw": "[Activate: Main] [Once Per Turn] (3) (You may rest the specified number of DON!! cards in your cost area.) You may trash 1 card from your hand: Set this Leader as active."
+  }
+ ],
+ "rules": [
+  "10-2-2",
+  "10-2-13",
+  "8-3-1-1",
+  "8-3-1-3",
+  "8-3-1-5"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "rests 3 active DON!!, trashes 1 card, and the Leader is active again",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "leaderRested": true,
+     "don": {
+      "active": 3
+     },
+     "hand": [
+      "ST01-003"
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader",
+     "expect": {
+      "queue": 1
+     }
+    },
+    {
+     "t": "fx",
+     "target": null,
+     "expect": {
+      "p0.don.active": 0,
+      "p0.don.rested": 3
+     }
+    },
+    {
+     "t": "fx",
+     "target": "h0"
+    },
+    {
+     "t": "fx",
+     "target": null
+    }
+   ],
+   "expect": {
+    "p0.hand": 0,
+    "p0.trash": 1,
+    "p0.leader.rested": false,
+    "queue": 0
+   }
+  },
+  {
+   "name": "declined before any cost is paid: nothing moves",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "leaderRested": true,
+     "don": {
+      "active": 3
+     },
+     "hand": [
+      "ST01-003"
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fxskip"
+    }
+   ],
+   "expect": {
+    "p0.don.active": 3,
+    "p0.hand": 1,
+    "p0.leader.rested": true,
+    "queue": 0
+   }
+  },
+  {
+   "name": "once the DON!! are rested, the card from hand is owed: no skipping out halfway",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "leaderRested": true,
+     "don": {
+      "active": 3
+     },
+     "hand": [
+      "ST01-003"
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "fxskip",
+     "refused": "paid in full"
+    }
+   ],
+   "expect": {
+    "queue": 1,
+    "p0.don.rested": 3,
+    "legal.fxskip": 0
+   }
+  },
+  {
+   "name": "not with 2 active DON!!: the whole cost cannot be paid, so none of it is",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "leaderRested": true,
+     "don": {
+      "active": 2
+     },
+     "hand": [
+      "ST01-003"
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader",
+     "refused": "cost cannot be paid"
+    }
+   ],
+   "expect": {
+    "p0.don.active": 2,
+    "p0.hand": 1,
+    "queue": 0
+   }
+  },
+  {
+   "name": "not with an empty hand",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "leaderRested": true,
+     "don": {
+      "active": 3
+     }
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader",
+     "refused": "cost cannot be paid"
+    }
+   ],
+   "expect": {
+    "p0.don.active": 3
+   }
+  },
+  {
+   "name": "once per turn",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "leaderRested": true,
+     "don": {
+      "active": 6
+     },
+     "hand": [
+      "ST01-003",
+      "ST01-003"
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "activate",
+     "ref": "leader"
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "fx",
+     "target": "h0"
+    },
+    {
+     "t": "fx",
+     "target": null
+    },
+    {
+     "t": "activate",
+     "ref": "leader",
+     "refused": "once per turn"
+    }
+   ],
+   "expect": {
+    "p0.don.active": 3,
+    "p0.hand": 1
+   }
+  }
+ ],
+ "note": "Take 122: two costs in a row -- the rest-DON!! symbol, then a card from hand -- paid in order and in full once begun; then this Leader is set active."
+}

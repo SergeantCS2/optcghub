@@ -1,0 +1,160 @@
+{
+ "num": "ST12-001",
+ "name": "Roronoa Zoro & Sanji",
+ "text": "[DON!! x1][When Attacking][Once Per Turn] You may return 1 of your Characters with a cost of 2 or more to the owner's hand: Set up to 1 of your Characters with 7000 power or less as active.",
+ "text_fp": "a48b6acdae96d6f1",
+ "fx_fp": "97d170e1550eee4a",
+ "reading": [
+  {
+   "t": "attack",
+   "if": [
+    {
+     "c": "donx",
+     "n": 1
+    },
+    {
+     "c": "opt"
+    }
+   ],
+   "do": [],
+   "hand": true,
+   "raw": "[DON!! x1][When Attacking][Once Per Turn] You may return 1 of your Characters with a cost of 2 or more to the owner's hand: Set up to 1 of your Characters with 7000 power or less as active."
+  }
+ ],
+ "rules": [
+  "10-2-5",
+  "10-2-9",
+  "10-2-13"
+ ],
+ "verdict": "proven",
+ "scenarios": [
+  {
+   "name": "attacking with a DON!! given: one of your Characters to hand, then one of yours set active",
+   "board": {
+    "p0": {
+     "leader": "@",
+     "leaderDon": 1,
+     "chars": [
+      {
+       "card": "OP01-012"
+      },
+      {
+       "card": "ST01-003",
+       "rested": true
+      }
+     ]
+    },
+    "p1": {
+     "chars": [
+      {
+       "card": "ST01-003"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "attack",
+     "ref": "leader",
+     "target": "leader",
+     "expect": {
+      "queue": 1
+     }
+    },
+    {
+     "t": "fxhand"
+    },
+    {
+     "t": "hand",
+     "op": "tohand",
+     "side": 0,
+     "k": 0
+    },
+    {
+     "t": "hand",
+     "op": "active",
+     "side": 0,
+     "ref": 0
+    },
+    {
+     "t": "handdone"
+    }
+   ],
+   "expect": {
+    "p0.chars": 1,
+    "p0.chars.0.rested": false,
+    "p0.hand": 1,
+    "p1.chars": 1
+   }
+  },
+  {
+   "name": "never the opponent's Character to hand",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "leaderDon": 1,
+     "chars": [
+      {
+       "card": "OP01-012"
+      }
+     ]
+    },
+    "p1": {
+     "chars": [
+      {
+       "card": "ST01-003"
+      }
+     ]
+    }
+   },
+   "do": [
+    {
+     "t": "attack",
+     "ref": "leader",
+     "target": "leader"
+    },
+    {
+     "t": "fxhand"
+    },
+    {
+     "t": "hand",
+     "op": "tohand",
+     "side": 1,
+     "k": 0,
+     "refused": "not a move this line names"
+    }
+   ],
+   "expect": {
+    "p1.chars": 1,
+    "p1.hand": 0
+   }
+  },
+  {
+   "name": "not without a DON!! given",
+   "must_not": true,
+   "board": {
+    "p0": {
+     "leader": "@",
+     "chars": [
+      {
+       "card": "OP01-012"
+      }
+     ]
+    },
+    "p1": {}
+   },
+   "do": [
+    {
+     "t": "attack",
+     "ref": "leader",
+     "target": "leader"
+    }
+   ],
+   "expect": {
+    "queue": 0
+   }
+  }
+ ],
+ "note": "By hand (take 122): one of YOUR Characters to hand, one of yours set active -- the tray used to offer the opponent's Characters too."
+}

@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 121.*
+*Current as of take 126.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -224,6 +224,37 @@ Start here. Do not read top to bottom.
 | AdMob "couldn't verify" the app; app-ads.txt not found, or "details don't match" | 209 |
 | AdMob's app for the build says "Add store"; the store-linked app is another ID | 210 |
 | The MAX ad grants a deck save and MAX stays shut; a reward lands on the wrong kind | 211 |
+| The Sim lets a player draw, add DON!! or add Life without limit | 212 |
+| A [Once Per Turn] effect applies twice; tapping its button again queues another copy | 213 |
+| The Sim refuses a play the rules allow (a sixth Character, a second Stage) | 214 |
+| Two copies of one game, fed the same moves, disagree | 215 |
+| A refused move leaves a change behind | 216 |
+| A card's effect or keyword is missing though its text has it | 217 |
+| A card that worked by hand has no way to be played after a fix | 218 |
+| A `\uXXXX` in new code became the character itself | 219 |
+| The Sim offers a choice or a cost that it then refuses | 220 |
+| A test that passed for many takes fails after an unrelated change | 221 |
+| A proof binds a printing no deck deals | 222 |
+| A privacy check names a card the other seat may see | 223 |
+| The other seat learns a card that moved unrevealed | 224 |
+| A board names a card its seat may not see, and the view is clean | 225 |
+| A card's picture reads "Image Coming Soon" | 226, 240 |
+| A self-play sweep of thousands of games is clean and the engine still breaks the rules | 227 |
+| A check's verdict is `undefined`, and the thing it checks passes | 228 |
+| A row of cards sized to fit breaks a card early onto the next row | 229 |
+| A browser test taps a card and another card answers | 230 |
+| Rows the app folded come apart with no code change; a check finds "0 decks" | 231 |
+| A planted fault goes unnamed after a change that did not touch its check | 232 |
+| Scanner reads nothing, or takes 10-20 s, on a sleeve, toploader, binder or light ground | **233** |
+| The same card is counted again while it stays in view | 234, 16 |
+| A scan names the card next to the one in hand | 235 |
+| Two reads agree on the wrong number | 236 |
+| An OCR measurement on the VM says the camera approach cannot work | 237 |
+| The look hangs at a scanner step | 238 |
+| "Last backup: Failed" on every backup, after a reinstall or the switch to Play | 239 |
+| A card's picture is wrong for good although the host has the right one, or a wrong picture never leaves | 240 |
+| A card is shown with another printing's picture: the right card, the wrong illustration | 241 |
+| A picture hash compared in the app differs from the pipeline's by a few bits | 242 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -363,6 +394,7 @@ the holder's edge is the higher-contrast one. Sleeved and toploadered cards must
 be in the Phase 0 sample; testing on loose base cards produces a false-positive
 feasibility result. The owner's most valuable card is in a toploader in his own
 screenshots.
+*Take 125:* the outline no longer gates the read -- the number is found by the recogniser wherever it is (landmine 233), so a card in a toploader is read; its outline is still not believed there, so no star is looked for and its photo is the view at a card's shape.
 
 **15. Bench light is not shop light.** Every accuracy figure carries the lighting
 it was measured under. A number from a desk lamp is not evidence about a card
@@ -372,6 +404,7 @@ shop table or a convention hall.
 should produce one row with quantity 4, with a visible `×4` badge so a runaway
 double-count is catchable. An 800 ms cooldown after each accept stops the same
 card being counted twice while the hand moves.
+*Take 125:* the 800 ms cooldown was never set (landmine 234). The number decided is now held while it stays in view and let go after three captures that do not read it; a playset still counts four as the hand swaps the cards.
 
 **17. The scan loop is the product; 1.5 s per card is the budget.** If bulk
 scanning is slower than typing card numbers, the feature has failed and the
@@ -420,6 +453,7 @@ label occlusion, card recessed behind thick acrylic. They also have their own
 pricing that TCGCSV does not carry. Manual entry with grader, grade and cert
 number; consider reading the cert barcode later. Do not let the scanner attempt
 them and produce a plausible wrong answer.
+*Take 125, at the owner's word (he asked for slabs to scan):* a slabbed card's number is read like any card's and it enters the batch ungraded; the grader, grade and cert are the collector's to set on the card's page. A number on the label sits above the card and so, with the slab filling the view, in its top quarter, where it is not taken (INFERRED). Reading the label stays deferred, and no slab photograph has been measured (UNKNOWN).
 
 **26. Card art is copyrighted and this app never hosts it.** Bandai, Shueisha,
 Toei and Viz own it. The pipeline downloads images inside the CI runner, computes
@@ -471,6 +505,11 @@ emblem only: the icon carries Bandai's printed card-back emblem at the
 owner's word (D7), picked by the owner, uploaded and live on Play. The name
 and the listing text are unchanged. The own-rose swap in
 `design/d7-icons/SHIP.md` is the fallback.)*
+*(Take 124, the owner's word: the Sim's card backs are the icon's card back --
+"as close to real card backs as possible, similar to the unofficial OPTCG SIM and
+even our Google play ICON". The emblem is lifted from `assets/icon.svg` into the
+sprite (`g-cardart`) and drawn on every card back of the table: the icon's
+exception, extended, with its risk (31). The own-rose swap covers it too.)*
 
 **31. Play IP complaints suspend first and appeal after.** *(Take 13: the
 "do not monetise" guidance below is overtaken by A17. The posture with rewarded
@@ -2787,6 +2826,320 @@ reward event read `'deck'` and granted a deck save, and MAX never opened (take
 waits on `show()`, and `onRewardedVideoAdFailedToShow` clears it. Read the
 native source, not only `definitions.d.ts`, when an order matters (landmine 73
 read the types).
+
+**212. A by-hand escape with no bounds is a second rules engine that enforces
+nothing.** The Sim's row under the hand (*Draw*, *+1 DON!!*, *Life → hand*,
+*+1 Life*) and the tray's *Set active* existed from take 46 so a player could
+act out an effect the app does not run. None had a limit, a phase, a card or a
+log line, so any deck could draw itself out, take all ten DON!! on turn one,
+or attack again and again, and the log never showed it. The owner found it
+with the first ready-made deck (take 122). A by-hand effect is still a card's
+effect: it is offered at that card's timing, under its Once Per Turn, with
+only the moves its line can need, each logged "by hand for <card>", and rule
+processing runs after every one.
+
+**213. [Once Per Turn] marked when applied and keyed on a row position.** The
+engine checked the mark when it OFFERED an effect and set it when the first
+step was APPLIED, so a second tap on Main before the first resolved queued a
+second copy, and both applied. The mark was keyed on the Character's index in
+the row, so a card leaving play moved every card after it onto an unmarked key
+(the record said "per card instance" from take 51; the code never was). §10-2-13:
+once per card, per turn. The mark is set when the effect is activated, keyed on
+the card's instance id (the Leader has one too), and checked again at apply.
+Found by the owner (take 122); the self-play auditor counts uses on its own.
+
+**214. A refusal can break a rule as surely as a permission.** "Five Characters
+already -- K.O. or trash one first" read as caution and was wrong for 76 takes:
+§3-7-6-1 lets a player with five trash one (a rule process, so no [On K.O.])
+and play the new one, and §3-8-5-1 does the same for a Stage. Every refusal
+the engine prints cites a section; the citation is checked against the rules'
+own text (the digest behind the Rules button), not against a memory of it. *Take 124:* it read a comment's "(SIM-UI §4)" as a citation of
+section 4 and stopped the build; the Sim's comments name the contract's parts in words.
+
+**215. A read that writes makes two copies of one game disagree.** `legal()`
+and `blockers()` found the battle's cards through `track()`, which stored
+where they were now -- so asking what was legal moved the battle's refs. One
+app never noticed; two apps fed the same moves (take 122's self-play,
+`--two-apps`, what two phones will do) held different games within a few
+hundred moves. A read is pure (`locate()`); only a move writes (`track()`), and
+the self-play compares both copies after every move.
+
+**216. A refusal that has already written is a permission in disguise.** A
+move could mark Once Per Turn, shift the effect queue or duplicate a card and
+THEN meet the check that refused it; the refusal was returned and the change
+stayed. Found by chaos self-play, which sends moves the engine must refuse and
+compares the game before and after. `SIM.act` is a transaction: a snapshot
+before, restored on any refusal, and the move is not recorded. The restore
+writes into the objects the game already has, so a caller holding `SIM.g` or a
+player still holds the game.
+
+**217. One tag, many spellings; two effects on one line.** The catalogue
+writes `[Activate:Main]` on 417 lines, `[DON!!x1]`, `[DON!! X1]`, `[On play]`,
+`[End of your Turn]`, and often runs two effects together (`... during this
+battle. [Trigger] Play this card.`). A parser keyed on one spelling and one
+effect per line never saw those effects -- ST01-002's [Trigger] was missing
+from the keywords as well as the effects. Every reader reads a tag through
+`canon_tag()` and a line through `lines_of()` (`SIM.lines()` in the app, which
+the card proofs cross-check); `tools/wording.py` lists any tag it does not know.
+
+**218. An escape hatch stands in for more than its bug.** Removing the Sim's
+free row (landmine 212) also removed the only way to act out two Leaders whose
+lines have no tag timing: ST08-001's "When a Character is K.O.'d" and ST09-001's
+continuous +1000 with a condition in words. Before removing a fallback, list
+what used it; here the review found them and scripted both, and a continuous
+line no template reads is now kept and the board says it is the player's.
+
+**219. The file tools write a `\uXXXX` escape as its character.** Text given to
+the session's Write and Edit tools has an escape (`\u` then `2014`) turned
+into the dash itself, while the shipped script keeps escapes (smoke reads the
+DON!! pips' escape in the source; the scrubber reads the source). This entry
+was bitten while it was written. An edit whose old text contains an
+escape keeps the new text's escapes as written. After any edit through those
+tools, run a pass that puts the escapes back in the lines the branch added --
+inside `<script>` only: the pass also turned the middle dot in the Sim's
+subtitle markup into its six-character escape, shown as text, and smoke's
+source check caught it. *Take 124:* bitten again on the first engine edit (an em dash in a
+log line); the pass ran after every edit of the take, over the branch's added lines.
+
+**220. A choice computed when an effect was queued is stale when it resolves.**
+An offer carried the targets and the payable cost it had when it was queued;
+an earlier effect in the same queue could trash that hand card or spend those
+DON!! first, and the engine then offered a move it would refuse. Found by the
+whole-Sim review's self-play sweep (landmine 216's shape, from the other
+side). An offer's choices and its cost are read when it resolves
+(`SIM.targetsOf`, `canPay` in `legal()`), never kept from when it was queued.
+
+**221. A test on an unseeded shuffle passes or fails with the hand.** Smoke's
+take-46 to take-51 sections dealt with `Math.random` and read the hand they
+got; one of them needed an active DON!! left after a random play, passed
+run after run from take 46, and failed on one run at take 122. Every game a
+test deals is seeded (the engine takes a seed since take 122), so a failure
+is the code's and happens every time.
+
+**222. A card number is not a text.** ST03-001 is printed with two texts: the
+original ("Return up to 1 Character") and a reprint with the errata ("Return
+1 Character", owed). A proof scaffolded from the cheapest printing bound the
+errata, which no ready-made deck deals, and ran nowhere the owner plays it.
+AGENTS rule 3 again, one layer down: a proof names its printing (`cards.py
+--new NUM --id ID`, the one the deck deals), binds that text, and leaves the
+other unproven until it is proven.
+
+**223. A hidden card named by its name is also a public card of that name.**
+The look's first privacy check (take 123) searched the page for the names of
+the other seat's hand and reported a leak: a Eustass"Captain"Kid in that hand
+shares its name with the Kid Leader on the table, which both seats see. A
+card name is not an identity; four copies and a Leader of the same name are
+ordinary. A check by name first takes out every name the seat may see
+anyway -- both fields (Leader, Characters, Stage), both trashes, and its own
+hand (`publicNames` in `tools/look/steps.mjs`); smoke's check plants names
+no real card carries, and self-play's reads the view's structure
+(`them.hand` is `null`). It bit twice in one take: self-play's check that a
+declined [Trigger] is not named in the log (landmine 224) first "found" 26
+games naming a Monkey.D.Luffy -- the player, named for its deck and Leader
+("Yellow Monkey.D.Luffy -- built from ST29"). The players' names are taken
+out of the line before it is read.
+
+**224. The log is in every view, so a sentence can leak what the view keeps
+out.** Take 123 kept the other hand, the Lives and the decks out of a seat's
+view -- and the log, which both seats read, still named a declined [Trigger]
+("<its name>: the rest is declined"; §10-1-5 lets its player add it to hand
+without revealing it) and a card put from hand on top of the deck by hand.
+The view's first cut also handed the attacker the waiting Trigger's card and
+text in its `offer`: in 212 of 400 self-play games. A privacy check that
+plants hidden cards only where they rest (hand, Life, deck) never sees a card
+on its way between two hidden places. Read every log sentence and every
+field of the view against where its card came from and where it went; a
+card that moves unrevealed is named nowhere. Checked by smoke (the log
+sentences included in its leak check) and by self-play after every move.
+
+**225. What a move returns is the mover's, not the seat's on screen.** Take
+123 kept everything private out of `SIM.view(seat)` -- and its board painted a
+battle's result from what `SIM.act` returned (`res`), which names each Life card
+that went to hand. Against the app the human taps Resolve for the app's seat,
+so the human's screen said "Life card to hand: Jewelry Bonney" -- a card in the
+app's hand, face down (§3-10, §10-1-5; take 124's audit, seed 3, PROVEN in the
+shipped script). No check saw it: they walked the view, and `res` never
+entered it; it rode UI state (`SIMUI.result`) into a painter. The result is now
+in the view per seat (`view.last`), a painter may not read a stored result,
+and smoke paints the board after that hit with the app's hand, Life and deck
+planted and finds none of them; self-play audits `last` after every move. Any
+value that crosses from the engine to the screen outside the view is the same
+hole.
+
+**226. A picture shared by cards of different names is the host's
+placeholder.** TCGplayer's CDN answers some products with one "Image Coming
+Soon" picture, served 200 like any other; the pipeline hashes it like a card.
+MEASURED 29 Sept: one hash on 22 printings of 22 names, among them ST01-005
+Jinbe, ST01-007 Nami, ST01-014 Guard Point and ST01-015 Gum-Gum Jet Pistol --
+printings the ready-made decks deal. Reprints of one card share art under one
+name, so the rule reads names: a hash shared by two or more names is no card's
+picture. The Sim draws such a card in its colours (`SIM.placeholderPic`, take
+124); the rest of the app still shows the placeholder (AGENDA A23, take 124).
+
+**227. The ready-made decks are 234 cards; the game is thousands.** Take 124's
+first 4,000 self-play games dealt only the seventeen ready-made decks and found
+nothing. The same count of games with random legal decks (the owner: "as many
+random/arbitrary decks (that are still legal)") met 6,196 cards and found six
+faults in the engine the ready-made decks never dealt a card for: a used
+[Trigger] left in hand when no target was chosen (§10-1-5-3), a search declined
+halfway with its looked-at cards left outside the deck (§11-3-3), an automatic
+effect the player could decline (§8-1-3-1), an effect whose card left the field
+before it began waiting for a move and taking any (§8-1-3-1-3), an effect that
+had begun dropped when its card left, and "that card" with none chosen before
+standing the game still. A sweep's coverage is the cards it deals, not its
+number of games. Self-play deals every pairing of the ready-made decks and
+random legal decks in turn, and the rulebook (tools/lib/rulebook.mjs) holds
+every move to the rules' own model of the game.
+
+**228. A check that returns `undefined` passes.** The card's words check read
+`pw(text, n) || (d.sign_inferred && ...)` for a power step; with no inferred
+sign the whole expression was `undefined`, and the loop counted a miss only
+`=== false`. A power step misparsed from "+2000" as "-2000" went unnamed; its
+planted control named two of three and gave it away. A verdict is a boolean,
+or anything falsy is the failure it stands for.
+
+**229. A row sized to fit exactly breaks a fraction early.** The held hand
+(take 124) computed each row's cards and their step to fill the column --
+412.1 px of cards in 412 px -- and flexbox moved the fourth card to the next
+row, its negative margin pushing it half out of the column (the tablet, 8
+cards). Round the step down and leave the row a pixel or two to spare; the
+check is that every hand card is whole on the screen (render, four sizes).
+
+**230. A card under another is tapped on its own strip.** The look clicked a
+held hand card at its centre -- under the next card, which took the click
+(Playwright named the intercepting element). A person taps the strip of the
+card they can see; render measures that strip as the card's 44 px square, and
+the look clicks inside it.
+
+**231. A set's name is TCGCSV's text, not the set.** On 29 Sept, between take
+124's own ingest and its PR's first check, TCGCSV renamed all 44 starter-deck
+groups -- "Starter Deck 31: RED Monkey.D.Luffy" to "ST-31: Starter Deck 31 RED
+Monkey.D.Luffy", "Super Pre-Release Starter Deck 1: Straw Hat Crew" to "ST-01:
+Starter Deck 1 Straw Hat Crew (Super Pre-Release Edition)" -- with every id,
+code and date unchanged. Releases knew a starter deck by `/^Starter Deck/` on
+its name (take 97), so the six ST31-ST36 rows the owner had asked to see as one
+came back, on a branch that never touched Releases, and smoke's own check,
+reading the name the same way, found "0 decks". A set is known by its code
+(the catalogue takes it from the cards' printed numbers), with the words as
+the fallback; smoke renames the run's sets and the fold must hold.
+
+**232. A planted fault the sample meets by chance is a control by luck.**
+Self-play's control for a log that names a declined [Trigger] needed a game to
+decline one, and chaos declines at weight 1 against 3 or 4 for using it. When
+take 124 made a by-hand line be opened rather than skipped, chaos's random
+stream moved: the plant's forty games met eleven [Trigger]s, declined none, and
+the planted leak went unnamed -- the auditor looked broken and was not. Its
+games now decline every [Trigger] from Life. A plant forces the event it
+plants on; a sample that only may meet it is not a control.
+
+**233. A card outline that is every bright pixel is the whole frame.** Take 10's
+detector boxed every pixel brighter than 1.18 x the frame's mean and accepted
+the box at ±22 % of a card's aspect. On a couch, a carpet, a binder or any
+sleeve's glint there is a bright pixel at every edge, and a portrait frame's
+0.56-0.83 passes the aspect test: the "card" was the frame on 14 of the owner's
+15 photographs and nothing on the 15th, the code crop cut from it was the
+frame's corner, and the scanner read 0 of 15 (MEASURED take 125). It had been
+proven once, on two plain cards on a dark table in a dark room -- the one
+ground it works on. Take 125 finds the number with the recogniser, which finds
+text anywhere, and believes the outline only where the number sits on it. A
+stage a later stage depends on is measured on the ground the collector uses,
+not the one it was proven on.
+
+**234. A cooldown that is never set is not a cooldown.** `SCAN.lastAccept` was
+compared against for 115 takes and assigned by nothing, and the loop reset its
+vote after each decision: a card left in view was decided again every two
+reads -- four times in eight (the smoke control, take 125). Landmine 16's
+800 ms was written down and never ran. Take 125 holds the number decided until
+three captures in a row do not read it: counted in captures, so a picker's wait
+is not the card leaving. A guard's variable is grepped for its writer, not only
+its reader.
+
+**235. A turned look turns the neighbours too.** To read a card lying on its
+side the view is turned a quarter; an upright neighbour then lies on its side,
+and a reader that reads vertical text finds its number anywhere -- past the
+top and left quarters that keep a neighbour out, which assume an upright card.
+Turned the other way, a sideways neighbour is upside down and its number reads
+across. MEASURED take 125: the neighbours' numbers read on four of the owner's
+frames. Two rules close it, both geometry of an upright card: the number's line
+runs across (wider than twice its height), and the card's own name is printed
+above its number, never below.
+*Before take 125 shipped:* the turned looks went at the owner's word -- cards
+are scanned upright -- and with them the name-below rule, whose one catch was a
+neighbour a turned look turned over. The upright-line rule stays: the whole
+look read a sideways neighbour's number on one of the owner's frames too. On
+his 29 upright frames the turned looks had added nothing (23 right either way).
+
+**236. A misread lands a digit away, and repeats.** The owner's close-up of
+Kyros, OP10-046, read OP10-040 -- a valid number, an Event -- in two looks alike
+(MEASURED take 125, the stand-in reader). Two agreeing reads of a still card are
+not independent: the vote of landmine 65 removes noise, not a glint that sits on
+the 6. The card's name does not: a read is refused when the words name a card
+one digit from it and not its own. Refused, never corrected -- a name in an
+effect's text is not the card's. Using the name the other way, to accept on one
+read, would have confirmed 680 of 64,428 one-digit misreads (318 by the true
+card's own words, 362 by a shared name; MEASURED over the catalogue).
+
+**237. A stand-in recogniser has to be the same kind of reader.** ML Kit runs
+only on the phone. Tesseract, a document reader, found 1 of 15 numbers in the
+whole view -- it missed the clean Shanks Leader -- and would have said the
+approach cannot work. RapidOCR, a camera-text detector and reader like ML Kit,
+found 7 with no help and 12 with the looks. A proxy measures only what it shares
+with the thing it stands in for; say which, and label the result INFERRED.
+
+**238. `video.play()` on a canvas's stream never settles in headless
+Chromium.** The look's scanner steps hung ten minutes on it (take 125) and
+were killed with nothing in the log. The look now hands the app the stream as
+its camera (getUserMedia) and lets the app's own path play it; any await on a
+media promise in a harness is raced against a timeout.
+
+**239. A file in Documents is the install's that made it.** Android's shared
+storage gives each file to the install that created it; an uninstall leaves
+the file and takes the ownership, and the next install may neither write over
+it nor read it (`open failed: EACCES`). The sideload install's
+`Documents/OPTCGHub/backup-latest.json` outlived the switch to the Play build,
+and every backup from then on failed at its first write -- the dated copy
+never reached -- with the reason thrown away: More said "Failed" and nothing
+said why (the owner's screenshot, take 121, 29 Sept; take 115 had asked the
+question, INFERRED). A file the app keeps in shared storage is written under a
+name this install owns -- a new one made when the old name is refused, and
+kept -- and a write that fails keeps its reason. Take 125; smoke plants the
+refusal with Android's own words, and take 123's build fails it.
+
+**240. A picture hashed once is never fetched again.** The hash step fetches
+the printings it has never hashed and the misses; a printing with a hash is
+never looked at again. TCGplayer answers some products with one "Image Coming
+Soon" picture, 200 OK like any other, and the night 22 starter-deck printings
+arrived it was hashed as their picture -- and stayed it, for every screen and
+the scanner, because nothing ever fetched them again (PROVEN 30 Sept: all
+6,771 hashed pictures fetched again, the 22 still the placeholder, 200 x 115;
+every other one portrait). A cache that never revisits keeps the day's answer
+for good: what the host served on the first night has to be judged that night
+-- a card picture that is not card-shaped, or near a placeholder hash on file,
+is a miss (take 126) -- and a miss is the entry that is retried.
+
+**241. One card's printings are not one picture.** Take 126 filled the Sim's
+pictureless cards from other printings of the same card, and the same step
+for Collect looked free: same number, same name, same treatment. MEASURED 30
+Sept over every card picture on file: 535 of 1,722 groups of one card's
+same-treatment printings hold two or more illustrations, 2,362 pairs more than
+8 bits apart -- promos under "base" mostly (ST01-004 Sanji's six OP-PR
+printings share one illustration, 34 bits from the starter deck's). A table
+plays the card, and every printing of a number plays the same, so the Sim may
+borrow; a ledger of printings may not, because the picture is how a collector
+tells which one they hold. A picture stands for its printing unless the
+screen is about the card.
+
+**242. A 64-bit number read by JSON.parse is a 53-bit number.** The bundle
+ships each printing's artwork hash as a JSON integer, and the app reads the
+catalogue with `r.json()`: every hash above 2^53 comes back rounded. MEASURED
+30 Sept, parsed as the app parses it: 6,748 of 6,748 such hashes drift, a
+median of 5 bits and up to 13 -- the scanner's artwork auto-accept (at most 8
+bits, a 13-bit gap; landmines 13, 49) was measured on exact ones. Nothing
+passes a camera hash to `resolve()` yet, so nothing has misfired; take 126
+found it planning to compare pictures in the app, and moved that choice to
+the build (`hashes.lend_map`), where hashes are exact. Rule: a value wider
+than 53 bits crosses into JavaScript as a string, and is compared as a BigInt
+parsed from it. The fix is its own take (queued from take 126).
 
 ## §2 — Inherited from APEX ORV
 
