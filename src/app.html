@@ -4363,10 +4363,12 @@ function scheduleBackup(reason) {
   clearTimeout(_backupTimer);
   _backupTimer = setTimeout(async () => {
     if (backupHeld()) { if (await PLATFORM.readBackup()) return; releaseBackupHold(); }   // a backup on file is kept until a restore
-    const where = await PLATFORM.backup(backupJson());
-    OWN.lastBackup = where ? { at: new Date().toISOString(), where, reason } : { failed: true, at: new Date().toISOString() };
+    let where = null, why = '';
+    try { where = await PLATFORM.backup(backupJson()); } catch (e) { why = String((e && e.message) || e); }
+    /* take 125: a failure keeps its reason -- Diagnostics and the self-test say it (landmine 239) */
+    OWN.lastBackup = where ? { at: new Date().toISOString(), where, reason } : { failed: true, at: new Date().toISOString(), why };
     saveJson('vault.lastBackup', OWN.lastBackup);
-    if (!where) toast('Backup failed — export your collection');
+    if (!where) { ERRS.push('backup', `backup failed: ${why}`, 'scheduleBackup'); toast('Backup failed — export your collection'); }
   }, 400);
 }
 /* take 115 (loose-production 4): a restore reads the file before it replaces anything -- this app's backup, each
@@ -4411,7 +4413,7 @@ async function restoreFromBackup() {
     raw = src === 'kept' ? kept : src === 'file' ? await PLATFORM.pickTextFile('.json,application/json') : raw;
     if (!raw) return toast('No backup chosen');
   } else if (!raw) {
-    toast('No backup of this install \u2014 choose one: Documents \u203a OPTCGHub \u203a backup-latest.json');
+    toast('No backup of this install \u2014 choose the newest file in Documents \u203a OPTCGHub');   // take 125: another install's latest can be backup-latest-<time>.json (landmine 239)
     raw = await PLATFORM.pickTextFile('.json,application/json');
     if (!raw) return toast('No backup chosen');
   }
@@ -5380,9 +5382,11 @@ function paintBatchBadge() {
 function paintScan() {
   startCamera();
   paintBatchBadge();
-  if (BATCH.rows.length && !SCAN._resumedOnce) {
+  /* take 125: once, at the first paint -- a batch left from before is waiting; the first card scanned is not
+     (its paint after the accept told the collector their one new card was "waiting" -- the look, take 125) */
+  if (!SCAN._resumedOnce) {
     SCAN._resumedOnce = true;
-    toast(`${BATCH.rows.length} scanned card${BATCH.rows.length === 1 ? '' : 's'} waiting \u2014 tap Review to add them`);
+    if (BATCH.rows.length) toast(`${BATCH.rows.length} scanned card${BATCH.rows.length === 1 ? '' : 's'} waiting \u2014 tap Review to add them`);
   }
   const c = $('#scanCredits');
   if (CREDITS.enabled()) {
@@ -5445,26 +5449,14 @@ $('#btnDone').addEventListener('click', () => {
 });
 
 /* =====================================================================
- * THE SCANNER — take 10
- *
- * Stages, each a plain function so the harness can drive them with synthetic
- * input and the only thing left unproven is the camera itself (A2):
- *
- *   frame ─► detectQuad ─► warp(500x700) ─► cropCode ─► OCR ─► parseRead
- *                                        └► cropStar ─► starScore
- *                                                          │
- *              vote(3 frames) ─► face ─► resolve(number,{setId,face}) ─► auto | picker
+ * THE SCANNER — take 10; its stages are src/scan.js since take 125
  *
  * PLATFORM is the seam: in the APK it is Capacitor (Filesystem + ML Kit +
  * Haptics + Camera); in a browser it is getUserMedia and NO recogniser --
  * the browser build says so and falls back to the manual path rather than
- * pretending. In smoke.mjs it is whatever the test injects.
+ * pretending. In smoke.mjs it is whatever the test injects. The stages it
+ * feeds, and the live loop that drives them, follow it.
  * ===================================================================== */
-const CANON = { w: 500, h: 700 };
-const CODE_BOX = { x: 0.60, y: 0.928, w: 0.29, h: 0.050 };   // MEASURED take 7
-const CODE_RE  = /(OP|ST|EB|PRB|LT|P)\d{0,2}-\d{3}/;         // no anchors: landmine 63
-const ASPECT   = 63 / 88;
-
 const PLATFORM = {
   cap() { return window.Capacitor && window.Capacitor.Plugins; },
   plugin(name) {
@@ -5477,9 +5469,13 @@ const PLATFORM = {
      @capacitor/status-bar, in package.json; on the web there is none and nothing happens. */
   statusBar(theme) { const SB = this.plugin('StatusBar'); if (!SB || typeof SB.setStyle !== 'function') return false; try { const p = SB.setStyle({ style: theme === 'light' ? 'LIGHT' : 'DARK' }); if (p && p.catch) p.catch(() => {}); } catch (e) {} return true; },
   hasOcr() { return !!this.plugin('TextRecognition'); },
-  /* Crop canvas -> file -> ML Kit. The plugin takes a PATH (read from its
-     definitions.d.ts at take 10, not from memory), so the crop goes through
-     Filesystem first. script:LATIN keeps the other four recognisers idle. */
+  /* Canvas -> file -> ML Kit. The plugin takes a PATH (read from its
+     definitions.d.ts at take 10, not from memory), so the picture goes through
+     Filesystem first. script:LATIN keeps the other four recognisers idle.
+     Take 125: what it read is { text, lines: [{ text, box }] } -- every line
+     with its place in the picture (blocks -> lines -> boundingBox, read off the
+     8.2.1 definitions), for the scanner to find the number among; null with no
+     recogniser. The temporary file is deleted without waiting on it. */
   async ocr(canvas) {
     const TR = this.plugin('TextRecognition'), FS = this.plugin('Filesystem');
     if (!TR || !FS) return null;
@@ -5487,10 +5483,11 @@ const PLATFORM = {
     const f = await FS.writeFile({ path: `scan/${Date.now()}.jpg`, data: b64,
                                    directory: 'CACHE', recursive: true });
     try {
-      const r = await TR.processImage({ path: f.uri, script: 'LATIN' });
-      return r && r.text ? r.text : '';
+      const r = (await TR.processImage({ path: f.uri, script: 'LATIN' })) || {};
+      const box = b => b ? { x: b.left, y: b.top, w: b.right - b.left, h: b.bottom - b.top } : null;
+      return { text: r.text || '', lines: (r.blocks || []).flatMap(b => b.lines || []).map(l => ({ text: l.text || '', box: box(l.boundingBox) })) };
     } finally {
-      try { await FS.deleteFile({ path: f.uri }); } catch (e) {}
+      FS.deleteFile({ path: f.uri }).catch(() => {});
     }
   },
   async haptic() {
@@ -5517,31 +5514,53 @@ const PLATFORM = {
   /* Backup to the public Documents folder, which SURVIVES UNINSTALL on Android
      11+ for files the app created (read from the plugin’s definitions.d.ts at
      take 15). PROTOCOL §9: this runs on every batch commit and every deck save,
-     and failure is shown, never swallowed. */
+     and failure is shown, never swallowed. Take 125: it returns where the backup
+     went, or throws with the reason (thrown away until take 125). */
   async backup(json) {
     const FS = this.plugin('Filesystem');
-    if (!FS) { try { localStorage.setItem('vault.backup', json); return 'browser storage'; } catch (e) { return null; } }
-    try {
-      const day = new Date().toISOString().slice(0, 10);
-      await FS.writeFile({ path: 'OPTCGHub/backup-latest.json', data: json, directory: 'DOCUMENTS', recursive: true, encoding: 'utf8' });
-      await FS.writeFile({ path: `OPTCGHub/backup-${day}.json`, data: json, directory: 'DOCUMENTS', recursive: true, encoding: 'utf8' });
-      return 'Documents/OPTCGHub';
-    } catch (e) { console.warn('backup failed', e); return null; }
+    if (!FS) { localStorage.setItem('vault.backup', json); return 'browser storage'; }
+    const latest = await this.writeOwnDoc('backup-latest.json', json);
+    /* the dated copy is the history: kept when it can be (on the day of a reinstall the name can be the old install's) */
+    const day = new Date().toISOString().slice(0, 10);
+    try { await FS.writeFile({ path: `OPTCGHub/backup-${day}.json`, data: json, directory: 'DOCUMENTS', recursive: true, encoding: 'utf8' }); }
+    catch (e) { ERRS.push('backup', `backup-${day}.json could not be written: ${e.message || e}`, 'backup'); }
+    return latest === 'backup-latest.json' ? 'Documents/OPTCGHub' : `Documents/OPTCGHub/${latest}`;
+  },
+  /* take 125 (landmine 239): a file in Documents is the install's that made it. The sideload install's
+     backup-latest.json outlived its uninstall, and the Play install could not write over it -- every backup
+     failed from the switch on, its reason thrown away (the owner's More, 29 Sept; A43's item 5, INFERRED at
+     take 115). A file this app keeps there is written under the name this install last wrote it to; when that
+     name cannot be written, a new one is made once -- backup-latest-20260929-170512.json -- and kept for the
+     next (vault.docNames: an Android backup that brings it to a later install is healed the same way).
+     Returns the name written; throws with both reasons when neither can be. */
+  async writeOwnDoc(base, json) {
+    const FS = this.plugin('Filesystem'), names = readJson('vault.docNames', {}, false);
+    const write = name => FS.writeFile({ path: `OPTCGHub/${name}`, data: json, directory: 'DOCUMENTS', recursive: true, encoding: 'utf8' });
+    const first = names[base] || base;
+    try { await write(first); return first; }
+    catch (e) {
+      const t = new Date(), p = n => String(n).padStart(2, '0');
+      const name = base.replace(/\.json$/, `-${t.getFullYear()}${p(t.getMonth() + 1)}${p(t.getDate())}-${p(t.getHours())}${p(t.getMinutes())}${p(t.getSeconds())}.json`);
+      try { await write(name); } catch (e2) { throw new Error(`${first}: ${e.message || e}; ${name}: ${e2.message || e2}`); }
+      saveJson('vault.docNames', { ...names, [base]: name });
+      ERRS.push('backup', `${first} could not be written (${e.message || e}); this install writes ${name} now`, 'writeOwnDoc');
+      return name;
+    }
   },
   /* take 115: what a restore replaced, beside the backups -- Restore offers the copy kept in storage; this one
      outlives an uninstall, and the file picker reaches it */
   async keepAside(json) {
     const FS = this.plugin('Filesystem'); if (!FS) return null;
-    try { await FS.writeFile({ path: 'OPTCGHub/backup-before-restore.json', data: json, directory: 'DOCUMENTS', recursive: true, encoding: 'utf8' }); return 'Documents/OPTCGHub'; }
-    catch (e) { console.warn('keep aside failed', e); return null; }
+    try { await this.writeOwnDoc('backup-before-restore.json', json); return 'Documents/OPTCGHub'; }
+    catch (e) { ERRS.push('backup', `the copy before a restore was not written: ${e.message || e}`, 'keepAside'); return null; }
   },
+  /* the latest backup this install wrote -- never a file another install left under the old name (take 125) */
   async readBackup() {
     const FS = this.plugin('Filesystem');
     if (!FS) return localStorage.getItem('vault.backup');
-    try {
-      const r = await FS.readFile({ path: 'OPTCGHub/backup-latest.json', directory: 'DOCUMENTS', encoding: 'utf8' });
-      return r.data;
-    } catch (e) { return null; }
+    const name = readJson('vault.docNames', {}, false)['backup-latest.json'] || 'backup-latest.json';
+    try { return (await FS.readFile({ path: `OPTCGHub/${name}`, directory: 'DOCUMENTS', encoding: 'utf8' })).data; }
+    catch (e) { return null; }
   },
   /* Take 34, landmine 110. A download link does NOTHING in Capacitor’s WebView:
      no DownloadListener is installed and a blob: URL has nowhere to go, so
@@ -5752,155 +5771,7 @@ const PLATFORM = {
   }
 };
 
-/* ---- stage 1: find the card in a frame ---------------------------------
-   Luminance bounding-box detector, identical to the Phase 0 rig’s, so what
-   the rig measures is what the app does. A card on a dark table is a bright
-   quad with aspect ~0.716; a toploader is a different ratio and is rejected,
-   which is landmine 14 and is the point of measuring rather than assuming. */
-const _work = document.createElement('canvas');
-function detectQuad(src, sw, sh) {
-  const W = 160, H = Math.round(W * sh / sw);
-  _work.width = W; _work.height = H;
-  const c = _work.getContext('2d', { willReadFrequently: true });
-  c.drawImage(src, 0, 0, W, H);
-  const d = c.getImageData(0, 0, W, H).data;
-  let sum = 0;
-  const lum = new Float32Array(W * H);
-  for (let i = 0, p = 0; i < d.length; i += 4, p++) {
-    lum[p] = d[i] * .299 + d[i + 1] * .587 + d[i + 2] * .114; sum += lum[p];
-  }
-  const thr = (sum / (W * H)) * 1.18;
-  let x0 = W, y0 = H, x1 = 0, y1 = 0, n = 0;
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    if (lum[y * W + x] > thr) {
-      n++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
-    }
-  }
-  if (n < W * H * 0.06) return null;
-  const w = x1 - x0, h = y1 - y0;
-  if (w < 8 || h < 8) return null;
-  const ar = w / h;
-  if (ar < ASPECT * 0.78 || ar > ASPECT * 1.22) return null;
-  const sx = sw / W, sy = sh / H;
-  return { x: x0 * sx, y: y0 * sy, w: w * sx, h: h * sy };
-}
-
-/* ---- stage 2: canonical warp + the two crops ----------------------------- */
-function warpCanonical(src, q) {
-  const full = document.createElement('canvas');
-  full.width = CANON.w; full.height = CANON.h;
-  full.getContext('2d').drawImage(src, q.x, q.y, q.w, q.h, 0, 0, CANON.w, CANON.h);
-  return full;
-}
-function contrastStretch(ctx, w, h) {
-  const im = ctx.getImageData(0, 0, w, h), d = im.data;
-  let lo = 255, hi = 0;
-  for (let i = 0; i < d.length; i += 4) {
-    const l = d[i] * .299 + d[i + 1] * .587 + d[i + 2] * .114;
-    if (l < lo) lo = l; if (l > hi) hi = l;
-  }
-  const span = Math.max(1, hi - lo);
-  for (let i = 0; i < d.length; i += 4) {
-    const l = (d[i] * .299 + d[i + 1] * .587 + d[i + 2] * .114 - lo) / span * 255;
-    d[i] = d[i + 1] = d[i + 2] = Math.max(0, Math.min(255, l));
-  }
-  ctx.putImageData(im, 0, 0);
-}
-function cropBox(full, box, upscale) {
-  const cw = Math.round(CANON.w * box.w), ch = Math.round(CANON.h * box.h);
-  const c = document.createElement('canvas');
-  c.width = cw * upscale; c.height = ch * upscale;
-  const g = c.getContext('2d', { willReadFrequently: true });
-  g.imageSmoothingQuality = 'high';
-  g.drawImage(full, Math.round(CANON.w * box.x), Math.round(CANON.h * box.y),
-              cw, ch, 0, 0, c.width, c.height);
-  contrastStretch(g, c.width, c.height);
-  return c;
-}
-const cropCode = full => cropBox(full, CODE_BOX, 4);
-const cropStar = full => CAT.star
-  ? cropBox(full, { x: CAT.star.box[0], y: CAT.star.box[1], w: CAT.star.box[2], h: CAT.star.box[3] }, 1)
-  : null;
-
-/* ---- stage 3: the star detector, ported from tools/star_template.py ------
-   Zero-mean unit-variance patch, correlated against the committed template.
-   Threshold, box and held-out evidence all travel WITH the template in the
-   bundle, so the app cannot ship a detector without its numbers. */
-function starScore(starCanvas) {
-  const T = CAT.star; if (!T || !starCanvas) return null;
-  const c = document.createElement('canvas');
-  c.width = T.w; c.height = T.h;
-  const g = c.getContext('2d', { willReadFrequently: true });
-  g.imageSmoothingQuality = 'high';
-  g.drawImage(starCanvas, 0, 0, T.w, T.h);
-  const d = g.getImageData(0, 0, T.w, T.h).data;
-  const n = T.w * T.h, v = new Float32Array(n);
-  let mean = 0;
-  for (let i = 0; i < n; i++) { v[i] = d[i * 4] * .299 + d[i * 4 + 1] * .587 + d[i * 4 + 2] * .114; mean += v[i]; }
-  mean /= n;
-  let sd = 0;
-  for (let i = 0; i < n; i++) sd += (v[i] - mean) ** 2;
-  sd = Math.sqrt(sd / n) || 1e-6;
-  let dot = 0;
-  for (let i = 0; i < n; i++) dot += ((v[i] - mean) / sd) * T.template[i];
-  return dot / n;
-}
-
-/* ---- stage 4: OCR text -> a card number, or nothing ---------------------- */
-function normaliseRead(t) {
-  let s = String(t || '').toUpperCase().replace(/\s+/g, '');
-  s = s.replace(/(?<=\d)O/g, '0').replace(/O(?=\d)/g, '0')
-       .replace(/(?<=\d)I/g, '1').replace(/I(?=\d)/g, '1')
-       .replace(/(?<=\d)S/g, '5');
-  return s.replace(/[^A-Z0-9-]/g, '');
-}
-function parseRead(text) {
-  const norm = normaliseRead(text);
-  const m = norm.match(CODE_RE);
-  const number = m ? m[0] : null;
-  /* Landmine 65: a read that is not a real card number is a NO read. */
-  const valid = number && CAT.valid.has(number) ? number : null;
-  /* Landmine 61: the SP badge is literal text inside the same crop. */
-  const sp = /(^|[^A-Z])SP(?=[A-Z]{1,3}\d)/.test(norm) || /^SP/.test(norm);
-  return { number: valid, raw: text, sp };
-}
-
-/* ---- stage 5: temporal voting -------------------------------------------
-   Landmine 65 again: single-frame noise is the residual 2%, and three frames
-   agreeing removes it without touching recall. */
-function makeVoter(size = 3, need = 2) {
-  const buf = [];
-  return {
-    push(number) {
-      buf.push(number); if (buf.length > size) buf.shift();
-      const counts = {};
-      for (const n of buf) if (n) counts[n] = (counts[n] || 0) + 1;
-      const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
-      return best && best[1] >= need ? best[0] : null;
-    },
-    reset() { buf.length = 0; }
-  };
-}
-
-/* ---- stage 6: one capture, start to finish ------------------------------ */
-async function identifyFrame(src, sw, sh, { setId = null } = {}) {
-  const q = detectQuad(src, sw, sh);
-  if (!q) return { stage: 'no-card' };
-  const full = warpCanonical(src, q);
-  const text = await PLATFORM.ocr(cropCode(full));
-  if (text === null) return { stage: 'no-ocr', full };
-  const read = parseRead(text);
-  if (!read.number) return { stage: 'no-read', full, raw: read.raw };
-  let face = null;
-  if (read.sp) face = 'sp';
-  else {
-    const sc = starScore(cropStar(full));
-    /* Landmine 60: narrow ONLY on a sighting. Below threshold means "nothing
-       seen", never "plain". */
-    if (sc != null && sc >= CAT.star.threshold) face = 'star';
-  }
-  return { stage: 'read', number: read.number, face, full, raw: read.raw };
-}
+/* __SCAN__ -- the scanner's stages live in src/scan.js (take 125); build_app.py puts them here */
 
 /* 8.7 helpers: a deck’s value on each day on file, and how much of it the
    collector already owns. */
@@ -5938,9 +5809,15 @@ function sparkOn(cv, series, kind = 'record') {
   x.fillStyle = acc; x.beginPath(); x.arc(lx, ly, 3.5, 0, 7); x.fill();
 }
 
-/* ---- the live loop ------------------------------------------------------ */
-const SCAN = { stream: null, running: false, voter: makeVoter(), lastAccept: 0,
-               busy: false, stableSince: 0, lastQuad: null };
+/* ---- the live loop ------------------------------------------------------
+   Take 125: one capture after another while the Scan screen is up, each through
+   the look that read last (the next look after a capture that did not). Take 10
+   captured only once a card outline had held still for 350 ms; the outline was
+   the whole view on 14 of the owner's 15 frames (MEASURED), so every capture
+   waited on it and read the wrong place. Landmine 18 still holds: no shutter tap
+   in the happy path, and two agreeing reads of three decide. The picker open
+   pauses it, and the number decided is held until it leaves the view (makeVoter). */
+const SCAN = { stream: null, running: false, voter: makeVoter(), busy: false, look: 0, gen: 0 };
 async function startCamera() {
   if (SCAN.stream) return true;
   try {
@@ -5961,7 +5838,7 @@ async function startCamera() {
       if (caps.exposureMode && caps.exposureMode.includes('continuous')) adv.exposureMode = 'continuous';
       if (Object.keys(adv).length) await tr.applyConstraints({ advanced: [adv] });
     } catch (e) {}
-    SCAN.running = true; requestAnimationFrame(scanLoop);
+    SCAN.running = true; if (PLATFORM.hasOcr()) scanLoop(++SCAN.gen);
     $('#camHint').textContent = PLATFORM.hasOcr()
       ? 'Point at the card. Hold steady.'
       : 'Preview only — the recogniser runs in the app, not the browser.';
@@ -5976,57 +5853,55 @@ function stopCamera() {
   const g = $('#guide'); if (g) g.classList.remove('live');
   if (SCAN.stream) { SCAN.stream.getTracks().forEach(t => t.stop()); SCAN.stream = null; }
 }
-function scanLoop() {
-  if (!SCAN.running) return;
-  const v = $('#cam');
-  if (!v.videoWidth) return requestAnimationFrame(scanLoop);
-  const ov = $('#camOv'), r = v.getBoundingClientRect();
-  ov.width = r.width; ov.height = r.height;
-  const g = ov.getContext('2d'); g.clearRect(0, 0, ov.width, ov.height);
-  const q = detectQuad(v, v.videoWidth, v.videoHeight);
-  const guide = $('#guide');
-  guide.classList.toggle('seen', !!q);
-  if (q) {
-    const sx = ov.width / v.videoWidth, sy = ov.height / v.videoHeight;
-    g.strokeStyle = '#f5c518'; g.lineWidth = 2.5;
-    g.strokeRect(q.x * sx, q.y * sy, q.w * sx, q.h * sy);
-    /* Landmine 18: auto-capture on a STABLE quad, no shutter tap in the happy
-       path. Stable = present for 3 consecutive frames-worth of time. */
-    if (!SCAN.stableSince) SCAN.stableSince = performance.now();
-    else if (performance.now() - SCAN.stableSince > 350 && !SCAN.busy &&
-             performance.now() - SCAN.lastAccept > 800 && PLATFORM.hasOcr()) {
-      captureAndIdentify(v, v.videoWidth, v.videoHeight);
-    }
-  } else SCAN.stableSince = 0;
-  SCAN.lastQuad = q;
-  requestAnimationFrame(scanLoop);
+async function scanLoop(gen) {
+  const frame = () => new Promise(r => requestAnimationFrame(r));
+  while (SCAN.running && gen === SCAN.gen) {
+    const v = $('#cam');
+    if (v.videoWidth && !$('#picker').classList.contains('on')) await captureAndIdentify(v);
+    await frame();
+  }
 }
-async function captureAndIdentify(src, sw, sh) {
+const SCAN_HINT = { 'no-text': 'Point at the card.', 'no-read': 'Looking for the code\u2026',
+                    several: 'One card at a time \u2014 more than one number in view' };
+async function captureAndIdentify(v) {
+  if (SCAN.busy) return;
   SCAN.busy = true;
   try {
-    const res = await identifyFrame(src, sw, sh, { setId: BATCH.setId });
-    if (res.stage !== 'read') { $('#camHint').textContent =
-        res.stage === 'no-read' ? 'Looking for the code…' : 'Point at the card.'; return; }
-    const voted = SCAN.voter.push(res.number);
-    $('#camHint').textContent = voted ? '' : `Saw ${res.number} — hold still…`;
+    const r = v.getBoundingClientRect(), look = LOOKS[SCAN.look];
+    const res = await identifyFrame(v, viewRect(v.videoWidth, v.videoHeight, r.width, r.height), look);
+    if (!SCAN.running) return;   // the screen closed while it read: nothing is added, and the camera is not started again behind another screen
+    const number = res.stage === 'read' ? res.number : null;
+    if (!number) SCAN.look = (SCAN.look + 1) % LOOKS.length;
+    $('#guide').classList.toggle('seen', !!number);
+    drawCard(res, r);
+    const voted = SCAN.voter.push(number);
+    if (!number) { $('#camHint').textContent = SCAN_HINT[res.stage] || ''; return; }
+    $('#camHint').textContent = voted || SCAN.voter.held === number ? '' : `Saw ${number} \u2014 hold still\u2026`;
     if (!voted) return;
-    SCAN.voter.reset();
-    const r = resolve(voted, { setId: BATCH.setId, face: res.face });
+    const rs = resolve(voted, { setId: BATCH.setId, face: res.face });
     const photo = await PLATFORM.savePhoto(res.full.toDataURL('image/jpeg', 0.7), voted);   // landmines 27, 79
-    if (r.verdict === 'ask') openPicker(voted, r, photo);
-    else if (r.verdict === 'auto') { flashHit(); accept(r.pick, r.why, photo); }
+    if (rs.verdict === 'ask') openPicker(voted, rs, photo);
+    else if (rs.verdict === 'auto') { flashHit(); accept(rs.pick, rs.why, photo); }
     else $('#camHint').textContent = `${voted} is not in the catalogue`;
   } finally { SCAN.busy = false; }
+}
+/* the card's outline on the guide: only an outline believed (the number sits where it says, stage 4) */
+function drawCard(res, r) {
+  const ov = $('#camOv'); ov.width = r.width; ov.height = r.height;
+  const g = ov.getContext('2d'); g.clearRect(0, 0, ov.width, ov.height);
+  const q = res.card; if (!q) return;
+  g.strokeStyle = '#f5c518'; g.lineWidth = 2.5;
+  g.strokeRect(q.x * r.width, q.y * r.height, q.w * r.width, q.h * r.height);
 }
 function flashHit() {
   const g = $('#guide'); g.classList.remove('seen'); g.classList.add('hit');
   setTimeout(() => g.classList.remove('hit'), 500);
 }
 
-/* The shutter now does two things: in the app, it forces a capture even when
-   the quad is not stable (a card in a sleeve on a light table); in a browser
-   with no recogniser, it runs the simulation from take 2 so the flow can still
-   be walked and the ask/auto ratio is still the real one. */
+/* The shutter does two things: in the app, it takes a capture now rather than
+   at the loop's next turn; in a browser with no recogniser, it runs the
+   simulation from take 2 so the flow can still be walked and the ask/auto
+   ratio is still the real one. */
 $('#btnTorch').addEventListener('click', async () => {
   if (!SCAN.stream) return;
   const tr = SCAN.stream.getVideoTracks()[0];
@@ -6041,7 +5916,7 @@ document.addEventListener('click', e => {
 $('#btnShutter').addEventListener('click', async () => {
   const v = $('#cam');
   if (SCAN.stream && v.videoWidth && PLATFORM.hasOcr()) {
-    return captureAndIdentify(v, v.videoWidth, v.videoHeight);
+    return captureAndIdentify(v);
   }
   simulateScan();
 });
@@ -6050,7 +5925,11 @@ $('#btnGallery').addEventListener('click', async () => {
   if (!path) return toast(PLATFORM.cap() ? 'No image chosen' : 'Gallery import runs in the app');
   const img = new Image();
   img.onload = async () => {
-    const res = await identifyFrame(img, img.naturalWidth, img.naturalHeight, { setId: BATCH.setId });
+    /* take 125: a photo gets every look until one reads a number, or finds more than one */
+    const view = { x: 0, y: 0, w: img.naturalWidth, h: img.naturalHeight };
+    let res = null;
+    for (const look of LOOKS) { res = await identifyFrame(img, view, look); if (res.stage === 'read' || res.stage === 'several') break; }
+    if (res.stage === 'several') return toast('More than one card number in that photo \u2014 crop it to one card');
     if (res.stage !== 'read') return toast('Could not read a card number from that photo');
     const r = resolve(res.number, { setId: BATCH.setId, face: res.face });
     const photo = await PLATFORM.savePhoto(res.full.toDataURL('image/jpeg', 0.7), res.number);
@@ -7059,6 +6938,9 @@ const SELFTEST = {
     await check('Star template shipped', () => ({ ok: !!(CAT.star && CAT.star.box), note: CAT.star ? `threshold ${CAT.star.threshold}` : 'missing' }));
     await check('Fonts loaded', async () => { if (!document.fonts || !document.fonts.check) return null; await document.fonts.ready; const ok = document.fonts.check('16px "OPH Display"') && document.fonts.check('16px "OPH Body"'); return { ok, note: ok ? 'display + body' : 'a role face did not load' }; });
     await check('Storage writes and reads back', () => { const k = 'vault.selftest', v = String(Date.now()); localStorage.setItem(k, v); const ok = localStorage.getItem(k) === v; localStorage.removeItem(k); return { ok, note: ok ? 'localStorage round-trip' : 'mismatch' }; });
+    /* take 125 (landmine 239): the backups themselves -- the last one written, or why it was not; nothing is written here */
+    await check('Backups are being written', () => { const b = OWN.lastBackup; if (!b) return null;
+      return { ok: !b.failed, note: b.failed ? `failed ${momentText(b.at)}${b.why ? ': ' + b.why : ' (no reason was kept before take 125)'}` : `${momentText(b.at)} \u00b7 ${b.where}` }; });
     await check('Backup file round-trip (Filesystem)', async () => { const FS = PLATFORM.plugin('Filesystem'); if (!FS) return null; const path = 'selftest/probe.json', data = JSON.stringify({ t: Date.now() }); await FS.writeFile({ path, data, directory: 'CACHE', recursive: true, encoding: 'utf8' }); const r = await FS.readFile({ path, directory: 'CACHE', encoding: 'utf8' }); try { await FS.deleteFile({ path, directory: 'CACHE' }); } catch (e) {} return { ok: r.data === data, note: 'wrote, read, deleted in the app cache' }; });
     await check('Share sheet available', async () => { const SH = PLATFORM.plugin('Share'); if (!SH) return null; const r = await SH.canShare(); return { ok: !!r.value, note: r.value ? 'Share.canShare true' : 'canShare false' }; });
     await check('Camera reachable', async () => { if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return null; const d = (await navigator.mediaDevices.enumerateDevices()).filter(x => x.kind === 'videoinput'); return cameraVerdict(d, !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())); });
@@ -7066,7 +6948,7 @@ const SELFTEST = {
       if (!PLATFORM.hasOcr()) return null;
       const c = document.createElement('canvas'); c.width = 600; c.height = 160;
       const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 600, 160); x.fillStyle = '#000'; x.font = 'bold 72px sans-serif'; x.fillText('OP01-016', 40, 110);
-      const txt = await PLATFORM.ocr(c); const m = parseRead(txt || ''); return { ok: !!m && m.number === 'OP01-016', note: txt ? `read "${String(txt).trim().slice(0, 30)}"` : 'no text returned' };
+      const r = await PLATFORM.ocr(c), txt = r ? r.text : ''; return { ok: parseRead(txt).number === 'OP01-016', note: txt ? `read "${txt.trim().slice(0, 30)}"` : 'no text returned' };
     });
     await check('Notifications permission', async () => { const N = PLATFORM.plugin('LocalNotifications'); if (!N) return null; const r = (await N.checkPermissions()) || {}; return { ok: !!r.display && r.display !== 'denied', note: r.display ? `display: ${r.display}` : 'the plugin answered without a permission state (its permission annotation is missing from the build, landmine 141)' }; });
     /* take 121: real units are right on a build at or after ads.live.from; what is wrong is a real unit in
@@ -7162,8 +7044,8 @@ async function runSelfTest() {
                    DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, THEME, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, simAct, simSeat, simReport, simHandLabel, simTap, simSay, simAt, simSheetOpen, simPaced, simFit, RULEBOOK, RULES_DB, openRules, paintRules, rulesStatus, verNewer, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,
                    backupJson, scheduleBackup, backupHeld, restoreFromBackup, loadCatalogue, catalogueProblem, STORE, readJson, saveJson, BATCH,
                    PICKER, pickCurrency, MAXLOCK, bnTurn, commitOwn, importCsv, backupProblem, typedAmount, paintAlerts, localDay,
-                   scan: { PLATFORM, detectQuad, parseRead, normaliseRead, starScore,
-                           makeVoter, identifyFrame, cropCode, cropStar, CODE_BOX } };
+                   scan: { PLATFORM, detectQuad, parseRead, normaliseRead, starScore, makeVoter, identifyFrame, cropStar,
+                           LOOKS, CODE_AT, viewRect, viewCanvas, lookCanvas, equalise, codesIn, cardAround, captureAndIdentify, SCAN } };
 })();
 </script>
 </body>
