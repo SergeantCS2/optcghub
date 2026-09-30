@@ -35,7 +35,7 @@ const SIM = {
     const seed = (opts.seed != null ? opts.seed : Math.floor(Math.random() * 4294967296)) >>> 0; this.uid = 0;
     const spec = { v: 1, take: TAKE, rules: this.RULES, seed, first, bot: opts.bot != null ? opts.bot : null,
       decks: [deckA, deckB].map(d => ({ name: d.name || '', leader: d.leader, cards: d.cards.map(c => ({ id: c.id, n: c.n })) })) };
-    this.g = { spec, seed, rs: seed, turn: 0, first, active: first, phase: 'mulligan', players: [], battle: null, log: [], over: null, queue: [], after: null, hand: null, last: null, actions: [] };
+    this.g = { spec, seed, rs: seed, turn: 0, first, active: first, phase: 'mulligan', players: [], battle: null, log: [], over: null, queue: [], after: null, hand: null, last: null, start: null, actions: [] };
     if (opts.bot != null) this.g.bot = opts.bot;
     this.g.players = [deckA, deckB].map((d, i) => this.player(d.name || `Player ${i + 1}`, d.leader, this.shuffle(this.expand(d))));
     this.g.players.forEach((P, i) => this.draw(i, 5));
@@ -64,11 +64,14 @@ const SIM = {
     for (const c of P.chars) { back += c.don; c.don = 0; c.rested = false; }
     if (P.stage) P.stage.rested = false; P.don.active += P.don.rested + back; P.don.rested = 0;
     // §6-3-1: draw one; not the first player on turn one
-    if (!(g.turn === 1 && i === g.first)) this.draw(i, 1);
+    const first = g.turn === 1 && i === g.first, had = P.hand.length; if (!first) this.draw(i, 1);
     g.phase = 'main'; this.rules(); if (g.over !== null) return;
     // §6-4-1: two DON!!; one on the first player\u2019s first turn; what the DON!! deck has (§6-4-2, §6-4-3)
-    const add = Math.min(P.donDeck, (g.turn === 1 && i === g.first) ? 1 : 2); P.donDeck -= add; P.don.active += add;
-    g.battle = null; this.log(`${P.name} \u2014 refresh, draw, +${add} DON!!`); },
+    const add = Math.min(P.donDeck, first ? 1 : 2); P.donDeck -= add; P.don.active += add;
+    /* take 124 (the owner: "a user should never be able to skip drawing a card, don"): the turn's start is the engine's, never
+       a move -- and what it did is kept for the view, so the table can say it (take 124 logged "draw" where none is drawn) */
+    g.start = { turn: g.turn, i, drew: P.hand.length - had, don: add, first };
+    g.battle = null; this.log(`${P.name} \u2014 turn ${g.turn}: refresh, ${first ? 'no draw on the first turn (§6-3-1)' : 'draw 1'}, ${add ? `+${add} DON!!` : 'the DON!! deck is empty'}`); },
   /* §6-6: the End Phase -- 'during this turn' ends on BOTH sides (take 50; §6-6-1-3) -- then the other player's turn */
   endTurn() { const g = this.g; if (g.phase !== 'main') return false; this.log(`${this.P(g.active).name} ends the turn`);
     g.players.forEach(X => { X.modl = X.modl.filter(m => m.until !== 'endturn' && m.until !== 'endbattle'); });
@@ -337,10 +340,13 @@ const SIM = {
   /* §8-1-3-1: an automatic effect activates by itself and resolves in full -- an "up to" lets 0 be chosen, and nothing else is
      the player's to decline. A line may be declined only before it begins, and only one that says "you may", or that begins with
      a cost the player may choose not to pay (§8-3), or a [Trigger] (§10-1-5), or one the player activates ([Activate: Main]),
-     which may be put back unpaid; a line the app runs by hand stays the player's (take 122). Take 124: every line could be
-     declined at any step; the rulebook found a search declined after its look, its cards left outside the deck. */
-  declinable(o) { if (o.hand) return true; if (o.step > 0) return false; const e = o.e || {};
-    return e.t === 'trigger' || e.t === 'main' || /^cost_/.test((e.do && e.do[0] && e.do[0].a) || '') || /^\s*you may\b/i.test(String(e.raw || '').replace(/^(\s*\[[^\]]+\]\s*)+/, '').replace(/\([^)]*\)/g, '')); },
+     which may be put back unpaid. Take 124: every line could be declined at any step; the rulebook found a search declined
+     after its look, its cards left outside the deck. And (the owner: "a user should never be able to skip ... things that
+     every player does") a by-hand line is held to the same -- its cost first read from its words, "X: Y" -- and else is
+     opened and done by its words: take 122 left every by-hand line the player's, so an [On Play] the rules make happen was
+     passed by in one tap */
+  declinable(o) { if (o.step > 0) return false; const e = o.e || {}, body = String(e.raw || '').replace(/^(\s*\[[^\]]+\]\s*)+/, '').replace(/\([^)]*\)/g, '');
+    return e.t === 'trigger' || e.t === 'main' || /^cost_/.test((e.do && e.do[0] && e.do[0].a) || '') || /^\s*you may\b/i.test(body) || (!!o.hand && /^[^.:]*:/.test(body) && !/^\s*choose one\b/i.test(body)); },
   /* What each parsed action DOES -- one entry per action effects.py emits (smoke checks the two lists are equal).
      c = { i, P (the player), O (the opponent), d (the step), offer, target, opts, side(t), idx(t) }; an entry may return
      { follow } (offers that follow on) or { ok: false, why }. */
@@ -461,7 +467,7 @@ const SIM = {
     const X = a.side === 1 ? O : P, xi = a.side === 1 ? 1 - i : i, nm = id => (this.card(id) || {}).name || '?';
     const spend = op => { if (op === 'power') { const L = H.left.power; L.splice(L.indexOf(a.v), 1); } else if (op === 'lookto') H.left['look' + a.to]--; else if (op !== 'look') H.left[op === 'activedon' ? 'active' : op]--; };   // a DON!! set active spends the line's 'set ... as active' (take 122: it spent a budget no line has, and never ran out)
     const say = this.HAND[a.op].call(this, { i, P, X, xi, a, H, nm });
-    spend(a.op); this.log(`by hand for ${nm(H.cardId)}: ${say}`); return { ok: true }; },
+    spend(a.op); H.n = (H.n || 0) + 1; this.log(`by hand for ${nm(H.cardId)}: ${say}`); return { ok: true }; },
   /* what each by-hand move does; returns the words the log says after "by hand for <card>:" */
   HAND: {
     draw(c) { this.draw(c.i, 1); return 'draws 1'; },
@@ -503,7 +509,7 @@ const SIM = {
     if (g.phase === 'mulligan') return [{ t: 'keep' }, { t: 'mull' }];
     if (g.queue.length) { const o = g.queue[0];
       if (g.hand) return this.handMoves(i).concat([{ t: 'handdone' }]);
-      if (o.hand) return [{ t: 'fxhand' }, { t: 'fxskip' }];
+      if (o.hand) return [{ t: 'fxhand' }].concat(this.declinable(o) ? [{ t: 'fxskip' }] : []);
       const d = o.steps[o.step], T = this.targetsOf(o), tg = T && T.length ? T.map(t => t.ref) : [];
       if (!this.canPay(i, o.uid != null ? this.refOf(P, o.uid) : o.ref, d)) return [{ t: 'fxskip' }];   // a cost is read when it is paid, not when it was queued (§8-3-1-3)
       const needRoom = ref => { const id = d.a === 'playself' ? o.cardId : (d.a === 'playfromhand' ? P.hand[+String(ref).slice(1)] : null); const p = id && this.card(id); return !!(p && p.type === 'Character' && P.chars.length >= 5); };
@@ -560,6 +566,8 @@ const SIM = {
         does: this.describe(o.e), step: o.step, steps: o.steps.length, cost: !!(d && /^cost_/.test(d.a)), choices: o.i === seat && !o.hand ? this.choicesOf(o) : null, queued: g.queue.length } : null,
       tray: g.hand ? (g.hand.i === seat ? { mine: true, cardId: g.hand.cardId, raw: g.hand.raw, left: JSON.parse(JSON.stringify(g.hand.left)) } : { mine: false, cardId: g.hand.cardId, raw: g.hand.raw }) : null,
       last: g.last ? this.lastFor(seat) : null,
+      /* this turn's start as the engine made it (take 124): whose, the cards drawn, the DON!! added -- counts, public to both */
+      start: g.start && g.start.turn === g.turn ? Object.assign({}, g.start) : null,
       legal: who === seat ? this.legal(seat) : [], log: g.log.slice() }; },
   /* the last battle's result as a seat may see it (take 124): a Life card that went to hand is its owner's to know -- its name,
      and whether it has a [Trigger] -- and the other seat's only when [Banish] trashed it face up (§10-1-3); to the other seat it
@@ -627,6 +635,7 @@ const SIM = {
            an [On K.O.] set off by a step that was not the last was dropped) */
         if (r.done) { g.queue.shift(); if (r.follow && r.follow.length) g.queue.unshift(...r.follow); } else if (r.follow && r.follow.length) g.queue.splice(1, 0, ...r.follow); return r; }
       case 'fxskip': { const o0 = g.queue[0], d0 = o0 && o0.steps && o0.steps[o0.step];
+        if (o0 && o0.hand && !this.declinable(o0)) return refuse('it happens in full: open it and do what its words say, then Done (\u00a78-1-3-1)');
         if (o0 && !this.declinable(o0) && d0 && this.canPay(i, o0.uid != null ? this.refOf(P, o0.uid) : o0.ref, d0)) return refuse(o0.step > 0 && /^cost_/.test(d0.a) ? 'a cost once begun is paid in full, in order (§8-3)' : 'it resolves in full; an \u201cup to\u201d lets you choose none (§8-1-3-1)');
         const o = g.queue.shift(); if (!o) return refuse('no effect');
         if (o.fromLife && !o.step) this.log(`${this.P(o.i).name} adds the Life card to hand without revealing it (§10-1-5)`);
@@ -636,10 +645,11 @@ const SIM = {
       case 'fxhand': { const o = g.queue[0]; if (!o || !o.hand || g.hand) return refuse('no by-hand effect');
         if (o.uid != null) o.ref = this.refOf(P, o.uid);   // its card by instance, as apply() finds it (take 124: a Character gone before it shifted the place, and Once Per Turn read another card)
         if (o.e.if.some(c => c.c === 'opt')) { if (this.used(i, o)) return refuse('once per turn, and used this turn (§10-2-13)'); this.markUsed(i, o); }
-        g.hand = { i, cardId: o.cardId, raw: o.e.raw, left: this.handOps(o.e.raw), fromLife: o.fromLife };
+        g.hand = { i, cardId: o.cardId, raw: o.e.raw, left: this.handOps(o.e.raw), fromLife: o.fromLife, n: 0 };
         this.log(`by hand: ${this.card(o.cardId).name} \u2014 ${o.e.raw.slice(0, 90)}`); return { ok: true }; }
       case 'hand': if (!g.hand) return refuse('no by-hand effect open'); return this.handOp(i, a);
       case 'handdone': { const H = g.hand; if (!H) return refuse('no by-hand effect open'); g.hand = null; g.queue.shift();
+        this.log(`${this.card(H.cardId).name}: done by hand${H.n ? '' : ' \u2014 no move made'}`);   // take 124: the other seat sees it was finished, and how
         if (P.looking.length) P.deck.unshift(...P.looking.splice(0));      // §11-3-3: what was looked at and not moved goes back as it was
         if (H.fromLife) { const h = P.hand.indexOf(H.cardId); if (h >= 0) { P.hand.splice(h, 1); P.trash.push(H.cardId); } }   // §10-1-5-3
         return { ok: true }; }
@@ -701,7 +711,7 @@ const BOT = {
   choose(i, L) { const g = SIM.g; if (g.phase === 'mulligan') return { t: 'keep' };
     if (g.queue.length) return this.effect(i, L); if (g.phase === 'battle') return this.defend(i, L); return this.main(i, L); },
   /* an offered effect: its first sensible target; a cost that would empty the hand declined */
-  effect(i, L) { const g = SIM.g, P = SIM.P(i), o = g.queue[0]; if (g.hand) return { t: 'handdone' }; if (o.hand) return { t: 'fxskip' };
+  effect(i, L) { const g = SIM.g, P = SIM.P(i), o = g.queue[0]; if (g.hand) return { t: 'handdone' }; if (o.hand) return L.find(x => x.t === 'fxskip') || { t: 'fxhand' };
     const d = o.steps[o.step], skip = L.find(x => x.t === 'fxskip');
     if (skip && o.step === 0 && o.steps.some(st => st.a === 'cost_trashhand') && P.hand.length < 3) return skip;   // decided before a cost is begun (§8-3)
     const hurts = ['ko', 'rest', 'bounce', 'bottom', 'costmod'].includes(d.a) || (d.a === 'power' && d.n < 0);

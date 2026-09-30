@@ -1889,8 +1889,11 @@ const take124 = [
         const hand = document.querySelector('#simBoard .tb-hand'), hr = hand.getBoundingClientRect(), hc = [...hand.querySelectorAll('.sc')], sec = document.querySelector('#sim');
         out = { turn: S.g.turn, halves: document.querySelectorAll('#simBoard .tb-half').length, lit: document.querySelectorAll('#simBoard .tb-hand .sc.can').length, tabs: shown('.modebar'), header: shown('#sim > .appbar'), top: Math.round(document.querySelector('#simBoard').getBoundingClientRect().top),
           shown: [...U.shown].sort().join(), hand: hc.length, handShown: hc.filter(e => { const q = e.getBoundingClientRect(); return q.left >= hr.left - 1 && q.right <= hr.right + 1 && q.bottom <= innerHeight + 0.5; }).length, hw: Math.round(hc[0].getBoundingClientRect().width),
-          unused: Math.round(innerHeight - document.querySelector('#simBoard').getBoundingClientRect().bottom - (parseFloat(getComputedStyle(sec).paddingBottom) || 0)) };`));
-      return { ok: m.turn === 1 && m.halves === 2 && !m.tabs && !m.header && m.top <= 8 && fits(m) && m.shown === '0,1' && m.handShown === m.hand && m.unused <= 24, shot, ...m };
+          unused: Math.round(innerHeight - document.querySelector('#simBoard').getBoundingClientRect().bottom - (parseFloat(getComputedStyle(sec).paddingBottom) || 0)),
+          start: (document.querySelector('#simBoard .tb-start') || {}).textContent || '', next: (document.querySelector('#simBoard .tb-next') || {}).textContent || '' };`));
+      /* the owner's fourth word: the band says what the turn's start did, the dock what can be done next */
+      return { ok: m.turn === 1 && m.halves === 2 && !m.tabs && !m.header && m.top <= 8 && fits(m) && m.shown === '0,1' && m.handShown === m.hand && m.unused <= 24
+        && /^Your turn 1 \u00b7 no draw on the first turn \u00b7 \+1\u00a0DON!!$/.test(m.start) && /^(Next: |Nothing left)[^]*no attacks on your first turn\.$/.test(m.next), shot, ...m };
     } },
   { name: 'sim-a-card-selected-and-its-moves', run: async (page) => {
       /* a hand with nothing to play on turn one is lent two DON!! from its deck (the ten stay ten) so a card can be chosen */
@@ -1904,16 +1907,26 @@ const take124 = [
   { name: 'sim-played-onto-the-table', run: async (page) => {
       await tap124(page, '#simBoard .tb-dock [data-sim^="play:"]');
       /* a card played with an [On Play] waits on it: the effect is declined (or applied, when it cannot be declined) as the player would */
-      const m = await page.evaluate(tb(`for (let k = 0; k < 6 && S.who() === 0 && S.g.queue.length; k++) V.simTap(U.v.legal.some(x => x.t === 'fxskip') ? 'fxskip' : 'fxapply');
+      const m = await page.evaluate(tb(`for (let k = 0; k < 8 && S.who() === 0 && S.g.queue.length; k++) { const L = U.v.legal; V.simTap(U.v.tray ? 'hdone' : L.some(x => x.t === 'fxskip') ? 'fxskip' : L.some(x => x.t === 'fxhand') ? 'fxhand' : 'fxapply'); }
         out = { mine: S.P(0).chars.length, onTable: document.querySelectorAll('#simBoard .tb-half.me .tb-row.front .sc').length, waiting: S.g.queue.length };`));
       return { ok: m.mine >= 1 && m.onTable === m.mine && fits(m), ...m };
     } },
   { name: 'sim-the-app-plays-its-turn-a-move-a-beat', run: async (page, ctx) => {
-      await page.click('#simBoard [data-sim="end"]'); await wait(1300);
+      /* the owner's fourth word: End turn asks while a card can still be played or an ability used, naming them -- shot -- and the
+         question's End turn ends it */
+      await page.click('#simBoard [data-sim="end"]'); await wait(450);
+      const q = await page.evaluate(() => ({ asked: document.querySelector('#simSheet').classList.contains('on') && (window.VAULT.SIMUI.sheet || {}).kind === 'endq', left: [...document.querySelectorAll('#simSheet .tb-left li')].map(e => e.textContent) }));
+      if (q.asked) { await ctx.shot('06a-end-turn-asks-what-is-left'); await page.click('#simSheet [data-sim="end:now"]'); }
+      await wait(1300);
       const mid = await page.evaluate(() => ({ busy: window.VAULT.SIMUI.busy, dock: (document.querySelector('#simBoard .tb-dock') || {}).textContent || '' })); const shot = await ctx.shot('06b-the-app-mid-turn');
+      await page.waitForFunction(() => !window.VAULT.SIMUI.busy, null, { timeout: 30000 }); const shot3 = await ctx.shot('06c-your-turn-drew-one-and-two-don');
       await settled(page);
-      const m = await page.evaluate(tb(`out = { turn: S.g.turn, theirs: S.P(1).chars.length, who: S.who() };`));
-      return { ok: mid.busy && /The app is playing/.test(mid.dock) && m.turn === 3 && m.who === 0 && fits(m), midBusy: mid.busy, shot, ...m };
+      const m = await page.evaluate(tb(`const nx = document.querySelector('#simBoard .tb-next'); out = { turn: S.g.turn, theirs: S.P(1).chars.length, who: S.who(), start: (document.querySelector('#simBoard .tb-start') || {}).textContent || '', next: nx ? nx.textContent : '',
+        lines: nx ? Math.round(nx.getBoundingClientRect().height / parseFloat(getComputedStyle(nx).lineHeight)) : 0, wide: innerWidth >= 640 };`));
+      /* the look, 360 px: "play 5 cards, give DON!! and attack with your Leader and Brook, ..." took three lines and the cards gave way;
+         from 640 px the dock is in the hand's column and takes that column's room (four lines on the open Fold, the cards whole above it) */
+      return { ok: mid.busy && /The app is playing/.test(mid.dock) && m.turn === 3 && m.who === 0 && fits(m) && /^Your turn 3 \u00b7 drew\u00a01 \u00b7 \+2\u00a0DON!!$/.test(m.start) && /^Next: [^]*attack with your Leader/.test(m.next) && (m.wide || m.lines <= 2),
+        midBusy: mid.busy, asked: q.asked, left: q.left, shot, shot3, ...m };
     } },
   { name: 'sim-attack-the-targets-lit', run: async (page) => {
       await tap124(page, '#simBoard [data-key="L"]'); await tap124(page, '#simBoard .tb-dock [data-sim="attack:leader"]');
@@ -1947,6 +1960,20 @@ const take124 = [
         S.P(0).chars.push(S.inst(gid, S.g.turn)); S.g.queue = S.offers(0, 'onplay', S.P(0).chars.length - 1).slice(0, 1); fresh(); V.paintSim();
         out = { panel: !!document.querySelector('#simBoard .tb-panel'), picks: document.querySelectorAll('#simBoard .tb-panel .tb-pick').length, lit: document.querySelectorAll('#simBoard .tb-mat .sc.aim').length, card: V.CAT.byId.get(gid).name };`));
       return { ok: m.panel && m.picks >= 1 && m.lit >= 1, ...m };
+    } },
+  { name: 'sim-a-by-hand-line-resolved-never-skipped', run: async (page, ctx) => {
+      /* the owner's fourth word: a by-hand [On Play] that says neither "you may" nor a cost is opened and done by its words -- the panel
+         offers Resolve by hand alone and says it happens in full, the dock says to resolve it; opened, then Done */
+      await page.evaluate(() => window.VAULT.closeAnyOverlay()); await wait(250);
+      const m = await page.evaluate(tb(`const FX = V.CAT.effects, body = r => String(r).replace(/^(\\s*\\[[^\\]]+\\]\\s*)+/, '').replace(/\\([^)]*\\)/g, '');
+        const hid = +Object.keys(FX).find(id => { const p = V.CAT.byId.get(+id); return p && p.type === 'Character' && !p.sealed && FX[id].some(e => e.hand && e.t === 'onplay' && !/^\\s*you may\\b/i.test(body(e.raw)) && !/^[^.:]*:/.test(body(e.raw)) && !e.if.some(c => c.c === 'opt')); });
+        S.g.queue = []; S.P(0).chars = S.P(0).chars.slice(0, 4); S.P(0).chars.push(S.inst(hid, S.g.turn)); S.g.queue = S.offers(0, 'onplay', S.P(0).chars.length - 1).filter(o => o.hand).slice(0, 1); fresh(); V.paintSim(); await wait(300);
+        const panel = (document.querySelector('#simBoard .tb-panel') || {}).textContent || '';
+        out = { card: V.CAT.byId.get(hid).name, resolve: !!document.querySelector('#simBoard .tb-panel [data-sim="fxhand"]'), skip: !!document.querySelector('#simBoard .tb-panel [data-sim="fxskip"]'), full: /it happens in full/.test(panel), next: (document.querySelector('#simBoard .tb-next') || {}).textContent || '' };`));
+      const shot = await ctx.shot('14a-a-by-hand-line-no-skip'); await page.click('#simBoard .tb-panel [data-sim="fxhand"]'); await wait(400);
+      const done = !!(await page.$('#simBoard .tb-panel [data-sim="hdone"]')); if (done) { await page.click('#simBoard .tb-panel [data-sim="hdone"]'); await wait(400); }
+      const after = await page.evaluate(() => ({ queue: window.VAULT.SIM.g.queue.length, log: window.VAULT.SIM.g.log[0] }));
+      return { ok: m.resolve && !m.skip && m.full && /^Next: resolve .+ effect by hand\.$/.test(m.next) && done && after.queue === 0 && /done by hand/.test(after.log), shot, ...m, done, log: after.log };
     } },
   { name: 'sim-two-on-one-phone-the-curtain', run: async (page) => {
       const m = await page.evaluate(tb(`S.g.queue = []; Object.assign(U, { opp: 'human', d1: 'stock-st08', d2: 'stock-st03', first: 0 }); S.g = null; V.paintSim(); await wait(200); V.simTap('start');
@@ -2030,7 +2057,7 @@ const take125 = [
     } },
   { name: 'more-last-backup-after-the-switch-to-play', run: async (page) => {
       /* the owner's phone after the sideload-to-Play switch: Documents/OPTCGHub/backup-latest.json is the uninstalled
-         install's, and Android refuses this one a write of it (landmine 238). A stubbed Filesystem says so in Android's
+         install's, and Android refuses this one a write of it (landmine 239). A stubbed Filesystem says so in Android's
          words; the app's own scheduleBackup runs, and More shows what it did. */
       const m = await page.evaluate(`(async () => { const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms)); while (V.closeAnyOverlay()) {}
         const disk = {}; window.__cap0 = window.Capacitor;

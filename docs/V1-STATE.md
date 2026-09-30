@@ -209,7 +209,7 @@ reproductions, outside the harness).
 | First test-ad impression | needs a phone | A17 |
 | First notification | needs a phone | 8.5 |
 | Export and restore on the Fold | share sheet and file picker are INFERRED from the plugin definitions until seen | landmine 110 |
-| The backup after a reinstall on the Fold | take 121 on the Fold failed every backup: the uninstalled sideload's `backup-latest.json` is not this install's (landmine 238); take 125 writes a name this install owns and keeps a failure's reason -- PROVEN in smoke with Android's `EACCES`, the Fold's next backup is the proof | HANDOFF take 125 |
+| The backup after a reinstall on the Fold | take 121 on the Fold failed every backup: the uninstalled sideload's `backup-latest.json` is not this install's (landmine 239); take 125 writes a name this install owns and keeps a failure's reason -- PROVEN in smoke with Android's `EACCES`, the Fold's next backup is the proof | HANDOFF take 125 |
 | First Sync on the Fold | `UPDATE_URL` is set; the first *Sync now* that shows a date proves Pages and the URL | RUNBOOK §5 |
 | Real AdMob unit IDs | D11, needed now: the app is live on Google Play since 24 Sept and every install shows test ads. Take 121: three units under the linked app, and a consent flow first (the app is worldwide); app-ads.txt is 404 at the listing's website (landmine 209) | A17, A43, RUNBOOK-play §9 |
 | The named fonts as files | D16; the roles ship with free faces, the slot takes licensed ones | A26 |

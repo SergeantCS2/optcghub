@@ -244,13 +244,14 @@ Start here. Do not read top to bottom.
 | A row of cards sized to fit breaks a card early onto the next row | 229 |
 | A browser test taps a card and another card answers | 230 |
 | Rows the app folded come apart with no code change; a check finds "0 decks" | 231 |
-| Scanner reads nothing, or takes 10-20 s, on a sleeve, toploader, binder or light ground | **232** |
-| The same card is counted again while it stays in view | 233, 16 |
-| A scan names the card next to the one in hand | 234 |
-| Two reads agree on the wrong number | 235 |
-| An OCR measurement on the VM says the camera approach cannot work | 236 |
-| The look hangs at a scanner step | 237 |
-| "Last backup: Failed" on every backup, after a reinstall or the switch to Play | 238 |
+| A planted fault goes unnamed after a change that did not touch its check | 232 |
+| Scanner reads nothing, or takes 10-20 s, on a sleeve, toploader, binder or light ground | **233** |
+| The same card is counted again while it stays in view | 234, 16 |
+| A scan names the card next to the one in hand | 235 |
+| Two reads agree on the wrong number | 236 |
+| An OCR measurement on the VM says the camera approach cannot work | 237 |
+| The look hangs at a scanner step | 238 |
+| "Last backup: Failed" on every backup, after a reinstall or the switch to Play | 239 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -390,7 +391,7 @@ the holder's edge is the higher-contrast one. Sleeved and toploadered cards must
 be in the Phase 0 sample; testing on loose base cards produces a false-positive
 feasibility result. The owner's most valuable card is in a toploader in his own
 screenshots.
-*Take 125:* the outline no longer gates the read -- the number is found by the recogniser wherever it is (landmine 232), so a card in a toploader is read; its outline is still not believed there, so no star is looked for and its photo is the view at a card's shape.
+*Take 125:* the outline no longer gates the read -- the number is found by the recogniser wherever it is (landmine 233), so a card in a toploader is read; its outline is still not believed there, so no star is looked for and its photo is the view at a card's shape.
 
 **15. Bench light is not shop light.** Every accuracy figure carries the lighting
 it was measured under. A number from a desk lamp is not evidence about a card
@@ -400,7 +401,7 @@ shop table or a convention hall.
 should produce one row with quantity 4, with a visible `×4` badge so a runaway
 double-count is catchable. An 800 ms cooldown after each accept stops the same
 card being counted twice while the hand moves.
-*Take 125:* the 800 ms cooldown was never set (landmine 233). The number decided is now held while it stays in view and let go after three captures that do not read it; a playset still counts four as the hand swaps the cards.
+*Take 125:* the 800 ms cooldown was never set (landmine 234). The number decided is now held while it stays in view and let go after three captures that do not read it; a playset still counts four as the hand swaps the cards.
 
 **17. The scan loop is the product; 1.5 s per card is the budget.** If bulk
 scanning is slower than typing card numbers, the feature has failed and the
@@ -3019,7 +3020,16 @@ reading the name the same way, found "0 decks". A set is known by its code
 (the catalogue takes it from the cards' printed numbers), with the words as
 the fallback; smoke renames the run's sets and the fold must hold.
 
-**232. A card outline that is every bright pixel is the whole frame.** Take 10's
+**232. A planted fault the sample meets by chance is a control by luck.**
+Self-play's control for a log that names a declined [Trigger] needed a game to
+decline one, and chaos declines at weight 1 against 3 or 4 for using it. When
+take 124 made a by-hand line be opened rather than skipped, chaos's random
+stream moved: the plant's forty games met eleven [Trigger]s, declined none, and
+the planted leak went unnamed -- the auditor looked broken and was not. Its
+games now decline every [Trigger] from Life. A plant forces the event it
+plants on; a sample that only may meet it is not a control.
+
+**233. A card outline that is every bright pixel is the whole frame.** Take 10's
 detector boxed every pixel brighter than 1.18 x the frame's mean and accepted
 the box at ±22 % of a card's aspect. On a couch, a carpet, a binder or any
 sleeve's glint there is a bright pixel at every edge, and a portrait frame's
@@ -3032,7 +3042,7 @@ text anywhere, and believes the outline only where the number sits on it. A
 stage a later stage depends on is measured on the ground the collector uses,
 not the one it was proven on.
 
-**233. A cooldown that is never set is not a cooldown.** `SCAN.lastAccept` was
+**234. A cooldown that is never set is not a cooldown.** `SCAN.lastAccept` was
 compared against for 115 takes and assigned by nothing, and the loop reset its
 vote after each decision: a card left in view was decided again every two
 reads -- four times in eight (the smoke control, take 125). Landmine 16's
@@ -3041,7 +3051,7 @@ three captures in a row do not read it: counted in captures, so a picker's wait
 is not the card leaving. A guard's variable is grepped for its writer, not only
 its reader.
 
-**234. A turned look turns the neighbours too.** To read a card lying on its
+**235. A turned look turns the neighbours too.** To read a card lying on its
 side the view is turned a quarter; an upright neighbour then lies on its side,
 and a reader that reads vertical text finds its number anywhere -- past the
 top and left quarters that keep a neighbour out, which assume an upright card.
@@ -3056,7 +3066,7 @@ neighbour a turned look turned over. The upright-line rule stays: the whole
 look read a sideways neighbour's number on one of the owner's frames too. On
 his 29 upright frames the turned looks had added nothing (23 right either way).
 
-**235. A misread lands a digit away, and repeats.** The owner's close-up of
+**236. A misread lands a digit away, and repeats.** The owner's close-up of
 Kyros, OP10-046, read OP10-040 -- a valid number, an Event -- in two looks alike
 (MEASURED take 125, the stand-in reader). Two agreeing reads of a still card are
 not independent: the vote of landmine 65 removes noise, not a glint that sits on
@@ -3066,20 +3076,20 @@ effect's text is not the card's. Using the name the other way, to accept on one
 read, would have confirmed 680 of 64,428 one-digit misreads (318 by the true
 card's own words, 362 by a shared name; MEASURED over the catalogue).
 
-**236. A stand-in recogniser has to be the same kind of reader.** ML Kit runs
+**237. A stand-in recogniser has to be the same kind of reader.** ML Kit runs
 only on the phone. Tesseract, a document reader, found 1 of 15 numbers in the
 whole view -- it missed the clean Shanks Leader -- and would have said the
 approach cannot work. RapidOCR, a camera-text detector and reader like ML Kit,
 found 7 with no help and 12 with the looks. A proxy measures only what it shares
 with the thing it stands in for; say which, and label the result INFERRED.
 
-**237. `video.play()` on a canvas's stream never settles in headless
+**238. `video.play()` on a canvas's stream never settles in headless
 Chromium.** The look's scanner steps hung ten minutes on it (take 125) and
 were killed with nothing in the log. The look now hands the app the stream as
 its camera (getUserMedia) and lets the app's own path play it; any await on a
 media promise in a harness is raced against a timeout.
 
-**238. A file in Documents is the install's that made it.** Android's shared
+**239. A file in Documents is the install's that made it.** Android's shared
 storage gives each file to the install that created it; an uninstall leaves
 the file and takes the ownership, and the next install may neither write over
 it nor read it (`open failed: EACCES`). The sideload install's

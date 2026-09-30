@@ -42,7 +42,7 @@ what it handed on is A43.)
    nightly's AAB), a measurement of the app's data folder before any
    automatic-backup rule, and More's "Last backup" line after the
    sideload-to-Play switch (answered take 125: it could not be written --
-   landmine 238); A41's parts and the source; the take-100 look's
+   landmine 239); A41's parts and the source; the take-100 look's
    "tiny bit of work" (which picture, what).
 5. **D22** background stock checks; **D21** local stock for unserved zips;
    **D20** a crowd-report inbox. Each caps a Hunt feature until answered.
@@ -90,7 +90,12 @@ what take 115 changed on screen.
    the playmat of pictures, the zoom, the full screen, Leave, the icon's card
    backs in the game's colours (`docs/SIM-UI.md` §8), and the rulebook with
    random legal decks, whose nine finds in the engine are fixed. Every Sim
-   take now runs that sweep (the owner's rule). Next: the owner's look on the Fold, then
+   take now runs that sweep (the owner's rule). Then the owner's fourth word:
+   the table says the next action -- the turn's start, the next move, End
+   turn asking while something is left -- and a by-hand line is never passed
+   by where the rules make it happen (`docs/SIM-UI.md` §8). **Ruled out:**
+   applying a "you may" for the player; Draw and DON!! buttons; asking about
+   DON!! left active. Next: the owner's look on the Fold, then
    HANDOFF take 124's DEFERRED (the host's placeholder across the app
    first), then the tail -- modal effects, ordering, protection, the
    opponent's hidden choices -- one mechanism per take, each proven through
@@ -204,8 +209,8 @@ The one unproven assumption in the entire plan. Everything else is arithmetic.
 ### Take 125 — the number found by the recogniser (the owner's word: "greatly overhaul the scanning tool")
 
 - **MEASURED:** take 123's stages read 0 of 15 of the owner's photographed
-  frames -- the outline was the whole frame (landmine 232); `lastAccept` never
-  set (landmine 233). The rebuilt stages (`src/scan.js`: the whole view to the
+  frames -- the outline was the whole frame (landmine 233); `lastAccept` never
+  set (landmine 234). The rebuilt stages (`src/scan.js`: the whole view to the
   recogniser, three looks, the number on an upright card in the view and not
   contradicted by its name) decide 23 of 29 upright frames right and 0 wrong
   (the 19 on their side: 0 wrong), with a
@@ -214,11 +219,11 @@ The one unproven assumption in the entire plan. Everything else is arithmetic.
   the stand-in), a card counted once while it stays in view.
 - **Ruled out:** looks turned a quarter each way, for a card on its side (the
   owner scans upright; on his 29 upright frames they added nothing, and they
-  were the only looks to read a neighbour's number -- landmine 234); the card
+  were the only looks to read a neighbour's number -- landmine 235); the card
   outline as the gate to the read (0 of 15, landmine
-  232); Tesseract as the stand-in for ML Kit (1 of 15 in the whole view,
-  landmine 236); the card's name as a one-read confirmation (680 of 64,428
-  one-digit misreads would be confirmed, landmine 235); correcting a misread to
+  233); Tesseract as the stand-in for ML Kit (1 of 15 in the whole view,
+  landmine 237); the card's name as a one-read confirmation (680 of 64,428
+  one-digit misreads would be confirmed, landmine 236); correcting a misread to
   the named number (an effect's text names other cards); the art hash from a
   photo as an auto-accept this take (right printing nearest in 5 of 6, but a
   4 % crop error flips a parallel to its base, and none cleared ≤ 8 / gap 13);
@@ -1497,7 +1502,7 @@ UI-AUDIT's open boxes; they are listed here once so nothing is lost.
    `backup-before-restore.json`) written by the sideload install. The proof
    is More's "Last backup" line on the owner's phone. *Answered take 125: it may
    not.* The owner's More on take 121 said "Last backup: Failed" on every
-   backup; the file belongs to the uninstalled install (landmine 238). Each
+   backup; the file belongs to the uninstalled install (landmine 239). Each
    file the app keeps there is now written under a name this install owns, and
    a failure keeps its reason (HANDOFF take 125). The Fold's next backup is the
    proof.

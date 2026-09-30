@@ -99,15 +99,15 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
 - **Take 125 -- the scanner reads the number where the recogniser finds it**
   (AGENDA A2's take-125 section; HANDOFF take 125). Take 123's card outline
   was the whole frame on 14 of the owner's 15 photographs and its stages read
-  0 of them (landmine 232); the whole view now goes to ML Kit, the number is
+  0 of them (landmine 233); the whole view now goes to ML Kit, the number is
   picked out of its lines on a card upright in the look and in the view and
   not contradicted by its own name, through three looks in turn (cards are
   scanned upright), and the number
-  decided is held while it stays in view (landmines 232-237). 23 of 29 of the
+  decided is held while it stays in view (landmines 233-238). 23 of 29 of the
   owner's upright frames right, 0 wrong, with a camera-text reader standing in for ML
   Kit. The stages are `src/scan.js`. It also mends the backups: after the
   switch to Play every backup failed on a file the uninstalled sideload made
-  (landmine 238); each file is now written under a name this install owns, and
+  (landmine 239); each file is now written under a name this install owns, and
   a failure keeps its reason. It carries take 124, merged into its
   branch at the owner's word. **Next, the owner's:** a scan on the Fold and the
   HANDOFF's questions. **Yours after it:** the printing from the picture (A2).
@@ -133,7 +133,12 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   the deck, and five more) and fixed each with a check. The PR's first check
   met TCGCSV's rename of every starter deck ("ST-31: Starter Deck 31 ...") and
   Releases' fold came apart; a starter deck is now known by its code, ST and a
-  number (landmine 231). `docs/SIM-UI.md` §7 and §8; landmines 225-231.
+  number (landmine 231). Then the owner's fourth word ("The sim should tell
+  the player what the next action is"): the band says what the turn's start
+  did, the dock says the next move or that only End turn is left, End turn
+  asks while an attack, a card to play or an ability is left, and a by-hand
+  line is declined only where the rules let a line be -- no Skip on an [On
+  Play] that must happen. `docs/SIM-UI.md` §7 and §8; landmines 225-232.
   **Next, the owner's:** the look on the Fold (the
   pace, the vibration, the long press, the fit) and his word on the card
   back. **Yours after it:** HANDOFF take 124's DEFERRED -- the host's

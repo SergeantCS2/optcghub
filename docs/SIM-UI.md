@@ -54,7 +54,11 @@ trashes are most of it late in a game):
   battle's result as this seat may see it, or `null`: `n` numbers it, `turn`,
   `att`, `def`, `a`, `d`, `win`, `gone`, `ko`, and `life` -- each Life card
   that left: its `name`, `id` and `trigger` for its owner only, or for both
-  when [Banish] trashed it face up; to the other seat `{ id: null, name: null }`).
+  when [Banish] trashed it face up; to the other seat `{ id: null, name: null }`),
+  `start` (this turn's start as the engine made it, or `null`: `turn`, `i`
+  whose, `drew`, `don` added, `first` -- counts, public to both; take 124:
+  Refresh, Draw and DON!! are the engine's, never a move, and the table says
+  what they did).
 - **`me` and `them`** — the two sides, the same shape: `seat`, `name`,
   `leader`, `chars` (in order; a Character's index is its `ref`), `stage`
   (or `null`), `hand` (**`me` only**; `them.hand` is `null`), `handCount`,
@@ -105,7 +109,7 @@ Always one of `view.legal`, sent back as it is. Their shapes:
 | `counter` / `cevent` | `h` | the Counter Step |
 | `resolve` | — | the Damage Step; the result comes back as `res` |
 | `fx` | `target` (or `null` for none / no target), `trash` | apply the offer's step |
-| `fxskip` | — | decline -- only a line that says "you may", begins with a cost, a [Trigger], an [Activate: Main] before it begins, or a by-hand line; an automatic effect resolves in full, its "up to" letting none be chosen (§8-1-3-1; take 124). Offered alone when a cost begun can no longer be paid (§8-3-1-3) |
+| `fxskip` | — | decline -- only a line that says "you may", begins with a cost (a by-hand line's read from its words, "X: Y"), a [Trigger], or an [Activate: Main] before it begins; an automatic effect resolves in full, its "up to" letting none be chosen, and a by-hand one is opened and done by its words (§8-1-3-1; take 124, the owner: nothing skipped that must happen). Offered alone when a cost begun can no longer be paid (§8-3-1-3) |
 | `fxhand`, `hand`, `handdone` | `hand` carries `op` and its fields | the by-hand tray |
 | `end`, `concede` | — | end the turn; concede (§1-2-3) |
 
@@ -207,6 +211,24 @@ draw their own seat's view from the same seed and moves.
   counter, an effect's choice, one of five to trash -- is lit on the card it
   names, carrying that move's own word. The app's moves come one a beat where
   the browser can draw them (`simPaced()`), at once under reduced motion.
+- **The next action, always** (the owner, take 124: "Ensure if there's an
+  outstanding action, the player knows about it"): the band says what the
+  turn's start did (`view.start`) until the seat's first move of it, and the
+  turn's banner says it too, the drawn card and the new DON!! drawn arriving;
+  the dock says what the seat can do next from its legal moves -- a card to
+  play, who can attack, an ability -- or that only End turn is left (two lines
+  at most on a phone's strip; in the hand's column from 640 px it takes that
+  column's room), and
+  an effect waiting on it; it is outlined while the game waits on this seat,
+  and the top bar says "your move" in the other's turn; it never counts the
+  cards to play -- one named, or "a card" (the owner: "you won't always play 5
+  cards"). End turn stands alone against the app (the owner) and says "then
+  pass the phone" between two people; it asks while an attack, a card to play
+  or an ability is left, and names them (DON!! left
+  active are not asked about: they pay for a [Counter] Event in the other
+  turn). A decline is named for what it does: Add to hand ([Trigger]), Cancel
+  ([Activate: Main]), Don't pay (a cost), Decline ("you may"), Go on (a cost
+  that can no longer be paid).
 - **Held by:** smoke's take-124 section (every legal move has its control on
   the table in the states a board meets, with a planted move as its control;
   the painted board against the app names no card the app alone may see; the

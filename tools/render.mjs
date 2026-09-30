@@ -270,6 +270,25 @@ if (puppeteer) {
   ok('the table uses the screen at four sizes -- a phone, the Fold\'s two, a tablet: its foot within 24 px of the screen\'s, all of a first hand on the screen, each card with a 44 px strip of its own, nothing sideways (the owner, take 124)',
      Object.values(space).every(({ now: s }) => s.unused >= 0 && s.unused <= 24 && s.n === 5 && s.shown === 5 && s.strip >= 44 && !s.sideways), JSON.stringify(Object.fromEntries(Object.entries(space).map(([k, v]) => [k, v.now]))));
   ok('...control: take 124\'s first hand -- one strip -- leaves the Fold\'s cover 60 px or more unused, or hides part of the hand', space.cover.old.unused >= 60 || space.cover.old.shown < 5, JSON.stringify(space.cover.old));
+  /* take 124, the owner's fourth word ("The sim should tell the player what the next action is"): as Chrome lays them out at the four
+     sizes, the band's turn start whole in the room the band had (66 px; it was one log line, cut short on a phone), the dock's next
+     action in two lines at most (the dock's room, so the cards keep their size), and End turn's question with 44 px buttons */
+  const sayAt = async (vp) => { await page.setViewport(vp); await new Promise(r => setTimeout(r, 150));
+    return page.evaluate(async () => { const V = window.VAULT; V.SIMUI.acted = null; V.paintSim(); const b = document.querySelector('#simBoard'), band = b.querySelector('.tb-band'), st = b.querySelector('.tb-start'), nx = b.querySelector('.tb-next'), dock = b.querySelector('.tb-dock');
+      const whole = e => !!e && e.scrollWidth <= e.clientWidth + 1 && e.scrollHeight <= e.clientHeight + 1, lh = nx ? parseFloat(getComputedStyle(nx).lineHeight) : 1;
+      const out = { band: Math.round(band.getBoundingClientRect().height), start: whole(st), startText: st ? st.textContent : '', lines: nx ? Math.round(nx.getBoundingClientRect().height / lh) : 0, dock: Math.round(dock.getBoundingClientRect().height), wide: innerWidth >= 640, next: nx ? nx.textContent : '', unused: Math.round(innerHeight - b.getBoundingClientRect().bottom - (parseFloat(getComputedStyle(document.querySelector('#sim')).paddingBottom) || 0)) };   // the space check's own measure
+      /* the deal is unseeded: a first hand with nothing to play at 1 DON!! is lent enough from the DON!! deck for its cheapest card (the
+         ten stay ten), so End turn has something to ask about; given back after */
+      const P = V.SIM.P(0), costs = (V.SIMUI.v.me.hand || []).map(c => c.cost || 0), lend = costs.length ? Math.max(0, Math.min(P.donDeck, Math.min(...costs) - P.don.active)) : 0;
+      if (lend) { P.don.active += lend; P.donDeck -= lend; V.paintSim(); }
+      V.simTap('end'); await new Promise(r => setTimeout(r, 60)); const sh = document.querySelector('#simSheet'), btn = sel => { const e = sh.querySelector(sel); if (!e) return 0; const q = e.getBoundingClientRect(); return Math.round(Math.min(q.width, q.height)); };
+      Object.assign(out, { asked: sh.classList.contains('on') && V.SIMUI.sheet && V.SIMUI.sheet.kind === 'endq', endBtn: btn('[data-sim="end:now"]'), keepBtn: btn('[data-close="simSheet"]'), items: sh.querySelectorAll('.tb-left li').length, turn: V.SIM.g.turn, lend });
+      sh.classList.remove('on'); V.SIMUI.sheet = null; if (lend && V.SIM.g.turn === 1) { P.don.active -= lend; P.donDeck += lend; } V.paintSim(); return out; }); };
+  const said = {}; for (const [k, vp] of Object.entries({ phone: PHONE(360, 780), cover: FOLD.cover, inner: FOLD.inner, tablet: { width: 1280, height: 800, deviceScaleFactor: 2 } })) said[k] = await sayAt(vp);
+  await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });
+  ok('the table says the next action at four sizes: the turn\'s start whole in the band\'s own room ("Your turn 1 \u00b7 no draw on the first turn \u00b7 +1 DON!!"), the next action in the dock in two lines at most on a phone (in the hand\'s column from 640 px it takes the column\'s room, never the table\'s), the table still to the screen\'s foot (the owner, take 124)',
+     Object.values(said).every(x => x.start && /^Your turn 1 \u00b7 no draw on the first turn \u00b7 \+1\u00a0DON!!$/.test(x.startText) && x.band <= 70 && x.lines >= 1 && (x.wide || x.lines <= 2) && /^(Next: |Nothing left)/.test(x.next) && x.unused >= 0 && x.unused <= 24), JSON.stringify(said));
+  ok('End turn asks while a card can be played, in a sheet with End turn and Keep playing 44 px each, naming what is left -- and the turn goes on (the owner: "the player knows about it")', Object.values(said).every(x => x.asked && x.endBtn >= 44 && x.keepBtn >= 44 && x.items >= 1 && x.turn === 1), JSON.stringify(Object.fromEntries(Object.entries(said).map(([k, x]) => [k, { asked: x.asked, endBtn: x.endBtn, keepBtn: x.keepBtn, items: x.items, turn: x.turn }]))));
   const simShot = await page.screenshot({ encoding: 'base64', fullPage: false });
   fs.writeFileSync(path.join(ROOT, 'www', 'render-sim.png'), Buffer.from(simShot, 'base64'));
   await page.evaluate(() => { window.VAULT.SIM.g = null; window.VAULT.MODE.set('collect', false); document.querySelector('nav button[data-go="collection"]').click(); });

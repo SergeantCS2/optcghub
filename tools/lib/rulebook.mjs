@@ -97,10 +97,11 @@ export function makeRulebook(CAT) {
 
   /* ---- which effects a player may decline (§8-1-3-1): an automatic effect activates by itself and resolves in full, its "up to"
      letting 0 be chosen; a [Trigger] is the player's to use (§10-1-5); a line that says "you may", or that begins with a cost, is
-     the player's to take; one the player activates may be put back before it begins; a line run by hand is the player's.
+     the player's to take; one the player activates may be put back before it begins. A line run by hand is held to the same
+     (take 124, the owner: nothing skipped that must happen) -- its cost read from its words, "X: Y", a "Choose one:" no cost.
      Nothing is declined once begun (§8-3-1-1) ---- */
-  const declinable = o => { if (o.hand) return true; if (o.step > 0) return false; const e = o.e || {}, body = String(e.raw || '').replace(/^(\s*\[[^\]]+\]\s*)+/, '').replace(/\([^)]*\)/g, '');
-    return e.t === 'trigger' || e.t === 'main' || /^cost_/.test((e.do && e.do[0] && e.do[0].a) || '') || /^\s*you may\b/i.test(body); };
+  const declinable = o => { if (o.step > 0) return false; const e = o.e || {}, body = String(e.raw || '').replace(/^(\s*\[[^\]]+\]\s*)+/, '').replace(/\([^)]*\)/g, '');
+    return e.t === 'trigger' || e.t === 'main' || /^cost_/.test((e.do && e.do[0] && e.do[0].a) || '') || /^\s*you may\b/i.test(body) || (!!o.hand && /^[^.:]*:/.test(body) && !/^\s*choose one\b/i.test(body)); };
 
   /* ---- the legal moves (§6-5, §7, §8): what the engine's legal() must offer, exactly ---- */
   function canAttack(m, i, ref) { const X = P(m, i), o = at(X, ref); if (!o || o.rested || X.taken <= 1) return false;          // §7-1-1-1, §6-5-6-1
@@ -122,7 +123,7 @@ export function makeRulebook(CAT) {
     if (m.phase === 'mulligan') return [{ t: 'keep' }, { t: 'mull' }];
     if (m.queue.length) { const o = m.queue[0];
       if (m.hand) return null;                                     // the by-hand tray: its moves are its words' (landmine 212), not modelled here
-      if (o.hand) return [{ t: 'fxhand' }, { t: 'fxskip' }];
+      if (o.hand) return [{ t: 'fxhand' }].concat(declinable(o) ? [{ t: 'fxskip' }] : []);
       const srcRef = o.uid != null ? refOf(X, o.uid) : o.ref, d = o.steps[o.step], T = targetsFor(m, i, d, srcRef) || [];
       if (!payable(m, i, at(X, srcRef), d)) return [{ t: 'fxskip' }];
       const room = ref => { const id = d.a === 'playself' ? o.cardId : d.a === 'playfromhand' && ref != null ? X.hand[+String(ref).slice(1)] : null, p = id != null && card(id); return !!(p && p.type === 'Character' && X.chars.length >= 5); };

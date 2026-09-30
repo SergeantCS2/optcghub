@@ -55,7 +55,7 @@ function viewCanvas(src, v) {
    whole alone 7 of 15; with near and glare, 12 of 15; take 123's stages 0. Cards are scanned upright:
    two looks turned a quarter each way read a card on its side and were the only looks to read a
    neighbour's number, and went before take 125 shipped (the owner: sideways "will only
-   overcomplicate things"; landmine 234). */
+   overcomplicate things"; landmine 235). */
 const LOOKS = [
   { name: 'whole' },
   { name: 'near', part: { x: 0.3, y: 0.5, w: 0.7, h: 0.5 }, zoom: 2 },   // the corner the number is printed in, twice the size
@@ -132,7 +132,7 @@ function parseRead(text) {
    and not contradicted by the card's own words. A line without a place is taken at its word.
    Upright: the line runs across (wider than twice its height) -- the places below assume an upright card,
    and a card on its side beside the one in hand prints its number down the picture (MEASURED take 125: the
-   whole look read a sideways neighbour's number on one of the owner's frames until this; landmine 234).
+   whole look read a sideways neighbour's number on one of the owner's frames until this; landmine 235).
    In the view: not in the top or left quarter (CODE_AT). */
 function codesIn(read, w, h) {
   const onCard = b => !b || (b.w >= 2 * b.h && b.x + b.w / 2 >= w / 4 && b.y + b.h / 2 >= h / 4);
