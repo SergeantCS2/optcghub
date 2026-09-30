@@ -156,6 +156,22 @@ More's one row and its action, Diagnostics' line and the boot's one line.
 - The first real ad impression and the first earnings: after the merge, the
   upload and real users (the owner's Fold is a test device).
 
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+- PR #53 merged 30 Sept, 16:11Z (the owner's "go" after the look); `build`
+  run 83 green in every job; Release take-127 published 16:23Z with the APK
+  (28,899,554 bytes), the AAB (22,092,176), the mapping and the Play icon.
+  PROVEN from the apk job's log: "AdMob app id
+  ca-app-pub-6243777967151950~9519036366 in strings.xml + manifest",
+  versionCode 127, the AAB signed by the pinned upload key (`32:8E:60:A5:…`).
+  The Pages manifest serves take 127: `ads.live` the owner's three units
+  from 127, `ads.scan` and `ads.deck` Google's test unit.
+- The owner asked about five `ad load failed` lines (`code: 3, No fill` x3,
+  `code: 2, Network error`, `code: 3, No fill`): smoke's own planted load
+  failures, in its order (scan, deck, MAX, a network error, offline), which
+  the app's listener logs; the same five lines stand in the clean run's log.
+  No real ad has been requested yet. The owner's: the upload, then the
+  Fold's "Test Ad" labels and Diagnostics' ads line.
 
 ## Take 126 — 2026-09-30 — the host's "Image Coming Soon" is no card's picture: refused where pictures are fetched, so no screen draws it
 
