@@ -117,7 +117,12 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   the deck, and five more) and fixed each with a check. The PR's first check
   met TCGCSV's rename of every starter deck ("ST-31: Starter Deck 31 ...") and
   Releases' fold came apart; a starter deck is now known by its code, ST and a
-  number (landmine 231). `docs/SIM-UI.md` §7 and §8; landmines 225-231.
+  number (landmine 231). Then the owner's fourth word ("The sim should tell
+  the player what the next action is"): the band says what the turn's start
+  did, the dock says the next move or that only End turn is left, End turn
+  asks while an attack, a card to play or an ability is left, and a by-hand
+  line is declined only where the rules let a line be -- no Skip on an [On
+  Play] that must happen. `docs/SIM-UI.md` §7 and §8; landmines 225-232.
   **Next, the owner's:** the look on the Fold (the
   pace, the vibration, the long press, the fit) and his word on the card
   back. **Yours after it:** HANDOFF take 124's DEFERRED -- the host's

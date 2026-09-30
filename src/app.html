@@ -943,6 +943,12 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
 .tb-say b{color:var(--fg)}
 .tb-why{display:block;margin-top:2px;font-size:var(--fs-cap);color:var(--dim2)}
 .tb-dock > .ghost,.tb-dock .tb-go > .ghost{padding:10px 14px}
+/* take 124 (the owner: "the sim should tell the player what the next action is"): the dock is outlined while the game waits
+   on this seat and says what it can do next; the band says what the turn's start did until the first move */
+.tb-dock.you{border-color:var(--accent-ink);box-shadow:inset 3px 0 0 var(--accent-ink)}
+.tb-start{white-space:normal;line-height:1.35;color:var(--fg)}
+.tb-start b{color:var(--accent-ink);font-family:var(--heavy);font-weight:800}
+.tb-left{margin:8px 0 4px;padding-left:20px;font-size:var(--fs-sm);line-height:1.5;color:var(--fg)}
 /* the effect panel, over the hand */
 .tb-panel{position:absolute;left:0;right:0;bottom:0;z-index:6;max-height:62%;overflow:auto;padding:14px 14px calc(14px + var(--sab));border-radius:22px 22px 0 0;
   background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-bottom:0;box-shadow:0 -14px 34px rgba(0,0,0,.55);animation:sheetUp var(--dur-sheet) cubic-bezier(.2,.8,.2,1)}
@@ -966,6 +972,7 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
   background:linear-gradient(90deg,transparent,rgba(8,10,14,.93) 18%,rgba(8,10,14,.93) 82%,transparent);animation:tbBanner 1.5s ease-in-out both}
 .tb-banner b{font-family:var(--display);font-weight:400;font-size:var(--fs-head);color:var(--fg);letter-spacing:.02em}
 .tb-banner span{font-size:var(--fs-sm);font-weight:700;color:var(--accent-ink)}
+.tb-banner span.st{margin-top:2px;font-weight:600;color:var(--fg)}
 @keyframes tbBanner{0%{opacity:0;transform:translate(-30%,-50%)}18%,78%{opacity:1;transform:translate(0,-50%)}100%{opacity:0;transform:translate(30%,-50%)}}
 .tb-burst{position:absolute;left:50%;top:50%;z-index:8;max-width:88%;padding:10px 22px;border-radius:var(--r-lg);transform:translate(-50%,-50%);text-align:center;pointer-events:none;
   background:rgba(8,10,14,.93);border:2px solid var(--brass);box-shadow:0 12px 30px rgba(0,0,0,.6);animation:tbBurst 1.6s ease-out}
@@ -6484,7 +6491,7 @@ $('#rulesSync').addEventListener('click', async () => { const n = $('#rulesSyncN
    markers -- and the controller after them holds the view it painted, so a tap sends back one of that view's legal
    moves (docs/SIM-UI.md). */
 const SIMUI = { sel: null, focus: null, post: null, seen: 0, pre: null, room: null, fxt: null, v: null, sheet: null,
-  busy: false, timer: null, hurry: false, pace: 650, press: null, pressed: false, d1: null, d2: null, opp: 'human', first: 0,
+  busy: false, timer: null, hurry: false, pace: 650, press: null, pressed: false, d1: null, d2: null, opp: 'human', first: 0, acted: null,
   legalDecks() { return DECKS.all().filter(d => d.leader && legality(d).problems.length === 0); } };
 /* ==== the table's painters (take 124): each draws from the view it is handed and the board's own choices -- what is
    selected, what is aimed -- never from the engine; smoke reads every function from here to SIM_PAINTERS_END, markers
@@ -6496,6 +6503,15 @@ function simCan(L, pred) { return L.some(pred); }
 function simSide(v, seat) { return v.me.seat === seat ? v.me : v.them; }
 /* a player's short name: the seat's own word before its deck's name */
 function simShort(X) { return String(X.name || '').split(' \u2014 ')[0]; }
+/* a turn's start in a few words (take 124): what the engine did at it -- the card drawn, none on the first player's first
+   turn (§6-3-1), the DON!! added -- never a move, so never skipped */
+function simStartText(s) { return `${s.first ? 'no draw on the first turn' : s.drew ? 'drew\u00a0' + s.drew : 'nothing to draw'} \u00b7 ${s.don ? '+' + s.don + '\u00a0DON!!' : 'no DON!! left to add'}`; }   // a count and its word never broken apart
+/* what this seat may still do in its Main Phase, from its legal moves (take 124, the owner: "Ensure if there's an outstanding
+   action, the player knows about it"): who can attack, the cards it can play, the abilities ready */
+function simOpen(v) { const L = v.legal, uniq = a => [...new Set(a)];
+  return { atk: uniq(L.filter(x => x.t === 'attack').map(x => x.ref)), plays: uniq(L.filter(x => x.t === 'play').map(x => x.h)), abil: uniq(L.filter(x => x.t === 'activate').map(x => x.ref)) }; }
+function simUnitName(v, ref, own) { const c = ref === 'stage' ? v.me.stage : v.me.chars[ref];
+  return ref === 'leader' ? 'your Leader' + (own ? '\u2019s' : '') : esc((c || {}).name || '?') + (own ? '\u2019s' : ''); }
 /* a log line as the table says it: against the app the human's own lines in the second person -- the engine writes
    "You ends the turn" (docs/SIM-UI.md, what the pass keeps; the audit's row 2) -- and on the ticker without its turn */
 function simSay(line, bare, v) { let t = String(line || '');
@@ -6580,12 +6596,14 @@ function simHalfHtml(v, X, mine, t) {
 /* the table's top bar, while the game fills the screen (the owner, take 124: the header and the mode tabs step aside): Leave
    -- forfeit and back to the app --, whose turn it is, the Rules (on every Prep & Play screen, take 122), the log, the menu */
 function simTopHtml(v) { const turn = v.over !== null ? 'The game is over' : v.phase === 'mulligan' ? 'Keep or mulligan' : `Turn ${v.turn}`;
-  const who = v.over !== null || v.phase === 'mulligan' ? '' : v.active === v.seat ? (v.bot != null ? 'your turn' : simShort(v.me) + '\u2019s turn') : simShort(v.them) + (v.bot != null ? ' is playing' : '\u2019s turn');
+  const who = v.over !== null || v.phase === 'mulligan' ? '' : v.active === v.seat ? (v.bot != null ? 'your turn' : simShort(v.me) + '\u2019s turn')
+    : v.who === v.seat ? (v.bot != null ? 'your move' : simShort(v.me) + ' decides') : simShort(v.them) + (v.bot != null ? ' is playing' : '\u2019s turn');   // take 124: asked in the other's turn
   return `<div class="tb-top"><button class="tb-leave" data-sim="leave" aria-label="Leave the table">${G('back', 20)}<span>Leave</span></button><span class="tb-stat"><b>${turn}</b>${who ? ` \u00b7 ${esc(who)}` : ''}</span><button class="icb" data-rules="" aria-label="Rules">${G('rules', 22)}</button><button class="icb" data-sim="log" aria-label="The log">${G('log', 22)}</button>${v.over === null ? `<button class="icb" data-sim="menu" aria-label="Game menu">${G('more', 22)}</button>` : ''}</div>`; }
-/* the middle of the table: the latest line of the log, a battle's two powers, and End turn with what happens after it */
-function simBandHtml(v) { const b = v.battle, endOk = v.legal.some(x => x.t === 'end');
-  const mid = b ? `<span class="tb-clash" aria-label="${b.powers.a} against ${b.powers.d}"><b>${b.powers.a}</b>${G('sword', 18)}<b>${b.powers.d}</b>${b.counter ? `<span>+${b.counter}</span>` : ''}</span>` : `<span class="tb-tick">${esc(simSay(v.log[0], true, v))}</span>`;
-  return `<div class="tb-band">${mid}${endOk ? `<span class="tb-go tb-end"><button class="ghost go" data-sim="end">End turn</button><span class="note">${v.bot != null ? 'then the app plays' : 'then pass the phone'}</span></span>` : ''}</div>`; }
+/* the middle of the table: the latest line of the log, a battle's two powers, and End turn with what happens after it; at this
+   seat's turn start, until its first move, what the start did (take 124: it was a log line cut short on a phone) */
+function simBandHtml(v) { const b = v.battle, endOk = v.legal.some(x => x.t === 'end'), st = v.start, fresh = !b && st && st.i === v.seat && v.active === v.seat && SIMUI.acted !== v.turn;
+  const mid = fresh ? `<span class="tb-tick tb-start"><b>${v.bot != null ? 'Your turn' : esc(simShort(v.me)) + '\u2019s turn'} ${v.turn}</b> \u00b7 ${simStartText(st)}</span>` : b ? `<span class="tb-clash" aria-label="${b.powers.a} against ${b.powers.d}"><b>${b.powers.a}</b>${G('sword', 18)}<b>${b.powers.d}</b>${b.counter ? `<span>+${b.counter}</span>` : ''}</span>` : `<span class="tb-tick">${esc(simSay(v.log[0], true, v))}</span>`;
+  return `<div class="tb-band">${mid}${endOk ? `<span class="tb-go tb-end"><button class="ghost go" data-sim="end">End turn</button>${v.bot != null ? '' : '<span class="note">then pass the phone</span>'}</span>` : ''}</div>`; }   // take 124, the owner: against the app End turn needs no "then the app plays"
 /* this seat's hand: whole cards in a strip -- lit when it may be played, dimmed when not; the other hand is a count (§3-4) */
 function simHandHtml(v, t) { const H = v.me.hand || [];
   return `<div class="tb-hand" role="group" aria-label="Your hand, ${H.length} cards">${H.map((c, h) => { const o = t['h' + h] || {}; return simCardHtml(c, 'h' + h, Object.assign({}, o, { cls: ['hand', o.cls || (c.play && c.play.ok ? '' : 'no')].filter(Boolean).join(' ') })); }).join('') || '<span class="note">No cards in hand</span>'}</div>`; }
@@ -6597,6 +6615,29 @@ function simActsHtml(v, key) { const L = v.legal, ref = simRef(key), out = [];
     L.filter(x => x.t === 'activate' && x.ref === ref).forEach((x, k) => out.push(`<button class="ghost" data-sim="fxmain:${ref}${k ? '.' + x.n : ''}">Main${k ? ' ' + (k + 1) : ''}</button>`));
     if (L.some(x => x.t === 'give' && x.ref === ref)) out.push(`<button class="ghost" data-sim="give:${ref}" title="+1000 on your turn">+DON!!</button>`); }
   return out.join(''); }
+/* the dock in this seat's Main Phase with nothing selected (take 124): what it can do next -- a card to play, who can attack, an
+   ability -- or that only End turn is left; two lines at most on a 360 px phone (the look: three pushed the cards smaller), so giving
+   DON!! is left to the card's own moves (+DON!!) and several playable cards are "a card", the lit ones */
+function simNextHtml(v) { const o = simOpen(v), me = v.me, parts = [];
+  if (o.plays.length) parts.push(`play ${o.plays.length === 1 ? esc(me.hand[o.plays[0]].name) : 'a card'}`);   // each can be played now, not all of them (the look: "play 5 cards" with 5 DON!!)
+  if (o.atk.length) { const ch = o.atk.filter(r => r !== 'leader'), who = [o.atk.includes('leader') ? 'your Leader' : '', ch.length === 1 ? simUnitName(v, ch[0]) : ch.length ? ch.length + ' Characters' : ''].filter(Boolean).join(' and ');
+    parts.push(`attack with ${who}`); }
+  if (o.abil.length) parts.push(o.abil.length === 1 ? `use ${simUnitName(v, o.abil[0], true)} ability` : `use ${o.abil.length} abilities`);
+  const first = me.taken <= 1 ? ' \u2014 no attacks on your first turn' : '';
+  return `<div class="tb-say tb-next">${parts.length ? `<b>Next:</b> ${parts.join(', ')}, or End turn${first}.` : `<b>Nothing left to play or attack with</b> \u2014 End turn${first}.`}</div>`; }
+/* what End turn would leave behind (take 124): an attack, a card to play, an ability -- DON!! left active are not asked
+   about: they pay for a [Counter] Event in the other player's turn */
+function simLeft(v) { const o = simOpen(v), cap = t => t[0].toUpperCase() + t.slice(1), out = [];
+  o.atk.forEach(r => out.push(`${cap(simUnitName(v, r))} can attack`));
+  if (o.plays.length) out.push(o.plays.length === 1 ? `You can play ${esc(v.me.hand[o.plays[0]].name)}` : `You can play ${o.plays.length} cards`);
+  o.abil.forEach(r => out.push(`${cap(simUnitName(v, r, true))} [Activate: Main] is ready`));
+  return out; }
+function simEndHtml(v) { return `<div class="tb-menu"><div class="note" style="margin:0">Still possible this turn:</div><ul class="tb-left">${simLeft(v).map(x => `<li>${x}</li>`).join('')}</ul><div class="tb-go"><button class="ghost go" data-sim="end:now">End turn</button><button class="ghost" data-close="simSheet">Keep playing</button></div></div>`; }
+/* a decline named for what it does (take 124): a [Trigger]'s card goes to hand instead, an [Activate: Main] is not activated,
+   a cost is not paid and its effect does not happen, a "you may" is left -- and a cost that can no longer be paid ends it */
+function simSkipHtml(cur, only) { const [w, n] = only ? ['Go on', `its cost cannot be paid now, so the rest does not happen (${simCite('§8-3-1-3')})`] : cur.t === 'trigger' ? ['Add to hand', `instead of its [Trigger] (${simCite('§10-1-5')})`]
+    : cur.t === 'main' ? ['Cancel', 'not activated'] : cur.cost && cur.step === 0 ? ['Don\u2019t pay', `then the effect does not happen (${simCite('§8-3')})`] : ['Decline', 'its words let you'];
+  return `<button class="ghost" data-sim="fxskip">${w}</button><span class="note">${n}</span>`; }
 /* the dock under the hand: the selected card and its moves; the defender's block and counter; the app's defence waiting
    on Resolve; or what the table is waiting for */
 function simDockHtml(v) { const L = v.legal, b = v.battle, go = (btn, note) => `<span class="tb-go">${btn}${note != null ? `<span class="note">${note}</span>` : ''}</span>`;
@@ -6607,11 +6648,14 @@ function simDockHtml(v) { const L = v.legal, b = v.battle, go = (btn, note) => `
     const head = `<div class="tb-say"><b>${esc(tgt.name)}</b> is attacked by <b>${esc((b.attacker || v.them.leader).name)}</b>`;
     if (b.step === 'block') return `${head} \u2014 Block step (${simCite('§7-1-2')}): ${L.some(x => x.t === 'block') ? 'tap a lit Blocker, or' : (b.unblockable ? 'the attacker is Unblockable' : 'no active Blocker')}</div>${go('<button class="ghost" data-sim="noblock">No block</button>', 'then the counter step')}`;
     return `${head} \u2014 Counter step (${simCite('§7-1-3')}): ${L.some(x => x.t === 'counter' || x.t === 'cevent') ? 'tap a lit card in your hand, or' : 'No Counter cards in hand'}</div>${go('<button class="ghost go" data-sim="resolve">Resolve</button>', hitSay(b.powers))}`; }
+  /* take 124: an effect waiting on this seat is said in the dock as well as the panel */
+  if (v.offer && !v.offer.hidden && v.offer.seat === v.seat) { const o = v.offer, n = esc(o.name);
+    return `<div class="tb-say tb-next">${v.tray ? `<b>By hand:</b> do what ${n}\u2019s words say with its moves, then <b>Done</b>.` : o.t === 'trigger' ? `<b>A [Trigger] from your Life:</b> use it, or add ${n} to your hand.` : `<b>Next:</b> resolve ${n}\u2019s effect${o.hand ? ' by hand' : ''}.`}</div>`; }
   if (SIMUI.sel) { const a = simAt(v, SIMUI.sel.ref === 'leader' ? 'L' : 'm' + SIMUI.sel.ref); return `<div class="tb-say"><b>${esc(a ? a.name : '')}</b> attacks \u00b7 <span style="color:var(--accent-ink)">choose a target</span></div>${go('<button class="ghost" data-sim="aimx">Cancel</button>')}`; }
   const f = SIMUI.focus && simAt(v, SIMUI.focus);
   if (f) { const acts = simActsHtml(v, SIMUI.focus), why = /^h\d+$/.test(SIMUI.focus) && f.play && !f.play.ok ? simCite(f.play.why) : (f.play && f.play.full ? `five in play: trash one to play it (${simCite('§3-7-6-1')})` : '');
     return `<div class="tb-say"><b>${esc(f.name)}</b>${f.power != null ? ` \u00b7 ${f.power}` : ''}${f.unapplied && f.unapplied.length ? ' \u00b7 its continuous text is yours to apply; the power shown is without it' : ''}${why ? `<span class="tb-why">${why}</span>` : ''}</div>${acts}<button class="ghost" data-sim="zoom:${SIMUI.focus}">Zoom</button>`; }
-  return `<div class="tb-say">Tap a card for its moves; hold it to read it.</div>`; }
+  return v.phase === 'main' && v.active === v.seat && !v.battle && !v.offer ? simNextHtml(v) : `<div class="tb-say">Tap a card for its moves; hold it to read it.</div>`; }
 /* the move a by-hand tray button makes, in a few words */
 function simHandLabel(v, a) { const P = v.me, X = a.side === 1 ? v.them : v.me, nm = c => esc((c || {}).name || '?'), at = ref => nm(ref === 'leader' ? X.leader : X.chars[ref]), who = a.side === 1 ? ' (theirs)' : '';
   switch (a.op) {
@@ -6637,13 +6681,13 @@ function simOfferPanel(v, lead) {
   if (v.tray) { const moves = L.map((a, k) => ({ a, k })).filter(x => x.a.t === 'hand');
     body = `<div class="note">Only the moves its words name, each logged.</div>${(v.me.looking || []).length ? `<div class="tb-picks">${v.me.looking.map((c, k) => simPick(v, 'x' + k, 'zoom:x' + k, c.name)).join('')}</div>` : ''}<div class="tb-moves">${moves.map(x => `<button class="linkish" data-sim="hop:${x.k}">${simHandLabel(v, x.a)}</button>`).join('') || '<div class="note">No move to make \u2014 its effect is yours to apply as the text says.</div>'}</div>
       <div class="tb-go"><button class="ghost go" data-sim="hdone">Done</button>${report}</div>`; }
-  else if (cur.hand) body = `<div class="tb-go"><button class="ghost go" data-sim="fxhand">Resolve by hand</button><button class="ghost" data-sim="fxskip">Skip</button><span class="note">decline it</span>${report}</div>`;
+  else if (cur.hand) body = `<div class="tb-go"><button class="ghost go" data-sim="fxhand">Resolve by hand</button>${L.some(x => x.t === 'fxskip') ? simSkipHtml(cur) : '<span class="note">it happens in full (' + simCite('§8-1-3-1') + ')</span>'}${report}</div>`;
   else { const fx = L.filter(x => x.t === 'fx'), T = cur.choices, tg = T || [], none = fx.some(x => x.target == null);
     const room = SIMUI.fxt != null ? fx.filter(x => x.target === SIMUI.fxt.target && x.trash != null) : [];
     body = `<div class="note">The app will: ${esc(cur.does)}</div>${cur.steps > 1 ? `<div class="note">step ${cur.step + 1} of ${cur.steps}${cur.cost ? (cur.step === 0 ? ' \u2014 the cost; skipping declines the effect' : ' \u2014 the cost, paid in full once begun') : ''}</div>` : ''}
       ${room.length ? `<div class="fgrp">Five Characters: trash one to make room (${simCite('§3-7-6-1')})</div><div class="note">Tap a lit Character on the table.</div>`
       : (tg.length ? `<div class="fgrp">Choose</div><div class="tb-picks">${tg.map((t, k) => simPick(v, t.face ? 'c' + k : t.ref, 'fx:' + t.ref, t.name)).join('')}</div>` : (T ? '<div class="note">No legal target for this step.</div>' : ''))}
-      <div class="tb-go">${none && !room.length ? `<button class="ghost go" data-sim="fxapply">${tg.length ? 'Choose none' : 'Apply'}</button>` : ''}${L.some(x => x.t === 'fxskip') ? '<button class="ghost" data-sim="fxskip">Skip</button><span class="note">decline it</span>' : cur.step > 0 && cur.cost ? '<span class="note">a cost begun is paid in full (' + simCite('§8-3') + ')</span>' : '<span class="note">it resolves in full (' + simCite('§8-1-3-1') + ')</span>'}${report}</div>`; }
+      <div class="tb-go">${none && !room.length ? `<button class="ghost go" data-sim="fxapply">${tg.length ? 'Choose none' : 'Apply'}</button>` : ''}${L.some(x => x.t === 'fxskip') ? simSkipHtml(cur, !fx.length) : cur.step > 0 && cur.cost ? '<span class="note">a cost begun is paid in full (' + simCite('§8-3') + ')</span>' : '<span class="note">it resolves in full (' + simCite('§8-1-3-1') + ')</span>'}${report}</div>`; }
   return `<div class="tb-panel" role="region" aria-label="${esc(cur.name)} effect">${lead || ''}<h3>${esc(cur.name)} \u2014 effect</h3><div class="note">${esc(cur.raw)}</div><div class="note tb-mark">${badge}</div>${body}</div>`; }
 /* a battle's result, as the seat reading it may see it (view.last): a Life card named only to its owner (the audit's
    row 1 -- take 123 painted what act() returned) */
@@ -6685,7 +6729,7 @@ function simLeaveHtml(v) { return `<div class="tb-menu"><div class="note" style=
 function simSideHtml(v) { return `<aside class="tb-side" aria-label="The card and the log">${SIMUI.focus && simAt(v, SIMUI.focus) ? simZoomHtml(v, SIMUI.focus) : '<div class="note">Tap a card to read it here.</div>'}<h3 class="tb-sh">Log</h3>${simLogHtml(v, 40)}</aside>`; }
 /* the table in play */
 function simTableHtml(v) { const t = simTargets(v);
-  return `${simTopHtml(v)}<div class="tb-mat">${simHalfHtml(v, v.them, false, t)}${simBandHtml(v)}${simHalfHtml(v, v.me, true, t)}<svg class="tb-lines" aria-hidden="true"></svg></div>${simHandHtml(v, t)}<div class="tb-dock">${simDockHtml(v)}</div>${simPanelHtml(v)}${simSideHtml(v)}`; }
+  return `${simTopHtml(v)}<div class="tb-mat">${simHalfHtml(v, v.them, false, t)}${simBandHtml(v)}${simHalfHtml(v, v.me, true, t)}<svg class="tb-lines" aria-hidden="true"></svg></div>${simHandHtml(v, t)}<div class="tb-dock${v.who === v.seat || (v.bot != null && v.battle && v.battle.def === v.bot && v.who === v.bot && v.battle.step === 'counter' && !SIMUI.busy) ? ' you' : ''}">${simDockHtml(v)}</div>${simPanelHtml(v)}${simSideHtml(v)}`; }
 /* the mulligan: this seat's Leader and five cards large, keep or redraw once */
 function simMulliganHtml(v) { const M = v.me;
   return `${simTopHtml(v)}<div class="tb-mull"><h3>${esc(simShort(M))} \u2014 keep or mulligan?</h3><div class="note">Redraw once, the first player deciding first (${simCite('§5-2-1-6')}). Hold a card to read it.</div>
@@ -6736,8 +6780,9 @@ function simBotRun() { const g = SIM.g; if (!g || g.bot == null) return; clearTi
 function simCurtain(text, sub, L) { if (SIM.g && SIM.g.bot != null) return; const c = $('#simCurtain'), [who, ...deck] = String(text || '').split(' \u2014 ');
   c.innerHTML = `${L && L.art ? `<div class="cur-art" aria-hidden="true"><img src="${esc(L.art.thumb)}" alt="" onerror="this.remove()"></div><div class="cur-card" aria-hidden="true"><img src="${esc(L.art.large || L.art.thumb)}" alt="" onerror="this.remove()"></div>` : ''}<div class="big" style="font-size:var(--fs-head);margin-bottom:8px">Hand the phone to</div><h2 style="font-size:var(--fs-hero);margin:0 0 6px">${esc(who)}</h2>${deck.length ? `<div class="note" style="margin:0 0 10px">${esc(deck.join(' \u2014 '))}</div>` : ''}<div class="note">${esc(sub || 'tap when you have it')}</div>`; c.classList.add('on'); }
 /* one tap, one act; then the hand-over the rules imply: a new decider means the curtain (or the app's move) */
-function simAct(i, a) { const g = SIM.g, before = SIM.who(); const r = SIM.act(i, a);
+function simAct(i, a) { const g = SIM.g, before = SIM.who(), turn = g && g.turn; const r = SIM.act(i, a);
   if (!r.ok) { if (r.why) toast(r.why); return r; }
+  SIMUI.acted = turn;   // take 124: the band says the turn's start until its first move
   SIMUI.sel = null; SIMUI.room = null; SIMUI.fxt = null; SIMUI.focus = null;
   if (a.t === 'resolve' && g.bot == null) SIMUI.post = { i };   // two on one phone: the defender reads the result before the phone goes back
   simAfter(before); return r; }
@@ -6797,7 +6842,7 @@ function simFit() { const b = $('#simBoard');
 function simSnap(box) { const v = SIMUI.v; if (!v || !box || typeof box.querySelectorAll !== 'function' || typeof box.getBoundingClientRect !== 'function') return null;
   try { const at = new Map(), rect = sel => { const e = box.querySelector(sel); return e ? e.getBoundingClientRect() : null; };
     box.querySelectorAll('.tb-mat [data-uid]').forEach(e => at.set(e.dataset.uid, { r: e.getBoundingClientRect(), html: e.outerHTML, mine: !!e.closest('.me') }));
-    return { v, at, trash: { me: rect('.me .z-trash'), them: rect('.them .z-trash') }, life: { me: rect('.me .z-life'), them: rect('.them .z-life') }, hand: { me: rect('.tb-hand'), them: rect('.tb-hb') } }; }
+    return { v, at, trash: { me: rect('.me .z-trash'), them: rect('.them .z-trash') }, life: { me: rect('.me .z-life'), them: rect('.them .z-life') }, hand: { me: rect('.tb-hand'), them: rect('.tb-hb') }, deck: { me: rect('.me .deck'), them: rect('.them .deck') } }; }
   catch (e) { return null; } }
 /* after it, what changed is drawn moving: a card dealt in, a card sliding to its new place, a card turning to rest or back,
    a card that left the table going to its trash, a Life card leaving its stack, a DON!! landing, a power changing, a new
@@ -6818,7 +6863,12 @@ function simMotion(b, v) { const box = $('#simBoard');
       if (d && c.don > was.don) d.animate([{ transform: 'translateY(-18px) scale(1.7)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 400, easing: 'cubic-bezier(.2,.8,.2,1)' }); }
     for (const [uid, o] of b.at) if (!now.has(uid)) simGhost(o.html, o.r, (o.mine ? b.trash.me : b.trash.them) || o.r, 0);
     ['me', 'them'].forEach(s => { const lost = b.v[s].lifeCount - v[s].lifeCount; for (let k = 0; k < lost && b.life[s]; k++) simGhost(simBack(), b.life[s], b.hand[s] || b.life[s], k * 140); });
-    if (v.turn !== b.v.turn) simBanner(v);
+    if (v.turn !== b.v.turn) { simBanner(v);
+      /* the turn's start (take 124): its card goes from the deck to the hand, its new DON!! land in the cost area one by one */
+      const st = v.start, s = st && (st.i === v.seat ? 'me' : 'them');
+      if (st && st.drew && b.deck && b.deck[s]) simGhost(simBack(), b.deck[s], b.hand[s] || b.deck[s], 180);
+      if (st && st.don) [...box.querySelectorAll(`.tb-half.${s} .tb-don .tk`)].filter(e => !e.classList.contains('r')).slice(-st.don)
+        .forEach((e, k) => e.animate([{ transform: 'translateY(-14px) scale(1.5)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 420, delay: 300 + k * 150, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' })); }
     if (v.battle && !b.v.battle && v.battle.attacker) { const e = now.get(String(v.battle.attacker.uid)); if (e) e.animate([{ transform: 'none' }, { transform: `translateY(${v.battle.att === v.seat ? -16 : 16}px) scale(1.08)` }, { transform: 'none' }], { duration: 440, easing: 'ease-out' }); }
   } catch (e) {} }
 /* a Leader the first time it shows this game turns over from its red back, as players reveal their Leaders to start (the owner,
@@ -6842,7 +6892,7 @@ function simGhost(html, from, to, delay) { if (!from || !document.body || !docum
   a.onfinish = () => d.remove(); setTimeout(() => d.remove(), 1600 + delay); }
 /* a new turn, across the middle of the table */
 function simBanner(v) { const mat = document.querySelector('#simBoard .tb-mat'); if (!mat) return; const b = document.createElement('div'); b.className = 'tb-banner';
-  const mine = v.active === v.seat; b.innerHTML = `<b>Turn ${v.turn}</b><span>${mine ? (v.bot != null ? 'Your turn' : esc(simShort(v.me)) + '\u2019s turn') : esc(simShort(v.them)) + (v.bot != null ? ' plays' : '\u2019s turn')}</span>`;
+  const mine = v.active === v.seat, st = v.start ? simStartText(v.start) : ''; b.innerHTML = `<b>Turn ${v.turn}</b><span>${mine ? (v.bot != null ? 'Your turn' : esc(simShort(v.me)) + '\u2019s turn') : esc(simShort(v.them)) + (v.bot != null ? ' plays' : '\u2019s turn')}</span>${st ? `<span class="st">${st[0].toUpperCase() + st.slice(1)}</span>` : ''}`;
   mat.appendChild(b); setTimeout(() => b.remove(), 1600); }
 /* over the table after the paint: the attack's line from attacker to target, and a battle's result not yet shown -- hit
    or held, a K.O., the defender's own Life card -- once, where the two met; a hit is felt as well as seen */
@@ -6859,8 +6909,8 @@ function simDecor(v) { const box = $('#simBoard'); if (!v || !box || typeof box.
 /* the sheet over the table: a card's zoom, the log, a trash, the game's menu -- painted from the kept view */
 function simSheetOpen(kind, arg) { SIMUI.sheet = { kind, arg }; simSheetPaint(); $('#simSheet').classList.add('on'); }
 function simSheetPaint() { const s = SIMUI.sheet, v = SIMUI.v; if (!s || !v) return;
-  $('#simSheetTitle').textContent = s.kind === 'trash' ? `${simShort(simSide(v, +s.arg))}\u2019s trash` : ({ zoom: 'The card', log: 'The log', menu: 'The game', leave: 'Leave the table' }[s.kind] || '');
-  $('#simSheetBody').innerHTML = s.kind === 'zoom' ? simZoomHtml(v, s.arg) : s.kind === 'log' ? simLogHtml(v) : s.kind === 'trash' ? simTrashSheetHtml(v, +s.arg) : s.kind === 'leave' ? simLeaveHtml(v) : simMenuHtml(v); }
+  $('#simSheetTitle').textContent = s.kind === 'trash' ? `${simShort(simSide(v, +s.arg))}\u2019s trash` : ({ zoom: 'The card', log: 'The log', menu: 'The game', leave: 'Leave the table', endq: 'End your turn?' }[s.kind] || '');
+  $('#simSheetBody').innerHTML = s.kind === 'zoom' ? simZoomHtml(v, s.arg) : s.kind === 'log' ? simLogHtml(v) : s.kind === 'trash' ? simTrashSheetHtml(v, +s.arg) : s.kind === 'leave' ? simLeaveHtml(v) : s.kind === 'endq' ? simEndHtml(v) : simMenuHtml(v); }
 function simLogText() { const g = SIM.g; if (!g) return ''; const P = i => g.players[i]; return [`OP TCG Hub sim \u2014 take ${TAKE} \u2014 rules v${SIM.RULES}`, `${P(0).name} (${CAT.byId.get(P(0).leader.id)?.name}) vs ${P(1).name} (${CAT.byId.get(P(1).leader.id)?.name}), turn ${g.turn}`, '', ...g.log.slice().reverse().map(l => simSay(l, false, SIMUI.v))].join('\n'); }
 /* Report (take 122): the effect on screen, what the app made of it, and the whole game as its seed and moves --
    enough to replay it exactly and turn it into a proof (tools/cardproof.mjs --from-report). Shared by the
@@ -6879,7 +6929,7 @@ function simTap(code) { const s = String(code), c = s.indexOf(':'), act = c < 0 
     const bot = $('#simOpp') && $('#simOpp').value === 'bot';
     SIM.new({ ...d1, name: (bot ? 'You' : 'Player 1') + (d1.name ? ' \u2014 ' + d1.name : '') },   // two on one phone: each seat by its number (take 123: Player 2 read its opponent as "You")
       { ...d2, name: (bot ? 'The app' : 'Player 2') + (d2.name ? ' \u2014 ' + d2.name : '') }, first, bot ? { bot: 1 } : {});
-    Object.assign(SIMUI, { sel: null, focus: null, post: null, room: null, fxt: null, seen: 0, hurry: false, shown: new Set() });
+    Object.assign(SIMUI, { sel: null, focus: null, post: null, room: null, fxt: null, seen: 0, hurry: false, shown: new Set(), acted: null });
     if (bot) simBotRun(); else simCurtain(SIM.P(SIM.who()).name, 'keep or mulligan first', SIM.view(SIM.who()).me.leader); paintSim(); window.scrollTo(0, 0); return; }
   if (act === 'new') { clearTimeout(SIMUI.timer); SIM.g = null; Object.assign(SIMUI, { sel: null, focus: null, post: null, room: null, fxt: null, busy: false, hurry: false, sheet: null }); paintSim(); return; }
   if (act === 'sharelog') { simShare('OP TCG Hub game log', simLogText()); return; }
@@ -6919,7 +6969,7 @@ function simTap(code) { const s = String(code), c = s.indexOf(':'), act = c < 0 
     case 'fxhand': send(pick(x => x.t === 'fxhand')); break;
     case 'hop': { const a = L[+arg]; if (a && a.t === 'hand') send(a); break; }
     case 'hdone': send(pick(x => x.t === 'handdone')); break;
-    case 'end': send(pick(x => x.t === 'end')); break;
+    case 'end': if (arg !== 'now' && simLeft(v).length) return simSheetOpen('endq'); send(pick(x => x.t === 'end')); break;   // take 124: it asks while an attack, a play or an ability is left
     case 'concede': simAct(simSeat(), { t: 'concede' }); break;
   }
   paintSim(); }

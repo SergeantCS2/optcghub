@@ -4211,14 +4211,14 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
     /* the take-115 look: "Hand back" broke onto two lines at 411 px (110 x 65), squeezed by the note beside it, which names a
        deck and can be long; a button beside a note that can grow keeps its width, and the row wraps instead */
     const goRule = /\n\.tb-go\{display:flex;flex-wrap:wrap;/.test(css) && /\n\.tb-go > \.ghost\{flex:none;white-space:nowrap\}/.test(css);   // take 124: one rule for every such row on the table
-    const holdsWidth = t => /<div class="tb-go"><button class="ghost go" data-sim="post">Hand back<\/button>/.test(t) && /<div class="tb-go">[\s\S]{0,400}?<button class="ghost" data-sim="fxskip">Skip<\/button>/.test(t);
-    ok('(the look) a Sim button beside a note that can grow keeps its width, in a row that wraps: Hand back, Skip, painted (Hand back broke onto two lines at 411)', goRule && holdsWidth(postBoard + offerBoard), (postBoard.match(/data-sim="post"[^>]*>/) || ['no Hand back'])[0]);
-    ok('...control: the rows as A4 first wrote them are caught', !holdsWidth('<div class="row" style="margin-top:10px"><button class="ghost go" data-sim="post">Hand back</button><span class="note" style="margin:0">to X</span></div><div class="row" style="gap:10px;margin-top:8px"><button class="ghost" data-sim="fxskip">Skip</button><span class="note" style="margin:0">play it by hand</span></div>'));
+    const holdsWidth = t => /<div class="tb-go"><button class="ghost go" data-sim="post">Hand back<\/button>/.test(t) && /<div class="tb-go">[\s\S]{0,400}?<button class="ghost" data-sim="fxskip">Decline<\/button>/.test(t);   // take 124: a decline named for what it does
+    ok('(the look) a Sim button beside a note that can grow keeps its width, in a row that wraps: Hand back, Decline, painted (Hand back broke onto two lines at 411)', goRule && holdsWidth(postBoard + offerBoard), (postBoard.match(/data-sim="post"[^>]*>/) || ['no Hand back'])[0]);
+    ok('...control: the rows as A4 first wrote them are caught', !holdsWidth('<div class="row" style="margin-top:10px"><button class="ghost go" data-sim="post">Hand back</button><span class="note" style="margin:0">to X</span></div><div class="row" style="gap:10px;margin-top:8px"><button class="ghost" data-sim="fxskip">Decline</button><span class="note" style="margin:0">play it by hand</span></div>'));
     ok('...control: take 114\'s labels are caught', wordy('<button class="ghost go" data-sim="end">End turn \\u2014 pass the phone</button><button class="ghost go" data-sim="resolve">Resolve \\u2014 ${pw.a} vs ${pw.d}${pw.a >= pw.d ? \': hit\' : \': held\'}</button><button data-sim="block:1">Block with ${esc(x.name)}</button>').length === 2);
-    ok('...and what happens is said beside them, on the painted board: then pass the phone, then the counter step, who has hit, to whom the phone goes, decline it (take 122: Skip declines; Resolve by hand is its own button)',
+    ok('...and what happens is said beside them, on the painted board: then pass the phone, then the counter step, who has hit, to whom the phone goes, what a decline does (take 122: Resolve by hand is its own button; take 124: the decline of a "you may" line is Decline, "its words let you")',
        /data-sim="end">End turn<\/button><span class="note"[^>]*>then pass the phone<\/span>/.test(mainBoard) && /data-sim="noblock"[^>]*>No block<\/button><span class="note"[^>]*>then the counter step<\/span>/.test(blockBoard)
        && /data-sim="resolve"[^>]*>Resolve<\/button><span class="note"[^>]*>\d+ vs \d+: (?:hit|held)<\/span>/.test(counterBoard) && /data-sim="post"[^>]*>Hand back<\/button><span class="note"[^>]*>to [^<]+<\/span>/.test(postBoard)
-       && /data-sim="fxskip"[^>]*>Skip<\/button><span class="note"[^>]*>decline it<\/span>/.test(offerBoard), [mainBoard, blockBoard, counterBoard, postBoard, offerBoard].map(b => (b.match(/data-sim="(?:end|noblock|resolve|post|fxskip)"[^>]*>[^<]*<\/button>(?:<span[^>]*>[^<]*<\/span>)?/) || ['-'])[0]).join(' | '));
+       && /data-sim="fxskip"[^>]*>Decline<\/button><span class="note"[^>]*>its words let you<\/span>/.test(offerBoard), [mainBoard, blockBoard, counterBoard, postBoard, offerBoard].map(b => (b.match(/data-sim="(?:end|noblock|resolve|post|fxskip)"[^>]*>[^<]*<\/button>(?:<span[^>]*>[^<]*<\/span>)?/) || ['-'])[0]).join(' | '));
 
     /* (SPEC-110-45) keywords one way: the deck's stats chips as the game and the tour write them, the Sim's reasons without
        brackets, a Trigger named plainly, the want list by its name */
@@ -4913,7 +4913,7 @@ V.MODE.set('play', false); V.go('sim');
 
 /* the audit's row 1: a battle's result, per seat -- through the board's own taps, against the app */
 S.new({ ...stock('stock-st01'), name: 'You' }, { ...stock('stock-st02'), name: 'The app' }, 0, { seed: 3, bot: 1 }); fresh(); V.paintSim();
-V.simTap('keep:0'); V.simTap('end');   // here the app keeps and plays its turn at once: no frame clock, as with reduced motion
+V.simTap('keep:0'); V.simTap('end:now');   // here the app keeps and plays its turn at once: no frame clock, as with reduced motion (take 124: End turn asks while a card could be played; its sheet's End turn is end:now)
 const turn3 = S.g.turn === 3 && S.who() === 0;
 V.simTap('attack:leader'); V.simTap('target:leader');   // the app defends at once and holds Resolve for the human's tap
 const held = !!S.g.battle && S.who() === 1 && S.g.battle.step === 'counter', lcId = S.P(1).life[0], hand0 = S.P(1).hand.slice();
@@ -5101,7 +5101,7 @@ ok('...control: the engine\'s own lines, as take 123 painted them, are caught', 
   S.new({ ...stock('stock-st01'), name: 'Player 1 — Red' }, { ...stock('stock-st02'), name: 'Player 2 — Green' }, 0, { seed: 62 }); fresh(); SU.shown = new Set(); V.paintSim();
   const mullShown = [...SU.shown]; S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' }); V.paintSim(); const tableShown = [...SU.shown].sort(); V.paintSim();
   ok('each Leader turns over from its red back the first time it shows in a game -- the mulligan shows the deciding seat\'s, the table the other -- and never again', mullShown.join() === String(S.g.first) && tableShown.join() === '0,1' && SU.shown.size === 2, JSON.stringify({ mullShown, tableShown }));
-  ok('...control: a new game is dealt with none shown yet (Deal resets it)', /Object\.assign\(SIMUI, \{ sel: null, focus: null, post: null, room: null, fxt: null, seen: 0, hurry: false, shown: new Set\(\) \}\)/.test(js));
+  ok('...control: a new game is dealt with none shown yet, and no move made (Deal resets both; take 124)', /Object\.assign\(SIMUI, \{ sel: null, focus: null, post: null, room: null, fxt: null, seen: 0, hurry: false, shown: new Set\(\), acted: null \}\)/.test(js));
   /* a picture shared by cards of different names is the host's placeholder: such a card is drawn in its colours */
   const rows = V.CAT.rows.filter(p => p.hash && !p.sealed), by = new Map(); rows.forEach(p => by.set(p.hash, (by.get(p.hash) || new Set()).add(p.name)));
   const shared = [...by].filter(([h, n]) => n.size > 1).map(([h]) => h), ph = rows.find(p => shared.includes(p.hash)), real = rows.find(p => p.img && !shared.includes(p.hash));
@@ -5125,7 +5125,7 @@ ok('...control: the engine\'s own lines, as take 123 painted them, are caught', 
   { const d = S.declinable; S.declinable = () => true; S.g.queue = S.offers(0, 'onplay', put(0, auto.id)); const planted = S.legal(0).some(x => x.t === 'fxskip'); S.declinable = d; S.g.queue = [];
     ok('...control: take 123\'s engine, where every line could be declined, offers the Skip', planted); }
   { S.g.queue = S.offers(0, 'onplay', put(0, auto.id)); fresh(); V.paintSim(); const bAuto = board(); S.g.queue = S.offers(0, 'onplay', put(0, may.id)); fresh(); V.paintSim(); const bMay = board(); S.g.queue = [];
-    ok('...and the effect panel says so where Skip was: "it resolves in full" with the rule\'s section; a "you may" line keeps Skip', /<span class="note">it resolves in full \(<button class="linkish" data-rules="8-1-3-1"/.test(bAuto) && !/data-sim="fxskip"/.test(bAuto) && /data-sim="fxskip">Skip<\/button>/.test(bMay), (bAuto.match(/<div class="tb-go">[\s\S]{0,300}/) || [''])[0]); }
+    ok('...and the effect panel says so where Skip was: "it resolves in full" with the rule\'s section; a "you may" line keeps its decline, named Decline (take 124)', /<span class="note">it resolves in full \(<button class="linkish" data-rules="8-1-3-1"/.test(bAuto) && !/data-sim="fxskip"/.test(bAuto) && /data-sim="fxskip">(?:Decline|Don\u2019t pay)<\/button>/.test(bMay) /* a "you may" that begins with a cost is declined by not paying it */, (bAuto.match(/<div class="tb-go">[\s\S]{0,300}/) || [''])[0]); }
   /* 2. a [Trigger] used is trashed however its last step went -- none chosen included (§10-1-5-3) */
   deal(); const trig = lineWhere(e => e.t === 'trigger' && e.do.length === 1 && e.do[0].a === 'ko' && e.do[0].upto);
   const trigRun = plant => { deal(); S.P(1).chars = []; S.P(0).hand.push(trig.id); S.g.queue = S.offers(0, 'trigger', null, trig.id, true); const f = S.finish; if (plant) S.finish = function () {};
@@ -5183,6 +5183,78 @@ ok('...control: the engine\'s own lines, as take 123 painted them, are caught', 
     S.act(0, { t: 'fxhand' }); S.act(0, { t: 'handdone' }); S.refOf = rf; return S.offers(0, 'main', S.refOf(S.P(0), uid)).length === 0; };
   ok(`a by-hand line's [Once Per Turn] is spent on its own card when a Character before it has left: ${byHandOpt ? byHandOpt.p.name : '?'} (two apps named it resolved twice)`, !!byHandOpt && opt6(false));
   ok('...control: the tray reading the place the card had (take 123) spends another card\'s and leaves this one unused', !!byHandOpt && !opt6(true));
+  /* the owner's fourth word (take 124): "Ensure if there's an outstanding action, the player knows about it. The sim should tell the
+     player what the next action is, such as drawing a card, don etc. ... a user should never be able to skip drawing a card, don" --
+     the turn's start is the engine's and is said; the next action is said; End turn asks; nothing that must happen is skipped */
+  /* 7. the turn's start: never a move, and said as it was (take 124 logged "refresh, draw" where no card is drawn) */
+  { const said = (line, st) => new RegExp(`turn ${st.turn}: refresh, ${st.first ? 'no draw on the first turn \\(\u00a76-3-1\\)' : 'draw ' + st.drew}, \\+${st.don} DON!!$`).test(line);
+    S.new({ ...stock('stock-st01'), name: 'Player 1' }, { ...stock('stock-st02'), name: 'Player 2' }, 0, { seed: 70 }); const h0 = S.P(0).hand.length;
+    S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' }); const s1 = S.view(0).start, l1 = S.g.log[0], m1 = [...new Set(S.legal(0).map(x => x.t))], hand1 = S.P(0).hand.length, don1 = S.P(0).don.active;
+    const h1 = S.P(1).hand.length; S.act(0, { t: 'end' }); const s2 = S.view(1).start, s2o = S.view(0).start, l2 = S.g.log[0];
+    ok('a turn\'s start is the engine\'s, never a move to take or skip (the owner: "a user should never be able to skip drawing a card, don"): the first player\'s first turn draws none and adds 1 DON!!, the second player\'s draws 1 and adds 2 -- in both seats\' views, the log saying it as it was',
+       !!s1 && s1.i === 0 && s1.first && s1.drew === 0 && s1.don === 1 && hand1 === h0 && don1 === 1 && m1.every(t => ['play', 'give', 'activate', 'attack', 'end'].includes(t)) && said(l1, s1)
+       && !!s2 && s2.i === 1 && !s2.first && s2.drew === 1 && s2.don === 2 && S.P(1).hand.length === h1 + 1 && S.P(1).don.active === 2 && JSON.stringify(s2o) === JSON.stringify(s2) && said(l2, s2), JSON.stringify({ s1, l1, s2, l2, m1 }));
+    ok('...control: take 124\'s line on that first turn, "refresh, draw, +1 DON!!", is caught -- no card was drawn', (st => !said('Player 1 \u2014 refresh, draw, +1 DON!!', st) && !said('Player 1 \u2014 turn 1: refresh, draw 1, +1 DON!!', st) && said('Player 1 \u2014 turn 1: refresh, no draw on the first turn (\u00a76-3-1), +1 DON!!', st))({ turn: 1, first: true, drew: 0, don: 1 })); }
+  /* 8-10. against the app, through the table's own taps: the band says the turn's start until the first move; the dock says the next
+     action; End turn asks while an attack is left, and names it */
+  { const sayStart = h => /class="tb-tick tb-start"><b>Your turn 1<\/b> \u00b7 no draw on the first turn \u00b7 \+1\u00a0DON!!<\/span>/.test(h);
+    const sayNext = h => /<div class="tb-say tb-next">(?:<b>Next:<\/b> [^<]+, or End turn|<b>Nothing left to play or attack with<\/b> \u2014 End turn)/.test(h);
+    S.new({ ...stock('stock-st01'), name: 'You' }, { ...stock('stock-st02'), name: 'The app' }, 0, { seed: 3, bot: 1 }); fresh(); SU.acted = null; V.paintSim(); V.simTap('keep:0');
+    const b1 = board(); V.simTap('give:leader'); const b2 = board();
+    ok('the band says what the turn\'s start did -- "Your turn 1 \u00b7 no draw on the first turn \u00b7 +1 DON!!" -- until the first move of the turn, then the log again (take 124 had one log line, cut short on a phone)', sayStart(b1) && !/tb-start/.test(b2) && /class="tb-tick">You give/.test(b2), (b1.match(/<span class="tb-tick[^"]*">[\s\S]{0,120}/) || [''])[0] + ' | ' + (b2.match(/<span class="tb-tick[^"]*">[\s\S]{0,80}/) || [''])[0]);
+    ok('...control: take 124\'s band, the ticker alone, is caught', !sayStart('<span class="tb-tick">You \u2014 refresh, draw, +1 DON!!</span>'));
+    /* the owner, on the look: against the app End turn "doesn't need to say then the app plays" -- two on one phone keep "then pass
+       the phone" (the check of take 122's labels holds that) */
+    const endAlone = h => /data-sim="end">End turn<\/button><\/span>/.test(h) && !/then the app plays/.test(h);
+    ok('against the app, End turn stands alone -- no "then the app plays" under it (the owner)', endAlone(b1), (b1.match(/data-sim="end">[\s\S]{0,80}/) || [''])[0]);
+    ok('...control: take 124\'s band as the owner saw it, the note under End turn, is caught', !endAlone('<button class="ghost go" data-sim="end">End turn</button><span class="note">then the app plays</span></span>'));
+    ok('the dock says the next action in the Main Phase -- a card to play, who can attack, an ability -- or that only End turn is left, and on a first turn that no attack can be made (§6-5-6-1)', sayNext(b1) && sayNext(b2) && /no attacks on your first turn\./.test(b1), (b1.match(/<div class="tb-say tb-next">[\s\S]{0,160}/) || [''])[0]);
+    ok('...control: take 124\'s dock line, "Tap a card for its moves; hold it to read it.", is caught', !sayNext('<div class="tb-dock"><div class="tb-say">Tap a card for its moves; hold it to read it.</div></div>'));
+    V.simTap('end:now'); const t3 = S.g.turn, w3 = S.who(), b3 = board(), n3 = new Set(S.legal(0).filter(x => x.t === 'play').map(x => x.h)).size;
+    /* the owner, on the look: "it says play 5 cards, you won't always play 5 cards of course" -- cards each playable now are not all
+       playable together; the line names one card, or says "a card" (the lit ones) */
+    const noCount = h => !/play \d+ cards/.test(h) && (n3 >= 2 ? /<b>Next:<\/b> play a card,/.test(h) : true);
+    ok(`the next action never counts the cards to play: "play a card" where ${n3} can each be played now (the owner: "you won't always play 5 cards of course")`, n3 >= 2 && noCount(b3), (b3.match(/<div class="tb-say tb-next">[\s\S]{0,120}/) || [''])[0]);
+    ok('...control: the line the owner saw, "play 5 cards, give DON!! and attack with ...", is caught', !noCount('<div class="tb-say tb-next"><b>Next:</b> play 5 cards, give DON!! and attack with your Leader and Brook, or End turn.</div>'));
+    SU.sheet = null; V.simTap('end'); const asked = !!SU.sheet && SU.sheet.kind === 'endq', q = sheet(), still = S.g.turn === t3;
+    ok('End turn asks while an attack is left, and names it -- "Your Leader can attack" -- and the turn goes on until the question\'s End turn (the owner: "Ensure if there\'s an outstanding action, the player knows about it")',
+       t3 === 3 && w3 === 0 && /<b>Next:<\/b>[^<]*attack with your Leader/.test(b3) && asked && still && /<li>Your Leader can attack<\/li>/.test(q) && /data-sim="end:now">End turn<\/button>/.test(q) && /data-close="simSheet">Keep playing<\/button>/.test(q), JSON.stringify({ t3, w3, asked, still, q: q.slice(0, 200) }));
+    V.simTap('end:now'); const t5 = S.g.turn;
+    ok('...control: the same state, the one tap take 124 had (the question\'s End turn) ends the turn at once', t5 > t3, `turn ${t5}`);
+    S.g = null; fresh(); }
+  /* ...and with nothing left -- no card to play, no attacker, no ability (its [Activate: Main] lines taken away for the check) -- the dock
+     says so and End turn ends the turn at once, unasked */
+  { deal(); const P = S.P(0); P.leader.rested = true; P.chars = []; P.hand = []; P.stage = null; const of = S.offers; S.offers = function (i, t, ...r) { return t === 'main' ? [] : of.call(this, i, t, ...r); };
+    fresh(); SU.sheet = null; V.paintSim(); const b4 = board(), t = S.g.turn; V.simTap('end'); S.offers = of;
+    ok('...and with nothing left, the dock says so -- "Nothing left to play or attack with \u2014 End turn" -- and End turn ends the turn at once, unasked', /<b>Nothing left to play or attack with<\/b> \u2014 End turn/.test(b4) && S.g.turn > t && !SU.sheet, JSON.stringify({ t, now: S.g.turn, sheet: SU.sheet, dock: (b4.match(/<div class="tb-say tb-next">[\s\S]{0,120}/) || [''])[0] }));
+    S.g = null; fresh(); V.go('sim'); }
+  /* 11. a by-hand line is declined only where the rules let a line be: an [On Play] by hand that says neither "you may" nor a cost is
+     opened and done, never skipped (take 124 offered Skip on every by-hand line); the app opens its own and says it made no move; a
+     "you may" one keeps its decline; a [Trigger] from Life is added to hand instead (the owner: "technically optional to skip but why
+     would you skip") */
+  { const handWhere = (pred, anyType) => { for (const [id, L] of Object.entries(E)) { const p = byId(id); if (!p || p.sealed || (!anyType && p.type !== 'Character')) continue; const n = L.findIndex(e => e.hand && pred(e)); if (n >= 0) return { id: +id, n, e: L[n] }; } return null; };
+    const must = handWhere(e => e.t === 'onplay' && !/^\s*you may\b/i.test(body(e.raw)) && !/^[^.:]*:/.test(body(e.raw)) && !e.if.some(c => c.c === 'opt'));
+    const mayH = handWhere(e => e.t === 'onplay' && /^\s*you may\b/i.test(body(e.raw))), trigH = handWhere(e => e.t === 'trigger', true);
+    const offerOf = (id, t, kk) => S.offers(0, t, kk, t === 'trigger' ? id : undefined, t === 'trigger').filter(o => o.hand);
+    deal(); let kk = put(0, must.id); S.g.queue = offerOf(must.id, 'onplay', kk); const Lm = S.legal(0), rm = S.act(0, { t: 'fxskip' }); fresh(); V.paintSim(); const bm = board();
+    const a1 = V.BOT.choose(0, S.legal(0)); S.act(0, a1); const a2 = V.BOT.choose(0, S.legal(0)); S.act(0, a2); const lm = S.g.log[0];
+    ok(`a by-hand line the rules make happen is not the player's to pass by (§8-1-3-1): ${byId(must.id).name}'s "${body(must.e.raw).slice(0, 40)}" offers Resolve by hand alone, act refuses a Skip, the panel says it happens in full and the dock says to resolve it`,
+       Lm.length === 1 && Lm[0].t === 'fxhand' && rm.ok === false && /\u00a78-1-3-1/.test(rm.why) && /data-sim="fxhand">Resolve by hand<\/button><span class="note">it happens in full/.test(bm) && !/data-sim="fxskip"/.test(bm) && /<b>Next:<\/b> resolve [^<]+\u2019s effect by hand\./.test(bm), JSON.stringify({ Lm, why: rm.why }));
+    ok('...and the app opens its own and is done, the log saying no move was made -- it runs no by-hand words', a1.t === 'fxhand' && a2.t === 'handdone' && /: done by hand \u2014 no move made$/.test(lm), JSON.stringify({ a1, a2, lm }));
+    { const d = S.declinable; S.declinable = function (o) { return !!o.hand || d.call(this, o); }; deal(); S.g.queue = offerOf(must.id, 'onplay', put(0, must.id)); const planted = S.legal(0).some(x => x.t === 'fxskip'); S.declinable = d;
+      ok('...control: take 124\'s engine as it opened, every by-hand line declinable, offers the Skip', planted); }
+    deal(); S.g.queue = offerOf(mayH.id, 'onplay', put(0, mayH.id)); const Ly = S.legal(0); fresh(); V.paintSim(); const by = board();
+    deal(); S.P(0).hand.push(trigH.id); S.g.queue = offerOf(trigH.id, 'trigger', null); const Lt = S.legal(0); fresh(); V.paintSim(); const bt = board();
+    ok(`a by-hand line that says "you may" keeps its decline, named Decline (${byId(mayH.id).name}); a [Trigger] from Life by hand is added to hand instead, named Add to hand (${byId(trigH.id).name}, §10-1-5)`,
+       Ly.some(x => x.t === 'fxskip') && /data-sim="fxskip">Decline<\/button>/.test(by) && Lt.some(x => x.t === 'fxskip') && /data-sim="fxskip">Add to hand<\/button><span class="note">instead of its \[Trigger\]/.test(bt) && /<b>A \[Trigger\] from your Life:<\/b> use it, or add /.test(bt), JSON.stringify({ Ly, Lt })); }
+  /* 12. the other's turn, and this seat is asked: the top bar says "your move" and the dock is outlined -- the app attacks the human */
+  { S.new({ ...stock('stock-st01'), name: 'You' }, { ...stock('stock-st02'), name: 'The app' }, 1, { seed: 5, bot: 1 }); fresh(); SU.acted = null; V.simBotRun(); V.paintSim(); V.simTap('keep:0');
+    let guard = 0; while (S.g.over === null && !(S.g.battle && S.who() === 0) && guard++ < 6) { V.simTap('end:now'); if (S.g.phase === 'main' && S.who() === 0 && S.g.queue.length) break; }
+    const bb = board(), asked = !!S.g.battle && S.who() === 0 && S.g.active === 1;
+    const says = h => /<span class="tb-stat"><b>Turn \d+<\/b> \u00b7 your move<\/span>/.test(h) && /class="tb-dock you"/.test(h);
+    ok('in the other\'s turn, when the game waits on this seat -- the app attacks, block or not -- the top bar says "your move" and the dock is outlined', asked && says(bb), JSON.stringify({ turn: S.g.turn, battle: !!S.g.battle, who: S.who(), stat: (bb.match(/<span class="tb-stat">[\s\S]{0,60}/) || [''])[0] }));
+    ok('...control: take 124\'s top bar there, "The app is playing", is caught', !says('<span class="tb-stat"><b>Turn 3</b> \u00b7 The app is playing</span><div class="tb-dock">'));
+    S.g = null; fresh(); }
   S.g = null; }
 V.MODE.set('collect', false); V.go('home');
 }

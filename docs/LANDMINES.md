@@ -244,6 +244,7 @@ Start here. Do not read top to bottom.
 | A row of cards sized to fit breaks a card early onto the next row | 229 |
 | A browser test taps a card and another card answers | 230 |
 | Rows the app folded come apart with no code change; a check finds "0 decks" | 231 |
+| A planted fault goes unnamed after a change that did not touch its check | 232 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -3008,6 +3009,15 @@ came back, on a branch that never touched Releases, and smoke's own check,
 reading the name the same way, found "0 decks". A set is known by its code
 (the catalogue takes it from the cards' printed numbers), with the words as
 the fallback; smoke renames the run's sets and the fold must hold.
+
+**232. A planted fault the sample meets by chance is a control by luck.**
+Self-play's control for a log that names a declined [Trigger] needed a game to
+decline one, and chaos declines at weight 1 against 3 or 4 for using it. When
+take 124 made a by-hand line be opened rather than skipped, chaos's random
+stream moved: the plant's forty games met eleven [Trigger]s, declined none, and
+the planted leak went unnamed -- the auditor looked broken and was not. Its
+games now decline every [Trigger] from Life. A plant forces the event it
+plants on; a sample that only may meet it is not a control.
 
 ## §2 — Inherited from APEX ORV
 

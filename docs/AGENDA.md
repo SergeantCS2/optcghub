@@ -83,7 +83,12 @@ what take 115 changed on screen.
    the playmat of pictures, the zoom, the full screen, Leave, the icon's card
    backs in the game's colours (`docs/SIM-UI.md` §8), and the rulebook with
    random legal decks, whose nine finds in the engine are fixed. Every Sim
-   take now runs that sweep (the owner's rule). Next: the owner's look on the Fold, then
+   take now runs that sweep (the owner's rule). Then the owner's fourth word:
+   the table says the next action -- the turn's start, the next move, End
+   turn asking while something is left -- and a by-hand line is never passed
+   by where the rules make it happen (`docs/SIM-UI.md` §8). **Ruled out:**
+   applying a "you may" for the player; Draw and DON!! buttons; asking about
+   DON!! left active. Next: the owner's look on the Fold, then
    HANDOFF take 124's DEFERRED (the host's placeholder across the app
    first), then the tail -- modal effects, ordering, protection, the
    opponent's hidden choices -- one mechanism per take, each proven through
