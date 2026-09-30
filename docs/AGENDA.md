@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 126.* Ranked by blocking-ness, not by interest.
+*Current as of take 127.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -26,15 +26,15 @@ what it handed on is A43.)
    is recorded -- say which you upload. The sideload APK does not install
    over the Play build (landmine 34): a sideload proof means export →
    uninstall → sideload → import. *Take 121:* its AAB is the first that
-   names the store-linked AdMob app; upload it.
-2. **Ads, in order (take 121; RUNBOOK-play §9):** app-ads.txt -- the
-   listing's Website is back on `sergeantcs2.github.io/optcghub/` (the
-   owner's pick, PROVEN live 28 Sept), whose root serves the line -- so
-   AdMob's *Verify app* is what is left (landmine 209); your phones as AdMob
-   test devices; **D11**, three rewarded units (scan credits, deck save,
-   MAX unlock) under "OP TCG Hub: Collect, Hunt, SIM" `~9519036366`, never
-   "testing"; the European-regulations message published in AdMob's
-   *Privacy & messaging*; the payments profile.
+   names the store-linked AdMob app -- **uploaded and live, 28 Sept** (the
+   owner), the second upload the record holds after take 101's.
+2. **Ads (take 127).** *Done:* the AdMob app approved, "Ready" (30 Sept);
+   the three rewarded units made (30 Sept) and in take 127 with the consent
+   flow; the Fold registered as a test device (30 Sept). *Left, the
+   owner's:* the European-regulations message **published** before take
+   127 merges ("Do not consent" on, the session's recommendation); then merge
+   and upload take 127's AAB; on the Fold, "Test Ad" labels and the
+   self-test's ads line reading live units.
 3. **Take 113's Fold check:** the launcher on both screens, the splash, a
    reminder's ドン!! glyph (landmine 170).
 4. **Answers still open:** A43's large items -- ad consent (answered take
@@ -65,13 +65,10 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0. **The consent flow, then D11's units (take 121's follow-on):** UMP before
-   `initialize` and before any load, setting `PLATFORM._canRequestAds` from
-   its `canRequestAds` (take 121's builds never set it, so they never load a
-   real unit); a *Privacy choices* row under More; a line in the privacy
-   page; the gate's `ADMOB_LIVE_FLOOR` raised to that take; the owner's
-   three units in `ADMOB_LIVE_*` with `ADMOB_LIVE_FROM` that take. Waits on
-   the owner's message and units.
+0. *Done at take 127:* the consent flow and D11's units together (the
+   owner's word), a free save when no ad loads, More's Privacy choices where
+   UMP requires it. Next: the first real impressions and earnings, read from
+   the owner's AdMob after the upload.
 1. **A43's small items**, when wanted: the gate checks (the catalogue's
    shape; "Say take N" = BUILD + 1), the Restore file picker, the waiting
    batch in the backup, the cost basis in the currency on screen, CSV
@@ -1482,6 +1479,11 @@ UI-AUDIT's open boxes; they are listed here once so nothing is lost.
    no new plugin; the owner publishes AdMob's European-regulations message;
    the take after 121 builds it, and the gate refuses `ads.live` until it
    does (A17's take-121 section).*
+   *30 Sept, the owner: the consent flow ships with the units in one take
+   (127 or later), and a user who can get no ad saves free -- the no-fill
+   fallback this item asked for.*
+   ***Closed at take 127:*** the consent flow and the free save shipped with
+   the units (HANDOFF take 127).
 2. **D11, the two real rewarded unit IDs** (the owner's). Register the
    owner's phones as AdMob test devices first; the IDs ride the Pages
    manifest, so the take that carries them switches every install.
@@ -2630,7 +2632,7 @@ a One Piece background, and placeholders for whatever I cannot supply.
   template); a layer-list drawable placed by gravity would end the stretch.
   Its own small take.
 
-## A17 — Ads and revenue · SDK WIRED take 22 against Google test units · REAL APP ID take 41 · THE STORE-LINKED APP and ads.live take 121 · units and consent pending (D11, A43)
+## A17 — Ads and revenue · SDK WIRED take 22 against Google test units · REAL APP ID take 41 · THE STORE-LINKED APP and ads.live take 121 · REAL UNITS, CONSENT and the free save take 127
 
 The owner's ask, take 13: ad revenue, probably Google's. Starting ideas — 20 scans
 free then 20 per rewarded ad, repeating; 1 deck build free then 1 per ad,
@@ -2766,6 +2768,19 @@ flow, then the units (Priorities, mine 0).
   worldwide; the gate refuses `ads.live` without `requestConsentInfo`.
 - **Ruled out: a gate check that fetches the listing's website.** The host is
   the owner's server; the check is one command in RUNBOOK-play §9.
+
+### Take 127 — the units live, behind consent, and a free save when no ad loads
+
+The owner's three units (Scan Credits, Deck Save, MAX Unlock) ride `ads.live`
+from take 127; a build loads them only once UMP's consent allows ads
+(`consentAsk`), and every older install keeps Google's test units. When no ad
+can be loaded -- consent allows none, or a load fails while online with
+anything but a network error -- the save goes through free (the owner, 30
+Sept); offline keeps the tray. HANDOFF take 127 has the measurements.
+
+- **Ruled out: free credits on a no-fill.** Exactly the waiting cards
+  commit; nothing is banked.
+- **Ruled out: a free save while offline.** PROTOCOL §8's tray settles later.
 
 ## A16 — Theming, icon, splash · DESIGNED take 16, ICONOGRAPHY take 17 · ICON REVERTED take 33 as asked · one request declined · ICON SHIPPED take 113 (the owner's pick)
 

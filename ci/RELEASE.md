@@ -1,4 +1,4 @@
-# OP TCG Hub — take 126
+# OP TCG Hub — take 127
 
 ## Installing — read this first
 
@@ -17,6 +17,13 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 127:** Real ads. Where the law asks for it -- the EEA, the UK and
+Switzerland -- the app asks for your consent first, in Google's own message,
+and More gains Privacy choices for ads to change it. When no ad is available,
+what you were saving goes through anyway instead of waiting. An ad still earns
+20 save credits, a deck save or a day of all-time history. Nothing you have
+saved changes.
 
 **New at take 126:** More cards in the Sim have pictures: a card whose own
 picture TCGplayer doesn't have is shown with the picture of another printing
@@ -490,9 +497,10 @@ first-run tour; no more text prompts anywhere.
 More → Sync now. If it says *Sync failed*, the Pages site is not up yet and
 the app keeps the catalogue it came with.
 
-**Ads** run against Google's test units. You start with 20 save credits and
+**Ads** are real from take 127 (Google AdMob). You start with 20 save credits and
 1 deck save. Tap "+20 for a short ad" on Scan: watch it through and the count
-rises; close it early and nothing happens. Both are correct.
+rises; close it early and nothing happens. If no ad is available, the cards
+waiting in the tray save anyway; offline they wait until you are online.
 
 ## Five minutes, in order
 

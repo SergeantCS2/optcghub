@@ -2088,6 +2088,22 @@ const CREDITS = {
     this.state.pending.splice(0, n);
     this.spendScan(n); this.save(); commitOwn('pending');
     toast(`${n} pending card${n === 1 ? '' : 's'} added`);
+  },
+  /* take 127, the owner's rule: a save no ad could pay for goes through free -- the waiting cards commit (credits
+     for exactly them, spent at once by drain), a refused new deck gets its one save; counted for Diagnostics.
+     False when nothing waits, so the caller says "try again" instead. */
+  freeSave(kind) {
+    if (!this.enabled()) return false;
+    const n = this.state.pending.length;
+    if (kind === 'deck') this.state.deck += 1;
+    else if (!n) return false;
+    else this.state.scan += n;
+    this.state.free = (this.state.free || 0) + 1; this.save();
+    if (kind === 'deck') { toast('No ad available \u2014 this deck save is free: tap Save again'); return true; }
+    this.drain();
+    toast(`No ad available \u2014 ${n} waiting card${n === 1 ? '' : 's'} saved free`);
+    if (typeof paintScan === 'function' && $('#scan').classList.contains('on')) paintScan();
+    return true;
   }
 };
 
@@ -4218,6 +4234,7 @@ document.addEventListener('click', e => {
     rate: () => PLATFORM.rateApp(),
     currency: pickCurrency,
     shareapp: async () => { const r = await PLATFORM.shareApp(); if (r === 'copied') toast('Link copied'); if (r === false) toast('Could not share'); },
+    adprivacy: () => PLATFORM.adPrivacy(),   /* take 127: UMP's privacy options, when it requires the entry point */
     backup: () => { if (scheduleBackup('manual') !== false) toast('Backing up to Documents/OPTCGHub'); },
     restore: restoreFromBackup,
     wants: () => go('wants'),
@@ -5641,9 +5658,9 @@ const PLATFORM = {
      a build only at or after ads.live.from: every install from take 120 and
      earlier reads ads.scan and ads.deck, names the "testing" AdMob app in its
      APK and has no consent flow, so those two stay Google's test units. And
-     only once _canRequestAds is true, which nothing in take 121 sets: the
-     consent take sets it from the consent SDK's canRequestAds, so a build with
-     no consent flow never loads a real unit, whatever ads.live.from says. */
+     only once _canRequestAds is true, which only consentAsk sets (take 127),
+     from the consent SDK's canRequestAds -- so a build with no consent flow
+     (121 to 126) never loads a real unit, whatever ads.live.from says. */
   _canRequestAds: undefined,
   _adIds: {},
   adUnits() {
@@ -5658,6 +5675,58 @@ const PLATFORM = {
     return `Google test units (live units wait for ${TAKE < L.from ? `take ${L.from}` : 'consent'})`;
   },
   _adFailed(e) { if (e) console.warn('ad not shown', e); this._pendingKind = null; this._adReady = { scan: false, deck: false, max: false }; toast('The ad could not be shown'); },
+  /* Take 127: consent first -- the app is on Play worldwide (the owner). UMP through the plugin (8.1.0's
+     dist/esm/consent; its Android AdConsentExecutor): the info, then the form only when it is required (the
+     plugin's showConsentForm is UMP's loadAndShowConsentFormIfRequired), then canRequestAds decides. Offline
+     or on an error nothing is decided: _canRequestAds keeps what it was, and no ad is requested. */
+  _consent: null,
+  _adsStarted: false,
+  _starting: null,
+  async consentAsk() {
+    const A = this.plugin('AdMob'); if (!A || typeof A.requestConsentInfo !== 'function') return null;
+    try {
+      let info = await A.requestConsentInfo();
+      if (info && info.status === 'REQUIRED' && info.isConsentFormAvailable) info = { ...info, ...(await A.showConsentForm()) };
+      this._consent = { status: info.status, privacy: info.privacyOptionsRequirementStatus, can: !!info.canRequestAds };
+      this._canRequestAds = !!info.canRequestAds;
+    } catch (e) { this._consent = { ...(this._consent || {}), error: String((e && e.message) || e).slice(0, 80) }; }
+    if (typeof paintSettings === 'function' && $('#settings') && $('#settings').classList.contains('on')) paintSettings();
+    return this._consent;
+  },
+  /* consent, then the SDK and the first load -- once; a second caller waits on the first */
+  adsStart() {
+    if (!this._starting) this._starting = (async () => {
+      await this.consentAsk();
+      if (this._canRequestAds !== true) return false;
+      if (!this._adsStarted) { this._adsStarted = await this.adsInit(); if (this._adsStarted) this.adLoad('scan'); }
+      return this._adsStarted;
+    })().finally(() => { this._starting = null; });
+    return this._starting;
+  },
+  /* never over the first-open guide: Google's message waits until the guide is closed */
+  adsStartWhenFree() {
+    const busy = () => { const g = document.getElementById('tour'); return !!(g && !g.hidden && g.classList.contains('on')); };
+    const tick = () => { if (busy()) { setTimeout(tick, 1000); return; } this.adsStart(); };
+    setTimeout(tick, 800);
+  },
+  /* the owner's rule (take 127): when no ad can be loaded -- none to show, or consent that allows none -- the save
+     goes through free; offline or on a network error the cards wait in the tray as before (PROTOCOL §8), and MAX,
+     which is not a save, says try again */
+  adNone(kind, noAd) {
+    if (noAd && (kind === 'scan' || kind === 'deck') && CREDITS.freeSave(kind)) return false;
+    toast('No ad available right now \u2014 try again in a moment'); return false;
+  },
+  adPrivacyShown() { return !!(this._consent && this._consent.privacy === 'REQUIRED'); },
+  async adPrivacy() {
+    const A = this.plugin('AdMob'); if (!A || typeof A.showPrivacyOptionsForm !== 'function') return;
+    try { await A.showPrivacyOptionsForm(); } catch (e) { toast('Privacy choices could not be opened \u2014 try again when online'); return; }
+    await this.adsStart();
+  },
+  consentNote() {
+    const c = this._consent, f = (CREDITS.state && CREDITS.state.free) || 0;
+    const head = !c ? 'not asked yet' : c.status ? `${c.status}, ads ${c.can ? 'allowed' : 'not allowed'}, privacy choices ${c.privacy === 'REQUIRED' ? 'shown' : 'not needed'}` : 'no answer yet';
+    return `${head}${c && c.error ? ` (last error: ${c.error})` : ''} \u00b7 free saves ${f}`;
+  },
   async adsInit() {
     const A = this.plugin('AdMob'); if (!A || !CAT.man.ads) return false;
     try {
@@ -5672,23 +5741,25 @@ const PLATFORM = {
       });
       await A.addListener('onRewardedVideoAdDismissed', () => { this._adReady = { scan: false, deck: false, max: false }; this.adLoad('scan'); });
       await A.addListener('onRewardedVideoAdFailedToShow', e => this._adFailed(e));
-      await A.addListener('onRewardedVideoAdFailedToLoad', e => { console.warn('ad load failed', e); });
+      await A.addListener('onRewardedVideoAdFailedToLoad', e => { this._loadErr = e && typeof e.code === 'number' ? e.code : null; console.warn('ad load failed', e); });   /* take 127: sent before the reject; 2 is a network error */
       return true;
     } catch (e) { console.warn('ads init failed', e); return false; }
   },
   async adLoad(kind = 'scan') {
     const A = this.plugin('AdMob'); if (!A || !CAT.man.ads) return false;
-    const u = this.adUnits();
+    const u = this.adUnits(); this._loadErr = null;
     try {
       await A.prepareRewardVideoAd({ adId: u[kind], isTesting: u.test });
       this._adIds[kind] = u[kind]; this._adReady[kind] = true; return true;
-    } catch (e) { this._adReady[kind] = false; return false; }
+    } catch (e) { this._adReady[kind] = false; if (this._loadErr == null && /no fill/i.test(String((e && e.message) || e))) this._loadErr = 3; return false; }
   },
   /* kind: 'scan', 'deck' or 'max', each its own unit (take 121). True once the
      ad is asked to show; the credit is the reward event's. */
   async adShow(kind = 'scan') {
     const A = this.plugin('AdMob'); if (!A) return false;
-    if (!this._adReady[kind] && !(await this.adLoad(kind))) { toast('No ad available right now \u2014 try again in a moment'); return false; }
+    if (this._canRequestAds !== true || !this._adsStarted) await this.adsStart();   /* take 127: the consent answer first; offline at launch, asked again here */
+    if (this._canRequestAds !== true || !this._adsStarted) return this.adNone(kind, this._canRequestAds === false || (!!this._consent && !!this._consent.error && navigator.onLine !== false));
+    if (!this._adReady[kind] && !(await this.adLoad(kind))) return this.adNone(kind, navigator.onLine !== false && this._loadErr !== 2);
     this._pendingKind = kind; this._lastKind = kind; this._adReady[kind] = false;
     /* by the unit it prepared (the adId option, since 8.0.1): without it 8.1.0 shows the LAST prepared ad */
     try { A.showRewardVideoAd({ adId: this._adIds[kind] }).catch(e => this._adFailed(e)); return true; }
@@ -6268,7 +6339,7 @@ function paintSettings() {
       <button class="linkish" id="guideAgain">Show the guide again</button>
       <button class="linkish" data-act="currency">Show prices in\u2026 ${esc(CUR.active())}${CUR.active() !== 'USD' ? ' (converted)' : ''}</button>
       <button class="linkish" data-act="rate">Rate this app on Google Play</button>
-      <button class="linkish" data-act="shareapp">Tell someone about the app</button></div>
+      <button class="linkish" data-act="shareapp">Tell someone about the app</button>${PLATFORM.adPrivacyShown() ? '<button class="linkish" data-act="adprivacy">Privacy choices for ads</button>' : ''}</div>
     <div class="panel"><h3>Appearance</h3>
       <div class="seg" id="themeSeg" role="radiogroup" aria-label="Appearance">${['dark', 'light', 'system'].map(t => `<button role="radio" data-theme="${t}" class="${THEME.cur === t ? 'on' : ''}" aria-checked="${THEME.cur === t}">${{ dark: 'Dark', light: 'Light', system: 'Auto' }[t]}</button>`).join('')}</div>
       <div class="note">Dark is the app\u2019s own look. Light gives each mode a paper ground \u2014 parchment for Collect, chalk for Prep &amp; Play, cream for Hunt. Auto follows the phone\u2019s dark mode.</div></div>
@@ -6907,7 +6978,7 @@ const DIAG = {
     L.push('', '## app'); line('build', CAT.man.built_at || '?'); line('mode', MODE.cur); line('screen stack', NAV.stack.join(' > ') || '-');
     line('boot stack', (NAV.bootStack || []).join(' > ') || 'none'); line('screens on', [...document.querySelectorAll('.screen.on')].map(e => e.id).join(',') || 'NONE'); line('overlays on', ['#askSheet', '#picker', '#rulesSheet', '#simSheet', '#detail', '#tour', '#simCurtain'].filter(id => { const el = $(id); return el && el.classList && el.classList.contains('on'); }).join(',') || 'none'); line('splash', $('#splash') ? 'still in the page' : 'gone');
     line('currency', CUR.active() + (CAT.man.rates ? ` (rates ${CAT.man.rates.date}${CAT.man.rates.stale ? ', stale' : ''})` : ' (no rates)')); line('online', navigator.onLine); line('native', !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())); line('plugins', ['Camera', 'Filesystem', 'Share', 'LocalNotifications', 'Network', 'App', 'AdMob'].filter(n => PLATFORM.plugin(n)).join(', ') || 'none (browser)');
-    line('ads', !CAT.man.ads ? 'none' : PLATFORM.adUnitsNote());
+    line('ads', !CAT.man.ads ? 'none' : PLATFORM.adUnitsNote()); line('consent', !CAT.man.ads ? 'none' : PLATFORM.consentNote());
     L.push('', '## device'); line('ua', String(navigator.userAgent || '?').slice(0, 120)); line('viewport', `${typeof innerWidth === 'number' ? innerWidth + 'x' + innerHeight : '?'} @${devicePixelRatio || 1}`); line('language', navigator.language || '?'); line('tz', (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return '?'; } })());
     L.push('', '## catalogue'); line('cards', CAT.man.cards); line('printings', CAT.rows.length); line('pictures', picturesLine()); line('prices dated', (CAT.man.source_updated_at || '?').slice(0, 10)); line('history days', (CAT.days || []).length + (CAT.days && CAT.days.length ? ` (${CAT.days[0]}..${CAT.days[CAT.days.length - 1]})` : '')); line('catalogue copy', CAT.man.fromDisk ? 'synced on this phone' : 'the one that came with the app' + (CAT.refused ? ` (${CAT.refused})` : '')); line('sealed products', sealedCountLine()); line('stock decks', (CAT.stock || []).length); line('effects scripted', CAT.man.effects ? effectsLine(CAT.man.effects, Object.keys(CAT.effects || {}).filter(id => CAT.effects[id].some(e => !e.hand)).length) : '?'); line('effects proven', CAT.man.effects && CAT.man.effects.proofs != null ? `${CAT.man.effects.proven} printings proven, ${CAT.man.effects.wrong} proven wrong, from ${CAT.man.effects.proofs} proofs; ${CAT.man.effects.hand} lines by hand` + (CAT.man.effects.stale && CAT.man.effects.stale.length ? `; reopened: ${CAT.man.effects.stale.join(', ')}` : '') : '?'); line('rules', RULEBOOK ? `v${RULES_DB.cur().version}` + (RULES_DB.official && RULES_DB.official.version ? `, official v${RULES_DB.official.version}` : '') : '?');
     L.push('', '## sync'); line('update url', CAT.man.updateUrl || 'NOT SET'); line('manifest', await this.probe(CAT.man.updateUrl ? CAT.man.updateUrl + 'manifest.json' : null));
@@ -7032,7 +7103,7 @@ async function runSelfTest() {
     CREDITS.FREE_DECKS = CAT.man.ads.decksFree; CREDITS.DECKS_PER_AD = CAT.man.ads.decksPerAd;
     if (!localStorage.getItem('vault.credits')) { CREDITS.state.scan = CREDITS.FREE_ON_INSTALL; CREDITS.state.deck = CREDITS.FREE_DECKS; CREDITS.save(); }
     ADS_ENABLED = !!(CAT.man.ads.scan && PLATFORM.plugin('AdMob'));
-    if (ADS_ENABLED) PLATFORM.adsInit().then(ok => { if (ok) PLATFORM.adLoad('scan'); });
+    if (ADS_ENABLED) PLATFORM.adsStartWhenFree();   /* take 127: consent first, never over the first-open guide */
   }
   paintDevEarn();   /* take 115: after the manifest's numbers, and again whenever Diagnostics opens */
   /* Take 81: the phone’s back button. Read from @capacitor/app’s definitions:

@@ -1,4 +1,161 @@
-# HANDOFF — through Take 126
+# HANDOFF — through Take 127
+
+## Take 127 — 2026-09-30 — real ads: the consent message, the three units, and a free save when no ad loads
+
+Opened before any code (PROTOCOL §6), on `main` at take 126 (Release
+take-126 present; the merge's `build`, run 82, green) with take 121's
+after-the-merge notes riding along from the same branch. The owner, 30 Sept:
+AdMob's app is approved ("Ready", limits lifted); the three rewarded units,
+made under the linked app `~9519036366`:
+
+- `ca-app-pub-6243777967151950/9587227232` -- Scan Credits
+- `ca-app-pub-6243777967151950/2391263492` -- Deck Save
+- `ca-app-pub-6243777967151950/5013557407` -- MAX Unlock
+
+"Continue! Provide all my steps from here", and, while this was being read:
+"Also keep in mind we've done a ton of app changes since we've worked on
+add, be careful changing anything they had changed - follow protocol,
+continue." His answers (take 121's after-the-merge notes): the consent flow
+and the units in **one take**; when no ad can be loaded **the save goes
+through free**; MAX's and the deck save's ads PROVEN on the Fold on take 121.
+
+### What was read before any code
+
+- **Takes 122-126 left the ads code alone.** `git diff` from take 121's
+  code to `main`: in `src/app.html` the only line near it is the
+  `window.VAULT` export the Sim grew; `CREDITS`, `MAXLOCK`, the deck save's
+  wall (`#dkSave`), the scan screen's `+N for a short ad` (`#earnBtn`), the
+  batch commit (`#btnDone`), More (`paintSettings`) and the boot's ads block
+  are take 121's. PROVEN at `main` 54b8672: nothing assigns
+  `PLATFORM._canRequestAds`, so no build from 121 to 126 loads a real unit.
+- **The plugin's consent API**, from 8.1.0's `dist/esm/consent/*.d.ts` and
+  its Android source (`AdConsentExecutor.java`): `requestConsentInfo()`
+  returns `status`, `isConsentFormAvailable`, `canRequestAds`,
+  `privacyOptionsRequirementStatus`; `showConsentForm()` is UMP's
+  `loadAndShowConsentFormIfRequired` and returns `status`, `canRequestAds`,
+  `privacyOptionsRequirementStatus`; `showPrivacyOptionsForm()`. The UMP
+  library ships in the plugin (`user-messaging-platform` in its gradle).
+- **A failed load's code** (`RewardedAdCallbackAndListeners.kt`): the
+  plugin sends `onRewardedVideoAdFailedToLoad` with `{ code, message }`
+  before it rejects `prepareRewardVideoAd` with the message alone. Google's
+  load error codes: 0 internal, 1 invalid request, 2 network, 3 no fill
+  (INFERRED from Google's SDK reference, not read here).
+
+### What this take changes
+
+- **Consent first** (`src/app.html`, the ads block): `consentAsk()` asks UMP
+  through the plugin -- the info, the form only when it is required, then
+  `canRequestAds` sets `PLATFORM._canRequestAds`, the lock take 121 left
+  for it. `adsStart()` runs consent, then `initialize`, then the first load,
+  once (a second caller waits on the first). Offline or on an error nothing
+  is decided and no ad is requested. The boot calls `adsStartWhenFree()`,
+  which waits while the first-open guide is up (`#tour` open), so Google's
+  message never lands over it. Scanning is never gated.
+- **The owner's three units** in `tools/config.py` (`ADMOB_LIVE_SCAN`,
+  `_DECK`, `_MAX`), `ADMOB_LIVE_FROM = 127`; the gate's `ADMOB_LIVE_FLOOR`
+  is 127. `ads.scan` and `ads.deck` stay Google's test unit for every older
+  install. A take-127 install loads the live units once consent allows ads.
+- **The owner's rule, a free save when no ad loads:** `adShow` sends a
+  failure to `adNone`. When consent allows no ads, or a load fails while
+  online with anything but a network error (code 2), the save goes through
+  free: `CREDITS.freeSave` commits exactly the waiting cards (credits for
+  them, spent at once) or gives a refused new deck its one save, and counts
+  it (`state.free`). Offline or a network error keeps the tray as before
+  (PROTOCOL §8); MAX, not a save, says "try again". A failed load's code
+  comes from `onRewardedVideoAdFailedToLoad`, which 8.1.0 sends before the
+  reject; "No fill" in the reject is read too.
+- **More's "Privacy choices for ads"**, under How it works after the two
+  share rows, drawn only when UMP says the entry point is required
+  (`privacyOptionsRequirementStatus`), opening Google's privacy options form
+  and asking again. The only thing on screen this take adds, and a policy
+  requirement rather than a UI refinement (take 104's rule); the look shows
+  it at both sizes.
+- **Diagnostics** gains `consent:` (the answer, any last error, the free
+  saves); `ads:` says "live units wait for consent" until it is given.
+- **`src/privacy.html`** says where consent is asked, where to change it,
+  and that a save goes through when no ad is available.
+- **The gate:** the floor at 127, its "before the floor" probe at
+  `ADMOB_LIVE_FLOOR - 1`, and the no-consent probe now takes the consent
+  flow out of the copy first (the app has one, so the old probe would have
+  stopped firing).
+- **The harnesses:** smoke's take-127 section (20 checks, consent in both
+  orders, the free save, the tray kept offline and on a network error, MAX
+  kept shut, the privacy row, the boot); take 121's section given the
+  consent call it now meets, and its test-units reading taken with no
+  consent answer (the real `ads.live` is in the manifest now). The look's
+  take-127 steps: More with the row, More without it, Diagnostics' two lines.
+
+Nothing else in the app moved: `git diff` touches the ads block, `CREDITS`,
+More's one row and its action, Diagnostics' line and the boot's one line.
+
+### The owner's, from here
+
+1. **Before merging:** the European-regulations message published in
+   AdMob's *Privacy & messaging*, and the Fold registered as an AdMob test
+   device (RUNBOOK-play §9 items 2 and 4). Real units reach every take-127
+   install once this merges, the EEA's and the UK's included.
+2. Merge; upload take 127's AAB to production.
+3. On the Fold after the update: no consent message in the US (correct);
+   every ad labelled "Test Ad"; the self-test's ads line reads live units.
+
+### Measured
+
+- Take 126's code, BUILD still 126, the whole pipeline from a fresh ingest
+  (87 groups): smoke 1565/1565, render 265/265 (mode: chrome); the gate red
+  only on the HANDOFF header this entry had already moved to 127.
+- The new checks before the code, on that build: smoke's take-127 section
+  red (the live block absent, the consent flow and free save absent, the
+  boot straight into the SDK); with the units in config and the app not yet
+  patched, the gate's `ads` red: "ads.live is set and the app asks for no
+  consent".
+- Four faults planted in the built `www/app.js`, one at a time, each caught
+  by smoke: no free save (6 red), consent skipped (8 red), a network error
+  counted as no ad (2 red), the privacy row always drawn (1 red).
+
+### What I got wrong
+
+- Took the no-consent probe's mutation for granted: it planted a live block
+  and relied on the app having no consent flow, which this take gives it;
+  re-read before running, it now removes the flow from the copy.
+- Started the first clean run with a partial step list and no ingest; it
+  stopped at hashes for want of a catalogue, as it should. Re-run whole.
+
+### Ruled out
+
+- Consent only for live units: test units are ads too, and the rule for
+  requesting any ad is Google's.
+- A free save on every failure, offline included: offline keeps the tray
+  (PROTOCOL §8); the owner's rule is about an ad that cannot be had.
+- Free credits (+20) on a no-fill: the rule is that the save goes through;
+  exactly the waiting cards commit, nothing is banked.
+- Holding the guide's code to wait for its close: a poll on `#tour` needs
+  no change to the UI/UX session's guide.
+- MAX free on a no-fill: not a save (the owner's plan, 30 Sept).
+
+### Tests
+
+- This branch, 30 Sept: `ci/deps.sh`, the whole pipeline on take 126's code
+  (the baseline above), the checks watched red, then the code: smoke
+  **1585/1585**, render **265/265 (mode: chrome)**, the look **8/8** at both
+  Fold sizes (every picture read: the row under How it works in the panel's
+  own style, gone where not required, Diagnostics' two lines);
+  `gate.py --selftest` **34/34**; `scrub.py --check --docs` clean.
+- **The clean run (PROTOCOL §6b; `gate.py` changed):** the tracked tree with
+  this take's changes in an empty directory (a `git init`, for smoke's
+  `git check-ignore`), the pipeline from ingest (87 groups, hash coverage
+  100 %): smoke 1585/1585, render 265/265 (mode: chrome); its gate red only
+  on this entry's DEFERRED and V1-STATE's heading, the copy having been taken
+  before they were written.
+- `seal.sh --gate-only`, bare: GATE PASSED; the runner-owned files restored.
+
+### DEFERRED
+
+- The consent message seen on a device in the EEA: the US Fold gets
+  NOT_REQUIRED, and UMP's debug geography needs a hashed test-device ID;
+  the EEA path is proven by smoke's stub only (INFERRED on a device).
+- The first real ad impression and the first earnings: after the merge, the
+  upload and real users (the owner's Fold is a test device).
+
 
 ## Take 126 — 2026-09-30 — the host's "Image Coming Soon" is no card's picture: refused where pictures are fetched, so no screen draws it
 
@@ -1806,6 +1963,83 @@ Diagnostics line, so the take has no look steps (101-103 and 113 had none).
   mid-session loads live units into an SDK started for testing until the next
   launch. Harmless with test devices registered; the consent take reorders
   boot anyway.
+
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+- PR #46 merged 28 Sept, 20:59Z; `build` run 75 green in every job (seed,
+  bundle, apk, pages, report); Release take-121 published 21:10Z with the
+  APK (27,701,773 bytes), the AAB (20,889,216), the mapping and the Play
+  icon. PROVEN from the apk job's log: "AdMob app id
+  ca-app-pub-6243777967151950~9519036366 in strings.xml + manifest (Google
+  test units at the top level; take 121)", versionCode 121, the AAB signed
+  by the upload key (SHA256 `32:8E:60:A5:…`, the pinned one). The Pages
+  manifest serves take 121: `ads.app` the linked app, `ads.scan` and
+  `ads.deck` Google's test unit, `ads.live` null.
+- The owner's first *Check for updates* after setting the Website back
+  (about 20:50Z) still read "details don't match". The file side PROVEN
+  right the same hour: the listing reads
+  `https://sergeantcs2.github.io/optcghub/`; that root serves the line, 200
+  `text/plain`, to Googlebot's and Google-adstxt's user agents alike; no
+  `robots.txt`; `http://` 301s to the same file (Google allows it); the
+  bytes exact. Google's page for it (support.google.com/admob/answer/9363762):
+  "If you've recently added your developer website or updated your app
+  listing in Google Play, allow up to 24 hours for AdMob to detect these
+  changes", and "You need to wait at least 24 hours for the app-ads.txt
+  status to update". The same page settles the shared domain: for a
+  subdomain website the crawler checks the subdomain's own
+  `/app-ads.txt` first, so `github.io`'s own page (a redirect to
+  pages.github.com) is not read while ours answers. INFERRED: AdMob still
+  crawled the old website. The next check is after 21:00Z on 29 Sept; if it
+  is still red, AdMob's app-ads.txt tab (Apps → View all apps) names the
+  website it reads.
+- The owner's: upload take-121's AAB to production, once.
+- **What I got wrong, found after the merge:** the take called AdMob's
+  payment details "to be paid rather than to serve". Google's *About app
+  readiness* (answer 10564477): "your account must be verified before it's
+  approved to serve ads. To have your account verified, you must enter your
+  payment details". RUNBOOK-play §9 item 5 corrected; the owner told.
+- The owner's app-ads.txt tab, 28 Sept evening: "No ad requests with
+  app-ads.txt yet", no rows. Expected, per answer 9776740: the tab shows
+  nothing "if your app hasn't generated an ad request in the last 7 days or
+  if your app hasn't been verified". Google's test units are not this
+  account's (INFERRED: their publisher is `pub-3940256099942544`), so it
+  fills with the consent take's real units. Verification after a website
+  change can take up to a week (answer 9675354).
+- **The owner, 28 Sept evening:** take 121's AAB uploaded to production and
+  live; the Fold updated from Play and **an ad watched on it** -- the first
+  ad on a device this record holds (which placement, and whether its credit
+  landed, not said); AdMob's payment details correct; *Verify app* still
+  "details don't match". Re-checked 22:09Z, all PROVEN: the live listing
+  (two locales) reads `https://sergeantcs2.github.io/optcghub/`; that root
+  answers Google-adstxt's user agent 200 `text/plain` with the line, over
+  `https://` and `http://` (a 301 to the same file); the old site still
+  answers 404, so the unchanged message is the one AdMob gave while the
+  listing named it. Nothing in the app is an input to verification
+  (Google's *Verify your app*: the published app, its store link, the
+  listing's website, the file there). The listing changed between 19:10Z
+  and 20:43Z; the next *Check for updates* is after about 20:45Z, 29 Sept,
+  and Google allows up to a week after a website change.
+- **30 Sept, the owner's screenshots: the AdMob app is approved** -- "Your
+  first app is approved … any ad serving limits have been lifted", status
+  **Ready**; app-ads.txt verification and the account's verification are
+  done with it. The only item left on AdMob's checklist is the first ad unit.
+- **PROVEN on the Fold, take 121 from Play (the owner):** the MAX ad opened
+  MAX -- landmine 211's fix, the one only a phone could prove -- and the
+  deck-save ad granted the save.
+- **The owner's answers for the consent take:** one take carries the consent
+  flow and the three units; when no ad can be loaded (Google's no-fill, or
+  consent that leaves `canRequestAds` false) the save goes through free, a
+  counter in Diagnostics records it, offline keeps the pending tray until
+  online (PROTOCOL §8) and MAX stays "try again" (not a save). The owner's
+  steps first: the three units, the Fold as a test device, the
+  European-regulations message published (RUNBOOK-play §9).
+- **Takes 122-126 landed from other sessions while this waited** (the Sim's
+  engine and table, the scanner, backups, pictures), so the consent take is
+  127 or later. PROVEN at `main` 54b8672: none of them sets
+  `PLATFORM._canRequestAds` (declared, never assigned), so no build from 122
+  to 126 can load a real unit whatever `ads.live.from` says -- take 121's
+  second lock doing its job. `ADMOB_LIVE_FLOOR` stays 122 until the consent
+  take raises it to its own number.
 
 ## Take 120 — 2026-09-25 — the light theme, and the UI series wrapped up
 

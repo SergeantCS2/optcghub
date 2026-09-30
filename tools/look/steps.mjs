@@ -2142,4 +2142,42 @@ const take126 = [
     } },
 ];
 take126.viewports = ['cover', 'inner', 'phone', 'tablet'];
-export const STEPS = { 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
+/* ---- take 127 — real ads: consent first, and More's Privacy choices where the consent SDK requires it ---- */
+const take127 = [
+  { name: 'open', run: async (page, ctx) => { await ctx.open(); return { ok: true }; } },
+  { name: 'more-privacy-choices-where-consent-is-required', run: async (page) => {
+      /* an EEA or UK answer planted (a browser has no consent SDK): the row sits under How it works, after the
+         two share rows; the owner's Fold, in the US, never draws it */
+      return page.evaluate(async () => {
+        const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('collect', true);
+        V.PLATFORM._consent = { status: 'OBTAINED', privacy: 'REQUIRED', can: true }; V.go('settings');
+        await new Promise(r => setTimeout(r, 300));
+        const b = document.querySelector('#setBody [data-act="adprivacy"]');
+        if (b) window.scrollTo(0, Math.max(0, b.getBoundingClientRect().top + window.scrollY - 220));
+        return { ok: !!b && b.textContent === 'Privacy choices for ads', label: b ? b.textContent : null, after: b && b.previousElementSibling ? b.previousElementSibling.textContent : null };
+      });
+    } },
+  { name: 'more-without-the-row-where-it-is-not-required', run: async (page) => {
+      return page.evaluate(async () => {
+        const V = window.VAULT; V.PLATFORM._consent = { status: 'NOT_REQUIRED', privacy: 'NOT_REQUIRED', can: true }; V.go('settings');
+        await new Promise(r => setTimeout(r, 300));
+        const share = document.querySelector('#setBody [data-act="shareapp"]');
+        if (share) window.scrollTo(0, Math.max(0, share.getBoundingClientRect().top + window.scrollY - 220));
+        const ok = !document.querySelector('#setBody [data-act="adprivacy"]');
+        V.PLATFORM._consent = null; return { ok, rowAbsent: ok };
+      });
+    } },
+  { name: 'diagnostics-ads-and-consent-lines', run: async (page) => {
+      /* in a browser: Google's test units (the live ones wait for consent) and a consent not asked yet */
+      return page.evaluate(async () => {
+        const V = window.VAULT; V.go('diag');
+        const rep = await V.DIAG.report(); const out = document.querySelector('#diagOut'); if (out) out.textContent = rep;
+        const lines = rep.split('\n'); const i = lines.findIndex(l => /^ads: /.test(l));
+        if (out && i >= 0) { const lh = parseFloat(getComputedStyle(out).lineHeight) || 17; window.scrollTo(0, Math.max(0, out.getBoundingClientRect().top + window.scrollY + i * lh - 160)); }
+        const ads = lines[i] || '', consent = lines.find(l => /^consent: /.test(l)) || '';
+        return { ok: /live units wait for consent/.test(ads) && /not asked yet/.test(consent) && /free saves \d+/.test(consent), ads, consent };
+      });
+    } }
+];
+
+export const STEPS = { 127: take127, 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };

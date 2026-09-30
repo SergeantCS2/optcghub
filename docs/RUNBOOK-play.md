@@ -1,6 +1,6 @@
 # RUNBOOK — Google Play, from the repo to a running 14-day clock
 
-*Current as of take 126.* The whole procedure, in the order it must happen,
+*Current as of take 127.* The whole procedure, in the order it must happen,
 with who does each step. Everything on the repo side is already built; what
 follows is the owner's, and none of it is hard. The gate at the end is calendar
 time: **12 testers opted in for 14 continuous days** (landmine 35; re-checked
@@ -238,7 +238,10 @@ them, in `ADMOB_LIVE_*`, with the consent flow first (§9 items 3 and 4).*
 ## 9. Ads — AdMob, in parallel, none of it blocks the clock
 
 The AdMob account exists (take 33): publisher `pub-6243777967151950`. *Rewritten
-at take 121, when AdMob could not verify the app.*
+at take 121, when AdMob could not verify the app.* **Approved, 30 Sept: the app is "Ready", ad
+serving limits lifted.** *30 Sept: the Fold a test device, the three units
+made and live from take 127 with the consent flow; left, the consent message
+published before take 127 merges.*
 
 **Two AdMob apps (the owner's screenshot, 28 Sept):** "OP TCG Hub: Collect,
 Hunt, SIM", `ca-app-pub-6243777967151950~9519036366`, linked to Google Play
@@ -275,6 +278,11 @@ under "testing".
    *app-ads.txt* → **Check for updates**; verified within about a day, and the
    AdMob tab is the proof, not a 200 (take 40 called it DONE on the 200). Every
    time the listing's website changes, the file moves with it.
+   *Take 121: after a change to the listing's website, Google allows up to 24
+   hours for AdMob to see it and asks for at least 24 hours before the
+   status updates (support.google.com/admob/answer/9363762); a Check for
+   updates inside that window reads the old site ("details don't match",
+   28 Sept). Change nothing in the window, then check again.*
 2. **Test devices first:** AdMob → *Settings → Test devices → Add*, the Fold's
    advertising ID (the phone's *Settings → Google → Ads*), and every phone the
    owner taps ads on. Tapping a real unit on your own phone is invalid traffic
@@ -295,9 +303,33 @@ under "testing".
    **published**; the US states message is optional. The app's side (the UMP
    calls, a *Privacy choices* row under More) is the take after 121, and the
    gate refuses `ads.live` without it.
-5. **Payments**, to be paid rather than to serve: AdMob → *Payments* -- the
-   payment profile, tax information, and the PIN letter when it arrives.
-6. **Families:** this app is not directed at children. Never a Families
+   *Take 127, how the app behaves:* it asks UMP at launch, after the
+   first-open guide; where consent is required Google's message shows once;
+   More gains *Privacy choices for ads* where UMP requires the entry point.
+   No ad is requested until UMP allows ads. When none can be had -- consent
+   allows none, or a load fails while online with anything but a network
+   error -- the save goes through free (the owner's rule); offline, the
+   pending tray waits. Diagnostics' `consent:` line says the answer and the
+   free saves.
+5. **Payments -- needed to SERVE, not only to be paid** (corrected after
+   take 121's merge; the take had it as "to be paid rather than to serve").
+   Google's *About app readiness* (support.google.com/admob/answer/10564477):
+   "When you first sign up for AdMob, your account must be verified before
+   it's approved to serve ads. To have your account verified, you must enter
+   your payment details" -- up to 24 hours, rarely two weeks. AdMob →
+   *Payments*: the payment profile and tax information; the PIN letter when
+   earnings reach the threshold.
+6. **What to expect, from Google's pages:** the *app-ads.txt* tab (Apps →
+   View all apps) stays empty until the app sends ad requests with this
+   account's own units and is verified ("Your app-ads.txt status won't show
+   ... if your app hasn't generated an ad request in the last 7 days or if
+   your app hasn't been verified", answer 9776740) -- Google's test units
+   are not this account's, so it is empty until the consent take's real
+   units. After a website change, verification can take up to a week
+   ("Wait one week before seeking additional help", answer 9675354). Once
+   verified, the app readiness review starts by itself, "typically 2-3
+   days", with limited serving until approved (answer 10564477).
+7. **Families:** this app is not directed at children. Never a Families
    category; `tagForChildDirectedTreatment` stays unset.
 
 ## 10. Developer verification — The owner, when Play asks
