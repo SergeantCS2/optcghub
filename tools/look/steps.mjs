@@ -24,6 +24,11 @@ export const VIEWPORTS = {
   cover: { width: 411, height: 960, dpr: 2.625, note: 'MEASURED, the owner\'s Diagnostics' },
   inner: { width: 749, height: 832, dpr: 2.625, note: 'MEASURED, the owner\'s Diagnostics' }
 };
+/* take 124: the table is for normal phones and tablets too (the owner) -- two more sizes a step list may ask for, INFERRED:
+   common sizes, not the owner's devices. The Fold's two stay the default for every take. */
+export const SIZES = { ...VIEWPORTS,
+  phone: { width: 360, height: 780, dpr: 3, note: 'INFERRED: a common Android phone' },
+  tablet: { width: 1280, height: 800, dpr: 2, note: 'INFERRED: a common tablet, held landscape' } };
 /* The owner's zone, MEASURED on the same Diagnostics (`tz: America/New_York`); take 114's look ran America/Detroit,
    INFERRED from the zip 48329 -- the same offsets and the same daylight-saving days in 2026. look.mjs opens every
    page in it. */
@@ -1846,4 +1851,167 @@ const take123 = [
       return { ok: m.block && leaked.length === 0 && /is attacked/.test(m.text), leakedOfTheirs: leaked.join(', '), block: m.block };
     } },
 ];
-export const STEPS = { 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
+/* ---- take 124 -- the table: a game against the app through the table's own taps (real clicks), then an effect and its choices,
+   the zoom by a real long press, the log, two people on one phone, the end. The app's moves come a beat at a time in this browser,
+   so a step waits for them (SIMUI.busy). Every step reads the card size the table solved, that its foot is on the screen, that the
+   nav is aside, and how many card pictures drew. */
+const tb = js => `(async () => { const V = window.VAULT, S = V.SIM, U = V.SIMUI, wait = ms => new Promise(r => setTimeout(r, ms)), stock = id => V.CAT.stock.find(d => d.id === id), num = n => V.CAT.rows.find(p => p.num === n && !p.sealed);
+  const settle = async () => { for (let k = 0; k < 300 && U.busy; k++) await wait(50); await wait(450); };
+  const fresh = () => Object.assign(U, { sel: null, focus: null, post: null, room: null, fxt: null, busy: false, hurry: false, sheet: null });   /* seen kept: a result already shown is not shown again */
+  let out = {}; ${js}
+  await wait(300); const b = document.querySelector('#simBoard'), r = b.getBoundingClientRect(), nav = document.querySelector('#navPlay');
+  return Object.assign({ cw: getComputedStyle(b).getPropertyValue('--cw').trim(), foot: Math.round(r.bottom), vh: innerHeight, navAside: !nav || getComputedStyle(nav).display === 'none',
+    pictures: [...b.querySelectorAll('.tb-mat img, .tb-hand img')].filter(i => i.complete && i.naturalWidth > 0).length, sideways: document.documentElement.scrollWidth > innerWidth + 0.5 }, out); })()`;
+const fits = m => m.foot <= m.vh + 1 && m.navAside && !m.sideways && parseInt(m.cw, 10) >= 44;
+const tap124 = async (page, sel) => { await page.click(sel); await wait(450); };
+const settled = page => page.evaluate(`(async () => { const U = window.VAULT.SIMUI; for (let k = 0; k < 300 && U.busy; k++) await new Promise(r => setTimeout(r, 50)); await new Promise(r => setTimeout(r, 500)); })()`);
+const take124 = [
+  { name: 'open', run: async (page, ctx) => { await ctx.open(); return { ok: true }; } },
+  { name: 'sim-setup-the-leaders-face-to-face', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('play', true); await ${pause}; V.SIM.g = null; V.go('sim'); await ${pause};
+        Object.assign(V.SIMUI, { opp: 'bot', d1: 'stock-st01', d2: 'stock-st02' }); V.paintSim(); window.scrollTo(0, 0); await ${pause};
+        return { vs: !!document.querySelector('#simBoard .tb-vs'), leaders: document.querySelectorAll('#simBoard .vsl img').length, deal: !!document.querySelector('#simBoard [data-sim="start"]') }; })()`);
+      return { ok: m.vs && m.deal, ...m };
+    } },
+  { name: 'sim-mulligan-the-five-large', run: async (page, ctx) => {
+      /* the deal: the Leader turns over from its red back (the owner, mid-take: "red for leaders"), caught as it turns */
+      await page.evaluate(`(() => { const V = window.VAULT, S = V.SIM, stock = id => V.CAT.stock.find(d => d.id === id); S.new({ ...stock('stock-st01'), name: 'You — ST01' }, { ...stock('stock-st02'), name: 'The app — ST02' }, 0, { seed: 7, bot: 1 });
+        Object.assign(V.SIMUI, { sel: null, focus: null, post: null, room: null, fxt: null, busy: false, hurry: false, sheet: null, shown: new Set() }); V.paintSim(); window.scrollTo(0, 0); })()`);
+      await wait(260); const shot = await ctx.shot('03a-the-leader-turns-over-from-its-red-back');
+      const m = await page.evaluate(tb(`out = { cards: document.querySelectorAll('#simBoard .tb-mhand .sc').length, keep: !!document.querySelector('#simBoard [data-sim="keep:0"]'), shown: [...U.shown] };`));
+      return { ok: m.cards === 5 && m.keep && m.shown.join() === '0', shot, ...m };
+    } },
+  { name: 'sim-the-table-turn-one', run: async (page, ctx) => {
+      /* the app's Leader turns over as the table first shows it, once the app has kept */
+      await page.click('#simBoard [data-sim="keep:0"]'); await page.waitForFunction(() => window.VAULT.SIM.g && window.VAULT.SIM.g.phase !== 'mulligan', null, { timeout: 8000 });
+      await wait(260); const shot = await ctx.shot('04a-the-apps-leader-turns-over'); await settled(page);
+      const m = await page.evaluate(tb(`const shown = sel => { const e = document.querySelector(sel); return !!e && getComputedStyle(e).display !== 'none'; };
+        const hand = document.querySelector('#simBoard .tb-hand'), hr = hand.getBoundingClientRect(), hc = [...hand.querySelectorAll('.sc')], sec = document.querySelector('#sim');
+        out = { turn: S.g.turn, halves: document.querySelectorAll('#simBoard .tb-half').length, lit: document.querySelectorAll('#simBoard .tb-hand .sc.can').length, tabs: shown('.modebar'), header: shown('#sim > .appbar'), top: Math.round(document.querySelector('#simBoard').getBoundingClientRect().top),
+          shown: [...U.shown].sort().join(), hand: hc.length, handShown: hc.filter(e => { const q = e.getBoundingClientRect(); return q.left >= hr.left - 1 && q.right <= hr.right + 1 && q.bottom <= innerHeight + 0.5; }).length, hw: Math.round(hc[0].getBoundingClientRect().width),
+          unused: Math.round(innerHeight - document.querySelector('#simBoard').getBoundingClientRect().bottom - (parseFloat(getComputedStyle(sec).paddingBottom) || 0)),
+          start: (document.querySelector('#simBoard .tb-start') || {}).textContent || '', next: (document.querySelector('#simBoard .tb-next') || {}).textContent || '' };`));
+      /* the owner's fourth word: the band says what the turn's start did, the dock what can be done next */
+      return { ok: m.turn === 1 && m.halves === 2 && !m.tabs && !m.header && m.top <= 8 && fits(m) && m.shown === '0,1' && m.handShown === m.hand && m.unused <= 24
+        && /^Your turn 1 \u00b7 no draw on the first turn \u00b7 \+1\u00a0DON!!$/.test(m.start) && /^(Next: |Nothing left)[^]*no attacks on your first turn\.$/.test(m.next), shot, ...m };
+    } },
+  { name: 'sim-a-card-selected-and-its-moves', run: async (page) => {
+      /* a hand with nothing to play on turn one is lent two DON!! from its deck (the ten stay ten) so a card can be chosen */
+      await page.evaluate(tb(`if (!document.querySelector('#simBoard .tb-hand .sc.can')) { const P = S.P(0); P.don.active += 2; P.donDeck -= 2; V.paintSim(); }`));
+      const key = await page.evaluate(() => { const e = document.querySelector('#simBoard .tb-hand .sc.can'); return e ? e.dataset.key : null; });
+      /* a card held under the next one is tapped on its own strip, as a person would -- its middle may be under the next card */
+      if (key) { await page.click(`#simBoard [data-key="${key}"]`, { position: { x: 16, y: 40 } }); await wait(450); }
+      const m = await page.evaluate(tb(`out = { key: U.focus, play: !!document.querySelector('#simBoard .tb-dock [data-sim^="play:"]'), zoom: !!document.querySelector('#simBoard .tb-dock [data-sim^="zoom:"]') };`));
+      return { ok: !!key && m.play && m.zoom, ...m };
+    } },
+  { name: 'sim-played-onto-the-table', run: async (page) => {
+      await tap124(page, '#simBoard .tb-dock [data-sim^="play:"]');
+      /* a card played with an [On Play] waits on it: the effect is declined (or applied, when it cannot be declined) as the player would */
+      const m = await page.evaluate(tb(`for (let k = 0; k < 8 && S.who() === 0 && S.g.queue.length; k++) { const L = U.v.legal; V.simTap(U.v.tray ? 'hdone' : L.some(x => x.t === 'fxskip') ? 'fxskip' : L.some(x => x.t === 'fxhand') ? 'fxhand' : 'fxapply'); }
+        out = { mine: S.P(0).chars.length, onTable: document.querySelectorAll('#simBoard .tb-half.me .tb-row.front .sc').length, waiting: S.g.queue.length };`));
+      return { ok: m.mine >= 1 && m.onTable === m.mine && fits(m), ...m };
+    } },
+  { name: 'sim-the-app-plays-its-turn-a-move-a-beat', run: async (page, ctx) => {
+      /* the owner's fourth word: End turn asks while a card can still be played or an ability used, naming them -- shot -- and the
+         question's End turn ends it */
+      await page.click('#simBoard [data-sim="end"]'); await wait(450);
+      const q = await page.evaluate(() => ({ asked: document.querySelector('#simSheet').classList.contains('on') && (window.VAULT.SIMUI.sheet || {}).kind === 'endq', left: [...document.querySelectorAll('#simSheet .tb-left li')].map(e => e.textContent) }));
+      if (q.asked) { await ctx.shot('06a-end-turn-asks-what-is-left'); await page.click('#simSheet [data-sim="end:now"]'); }
+      await wait(1300);
+      const mid = await page.evaluate(() => ({ busy: window.VAULT.SIMUI.busy, dock: (document.querySelector('#simBoard .tb-dock') || {}).textContent || '' })); const shot = await ctx.shot('06b-the-app-mid-turn');
+      await page.waitForFunction(() => !window.VAULT.SIMUI.busy, null, { timeout: 30000 }); const shot3 = await ctx.shot('06c-your-turn-drew-one-and-two-don');
+      await settled(page);
+      const m = await page.evaluate(tb(`const nx = document.querySelector('#simBoard .tb-next'); out = { turn: S.g.turn, theirs: S.P(1).chars.length, who: S.who(), start: (document.querySelector('#simBoard .tb-start') || {}).textContent || '', next: nx ? nx.textContent : '',
+        lines: nx ? Math.round(nx.getBoundingClientRect().height / parseFloat(getComputedStyle(nx).lineHeight)) : 0, wide: innerWidth >= 640 };`));
+      /* the look, 360 px: "play 5 cards, give DON!! and attack with your Leader and Brook, ..." took three lines and the cards gave way;
+         from 640 px the dock is in the hand's column and takes that column's room (four lines on the open Fold, the cards whole above it) */
+      return { ok: mid.busy && /The app is playing/.test(mid.dock) && m.turn === 3 && m.who === 0 && fits(m) && /^Your turn 3 \u00b7 drew\u00a01 \u00b7 \+2\u00a0DON!!$/.test(m.start) && /^Next: [^]*attack with your Leader/.test(m.next) && (m.wide || m.lines <= 2),
+        midBusy: mid.busy, asked: q.asked, left: q.left, shot, shot3, ...m };
+    } },
+  { name: 'sim-attack-the-targets-lit', run: async (page) => {
+      await tap124(page, '#simBoard [data-key="L"]'); await tap124(page, '#simBoard .tb-dock [data-sim="attack:leader"]');
+      const m = await page.evaluate(tb(`out = { aim: !!U.sel, lit: [...document.querySelectorAll('#simBoard .tb-half.them .sc.aim')].map(e => e.dataset.sim) };`));
+      return { ok: m.aim && m.lit.includes('target:leader'), ...m };
+    } },
+  { name: 'sim-the-line-and-the-app-defends', run: async (page) => {
+      await page.click('#simBoard .tb-half.them [data-sim="target:leader"]'); await settled(page);
+      const m = await page.evaluate(tb(`out = { battle: !!S.g.battle, step: S.g.battle && S.g.battle.step, line: !!document.querySelector('#simBoard .tb-lines line'), clash: (document.querySelector('#simBoard .tb-clash') || {}).textContent || '', resolve: !!document.querySelector('#simBoard .tb-dock [data-sim="resolve"]') };`));
+      return { ok: m.battle && m.line && m.resolve && fits(m), ...m };
+    } },
+  { name: 'sim-resolve-the-hit', run: async (page, ctx) => {
+      await page.click('#simBoard .tb-dock [data-sim="resolve"]'); await wait(260); const shot = await ctx.shot('09b-the-burst');
+      const m = await page.evaluate(tb(`out = { burst: (document.querySelector('#simBoard .tb-burst') || {}).textContent || '', last: S.view(0).last, life: S.P(1).life.length };`));
+      return { ok: !!m.last && m.last.life.every(l => l.name === null), shot, burst: m.burst, life: m.life, cw: m.cw };
+    } },
+  { name: 'sim-hold-a-card-to-zoom', run: async (page) => {
+      const el = await page.$('#simBoard [data-key="oL"]'); const bx = await el.boundingBox();
+      await page.mouse.move(bx.x + bx.width / 2, bx.y + bx.height / 2); await page.mouse.down(); await wait(700); await page.mouse.up(); await wait(500);
+      const m = await page.evaluate(() => ({ on: document.querySelector('#simSheet').classList.contains('on'), title: document.querySelector('#simSheetTitle').textContent, big: !!document.querySelector('#simSheetBody .zm-art img'), words: /The app will|by hand/.test(document.querySelector('#simSheetBody').textContent) }));
+      return { ok: m.on && m.title === 'The card' && m.words, ...m };
+    } },
+  { name: 'sim-the-log', run: async (page) => {
+      await page.evaluate(() => window.VAULT.closeAnyOverlay()); await wait(300); await tap124(page, '#simBoard [data-sim="log"]');
+      const m = await page.evaluate(() => ({ on: document.querySelector('#simSheet').classList.contains('on'), lines: document.querySelectorAll('#simSheetBody .ll').length, you: /\bYou (?:activates|gives|plays|ends)\b/.test(document.querySelector('#simSheetBody').textContent) }));
+      return { ok: m.on && m.lines > 5 && !m.you, ...m };
+    } },
+  { name: 'sim-an-effect-its-choices-on-the-table', run: async (page) => {
+      await page.evaluate(() => window.VAULT.closeAnyOverlay()); await wait(250);
+      const m = await page.evaluate(tb(`const FX = V.CAT.effects, gid = +Object.keys(FX).find(id => { const p = V.CAT.byId.get(+id); return p && p.type === 'Character' && !p.sealed && FX[id].some(e => !e.hand && e.t === 'onplay' && e.if.length === 0 && e.do[0].a === 'power' && e.do[0].who !== 'opp' && e.do[0].who !== 'prev'); });
+        S.P(0).chars.push(S.inst(gid, S.g.turn)); S.g.queue = S.offers(0, 'onplay', S.P(0).chars.length - 1).slice(0, 1); fresh(); V.paintSim();
+        out = { panel: !!document.querySelector('#simBoard .tb-panel'), picks: document.querySelectorAll('#simBoard .tb-panel .tb-pick').length, lit: document.querySelectorAll('#simBoard .tb-mat .sc.aim').length, card: V.CAT.byId.get(gid).name };`));
+      return { ok: m.panel && m.picks >= 1 && m.lit >= 1, ...m };
+    } },
+  { name: 'sim-a-by-hand-line-resolved-never-skipped', run: async (page, ctx) => {
+      /* the owner's fourth word: a by-hand [On Play] that says neither "you may" nor a cost is opened and done by its words -- the panel
+         offers Resolve by hand alone and says it happens in full, the dock says to resolve it; opened, then Done */
+      await page.evaluate(() => window.VAULT.closeAnyOverlay()); await wait(250);
+      const m = await page.evaluate(tb(`const FX = V.CAT.effects, body = r => String(r).replace(/^(\\s*\\[[^\\]]+\\]\\s*)+/, '').replace(/\\([^)]*\\)/g, '');
+        const hid = +Object.keys(FX).find(id => { const p = V.CAT.byId.get(+id); return p && p.type === 'Character' && !p.sealed && FX[id].some(e => e.hand && e.t === 'onplay' && !/^\\s*you may\\b/i.test(body(e.raw)) && !/^[^.:]*:/.test(body(e.raw)) && !e.if.some(c => c.c === 'opt')); });
+        S.g.queue = []; S.P(0).chars = S.P(0).chars.slice(0, 4); S.P(0).chars.push(S.inst(hid, S.g.turn)); S.g.queue = S.offers(0, 'onplay', S.P(0).chars.length - 1).filter(o => o.hand).slice(0, 1); fresh(); V.paintSim(); await wait(300);
+        const panel = (document.querySelector('#simBoard .tb-panel') || {}).textContent || '';
+        out = { card: V.CAT.byId.get(hid).name, resolve: !!document.querySelector('#simBoard .tb-panel [data-sim="fxhand"]'), skip: !!document.querySelector('#simBoard .tb-panel [data-sim="fxskip"]'), full: /it happens in full/.test(panel), next: (document.querySelector('#simBoard .tb-next') || {}).textContent || '' };`));
+      const shot = await ctx.shot('14a-a-by-hand-line-no-skip'); await page.click('#simBoard .tb-panel [data-sim="fxhand"]'); await wait(400);
+      const done = !!(await page.$('#simBoard .tb-panel [data-sim="hdone"]')); if (done) { await page.click('#simBoard .tb-panel [data-sim="hdone"]'); await wait(400); }
+      const after = await page.evaluate(() => ({ queue: window.VAULT.SIM.g.queue.length, log: window.VAULT.SIM.g.log[0] }));
+      return { ok: m.resolve && !m.skip && m.full && /^Next: resolve .+ effect by hand\.$/.test(m.next) && done && after.queue === 0 && /done by hand/.test(after.log), shot, ...m, done, log: after.log };
+    } },
+  { name: 'sim-two-on-one-phone-the-curtain', run: async (page) => {
+      const m = await page.evaluate(tb(`S.g.queue = []; Object.assign(U, { opp: 'human', d1: 'stock-st08', d2: 'stock-st03', first: 0 }); S.g = null; V.paintSim(); await wait(200); V.simTap('start');
+        const c = document.querySelector('#simCurtain'); out = { curtain: c.classList.contains('on'), text: c.textContent.trim().slice(0, 60), art: !!c.querySelector('.cur-art img') };`));
+      return { ok: m.curtain && /Player 1/.test(m.text), curtain: m.curtain, text: m.text, art: m.art };
+    } },
+  { name: 'sim-leave-asks-first', run: async (page) => {
+      await page.evaluate(`(async () => { const V = window.VAULT, S = V.SIM; document.querySelector('#simCurtain').classList.remove('on'); S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' }); V.paintSim(); window.scrollTo(0, 0); })()`); await wait(400);
+      await tap124(page, '#simBoard [data-sim="leave"]');
+      const m = await page.evaluate(() => ({ on: document.querySelector('#simSheet').classList.contains('on'), title: document.querySelector('#simSheetTitle').textContent, text: document.querySelector('#simSheetBody').textContent.slice(0, 120) }));
+      return { ok: m.on && /Leaving forfeits this game/.test(m.text), ...m };
+    } },
+  { name: 'sim-forfeit-and-back-to-the-app', run: async (page) => {
+      await page.click('#simSheet [data-sim="leavenow"]'); await wait(700);
+      const m = await page.evaluate(() => { const shown = sel => { const e = document.querySelector(sel); return !!e && getComputedStyle(e).display !== 'none'; }; return { game: !!window.VAULT.SIM.g, tabs: shown('.modebar'), header: shown('#sim > .appbar'), nav: shown('#navPlay'), setup: /New game/.test(document.querySelector('#simBoard').textContent), toast: document.querySelector('#toast').textContent }; });
+      return { ok: !m.game && m.tabs && m.header && m.nav && m.setup, ...m };
+    } },
+  { name: 'sim-the-end', run: async (page) => {
+      const m = await page.evaluate(tb(`S.new({ ...stock('stock-st08'), name: 'Player 1 \u2014 ST08' }, { ...stock('stock-st03'), name: 'Player 2 \u2014 ST03' }, 0, { seed: 9 }); fresh(); S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' }); S.act(1, { t: 'concede' }); V.paintSim(); window.scrollTo(0, 0);
+        out = { over: S.g.over, text: (document.querySelector('#simBoard .tb-over h3') || {}).textContent || '', win: !!document.querySelector('#simBoard .tb-win img') };`));
+      return { ok: m.over === 0 && /wins/.test(m.text), over: m.over, text: m.text, win: m.win };
+    } },
+  { name: 'releases-a-day-of-starter-decks-one-row-again', run: async (page, ctx) => {
+      /* TCGCSV renamed every starter deck on 29 Sept ("ST-31: Starter Deck 31 RED Monkey.D.Luffy") and take 97's fold came
+         apart; a starter deck is known by its code now (landmine 231). The day's run is one row, shot folded; a real click opens it */
+      const before = await page.evaluate(async () => { const V = window.VAULT; V.NAV.zipAsked = true; V.MODE.set('hunt', true); V.RELF.open = new Set(); V.go('releases'); V.paintReleases(); await new Promise(r => setTimeout(r, 300));
+        while (V.closeAnyOverlay()) {}   /* Hunt asks for a zip on its first visit; the sheet is not this step's subject (as take 110's steps) */
+        const f = document.querySelector('#relList [data-relfold]:not([data-relfold^="d:"])'); if (f) { f.closest('.rel').scrollIntoView({ block: 'start' }); window.scrollBy(0, -70); }
+        const day = f ? f.dataset.relfold : ''; const run = [...V.CAT.sets.values()].filter(s => s.pub === day && /^ST-?\d/i.test(s.abbr || ''));
+        const h = document.querySelector('#relList').innerHTML;
+        return { fold: !!f, day, decks: run.length, rows: run.filter(s => h.includes('data-browse-set="' + s.id + '"')).length, names: run.slice(0, 2).map(s => s.name), label: f ? f.textContent.trim() : '' }; });
+      const shot = await ctx.shot('18a-releases-the-starter-decks-one-row');
+      if (before.fold) await page.click(`#relList [data-relfold="${before.day}"]`); await wait(300);
+      const after = await page.evaluate((day) => { const V = window.VAULT; const h = document.querySelector('#relList').innerHTML;
+        const run = [...V.CAT.sets.values()].filter(s => s.pub === day && /^ST-?\d/i.test(s.abbr || ''));
+        return { rows: run.filter(s => h.includes('data-browse-set="' + s.id + '"')).length, hide: /Hide the decks/.test(h) }; }, before.day);
+      return { ok: before.fold && before.decks >= 2 && before.rows === 1 && after.rows === before.decks && after.hide, shot, ...before, after };
+    } },
+];
+take124.viewports = ['cover', 'inner', 'phone', 'tablet'];
+export const STEPS = { 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };

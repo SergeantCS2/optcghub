@@ -1,4 +1,4 @@
-# OP TCG Hub — take 123
+# OP TCG Hub — take 124
 
 ## Installing — read this first
 
@@ -17,6 +17,26 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 124:** The Sim is a real table now. Once a game is dealt it
+fills the screen, and Leave at the top forfeits and takes you back to the
+app. Both sides of the playmat show the cards' pictures, with card backs in
+the game's colours -- blue for the deck, red for Leaders, white for DON!! --
+and your hand uses all the room the screen leaves. Tap a card to see what it
+can do: play, attack, give DON!!, use its ability, or zoom in to read it.
+Targets light up, attacks draw a line, and the app plays its turn one move at
+a time so you can watch. The rules are kept more closely too: an automatic
+effect such as [On Play] always resolves (an "up to" still lets you choose
+none), a [Trigger] you use goes to the trash, and cards an effect looks at go
+back where they were. Made for phones, both Fold screens and tablets. Against
+the app, its Life cards are no longer named when they go to its hand. The
+table tells you what comes next: your turn starts by showing the card you drew
+and the DON!! you got, the bar under your hand says what you can still do --
+play a card, attack, use an ability -- or that it is time to end your turn,
+and End turn asks first if an attack or a card to play is left. An effect the
+app cannot run for you is resolved by hand, never skipped, unless its words
+make it optional. And Releases shows a day's starter decks as one row again,
+after TCGplayer renamed them.
 
 **New at take 123:** Under the hood of the Sim: the board now draws only what
 the player whose turn it is may see -- the other hand, both Lives and both

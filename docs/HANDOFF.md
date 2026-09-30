@@ -1,4 +1,603 @@
-# HANDOFF — through Take 123
+# HANDOFF — through Take 124
+
+## Take 124 — 2026-09-29 — the table: the Sim's board redrawn as a playmat of the cards' pictures, on an audited take 123
+
+Opened before any code (PROTOCOL §6), from `main` at the nightly after take
+123's merge (`0aa76ac`; Release take-123 present, published 16:28 UTC by the
+`build` run 78, green; the nightly before it green).
+
+The owner: "audit on the SIM for the newest 123 take, build #78, all the work
+we've done recently and ensure we're ready for your UI pass. I want to take the
+core of the SIM, all the code all it's features and add a new UI ontop of it.
+Similar to optcgsim.com." Then: "make it fun to play, functional with as many
+visual assets as possible. We'll likely want to move into the board style,
+working for normal phones and foldables/tablets." His references: the
+Comprehensive Rules PDF, onesimulator.slidingcodes.com, optcgsim.com ("the gold
+standard"; its APK is 700 MB and was not provided) and oplaytcg.com.
+
+**The Sim's UI pass is this session's, on the owner's word** (take 123 left it
+as his own); the take-104 rule (refinement is the UI/UX session's) is set aside
+for the Sim's board, as take 122 did for the engine.
+
+**The two references the owner named for the pass.** `npx skills use
+https://uizze.sh/ --skill ui-taste` was refused by the session's own safety
+check (code from outside the repo); nothing was run or installed. Its
+"new-work" reference at `uizze.sh/downloads/reference/new-work.md` answered
+HTTP 404 (PROVEN, 29 Sept). The three simulators are pages a script draws: a
+fetch returns their titles and, for optcgsim.com, its downloads and
+troubleshooting -- no board. The board's layout is the rules' zones (§3) on
+the standard play sheet: the five Characters in front, then Life, Leader,
+Stage, Deck and Trash, then the DON!! deck and the cost area.
+
+### The audit of take 123 (build run 78)
+
+Baseline, rebuilt here from ingest (87 groups, 7,676 products): smoke 1,437
+passed, 0 failed; render 242 in Chrome; the gate passed (card proofs 25 / 85
+printings / 346 scenarios, 0 failed; self-play 68 games and 16 on two apps,
+0 violations). The engine is sound; what a board would trip over:
+
+| # | Found | Fix (this take) | Held by |
+|---|---|---|---|
+| 1 | **A leak.** Against the app, a hit on the app's Leader painted its Life card by name -- "Life card to hand: **Jewelry Bonney**" (seed 3, PROVEN in the shipped script) -- a card that went to the app's hand face down (§3-10, §10-1-5). `SIM.view(0)` held nothing: the name rode `act()`'s return (`res`) into `SIMUI.result`, and `simResult` painted it. Take 123's checks read the view, never what a move returns. `res.life[].trigger` also told whether a hidden card has a [Trigger] | the last battle's result is in the view as its seat may see it (`view.last`): a Life card named only to its owner, or when [Banish] trashes it face up. The board paints results from the view alone; `SIMUI` holds no card | smoke: the board painted against the app holds no name only the app may see (take 123's painter as the control); self-play: a twelfth plant |
+| 2 | The log against the app reads "You activates", "You gives", "You plays", "You ends the turn" (SIM-UI §6 named it) | the board says the human's lines in the second person | smoke, a painted bot game |
+| 3 | Effect lines in the log carry the engine's codes and raw references: "Monkey.D.Luffy: givedon → L (…)", "Trafalgar Law: cost_returndon (…)", "playfromhand → h5", "bottom — none chosen", "condition not met: donx,opt" | each step in the words the offer panel already uses (`describe`'s, lifted out unchanged) and the target by name when it is a public card; never a code or a reference | smoke, a sweep of bot games (take 123's line as the control) |
+| 4 | The app's whole turn ran inside one tap (a loop of up to 400 moves): nothing to watch | the app's moves one at a time, each painted | smoke, the look |
+| 5 | The tap handler re-derived legality from the engine (`SIM.canPlay`, `SIM.canAttack`, `SIM.legal`) instead of the moves the board was painted with (SIM-UI §4) | the handler sends back only moves from the painted view's `legal` | smoke: every legal move has a control on the board |
+| 6 | An effect's choice of a hand card or a searched deck card is a name only: a board of pictures needs its face (only the deciding seat has choices, and it sees these cards) | `choices[].face` for hand and deck targets | smoke (take 123's: the other seat has no choices) |
+| 7 | The painter guard named its painters in a list: a new painter outside the list was never read | the guard reads every function in the painters' block | smoke, a planted painter as the control |
+
+### The plan -- the table
+
+- **The layout.** Under the Sim's header (unchanged: the title, Rules, More;
+  its subtitle says whose turn it is), the playmat fills the screen while a
+  game is on; the nav steps aside, and the mode bar, More and Back stay. Two
+  halves, the opponent's across the table and mirrored. Each has the five
+  Character places in front, then a back row: Life (card backs, fanned, the
+  count on them), Stage, the Leader in the centre, Trash (its top card face
+  up; a tap opens the whole trash) and Deck (a stack and its count); then the
+  cost area, DON!! tokens active upright and rested turned, beside the DON!!
+  deck's count. Between the halves is a band: whose turn it is, the latest line
+  of the log (a tap opens the log) and End turn. Under my half is my hand, a
+  strip of whole cards that scrolls when it is long; the opponent's hand is
+  card backs, a count. Card size comes from the space: about 60 px wide on a
+  360 px phone, 71 on the Fold's cover, and on the open Fold and a tablet a
+  panel beside the table holds the card large, its words, its moves and the
+  log (optcgsim's side panel). From 900 px the table leaves the phone column.
+- **The cards.** Each card is its hot-linked picture (the thumbnail on the
+  table, the large one in the zoom), turned sideways when rested, with upright
+  badges: its power now (lit above its printed power, red below), its given
+  DON!!, a Blocker and a Rush mark. A card whose picture fails is its colours
+  with its name, cost and power in text. The card back and the DON!! token are
+  our own, from the app's glyphs on the Play palette, never Bandai's card back
+  or DON!! art (landmine 30). Each half's ground is its Leader's art, blurred,
+  in the card's own colours.
+- **Playing.** A tap selects a card and the dock under the hand shows its
+  moves (Play, Attack, +DON!!, Main, Zoom), exactly those in `view.legal`.
+  Attack lights the legal targets across the table, and a tap on one attacks.
+  A long press opens the zoom. Defending, the Blockers light up; in the
+  counter step the hand's counters light with their +1000 / +2000; No block
+  and Resolve sit in the dock with what happens beside them. An effect raises
+  a panel over the hand: the card, its words, its mark (proven, unproven, by
+  hand, proven wrong) and Report. Its targets light on the table and are also
+  listed; a by-hand tray lists only its words' moves. For a sixth Character,
+  my five light up for the one to trash. The mulligan shows the five cards
+  large; the end, the winner's Leader, New game and Share the log. With two
+  on one phone, the curtain names the next player over their Leader.
+- **Motion.** The app plays its turn a move at a time, each move drawn: a card
+  dealt in, a card turning to rest, a DON!! landing on a card, a line from
+  attacker to target, the clash (hit or held), a Life card leaving, a
+  K.O.'d card fading to the trash, and a banner for each new turn. With
+  reduced motion there is none of it, and the app moves at once. A hit gives
+  a light vibration (Haptics, already in the build).
+- **Kept (SIM-UI §6):** three-word buttons, keywords one way, curled
+  apostrophes, the tokens and the palettes, 44 px targets, both Fold sizes, a
+  Rules button and every `§x-y` a link, the proof marks and Report, "yours to
+  apply" and the power shown without it, the by-hand tray's own labels,
+  pictures hot-linked and falling back to `art.ground`, Back closing a sheet
+  before it leaves the screen.
+- **The look at four sizes:** the Fold's two (MEASURED), a phone at 360 x 780
+  and a tablet at 1280 x 800 (both INFERRED: common sizes, not the owner's
+  devices).
+
+**The owner, mid-take, after the first look's pictures:** "When in the
+game/sim the sim headline, collect, hunt, prep & play tabs should hide
+automatically, the game should fill the screen after it loads. The user should
+have the ability to forfeit and leave the match to return back to the normal
+application. We should be using as close to real card backs as possible,
+similar to the unofficial OPTCG SIM and even our Google play ICON that you had
+designed. Continue, so far this looks pretty good!" Two lines of the plan
+above are superseded by it: the header and the mode tabs step aside too, not
+only the nav; and the card backs are the app icon's card back (Bandai's printed
+emblem, as the icon draws it), not the app's own wheel -- landmine 30's
+exception for the icon, extended on the owner's word.
+
+**The owner, a second time mid-take:** "Change the card back colors to match
+the game. The darker blue for normal cards, white for don, red for leaders.
+Change the borders to match. For don, black border. Continue! Ensure were
+using the screen space as optimally as possible." And for the Sim from here
+on: "For future real SIM testing, I want you to ensure we're auditing as much
+as we can when you're testing live games. Test all starter decks and as many
+random/arbitrary decks (that are still legal), after every turn ends audit all
+moves against the rules and all card they played and ensure the actions they
+did with the card is legal per the cards rules and game rules. Our goal is to
+ensure the sim is optimized as much as possible out of the box for users so
+it's unlikely they'll find major issues, small ones will surface in the
+future." The take answers all three: the backs in the game's colours; the
+table and the hand sized from the space (MEASURED below, before and after);
+and the rulebook -- a second model of the game, written from the rules, that
+checks every move of every self-play game over every pairing of the
+ready-made decks and random legal decks. With it the take found nine faults
+in the engine and fixed each with a check. The testing rule stands in
+NEW-SESSION-PROMPT and SIM-UI §7.
+
+### What this take changes
+
+- **The audit's fixes, in the engine (`src/sim.js`):** the battle's result is
+  kept in the game (`g.last`, set where the battle resolves) and is in each
+  seat's view as that seat may see it (`view.last`, `SIM.lastFor`); an
+  effect's choices of a hand card or a searched deck card carry their `face`
+  (`SIM.choicesOf`); `describe()`'s words are lifted into `SIM.TIMING`,
+  `SIM.condText` and `SIM.stepText` (its output unchanged), and the log says
+  a step in them, with its target named only when public (`SIM.targetName`);
+  a picture shared by cards of different names is the host's placeholder and
+  is not drawn (`SIM.placeholderPic`, landmine 226).
+- **The table (`src/app.html`, `paintSim` and the painters between
+  `SIM_PAINTERS` and `SIM_PAINTERS_END`):** once dealt the game fills the
+  screen -- the mode tabs, the Sim's header and the nav step aside -- under a
+  top bar of Leave, whose turn it is, Rules, the log and the menu. Two halves
+  mirrored across a band (the latest log line, End turn and what follows it, a
+  battle's two powers crossed); each half the five Character places, then
+  Life (backs lying sideways, the count on a heart), Stage, the Leader in the
+  middle, Trash (its newest card; a tap opens it) and Deck (a stack, the
+  count), then the cost area (a DON!! token each, rested turned, the DON!!
+  deck's count). The other seat's hand is backs and a count. Cards are their
+  hot-linked pictures over their colours, turned when rested, with their power
+  now (lit above printed, red below), their DON!!, Blocker, Rush and Double
+  Attack marks, and a gold corner for continuous text that is the player's to
+  apply. The hand is a strip of whole cards (lit when playable, dimmed when
+  not); a tap selects a card and the dock lists exactly its legal moves; what
+  the table asks -- targets, Blockers, counters, an effect's choices, one of
+  five to trash -- is lit on the card with that move's word. The effect panel
+  rises over the hand (beside the table on wide screens) with the card's words,
+  its mark, what the app will do, its choices drawn as cards, Report. One
+  sheet (`#simSheet`, closed by Back) holds a card's zoom (the large picture,
+  its lines and marks, its moves; a long press opens it), the log, a trash,
+  the menu (Forfeit, Share the log) and Leave's question.
+- **Leave** (the owner): asks first; a game still on is forfeited for the seat
+  on screen (§1-2-3), the table closes, and the app's tabs, header and nav
+  come back with the setup.
+- **Card backs** (the owner, twice): the app icon's card back (`g-cardart`,
+  lifted from `assets/icon.svg`: the compass over the sea chart) in the game's
+  colours -- the deck's, Life's and the other hand's deep blue in a darker blue
+  border, a Leader's red in a darker red one, a DON!! card's white in black
+  (`.sb`, `.sb.ld`, `.sb.dn`). The DON!! deck is a stack of its white backs
+  beside the cost area; a DON!! face up is white in black with the app's DON!!
+  glyph, and so is the chip of DON!! given on a card. Each Leader turns over
+  from its red back the first time it shows in a game -- the mulligan the
+  deciding seat's, the table the other's (`simReveal`); under reduced motion it
+  is simply face up. Life's backs lie sideways.
+- **Motion:** a card dealt in, cards sliding to new places, a card turning to
+  rest and back, a power changing, a DON!! landing, a card leaving for its
+  trash, a Life card leaving its stack, a banner for each turn, the attacker's
+  lunge, a dashed line from attacker to target, the result's burst (a hit felt
+  as a vibration). The app's moves come one a beat (`simPaced()`; Hurry plays
+  the rest at once); reduced motion draws none of it and the app moves at once.
+- **Sizes** (the owner: "using the screen space as optimally as possible"):
+  `simFit()` solves `--cw` from the space (two trial sizes give the table's
+  height as a line in it). From 640 px the table takes the whole height under
+  the top bar, and the dock shares the hand's column (it sat under the table);
+  from 1000 px the side panel of zoom and log is a quarter of the width, 280 to
+  400 px; from 900 px the table leaves the phone column. The hand then takes
+  all the space left for it: every card at once at the largest size that fits
+  -- in rows under the table on a phone (two at most), in rows in the column
+  from 640 px -- and where whole cards side by side would be small, held like a
+  hand, each card over the last with a strip of its own (44 px at least and
+  two fifths of the card: its cost and counter; the card selected comes to the
+  front). Past that a phone's strip scrolls, as before. The band keeps one
+  height so the table does not resize as End turn comes and goes; the
+  mulligan and the end keep the first size.
+- **Around it:** the setup shows the two Leaders face to face; the mulligan
+  the five cards large; the end the winner's Leader; the curtain the next
+  player's Leader card. The log speaks to the human in the second person
+  against the app and names each seat by its short name (`simSay`). The tap
+  handler (`simTap`) sends back only moves from the view it painted.
+- **The rulebook** (the owner's rule for testing the Sim): `tools/lib/rulebook.mjs`,
+  the auditor's own model of the game, written from the rules digest and the
+  cards' lines, never from the engine's code. At every decision of a
+  self-play game it lists the moves the rules allow and compares them with
+  the engine's `legal()`; after every move it builds the game the rules say
+  follows -- every zone, DON!!, what applies to each card, the battle, the
+  effects waiting and their order, the battle's result -- and names the first
+  place the engine's game differs. A turn's end is a move like any other, so
+  the End Phase and the next refresh, draw and DON!! are held to the rules too.
+  Self-play deals every ordered pairing of the seventeen ready-made decks in
+  turn with two random legal decks per game (each passed by the rules' own
+  deck check, §5-1-2, and the app's), and before any game the card's words
+  check reads every scripted step against its own line's text. `--only SEED`
+  plays one game of a sweep again; a failing game keeps its moves in the
+  report, so `SIM.replay` rebuilds it.
+- **What the rulebook and the random decks found in the engine, each fixed
+  here with a check (`src/sim.js`):** (1) an automatic effect -- [On Play],
+  [When Attacking], an Event's -- could be declined, though it activates by
+  itself and resolves in full (§8-1-3-1): only a line that says "you may",
+  begins with a cost, a [Trigger], or an [Activate: Main] before it begins may
+  be declined now (`SIM.declinable`), "up to" still lets none be chosen, and
+  the effect panel says "it resolves in full" where Skip was; (2) a [Trigger]
+  used with no target chosen stayed in hand (§10-1-5-3); (3) a search declined
+  halfway left its looked-at cards outside the deck; an effect that ends,
+  however its last step went, now puts back what it looked at on top as it was
+  (§11-3-3 -- it put them at the bottom) and trashes a used [Trigger]
+  (`SIM.finish`); (4) an effect whose card left the field before it began
+  waited for a move and took any (§8-1-3-1-3): it leaves the queue by itself;
+  (5) one that had begun stopped when its card left: it resolves in full; (6)
+  "that card" with no card chosen before stood the game still (El Thor and its
+  reprints: the one move offered was refused): it is no card; (7) a by-hand
+  line's Once Per Turn read the place its card had when queued, so a
+  Character leaving first made it read another card (two apps: "resolved
+  twice"); (8) what a step set off while its effect still resolved -- an [On
+  K.O.], an [On Play] -- was dropped unless that step was the last (§8-6): it
+  waits its turn; (9) a step whose own condition was false took a target it
+  never offered (Radical Beam!!, the final sweep): a target is checked first.
+  The sweeps found (2), (3), (4), (6), (7) and (9); (1), (5), (8) and the
+  looked-at cards' place came from reading the engine against the rules while
+  writing the model.
+- **Glyphs:** `g-sword` (attack) and `g-log` (the log), drawn in the sprite's
+  own style; `g-cardart` (above).
+- **Harnesses:** smoke's take-124 section and the older Sim checks moved to
+  the table's markup, each with its control; render's table checks (the full
+  screen, the fit, 44 px); the look's `SIZES` (a phone and a tablet beside the
+  Fold's two) and a step list's `viewports`; self-play's twelfth plant; the
+  rulebook's sixteen plants, the words check's and the deck check's; render's
+  card backs as Chrome draws them and the screen used at four sizes; smoke's
+  scenario for each engine fix.
+- **Docs:** `docs/SIM-UI.md` (the rule that nothing `act()` returns is painted,
+  `view.last`, faces on choices, which lines may be declined, §7 the rulebook
+  and the owner's testing rule, §8 the table); landmines 225-230, notes on 30,
+  214 and 219; AGENDA A23; the owner's testing rule in NEW-SESSION-PROMPT.
+
+### The PR's first check, and the data under it
+
+The runner's first `check` on the PR (run 36624640603) failed in smoke: 1,494
+passed, 3 failed, all take 97's Releases fold ("undefined: 0 decks"). This take
+never touched Releases. TCGCSV renamed all 44 starter-deck groups at about 19:20
+UTC on 29 Sept, after the session's ingest and before the runner's (source
+20:05 UTC): "Starter Deck 31: RED Monkey.D.Luffy" is now "ST-31: Starter Deck 31
+RED Monkey.D.Luffy", and the four Super Pre-Release decks likewise. Ids, codes
+and dates are unchanged (PROVEN: the cached groups against TCGCSV's, 87 of 87).
+Releases knew a starter deck by `/^Starter Deck/` on its name, so the six
+ST31-ST36 rows the owner asked to see as one (take 97) came back. `main` carries
+the same line: its nightly, build run 79 at 00:39 UTC on 30 Sept, failed in
+smoke on the same three checks, 1,434 passed, 3 failed (PROVEN); this take's
+merge mends it.
+
+- **The fix:** a starter deck is a set whose code is ST and a number (the
+  catalogue takes a set's code from its cards' printed numbers), with "Starter
+  Deck" anywhere in the name as the fallback (landmine 231). Nothing else in the
+  app or the pipeline reads a set's name for what it is: the Sealed kinds and a
+  set's kind read the word "deck" anywhere, and Hunt folds the name's words in.
+- **Its checks, watched failing first:** smoke finds the run by its code; the
+  run renamed as before 29 Sept, and with no "Starter Deck" in its names, is
+  still one row; the control, neither the code nor the words, comes apart. On
+  the unfixed build with today's data: 1,495 passed, 4 failed (the run, the
+  rename, the fold, the search). On the fix: 1,499 passed, 0 failed; render
+  246 in Chrome, the folded row opening on a click.
+
+### The owner's fourth word: the next action said, nothing skipped
+
+The owner, on the PR (green, draft): "Ensure if there's an outstanding action,
+the player knows about it. The sim should tell the player what the next action
+is, such as drawing a card, don etc. we already cover some of this/most of it.
+This isn't a rule test, it's a sim to help players. So a user should never be
+able to skip drawing a card, don, things that every player does in every turn
+or with the leader/etc that are technically optional to skip but why would you
+skip."
+
+**What was already so** (PROVEN, `startTurn()` read and the rulebook's sweep):
+Refresh, Draw and DON!! are the engine's, never a move -- the Leader and every
+card set active, given DON!! back, one card drawn, two DON!! added -- so no
+player could skip or forget them, and the rulebook checks each turn's start
+against the rules. The table said so only in the band's one-line ticker, cut
+short on a phone, and on the first player's first turn the line said "draw"
+where no card is drawn (§6-3-1). Where the table asked nothing, the dock said
+"Tap a card for its moves"; End turn ended the turn with attacks still there;
+and a by-hand line (one the app does not run) offered Skip whatever its words
+said, so an [On Play] the rules make happen could be passed by in one tap.
+
+- **The turn's start, said:** the engine keeps what the start did
+  (`view.start`: drew, DON!!) and the log says it exactly; the dock says it
+  until the player's first move, the turn's banner says it, and the drawn card
+  and the new DON!! are drawn arriving.
+- **The next action, always:** the dock says what the player can do next,
+  from the view's legal moves -- the cards to play, who can attack, an ability
+  ready -- or that nothing is left but End turn; an effect waiting, a by-hand
+  tray, a block or a counter asked, each in its own words; the top bar says
+  "your move" when the game waits on this seat in the other's turn.
+- **End turn asks** when an attack, a card to play or an ability is still
+  there, and names them.
+- **Nothing skipped that must happen:** a by-hand line may be declined only
+  where the rules let a line be -- a [Trigger], an [Activate: Main] before it
+  begins, "you may", or a cost first -- as a scripted line (§8-1-3-1). Else it
+  is opened and done by its words. The app opens its own and says it made no
+  move. Declines are named for what they do: Add to hand ([Trigger]), Cancel
+  ([Activate: Main]), Don't pay (a cost), Decline ("you may").
+
+**Ruled out:** applying a "you may" line for the player (the rules make it a
+choice); a Draw button and a DON!! button to tap (a step to forget in other
+sims; here the engine takes them); asking at End turn about DON!! left active
+(they pay for a [Counter] Event in the other player's turn -- keeping them is
+play, not a slip); passing a Block or Counter step for the player when nothing
+can be done in it (not asked; a question for the owner).
+
+**The owner, on the look's pictures:** "I notice it says play 5 cards, you
+won't always play 5 cards of course. You might only play one high Don card or
+use your don for other stuff. Might want to change the wording there. It also
+doesn't need to say then the app plays under end turn." Both done: the line
+names the one card that can be played, or says "a card" where several each
+could be -- never a count -- and against the app End turn stands alone. Two
+people on one phone keep "then pass the phone", which tells them to hand over.
+Each is a smoke check with its control, watched failing on the previous build.
+And his word to mark the PR ready when it is.
+
+### Measured
+
+- **Smoke 1,518 passed, 0 failed** on TCGCSV's data of 29 Sept, 20:05 UTC
+  (1,437 at the take's start; 1,497 before the rename's two checks, 1,499
+  before the owner's fourth word; its 19 new checks against the previous
+  build: 1,503 passed, 15 failed, every control passing). **Render 248 in
+  Chrome** (242; the fourth word's two against the previous build: 246
+  passed, 2 failed). **The look, take 124: 76 of 76 steps** at four sizes --
+  the Fold's cover 411 x 960 and open 749 x 832 (MEASURED sizes), a phone 360
+  x 780 and a tablet 1280 x 800 (INFERRED) -- a game against the app through
+  real clicks (deal, mulligan, select, play, the app's turn a beat at a time,
+  aim, the line, Resolve, the burst), a long press to zoom, the log, an effect's
+  choices, the curtain, Leave's question, Forfeit & leave back to the app, the
+  end, and each Leader's red back caught as it turns over; the owner's fourth
+  word -- the turn's start and the next action on turns 1 and 3, End turn's
+  question (shot, then its End turn), a by-hand line resolved with no Skip;
+  then Releases, the day of ST31-ST36 as one row folded and opened by a click.
+  Pictures through Node: 803 fetched, 131 refused by the host. Smoke, render
+  and the look ran on the final build.
+- **The screen, used** (MEASURED in this VM's Chromium, a game against the
+  app after the mulligan, a first hand of 5 and one of 8; the first table of
+  this take, then the last):
+
+  | Size | Table card | Hand card, 5 / 8 | Hand whole on screen, 5 / 8 | Unused under the table, 5 / 8 | Cards cover the screen, 5 / 8 |
+  |---|---|---|---|---|---|
+  | Phone 360 x 780 | 62 -> 62 px | 69 -> 65 / 69 -> 69 | 4 -> 5 / 4 -> 4 | 8 -> 10 / 8 -> 4 px | 50 -> 49 / 50 -> 50 % |
+  | Fold cover 411 x 960 | 72 -> 72 | 104 -> 147 / 104 -> 75 | 3 -> 5 / 3 -> 8 | 80 -> 16 / 80 -> 116 | 51 -> 75 / 51 -> 53 |
+  | Fold open 749 x 832 | 91 -> 102 | 102 -> 123 / 102 -> 114 | 5 -> 5 / 8 -> 8 | 13 -> 3 / 13 -> 3 | 49 -> 64 / 56 -> 70 |
+  | Tablet 1280 x 800 | 87 -> 97 | 97 -> 194 / 97 -> 187 | 5 -> 5 / 8 -> 8 | 5 -> 1 / 5 -> 1 | 27 -> 51 / 31 -> 64 |
+
+  The 360 px phone is a table the width sets and little height left (a strip
+  of 4 or 5 hand cards, as before); the cover with 8 cards shows them all at
+  75 px, the 44 px strip's limit, and 116 px stay under the dock (DEFERRED).
+- **describe() unchanged:** one fingerprint over all 7,822 effect lines, the
+  same on this build and take 123's.
+- **The log:** 0 of 581 lines in a sweep of four seeded bot games carry an
+  engine code or a raw reference; 62 of 581 on take 123's build.
+- **The leak, and its checks watched failing on take 123's build:** the
+  painted board names Jewelry Bonney (take 123) and none of 16 hidden names
+  (take 124); the human's `view.last` names no Life card (take 123 has no
+  `last`); the painted log's "You ends" lines 1 and 0; deck choices with a
+  face 0 of 1 and 1 of 1; ST01-007 Nami drawn as the host's placeholder and in
+  its colours; the tap handler's engine reads of legality 4 and 0.
+- **The host's placeholder:** one picture shared across 22 printings of 22
+  names (landmine 226).
+- **The engine, after the audit's fixes, on the ready-made decks alone**
+  (before the rulebook): 4,000 games of the app against itself and chaos,
+  834,768 moves audited (both seats' views, `last` included, after every
+  move), 0 with a violation; 1,200 games of two apps, 253,804 moves, 0.
+- **Under the rulebook** (every pairing of the seventeen ready-made decks in
+  turn and random legal decks, both policies): the first sweep, before the
+  engine's fixes, named 5 games of 4,000 and 4 of 800 on two apps -- the
+  faults above; the sweep on the build before fix (9): 4,000 games, 831,439
+  moves, 1 game named (9); the build with all nine fixed: 4,000 games,
+  839,198 moves, 0. **The final build (the owner's fourth word in, on
+  TCGCSV's data of 29 Sept): 4,000 games -- all 289 pairings and 2,000 of
+  random decks -- 855,934 moves held to the rules' model (162,781 of them by
+  hand), 778,782 lists of legal moves compared, 56,667 turns ended, 6,181
+  cards met, 0 with a violation; a by-hand line opened 55,954 times and
+  declined 17,692, only where the rules let it be; 800 games on two apps,
+  170,024 moves, 0.** Card proofs 25 / 85 printings / 346 scenarios, 0
+  failed. The card's words: 3,377 steps of 2,482 scripted lines, none astray.
+  The selftest: 30 plants, each named (the thirtieth a by-hand line passed by
+  with Skip).
+
+### What I got wrong
+
+- My first log detector read the codes that are English words ("rest",
+  "power", "draw") as codes wherever they stood: 9 false hits on the fixed log.
+  It now reads them only where take 123 put a code.
+- My first check that the Life card "went to hand" asked that the printing was
+  not in the app's hand before: the app held another copy of it. A printing id
+  is not a copy; the check counts copies.
+- A comment saying "(SIM-UI §4)" stopped the build: landmine 214's check reads
+  comments as citations.
+- The file tools wrote an escape as its character again (landmine 219).
+- The look's first "select a card" step assumed a card playable on turn one;
+  seed 7's hand had none. The next step played a card and did not resolve its
+  [On Play], so End turn was rightly missing and four steps failed after it.
+- My first render floor for the table's controls (15) was above what a first
+  turn has (12); every one of the 12 passed the 44 px measure.
+- The first table named each seat by its full name, deck and all; the look
+  showed "Player 1 -- Black Monkey.D.Luffy -- built from ST08" across the
+  curtain.
+- The first card backs were the app's own wheel on the felt, and the header
+  and the mode tabs stayed above the table; the owner asked for the real backs
+  and the full screen.
+- The first effect panel covered the table's lower half on wide screens.
+- The first card backs in the icon's own purple on a pale face; the owner asked
+  for the game's colours.
+- My first "screen space" fit showed a hand whole at the largest size that fit
+  side by side: on the Fold's cover a row of 71 px cards with 122 px empty under
+  it. Holding the hand, each card over the last, uses the height.
+- The held hand's rows filled the column to the pixel, and a fraction broke the
+  tablet's first row early, a card half out of the column (landmine 229); the
+  look clicked a held card at its centre, under the next card (landmine 230).
+- The rulebook's first cut copied the engine where the engine let any effect
+  be declined at any step. The rules digest says an automatic effect resolves
+  in full (§8-1-3-1); the model follows the rules now, and so does the engine.
+- The card's words check counted only `false` as a miss, and one expression
+  gave `undefined` (landmine 228); its planted control named two of three.
+- My first El Thor scenario met its second step's condition by chance: the
+  condition reads the player's own Life, and I had set the opponent's.
+- 4,000 games of the ready-made decks found none of the nine faults; random
+  legal decks did (landmine 227).
+- The plan said a UI pass leaves the engine unchanged (SIM-UI §7 as take 123
+  wrote it). The owner's testing rule found nine faults in it; they are fixed
+  here.
+- My first look step for Releases turned Hunt on before saying its zip had
+  been asked: the first visit's zip sheet took the click, and the step timed
+  out (take 110's steps set `NAV.zipAsked` first; this one does now).
+- The first next-action line read "play 5 cards, give DON!! and attack with
+  your Leader and Brook, use your Leader's ability, or End turn" -- five cards
+  each playable read as five playable together, and on a 360 px phone it took
+  three lines and the cards gave way. It says "play a card" (the lit ones) and
+  leaves giving DON!! to the card's own moves; the band kept "+1" and "DON!!"
+  apart on the Fold's cover until a non-breaking space joined them.
+- My first "nothing left" check ran in the app's turn -- the app had attacked
+  on turn 4 and the human's turn never came; it builds its own state now. My
+  first render check measured the height left without the section's padding,
+  and leaned on an unseeded deal holding a playable card. A `//` comment
+  mid-call swallowed the rest of a smoke line.
+- The by-hand change moved chaos's random stream, and self-play's planted
+  [Trigger] leak went unnamed: the control had been met by chance (landmine
+  232).
+
+### Ruled out
+
+- **Privacy by the screen, again:** a painter that redacts `res` before
+  drawing it. The view carries the result as its seat may see it, so the board
+  is never handed the name.
+- **The second person in the engine:** the engine does not know which seat is
+  "You"; the board knows its own seat, and two phones will each say theirs.
+- **A fan of hand cards with less than 44 px of each its own:** the held hand
+  keeps every card a strip of 44 px or more (take 108's measure, render's) and
+  two fifths of it; past that the strip scrolls.
+- **Auditing only when a turn ends:** checking each move as it is made names the
+  move; a turn's end is a move, so the whole turn is held to the rules in their
+  order anyway.
+- **The engine's own `legal()` as the auditor's:** the rulebook lists the legal
+  moves itself and compares; an engine that checks itself shares its mistakes,
+  as the first model did where it copied the engine's declining.
+- **A new parser from the card's words check:** it found no step astray in 2,481
+  lines.
+- **Skip kept on automatic effects for convenience:** a drawback declined (trash
+  a card, rest a Leader) is a wrong game; "Choose none" is the rules' way out of
+  an "up to".
+- **A constant card size:** the Fold's cover takes 72 px cards and a 360 px
+  phone about 60; `simFit` solves it from the space.
+- **Rules off the table:** the owner's take-122 rule (a Rules button on every
+  Prep & Play screen) holds in the full screen; it is on the top bar.
+
+### Tests
+
+- `node tools/smoke.mjs` -- the take-124 section: the result per seat (the
+  view copying `act()`'s return as the control) and a [Banish]ed or [Trigger]
+  Life card; the board painted after the hit with 16 hidden names (take 123's
+  line as the control); the second person; the log in words (take 123's lines
+  as the control); faces on choices; the handler from the view (take 123's
+  lines as the control); every legal move reachable on the table in 8 states
+  (a planted move as the control); the paced opponent (no frame clock as the
+  control); the table's markup, pictures, DON!! tokens, the zoom, "yours to
+  apply" (the Leader as the control); the felt's palette (a drifted value as
+  the control); the full screen, the top bar, Leave; the card backs; the
+  placeholder picture (reprints as the control).
+- `node tools/render.mjs` -- the table in Chrome: the full screen, the fit,
+  every control 44 px.
+- `node tools/look.mjs 124` -- 19 steps at four sizes, 76 of 76.
+- `node tools/selfplay.mjs --selftest` -- twelve plants, each named; the
+  twelfth a view that copies the result's names to both seats. Then the
+  rulebook's fifteen (a sixteenth below), each named by it alone: three DON!! a turn, a draw on the
+  first player's first turn, a DON!! left rested by the refresh, a Character
+  attacking the turn it was played, a block with no [Blocker], a counter added
+  twice, a given DON!! counted on the other turn, a K.O. past its limits, a
+  draw of one more, an [On Play] set off by an attack, [DON!! x] unread,
+  [Double Attack] taking one Life, a "this turn" change kept past the turn, an
+  automatic effect declinable, a used [Trigger] kept in hand. The card's words
+  check's control (three steps misparsed on purpose, each named) and the deck
+  check's (a fifth copy, a card of no shared colour).
+- `node tools/selfplay.mjs [--games N] [--decks stock|random|all] [--only SEED]`
+  -- the rulebook on every move of every game; the words check before them.
+- `node tools/smoke.mjs` -- the owner's second message: the backs by colour
+  (hue from the shipped rules; take 124's first purple as the control), the
+  Leader's reveal, and a scenario for each engine fix with the engine as it was
+  planted as its control.
+- `node tools/render.mjs` -- the backs as Chrome draws them; the screen used at
+  four sizes (the foot within 24 px of the screen's, a first hand whole on the
+  screen, each card's own strip 44 px; take 124's first hand as the control).
+- `node tools/smoke.mjs` -- Releases after TCGCSV's rename (landmine 231): the
+  run of starter decks found by its code, renamed twice and still one row;
+  neither the code nor the words as the control.
+- `node tools/smoke.mjs` -- the owner's fourth word, each with its control
+  (take 124 as it opened): a turn's start in both seats' views and the log
+  said as it was (its first-turn "refresh, draw" as the control); the band's
+  turn start until the first move; the dock's next action, "Nothing left" at
+  the end; End turn asking with an attack left, naming it, and ending unasked
+  with nothing left; a by-hand [On Play] offering Resolve by hand alone, act
+  refusing a Skip, the app opening its own and saying no move was made (the
+  old declinable planted as the control); a "you may" one's Decline and a
+  [Trigger]'s Add to hand; "your move" and the outlined dock in the other's
+  turn; End turn standing alone against the app, and the next line never
+  counting the cards to play (the owner, on the look). Watched failing on the
+  previous build: 15.
+- `node tools/render.mjs` -- the band's turn start whole in its 66 px, the
+  next action in two lines on a phone (from 640 px, the hand column's room), the
+  table still to the screen's foot, End turn's question with 44 px buttons, at
+  four sizes; both watched failing on the previous build.
+- `node tools/look.mjs 124` -- the turn start and the next line on turns 1
+  and 3, End turn's question (shot, then its End turn), a by-hand line
+  resolved with no Skip.
+- `node tools/selfplay.mjs --selftest` -- the thirtieth plant, a by-hand line
+  the rules make happen passed by with Skip, named by the rulebook; the
+  [Trigger] leak's plant now declines every [Trigger] from Life (landmine
+  232).
+
+### DEFERRED
+
+- **The host's placeholder elsewhere:** Collect, a card's page and Hunt still
+  draw the host's "Image Coming Soon" for the 22 printings (landmine 226);
+  only the Sim leaves it out. `SIM.placeholderPic`'s rule, applied to the
+  app's other pictures, is a small take of its own.
+- **Drag to play and to attack** (optcgsim's gesture): taps only this take --
+  a tap selects, the dock lists the moves, a lit target is tapped. A drag
+  must never fire a move by accident; its own take, with the look's pointer
+  steps.
+- **Sounds:** none; a hit is a vibration.
+- **On the Fold itself:** the pace of the app's moves, the vibration, the long
+  press and the fit are measured in Chromium at the Fold's two CSS sizes,
+  not on the phone -- the owner's check.
+- **A game across the app's close:** the game lives in memory, as it did;
+  closing the app loses it. `SIM.replay(spec, moves)` makes keeping it a
+  small write, not made here.
+- **A phone on its side** (about 780 x 360): not measured; the 640 px layout
+  (the hand beside the table) is what applies.
+- **The effect panel's card as a picture:** the offer carries its card's name
+  and words, not its face, and the panel draws them in words.
+- **A scripted search's other cards:** the cards it may take are drawn as
+  choices; the ones looked at and not eligible (`me.looking`) are not drawn
+  in the panel (the by-hand tray draws them).
+- **Two phones** (D18) and **A23's tail** (SIM-UI §9): unchanged.
+- **The Fold's cover with 8 cards or more in hand:** all shown, at 75 px (the
+  44 px strip's limit), with about 116 px under the dock unused; a second row
+  would make them smaller still.
+- **What the rulebook does not model:** the by-hand tray's budget (landmine
+  212's check does) and which DON!! a player returns for DON!! -N (the app
+  returns rested ones first -- a player's choice the app makes).
+- **"In any order":** looked-at cards go to the bottom in the engine's order;
+  the player choosing it is A23's tail (ordering).
+- **"You may" partway through a line:** none among the scripted lines today; a
+  line parsed with one would be declinable only at its start.
+- ~~**A by-hand automatic line keeps its Skip**~~ -- closed by the owner's
+  fourth word: a by-hand line is opened and done by its words, declined only
+  where the rules let a line be. Inside the tray the app still cannot hold the
+  player to its words; Done ends it, and the log says whether a move was made.
+- **Passing a Block or Counter step for the player** when nothing can be done
+  in it (no Blocker, no Counter card): the table asks for the tap today. The
+  owner's call -- asked.
+- **Releases on the tablet** (the UI/UX session's): at 1280 x 800 a box wider
+  than the list's column stands behind the top of the list (the look's
+  `18-releases-...` picture). Not this take's; seen in passing.
 
 ## Take 123 — 2026-09-29 — the Sim ready for the UI pass: one view per seat, private things kept by the engine
 

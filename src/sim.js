@@ -35,7 +35,7 @@ const SIM = {
     const seed = (opts.seed != null ? opts.seed : Math.floor(Math.random() * 4294967296)) >>> 0; this.uid = 0;
     const spec = { v: 1, take: TAKE, rules: this.RULES, seed, first, bot: opts.bot != null ? opts.bot : null,
       decks: [deckA, deckB].map(d => ({ name: d.name || '', leader: d.leader, cards: d.cards.map(c => ({ id: c.id, n: c.n })) })) };
-    this.g = { spec, seed, rs: seed, turn: 0, first, active: first, phase: 'mulligan', players: [], battle: null, log: [], over: null, queue: [], after: null, hand: null, last: null, actions: [] };
+    this.g = { spec, seed, rs: seed, turn: 0, first, active: first, phase: 'mulligan', players: [], battle: null, log: [], over: null, queue: [], after: null, hand: null, last: null, start: null, actions: [] };
     if (opts.bot != null) this.g.bot = opts.bot;
     this.g.players = [deckA, deckB].map((d, i) => this.player(d.name || `Player ${i + 1}`, d.leader, this.shuffle(this.expand(d))));
     this.g.players.forEach((P, i) => this.draw(i, 5));
@@ -64,11 +64,14 @@ const SIM = {
     for (const c of P.chars) { back += c.don; c.don = 0; c.rested = false; }
     if (P.stage) P.stage.rested = false; P.don.active += P.don.rested + back; P.don.rested = 0;
     // §6-3-1: draw one; not the first player on turn one
-    if (!(g.turn === 1 && i === g.first)) this.draw(i, 1);
+    const first = g.turn === 1 && i === g.first, had = P.hand.length; if (!first) this.draw(i, 1);
     g.phase = 'main'; this.rules(); if (g.over !== null) return;
     // §6-4-1: two DON!!; one on the first player\u2019s first turn; what the DON!! deck has (§6-4-2, §6-4-3)
-    const add = Math.min(P.donDeck, (g.turn === 1 && i === g.first) ? 1 : 2); P.donDeck -= add; P.don.active += add;
-    g.battle = null; this.log(`${P.name} \u2014 refresh, draw, +${add} DON!!`); },
+    const add = Math.min(P.donDeck, first ? 1 : 2); P.donDeck -= add; P.don.active += add;
+    /* take 124 (the owner: "a user should never be able to skip drawing a card, don"): the turn's start is the engine's, never
+       a move -- and what it did is kept for the view, so the table can say it (take 124 logged "draw" where none is drawn) */
+    g.start = { turn: g.turn, i, drew: P.hand.length - had, don: add, first };
+    g.battle = null; this.log(`${P.name} \u2014 turn ${g.turn}: refresh, ${first ? 'no draw on the first turn (§6-3-1)' : 'draw 1'}, ${add ? `+${add} DON!!` : 'the DON!! deck is empty'}`); },
   /* §6-6: the End Phase -- 'during this turn' ends on BOTH sides (take 50; §6-6-1-3) -- then the other player's turn */
   endTurn() { const g = this.g; if (g.phase !== 'main') return false; this.log(`${this.P(g.active).name} ends the turn`);
     g.players.forEach(X => { X.modl = X.modl.filter(m => m.until !== 'endturn' && m.until !== 'endbattle'); });
@@ -183,7 +186,10 @@ const SIM = {
   battlePowers() { const b = this.g.battle, at = this.locate(); if (!b) return null; if (!at.ok) return { a: 0, d: 0, gone: true }; return { a: this.power(b.att, at.aref), d: this.power(b.def, at.dref) + b.counter }; },
   /* §7-1-4: attacker >= defender wins; a losing Leader takes damage, a losing Character is K.O.'d */
   resolve() { const g = this.g, b = g.battle; if (!b) return null; const A = this.P(b.att), O = this.P(b.def);
-    if (!this.track()) { this.log('the battle ends: a card in it has left the field (§7-1-3-1-3)'); this.endBattle(); return { win: false, a: 0, d: 0, life: [], ko: null, gone: true }; }
+    /* take 124: the result is kept in the game as well as returned -- a board draws it from view().last, which names a Life card
+       only to the seat that may see it; act()'s own return names it to whoever made the move (the audit's row 1) */
+    const kept = res => { g.last = Object.assign({ n: g.actions.length, turn: g.turn, att: b.att, def: b.def }, res); return res; };
+    if (!this.track()) { this.log('the battle ends: a card in it has left the field (§7-1-3-1-3)'); this.endBattle(); return kept({ win: false, a: 0, d: 0, life: [], ko: null, gone: true }); }
     const { a, d } = this.battlePowers();
     const att = this.card((b.aref === 'leader' ? A.leader : A.chars[b.aref]).id); const res = { win: a >= d, a, d, life: [], ko: null };
     if (res.win) {
@@ -197,7 +203,7 @@ const SIM = {
           res.life.push({ id, name: lc ? lc.name : '?', trigger: !banish && !!(lc && hasKw(lc, 'Trigger')), banished: banish }); } }
       else { const c = this.leave(O, b.dref, 'trash'); res.ko = this.card(c.id).name; res.koId = c.id; this.log(`${res.ko} is K.O.'d`); }
     }
-    this.log(`${att.name} ${a} vs ${d}: ${res.win ? 'hit' : 'held'}`); this.endBattle(); this.rules(); return res; },
+    this.log(`${att.name} ${a} vs ${d}: ${res.win ? 'hit' : 'held'}`); this.endBattle(); this.rules(); return kept(res); },
   /* §7-1-5: the battle ends; 'during this battle' ends with it (take 122: a [Counter] +power lasted the whole turn) */
   endBattle() { const g = this.g; g.players.forEach(X => { X.modl = X.modl.filter(m => m.until !== 'endbattle'); }); g.battle = null; if (g.phase === 'battle') g.phase = 'main'; },
   /* §9: rule processing after every act -- a Leader damaged with no Life (§9-2-1-1), an empty deck (§9-2-1-2; cards
@@ -292,37 +298,55 @@ const SIM = {
      is a list of new offers (a [Trigger] that activates an [On Play], the [On K.O.] of a Character an effect K.O.'d). */
   apply(i, offer, target, opts = {}) { const P = this.P(i), O = this.P(1 - i);
     if (offer.hand) return { ok: false, why: 'this line is resolved by hand' };
-    /* §8-1-3-1-3: the offer follows its card by instance; if the card has left the field, it cannot resolve */
-    if (offer.uid != null) { const k = this.refOf(P, offer.uid); if (k == null) return { ok: false, why: 'that card has left the field (§8-1-3-1-3)', gone: true }; offer.ref = k; }
+    /* §8-1-3-1-3: the offer follows its card by instance. A card that left before its effect began does not activate it; one
+       that leaves once it has begun does not stop it -- the rest resolves, and a step about the card itself finds no card
+       (take 124: the rest of an effect whose card had left was dropped; the rulebook found Sogeking's draw lost) */
+    if (offer.uid != null) { const k = this.refOf(P, offer.uid); if (k == null && offer.step === 0) return { ok: false, why: 'that card has left the field (§8-1-3-1-3)', gone: true }; offer.ref = k; }
     offer.targets = this.targetsFor(i, offer.steps[offer.step], offer.ref);
     const d = offer.steps[offer.step]; const need = offer.targets && offer.targets.length > 0;
     const opt = offer.step === 0 && offer.e.if.some(c => c.c === 'opt');
     if (opt && this.used(i, offer)) return { ok: false, why: 'once per turn, and used this turn (§10-2-13)' };
-    const next = () => { offer.step++; const done = offer.step >= offer.steps.length; if (!done) offer.targets = this.targetsFor(i, offer.steps[offer.step], offer.ref); return { ok: true, done, follow: [] }; };
-    /* a condition on the STEP is read now, not at the trigger (take 50): a false one skips the step */
-    if (d.if && !d.if.every(c => this.condOk(i, this.at(P, offer.ref), c))) { if (opt) this.markUsed(i, offer); this.log(`condition not met: ${d.if.map(c => c.c).join(',')}`); return next(); }
-    /* "up to": 0 may be chosen (§4-8, §8-4-4-1) */
-    if (target == null && (d.upto || !need) && this.TARGETED.includes(d.a) && !(d.a === 'power' && d.who === 'prev')) { if (opt) this.markUsed(i, offer); this.log(`${this.card(offer.cardId) ? this.card(offer.cardId).name : 'effect'}: ${d.a} \u2014 none chosen`); return next(); }
-    if (need && target == null) return { ok: false, why: 'choose a target' };
-    /* a target the step does not offer is refused, a step that takes none included (take 122: self-play's chaos found it ignored) */
+    /* take 124: a step skipped -- its condition false, or none chosen -- that is the last ends the effect as a step run does (the
+       rulebook found a [Trigger] with none chosen left in hand, §10-1-5-3) */
+    const next = () => { offer.step++; const done = offer.step >= offer.steps.length; if (!done) offer.targets = this.targetsFor(i, offer.steps[offer.step], offer.ref); else this.finish(i, offer); return { ok: true, done, follow: [] }; };
+    /* a target the step does not offer is refused, a step that takes none included (take 122: self-play's chaos found it ignored) --
+       before anything else, a false condition included (take 124: Radical Beam!!'s second step took a target it never offered) */
     if (target != null && !(offer.targets || []).some(t => t.ref === target)) return { ok: false, why: 'not a legal target for this effect' };
+    /* a condition on the STEP is read now, not at the trigger (take 50): a false one skips the step */
+    if (d.if && !d.if.every(c => this.condOk(i, this.at(P, offer.ref), c))) { if (opt) this.markUsed(i, offer); this.log(`${(this.card(offer.cardId) || {}).name || 'effect'}: ${this.stepText(d)} \u2014 skipped, only if ${d.if.map(c => this.condText(c)).join(', ')}`); return next(); }
+    /* "up to": 0 may be chosen (§4-8, §8-4-4-1) */
+    /* "that card" with none chosen before is no card: nothing to give (take 124: El Thor stood with a move the engine refused) */
+    if (target == null && (d.upto || !need) && this.TARGETED.includes(d.a) && !(d.a === 'power' && d.who === 'prev' && offer.prev != null)) { if (opt) this.markUsed(i, offer); this.log(`${this.card(offer.cardId) ? this.card(offer.cardId).name : 'effect'}: ${this.stepText(d)} \u2014 none chosen`); return next(); }
+    if (need && target == null) return { ok: false, why: 'choose a target' };
     const side = t => (t && t[0] === 'o') ? O : P, idx = t => +String(t).slice(1);
     const pl = id => { const p = this.card(id); return p && p.type === 'Character' && P.chars.length >= 5; };
     if ((d.a === 'playself' && pl(offer.cardId)) || (d.a === 'playfromhand' && pl(P.hand[idx(target)]))) {
       if (!(opts.trash >= 0 && opts.trash < P.chars.length)) return { ok: false, why: 'five Characters: choose one to trash first (§3-7-6-1)', need: 'trash' }; }
     if (opt) this.markUsed(i, offer);
     const run = this.DO[d.a]; if (!run) return { ok: false, why: 'unknown action' };
+    const tn = target != null ? this.targetName(i, d, target) : '';   // named before the step moves it (take 124)
     const r = run.call(this, { i, P, O, d, offer, target, opts, side, idx }) || {}; if (r.ok === false) return r;
     const follow = r.follow || [];
     const nm = offer.ref === 'leader' ? this.card(P.leader.id).name : (offer.ref != null && this.at(P, offer.ref) ? this.card(this.at(P, offer.ref).id).name : (this.card(offer.cardId) || {}).name || 'a card');
-    this.log(`${nm}: ${d.a}${target ? ' \u2192 ' + target : ''} (${offer.e.raw.replace(/^(\[[^\]]+\]\s*)+/, '').slice(0, 60)})`);
+    this.log(`${nm}: ${this.stepText(d)}${tn ? ' \u2192 ' + tn : ''}`);
     if (target != null) offer.prev = target;
     offer.step++; const done = offer.step >= offer.steps.length;
-    if (!done) offer.targets = this.targetsFor(i, offer.steps[offer.step], offer.ref);
-    if (done && P.looking.length) P.deck.push(...P.looking.splice(0));
-    /* a [Trigger] card activated instead of kept goes to the trash afterwards (§10-1-5-3) */
-    if (done && offer.fromLife) { const h = P.hand.indexOf(offer.cardId); if (h >= 0) { P.hand.splice(h, 1); P.trash.push(offer.cardId); } }
+    if (!done) offer.targets = this.targetsFor(i, offer.steps[offer.step], offer.ref); else this.finish(i, offer);
     return { ok: true, done, follow }; },
+  /* an effect that is over, however its last step went: what it looked at and did not move goes back as it was -- on top, in
+     order (§11-3-3; take 123's put it at the bottom) -- and a [Trigger] card used instead of kept goes to the trash (§10-1-5-3) */
+  finish(i, offer) { const P = this.P(i); if (P.looking.length) P.deck.unshift(...P.looking.splice(0));
+    if (offer.fromLife) { const h = P.hand.indexOf(offer.cardId); if (h >= 0) { P.hand.splice(h, 1); P.trash.push(offer.cardId); } } },
+  /* §8-1-3-1: an automatic effect activates by itself and resolves in full -- an "up to" lets 0 be chosen, and nothing else is
+     the player's to decline. A line may be declined only before it begins, and only one that says "you may", or that begins with
+     a cost the player may choose not to pay (§8-3), or a [Trigger] (§10-1-5), or one the player activates ([Activate: Main]),
+     which may be put back unpaid. Take 124: every line could be declined at any step; the rulebook found a search declined
+     after its look, its cards left outside the deck. And (the owner: "a user should never be able to skip ... things that
+     every player does") a by-hand line is held to the same -- its cost first read from its words, "X: Y" -- and else is
+     opened and done by its words: take 122 left every by-hand line the player's, so an [On Play] the rules make happen was
+     passed by in one tap */
+  declinable(o) { if (o.step > 0) return false; const e = o.e || {}, body = String(e.raw || '').replace(/^(\s*\[[^\]]+\]\s*)+/, '').replace(/\([^)]*\)/g, '');
+    return e.t === 'trigger' || e.t === 'main' || /^cost_/.test((e.do && e.do[0] && e.do[0].a) || '') || /^\s*you may\b/i.test(body) || (!!o.hand && /^[^.:]*:/.test(body) && !/^\s*choose one\b/i.test(body)); },
   /* What each parsed action DOES -- one entry per action effects.py emits (smoke checks the two lists are equal).
      c = { i, P (the player), O (the opponent), d (the step), offer, target, opts, side(t), idx(t) }; an entry may return
      { follow } (offers that follow on) or { ok: false, why }. */
@@ -330,9 +354,9 @@ const SIM = {
     draw(c) { this.draw(c.i, c.d.n); },
     selfpower(c) { const k = this.keyOf(c.P, c.offer.ref); if (k) this.mod(c.i, k, c.d.n, c.d.dur); },
     leaderpower(c) { this.mod(c.i, 'leader', c.d.n, c.d.dur); },
-    power(c) { const tg = c.d.who === 'prev' ? c.offer.prev : c.target; if (tg == null) return { ok: false, why: 'no card chosen before' };
+    power(c) { const tg = c.d.who === 'prev' ? c.offer.prev : c.target; if (tg == null) return;   // none chosen before: no card to give it to
       if (tg === 'L') return void this.mod(c.i, 'leader', c.d.n, c.d.dur);
-      const X = c.side(tg), ch = X.chars[c.idx(tg)]; if (!ch) return { ok: false, why: 'that card is gone' }; this.mod(X === c.P ? c.i : 1 - c.i, 'u' + ch.uid, c.d.n, c.d.dur); },
+      const X = c.side(tg), ch = X.chars[c.idx(tg)]; if (!ch) return; this.mod(X === c.P ? c.i : 1 - c.i, 'u' + ch.uid, c.d.n, c.d.dur); },   // a card gone: nothing to give
     ko(c) { const ch = this.leave(c.O, c.idx(c.target), 'trash'); return { follow: this.offers(1 - c.i, 'onko', null, ch.id).concat(this.onKO()) }; },   // §10-2-17: its [On K.O.] (take 122: never offered)
     rest(c) { c.O.chars[c.idx(c.target)].rested = true; },
     bounce(c) { this.leave(c.side(c.target), c.idx(c.target), 'hand'); },
@@ -443,7 +467,7 @@ const SIM = {
     const X = a.side === 1 ? O : P, xi = a.side === 1 ? 1 - i : i, nm = id => (this.card(id) || {}).name || '?';
     const spend = op => { if (op === 'power') { const L = H.left.power; L.splice(L.indexOf(a.v), 1); } else if (op === 'lookto') H.left['look' + a.to]--; else if (op !== 'look') H.left[op === 'activedon' ? 'active' : op]--; };   // a DON!! set active spends the line's 'set ... as active' (take 122: it spent a budget no line has, and never ran out)
     const say = this.HAND[a.op].call(this, { i, P, X, xi, a, H, nm });
-    spend(a.op); this.log(`by hand for ${nm(H.cardId)}: ${say}`); return { ok: true }; },
+    spend(a.op); H.n = (H.n || 0) + 1; this.log(`by hand for ${nm(H.cardId)}: ${say}`); return { ok: true }; },
   /* what each by-hand move does; returns the words the log says after "by hand for <card>:" */
   HAND: {
     draw(c) { this.draw(c.i, 1); return 'draws 1'; },
@@ -485,13 +509,13 @@ const SIM = {
     if (g.phase === 'mulligan') return [{ t: 'keep' }, { t: 'mull' }];
     if (g.queue.length) { const o = g.queue[0];
       if (g.hand) return this.handMoves(i).concat([{ t: 'handdone' }]);
-      if (o.hand) return [{ t: 'fxhand' }, { t: 'fxskip' }];
+      if (o.hand) return [{ t: 'fxhand' }].concat(this.declinable(o) ? [{ t: 'fxskip' }] : []);
       const d = o.steps[o.step], T = this.targetsOf(o), tg = T && T.length ? T.map(t => t.ref) : [];
       if (!this.canPay(i, o.uid != null ? this.refOf(P, o.uid) : o.ref, d)) return [{ t: 'fxskip' }];   // a cost is read when it is paid, not when it was queued (§8-3-1-3)
       const needRoom = ref => { const id = d.a === 'playself' ? o.cardId : (d.a === 'playfromhand' ? P.hand[+String(ref).slice(1)] : null); const p = id && this.card(id); return !!(p && p.type === 'Character' && P.chars.length >= 5); };
       tg.forEach(ref => { if (needRoom(ref)) P.chars.forEach((c, k) => out.push({ t: 'fx', target: ref, trash: k })); else out.push({ t: 'fx', target: ref }); });
       if ((!tg.length && d.a !== 'cost_trashhand') || (d.upto && this.TARGETED.includes(d.a))) { if (needRoom(null)) P.chars.forEach((c, k) => out.push({ t: 'fx', target: null, trash: k })); else out.push({ t: 'fx', target: null }); }
-      if (!(o.step > 0 && /^cost_/.test(d.a))) out.push({ t: 'fxskip' }); return out; }   // a cost begun is paid in full (§8-3); one that no longer can be ends the line (above)
+      if (this.declinable(o)) out.push({ t: 'fxskip' }); return out; }   // an automatic effect resolves in full (§8-1-3-1); a cost that no longer can be paid ends the line (above)
     if (g.phase === 'battle') { const b = g.battle;
       if (b.step === 'block') { this.blockers().forEach(x => out.push({ t: 'block', k: x.ref })); out.push({ t: 'noblock' }); return out; }
       this.counters().forEach(x => out.push({ t: 'counter', h: x.h })); this.counterEvents().forEach(x => out.push({ t: 'cevent', h: x.h })); out.push({ t: 'resolve' }); return out; }
@@ -507,7 +531,14 @@ const SIM = {
      hand (a count, §3-4), both Lives and both decks (counts: nobody looks at a Life card, §3-10, or a deck, §3-2), the cards being
      looked at (only to the player looking), an effect's choices and the moves (only to the player deciding). A
      redesigned board draws from this and cannot show what it was never given. docs/SIM-UI.md is the contract. */
-  face(id, extra) { const p = this.card(id) || {}, art = typeof artUrl === 'function' && p.img;
+  /* a picture shared by cards of different names is the host's placeholder ("Image Coming Soon"), not either card's -- MEASURED
+     29 Sept: one such picture, 22 printings, ST01-007 Nami and others the ready-made decks deal (take 124) -- so such a card is
+     drawn in its colours, as a card with no picture is */
+  placeholderPic(p) { if (!this._pics || this._pics.rows !== CAT.rows) { const by = new Map();
+      for (const r of CAT.rows) if (r.hash && !r.sealed) { const n = by.get(r.hash); if (!n) by.set(r.hash, new Set([r.name])); else n.add(r.name); }
+      this._pics = { rows: CAT.rows, bad: new Set([...by].filter(([h, n]) => n.size > 1).map(([h]) => h)) }; }
+    return !!(p && p.hash && this._pics.bad.has(p.hash)); },
+  face(id, extra) { const p = this.card(id) || {}, art = typeof artUrl === 'function' && p.img && !this.placeholderPic(p);
     return Object.assign({ id, num: p.num || null, name: p.name || '?', type: p.type || null, cost: p.cost != null ? this.cost(p) : null, printedPower: p.power != null ? this.num(p.power) : null,
       counter: this.num(p.counter) || null, kw: (p.kw || '').split('|').filter(Boolean), colours: typeof gameColours === 'function' ? gameColours(p) : [], text: p.text || '',
       art: art ? { thumb: artUrl(p), large: artUrl(p, 'large'), ground: artColours(p) } : null }, extra || {}); },
@@ -532,9 +563,23 @@ const SIM = {
         attacker: at.aref != null ? this.onField(b.att, at.aref) : null, target: at.dref != null ? this.onField(b.def, at.dref) : null, unblockable: at.aref != null && this.has(b.att, at.aref, 'Unblockable') } : null,
       offer: shut ? { seat: o.i, hidden: true, cardId: null, name: null, t: o.e.t, raw: null, hand: null, proof: null, wrong: null, does: null, step: null, steps: null, cost: null, choices: null, queued: g.queue.length }
         : o ? { seat: o.i, hidden: false, cardId: o.cardId, name: (this.card(o.cardId) || {}).name || 'Effect', t: o.e.t, raw: o.e.raw, hand: !!o.hand, proof: this.proofOf(o.cardId, o.e), wrong: o.e.wrong || null,
-        does: this.describe(o.e), step: o.step, steps: o.steps.length, cost: !!(d && /^cost_/.test(d.a)), choices: o.i === seat && !o.hand ? this.targetsOf(o) : null, queued: g.queue.length } : null,
+        does: this.describe(o.e), step: o.step, steps: o.steps.length, cost: !!(d && /^cost_/.test(d.a)), choices: o.i === seat && !o.hand ? this.choicesOf(o) : null, queued: g.queue.length } : null,
       tray: g.hand ? (g.hand.i === seat ? { mine: true, cardId: g.hand.cardId, raw: g.hand.raw, left: JSON.parse(JSON.stringify(g.hand.left)) } : { mine: false, cardId: g.hand.cardId, raw: g.hand.raw }) : null,
+      last: g.last ? this.lastFor(seat) : null,
+      /* this turn's start as the engine made it (take 124): whose, the cards drawn, the DON!! added -- counts, public to both */
+      start: g.start && g.start.turn === g.turn ? Object.assign({}, g.start) : null,
       legal: who === seat ? this.legal(seat) : [], log: g.log.slice() }; },
+  /* the last battle's result as a seat may see it (take 124): a Life card that went to hand is its owner's to know -- its name,
+     and whether it has a [Trigger] -- and the other seat's only when [Banish] trashed it face up (§10-1-3); to the other seat it
+     is a card that left the Life, no more (§3-10, §10-1-5). `n` numbers the result, so a board shows each one once. */
+  lastFor(seat) { const L = this.g.last, own = seat === L.def;
+    return { n: L.n, turn: L.turn, att: L.att, def: L.def, a: L.a, d: L.d, win: !!L.win, gone: !!L.gone, ko: L.ko || null,
+      life: (L.life || []).map(l => own || l.banished ? { id: l.id, name: l.name, banished: !!l.banished, trigger: own && !!l.trigger } : { id: null, name: null, banished: false, trigger: false }) }; },
+  /* an effect's choices as the deciding seat's board draws them (take 124): a hand card, or a card looked at from the top of the
+     deck, carries its face -- that seat already sees it; a card on the field is found on the table by its ref */
+  choicesOf(o) { const T = this.targetsOf(o); if (!T) return T; const P = this.P(o.i);
+    return T.map(t => { const r = String(t.ref), k = +r.slice(1), id = r[0] === 'h' ? P.hand[k] : r[0] === 'd' ? P.deck[k] : null;
+      return id != null ? Object.assign({}, t, { face: this.face(id) }) : t; }); },
   /* the ONE way a move is made. A move is a transaction: refused, the game is restored exactly as it was and the
      move is not recorded -- so a refusal changes nothing by construction, and two copies of a game fed the same
      moves stay the same game (take 122: self-play found a refused move that had already marked Once Per Turn) */
@@ -553,7 +598,12 @@ const SIM = {
   rec(i, a, r) { this.g.actions.push(Object.assign({ s: i }, a)); return r; },
   queue(list) { if (list && list.length) this.g.queue.push(...list); },
   /* 'end' waits for the End Phase's offers to be resolved or declined (§6-6-1-1), then the turn ends */
-  drain() { const g = this.g; if (g.over !== null || g.queue.length) return;
+  drain() { const g = this.g; if (g.over !== null) return;
+    /* §8-1-3-1-3: an effect whose card left the field before it began does not activate -- it leaves the queue by itself, no move
+       asked of anyone (take 124: it waited for one, offered its targets, and took any move as its end) */
+    while (g.queue.length && !g.hand) { const o = g.queue[0]; if (o.step !== 0 || o.uid == null || this.refOf(this.P(o.i), o.uid) != null) break;
+      g.queue.shift(); this.log(`${this.card(o.cardId).name}: its card has left the field; the effect does not activate (§8-1-3-1-3)`); }
+    if (g.queue.length) return;
     /* §7-1-1-4, §7-1-2-3: a battle whose attacker or target has left the field ends once nothing waits to resolve */
     if (g.battle && !this.locate().ok) { this.log('the battle ends: a card in it has left the field (§7-1-1-4)'); this.endBattle(); }
     if (g.after === 'end' && g.phase === 'main') { g.after = null; this.endTurn(); } },
@@ -575,22 +625,31 @@ const SIM = {
       case 'noblock': if (g.phase !== 'battle' || g.battle.step !== 'block' || g.queue.length) return refuse('not the Block Step (§7-1-2)'); this.noBlock(); return { ok: true };
       case 'counter': if (g.queue.length) return refuse('resolve the effect first (§8-6)'); return this.counter(a.h);
       case 'cevent': { if (g.queue.length) return refuse('resolve the effect first (§8-6)'); const r = this.playCounterEvent(a.h); if (r.ok) this.queue(this.offers(i, 'evcounter', null, r.id)); return r; }
-      case 'resolve': { if (g.phase !== 'battle' || g.battle.step !== 'counter' || g.queue.length) return refuse('not the Damage Step (§7-1-4)'); const res = this.resolve(); g.last = res;
+      case 'resolve': { if (g.phase !== 'battle' || g.battle.step !== 'counter' || g.queue.length) return refuse('not the Damage Step (§7-1-4)'); const res = this.resolve();
         if (g.over === null) { res.life.forEach(l => { if (l.trigger) this.queue(this.offers(i, 'trigger', null, l.id, true)); }); if (res.koId) { this.queue(this.offers(i, 'onko', null, res.koId)); this.queue(this.onKO()); } }   // §8-6-2: after the damage
         return { ok: true, res }; }
       case 'fx': { const o = g.queue[0]; if (!o || o.hand || g.hand) return refuse('no effect to apply');
         const r = this.apply(i, o, a.target == null ? null : a.target, { trash: a.trash });
         if (!r.ok) { if (r.gone) { g.queue.shift(); this.log(`${this.card(o.cardId).name}: its card has left the field; the effect does not resolve (§8-1-3-1-3)`); return { ok: true, gone: true }; } return r; }
-        if (r.done) { g.queue.shift(); if (r.follow && r.follow.length) g.queue.unshift(...r.follow); } return r; }
+        /* what its steps set off waits its turn: first when it is over, right after it while it still resolves (§8-6; take 124 --
+           an [On K.O.] set off by a step that was not the last was dropped) */
+        if (r.done) { g.queue.shift(); if (r.follow && r.follow.length) g.queue.unshift(...r.follow); } else if (r.follow && r.follow.length) g.queue.splice(1, 0, ...r.follow); return r; }
       case 'fxskip': { const o0 = g.queue[0], d0 = o0 && o0.steps && o0.steps[o0.step];
-        if (o0 && !o0.hand && o0.step > 0 && d0 && /^cost_/.test(d0.a) && this.canPay(i, o0.uid != null ? this.refOf(P, o0.uid) : o0.ref, d0)) return refuse('a cost once begun is paid in full, in order (§8-3)');
-        const o = g.queue.shift(); if (!o) return refuse('no effect'); if (o.fromLife && !o.step) this.log(`${this.P(o.i).name} adds the Life card to hand without revealing it (§10-1-5)`); else if (o.step > 0 || o.hand) this.log(`${this.card(o.cardId).name}: the rest is declined`); return { ok: true }; }
+        if (o0 && o0.hand && !this.declinable(o0)) return refuse('it happens in full: open it and do what its words say, then Done (\u00a78-1-3-1)');
+        if (o0 && !this.declinable(o0) && d0 && this.canPay(i, o0.uid != null ? this.refOf(P, o0.uid) : o0.ref, d0)) return refuse(o0.step > 0 && /^cost_/.test(d0.a) ? 'a cost once begun is paid in full, in order (§8-3)' : 'it resolves in full; an \u201cup to\u201d lets you choose none (§8-1-3-1)');
+        const o = g.queue.shift(); if (!o) return refuse('no effect');
+        if (o.fromLife && !o.step) this.log(`${this.P(o.i).name} adds the Life card to hand without revealing it (§10-1-5)`);
+        else if (o.step > 0) { this.finish(i, o); this.log(`${this.card(o.cardId).name}: its cost cannot be paid now \u2014 the rest does not resolve (§8-3-1-3)`); }
+        else if (o.hand) this.log(`${this.card(o.cardId).name}: the rest is declined`);
+        return { ok: true }; }
       case 'fxhand': { const o = g.queue[0]; if (!o || !o.hand || g.hand) return refuse('no by-hand effect');
+        if (o.uid != null) o.ref = this.refOf(P, o.uid);   // its card by instance, as apply() finds it (take 124: a Character gone before it shifted the place, and Once Per Turn read another card)
         if (o.e.if.some(c => c.c === 'opt')) { if (this.used(i, o)) return refuse('once per turn, and used this turn (§10-2-13)'); this.markUsed(i, o); }
-        g.hand = { i, cardId: o.cardId, raw: o.e.raw, left: this.handOps(o.e.raw), fromLife: o.fromLife };
+        g.hand = { i, cardId: o.cardId, raw: o.e.raw, left: this.handOps(o.e.raw), fromLife: o.fromLife, n: 0 };
         this.log(`by hand: ${this.card(o.cardId).name} \u2014 ${o.e.raw.slice(0, 90)}`); return { ok: true }; }
       case 'hand': if (!g.hand) return refuse('no by-hand effect open'); return this.handOp(i, a);
       case 'handdone': { const H = g.hand; if (!H) return refuse('no by-hand effect open'); g.hand = null; g.queue.shift();
+        this.log(`${this.card(H.cardId).name}: done by hand${H.n ? '' : ' \u2014 no move made'}`);   // take 124: the other seat sees it was finished, and how
         if (P.looking.length) P.deck.unshift(...P.looking.splice(0));      // §11-3-3: what was looked at and not moved goes back as it was
         if (H.fromLife) { const h = P.hand.indexOf(H.cardId); if (h >= 0) { P.hand.splice(h, 1); P.trash.push(H.cardId); } }   // §10-1-5-3
         return { ok: true }; }
@@ -602,13 +661,15 @@ const SIM = {
   /* a game is its spec and its actions: replaying them rebuilds it exactly, or names the move that no longer holds */
   replay(spec, actions) { this.new(spec.decks[0], spec.decks[1], spec.first, { seed: spec.seed, bot: spec.bot });
     for (let k = 0; k < actions.length; k++) { const { s, ...a } = actions[k]; const r = this.act(s, a); if (!r.ok) return { ok: false, at: k, why: r.why }; } return { ok: true, g: this.g }; },
-  /* what the engine will do with a line, in words (take 122): the proof sheets, the Report, and the board's offer read it */
-  describe(e) { if (!e) return ''; if (e.hand) return 'by hand: ' + e.raw;
-    const T = { onplay: 'On Play', attack: 'When Attacking', main: 'Activate: Main', onko: 'On K.O.', trigger: 'Trigger', onblock: 'On Block', endturn: 'End of Your Turn', evmain: 'Main', evcounter: 'Counter', static: 'while', whenko: 'When a Character is K.O.\u2019d' };
-    const C = c => ({ donx: `${c.n} DON!! given`, opt: 'once per turn', yourturn: 'on your turn', oppturn: "on the opponent\u2019s turn", opplife: `the opponent at ${c.max} Life or less`, donfield: `${c.min}+ DON!! on your field`, leadertype: `your Leader is {${c.t}}`, leadername: `your Leader is ${c.name}`, life: `you at ${c.max} Life or less`, trash: `${c.min}+ cards in your trash`, donle: 'your DON!! at most the opponent\u2019s' }[c.c] || c.c);
+  /* what the engine will do with a line, in words (take 122): the proof sheets, the Report, and the board's offer read it.
+     Take 124: a timing, a condition and a step are said by their own methods, so the log says a step in the same words
+     (it said the engine's codes -- "givedon -> L" -- HANDOFF take 124, the audit's row 3); describe()'s words are unchanged. */
+  TIMING: { onplay: 'On Play', attack: 'When Attacking', main: 'Activate: Main', onko: 'On K.O.', trigger: 'Trigger', onblock: 'On Block', endturn: 'End of Your Turn', evmain: 'Main', evcounter: 'Counter', static: 'while', whenko: 'When a Character is K.O.\u2019d' },
+  condText(c) { return ({ donx: `${c.n} DON!! given`, opt: 'once per turn', yourturn: 'on your turn', oppturn: "on the opponent\u2019s turn", opplife: `the opponent at ${c.max} Life or less`, donfield: `${c.min}+ DON!! on your field`, leadertype: `your Leader is {${c.t}}`, leadername: `your Leader is ${c.name}`, life: `you at ${c.max} Life or less`, trash: `${c.min}+ cards in your trash`, donle: 'your DON!! at most the opponent\u2019s' }[c.c] || c.c); },
+  stepText(d) { const T = this.TIMING;
     const up = d => d.upto ? 'up to ' : ''; const dur = d => ({ turn: ' this turn', nextturn: ' until your next turn', permanent: '', static: '', battle: ' this battle' }[d.dur] || '');
     const filt = d => [d.rested ? 'rested' : '', d.cost != null ? `cost ${d.cost} or less` : '', d.power != null ? `${d.power} power or less` : '', d.bpower != null ? `${d.bpower} base power or less` : ''].filter(Boolean).join(', ');
-    const S = d => { switch (d.a) {
+    switch (d.a) {
       case 'draw': return `draw ${d.n}`; case 'trashhand': return `trash ${up(d)}${d.n} from your hand`; case 'playself': return 'play this card';
       case 'activate': return `use this card\u2019s [${T[d.t] || d.t}]`; case 'playfromhand': return `play ${up(d)}1 ${d.type ? '{' + d.type + '} ' : ''}Character (${[d.cost != null ? 'cost ' + d.cost + ' or less' : '', d.power != null ? d.power + ' power or less' : ''].filter(Boolean).join(', ')}) from your hand, free`;
       case 'ko': return `K.O. ${up(d)}1 opponent\u2019s Character (${filt(d)})`; case 'rest': return `rest ${up(d)}1 opponent\u2019s Character${filt(d) ? ' (' + filt(d) + ')' : ''}`;
@@ -622,9 +683,18 @@ const SIM = {
       case 'givedon': return `give ${up(d)}${d.n} rested DON!! to ${d.who === 'chars' ? '1 of your Characters' : 'your Leader' + (d.who === 'leader' ? '' : ' or 1 Character')}`;
       case 'powerall': return `+${d.n} power to every one of your ${d.type ? '{' + d.type + '}' : '"' + d.typeq + '"'} Characters${dur(d)}`; case 'cost_restdon': return `cost: rest ${d.n} active DON!!`; case 'activedon': return `set ${up(d)}${d.n} DON!! active`;
       case 'cost_trashhand': return `cost: trash ${d.n} from your hand`; case 'cost_returndon': return `cost: return ${d.n} DON!! to the DON!! deck`; case 'cost_restself': return 'cost: rest this card';
-      default: return d.a; } };
-    const st = (e.do || []).map(d => S(d) + (d.if ? ` (if ${d.if.map(C).join(', ')})` : ''));
-    return `[${T[e.t] || e.t}]${e.if.length ? ' ' + e.if.map(C).join(', ') + ':' : ''} ${st.join('; then ')}`; }
+      default: return d.a; } },
+  describe(e) { if (!e) return ''; if (e.hand) return 'by hand: ' + e.raw;
+    const C = c => this.condText(c), st = (e.do || []).map(d => this.stepText(d) + (d.if ? ` (if ${d.if.map(C).join(', ')})` : ''));
+    return `[${this.TIMING[e.t] || e.t}]${e.if.length ? ' ' + e.if.map(C).join(', ') + ':' : ''} ${st.join('; then ')}`; },
+  /* a target as the log names it (take 124): a card on the field by its name; a hand card only when the step makes it public (played
+     or trashed); a card from the deck never (a search need not reveal it) -- the log is in both views (landmine 224) */
+  targetName(i, d, t) { const P = this.P(i), O = this.P(1 - i), r = String(t), k = +r.slice(1), nm = id => (this.card(id) || {}).name || 'a card';
+    if (r === 'L') return nm(P.leader.id);
+    if (r[0] === 'm') return P.chars[k] ? nm(P.chars[k].id) : 'a Character';
+    if (r[0] === 'o') return O.chars[k] ? nm(O.chars[k].id) : 'a Character';
+    if (r[0] === 'h') return ['playfromhand', 'trashhand', 'cost_trashhand'].includes(d.a) && P.hand[k] != null ? nm(P.hand[k]) : 'a card from hand';
+    return 'a card'; }
 };
 
 /* ---- sim: the opponent (A23 step 3, take 55; on the one entry point since take 122) -----
@@ -641,7 +711,7 @@ const BOT = {
   choose(i, L) { const g = SIM.g; if (g.phase === 'mulligan') return { t: 'keep' };
     if (g.queue.length) return this.effect(i, L); if (g.phase === 'battle') return this.defend(i, L); return this.main(i, L); },
   /* an offered effect: its first sensible target; a cost that would empty the hand declined */
-  effect(i, L) { const g = SIM.g, P = SIM.P(i), o = g.queue[0]; if (g.hand) return { t: 'handdone' }; if (o.hand) return { t: 'fxskip' };
+  effect(i, L) { const g = SIM.g, P = SIM.P(i), o = g.queue[0]; if (g.hand) return { t: 'handdone' }; if (o.hand) return L.find(x => x.t === 'fxskip') || { t: 'fxhand' };
     const d = o.steps[o.step], skip = L.find(x => x.t === 'fxskip');
     if (skip && o.step === 0 && o.steps.some(st => st.a === 'cost_trashhand') && P.hand.length < 3) return skip;   // decided before a cost is begun (§8-3)
     const hurts = ['ko', 'rest', 'bounce', 'bottom', 'costmod'].includes(d.a) || (d.a === 'power' && d.n < 0);

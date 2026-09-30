@@ -1,6 +1,6 @@
 # RULES — the One Piece Card Game, as the deck builder and the Sim must understand it
 
-*Current as of take 123.*
+*Current as of take 124.*
 
 Source: **Bandai, ONE PIECE CARD GAME Comprehensive Rules, Version 1.2.1,
 last updated 28 August 2026** — read in full at take 122 for the Sim's audit

@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 123.*
+*Current as of take 124.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -237,6 +237,14 @@ Start here. Do not read top to bottom.
 | A proof binds a printing no deck deals | 222 |
 | A privacy check names a card the other seat may see | 223 |
 | The other seat learns a card that moved unrevealed | 224 |
+| A board names a card its seat may not see, and the view is clean | 225 |
+| A card's picture reads "Image Coming Soon" | 226 |
+| A self-play sweep of thousands of games is clean and the engine still breaks the rules | 227 |
+| A check's verdict is `undefined`, and the thing it checks passes | 228 |
+| A row of cards sized to fit breaks a card early onto the next row | 229 |
+| A browser test taps a card and another card answers | 230 |
+| Rows the app folded come apart with no code change; a check finds "0 decks" | 231 |
+| A planted fault goes unnamed after a change that did not touch its check | 232 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -484,6 +492,11 @@ emblem only: the icon carries Bandai's printed card-back emblem at the
 owner's word (D7), picked by the owner, uploaded and live on Play. The name
 and the listing text are unchanged. The own-rose swap in
 `design/d7-icons/SHIP.md` is the fallback.)*
+*(Take 124, the owner's word: the Sim's card backs are the icon's card back --
+"as close to real card backs as possible, similar to the unofficial OPTCG SIM and
+even our Google play ICON". The emblem is lifted from `assets/icon.svg` into the
+sprite (`g-cardart`) and drawn on every card back of the table: the icon's
+exception, extended, with its risk (31). The own-rose swap covers it too.)*
 
 **31. Play IP complaints suspend first and appeal after.** *(Take 13: the
 "do not monetise" guidance below is overtaken by A17. The posture with rewarded
@@ -2827,7 +2840,8 @@ already -- K.O. or trash one first" read as caution and was wrong for 76 takes:
 §3-7-6-1 lets a player with five trash one (a rule process, so no [On K.O.])
 and play the new one, and §3-8-5-1 does the same for a Stage. Every refusal
 the engine prints cites a section; the citation is checked against the rules'
-own text (the digest behind the Rules button), not against a memory of it.
+own text (the digest behind the Rules button), not against a memory of it. *Take 124:* it read a comment's "(SIM-UI §4)" as a citation of
+section 4 and stopped the build; the Sim's comments name the contract's parts in words.
 
 **215. A read that writes makes two copies of one game disagree.** `legal()`
 and `blockers()` found the battle's cards through `track()`, which stored
@@ -2871,7 +2885,8 @@ escape keeps the new text's escapes as written. After any edit through those
 tools, run a pass that puts the escapes back in the lines the branch added --
 inside `<script>` only: the pass also turned the middle dot in the Sim's
 subtitle markup into its six-character escape, shown as text, and smoke's
-source check caught it.
+source check caught it. *Take 124:* bitten again on the first engine edit (an em dash in a
+log line); the pass ran after every edit of the take, over the branch's added lines.
 
 **220. A choice computed when an effect was queued is stale when it resolves.**
 An offer carried the targets and the payable cost it had when it was queued;
@@ -2923,6 +2938,86 @@ on its way between two hidden places. Read every log sentence and every
 field of the view against where its card came from and where it went; a
 card that moves unrevealed is named nowhere. Checked by smoke (the log
 sentences included in its leak check) and by self-play after every move.
+
+**225. What a move returns is the mover's, not the seat's on screen.** Take
+123 kept everything private out of `SIM.view(seat)` -- and its board painted a
+battle's result from what `SIM.act` returned (`res`), which names each Life card
+that went to hand. Against the app the human taps Resolve for the app's seat,
+so the human's screen said "Life card to hand: Jewelry Bonney" -- a card in the
+app's hand, face down (§3-10, §10-1-5; take 124's audit, seed 3, PROVEN in the
+shipped script). No check saw it: they walked the view, and `res` never
+entered it; it rode UI state (`SIMUI.result`) into a painter. The result is now
+in the view per seat (`view.last`), a painter may not read a stored result,
+and smoke paints the board after that hit with the app's hand, Life and deck
+planted and finds none of them; self-play audits `last` after every move. Any
+value that crosses from the engine to the screen outside the view is the same
+hole.
+
+**226. A picture shared by cards of different names is the host's
+placeholder.** TCGplayer's CDN answers some products with one "Image Coming
+Soon" picture, served 200 like any other; the pipeline hashes it like a card.
+MEASURED 29 Sept: one hash on 22 printings of 22 names, among them ST01-005
+Jinbe, ST01-007 Nami, ST01-014 Guard Point and ST01-015 Gum-Gum Jet Pistol --
+printings the ready-made decks deal. Reprints of one card share art under one
+name, so the rule reads names: a hash shared by two or more names is no card's
+picture. The Sim draws such a card in its colours (`SIM.placeholderPic`, take
+124); the rest of the app still shows the placeholder (AGENDA A23, take 124).
+
+**227. The ready-made decks are 234 cards; the game is thousands.** Take 124's
+first 4,000 self-play games dealt only the seventeen ready-made decks and found
+nothing. The same count of games with random legal decks (the owner: "as many
+random/arbitrary decks (that are still legal)") met 6,196 cards and found six
+faults in the engine the ready-made decks never dealt a card for: a used
+[Trigger] left in hand when no target was chosen (§10-1-5-3), a search declined
+halfway with its looked-at cards left outside the deck (§11-3-3), an automatic
+effect the player could decline (§8-1-3-1), an effect whose card left the field
+before it began waiting for a move and taking any (§8-1-3-1-3), an effect that
+had begun dropped when its card left, and "that card" with none chosen before
+standing the game still. A sweep's coverage is the cards it deals, not its
+number of games. Self-play deals every pairing of the ready-made decks and
+random legal decks in turn, and the rulebook (tools/lib/rulebook.mjs) holds
+every move to the rules' own model of the game.
+
+**228. A check that returns `undefined` passes.** The card's words check read
+`pw(text, n) || (d.sign_inferred && ...)` for a power step; with no inferred
+sign the whole expression was `undefined`, and the loop counted a miss only
+`=== false`. A power step misparsed from "+2000" as "-2000" went unnamed; its
+planted control named two of three and gave it away. A verdict is a boolean,
+or anything falsy is the failure it stands for.
+
+**229. A row sized to fit exactly breaks a fraction early.** The held hand
+(take 124) computed each row's cards and their step to fill the column --
+412.1 px of cards in 412 px -- and flexbox moved the fourth card to the next
+row, its negative margin pushing it half out of the column (the tablet, 8
+cards). Round the step down and leave the row a pixel or two to spare; the
+check is that every hand card is whole on the screen (render, four sizes).
+
+**230. A card under another is tapped on its own strip.** The look clicked a
+held hand card at its centre -- under the next card, which took the click
+(Playwright named the intercepting element). A person taps the strip of the
+card they can see; render measures that strip as the card's 44 px square, and
+the look clicks inside it.
+
+**231. A set's name is TCGCSV's text, not the set.** On 29 Sept, between take
+124's own ingest and its PR's first check, TCGCSV renamed all 44 starter-deck
+groups -- "Starter Deck 31: RED Monkey.D.Luffy" to "ST-31: Starter Deck 31 RED
+Monkey.D.Luffy", "Super Pre-Release Starter Deck 1: Straw Hat Crew" to "ST-01:
+Starter Deck 1 Straw Hat Crew (Super Pre-Release Edition)" -- with every id,
+code and date unchanged. Releases knew a starter deck by `/^Starter Deck/` on
+its name (take 97), so the six ST31-ST36 rows the owner had asked to see as one
+came back, on a branch that never touched Releases, and smoke's own check,
+reading the name the same way, found "0 decks". A set is known by its code
+(the catalogue takes it from the cards' printed numbers), with the words as
+the fallback; smoke renames the run's sets and the fold must hold.
+
+**232. A planted fault the sample meets by chance is a control by luck.**
+Self-play's control for a log that names a declined [Trigger] needed a game to
+decline one, and chaos declines at weight 1 against 3 or 4 for using it. When
+take 124 made a by-hand line be opened rather than skipped, chaos's random
+stream moved: the plant's forty games met eleven [Trigger]s, declined none, and
+the planted leak went unnamed -- the auditor looked broken and was not. Its
+games now decline every [Trigger] from Life. A plant forces the event it
+plants on; a sample that only may meet it is not a control.
 
 ## §2 — Inherited from APEX ORV
 
