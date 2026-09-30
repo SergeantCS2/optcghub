@@ -238,7 +238,8 @@ them, in `ADMOB_LIVE_*`, with the consent flow first (§9 items 3 and 4).*
 ## 9. Ads — AdMob, in parallel, none of it blocks the clock
 
 The AdMob account exists (take 33): publisher `pub-6243777967151950`. *Rewritten
-at take 121, when AdMob could not verify the app.*
+at take 121, when AdMob could not verify the app.* **Approved, 30 Sept: the app is "Ready", ad
+serving limits lifted.** Left: items 2-4 below, then the consent take.
 
 **Two AdMob apps (the owner's screenshot, 28 Sept):** "OP TCG Hub: Collect,
 Hunt, SIM", `ca-app-pub-6243777967151950~9519036366`, linked to Google Play

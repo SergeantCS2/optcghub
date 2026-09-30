@@ -28,16 +28,15 @@ what it handed on is A43.)
    uninstall → sideload → import. *Take 121:* its AAB is the first that
    names the store-linked AdMob app -- **uploaded and live, 28 Sept** (the
    owner), the second upload the record holds after take 101's.
-2. **Ads, in order (take 121; RUNBOOK-play §9):** app-ads.txt -- the
-   listing's Website is back on `sergeantcs2.github.io/optcghub/` (the
-   owner's pick, PROVEN live 28 Sept), whose root serves the line -- so
-   AdMob's *Verify app* is what is left (landmine 209); your phones as AdMob
-   test devices; **D11**, three rewarded units (scan credits, deck save,
-   MAX unlock) under "OP TCG Hub: Collect, Hunt, SIM" `~9519036366`, never
-   "testing"; the European-regulations message published in AdMob's
-   *Privacy & messaging*; the payments profile -- **needed to serve**:
-   Google verifies the account from the payment details (corrected after
-   take 121's merge; RUNBOOK-play §9 item 5).
+2. **Ads, in order (RUNBOOK-play §9).** *Done:* app-ads.txt verified and
+   the AdMob app **approved, "Ready", limits lifted (30 Sept)**; payment
+   details in; take 121 live, its MAX and deck-save ads PROVEN on the Fold.
+   *Left, the owner's:* **D11**, three rewarded units (Scan credits, Deck
+   save, MAX unlock) under "OP TCG Hub: Collect, Hunt, SIM" `~9519036366`,
+   never "testing"; the Fold (and any phone that taps ads) as an AdMob test
+   device first; the European-regulations message published in *Privacy &
+   messaging* (privacy URL `sergeantcs2.github.io/optcghub/privacy.html`);
+   then the three IDs to the session.
 3. **Take 113's Fold check:** the launcher on both screens, the splash, a
    reminder's ドン!! glyph (landmine 170).
 4. **Answers still open:** A43's large items -- ad consent (answered take
@@ -68,13 +67,16 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0. **The consent flow, then D11's units (take 121's follow-on):** UMP before
-   `initialize` and before any load, setting `PLATFORM._canRequestAds` from
-   its `canRequestAds` (take 121's builds never set it, so they never load a
-   real unit); a *Privacy choices* row under More; a line in the privacy
-   page; the gate's `ADMOB_LIVE_FLOOR` raised to that take; the owner's
-   three units in `ADMOB_LIVE_*` with `ADMOB_LIVE_FROM` that take. Waits on
-   the owner's message and units.
+0. **The consent take (127 or later; one take, the owner's word): the
+   consent flow and D11's units together.** UMP before `initialize` and
+   before any load, setting `PLATFORM._canRequestAds` from its
+   `canRequestAds` (no build from 121 to 126 sets it, so none loads a real
+   unit); a *Privacy choices* row under More when UMP requires it; a line in
+   the privacy page; **a free save when no ad loads** (Google's no-fill, or
+   no consent to request ads), counted in Diagnostics, offline keeping the
+   tray, MAX staying "try again" (the owner, 30 Sept); the gate's
+   `ADMOB_LIVE_FLOOR` raised to that take; the three units in `ADMOB_LIVE_*`
+   with `ADMOB_LIVE_FROM` that take. Waits on the owner's units and message.
 1. **A43's small items**, when wanted: the gate checks (the catalogue's
    shape; "Say take N" = BUILD + 1), the Restore file picker, the waiting
    batch in the backup, the cost basis in the currency on screen, CSV
@@ -1485,6 +1487,9 @@ UI-AUDIT's open boxes; they are listed here once so nothing is lost.
    no new plugin; the owner publishes AdMob's European-regulations message;
    the take after 121 builds it, and the gate refuses `ads.live` until it
    does (A17's take-121 section).*
+   *30 Sept, the owner: the consent flow ships with the units in one take
+   (127 or later), and a user who can get no ad saves free -- the no-fill
+   fallback this item asked for.*
 2. **D11, the two real rewarded unit IDs** (the owner's). Register the
    owner's phones as AdMob test devices first; the IDs ride the Pages
    manifest, so the take that carries them switches every install.

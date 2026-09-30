@@ -1862,6 +1862,27 @@ Diagnostics line, so the take has no look steps (101-103 and 113 had none).
   listing's website, the file there). The listing changed between 19:10Z
   and 20:43Z; the next *Check for updates* is after about 20:45Z, 29 Sept,
   and Google allows up to a week after a website change.
+- **30 Sept, the owner's screenshots: the AdMob app is approved** -- "Your
+  first app is approved … any ad serving limits have been lifted", status
+  **Ready**; app-ads.txt verification and the account's verification are
+  done with it. The only item left on AdMob's checklist is the first ad unit.
+- **PROVEN on the Fold, take 121 from Play (the owner):** the MAX ad opened
+  MAX -- landmine 211's fix, the one only a phone could prove -- and the
+  deck-save ad granted the save.
+- **The owner's answers for the consent take:** one take carries the consent
+  flow and the three units; when no ad can be loaded (Google's no-fill, or
+  consent that leaves `canRequestAds` false) the save goes through free, a
+  counter in Diagnostics records it, offline keeps the pending tray until
+  online (PROTOCOL §8) and MAX stays "try again" (not a save). The owner's
+  steps first: the three units, the Fold as a test device, the
+  European-regulations message published (RUNBOOK-play §9).
+- **Takes 122-126 landed from other sessions while this waited** (the Sim's
+  engine and table, the scanner, backups, pictures), so the consent take is
+  127 or later. PROVEN at `main` 54b8672: none of them sets
+  `PLATFORM._canRequestAds` (declared, never assigned), so no build from 122
+  to 126 can load a real unit whatever `ads.live.from` says -- take 121's
+  second lock doing its job. `ADMOB_LIVE_FLOOR` stays 122 until the consent
+  take raises it to its own number.
 
 ## Take 120 — 2026-09-25 — the light theme, and the UI series wrapped up
 

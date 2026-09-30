@@ -2825,7 +2825,8 @@ reward event read `'deck'` and granted a deck save, and MAX never opened (take
 "deck 1 (was 0)", MAX shut). What was asked for is set before `show()`, nothing
 waits on `show()`, and `onRewardedVideoAdFailedToShow` clears it. Read the
 native source, not only `definitions.d.ts`, when an order matters (landmine 73
-read the types).
+read the types). *PROVEN on the Fold, take 121 from Play (the owner, 30 Sept):
+the MAX ad opens MAX.*
 
 **212. A by-hand escape with no bounds is a second rules engine that enforces
 nothing.** The Sim's row under the hand (*Draw*, *+1 DON!!*, *Life → hand*,

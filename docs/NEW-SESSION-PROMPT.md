@@ -197,18 +197,20 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   ads.** The build names `~9519036366` (the AdMob app linked to Play;
   "testing", `~1538944343`, shipped from take 41 to 120, landmine 210).
   Real units ride `ads.live` only, loaded by a build at or after its
-  `from`; `ads.scan` and `ads.deck` stay Google's test unit for good, and
-  the gate's `check_ads` refuses anything else and refuses `ads.live`
-  without a consent flow (the app is worldwide). The MAX unlock has its
-  own unit and no longer grants a deck save (landmine 211). The owner's:
-  AdMob's *Verify app* (the listing's website is back on github.io, whose
-  root serves app-ads.txt; landmine 209), test devices, three units, the consent message in
-  AdMob. A build loads live units only once `PLATFORM._canRequestAds` is
-  true, which nothing in take 121 sets. **Next, yours:** the consent flow
-  (UMP before `initialize`, setting `_canRequestAds`; a Privacy choices row
-  under More; the gate's `ADMOB_LIVE_FLOOR` raised to that take), then the
-  units with `ADMOB_LIVE_FROM` that take -- RUNBOOK-play §9, AGENDA A17's
-  take-121 section.
+  `from` and only once `PLATFORM._canRequestAds` is true -- which no build
+  from 121 to 126 sets; `ads.scan` and `ads.deck` stay Google's test unit
+  for good; the gate's `check_ads` refuses anything else and refuses
+  `ads.live` without a consent flow (the app is worldwide). The MAX unlock
+  has its own unit, PROVEN on the Fold (landmine 211). **The AdMob app is
+  approved, "Ready" (30 Sept).** The owner's: three units, the Fold as a
+  test device, the European-regulations message, then the IDs. **Next,
+  yours -- the consent take (127 or later), one take with the units, the
+  owner's word:** UMP before `initialize`, setting `_canRequestAds`; a
+  Privacy choices row under More; a free save when no ad loads (no-fill or
+  no consent), offline keeping the tray, MAX staying "try again"; the
+  gate's `ADMOB_LIVE_FLOOR` raised to that take; the units with
+  `ADMOB_LIVE_FROM` that take -- RUNBOOK-play §9, AGENDA Priorities (mine
+  0), A17's take-121 section.
 
 - **Take 115 -- the production baseline.** When you read this it is merged
   (if it is not, it is in flight: nothing else starts until it merges). A
