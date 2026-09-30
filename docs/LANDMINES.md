@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 125.*
+*Current as of take 126.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -238,7 +238,7 @@ Start here. Do not read top to bottom.
 | A privacy check names a card the other seat may see | 223 |
 | The other seat learns a card that moved unrevealed | 224 |
 | A board names a card its seat may not see, and the view is clean | 225 |
-| A card's picture reads "Image Coming Soon" | 226 |
+| A card's picture reads "Image Coming Soon" | 226, 240 |
 | A self-play sweep of thousands of games is clean and the engine still breaks the rules | 227 |
 | A check's verdict is `undefined`, and the thing it checks passes | 228 |
 | A row of cards sized to fit breaks a card early onto the next row | 229 |
@@ -252,6 +252,9 @@ Start here. Do not read top to bottom.
 | An OCR measurement on the VM says the camera approach cannot work | 237 |
 | The look hangs at a scanner step | 238 |
 | "Last backup: Failed" on every backup, after a reinstall or the switch to Play | 239 |
+| A card's picture is wrong for good although the host has the right one, or a wrong picture never leaves | 240 |
+| A card is shown with another printing's picture: the right card, the wrong illustration | 241 |
+| A picture hash compared in the app differs from the pipeline's by a few bits | 242 |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -3102,6 +3105,41 @@ name this install owns -- a new one made when the old name is refused, and
 kept -- and a write that fails keeps its reason. Take 125; smoke plants the
 refusal with Android's own words, and take 123's build fails it.
 
+**240. A picture hashed once is never fetched again.** The hash step fetches
+the printings it has never hashed and the misses; a printing with a hash is
+never looked at again. TCGplayer answers some products with one "Image Coming
+Soon" picture, 200 OK like any other, and the night 22 starter-deck printings
+arrived it was hashed as their picture -- and stayed it, for every screen and
+the scanner, because nothing ever fetched them again (PROVEN 30 Sept: all
+6,771 hashed pictures fetched again, the 22 still the placeholder, 200 x 115;
+every other one portrait). A cache that never revisits keeps the day's answer
+for good: what the host served on the first night has to be judged that night
+-- a card picture that is not card-shaped, or near a placeholder hash on file,
+is a miss (take 126) -- and a miss is the entry that is retried.
+
+**241. One card's printings are not one picture.** Take 126 filled the Sim's
+pictureless cards from other printings of the same card, and the same step
+for Collect looked free: same number, same name, same treatment. MEASURED 30
+Sept over every card picture on file: 535 of 1,722 groups of one card's
+same-treatment printings hold two or more illustrations, 2,362 pairs more than
+8 bits apart -- promos under "base" mostly (ST01-004 Sanji's six OP-PR
+printings share one illustration, 34 bits from the starter deck's). A table
+plays the card, and every printing of a number plays the same, so the Sim may
+borrow; a ledger of printings may not, because the picture is how a collector
+tells which one they hold. A picture stands for its printing unless the
+screen is about the card.
+
+**242. A 64-bit number read by JSON.parse is a 53-bit number.** The bundle
+ships each printing's artwork hash as a JSON integer, and the app reads the
+catalogue with `r.json()`: every hash above 2^53 comes back rounded. MEASURED
+30 Sept, parsed as the app parses it: 6,748 of 6,748 such hashes drift, a
+median of 5 bits and up to 13 -- the scanner's artwork auto-accept (at most 8
+bits, a 13-bit gap; landmines 13, 49) was measured on exact ones. Nothing
+passes a camera hash to `resolve()` yet, so nothing has misfired; take 126
+found it planning to compare pictures in the app, and moved that choice to
+the build (`hashes.lend_map`), where hashes are exact. Rule: a value wider
+than 53 bits crosses into JavaScript as a string, and is compared as a BigInt
+parsed from it. The fix is its own take (queued from take 126).
 
 ## §2 — Inherited from APEX ORV
 

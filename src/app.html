@@ -877,7 +877,9 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
    (g-cardart); Life's lie sideways, the emblem turned with them */
 .sb{display:block;position:relative;border-radius:var(--r-sm);overflow:hidden;background:#0B1B45;color:#8DB4F5;--cbk:#EAF2FF;--f1:#2555AD;--f2:#112B69;box-shadow:0 2px 6px rgba(0,0,0,.55)}
 .sb.ld{background:#4C0A10;color:#FFBBAF;--cbk:#FFF3EF;--f1:#D23A3C;--f2:#80141A}
-.sb.dn{background:#0A0A0A;color:#161616;--cbk:#FFFFFF;--f1:#FFFFFF;--f2:#E9E6DE}
+.sb.dn{background:#0A0A0A;color:#0A0A0A;--f1:#FFFFFF;--f2:#FFFFFF;box-shadow:0 0 0 1px rgba(255,255,255,.28),0 2px 6px rgba(0,0,0,.55)}
+.sb.dn::before{inset:max(2px, calc(var(--cw) * .028))}
+.sb.dn .cb{inset:22%;width:56%;height:56%}
 .sb::before{content:"";position:absolute;inset:6%;border-radius:2px;background:radial-gradient(circle at 50% 46%,var(--f1),var(--f2) 80%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
 .sb .cb{position:absolute;inset:6%;width:88%;height:88%}
 .sb.rv{position:absolute;inset:0;z-index:3;pointer-events:none}
@@ -889,12 +891,15 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
 .stk.trash{padding:0;border-radius:var(--r-sm)}
 .stk .slot{position:absolute;inset:0;width:auto;height:auto}
 /* the cost area: a DON!! card each, face up -- white in its black border (the owner, take 124) -- active upright, rested turned;
-   the DON!! deck beside them, its white backs stacked, and its count */
+   the DON!! deck beside them, its white backs stacked, and its count. Take 126, the owner: "For don, replace the image/icon
+   with the DON japanese, not the !!. Give them a black border" -- ドン!! on every DON!! card (g-donjp, the icon's own strokes)
+   and a black frame of its own, a tenth of the card's width and never under 2px, a hairline of light outside it so the
+   black reads on the dark table */
 .tb-don{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px}
-.tk{display:grid;place-items:center;width:calc(var(--cw) * .28);height:calc(var(--cw) * .4);border-radius:3px;background:linear-gradient(160deg,#FFFFFF,#ECE9E1);
-  box-shadow:inset 0 0 0 1.5px #0A0A0A,0 1px 3px rgba(0,0,0,.55);transition:transform var(--dur-ui),opacity var(--dur-ui)}
+.tk{display:grid;place-items:center;box-sizing:border-box;width:calc(var(--cw) * .28);height:calc(var(--cw) * .4);border-radius:3px;background:#FFFFFF;
+  border:max(2px, calc(var(--cw) * .028)) solid #0A0A0A;box-shadow:0 0 0 1px rgba(255,255,255,.28),0 1px 3px rgba(0,0,0,.55);transition:transform var(--dur-ui),opacity var(--dur-ui)}
 .tk.r{transform:rotate(90deg);opacity:.5}
-.tk svg.g{width:72%;height:auto;color:#0A0A0A}
+.tk svg.g{width:80%;height:80%;color:#0A0A0A}
 .tb-strip .tk svg.g{display:none}
 .tb-don .dk{display:flex;align-items:center;gap:5px;margin-left:6px;font-family:var(--heavy);font-weight:800;font-size:var(--fs-cap);color:var(--dim)}
 .dkst{position:relative;display:block;flex:none;width:calc(var(--cw) * .28 + 4px);height:calc(var(--cw) * .4 + 4px)}
@@ -2005,6 +2010,7 @@ function indexCatalogue(cat) {
     byNum.get(p.num).push(p);
   }
   return { ng: cat.ng, ngs: cat.ngs, valid: new Set(cat.valid_numbers || []), star: cat.star || null, effects: cat.effects || {}, proof: cat.proof || {},
+    lend: cat.lend || {},   // take 126: the Sim's table only -- which printing's picture a card with none of its own is drawn with
     /* A29: stock decks ride in the bundle. They are DECKS, never cards owned --
        nothing here ever touches OWN, the portfolio, the export or the binder. */
     zips3: cat.zips3 || null,
@@ -4693,7 +4699,9 @@ function picturesLine(im = CAT.man.images) {
   const don = rows.filter(p => p && SEALED.isDon(p)).length, gone = rows.filter(p => !p).length;
   const what = ids ? `${im.missing_cards} cards, ${don} DON!! cards and ${ids.length - don - gone} sealed products${gone ? ` (and ${gone} no longer in the catalogue)` : ''}`
     : `${im.missing_cards} cards and ${im.missing_sealed} rows without a number (sealed products and DON!! cards)`;
-  return `${what} have no picture at the first host; ${im.alt_served} served by the second, ${im.exported} shipped that way` + (im.measured ? '' : ' (sealed images not yet measured)');
+  /* take 126 (landmine 240): the host's "Image Coming Soon" is among them -- a miss, not a picture -- and says so */
+  const ph = Number.isInteger(im.placeholder) && im.placeholder ? ` (${im.placeholder} of them the host’s “Image Coming Soon”, shipped with none)` : '';
+  return `${what} have no picture at the first host${ph}; ${im.alt_served} served by the second, ${im.exported} shipped that way` + (im.measured ? '' : ' (sealed images not yet measured)');
 }
 function sealedCountLine() {
   const sealed = CAT.rows.filter(p => p.sealed), goods = sealed.filter(p => SEALED.isGoods(p)), priced = goods.filter(p => SEALED.isProduct(p)).length;
@@ -6432,7 +6440,7 @@ function simCardHtml(c, key, o = {}) {
 function simSlot(label) { return `<span class="slot" aria-hidden="true">${esc(label || '')}</span>`; }
 /* a card back in the game's colours (take 124, the owner's word; landmine 30's exception for the icon, extended): the deck's
    blue, 'ld' a Leader's red, 'dn' a DON!! card's white in black -- the compass over the sea chart, `g-cardart` in the sprite */
-function simBack(cls, style) { return `<span class="sb${cls ? ' ' + cls : ''}"${style ? ` style="${style}"` : ''}><svg class="cb" aria-hidden="true"><use href="#g-cardart"/></svg></span>`; }
+function simBack(cls, style) { return `<span class="sb${cls ? ' ' + cls : ''}"${style ? ` style="${style}"` : ''}><svg class="cb" aria-hidden="true">${cls === 'dn' ? '<use href="#g-donjp"/>' : '<use href="#g-cardart"/>'}</svg></span>`; }   /* take 126: a DON!! card's back is ドン!! */
 /* Life: its card backs lying sideways down the column, with the count; nobody sees a Life card (§3-10) */
 function simLifeHtml(X) { const n = X.lifeCount, m = Math.min(n, 6);
   return `<span class="stk life z-life" role="img" aria-label="${n} Life">${m ? Array.from({ length: m }, (_, k) => simBack('lf', `--k:${k};--m:${m}`)).join('') : simSlot('Life')}<span class="cnt">${G('life', 12)}${n}</span></span>`; }
@@ -6446,7 +6454,7 @@ function simTrashPile(X) { const n = X.trash.length, top = n ? X.trash[n - 1] : 
    its count (§3-3, §6-4); a given DON!! is on its card */
 function simDonHtml(X) { const d = X.don, m = Math.min(d.deck, 3);
   const deck = m ? `<span class="dkst">${Array.from({ length: m }, (_, k) => simBack('dn', `left:${k * 2}px;top:${(m - 1 - k) * 2}px`)).join('')}</span>` : '';
-  return `<span class="tb-don" role="img" aria-label="DON!!: ${d.active} active, ${d.rested} rested, ${d.given} given, ${d.deck} in the DON!! deck">${`<i class="tk">${G('don', 14)}</i>`.repeat(d.active)}${`<i class="tk r">${G('don', 14)}</i>`.repeat(d.rested)}<span class="dk">${deck}${d.deck}</span></span>`; }
+  return `<span class="tb-don" role="img" aria-label="DON!!: ${d.active} active, ${d.rested} rested, ${d.given} given, ${d.deck} in the DON!! deck">${`<i class="tk">${G('donjp', 14)}</i>`.repeat(d.active)}${`<i class="tk r">${G('donjp', 14)}</i>`.repeat(d.rested)}<span class="dk">${deck}${d.deck}</span></span>`; }
 /* what the table asks of each card now, from the view's legal moves: a target to attack, a Blocker, a counter, an
    effect's choice, one of five to trash -- each drawn on the card it names, as that move's own word; in a free Main
    Phase what may act is lit and a tap selects it */
@@ -6550,11 +6558,16 @@ function simHandLabel(v, a) { const P = v.me, X = a.side === 1 ? v.them : v.me, 
 /* a choice drawn as the card it names, its name under it */
 function simPick(v, key, act, caption) { const c = simAt(v, key);
   return `<span class="tb-pick">${c ? simCardHtml(c, key, { act, cls: 'aim', nouid: true, say: 'choose it' }) : `<button class="ghost" data-sim="${act}">${esc(caption)}</button>`}<span>${esc(caption)}</span></span>`; }
-/* the effect the game waits on, for the seat deciding: its words, its mark -- proven, unproven, by hand, proven wrong --
-   what the app will do, its choices drawn as cards (the field's are lit on the table too), and Report */
+/* a line's mark says who plays it, not what the tests know (take 126, the owner: "change the proven by test wording or remove
+   it/hide it, make it more human if you keep it. Right now it's clear that that's soley AI and for AI/the tests"): nothing when
+   the app plays it and a card proof has shown it right; a word asking for a Report when the app plays it with no proof yet;
+   "yours" when the app does not play it -- by hand, or proven wrong. The engine's own words (SIM.proofOf) are unchanged */
+const SIM_MARK = { proven: '', unproven: 'Not checked yet \u2014 if the app gets it wrong, tap Report', hand: 'Yours to play \u2014 the app can\u2019t do this one', wrong: 'Yours to play \u2014 the app got this one wrong' };
+/* the effect the game waits on, for the seat deciding: its words, its mark (SIM_MARK), what the app will do, its choices
+   drawn as cards (the field's are lit on the table too), and Report */
 function simOfferPanel(v, lead) {
   const cur = v.offer, L = v.legal; if (!cur) return '';
-  const badge = { proven: 'proven by a test', unproven: 'the app runs it; no test has proven it yet', hand: 'by hand \u2014 the app does not run this line', wrong: `by hand \u2014 the app\u2019s version was proven wrong${cur.wrong && cur.wrong !== 'proven wrong' ? ': ' + esc(cur.wrong) : ''}` }[cur.proof];
+  const badge = SIM_MARK[cur.proof] || '';
   const report = '<button class="linkish" data-sim="report">Report</button>';
   let body;
   if (v.tray) { const moves = L.map((a, k) => ({ a, k })).filter(x => x.a.t === 'hand');
@@ -6567,7 +6580,7 @@ function simOfferPanel(v, lead) {
       ${room.length ? `<div class="fgrp">Five Characters: trash one to make room (${simCite('§3-7-6-1')})</div><div class="note">Tap a lit Character on the table.</div>`
       : (tg.length ? `<div class="fgrp">Choose</div><div class="tb-picks">${tg.map((t, k) => simPick(v, t.face ? 'c' + k : t.ref, 'fx:' + t.ref, t.name)).join('')}</div>` : (T ? '<div class="note">No legal target for this step.</div>' : ''))}
       <div class="tb-go">${none && !room.length ? `<button class="ghost go" data-sim="fxapply">${tg.length ? 'Choose none' : 'Apply'}</button>` : ''}${L.some(x => x.t === 'fxskip') ? simSkipHtml(cur, !fx.length) : cur.step > 0 && cur.cost ? '<span class="note">a cost begun is paid in full (' + simCite('§8-3') + ')</span>' : '<span class="note">it resolves in full (' + simCite('§8-1-3-1') + ')</span>'}${report}</div>`; }
-  return `<div class="tb-panel" role="region" aria-label="${esc(cur.name)} effect">${lead || ''}<h3>${esc(cur.name)} \u2014 effect</h3><div class="note">${esc(cur.raw)}</div><div class="note tb-mark">${badge}</div>${body}</div>`; }
+  return `<div class="tb-panel" role="region" aria-label="${esc(cur.name)} effect">${lead || ''}<h3>${esc(cur.name)} \u2014 effect</h3><div class="note">${esc(cur.raw)}</div>${badge ? `<div class="note tb-mark">${badge}</div>` : ''}${body}</div>`; }
 /* a battle's result, as the seat reading it may see it (view.last): a Life card named only to its owner (the audit's
    row 1 -- take 123 painted what act() returned) */
 function simResultHtml(r) { if (!r) return '';
@@ -6583,14 +6596,14 @@ function simPanelHtml(v) { const lead = SIMUI.post ? simResultHtml(v.last) : '';
 /* the zoom: the card at its largest, what it is now, its words line by line with what the app does and each line's mark,
    the continuous text that is the player's to apply, and its moves */
 function simZoomHtml(v, key) { const c = simAt(v, key); if (!c) return '<div class="note">That card is no longer there.</div>';
-  const mark = { proven: 'proven by a test', unproven: 'the app runs it; no test has proven it yet', hand: 'by hand \u2014 the app does not run this line', wrong: 'by hand \u2014 the app\u2019s version was proven wrong' };
   const kw = c.keywords || c.kw || [], gained = c.granted || [], acts = /^(L|S|m\d+|h\d+)$/.test(key) ? simActsHtml(v, key) : '';
   const pw = c.power != null ? `${c.power} power${c.printedPower != null && c.power !== c.printedPower ? ' (printed ' + c.printedPower + ')' : ''}` : (c.printedPower != null ? c.printedPower + ' power' : '');
   return `<div class="zm"><div class="zm-art">${simFace(c, true)}</div><div class="zm-info"><h3 class="zm-name">${esc(c.name)}</h3>
     <div class="zm-stats">${[c.num, c.type, c.cost != null ? 'cost ' + c.cost : '', pw, c.counter ? 'counter +' + c.counter : '', c.don ? c.don + ' DON!! given' : '', c.rested ? 'rested' : ''].filter(Boolean).map(esc).join(' \u00b7 ')}</div>
     ${kw.length ? `<div class="zm-kw">${kw.map(k => `<span class="kwtag">${esc(k)}${gained.includes(k) ? ' \u00b7 gained' : ''}</span>`).join('')}</div>` : ''}
     ${c.text ? `<div class="zm-text">${esc(c.text)}</div>` : ''}
-    ${(c.lines || []).map(l => `<div class="zm-line"><div class="note">${esc(mark[l.proof] || '')}</div>${l.proof === 'hand' || l.proof === 'wrong' ? '' : `<div class="note">The app will: ${esc(l.does)}</div>`}</div>`).join('')}
+    ${(c.lines || []).map(l => { const mk = l.proof === 'unproven' ? 'Not checked yet' : SIM_MARK[l.proof];   /* Report is the effect panel's, not the zoom's */
+      return `<div class="zm-line">${mk ? `<div class="note">${esc(mk)}</div>` : ''}${l.proof === 'hand' || l.proof === 'wrong' ? '' : `<div class="note">The app will: ${esc(l.does)}</div>`}</div>`; }).join('')}
     ${c.unapplied && c.unapplied.length ? `<div class="why">Yours to apply: ${c.unapplied.map(esc).join(' ')} The power shown is without it.</div>` : ''}
     ${c.play && !c.play.ok ? `<div class="note">${simCite(c.play.why)}</div>` : ''}
     ${acts ? `<div class="tb-go">${acts}</div>` : ''}</div></div>`; }

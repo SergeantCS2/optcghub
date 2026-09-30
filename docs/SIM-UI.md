@@ -1,6 +1,6 @@
 # SIM-UI — the contract the Sim's UI pass builds against
 
-*Current as of take 125.*
+*Current as of take 126.*
 
 For the Sim's board (Prep & Play → Sim). Takes 122 and 123 made the game
 underneath right, provable and private; take 124 drew it as a table -- the
@@ -143,7 +143,11 @@ draw their own seat's view from the same seed and moves.
   every control; both Fold sizes (411×960 cover, 749×832 open).
 - A Rules button on every Prep & Play screen; every `§x-y` in the Sim's words
   opening the Rules sheet.
-- Each effect's mark — proven, unproven, by hand, proven wrong — and Report.
+- Each effect's mark, in a player's words (take 126, the owner: "make it more
+  human"): nothing on a line a card proof has shown right; "Not checked yet"
+  on one with no proof, with Report on the effect panel; "Yours to play" on a
+  line the app does not play or was proven wrong on. `SIM.proofOf` keeps the
+  engine's words (proven, unproven, hand, wrong); the table says who plays.
 - "Yours to apply" beside a card with `unapplied` lines, and the power shown
   without them.
 - The by-hand tray's own labels; its moves are only `view.legal`.
@@ -199,13 +203,27 @@ draw their own seat's view from the same seed and moves.
   largest size that fits, held like a hand where whole cards side by side
   would be small, each card keeping a strip of its own (44 px, two fifths of
   the card) -- and past that scrolls.
-- **Pictures:** each card's hot-linked picture over its own colours; a picture
-  shared by cards of different names is the host's placeholder and is not
-  drawn (`SIM.placeholderPic`). **Card backs** are the app icon's card back
-  (`g-cardart` in the sprite) at the owner's word -- landmine 30's exception
-  for the icon, extended; the own-rose fallback swaps it -- in the game's
-  colours (the owner): a deck's blue, a Leader's red (each Leader turns over
-  from it the first time it shows), a DON!! card's white in black.
+- **Pictures:** each card's hot-linked picture over its own colours
+  (`SIM.picOf`, take 126): its own when the runner saw it serve; else another
+  printing's of the same card that the build chose (`CAT.lend`,
+  `hashes.lend_map`: the same number and name, the same treatment first, then
+  the oldest -- a real scan more often than a reprint's SAMPLE image) and the
+  runner saw serve, refused unless it is the same card, since the table plays
+  the card, not the printing (the owner: "ensure we get as many pictures as
+  possible"; 194 of the 257 card printings without a picture of their own
+  have one, MEASURED 30 Sept; the 63 left are EB05's and OP18's, not yet
+  photographed); else its own URL. The host's "Image Coming Soon" never
+  reaches the table: the pipeline ships it as no picture (landmine 240).
+  Collect keeps each printing's own picture (landmine 241). **Card backs**
+  are the app icon's card back (`g-cardart` in the sprite) at the owner's
+  word -- landmine 30's exception for the icon, extended; the own-rose
+  fallback swaps it -- in the game's colours (the owner): a deck's blue, a
+  Leader's red (each Leader turns over from it the first time it shows).
+  **DON!! cards**, face up and in the DON!! deck, are white in a black frame
+  of their own with ドン!! on them (take 126, the owner: "For don, replace the
+  image/icon with the DON japanese, not the !!. Give them a black border"):
+  `g-donjp`, the app icon's own manga strokes, drawn, so no Japanese font is
+  needed.
 - **Moves:** a tap selects a card and the dock lists exactly the view's legal
   moves that name it; what the table asks now -- a target, a Blocker, a
   counter, an effect's choice, one of five to trash -- is lit on the card it

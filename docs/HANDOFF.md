@@ -1,4 +1,286 @@
-# HANDOFF — through Take 125
+# HANDOFF — through Take 126
+
+## Take 126 — 2026-09-30 — the host's "Image Coming Soon" is no card's picture: refused where pictures are fetched, so no screen draws it
+
+Opened before any code (PROTOCOL §6), from `main` at take 124's merge
+(`f63c28c`). Build run 80 on it: seed, bundle (smoke and the gate on
+TCGCSV's renamed starter decks) and pages green at 04:17 UTC; the APK and
+Release take-124 were building. The nightly before it (run 79) was red on the
+rename, which take 124 mended. **Take 125 is another session's** (PR #50,
+draft: the scanner reads the number, backups after the switch to Play), so
+this take is 126 and its landmines start at 240, after take 125's 233-239.
+Whichever of the two merges second takes `main` in and keeps its numbers.
+
+The work is the first line of take 124's DEFERRED: "Collect, a card's page
+and Hunt still draw the host's 'Image Coming Soon' for the 22 printings
+(landmine 226); only the Sim leaves it out." A41 (missing images) is its
+agenda item: these are missing pictures the app counted as pictures.
+
+### Measured before the plan (30 Sept; PROVEN, every picture fetched)
+
+- **The catalogue on file:** one picture hash on 22 printings of 22 names
+  (ST01-005 Jinbe to ST04-017 Onigashima Island, and ST03-009 Donquixote
+  Doflamingo), each at its own URL. No other hash is shared across names;
+  806 are shared within one name (reprints, 1,689 printings). 6,771 of 7,006
+  card printings carry a hash.
+- **Every hashed card picture, fetched again (6,771 of 6,771 served):** 6,749
+  are portrait, 1.295 to 1.5 times as tall as wide (200 x 259 to 200 x 300; a
+  card is 88 x 63 mm, 1.40). The other 22 are the placeholder printings, one
+  picture at 200 x 115 (0.575, landscape). Every stored hash equals today's
+  picture's: the host has changed none of them since they were hashed.
+- **The placeholder at the other sizes:** 1000 x 573 at the large size, and
+  the second host serves its own copy at 200 x 115 for the same ids. Their
+  hashes are 2 to 4 bits apart. The nearest real card picture is 16 bits from
+  the placeholder (six printings); the nearest sealed picture, 21.
+- **Sealed:** 675 products fetched; one serves the placeholder (Premium Card
+  Collection -Best Selection Vol. 3, 606589: 200 x 115, 0 bits). Sixteen
+  others are landscape and real (display cases, 200 x 60 to 200 x 125), 32 to
+  39 bits away. For a sealed product the shape says nothing; the hash says it.
+- **Why it never healed (PROVEN from the code):** the hash step fetches the
+  ids it has never hashed and the misses; an id hashed once is never fetched
+  again. The placeholder, hashed the night these printings arrived, stayed
+  their picture, and the URL behind it is what every screen draws.
+
+### The plan
+
+- **At the source (`tools/hashes.py`).** A card picture less than 1.2 times as
+  tall as wide, or any picture within 6 bits of a placeholder hash on file, is
+  the host's placeholder: a miss, not a picture. It joins the misses retried
+  every night (landmine 124's queue), counted with the unpublished (the host
+  has no picture yet), never as a failure, and leaves the list the night the
+  host serves the card. The placeholder hashes on file are learned: from a
+  card picture judged not card-shaped, and from landmine 226's rule over the
+  hashes already held (one hash on two or more names). Ids already hashed
+  with it leave the hashes and are fetched again that run. The sealed probe
+  and the second host refuse it by its hash; a card at the second host by its
+  shape too.
+- **The export (`tools/build_app.py`).** A printing whose picture is the
+  placeholder ships no picture URL; the manifest counts them. Every screen then
+  draws it as it draws any card without a picture -- its colours and its
+  number -- in Collect, a card's page, Hunt and Sealed, the heroes and the Sim
+  at once, with no rule in the app.
+- `SIM.placeholderPic` retires: the data no longer carries the placeholder.
+- **The gate:** no hash shipped on two names, none within 6 bits of a
+  placeholder hash on file, and no URL shipped for an id the runner saw serve
+  the placeholder, each with a planted control.
+
+### The owner's word mid-take
+
+> "I'm noticing alot of cards in the sim without pictures, ensure we do a
+> sweep and ensure we get as many pictures as possible. For don, replace the
+> image/icon with the DON japanese, not the !!. Give them a black border. Also
+> change the proven by test wording or remove it/hide it, make it more human
+> if you keep it. Right now it's clear that that's soley AI and for AI/the
+> tests. ... Newer boxes/packs/whatever might not have images quite yet"
+
+His screenshots: Jewelry Bonney and Jinbe on take 124's table as blocks of
+colour -- two of the 22 placeholder printings -- a DON!! card with "!!" on it,
+and an effect marked "proven by a test". Three more pieces of work, in this
+take:
+
+- **The sweep (MEASURED 30 Sept, every card printing):** 6,749 of 7,006 card
+  printings have a picture of their own the runner saw serve. The other 257:
+  229 the host refuses (403/404), 22 the placeholder, 5 not yet tried (new
+  since the last run), 1 served by the second host. 194 of the 257 have
+  another printing of the same card -- the same number and name, the same
+  treatment -- whose picture the runner saw serve; the 63 that do not are
+  EB05's (46) and OP18's (17), sets out on 30 Oct and 20 Nov that TCGplayer has
+  not photographed. The sealed products without a picture are the same kind:
+  EB05's and OP18's boxes, packs and cases, displays and cases no one has
+  photographed, a judge pack; the second host serves none of them. Of the 238
+  printings the ready-made decks deal, 14 had no picture of their own on take
+  124 -- the 8 placeholder printings drawn in colours, and 6 the host refuses
+  (ST01-011 Brook and ST01-014 Guard Point of one set, 23907; ST21-003 Sanji,
+  ST21-008 Tony Tony.Chopper, ST21-010 Nico Robin and ST12-008 Roronoa Zoro of
+  another, 24306), which the table drew with a picture that never loaded.
+- **Borrowing is right for the table and wrong for the ledger (landmine
+  241):** 535 of 1,722 groups of one card's same-treatment printings hold two
+  or more illustrations (promos under "base" mostly). The table plays the
+  card -- every printing of a number plays the same -- so `SIM.picOf` draws a
+  card with no picture of its own with another printing's; Collect, a card's
+  page and Hunt show each printing's own picture or none.
+- **Which printing lends:** the build decides (`hashes.lend_map`, shipped as
+  the catalogue's `lend`) -- the same card's printings the runner saw serve,
+  the same treatment first, then the oldest. The oldest, because a card's
+  first printings are real scans more often than its reprints, whose pictures
+  are the publisher's sample images stamped SAMPLE across the art (landmine
+  151). For the ready-made decks that is the Super Pre-Release edition -- a
+  real card with the edition's small mark on it -- for the ST01, ST02 and ST04
+  cards, Brook's clean original, and the ST21 and ST12 cards' own sets. The app
+  takes the build's choice only if it is the same card.
+- **The DON!! cards:** ドン!! in the app icon's own manga strokes
+  (`assets/icon-stat.svg`, the reminders' glyph), laid out ドン over !! so the
+  word fills a portrait card, drawn as a symbol (`g-donjp`) so no Japanese font
+  is needed; face up and in the DON!! deck, each white in a black frame of its
+  own, a tenth of the card's width and never under 2 px.
+- **The marks:** a line's mark says who plays it. A line a card proof has
+  shown right has none; one the app plays with no proof yet says "Not checked
+  yet -- if the app gets it wrong, tap Report" on the effect panel ("Not
+  checked yet" in the zoom, which has no Report); one the app does not play,
+  or was proven wrong on, says "Yours to play". `SIM.proofOf` keeps its words.
+
+### What this take changes
+
+- `tools/hashes.py`: `card_shaped`, `near_placeholder`, `card_verdict`,
+  `judge`, `shared_names`, `purge`, the sidecar's `placeholder` (its hashes,
+  learned; its card and sealed ids), `export_pic`, `read_placeholder`; the card
+  pass judges each picture as fetched and learns a landscape one's hash after
+  the pass; the sealed probe, the second host and the large-size sample take a
+  judge; `tally` counts a placeholder with the unpublished and apart;
+  `lend_map` for the Sim's pictures.
+- `tools/build_app.py`: `export_pic` for every row -- a placeholder printing
+  ships no hash, and no URL but the second host's when that served the card;
+  `manifest.images.placeholder` and `placeholder_ids`; the catalogue's `lend`
+  (194 entries).
+- `tools/gate.py`: `check_pictures` (a hash on two names, a hash near a
+  placeholder hash on file, a URL or hash on a placeholder printing), in the
+  main run and on every probe copy, with three planted probes and a control.
+- `src/sim.js`: `SIM.picOf` for `SIM.face` (the build's `lend`, refused
+  unless it names the same card); `SIM.placeholderPic` gone.
+- `src/app.html`: `CAT.lend`; the DON!! cards (`.tk`, `.sb.dn`, `simBack`, `simDonHtml`);
+  `SIM_MARK` for the effect panel and the zoom; Diagnostics' pictures line
+  counts the placeholder.
+- `assets/glyphs.svg`: `g-donjp`.
+
+### Measured
+
+- **The hash step on `main`'s sidecar** (the VM, 30 Sept): the purge dropped
+  the 22 (one hash on 22 names, learned); the retry pass fetched them again,
+  still the placeholder; the sealed probe caught 606589 by its hash (0 bits);
+  the second host answered 404 x 252, the placeholder x 23 and served 1; the
+  large size 40 of 40. The sidecar went from 6,771 hashes to 6,753 (22 out, 4
+  new printings in) and from 230 misses to 253; the build shipped 23
+  printings no picture.
+- **The Sim's pictures:** 6,749 printings draw their own; 194 of the 257
+  without draw another printing's; 63 draw none (EB05, OP18). All 238
+  printings of the ready-made decks draw a picture the runner saw serve (14
+  did not on take 124): nine borrow their Super Pre-Release edition, Brook his
+  ST-01 original, the four ST21 and ST12 cards their own sets' printings. In
+  the look at four sizes, none shows SAMPLE.
+- **The clean run (PROTOCOL §6b)** -- a new worktree of `main` with this
+  take's files, the committed sidecar, a fresh ingest: the purge and the
+  retry as above, smoke 1,534/0, render 250/0 in Chrome, GATE PASSED. Hash
+  coverage reads 100.3 % on that first run: the catalogue step loaded the 22
+  before the hash step dropped them (the build ships them no hash all the
+  same); the next run loads the sidecar without them.
+- **A DON!! card as Chrome draws it** (render, the phone): a 2 px frame of
+  rgb(10, 10, 10), a white face, ドン!! inking 15.8 % of it at 20 px wide; the
+  control with the symbol hidden, 0 %.
+- **Self-play under the rulebook, on this build:** 4,000 games (all 289
+  pairings of the ready-made decks and 2,000 of random legal decks, both
+  policies), 855,934 moves held to the rules' model, 778,782 lists of legal
+  moves compared, 6,181 cards met, 0 violations -- the same games as take
+  124's final sweep, move for move: the engine's rules are unchanged, only the
+  picture it hands the table.
+
+### Tests
+
+- **hashes.py --selftest:** 14 new controls, 37 in all (the shape, the near test and its
+  edge, the verdict, the judge for cards and sealed, the probe with and
+  without a judge, the second host, the purge and its reprint control, a new
+  set's week of placeholders not a failure, the export, the sidecar round
+  trip, the lender map on three planted cards and its control); each rule
+  broken on a copy fails its own (the shape 4, the near test 5, the purge 1,
+  the tally 1, the export 1).
+- **gate.py:** `check_pictures` in the run and on every probe copy; three
+  planted probes and a clean control; on take 124's real build it names the
+  shared hash, on this one it passes.
+- **smoke:** a take-126 section of 18 checks (the export, Collect, the Sim's
+  pictures and a planted lender, the ready-made decks, the DON!! cards and
+  their frame, the marks in the panel and the zoom, Diagnostics); take 124's
+  DON!!, zoom and backs checks follow the new drawing; take 124's placeholder
+  checks retired with the rule. Take 124's build fails 15, passing the other
+  1,519.
+- **render:** a DON!! card read from Chrome's pixels, with its control; take
+  124's End-turn and next-action checks made certain (a seeded deal, DON!!
+  lent until a card can be played; 26 of 400 seeds had failed them).
+- **The look, take 126:** the owner's three cards on the table, the DON!!
+  cards close, an effect and the zoom in a player's words, Nami's page and the
+  sealed product without the placeholder, at four sizes.
+
+### What I got wrong
+
+- **The plan I came in with was the symptom's.** Take 124's DEFERRED said
+  "`SIM.placeholderPic`'s rule, applied to the app's other pictures", and I
+  set out to write it. Measuring first showed a rule in each screen would have
+  hidden a picture while the data stayed wrong: the hash was the
+  placeholder's for good (a hashed printing is never fetched again), the URL
+  still served it, and the counts called 22 printings pictured. The fix
+  belonged where the picture is fetched.
+- **I nearly numbered this take 125.** Another session's take 125 was open
+  (PR #50); the Releases list and `main` did not show it, the open PRs did.
+- **A check that crashes is not a control.** The new smoke section called
+  `S.picOf` and, run on take 124's build, stopped the run instead of failing;
+  it now falls back to what the face draws.
+- **The lender, three times.** First the oldest printing lent, and the look
+  showed Jinbe, Nami and Killer with "Super Pre-Release" on their art. I
+  reasoned that reprints carry the art clean and had the build prefer a
+  printing that is no pre-release edition; the next look showed Jinbe and
+  Nami with SAMPLE across them -- the Revision Pack's pictures are the
+  publisher's sample images, landmine 151's lesson, which the record already
+  held ("a 'better source' is measured picture by picture, not reasoned
+  about"). Back to the oldest: a real card with a small mark beats a sample
+  image. On the way, comparing illustrations in the app turned up landmine 242
+  (its hashes are rounded), so the choice is the build's.
+- **ドン!! stacked three high** came out smaller than one line across; ドン
+  over !! is the card's own shape (1.47 to 1.40).
+- **Take 124's End-turn check was a flake, and mine.** Render dealt the Sim
+  unseeded, and the check lent DON!! up to the hand's cheapest card; a hand
+  whose cheapest card no Main Phase plays (OP04-016, a 0-cost [Counter] Event)
+  was lent nothing, End turn ended the turn, and every size after measured
+  turn 2 -- 2 of 250 failing in one render of six, and in this take's first
+  clean run. MEASURED over 400 seeds: 26 hands left nothing to play. The deal
+  is seeded now, and DON!! is lent one at a time until the engine offers a
+  card to play: 0 of 400. Landmine 232's lesson again: a check's setup that
+  holds by chance is not a setup.
+- **A name reused** in render.mjs (`dp`) stopped a render run with a syntax
+  error; and the gate's self-test on an unstamped, unrendered tree failed on
+  the copy's stamp and receipt, not on the new check -- read before the seal,
+  that is noise.
+
+### Ruled out
+
+- A rule in the app to hide the placeholder (take 124's): the hash, the URL
+  and the counts stayed wrong everywhere it did not reach.
+- A hash constant for the placeholder: the host can change its picture; the
+  hashes on file are learned from a picture that is not card-shaped and from
+  landmine 226's rule.
+- A picture's shape as the test for a sealed product: sixteen real ones are
+  landscape.
+- Fetching every hashed picture again every night to catch a picture that
+  changed: 6,771 fetches, and none had (every stored hash equals today's
+  picture's); the placeholder is caught by the purge and the near test.
+- Collect, a card's page and Hunt borrowing another printing's picture
+  (landmine 241); Bandai's card site as a source (take 109: SAMPLE on 38 of 40,
+  keyed by card number).
+- A Japanese font for ドン!!: drawn as a symbol, from the icon's strokes.
+- Lending the printing that is no pre-release edition (by its set's words):
+  the reprints it chose lent SAMPLE images. The newest printing of the
+  illustration: Brook's pre-release edition is newer than his original.
+  Choosing the lender in the app: its hashes are rounded (landmine 242).
+- The nav's and the cost filter's DON!! glyph: the UI/UX session's.
+
+### DEFERRED
+
+- **Sealed products and the newest sets without pictures:** EB05, OP18 and a
+  few displays, cases and packs TCGplayer has not photographed; the nightly
+  retries them, and a picture appears the night the host serves one. No
+  other source is used (A41's ruling: a source keyed by card number is not a
+  printing's picture).
+- **Collect borrowing a picture:** not done (landmine 241). If the owner
+  wants the other printing's picture there too, it needs a label on it --
+  "another printing's picture" -- a UI question for him and the UI/UX
+  session.
+- **The cost filter's and the nav's DON!! glyph** (`g-don`, the "!!" in a
+  box) are the UI/UX session's; only the Sim's DON!! cards read ドン!!.
+- **The app's picture hashes are rounded (landmine 242):** seen in passing,
+  not fixed here -- a take of its own (queued as a task from this session):
+  ship them as strings, compare them as BigInts, and a check that the app's
+  equal the pipeline's. Nothing passes a camera hash to `resolve()` today.
+- **A SAMPLE stamp on a borrowed picture:** none among the ready-made decks
+  in the look; the other lenders (180) were not looked at picture by picture.
+- Carried from take 124, unchanged: drag to play and to attack, sounds, the
+  Fold check (the owner's), a game across the app's close, and A23's tail.
 
 ## Take 125 — 2026-09-29 — the scanner reads the number where the recogniser finds it (A2)
 
@@ -867,10 +1149,13 @@ And his word to mark the PR ready when it is.
 
 ### DEFERRED
 
-- **The host's placeholder elsewhere:** Collect, a card's page and Hunt still
+- ~~**The host's placeholder elsewhere:** Collect, a card's page and Hunt still
   draw the host's "Image Coming Soon" for the 22 printings (landmine 226);
   only the Sim leaves it out. `SIM.placeholderPic`'s rule, applied to the
-  app's other pictures, is a small take of its own.
+  app's other pictures, is a small take of its own.~~ -- closed by take 126,
+  at the source rather than in the app: the hash step refuses the placeholder
+  as it fetches it, and the build ships those printings no picture (landmine
+  240).
 - **Drag to play and to attack** (optcgsim's gesture): taps only this take --
   a tap selects, the dock lists the moves, a lit target is tapped. A drag
   must never fire a move by accident; its own take, with the look's pointer

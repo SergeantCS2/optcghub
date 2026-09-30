@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 125
+# V1-STATE — what exists, as of take 126
 
-*Current as of take 125.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 126.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -127,6 +127,23 @@ second host serves 1 of the 242 missing ids and answers 404 for 241 —
 the pattern is real and the missing pictures are not there either. The
 owner's image address from TCGplayer's own page is the next measurement;
 the phone's picture is the proof.
+
+**The host's placeholder (take 126, landmine 240):** TCGplayer serves one
+"Image Coming Soon" picture, 200 OK, for some products; the hash step had
+hashed it as the picture of 22 card printings and never fetched them again.
+PROVEN 30 Sept, every hashed picture fetched again: 6,749 card pictures
+portrait (1.295 to 1.5 times as tall as wide), the 22 at 200 x 115, and one
+sealed product (606589) with the same picture; the second host serves its own
+copy for the same ids. The hash step now judges a picture the night it is
+fetched -- a card picture that is not card-shaped, or any picture within 6
+bits of a placeholder hash on file (learned, never typed), is a miss, retried
+every night -- and the build ships those printings no URL and no hash, so
+every screen draws them as a card with no picture. The gate's
+`check_pictures` refuses a hash on two names, one near a placeholder hash, or
+a URL for a printing the runner saw serve it. The Sim, which plays the card
+and not the printing, draws a card with no picture of its own from another
+printing of it (194 of 257 card printings; the 63 left are EB05's and OP18's,
+not yet photographed); Collect does not (landmine 241).
 
 **Harness totals, take 115:** smoke.mjs 1248 assertions, render.mjs 215 in Chrome at the Fold's MEASURED sizes (411 x 960 and 749 x 832 at 2.625) in America/New_York, the look's take-115 list 36 of 36, hunt.py --selftest 135, hashes.py 23, ci/icon.py 28, scrub.py 11 (85 files), ci/apk.sh 7, ci/check.sh 6, gate.py's probes 21. Every take-115 check was watched to fail on take 114's build, and the self-review's on the build it reviewed (8f5034b), or on a planted fault.
 

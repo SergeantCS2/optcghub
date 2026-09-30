@@ -531,17 +531,23 @@ const SIM = {
      hand (a count, §3-4), both Lives and both decks (counts: nobody looks at a Life card, §3-10, or a deck, §3-2), the cards being
      looked at (only to the player looking), an effect's choices and the moves (only to the player deciding). A
      redesigned board draws from this and cannot show what it was never given. docs/SIM-UI.md is the contract. */
-  /* a picture shared by cards of different names is the host's placeholder ("Image Coming Soon"), not either card's -- MEASURED
-     29 Sept: one such picture, 22 printings, ST01-007 Nami and others the ready-made decks deal (take 124) -- so such a card is
-     drawn in its colours, as a card with no picture is */
-  placeholderPic(p) { if (!this._pics || this._pics.rows !== CAT.rows) { const by = new Map();
-      for (const r of CAT.rows) if (r.hash && !r.sealed) { const n = by.get(r.hash); if (!n) by.set(r.hash, new Set([r.name])); else n.add(r.name); }
-      this._pics = { rows: CAT.rows, bad: new Set([...by].filter(([h, n]) => n.size > 1).map(([h]) => h)) }; }
-    return !!(p && p.hash && this._pics.bad.has(p.hash)); },
-  face(id, extra) { const p = this.card(id) || {}, art = typeof artUrl === 'function' && p.img && !this.placeholderPic(p);
+  /* the picture a card is drawn with (take 126; take 124's placeholder rule went into the pipeline, which ships the host's
+     "Image Coming Soon" as no picture -- landmine 240). Its own, when the runner saw it serve (it has a hash). Else the
+     picture of another printing of the same card that the build chose (CAT.lend, hashes.lend_map: the same number and name,
+     the same treatment first, then the oldest -- a real scan more often than a reprint's, whose picture is often the
+     publisher's SAMPLE image, landmine 151), and only if it is the same card: the owner, on the table's blank cards, "ensure we get
+     as many pictures as possible". The table plays the card, not the printing; every printing of a number plays the same.
+     Else its own URL, which the host may publish before the next build (a refused picture falls away and the card is drawn
+     in its colours). MEASURED 30 Sept: 6,749 of 7,006 card printings have their own picture; 194 of the other 257 borrow
+     one; the 63 left are EB05's and OP18's, not yet photographed. Collect keeps each printing's own picture: 535 of 1,722
+     groups of one card's same-treatment printings hold two or more illustrations (landmine 241). */
+  picOf(p) { if (!p) return null; if (p.hash != null || !p.num) return p.img ? p : null;
+    const q = CAT.lend ? CAT.byId.get(+CAT.lend[p.id]) : null;
+    return q && q.img && q.hash != null && q.num === p.num && q.name === p.name ? q : (p.img ? p : null); },
+  face(id, extra) { const p = this.card(id) || {}, q = typeof artUrl === 'function' ? this.picOf(p) : null;
     return Object.assign({ id, num: p.num || null, name: p.name || '?', type: p.type || null, cost: p.cost != null ? this.cost(p) : null, printedPower: p.power != null ? this.num(p.power) : null,
       counter: this.num(p.counter) || null, kw: (p.kw || '').split('|').filter(Boolean), colours: typeof gameColours === 'function' ? gameColours(p) : [], text: p.text || '',
-      art: art ? { thumb: artUrl(p), large: artUrl(p, 'large'), ground: artColours(p) } : null }, extra || {}); },
+      art: q ? { thumb: artUrl(q), large: artUrl(q, 'large'), ground: artColours(p) } : null }, extra || {}); },
   /* a card on the field, as its owner and the opponent both see it */
   onField(xi, ref) { const X = this.P(xi), o = this.at(X, ref), unit = ref !== 'stage', kw = unit ? this.kwOf(xi, ref) : [], f = this.face(o.id);
     return Object.assign(f, { uid: o.uid, seat: xi, ref, rested: o.rested, don: o.don, turn: o.turn, power: unit ? this.power(xi, ref) : null, keywords: kw, granted: kw.filter(k => !f.kw.includes(k)),

@@ -222,7 +222,7 @@ if (puppeteer) {
     for (const l of lines) { const [n, num] = l.split(' '); const p = V.candidates(num, null).slice().sort((a, b) => (a.market || 9e9) - (b.market || 9e9))[0]; if (p.type === 'Leader') d.leader = p.id; else d.cards.push({ id: p.id, n: +n }); }
     const skip = [...document.querySelectorAll('#tour button')].find(b => /skip/i.test(b.textContent)); if (skip) skip.click();
     V.MODE.set('play', false); document.querySelector('nav button[data-go="sim"]').click();
-    V.SIM.new(d, d, 0); V.SIM.g.bot = 1; V.SIM.g.players[1].name = 'The app'; V.SIM.mulligan(0, false); V.SIM.mulligan(1, false); V.paintSim();
+    V.SIM.new(d, d, 0, { seed: 1 }); V.SIM.g.bot = 1; V.SIM.g.players[1].name = 'The app'; V.SIM.mulligan(0, false); V.SIM.mulligan(1, false); V.paintSim();   // take 126: seeded -- an unseeded deal made take 124's End-turn check a flake
     const b = document.querySelector('#simBoard'), r = b.getBoundingClientRect(), nav = document.querySelector('#navPlay'), shown = sel => { const e = document.querySelector(sel); return !!e && getComputedStyle(e).display !== 'none'; };
     /* take 124: the table -- two halves across the band, the hand as whole cards, the dock; the nav aside; every control on it a
        44 px square of its own (take 108's measure: its box, and the cross 21 px out from its centre landing on it) */
@@ -251,9 +251,33 @@ if (puppeteer) {
     const hue = ([r, g, bl]) => { const mx = Math.max(r, g, bl), d = mx - Math.min(r, g, bl); if (!d) return -1; const h = mx === r ? ((g - bl) / d) % 6 : mx === g ? (bl - r) / d + 2 : (r - g) / d + 4; return (h * 60 + 360) % 360; };
     const deck = b.querySelector('.me .stk.deck .sb'), dk = b.querySelector('.me .dkst .sb'), tk = b.querySelector('.me .tk');
     return { deck: deck && hue(rgb(getComputedStyle(deck).backgroundColor)), face: deck && getComputedStyle(deck, '::before').backgroundImage.slice(0, 60),
-      dkFrame: dk && rgb(getComputedStyle(dk).backgroundColor), dkFace: dk && getComputedStyle(dk, '::before').backgroundImage.slice(0, 60), tk: tk && getComputedStyle(tk).backgroundImage.slice(0, 60) }; });
+      dkFrame: dk && rgb(getComputedStyle(dk).backgroundColor), dkFace: dk && getComputedStyle(dk, '::before').backgroundImage.slice(0, 60), tk: tk && getComputedStyle(tk).backgroundColor }; });   // take 126: a white card in a frame, no gradient
   ok('the card backs as Chrome draws them: the deck\'s back a deep blue, the DON!! deck\'s white in a black frame, a DON!! face up white (the owner, take 124)',
      backs.deck >= 205 && backs.deck <= 245 && /radial-gradient/.test(backs.face || '') && backs.dkFrame && Math.max(...backs.dkFrame) <= 16 && /rgb\(255, 255, 255\)/.test(backs.dkFace || '') && /rgb\(255, 255, 255\)/.test(backs.tk || ''), JSON.stringify(backs));
+  /* take 126, the owner: "For don, replace the image/icon with the DON japanese, not the !!. Give them a black border" -- a DON!!
+     card face up as Chrome draws it, read back from the page's pixels (the review's method): its frame black all round, 2 px or
+     more; its face white, with ドン!!'s ink on it; the DON!! deck's backs carry the same symbol. The control hides the symbol. */
+  const donPix = async (css) => {
+    const r = await page.evaluate(c => { const tk = document.querySelector('#simBoard .me .tk:not(.r)') || document.querySelector('#simBoard .tk'); if (!tk) return null;
+      let st = document.getElementById('don126'); if (c && !st) { st = document.createElement('style'); st.id = 'don126'; document.head.appendChild(st); } if (st) st.textContent = c || '';
+      const q = tk.getBoundingClientRect(), cs = getComputedStyle(tk), u = tk.querySelector('use'), du = document.querySelector('#simBoard .dkst .sb use');
+      return { x: q.left, y: q.top, w: q.width, h: q.height, bw: parseFloat(cs.borderTopWidth), bc: cs.borderTopColor, bg: cs.backgroundColor, href: u && u.getAttribute('href'), dk: du && du.getAttribute('href') }; }, css || '');
+    if (!r) return null;
+    await new Promise(res => setTimeout(res, 80));
+    const b64 = await page.screenshot({ type: 'png', encoding: 'base64' });
+    return page.evaluate(async (b64, r) => { const im = new Image(); im.src = 'data:image/png;base64,' + b64; await im.decode();
+      const cv = new OffscreenCanvas(im.naturalWidth, im.naturalHeight), x = cv.getContext('2d'); x.drawImage(im, 0, 0);
+      const k = im.naturalWidth / innerWidth, d = x.getImageData(0, 0, cv.width, cv.height).data;
+      const px = (X, Y) => { const i = (Math.floor(Y * k) * cv.width + Math.floor(X * k)) * 4; return [d[i], d[i + 1], d[i + 2]]; }, dark = c => Math.max(...c) < 90;
+      let n = 0, ink = 0; const b = r.bw + 1;
+      for (let Y = r.y + b; Y < r.y + r.h - b; Y += 1 / k) for (let X = r.x + b; X < r.x + r.w - b; X += 1 / k) { n++; if (dark(px(X, Y))) ink++; }
+      const edge = [px(r.x + r.bw / 2, r.y + r.h / 2), px(r.x + r.w - r.bw / 2, r.y + r.h / 2), px(r.x + r.w / 2, r.y + r.bw / 2), px(r.x + r.w / 2, r.y + r.h - r.bw / 2)];
+      return { bw: r.bw, bc: r.bc, bg: r.bg, href: r.href, dk: r.dk, w: +r.w.toFixed(1), ink: +(ink / Math.max(1, n)).toFixed(3), edgeDark: edge.every(dark) }; }, b64, r);
+  };
+  const donP = await donPix(), donHid = await donPix('#simBoard .tk svg.g{visibility:hidden!important}'); await donPix('');
+  ok('a DON!! card face up as Chrome draws it, from its pixels (the owner, take 126): a black frame of 2 px or more all round, a white face with ドン!! inked on it, and the DON!! deck\'s backs carry the same symbol',
+     !!donP && donP.bw >= 2 && /rgb\(10, 10, 10\)/.test(donP.bc) && /rgb\(255, 255, 255\)/.test(donP.bg) && donP.href === '#g-donjp' && donP.dk === '#g-donjp' && donP.edgeDark && donP.ink >= 0.12 && donP.ink <= 0.6, JSON.stringify(donP));
+  ok('...control: the same card with its symbol hidden reads as a blank white face -- the ink measured is the symbol\'s', !!donHid && donHid.ink < 0.03 && donHid.edgeDark, JSON.stringify(donHid));
   const spaceAt = async (vp) => { await page.setViewport(vp); await new Promise(r => setTimeout(r, 150));
     return page.evaluate(() => { const V = window.VAULT; V.paintSim(); const b = document.querySelector('#simBoard'), sec = document.querySelector('#sim'), padB = parseFloat(getComputedStyle(sec).paddingBottom) || 0;
       const measure = () => { const hand = b.querySelector('.tb-hand'), hr = hand.getBoundingClientRect(), cards = [...hand.querySelectorAll('.sc')];
@@ -277,10 +301,13 @@ if (puppeteer) {
     return page.evaluate(async () => { const V = window.VAULT; V.SIMUI.acted = null; V.paintSim(); const b = document.querySelector('#simBoard'), band = b.querySelector('.tb-band'), st = b.querySelector('.tb-start'), nx = b.querySelector('.tb-next'), dock = b.querySelector('.tb-dock');
       const whole = e => !!e && e.scrollWidth <= e.clientWidth + 1 && e.scrollHeight <= e.clientHeight + 1, lh = nx ? parseFloat(getComputedStyle(nx).lineHeight) : 1;
       const out = { band: Math.round(band.getBoundingClientRect().height), start: whole(st), startText: st ? st.textContent : '', lines: nx ? Math.round(nx.getBoundingClientRect().height / lh) : 0, dock: Math.round(dock.getBoundingClientRect().height), wide: innerWidth >= 640, next: nx ? nx.textContent : '', unused: Math.round(innerHeight - b.getBoundingClientRect().bottom - (parseFloat(getComputedStyle(document.querySelector('#sim')).paddingBottom) || 0)) };   // the space check's own measure
-      /* the deal is unseeded: a first hand with nothing to play at 1 DON!! is lent enough from the DON!! deck for its cheapest card (the
-         ten stay ten), so End turn has something to ask about; given back after */
-      const P = V.SIM.P(0), costs = (V.SIMUI.v.me.hand || []).map(c => c.cost || 0), lend = costs.length ? Math.max(0, Math.min(P.donDeck, Math.min(...costs) - P.don.active)) : 0;
-      if (lend) { P.don.active += lend; P.donDeck -= lend; V.paintSim(); }
+      /* a first hand with nothing to play at 1 DON!! is lent DON!! from the DON!! deck one at a time until the engine offers a card to
+         play (the ten stay ten), so End turn has something to ask about; given back after. Take 126: take 124 lent up to the cheapest
+         card's cost, and a hand whose cheapest card was one no Main Phase plays ([Counter] only) was lent nothing, End turn ended the
+         turn, and every size after it measured turn 2 -- 2 of 250 failing in one run of five, on an unseeded deal */
+      const P = V.SIM.P(0); let lend = 0;
+      while (!V.SIM.legal(0).some(a => a.t === 'play') && P.donDeck > 0 && lend < 10) { P.don.active += 1; P.donDeck -= 1; lend += 1; }
+      if (lend) V.paintSim();
       V.simTap('end'); await new Promise(r => setTimeout(r, 60)); const sh = document.querySelector('#simSheet'), btn = sel => { const e = sh.querySelector(sel); if (!e) return 0; const q = e.getBoundingClientRect(); return Math.round(Math.min(q.width, q.height)); };
       Object.assign(out, { asked: sh.classList.contains('on') && V.SIMUI.sheet && V.SIMUI.sheet.kind === 'endq', endBtn: btn('[data-sim="end:now"]'), keepBtn: btn('[data-close="simSheet"]'), items: sh.querySelectorAll('.tb-left li').length, turn: V.SIM.g.turn, lend });
       sh.classList.remove('on'); V.SIMUI.sheet = null; if (lend && V.SIM.g.turn === 1) { P.don.active -= lend; P.donDeck += lend; } V.paintSim(); return out; }); };
