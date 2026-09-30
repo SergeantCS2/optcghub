@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 124.* Ranked by blocking-ness, not by interest.
+*Current as of take 126.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -88,11 +88,17 @@ what take 115 changed on screen.
    turn asking while something is left -- and a by-hand line is never passed
    by where the rules make it happen (`docs/SIM-UI.md` §8). **Ruled out:**
    applying a "you may" for the player; Draw and DON!! buttons; asking about
-   DON!! left active. Next: the owner's look on the Fold, then
-   HANDOFF take 124's DEFERRED (the host's placeholder across the app
-   first), then the tail -- modal effects, ordering, protection, the
-   opponent's hidden choices -- one mechanism per take, each proven through
-   `tools/cards/`.
+   DON!! left active. Take 126 (A41): the host's "Image Coming Soon"
+   refused where pictures are fetched, so neither the Sim nor any other
+   screen draws it; on the owner's word mid-take the table draws a card
+   with no picture of its own with another printing's (the table only:
+   landmine 241), every DON!! card reads ドン!! in a black frame, and a
+   line's mark says who plays it. **Ruled out (take 126):** Collect
+   borrowing another printing's picture unlabelled (535 of 1,722 groups
+   hold two illustrations); a Japanese font for ドン!! (drawn as a
+   symbol). Next: the owner's look on the Fold, then the tail --
+   modal effects, ordering, protection, the opponent's hidden choices -- one
+   mechanism per take, each proven through `tools/cards/`.
 5. **A31** Collectr import, the day a real exported file exists.
 6. The standing offer: the release-notes trim.
 
@@ -1591,9 +1597,23 @@ number have no picture at the first host, and the second host serves 1
 719824, new since take 100's 23) and 19 are sealed products; the sidecar
 counts every row without a number as "sealed" (landmine 162's family).
 
+*Take 126:* the missing pictures the app counted as pictures. TCGplayer
+serves one "Image Coming Soon" picture, 200 OK, for 22 card printings and
+one sealed product (PROVEN, every picture fetched 30 Sept); hashed once, it
+stayed their picture, because a hashed id is never fetched again (landmine
+240). The hash step now refuses it -- a card picture that is not
+card-shaped, or any picture within 6 bits of a placeholder hash on file --
+and retries those ids every night with the other misses; the build ships
+them no URL, so every screen draws them as it draws a card with no picture.
+
 **Ruled out:** hosting or caching any image; a source without terms
 the app can cite; shipping a URL the runner has not seen serve; a
-source keyed by card number standing in for a printing.
+source keyed by card number standing in for a printing. *Take 126:* a rule
+in the app to hide the placeholder where it is drawn (the Sim's since take
+124 -- it left the URL, the hash and the counts wrong everywhere else); a
+picture's shape as the test for a sealed product (sixteen real ones are
+landscape); a hash constant for the placeholder (the host can change its
+picture; the hashes on file are learned from it).
 
 ## A40 — The look: the session clicks through and screenshots every change before a take ships · OPENED take 99
 

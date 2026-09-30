@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 124.* Paste the block between the rules into a new session
+*Current as of take 126.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 124 takes by previous sessions. The repo is
+built across 126 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -96,6 +96,32 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
 
 **What is in flight when you arrive:**
 
+- **Take 126 -- the host's "Image Coming Soon" refused at the source**
+  (AGENDA A41; HANDOFF take 126). TCGplayer serves one placeholder picture,
+  200 OK, for 22 card printings and one sealed product; hashed once, it stayed
+  their picture, because the hash step never fetches a hashed printing again
+  (landmine 240). `tools/hashes.py` now judges a picture the night it is
+  fetched: a card picture that is not card-shaped, or any picture within 6
+  bits of a placeholder hash on file, is a miss, retried every night with the
+  other misses; the placeholder hashes are learned, never typed. The build
+  ships those printings no URL, so every screen draws them as it draws a card
+  with no picture; `SIM.placeholderPic` is gone with the data it read. Then
+  the owner's word mid-take, on take 124's table: "ensure we get as many
+  pictures as possible" -- `SIM.picOf` draws a card with no picture of its own
+  with another printing's of the same card, the build's choice (`lend`: the
+  oldest, a real scan more often than a reprint's SAMPLE image; 194 of 257;
+  the 63 left are EB05's and OP18's, not yet photographed), for the table
+  only, since one card's printings hold different illustrations (landmine
+  241); and the app's picture hashes turned out rounded by JSON.parse
+  (landmine 242, its fix a take of its own); "For don ... the DON
+  japanese ... a black border" -- every DON!! card on the table reads ドン!!
+  (`g-donjp`, the icon's own strokes) in a black frame; and "make it more
+  human" -- a line's mark says who plays it ("Not checked yet", "Yours to
+  play", nothing on a proven line). **Take 125 is another session's** (PR
+  #50: the scanner reads the number, backups after the switch to Play), open
+  alongside this one; its landmines are 233-239, this take's 240-242.
+  Whichever merges second takes `main` in.
+
 - **Take 124 -- the table** (AGENDA A23; HANDOFF take 124). The owner handed
   the Sim's UI pass to the session. An audit of take 123 came first: a
   battle's result named the app's Life card to the human past the view (the
@@ -126,8 +152,8 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   **Next, the owner's:** the look on the Fold (the
   pace, the vibration, the long press, the fit) and his word on the card
   back. **Yours after it:** HANDOFF take 124's DEFERRED -- the host's
-  placeholder across the app first -- then A23's tail, one mechanism per
-  take, each proven in `tools/cards/`.
+  placeholder across the app was take 126's -- then A23's tail, one mechanism
+  per take, each proven in `tools/cards/`.
 
 - **Take 123 -- the Sim ready for the UI pass** (AGENDA A23; HANDOFF take
   123). `SIM.view(seat)` is everything a board draws and nothing its seat may

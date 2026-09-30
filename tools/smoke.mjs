@@ -1345,7 +1345,7 @@ const sr = V.simReadiness(mk());
 ok('sim-readiness counts every card of the deck into exactly one bucket', sr.total === 14 && sr.full + sr.part + sr.hand + sr.none === sr.total, JSON.stringify(sr));
 ok('...and names the by-hand cards for the player', Array.isArray(sr.handNames) && sr.handNames.length <= 6);
 ok('the deck screen has the panel and the Play in Sim button; the sim preselects that deck', /id="dkSim"/.test(html) && /id="dkPlaySim"/.test(js) && /SIMUI\.pre = dkCur\.id/.test(js) && /findIndex\(x => x\.d\.id === \(SIMUI\.d1 \|\| SIMUI\.pre\)\)/.test(js));   // take 124: the choice made on the setup screen first, then the deck the Deck screen sent
-ok('the board draws DON!! as tokens -- active upright, rested turned -- and a card whose picture fails in its own colours (take 124; pips and dots to take 123)', /`<i class="tk">\$\{G\('don', 14\)\}<\/i>`\.repeat\(d\.active\)/.test(js) && /`<i class="tk r">\$\{G\('don', 14\)\}<\/i>`\.repeat\(d\.rested\)/.test(js) && /var\(--c-\$\{CCLASS\[cs\[0\]\]\}\)/.test(js));   // the tokens and colours read the seat's view (X.don, c.colours)
+ok('the board draws DON!! as tokens -- active upright, rested turned; ドン!! since take 126 -- and a card whose picture fails in its own colours (take 124; pips and dots to take 123)', /`<i class="tk">\$\{G\('donjp', 14\)\}<\/i>`\.repeat\(d\.active\)/.test(js) && /`<i class="tk r">\$\{G\('donjp', 14\)\}<\/i>`\.repeat\(d\.rested\)/.test(js) && /var\(--c-\$\{CCLASS\[cs\[0\]\]\}\)/.test(js));   // the tokens and colours read the seat's view (X.don, c.colours)
 }
 
 {
@@ -1520,7 +1520,8 @@ ok('the bottom bar is one bar in every mode: fixed height, near-black, items str
 ok('every screen title bar has the same minimum height', /\.appbar\{[^}]*min-height:56px/.test(html));   // take 107: the header, one per screen
 ok('the Portfolio label is a small caption above the name, which keeps the display face at the hero\'s size', /\.hero \.who \.cap\{[^}]*text-transform:uppercase/.test(html) && /<span class="cap">Collection<\/span><em id="pfName">/.test(html) && /\.hero \.who em\{[^}]*font-size:var\(--fs-head\)/.test(html));   // take 117: the token (26px)
 { const boxes = V.CAT.rows.filter(p => V.SEALED.isProduct(p));
-  ok('every sealed product carries a product photo url (343 of 343 today)', boxes.length > 300 && boxes.every(p => p.img));
+  const phSealed = new Set(((V.CAT.man.images || {}).placeholder_ids || []).map(Number));   // take 126: the host's "Image Coming Soon" ships no URL (landmine 240)
+  ok(`every sealed product carries a product photo url but those whose picture is the host's placeholder (${boxes.filter(p => phSealed.has(p.id)).length} today)`, boxes.length > 300 && boxes.every(p => p.img || phSealed.has(p.id)), String((boxes.find(p => !p.img && !phSealed.has(p.id)) || {}).id));
   const pic = V.productPic(boxes[0]);
   ok('a product picture is the take-12 display-only image -- lazy, hot-linked, retried once then removed on failure -- over a drawn tile that shows the set code', /<img class="ref" loading="lazy"/.test(pic) && /this\.remove\(\)/.test(pic) && /class="ph"/.test(pic) && /(tcgplayer-cdn|product-images)\.tcgplayer\.com/.test(pic));   // either declared host since take 100
   const np = V.productPic({ ...boxes[0], img: null });
@@ -5042,13 +5043,13 @@ ok('...control: the engine\'s own lines, as take 123 painted them, are caught', 
   const pics = [...mine, ...theirs].filter(c => c.art).every(c => t.includes(`src="${escH(c.art.thumb)}"`));
   ok('the table draws both halves: five Character places each, the Leader in the middle of each back row, Life and Deck as counts, the Trash with its newest card, DON!! as tokens, the other hand as backs',
      (t.match(/<div class="tb-row front">/g) || []).length === 2 && (t.match(/<div class="tb-row back">/g) || []).length === 2 && new RegExp(`aria-label="${v.me.lifeCount} Life"`).test(t) && new RegExp(`aria-label="Deck, ${v.me.deckCount} cards"`).test(t)
-     && /data-sim="trash:0" aria-label="Trash, 1 card"/.test(t) && (t.match(/<i class="tk"><svg class="g"[^>]*><use href="#g-don"\/><\/svg><\/i>/g) || []).length === v.me.don.active + v.them.don.active && new RegExp(`aria-label="${v.them.handCount} cards in hand">${'<i></i>'.repeat(v.them.handCount)}`).test(t), t.slice(0, 160));
+     && /data-sim="trash:0" aria-label="Trash, 1 card"/.test(t) && (t.match(/<i class="tk"><svg class="g"[^>]*><use href="#g-donjp"\/><\/svg><\/i>/g) || []).length === v.me.don.active + v.them.don.active && new RegExp(`aria-label="${v.them.handCount} cards in hand">${'<i></i>'.repeat(v.them.handCount)}`).test(t), t.slice(0, 160));
   ok('...every card on it is its hot-linked picture over its own colours, and a rested one with DON!! says so upright (the power, "+2")', pics && /<button class="sc[^"]*\brest\b[^"]*" data-sim="card:m0" data-key="m0" data-uid="\d+" aria-label="[^"]*rested, 2 DON!! given[^"]*">/.test(t) && /<span class="dn">\+2<\/span>/.test(t) && mine.every(c => t.includes(`--a1:${(c.art && c.art.ground[0]) || ''}`)), String(pics));
   ok('...the other hand is backs and a count: none of its cards is on the table', S.P(1).hand.every(id => !t.includes(`src="${escH(S.face(id).art ? S.face(id).art.thumb : '#none')}"`) || [v.them.leader, ...v.them.chars, ...v.them.trash, ...mine].some(c => c.id === id)));
   ok('...and the header\'s subtitle says whose turn it is while the setup\'s words say what the Sim does', doc.getElementById('simSub').textContent === 'turn 3 · Player 1’s turn');
   /* the zoom: a card at its largest with each line's mark and what the app does; a card whose continuous text is the player's */
   V.simSheetOpen('zoom', 'L'); const z = sheet();
-  ok('the zoom shows the card large (its large picture), its words, each line\'s mark and what the app will do, and its moves', z.includes(`src="${escH(v.me.leader.art.large)}"`) && /proven by a test|the app runs it; no test has proven it yet/.test(z) && /The app will: /.test(z) && /class="zm-name">Monkey\.D\.Luffy</.test(z), z.slice(0, 200));
+  ok('the zoom shows the card large (its large picture), its words, what the app will do on each line -- a proven line unmarked since take 126 -- and its moves', z.includes(`src="${escH(v.me.leader.art.large)}"`) && !/proven by a test|no test has proven|Not checked yet/.test(z) && /The app will: /.test(z) && /class="zm-name">Monkey\.D\.Luffy</.test(z), z.slice(0, 200));
   const E = V.CAT.effects, st = +Object.keys(E).find(id => { const p = V.CAT.byId.get(+id); return p && p.type === 'Character' && !p.sealed && E[id].some(e => e.hand && e.t === 'static'); });
   P.chars.push(onField(st, 1)); SU.focus = 'm1'; V.paintSim(); const y = board(); V.simSheetOpen('zoom', 'm1'); const yz = sheet();
   ok('a card whose continuous text the app does not compute says so: a gold corner on the card, "yours to apply" in the dock with the power said to be without it, and the line in the zoom (docs/SIM-UI.md, what the pass keeps)',
@@ -5092,7 +5093,7 @@ ok('...control: the engine\'s own lines, as take 123 painted them, are caught', 
      `frame ${hexOf(sb, 'background')} ${hue(hexOf(sb, 'background')).toFixed(0)}°, face ${hexOf(sb, '--f1')}`);
   ok('...a Leader\'s back red in a darker red border; a DON!! card\'s back white in a black border, and a DON!! face up white in black too, as is the given DON!! on a card',
      red(hexOf(ld, 'background')) && red(hexOf(ld, '--f1')) && light(hexOf(ld, 'background')) < light(hexOf(ld, '--f1')) && light(hexOf(dn, 'background')) < 0.01 && light(hexOf(dn, '--f1')) > 0.9 && light(hexOf(dn, 'color')) < 0.02
-     && /background:linear-gradient\(160deg,#FFFFFF,#ECE9E1\);\n  box-shadow:inset 0 0 0 1\.5px #0A0A0A,/.test(tk) && /color:#0A0A0A/.test(rule('.tk svg.g')));
+     && /background:#FFFFFF;\n  border:max\(2px, calc\(var\(--cw\) \* \.028\)\) solid #0A0A0A;/.test(tk) && /color:#0A0A0A/.test(rule('.tk svg.g')));   // take 126: a frame of its own, not a 1.5px line
   ok('...control: take 124\'s first backs -- the icon\'s own purple on a pale face, the gold DON!! token -- are not the game\'s colours',
      !deckBack('background:#8552b8;color:#8552b8;--cbk:#F6F1E4;--f1:#F6F1E4;--f2:#F6F1E4') && !deckBack('background:#8552B8;--f1:#8552B8;--f2:#8552B8') && light('#F6C48D') < 0.9 && !red('#8552B8'));
   ok('the backs are drawn where the game has them face down: the deck and Life blue, the DON!! deck a stack of white backs beside the cost area, and a Leader not yet shown red (the setup, the reveal)',
@@ -5102,11 +5103,8 @@ ok('...control: the engine\'s own lines, as take 123 painted them, are caught', 
   const mullShown = [...SU.shown]; S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' }); V.paintSim(); const tableShown = [...SU.shown].sort(); V.paintSim();
   ok('each Leader turns over from its red back the first time it shows in a game -- the mulligan shows the deciding seat\'s, the table the other -- and never again', mullShown.join() === String(S.g.first) && tableShown.join() === '0,1' && SU.shown.size === 2, JSON.stringify({ mullShown, tableShown }));
   ok('...control: a new game is dealt with none shown yet, and no move made (Deal resets both; take 124)', /Object\.assign\(SIMUI, \{ sel: null, focus: null, post: null, room: null, fxt: null, seen: 0, hurry: false, shown: new Set\(\), acted: null \}\)/.test(js));
-  /* a picture shared by cards of different names is the host's placeholder: such a card is drawn in its colours */
-  const rows = V.CAT.rows.filter(p => p.hash && !p.sealed), by = new Map(); rows.forEach(p => by.set(p.hash, (by.get(p.hash) || new Set()).add(p.name)));
-  const shared = [...by].filter(([h, n]) => n.size > 1).map(([h]) => h), ph = rows.find(p => shared.includes(p.hash)), real = rows.find(p => p.img && !shared.includes(p.hash));
-  ok(`a card whose picture is the host's placeholder -- a picture shared by cards of different names (${shared.length} such, ${rows.filter(p => shared.includes(p.hash)).length} printings today) -- is drawn in its own colours, like a card with no picture`, (!ph || S.face(ph.id).art === null) && !!real && S.face(real.id).art !== null, ph ? ph.num + ' ' + ph.name : 'none today');
-  ok('...control: the rule reads names, so reprints of one card sharing their art keep it', (() => { const same = [...by].find(([h, n]) => n.size === 1 && rows.filter(p => p.hash === h).length > 1); return !same || S.face(rows.find(p => p.hash === same[0]).id).art !== null; })());
+  /* take 124 drew a card whose picture was the host's placeholder in its colours, by a rule of the Sim's; take 126 refuses the
+     placeholder where pictures are fetched, and its section checks the shipped catalogue and the Sim's pictures */
   S.g = null; fresh(); }
 /* the owner, mid-take: "after every turn ends audit all moves against the rules and all card they played" -- the rulebook
    (tools/lib/rulebook.mjs) and random legal decks found what the ready-made decks never dealt; each fix is a scenario here, on
@@ -5256,6 +5254,65 @@ ok('...control: the engine\'s own lines, as take 123 painted them, are caught', 
     ok('...control: take 124\'s top bar there, "The app is playing", is caught', !says('<span class="tb-stat"><b>Turn 3</b> \u00b7 The app is playing</span><div class="tb-dock">'));
     S.g = null; fresh(); }
   S.g = null; }
+
+section('take 126 — the host\'s "Image Coming Soon" is no card\'s picture; the Sim draws a card from another printing of it; DON!! cards read ドン!!; the marks in words a player reads');
+{ const rows = V.CAT.rows, im = V.CAT.man.images || {}, byId = id => V.CAT.byId.get(+id);
+  /* 1. the export: the printings whose picture the runner saw be the placeholder ship none (landmine 240) */
+  const phIds = new Set((im.placeholder_ids || []).map(Number)), phRows = rows.filter(p => phIds.has(p.id));
+  const sharedOf = rs => { const by = new Map(); rs.filter(p => p.hash != null && !p.sealed).forEach(p => by.set(p.hash, (by.get(p.hash) || new Set()).add(p.name))); return [...by].filter(([h, n]) => n.size > 1); };
+  ok(`the build ships no picture for a printing whose picture the runner saw be the host's "Image Coming Soon": ${phRows.length} printings today (${phRows.filter(p => !p.sealed).length} cards, ${phRows.filter(p => p.sealed).length} sealed), each with no URL and no hash; and no hash is left on two names (landmines 226, 240)`,
+     Array.isArray(im.placeholder_ids) && im.placeholder === phRows.length && phRows.every(p => p.img == null && p.hash == null) && sharedOf(rows).length === 0,
+     JSON.stringify({ placeholder: im.placeholder, ids: (im.placeholder_ids || []).length, shared: sharedOf(rows).length }));
+  const ph = phRows.find(p => !p.sealed), real = rows.find(p => !p.sealed && p.hash != null && p.img && ph && p.name !== ph.name);
+  ok('...control: take 124\'s catalogue -- one hash on two names, a URL on the placeholder\'s printing -- is caught', !ph || (sharedOf([{ ...ph, hash: 77, img: 'x' }, { ...real, hash: 77 }]).length === 1 && [{ ...ph, img: 'x' }].some(p => p.img != null)));
+  ok('...and Collect draws such a printing as it draws any card without a picture: its colours and its number, no picture, and no other printing\'s', !ph || (!/<img/.test(V.productPic(ph)) && /<img class="ref"/.test(V.productPic(real))), ph ? ph.num + ' ' + ph.name : 'none today');
+  const pl = V.picturesLine(im), pl23 = V.picturesLine({ ...im, placeholder: 23 }), pl124 = V.picturesLine({ ...im, placeholder: undefined });   // 23 planted: the line reads the count, whatever today's is
+  ok(`Diagnostics' pictures line counts the placeholder among the pictures the first host has not: "${pl.slice(0, 90)}..."`, pl23.includes('(23 of them the host’s “Image Coming Soon”, shipped with none)') && (!im.placeholder || pl.includes(`(${im.placeholder} of them the host’s “Image Coming Soon”, shipped with none)`)), pl23);
+  ok('...control: take 124\'s manifest, with no count of it, reads as it did', !/Image Coming Soon/.test(pl124) && /have no picture at the first host; /.test(pl124), pl124);
+  /* 2. the Sim: a card with no picture of its own is drawn with another printing's of the same card (the owner: "I'm noticing alot of
+     cards in the sim without pictures, ensure we do a sweep and ensure we get as many pictures as possible") */
+  const pic = p => typeof S.picOf === 'function' ? S.picOf(p) : (S.face(p.id).art ? p : null);   // a build before take 126 draws a card's own picture or none
+  const cards = rows.filter(p => !p.sealed && p.num), own = cards.filter(p => p.hash != null), none = cards.filter(p => p.hash == null);
+  const lent = none.filter(p => { const q = pic(p); return q && q.id !== p.id; }), bare = none.filter(p => !pic(p) || pic(p).id === p.id);
+  const sameCard = (p, q) => q.num === p.num && q.name === p.name && q.hash != null && !q.sealed;
+  const treatFirst = (p, q) => q.treat === p.treat || !cards.some(r => r.hash != null && r.num === p.num && r.name === p.name && r.treat === p.treat);
+  ok(`the Sim draws a card with its own picture when the runner saw it serve (${own.length} printings)`, own.length > 0 && own.every(p => { const a = S.face(p.id).art; return !!a && a.thumb === V.artUrl(p); }));
+  const lendOf = p => +((V.CAT.lend || {})[p.id]);
+  ok(`...and a card with none of its own with the picture of another printing of the same card that the build chose -- the same number and name, one the runner saw serve, the same treatment first, then the oldest (a real scan more often than a reprint's SAMPLE image): ${lent.length} of ${none.length} today, ${bare.length} left bare`,
+     lent.length > 0 && lent.every(p => { const q = pic(p), sibs = cards.filter(r => sameCard(p, r) && r.img && r.treat === q.treat); return sameCard(p, q) && treatFirst(p, q) && q.id === lendOf(p) && q.id === Math.min(...sibs.map(r => r.id)) && S.face(p.id).art.thumb === V.artUrl(q) && S.face(p.id).art.ground[0] === V.artColours(p)[0]; }),
+     lent.slice(0, 3).map(p => `${p.num} ${p.name} <- ${pic(p).id}`).join('; '));
+  ok('...and a card with no such printing is never drawn with another card\'s picture: its own URL, which the host may publish, or none', bare.every(p => { const q = pic(p); return !q || q.id === p.id; }), `${bare.length} bare`);
+  { const L = V.CAT.lend || {}, p = lent[0] || none[0], keep = L[p.id], other = rows.find(r => r.hash != null && r.img && !r.sealed && r.name !== p.name), unseenSib = rows.find(r => r.num === p.num && r.name === p.name && r.hash == null && r.id !== p.id && r.img);
+    L[p.id] = other.id; const q1 = pic(p); L[p.id] = unseenSib ? unseenSib.id : 0; const q2 = pic(p); L[p.id] = keep;
+    ok('...control: a map naming another card, or a printing of this one the runner never saw serve, is refused -- the table draws the card or nothing, never another card', !!p && (!q1 || q1.id !== other.id) && (!q2 || !unseenSib || q2.id !== unseenSib.id), JSON.stringify({ p: p && p.id, planted: other && other.id, q1: q1 && q1.id, q2: q2 && q2.id })); }
+  const dealt = [...new Set((V.CAT.stock || []).flatMap(d => [d.leader, ...d.cards.map(c => c.id)]))], unseen = dealt.filter(id => { const q = pic(byId(id)); return !q || q.hash == null; });
+  ok(`every card the ready-made decks deal is drawn with a picture the runner saw serve (${dealt.length} printings; take 124 drew Jinbe, Nami and Jewelry Bonney in their colours)`, dealt.length > 100 && unseen.length === 0, unseen.map(id => byId(id).num + ' ' + byId(id).name).join(', '));
+  ok('...control: take 124\'s rule -- a card\'s own picture or none -- leaves the placeholder\'s printings bare', !ph || !(ph.img && ph.hash != null), ph ? ph.num : 'none today');
+  /* 3. DON!! cards read ドン!! in a black frame (the owner: "For don, replace the image/icon with the DON japanese, not the !!. Give them a black border") */
+  const sym = (html.match(/<symbol id="g-donjp"[\s\S]*?<\/symbol>/) || [''])[0], css = (html.match(/<style>([\s\S]*?)<\/style>/) || ['', ''])[1];
+  S.new({ ...stock('stock-st01'), name: 'You' }, { ...stock('stock-st02'), name: 'The app' }, 0, { seed: 3, bot: 1 }); fresh(); V.paintSim(); V.simTap('keep:0'); V.simTap('end:now'); V.paintSim();
+  const t = board(), v = S.view(S.g.active), tks = (t.match(/<i class="tk( r)?"><svg class="g"[^>]*><use href="#g-donjp"\/><\/svg><\/i>/g) || []).length;
+  ok(`every DON!! card on the table -- the cost area's ${v.me.don.active + v.me.don.rested + v.them.don.active + v.them.don.rested}, and the DON!! decks' backs -- reads ドン!!, the icon's own strokes drawn as a symbol, and none reads the old "!!"`,
+     /viewBox="17 -15 212 304"/.test(sym) && (sym.match(/<path /g) || []).length === 10 && tks === v.me.don.active + v.me.don.rested + v.them.don.active + v.them.don.rested && tks > 0
+     && /<span class="sb dn"[^>]*><svg class="cb" aria-hidden="true"><use href="#g-donjp"\/><\/svg><\/span>/.test(t) && !/<i class="tk( r)?"><svg class="g"[^>]*><use href="#g-don"\/>/.test(t) && !/<span class="sb dn"[^>]*><svg class="cb" aria-hidden="true"><use href="#g-cardart"/.test(t), `${tks} DON!! cards`);
+  ok('...control: take 124\'s DON!! card, the "!!" glyph on white, is caught', /<i class="tk( r)?"><svg class="g"[^>]*><use href="#g-don"\/>/.test('<i class="tk"><svg class="g" width="14" height="14"><use href="#g-don"/></svg></i>'));
+  const rule = sel => (css.match(new RegExp('\\n' + sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\{([^}]*)\\}')) || ['', ''])[1];
+  ok('...each in a black frame of its own, a tenth of the card\'s width and never under 2px, where take 124 drew a 1.5px line; the DON!! deck\'s frame as wide', /background:#FFFFFF;/.test(rule('.tk')) && /border:max\(2px, calc\(var\(--cw\) \* \.028\)\) solid #0A0A0A/.test(rule('.tk')) && !/inset 0 0 0 1\.5px/.test(rule('.tk')) && /inset:max\(2px, calc\(var\(--cw\) \* \.028\)\)/.test(rule('.sb.dn::before')), rule('.tk'));   // the same width on every side: a percentage inset reads the height top and bottom
+  S.g = null; fresh();
+  /* 4. the marks say who plays a line, not what the tests know (the owner: "make it more human ... Right now it's clear that that's soley AI and for AI/the tests") */
+  ok('the effect\'s marks are a player\'s words: none of the tests\' ("proven by a test", "no test has proven it yet", "does not run this line", "proven wrong") is in the app', !/proven by a test|no test has proven|does not run this line|version was proven wrong/.test(js), (js.match(/proven by a test|no test has proven|does not run this line|version was proven wrong/) || [''])[0]);
+  const MK = (js.match(/const SIM_MARK = (\{[^}]*\});/) || [])[1], mk = MK ? Function('return ' + MK)() : {};
+  ok('...a line a proof has shown right is unmarked; one with no proof asks for a Report if the app gets it wrong; a line the app does not play, or got wrong, is "Yours to play"',
+     mk.proven === '' && mk.unproven === 'Not checked yet \u2014 if the app gets it wrong, tap Report' && /^Yours to play \u2014 the app can\u2019t do this one$/.test(mk.hand) && /^Yours to play \u2014/.test(mk.wrong), JSON.stringify(mk));
+  const FX = V.CAT.effects, unproven = +Object.keys(FX).find(id => { const q = byId(id); return q && q.type === 'Character' && !q.sealed && !V.CAT.proof[id] && FX[id].some(e => !e.hand && e.t === 'onplay'); });
+  const handC = +Object.keys(FX).find(id => { const q = byId(id); return q && q.type === 'Character' && !q.sealed && FX[id].length && FX[id].every(e => e.hand); });
+  S.new({ ...stock('stock-st01'), name: 'Player 1' }, { ...stock('stock-st02'), name: 'Player 2' }, 0, { seed: 70 }); S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' }); fresh();
+  S.P(S.g.active).chars.push(S.inst(unproven, S.g.turn - 1), S.inst(handC, S.g.turn - 1)); V.paintSim(); V.simSheetOpen('zoom', 'm0'); const zu = sheet(); V.simSheetOpen('zoom', 'm1'); const zh = sheet();
+  ok(`the zoom marks a line with no proof "Not checked yet" (${byId(unproven).name}) -- Report is the effect panel's -- and a by-hand line "Yours to play" (${byId(handC).name})`,
+     /<div class="note">Not checked yet<\/div><div class="note">The app will: /.test(zu) && !/tap Report/.test(zu) && /<div class="note">Yours to play \u2014 the app can\u2019t do this one<\/div>/.test(zh), zu.slice(zu.indexOf('zm-line'), zu.indexOf('zm-line') + 160));
+  S.g.queue = S.offers(S.g.active, 'onplay', 0).filter(o => !o.hand); V.paintSim(); const pb = board();
+  ok('...and the effect panel, when that line resolves, says it with its Report beside it', /<div class="note tb-mark">Not checked yet \u2014 if the app gets it wrong, tap Report<\/div>/.test(pb) && /data-sim="report">Report<\/button>/.test(pb), (pb.match(/tb-mark">[^<]*/) || ['no mark'])[0]);
+  S.g = null; fresh(); }
 V.MODE.set('collect', false); V.go('home');
 }
 console.log(`\n${pass} passed, ${fail} failed`);

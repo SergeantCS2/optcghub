@@ -84,13 +84,25 @@ def catalogue_json(db):
     # the second host's URL -- only when the runner's probe saw it serve (the
     # sidecar's `alt`, written by hashes.py, which runs before this step). Nothing
     # is guessed: an id outside `alt` keeps the URL TCGCSV gave it.
+    # Take 126 (landmine 240): a printing whose picture the runner last saw be the host's placeholder ("Image Coming
+    # Soon") ships no hash and no URL -- or the second host's, when that served the card -- so every screen draws it
+    # as it draws a card with no picture. The catalogue step loaded the hashes before hashes.py ran, so the sidecar's
+    # verdict of this run is applied here, not left to the next build.
     import hashes as _h
-    alt = _h.read_alt(); ci = cols.index("img"); n_alt = 0
+    alt = _h.read_alt(); ph = _h.read_placeholder(); ci, hi = cols.index("img"), cols.index("hash"); n_alt = n_ph = 0
     rows = [list(r) for r in rows]
     for r in rows:
-        u = _h.export_url(r[1], r[ci], alt) if r[ci] else r[ci]
-        if u != r[ci]:
-            r[ci] = u; n_alt += 1
+        u, h = _h.export_pic(r[1], r[ci], r[hi], alt, ph)
+        if str(r[1]) in ph and not u:
+            n_ph += 1
+        elif u != r[ci]:
+            n_alt += 1
+        r[ci], r[hi] = u, h
+    # Take 126: for the Sim's table only, the printing whose picture a card with none of its own is drawn with
+    # (hashes.lend_map: the same card's oldest printing the runner saw serve, the same treatment first). Collect never
+    # borrows (landmine 241).
+    fields = ("id", "num", "name", "treat", "hash", "img", "sealed")
+    lend = _h.lend_map([{k: r[cols.index(k)] for k in fields} for r in rows])
     ids = [r[1] for r in rows]
     if len(set(ids)) != len(ids):
         raise SystemExit(f"build_app: {len(ids)-len(set(ids))} duplicate printings "
@@ -129,7 +141,8 @@ def catalogue_json(db):
                     hist[pid][di] = round(m, 2)
     except Exception as e:                                # noqa: BLE001
         print(f"   note: price history not bundled: {e}")
-    return {"sets": sets, "cols": cols, "rows": rows, "ng": ng, "ngs": ngs, "alt_images": n_alt,
+    return {"sets": sets, "cols": cols, "rows": rows, "ng": ng, "ngs": ngs, "alt_images": n_alt, "placeholder_images": n_ph,
+            "lend": {str(k): v for k, v in sorted(lend.items())},
             "valid_numbers": valid, "star": star, "days": days, "hist": hist}
 
 
@@ -355,13 +368,18 @@ def build(verbose=True):
                      "missing_sealed_ids": sorted(int(x) for x in raw_side.get("missing_sealed", [])),
                      "alt_served": len(raw_side.get("alt", [])),
                      "exported": cat.get("alt_images", 0),
+                     # take 126: the printings whose picture the runner saw be the host's "Image Coming Soon" -- shipped
+                     # with no picture (landmine 240); cards and sealed products, by id, for Diagnostics and the gate
+                     "placeholder": cat.get("placeholder_images", 0),
+                     "placeholder_ids": sorted(int(x) for k in ("cards", "sealed")
+                                               for x in (raw_side.get("placeholder") or {}).get(k, [])),
                      "measured": "missing_sealed" in raw_side,
                      # take 109 (A42): the large size as the runner measured it this run;
                      # the app asks for it only when it served (index.html, largeOk)
                      "large": raw_side.get("large") or {}}
     if verbose:
         im = man["images"]
-        print(f"   images: {im['exported']} rows carry the second host "
+        print(f"   images: {im['exported']} rows carry the second host, {im['placeholder']} ship no picture: the host's placeholder "
               f"({im['missing_cards']} cards and {im['missing_sealed']} sealed missing at the first; "
               f"{'measured' if im['measured'] else 'sealed images not yet measured on this sidecar'})")
         lg = im["large"]

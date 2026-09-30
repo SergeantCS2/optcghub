@@ -1,4 +1,4 @@
-# OP TCG Hub — take 124
+# OP TCG Hub — take 126
 
 ## Installing — read this first
 
@@ -17,6 +17,19 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 126:** More cards in the Sim have pictures: a card whose own
+picture TCGplayer doesn't have is shown with the picture of another printing
+of the same card, so every card in the ready-made decks has one now. About
+two dozen cards -- Nami, Jinbe and Kaido from the first starter decks among
+them -- and one sealed product showed TCGplayer's "Image Coming Soon" as if
+it were their picture. The app now spots that picture and never shows it,
+checks those cards again every night, and elsewhere in the app draws them in
+their own colours with their number until the real picture exists. DON!!
+cards in the Sim read ドン!! in a black border, and an effect's note says
+who plays it: nothing when the app plays it, "Not checked yet" when the app
+plays it untested (tap Report if it goes wrong), "Yours to play" when it's
+yours.
 
 **New at take 124:** The Sim is a real table now. Once a game is dealt it
 fills the screen, and Leave at the top forfeits and takes you back to the

@@ -1749,10 +1749,11 @@ const take122 = [
       return { ok: m.buttons.includes('fxmain:leader'), buttons: m.buttons.join(' ') };
     } },
   { name: 'sim-luffy-offer-marked-proven', run: async (page) => {
-      /* a real tap on Main: the offer says what the app will do, that a test proves it, and carries Report */
+      /* a real tap on Main: the offer says what the app will do and carries Report; take 126 leaves a proven line unmarked
+         (the owner: "make it more human") -- no test's words on it */
       await page.click('#simBoard [data-sim="fxmain:leader"]'); await wait(500);
       const m = await page.evaluate(simRead);
-      return { ok: /proven by a test/.test(m.text) && /The app will: \[Activate: Main\] once per turn/.test(m.text) && m.buttons.includes('fx:L') && m.buttons.includes('report'), buttons: m.buttons.filter(b => /^fx|report/.test(b)).join(' ') };
+      return { ok: !/proven by a test|no test has proven|Not checked yet/.test(m.text) && /The app will: \[Activate: Main\] once per turn/.test(m.text) && m.buttons.includes('fx:L') && m.buttons.includes('report'), buttons: m.buttons.filter(b => /^fx|report/.test(b)).join(' ') };
     } },
   { name: 'sim-luffy-once-then-refused-with-the-reason', run: async (page) => {
       /* the DON!! lands on the Leader; the Main button is gone, and a second activation is refused with its section */
@@ -2014,4 +2015,72 @@ const take124 = [
     } },
 ];
 take124.viewports = ['cover', 'inner', 'phone', 'tablet'];
-export const STEPS = { 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
+/* ---- take 126 -- the owner, on take 124's table: "I'm noticing alot of cards in the sim without pictures ... For don, replace the
+   image/icon with the DON japanese, not the !!. Give them a black border. Also change the proven by test wording". His three
+   pictureless cards (Jinbe, Nami, Jewelry Bonney: the host's "Image Coming Soon", landmine 240) on the table with another printing's
+   picture; the DON!! cards close; an effect and the zoom in a player's words; then the same printings where the picture stands for
+   the printing -- a card's page and a sealed product's -- drawn without the placeholder. */
+const take126 = [
+  { name: 'open', run: async (page, ctx) => { await ctx.open(); return { ok: true }; } },
+  { name: 'sim-the-owners-three-cards-with-pictures', run: async (page) => {
+      await page.evaluate(tb(`while (V.closeAnyOverlay()) {} V.MODE.set('play', true); await wait(450); V.go('sim'); await wait(450);
+        S.new({ ...stock('stock-st01'), name: 'You — ST01' }, { ...stock('stock-st02'), name: 'The app — ST02' }, 0, { seed: 7, bot: 1 }); S.act(S.who(), { t: 'keep' }); S.act(S.who(), { t: 'keep' });
+        S.act(0, { t: 'end' }); await settle(); S.act(1, { t: 'end' }); await settle();
+        window.__owners = ['ST01-005', 'ST01-007', 'ST02-007'].map(n => V.CAT.rows.filter(p => p.num === n && !p.sealed).sort((a, b) => a.id - b.id)[0]);
+        const [jinbe, nami, bonney] = window.__owners; S.P(0).chars = [S.inst(jinbe.id, 1), S.inst(nami.id, 1)]; S.P(1).chars = [S.inst(bonney.id, 1)];
+        const P = S.P(0); P.don.rested = Math.min(2, P.don.active); P.don.active -= P.don.rested; fresh(); V.paintSim(); window.scrollTo(0, 0);`));
+      await waitArt(page, '#simBoard .tb-mat img'); await wait(600);
+      const m = await page.evaluate(() => { const V = window.VAULT, S = V.SIM, b = document.querySelector('#simBoard');
+        const drawn = new Set([...b.querySelectorAll('.tb-mat img')].filter(i => i.complete && i.naturalWidth > 0).map(i => i.getAttribute('src')));
+        return window.__owners.map(p => { const q = S.picOf(p); return { card: p.num + ' ' + p.name, id: p.id, own: p.hash != null, lent: q ? q.id : null, drawn: !!q && drawn.has(V.artUrl(q)) }; }); });
+      return { ok: m.length === 3 && m.every(c => !c.own && c.lent && c.lent !== c.id && c.drawn), cards: m };
+    } },
+  { name: 'sim-the-don-cards-close', run: async (page, ctx) => {
+      /* the cost area and the DON!! deck, shot close: ドン!! on white in a black frame */
+      const m = await page.evaluate(() => { const b = document.querySelector('#simBoard'), tks = [...b.querySelectorAll('.tb-half.me .tk')], dk = [...b.querySelectorAll('.tb-half.me .dkst .sb use')];
+        const box = (b.querySelector('.tb-half.me .tb-don') || b).getBoundingClientRect();
+        return { cards: tks.length, rested: tks.filter(t => t.classList.contains('r')).length, glyph: tks.every(t => (t.querySelector('use') || {}).getAttribute && t.querySelector('use').getAttribute('href') === '#g-donjp'),
+          frame: tks.map(t => getComputedStyle(t).borderTopWidth + ' ' + getComputedStyle(t).borderTopColor)[0], deck: dk.length && dk.every(u => u.getAttribute('href') === '#g-donjp'),
+          clip: { x: Math.max(0, box.left - 8), y: Math.max(0, box.top - 8), width: Math.min(innerWidth, box.width + 16), height: box.height + 16 } }; });
+      const p = path.join(ctx.dir, '03a-the-don-cards-close.png'); await page.screenshot({ path: p, clip: m.clip }); ctx.shots += 1;
+      return { ok: m.cards >= 2 && m.rested >= 1 && m.glyph && m.deck && /^[2-9](\.\d+)?px rgb\(10, 10, 10\)$/.test(m.frame), shot: path.relative(ROOT, p), cards: m.cards, rested: m.rested, frame: m.frame };
+    } },
+  { name: 'sim-an-effect-not-checked-yet', run: async (page) => {
+      /* an [On Play] the app plays with no card proof yet: the panel asks for a Report, in a player's words */
+      const m = await page.evaluate(tb(`const FX = V.CAT.effects, id = +Object.keys(FX).find(k => { const p = V.CAT.byId.get(+k); return p && p.type === 'Character' && !p.sealed && !V.CAT.proof[k] && FX[k].some(e => !e.hand && e.t === 'onplay' && e.if.length === 0); });
+        S.P(0).chars.push(S.inst(id, S.g.turn)); S.g.queue = S.offers(0, 'onplay', S.P(0).chars.length - 1).filter(o => !o.hand).slice(0, 1); fresh(); V.paintSim(); await wait(300);
+        const panel = document.querySelector('#simBoard .tb-panel'); if (panel) panel.scrollIntoView({ block: 'nearest' });
+        out = { card: V.CAT.byId.get(id).name, mark: ((panel && panel.querySelector('.tb-mark')) || {}).textContent || '', report: !!(panel && panel.querySelector('[data-sim="report"]')), words: panel ? panel.textContent : '' };`));
+      return { ok: m.mark === 'Not checked yet — if the app gets it wrong, tap Report' && m.report && !/proven by a test|no test has proven/.test(m.words), card: m.card, mark: m.mark };
+    } },
+  { name: 'sim-the-zoom-says-who-plays-each-line', run: async (page) => {
+      /* a Character whose lines the app does not play: held to zoom (a real long press), "Yours to play" */
+      await page.evaluate(tb(`S.g.queue = []; const FX = V.CAT.effects, id = +Object.keys(FX).find(k => { const p = V.CAT.byId.get(+k); return p && p.type === 'Character' && !p.sealed && FX[k].length && FX[k].every(e => e.hand) && FX[k].some(e => e.t === 'onplay'); });
+        S.P(0).chars = S.P(0).chars.slice(0, 3); S.P(0).chars.push(S.inst(id, 1)); fresh(); V.paintSim(); window.scrollTo(0, 0);`));
+      const key = await page.evaluate(() => 'm' + (window.VAULT.SIM.P(0).chars.length - 1));
+      const el = await page.$(`#simBoard [data-key="${key}"]`); const bx = el && await el.boundingBox();
+      if (bx) { await page.mouse.move(bx.x + bx.width / 2, bx.y + Math.min(30, bx.height / 2)); await page.mouse.down(); await wait(700); await page.mouse.up(); await wait(500); }
+      const m = await page.evaluate(() => { const z = document.querySelector('#simSheetBody'); return { on: document.querySelector('#simSheet').classList.contains('on'), name: (z.querySelector('.zm-name') || {}).textContent || '', marks: [...z.querySelectorAll('.zm-line .note')].map(n => n.textContent).slice(0, 3), words: z.textContent }; });
+      return { ok: m.on && m.marks.includes('Yours to play — the app can’t do this one') && !/proven by a test|does not run this line/.test(m.words), name: m.name, marks: m.marks };
+    } },
+  { name: 'collect-nami-no-placeholder-on-her-page', run: async (page) => {
+      /* the ST01 printing of Nami on its own page, where the picture stands for the printing (landmine 241): its number on its colours,
+         no "Image Coming Soon" -- and no other printing's picture */
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.SIM.g = null; V.MODE.set('collect', true); await ${pause};
+        const p = V.CAT.rows.filter(q => q.num === 'ST01-007' && !q.sealed).sort((a, b) => a.id - b.id)[0]; V.openDetail(p.id); await ${pause}; window.scrollTo(0, 0);
+        const art = document.querySelector('#dArt'); return { id: p.id, img: p.img, hash: p.hash, pics: art.querySelectorAll('img').length, label: (art.querySelector('.ph') || {}).textContent || '', on: ${screens} }; })()`);
+      await wait(400);
+      return { ok: m.img == null && m.hash == null && m.pics === 0 && m.label === 'ST01-007', ...m };
+    } },
+  { name: 'hunt-a-sealed-product-no-placeholder', run: async (page) => {
+      /* the one sealed product the host serves its placeholder for, on its own page: its set code on its colours */
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.NAV.zipAsked = true; V.MODE.set('hunt', true); await ${pause};
+        const ids = ((V.CAT.man.images || {}).placeholder_ids || []).map(Number), p = V.CAT.rows.find(q => q.sealed && ids.includes(q.id));
+        if (!p) return { none: true }; V.openDetail(p.id); await ${pause}; while (V.closeAnyOverlay()) {} window.scrollTo(0, 0);
+        const art = document.querySelector('#dArt'); return { name: p.name, img: p.img, pics: art.querySelectorAll('img').length, product: art.classList.contains('product') }; })()`);
+      await wait(400);
+      return { ok: !m.none && m.img == null && m.pics === 0 && m.product, ...m };
+    } },
+];
+take126.viewports = ['cover', 'inner', 'phone', 'tablet'];
+export const STEPS = { 126: take126, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };

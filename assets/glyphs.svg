@@ -78,6 +78,12 @@
     <circle cx="14" cy="17" r=".9" fill="currentColor" stroke="none"/>
   </symbol>
 
+  <!-- A DON!! card's face on the Sim's table (take 126, the owner: "For don, replace the image/icon with the DON
+    japanese, not the !!. Give them a black border"): ドン!! in the app icon's own manga strokes (assets/icon-stat.svg),
+    ドン over !! so the word fills a portrait card (its ink is 1.47 times as tall as wide; a card is 1.40). Drawn, not
+    set in a font: no Japanese font is needed on the phone. -->
+  <symbol id="g-donjp" viewBox="17 -15 212 304"><g fill="currentColor" stroke="currentColor" stroke-width="3" stroke-linejoin="round"><g transform="translate(0 10) rotate(-4 50 60)"><path d="M30 4 Q42 -2 56 2 L52 112 Q44 124 32 118 Z"/><path d="M50 40 Q72 46 94 62 Q96 76 86 82 Q68 70 48 62 Z"/><path d="M70 0 L82 -4 Q88 10 88 24 L78 28 Q76 14 70 0 Z"/><path d="M90 -8 L102 -12 Q108 2 108 16 L98 20 Q96 6 90 -8 Z"/></g><g transform="translate(116 4)"><path d="M4 22 Q16 10 26 12 Q40 24 48 40 Q42 52 32 52 Q20 36 4 22 Z"/><path d="M-2 100 Q56 90 94 10 Q102 8 104 14 Q84 112 10 126 Q-6 118 -2 100 Z"/></g><g transform="translate(79 147) rotate(6 36 50) scale(1.14)"><path d="M4 0 L32 0 L22 84 L12 84 Z"/><path d="M18 92 a11 11 0 1 1 -0.1 0 Z"/><path d="M44 0 L72 0 L62 84 L52 84 Z"/><path d="M58 92 a11 11 0 1 1 -0.1 0 Z"/></g></g></symbol>
+
   <!-- Life — a heart-shaped counter, the Leader's starting Life (§2-9) -->
   <symbol id="g-life" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
     <path d="M12 20s-7-4.4-7-9.5A3.8 3.8 0 0 1 12 8a3.8 3.8 0 0 1 7 2.5C19 15.6 12 20 12 20z"/>

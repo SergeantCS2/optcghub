@@ -405,6 +405,43 @@ def check_variant_keying():
         fail("variant-keying", "the app indexes by number but not by productId")
 
 
+def check_pictures():
+    """Take 126 (landmines 226, 240): the host's "Image Coming Soon" is no card's picture -- checked against the BUILT
+    bundle and the runner's sidecar. No picture hash ships on printings of two or more names (reprints of one card
+    share art under one name; one hash on 22 names was the placeholder, the picture of 22 starter-deck printings for
+    as long as they had been hashed); none ships within PH_NEAR bits of a placeholder hash on file; and a printing the
+    runner last saw serve the placeholder ships no hash, and no URL but the second host's."""
+    b = os.path.join(ROOT, "www", "bundle", "catalog.json")
+    if not os.path.exists(b):
+        return note("bundle not built — pictures check skipped")
+    import hashes as H
+    cat = json.load(open(b)); ci = cat["cols"].index
+    sealed, pid, name, img, hsh = ci("sealed"), ci("id"), ci("name"), ci("img"), ci("hash")
+    sp = os.path.join(ROOT, "catalog", "hashes.json")      # the probes' copies carry their own
+    raw = json.load(open(sp)) if os.path.exists(sp) else {}
+    ph, alt = H.ph_state(raw), set(str(x) for x in raw.get("alt", []))
+    cards = [r for r in cat["rows"] if not r[sealed] and r[hsh] is not None]
+    by = {}
+    for r in cards:
+        by.setdefault(r[hsh], set()).add(r[name])
+    shared = [sorted(ns) for ns in by.values() if len(ns) > 1]
+    if shared:
+        fail("pictures", f"{len(shared)} picture hash(es) ship on printings of two or more names -- the host's "
+                         f"placeholder, no card's picture (landmines 226, 240): {', '.join(shared[0][:4])}")
+    near = [r[pid] for r in cards if H.near_placeholder(H.from_sqlite(r[hsh]), ph["hashes"])]
+    if near:
+        fail("pictures", f"{len(near)} printing(s) ship a hash within {H.PH_NEAR} bits of a placeholder hash on file "
+                         f"(landmine 240): {near[:5]}")
+    ids = ph["cards"] | ph["sealed"]
+    bad = [r[pid] for r in cat["rows"] if str(r[pid]) in ids
+           and (r[hsh] is not None or (r[img] and not (str(r[pid]) in alt and r[img] == H.alt_url(r[pid]))))]
+    if bad:
+        fail("pictures", f"{len(bad)} printing(s) the runner saw serve the host's placeholder ship its picture or its "
+                         f"hash (landmine 240): {bad[:5]}")
+    note(f"pictures: {len(ids)} printing(s) the host serves its placeholder for ship none; "
+         f"{len(ph['hashes'])} placeholder hash(es) on file")
+
+
 def check_confidence_gate():
     """Landmine 41. If auto-accept coverage ever looks generous, the spread
     calculation has broken and the scanner has started guessing with money."""
@@ -687,7 +724,7 @@ def selftest():
             check_docs_current(n); check_handoff(n); check_agenda()
             check_landmine_citations(); check_secrets(); check_render_receipt()
             check_workflow_copies(); check_offline(provision_hosts()); check_icon_characters(); check_stale_copy()
-            check_ads()
+            check_ads(); check_pictures()
             if cat == "sim":
                 check_sim()
             fired = any(f.startswith(cat + ":") for f in FAILS) if cat else bool(FAILS)
@@ -769,6 +806,33 @@ def selftest():
         json.dump(cat, open(b, "w"))
     probe("undeclared host in the bundle's img column (take 100)", bad_host, "offline")
 
+    # take 126 (landmines 226, 240): the host's placeholder, planted in the bundle and the sidecar a copy carries
+    def pics(t, same=False, near=None, served=False, blank=False):
+        b = os.path.join(t, "www", "bundle", "catalog.json"); cat = json.load(open(b)); ci = cat["cols"].index
+        import hashes as H
+        rows = [r for r in cat["rows"] if not r[ci("sealed")] and r[ci("hash")] is not None and r[ci("img")]]
+        hs = [H.from_sqlite(r[ci("hash")]) for r in rows]
+        # a card far from every other (15 bits and more), so the control's 7 bits cannot land near a reprint of it
+        a = next(r for k, r in enumerate(rows) if all(H.hamming(hs[k], x) >= 15 for j, x in enumerate(hs) if j != k))
+        o = next(r for r in rows if r[ci("name")] != a[ci("name")])
+        side = {"placeholder": {"hashes": [], "cards": [], "sealed": []}}
+        if same:
+            o[ci("hash")] = a[ci("hash")]                                   # one hash on two names
+        if near is not None:
+            side["placeholder"]["hashes"] = [H.to_sqlite(H.from_sqlite(a[ci("hash")]) ^ near)]
+        if served or blank:
+            side["placeholder"]["cards"] = [str(a[ci("id")])]
+            if blank:
+                a[ci("img")] = a[ci("hash")] = None                        # shipped as the build ships it
+        json.dump(cat, open(b, "w"))
+        os.makedirs(os.path.join(t, "catalog"), exist_ok=True)
+        json.dump(side, open(os.path.join(t, "catalog", "hashes.json"), "w"))
+    probe("pictures: one hash shipped on two names -- take 124's catalogue, 22 printings (take 126)", lambda t: pics(t, same=True), "pictures")
+    probe("pictures: a shipped hash 3 bits from a placeholder hash on file (take 126)", lambda t: pics(t, near=0b111), "pictures")
+    probe("pictures: a printing the runner saw serve the placeholder ships its URL and hash (take 126)", lambda t: pics(t, served=True), "pictures")
+    probe("control: a hash 7 bits from the placeholder's, and its printing shipped with no picture, pass (take 126)",
+          lambda t: pics(t, near=0x7F, blank=True), expect=False)
+
     # take 121 (landmines 209, 210): the synced ads block reaches every install
     def ads(t, live=None, consent=False, **top):
         d = os.path.join(t, "www", "bundle"); os.makedirs(d, exist_ok=True)
@@ -839,6 +903,7 @@ if __name__ == "__main__":
     check_no_condition_multiplier()
     check_offline(provision_hosts())
     check_variant_keying()
+    check_pictures()
     check_confidence_gate()
     check_catalogue()
     check_harness()
