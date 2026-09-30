@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 126.* Paste the block between the rules into a new session
+*Current as of take 127.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 126 takes by previous sessions. The repo is
+built across 127 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -193,6 +193,15 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   apps, and the auditor's planted faults. Landmines 212-222. Merged (PR
   #47); take 123 followed it.
 
+- **Take 127 -- real ads.** The owner's three rewarded units (Scan Credits,
+  Deck Save, MAX Unlock) ride `ads.live` from take 127, loaded only once
+  UMP's consent allows ads (`PLATFORM.consentAsk`; the app is worldwide);
+  More shows *Privacy choices for ads* where UMP requires it; when no ad
+  can be loaded the save goes through free (the owner's rule), offline
+  keeping the tray; Diagnostics' `consent:` line counts the free saves.
+  The gate's `ADMOB_LIVE_FLOOR` is 127. The owner's: the consent message
+  published before the merge, then the upload. Next: the first real
+  impressions, read from the owner's AdMob. HANDOFF take 127.
 - **Take 121 -- the store-linked AdMob app, and the groundwork for real
   ads.** The build names `~9519036366` (the AdMob app linked to Play;
   "testing", `~1538944343`, shipped from take 41 to 120, landmine 210).
@@ -203,14 +212,7 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   `ads.live` without a consent flow (the app is worldwide). The MAX unlock
   has its own unit, PROVEN on the Fold (landmine 211). **The AdMob app is
   approved, "Ready" (30 Sept).** The owner's: three units, the Fold as a
-  test device, the European-regulations message, then the IDs. **Next,
-  yours -- the consent take (127 or later), one take with the units, the
-  owner's word:** UMP before `initialize`, setting `_canRequestAds`; a
-  Privacy choices row under More; a free save when no ad loads (no-fill or
-  no consent), offline keeping the tray, MAX staying "try again"; the
-  gate's `ADMOB_LIVE_FLOOR` raised to that take; the units with
-  `ADMOB_LIVE_FROM` that take -- RUNBOOK-play §9, AGENDA Priorities (mine
-  0), A17's take-121 section.
+  test device, the European-regulations message, then the IDs. **Done at take 127** (the consent flow and the units, one take).
 
 - **Take 115 -- the production baseline.** When you read this it is merged
   (if it is not, it is in flight: nothing else starts until it merges). A
@@ -360,9 +362,8 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
 - **The self-test (A28)** runs on the Fold: 17 pass, 0 fail on take 114
   (the owner, 25 Sept); its report and Diagnostics are the measurement to
   ask for after a release that changes the device side.
-- **D16 (the fonts) and D11 (the AdMob unit IDs, needed now; three, under
-  the linked app, since take 121) are open**;
-  D7 (take 113), D15 and D17 (take 106) are answered. Do not build ahead of
+- **D16 (the fonts) is open**; D11 (the AdMob units, take 127), D7 (take
+  113), D15 and D17 (take 106) are answered. Do not build ahead of
   the open ones.
 - **A31 (Collectr import)** waits on one real exported file; the owner's own
   71-line transcription exists outside the repo in the Hub's export schema
@@ -388,6 +389,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 126" and begin with PROTOCOL §0.
+Say "take 128" and begin with PROTOCOL §0.
 
 ---

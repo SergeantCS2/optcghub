@@ -1,6 +1,6 @@
 # RUNBOOK — Google Play, from the repo to a running 14-day clock
 
-*Current as of take 126.* The whole procedure, in the order it must happen,
+*Current as of take 127.* The whole procedure, in the order it must happen,
 with who does each step. Everything on the repo side is already built; what
 follows is the owner's, and none of it is hard. The gate at the end is calendar
 time: **12 testers opted in for 14 continuous days** (landmine 35; re-checked
@@ -239,7 +239,9 @@ them, in `ADMOB_LIVE_*`, with the consent flow first (§9 items 3 and 4).*
 
 The AdMob account exists (take 33): publisher `pub-6243777967151950`. *Rewritten
 at take 121, when AdMob could not verify the app.* **Approved, 30 Sept: the app is "Ready", ad
-serving limits lifted.** Left: items 2-4 below, then the consent take.
+serving limits lifted.** *30 Sept: the Fold a test device, the three units
+made and live from take 127 with the consent flow; left, the consent message
+published before take 127 merges.*
 
 **Two AdMob apps (the owner's screenshot, 28 Sept):** "OP TCG Hub: Collect,
 Hunt, SIM", `ca-app-pub-6243777967151950~9519036366`, linked to Google Play
@@ -301,6 +303,14 @@ under "testing".
    **published**; the US states message is optional. The app's side (the UMP
    calls, a *Privacy choices* row under More) is the take after 121, and the
    gate refuses `ads.live` without it.
+   *Take 127, how the app behaves:* it asks UMP at launch, after the
+   first-open guide; where consent is required Google's message shows once;
+   More gains *Privacy choices for ads* where UMP requires the entry point.
+   No ad is requested until UMP allows ads. When none can be had -- consent
+   allows none, or a load fails while online with anything but a network
+   error -- the save goes through free (the owner's rule); offline, the
+   pending tray waits. Diagnostics' `consent:` line says the answer and the
+   free saves.
 5. **Payments -- needed to SERVE, not only to be paid** (corrected after
    take 121's merge; the take had it as "to be paid rather than to serve").
    Google's *About app readiness* (support.google.com/admob/answer/10564477):

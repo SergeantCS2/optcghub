@@ -4731,6 +4731,7 @@ ok('...and a build at its take with no consent answer keeps the test units: what
    never settles it (FullscreenPluginCallback.kt only notifies). */
 const L = {}, calls = [];
 const stub = {
+  requestConsentInfo: async () => ({ status: 'NOT_REQUIRED', isConsentFormAvailable: false, canRequestAds: true, privacyOptionsRequirementStatus: 'NOT_REQUIRED' }),   /* take 127: asked before any ad */
   initialize: async o => { calls.push(['init', o && o.initializeForTesting]); },
   addListener: async (n, f) => { L[n] = f; return { remove() {} }; },
   prepareRewardVideoAd: async o => { calls.push(['prepare', o.adId, o.isTesting]); return { adUnitId: o.adId }; },
@@ -4764,13 +4765,14 @@ try {
   const check = async () => Object.fromEntries((await V.SELFTEST.run()).checks.map(c => [c.name, c]))['Ads: the units match this build'];
   const onLive = await check();
   ok('the self-test\'s ads check passes a live build at its take (before take 121 it failed every real unit)', onLive && onLive.s === 'PASS' && /live/.test(onLive.note), JSON.stringify(onLive));
-  ads.live = hadLive; const onTest = await check();
+  ads.live = hadLive; P._canRequestAds = undefined; const onTest = await check();   /* take 127: the real ads.live waits for consent */
   ok('...and passes Google\'s test units', onTest && onTest.s === 'PASS' && /test units/.test(onTest.note), JSON.stringify(onTest));
   const s0 = ads.scan; ads.scan = live.scan; const onBad = await check(); ads.scan = s0;
   ok('negative control: a real unit where every older install reads it FAILS the check', onBad && onBad.s === 'FAIL', JSON.stringify(onBad));
   ok('Diagnostics says which units the build loads', /line\('ads', /.test(js));
 } finally {
   P.plugin = plug0; ads.live = hadLive; P._adReady = { scan: false, deck: false, max: false }; P._pendingKind = null; P._canRequestAds = consent0;
+  P._adsStarted = false; P._consent = null; P._starting = null;   /* take 127 */
   C.state.scan = keep.scan; C.state.deck = keep.deck; C.state.earned = keep.earned; V.MAXLOCK.until = keep.until;
   if (keep.max == null) ctx.localStorage.removeItem('vault.maxUntil'); else ctx.localStorage.setItem('vault.maxUntil', keep.max);
 }
@@ -5402,6 +5404,87 @@ section('take 126 — the host\'s "Image Coming Soon" is no card\'s picture; the
   ok('...and the effect panel, when that line resolves, says it with its Report beside it', /<div class="note tb-mark">Not checked yet \u2014 if the app gets it wrong, tap Report<\/div>/.test(pb) && /data-sim="report">Report<\/button>/.test(pb), (pb.match(/tb-mark">[^<]*/) || ['no mark'])[0]);
   S.g = null; fresh(); }
 V.MODE.set('collect', false); V.go('home');
+}
+
+{
+section('take 127 — consent first, the owner\'s three units, and a free save when no ad loads');
+/* The owner (30 Sept): consent and the units in one take; when no ad can be loaded the save goes through free.
+   The consent API is 8.1.0's (dist/esm/consent; Android AdConsentExecutor); a failed load sends
+   onRewardedVideoAdFailedToLoad { code, message } before it rejects -- the stub keeps both orders. */
+const P = V.PLATFORM, C = V.CREDITS, TEST = 'ca-app-pub-3940256099942544/', PUB = 'ca-app-pub-6243777967151950/';
+const L0 = manifest.ads && manifest.ads.live;
+ok('the three units ride ads.live: the publisher\'s, three of them, from take 127 -- the first build that asks for consent',
+   !!L0 && [L0.scan, L0.deck, L0.max].every(u => typeof u === 'string' && u.startsWith(PUB)) && new Set([L0.scan, L0.deck, L0.max]).size === 3 && L0.from >= 127 && L0.from <= V.TAKE, JSON.stringify(L0));
+ok('...and ads.scan and ads.deck, which every older install reads, stay Google\'s test unit', String(manifest.ads.scan).startsWith(TEST) && String(manifest.ads.deck).startsWith(TEST));
+if (typeof P.adsStart !== 'function' || typeof C.freeSave !== 'function') ok('take 127\'s consent flow and free save exist', false, typeof P.adsStart + ' ' + typeof C.freeSave);
+else {
+  ok('with no consent answer this build loads Google\'s test units, whatever ads.live says', (u => u.test === true && String(u.scan).startsWith(TEST))(P.adUnits()), JSON.stringify(P.adUnits()));
+  const calls = [], Lsn = {};
+  let consentInfo, formResult, loadFail = null;
+  const stub = {
+    requestConsentInfo: async () => { calls.push('consent'); if (consentInfo instanceof Error) throw consentInfo; return { ...consentInfo }; },
+    showConsentForm: async () => { calls.push('form'); return { ...formResult }; },
+    showPrivacyOptionsForm: async () => { calls.push('privacy'); },
+    initialize: async () => { calls.push('init'); },
+    addListener: async (n, f) => { Lsn[n] = f; return { remove() {} }; },
+    prepareRewardVideoAd: async o => { calls.push('prepare:' + o.adId); if (loadFail) { if (Lsn.onRewardedVideoAdFailedToLoad) Lsn.onRewardedVideoAdFailedToLoad({ ...loadFail }); throw new Error(loadFail.message); } return { adUnitId: o.adId }; },
+    showRewardVideoAd: async o => { calls.push('show:' + (o && o.adId)); const r = { type: 'Reward', amount: 1 }; if (Lsn.onRewardedVideoAdReward) Lsn.onRewardedVideoAdReward(r); return r; }
+  };
+  const NOT_REQ = { status: 'NOT_REQUIRED', isConsentFormAvailable: false, canRequestAds: true, privacyOptionsRequirementStatus: 'NOT_REQUIRED' };
+  const REQ = { status: 'REQUIRED', isConsentFormAvailable: true, canRequestAds: false, privacyOptionsRequirementStatus: 'REQUIRED' };
+  const plug0 = P.plugin, enabled0 = C.enabled, online0 = ctx.navigator.onLine;
+  const keep = { st: JSON.parse(JSON.stringify(C.state)), items: V.OWN.items.slice(), until: V.MAXLOCK.until };
+  const reset = () => { P._consent = null; P._canRequestAds = undefined; P._adsStarted = false; P._starting = null; P._adReady = { scan: false, deck: false, max: false }; calls.length = 0; loadFail = null; };
+  P.plugin = n => n === 'AdMob' ? stub : plug0.call(P, n); C.enabled = () => true; ctx.navigator.onLine = true;
+  try {
+    reset(); consentInfo = NOT_REQ; await P.adsStart();
+    ok('consent is asked before the SDK starts and before any ad loads (not required here: no form)', calls[0] === 'consent' && calls.indexOf('init') > 0 && calls.findIndex(c => c.startsWith('prepare')) > calls.indexOf('init') && !calls.includes('form'), calls.join(' '));
+    ok('...and consent that allows ads opens this build\'s live units', P._canRequestAds === true && (u => u.test === false && u.scan === L0.scan)(P.adUnits()), JSON.stringify(P.adUnits()));
+    reset(); consentInfo = REQ; formResult = { status: 'OBTAINED', canRequestAds: true, privacyOptionsRequirementStatus: 'REQUIRED' }; await P.adsStart();
+    ok('where consent is required Google\'s form comes first, and its answer decides', calls.slice(0, 3).join(' ') === 'consent form init' && P._canRequestAds === true, calls.join(' '));
+    ok('...and More offers Privacy choices where the consent SDK requires it', P.adPrivacyShown() === true);
+    reset(); consentInfo = REQ; formResult = { status: 'OBTAINED', canRequestAds: false, privacyOptionsRequirementStatus: 'REQUIRED' }; await P.adsStart();
+    ok('negative control: consent that allows no ads -- the SDK never starts and nothing loads', P._canRequestAds === false && !calls.includes('init') && !calls.some(c => c.startsWith('prepare')), calls.join(' '));
+    const cards = V.CAT.rows.filter(p => p.num && !p.sealed).slice(0, 3).map(p => ({ id: p.id }));
+    C.state.scan = 0; C.state.pending = cards.slice(); C.state.free = 0; const own0 = V.OWN.items.length;
+    await P.adShow('scan');
+    ok('consent that allows no ads: the waiting cards save free, no credit left over, counted', C.state.pending.length === 0 && V.OWN.items.length > own0 && C.state.scan === 0 && C.state.free === 1, `pending ${C.state.pending.length} scan ${C.state.scan} free ${C.state.free}`);
+    reset(); consentInfo = NOT_REQ; await P.adsStart();
+    loadFail = { code: 3, message: 'No fill.' }; P._adReady = { scan: false, deck: false, max: false };
+    C.state.pending = cards.slice(); C.state.free = 0; C.state.scan = 0;
+    await P.adShow('scan');
+    ok('Google has no ad to show (no fill): the waiting cards save free', C.state.pending.length === 0 && C.state.free === 1, `pending ${C.state.pending.length} free ${C.state.free}`);
+    C.state.deck = 0; P._adReady = { scan: false, deck: false, max: false };
+    await P.adShow('deck');
+    ok('...and a refused new deck gets its one save free', C.state.deck === 1 && C.state.free === 2, `deck ${C.state.deck} free ${C.state.free}`);
+    V.MAXLOCK.until = 0; P._adReady = { scan: false, deck: false, max: false };
+    await P.adShow('max');
+    ok('...but MAX, which is not a save, stays shut and says try again', V.MAXLOCK.until === 0 && C.state.free === 2);
+    loadFail = { code: 2, message: 'Network error.' }; C.state.pending = cards.slice(); P._adReady = { scan: false, deck: false, max: false };
+    await P.adShow('scan');
+    ok('negative control: a network error keeps the cards in the tray (PROTOCOL §8), nothing free', C.state.pending.length === cards.length && C.state.free === 2, `pending ${C.state.pending.length} free ${C.state.free}`);
+    ctx.navigator.onLine = false; loadFail = { code: 3, message: 'No fill.' }; P._adReady = { scan: false, deck: false, max: false };
+    await P.adShow('scan');
+    ok('...and so does being offline, whatever the load says', C.state.pending.length === cards.length && C.state.free === 2);
+    ctx.navigator.onLine = true; loadFail = null; C.state.pending = []; P._adReady = { scan: false, deck: false, max: false }; calls.length = 0;
+    await P.adShow('scan');
+    ok('an ad that loads still shows, by its own live unit', calls.includes('show:' + L0.scan), calls.join(' '));
+    reset(); consentInfo = { ...REQ, status: 'OBTAINED', canRequestAds: true }; await P.adsStart(); calls.length = 0;
+    await P.adPrivacy();
+    ok('Privacy choices opens Google\'s form, then asks again', calls[0] === 'privacy' && calls[1] === 'consent', calls.join(' '));
+    V.go('settings'); const more = ctx.document.getElementById('setBody').innerHTML;
+    P._consent = { status: 'NOT_REQUIRED', privacy: 'NOT_REQUIRED', can: true }; V.go('settings'); const moreNot = ctx.document.getElementById('setBody').innerHTML; V.go('home');
+    ok('More draws the Privacy choices row where it is required, and not elsewhere', /data-act="adprivacy">Privacy choices for ads</.test(more) && !/data-act="adprivacy"/.test(moreNot));
+    reset(); consentInfo = new Error('offline'); await P.adsStart();
+    ok('offline at launch nothing is decided: no SDK, no load, the answer left open', P._canRequestAds === undefined && !calls.includes('init') && !!P._consent && !!P._consent.error, JSON.stringify(P._consent));
+    ok('Diagnostics says the consent answer and the free saves', /line\('consent', /.test(js) && /free saves \d+/.test(P.consentNote()));
+  } finally {
+    P.plugin = plug0; C.enabled = enabled0; ctx.navigator.onLine = online0;
+    delete C.state.free; Object.assign(C.state, keep.st); C.save(); V.OWN.items = keep.items; V.MAXLOCK.until = keep.until;
+    P._consent = null; P._canRequestAds = undefined; P._adsStarted = false; P._starting = null; P._adReady = { scan: false, deck: false, max: false };
+  }
+}
+ok('the boot starts ads through consent, never straight into the SDK', /PLATFORM\.adsStartWhenFree\(\)/.test(js) && !/PLATFORM\.adsInit\(\)\.then/.test(js));
 }
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

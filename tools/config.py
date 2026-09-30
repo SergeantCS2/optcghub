@@ -83,13 +83,14 @@ ADMOB_TEST_UNIT       = "ca-app-pub-3940256099942544/5224354917"   # Google's te
 ADMOB_REWARD_SCAN     = ADMOB_TEST_UNIT
 ADMOB_REWARD_DECK     = ADMOB_TEST_UNIT
 # D11 -- the real rewarded units, made under the linked app, one per placement
-# (the owner, take 121: three). They ride ads.live, which a build loads only at
-# or after ADMOB_LIVE_FROM: the first take that names the linked app AND asks
-# for consent (the app is worldwide; A43). None until the owner sends them.
-ADMOB_LIVE_SCAN       = None
-ADMOB_LIVE_DECK       = None
-ADMOB_LIVE_MAX        = None
-ADMOB_LIVE_FROM       = None
+# (the owner, take 121: three; sent 30 Sept, take 127). They ride ads.live,
+# which a build loads only at or after ADMOB_LIVE_FROM -- take 127, the first
+# that names the linked app AND asks for consent (the app is worldwide; A43) --
+# and only once the consent SDK says ads may be requested.
+ADMOB_LIVE_SCAN       = "ca-app-pub-6243777967151950/9587227232"   # Scan Credits
+ADMOB_LIVE_DECK       = "ca-app-pub-6243777967151950/2391263492"   # Deck Save
+ADMOB_LIVE_MAX        = "ca-app-pub-6243777967151950/5013557407"   # MAX Unlock
+ADMOB_LIVE_FROM       = 127
 # Test-ness is a property of the AD UNITS (what gets loaded and tapped), not
 # of the app ID: Google's own development guidance is a real app ID with the
 # sample units. The SDK's isTesting flag follows the units (take 41).

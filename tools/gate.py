@@ -465,9 +465,9 @@ ADMOB_PUB = "ca-app-pub-6243777967151950"
 ADMOB_TEST = "ca-app-pub-3940256099942544/"
 ADMOB_RETIRED = {"ca-app-pub-6243777967151950~1538944343":
                  '"testing", added by name before the app was on Play and never linked (landmine 210)'}
-# take 121 names the linked app and asks no consent (A43). The consent take raises this to its
-# own number; the app holds the same line itself (PLATFORM._canRequestAds, set only by consent).
-ADMOB_LIVE_FLOOR = 122
+# take 127 is the first build that asks for consent (A43); 121 to 126 name the linked app and ask none.
+# The app holds the same line itself (PLATFORM._canRequestAds, set only by consentAsk).
+ADMOB_LIVE_FLOOR = 127
 
 
 def check_ads():
@@ -853,13 +853,18 @@ def selftest():
           lambda t: ads(t, scan=ADMOB_PUB + "/1111111111"), "ads")
     probe("ads: a live block carrying Google's test unit (take 121)",
           lambda t: ads(t, live={**good, "max": ADMOB_TEST + "5224354917"}, consent=True), "ads")
-    probe("ads: a live block from take 121, which asks no consent (take 121)",
-          lambda t: ads(t, live={**good, "from": 121}, consent=True), "ads")
+    probe("ads: a live block from the take before the floor, which asks no consent (take 121; 127)",
+          lambda t: ads(t, live={**good, "from": ADMOB_LIVE_FLOOR - 1}, consent=True), "ads")
     probe("ads: two placements sharing one live unit (take 121: three)",
           lambda t: ads(t, live={**good, "max": good["deck"]}, consent=True), "ads")
-    probe("ads: a live block and no consent flow in the app (take 121)",
-          lambda t: ads(t, live=good), "ads")
-    probe("control: a whole live block from take 122, with a consent flow, passes (take 121)",
+    def no_consent(t):
+        # take 127: the app asks for consent now, so the probe takes it out of the copy first
+        ads(t, live=good)
+        f = os.path.join(t, "src", "app.html")
+        open(f, "w").write(open(f).read().replace("requestConsentInfo", "requestNothing"))
+    probe("ads: a live block and no consent flow in the app (take 121; the flow removed, 127)",
+          no_consent, "ads")
+    probe("control: a whole live block from the floor, with a consent flow, passes (take 121; 127)",
           lambda t: ads(t, live=good, consent=True), expect=False)
 
     def drift(t):
