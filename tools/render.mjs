@@ -2091,6 +2091,70 @@ json.dump(H.build(F["zips"], F["radius"], previous=copy.deepcopy(F)), sys.stdout
     fs.rmSync(dir115, { recursive: true, force: true });
     await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 }); }
 
+  /* ---- take 128 (the owner's two testing notes). A scanned line's picture by choice, in real Chrome: the arrow's target and
+     place, a real tap on it (the card must not open), a real finger across the picture (CDP touch, as a phone sends it) and a
+     finger that goes up and down, the page's. The update notice: Play's answer planted in the page (a browser has no plugin),
+     the sheet from offer(), a real tap on Update, More's About row and a real tap on Check for updates. ---- */
+  await page.setViewport({ width: 411, height: 960, deviceScaleFactor: 2.625, hasTouch: true });
+  /* a viewport that gains touch reloads the page (puppeteer's rule), so the app boots again: wait for it, as the first open did */
+  await page.waitForFunction(() => !!window.VAULT && !!window.VAULT.CAT && window.VAULT.CAT.ready, { timeout: 30000 });
+  await page.waitForFunction(() => !document.querySelector('#splash'), { timeout: 15000 }).catch(() => {});   /* the splash lingers a moment and covered the first tap (landmine 169's rule named it) */
+  await page.evaluate(() => { const s = [...document.querySelectorAll('#tour button')].find(b => /skip/i.test(b.textContent)); if (s) s.click(); });
+  const take128 = await page.evaluate(() => window.VAULT.TAKE);
+  const flip128 = await page.evaluate(async () => {
+    const V = window.VAULT, wait = ms => new Promise(r => setTimeout(r, ms));
+    while (V.closeAnyOverlay()) {} V.MODE.set('collect', false);
+    const c = document.createElement('canvas'); c.width = 200; c.height = 280; const g = c.getContext('2d'); g.fillStyle = '#2a6f3a'; g.fillRect(0, 0, 200, 280); g.fillStyle = '#fff'; g.font = 'bold 28px sans-serif'; g.fillText('YOUR SCAN', 20, 150);
+    const photo = c.toDataURL('image/jpeg', 0.8);
+    const p = V.CAT.rows.find(x => /^OP01-0\d\d$/.test(x.num) && !x.sealed && x.img && x.market > 0);
+    window.__k128 = { items: V.OWN.items.slice(), pf: V.PF.active }; V.PF.active = 'main';
+    V.OWN.items = [{ id: p.id, qty: 1, condition: 'NM', pf: 'main', game: 'optcg', photo, added: '2026-10-01T00:00:00.000Z', fav: false }];
+    V.go('collection'); await wait(400);
+    const tile = document.querySelector(`#colGrid .tile[data-open="${p.id}"]`), art = tile && tile.querySelector('.art'), f = tile && tile.querySelector('[data-act="flip"]');
+    const fb = f && f.getBoundingClientRect(), ab = art && art.getBoundingClientRect(), own = tile && tile.querySelector('.art img[src^="data:"]');
+    return { id: p.id, photo: !!own && own.naturalWidth > 0 && own.getBoundingClientRect().height > 100, badge: !!(tile && tile.querySelector('.art .own')), target: fb ? Math.round(Math.min(fb.width, fb.height)) : 0,
+      corner: !!(fb && ab) && Math.abs(fb.right - ab.right) <= 2 && Math.abs(fb.bottom - ab.bottom) <= 2, chip: f ? Math.round(f.querySelector('i').getBoundingClientRect().width) : 0, label: f ? f.getAttribute('aria-label') : null, touch: getComputedStyle(art).touchAction }; });
+  ok('take 128: a scanned line\'s tile draws the photo at size with "Your scan" and the arrow -- a 44 px target at the picture\'s corner, a 28 px chip, named for what it shows next; up and down left to the page',
+     flip128.photo && flip128.badge && flip128.target >= 44 && flip128.corner && flip128.chip === 28 && flip128.label === 'Show the catalogue’s picture' && flip128.touch === 'pan-y', JSON.stringify(flip128));
+  await tap(`#colGrid .tile[data-open="${flip128.id}"] [data-act="flip"]`); await new Promise(r => setTimeout(r, 300));
+  const tileState128 = () => page.evaluate(id => { const V = window.VAULT, tile = document.querySelector(`#colGrid .tile[data-open="${id}"]`), f = tile && tile.querySelector('[data-act="flip"]');
+    return { ref: !!(tile && tile.querySelector('.art img.ref')), photo: !!(tile && tile.querySelector('.art img[src^="data:"]')), detail: document.getElementById('detail').classList.contains('on'), pic: V.OWN.items[0].pic, stored: (JSON.parse(localStorage.getItem('vault.items') || '[]')[0] || {}).pic, label: f && f.getAttribute('aria-label') }; }, flip128.id);
+  const tapped128 = await tileState128();
+  ok('take 128: a real tap on the arrow flips the tile to the catalogue\'s picture, keeps the choice on the phone, names the way back -- and does not open the card', tapped128.ref && !tapped128.photo && !tapped128.detail && tapped128.pic === 'ref' && tapped128.stored === 'ref' && tapped128.label === 'Show your scan', JSON.stringify({ ...tapped128, taps: tapNotes }));
+  /* a finger across the picture (CDP touch: Chrome makes the pointer events a phone would), then one that goes up and down */
+  const cdp128 = await page.createCDPSession();
+  const finger128 = async (dx, dy) => { const b = await page.evaluate(id => { const a = document.querySelector(`#colGrid .tile[data-open="${id}"] .art`); a.scrollIntoView({ block: 'center' }); const r = a.getBoundingClientRect(); return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) }; }, flip128.id);
+    await new Promise(r => setTimeout(r, 200));
+    await cdp128.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: b.x, y: b.y }] });
+    for (let k = 1; k <= 8; k++) await cdp128.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: Math.round(b.x + dx * k / 8), y: Math.round(b.y + dy * k / 8) }] });
+    await cdp128.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await new Promise(r => setTimeout(r, 450)); return tileState128(); };
+  const swiped128 = await finger128(-80, 4);
+  ok('take 128: a finger across the picture flips it back to the photo, and the card does not open', swiped128.pic === undefined && swiped128.photo && !swiped128.ref && !swiped128.detail, JSON.stringify(swiped128));
+  const vertical128 = await finger128(5, 90);
+  ok('take 128: ...control: a finger that goes up and down is the page\'s -- nothing flips, no card opens', vertical128.pic === undefined && vertical128.photo && !vertical128.detail, JSON.stringify(vertical128));
+  await cdp128.detach();
+  await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.OWN.items = window.__k128.items; V.PF.active = window.__k128.pf; V.OWN.save(); delete window.__k128; V.go('home'); });
+  /* the update notice */
+  const upd128 = await page.evaluate(async () => { const V = window.VAULT; window.__store = []; window.Capacitor = { Plugins: { AppUpdate: { getAppUpdateInfo: async () => ({ updateAvailability: 2, availableVersionCode: String(V.TAKE + 1), currentVersionCode: String(V.TAKE) }), openAppStore: async () => { window.__store.push('store'); } } } };
+    localStorage.removeItem('vault.updateSeen'); await V.UPDATE.check(); window.__offer = V.UPDATE.offer(); await new Promise(r => setTimeout(r, 400));
+    const pk = document.getElementById('picker'), opts = [...pk.querySelectorAll('.opt')].map(b => ({ t: b.querySelector('b').textContent, h: Math.round(b.getBoundingClientRect().height) }));
+    return { on: pk.classList.contains('on'), title: document.getElementById('pkTitle').textContent, why: document.getElementById('pkWhy').textContent, opts }; });
+  ok('take 128: Play\'s answer that a newer take is out opens the sheet -- its title, both takes in its words, Update and Later at 44 px', upd128.on && upd128.title === 'A newer version is on Google Play' && new RegExp(`^Take ${take128 + 1} is out; this is take ${take128}\\.`).test(upd128.why) && upd128.opts.map(o => o.t).join() === 'Update,Later' && upd128.opts.every(o => o.h >= 44), JSON.stringify(upd128));
+  await tap('#picker [data-upd="go"]'); await new Promise(r => setTimeout(r, 300));
+  const went128 = await page.evaluate(async () => ({ offered: await window.__offer, store: window.__store.length, closed: !document.getElementById('picker').classList.contains('on'), seen: localStorage.getItem('vault.updateSeen') }));
+  ok('take 128: a real tap on Update opens Google Play through the plugin, closes the sheet, and the version is remembered', went128.offered === true && went128.store === 1 && went128.closed && went128.seen === String(take128 + 1), JSON.stringify({ ...went128, taps: tapNotes }));
+  await page.evaluate(() => { window.VAULT.go('settings'); }); await new Promise(r => setTimeout(r, 300));
+  const row128 = await page.evaluate(() => { const s = document.getElementById('aboutUpd'), b = s && s.closest('.row').querySelector('[data-act="update"]'), r = b && b.getBoundingClientRect(); return { text: s && s.textContent, btn: b && b.textContent, h: r ? Math.round(r.height) : 0 }; });
+  ok('take 128: More → About names the newer take beside Google Play, with Update at 44 px', row128.text === `Take ${take128 + 1} is on Google Play — you have take ${take128}` && row128.btn === 'Update' && row128.h >= 44, JSON.stringify(row128));
+  const upToDate128 = await page.evaluate(async () => { const V = window.VAULT; window.Capacitor.Plugins.AppUpdate.getAppUpdateInfo = async () => ({ updateAvailability: 1, availableVersionCode: String(V.TAKE), currentVersionCode: String(V.TAKE) }); await V.UPDATE.check(); V.go('settings'); await new Promise(r => setTimeout(r, 200)); const s = document.getElementById('aboutUpd'); return { text: s.textContent, btn: s.closest('.row').querySelector('[data-act="update"]').textContent }; });
+  ok('take 128: ...up to date, the row says so and offers a check', upToDate128.text === 'Up to date on Google Play' && upToDate128.btn === 'Check for updates', JSON.stringify(upToDate128));
+  await tap('#setBody [data-act="update"]'); await new Promise(r => setTimeout(r, 400));
+  const checked128 = await page.evaluate(() => { const t = document.getElementById('toast'); return { toast: t.textContent, on: t.classList.contains('on') }; });
+  ok('take 128: a real tap on Check for updates asks Play again and says its answer', checked128.on && checked128.toast === 'Up to date on Google Play', JSON.stringify({ ...checked128, taps: tapNotes }));
+  await page.evaluate(() => { delete window.Capacitor; const V = window.VAULT; V.UPDATE.info = null; V.UPDATE.why = 'not asked yet'; localStorage.removeItem('vault.updateSeen'); while (V.closeAnyOverlay()) {} V.go('home'); });
+  await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });   /* touch gone: the page reloads once more; nothing below reads it */
+
   await browser.close();
 } else {
   /* ---------------- honest fallback ------------------------------------- */

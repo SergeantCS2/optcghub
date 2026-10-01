@@ -449,6 +449,8 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .tile{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:var(--r-xl);
   padding:12px;text-align:left;display:flex;flex-direction:column;min-width:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 10px 26px rgba(0,0,0,.28)}   /* take 119, T1: the tile is a surface card */
 .tile .art{border:1px solid var(--line);box-shadow:0 6px 14px rgba(0,0,0,.35)}
+.tile .art{touch-action:pan-y}   /* take 128: a sideways swipe on a scanned tile's picture is the flip's; up and down stay the page's */
+.tile .art img{-webkit-user-drag:none;user-select:none}   /* take 128 (the look): a pointer dragged across a picture started the browser's own image drag, which cancelled the pointer after 8 px and the swipe never ended */
 .art{aspect-ratio:.716;border-radius:var(--r-md);background:var(--card2);overflow:hidden;
   display:flex;align-items:center;justify-content:center;margin-bottom:10px;position:relative}
 /* Reference art, hot-linked from the TCGplayer CDN and never written to disk
@@ -471,6 +473,11 @@ img.above{object-view-box:inset(0 0 58% 0)}
 .art .own{position:absolute;top:6px;left:6px;background:color-mix(in srgb,var(--bg) 88%,transparent);
   color:var(--accent-ink);font-size:var(--fs-cap);font-weight:800;padding:2px 6px;border-radius:var(--r-sm);
   letter-spacing:.03em}
+/* take 128 (the owner's note): the arrow that flips a scanned line's picture -- a 44 px target (take 108) at the picture's
+   corner, drawn as a 28 px chip on the badge's ground; up-and-down stays the page's scroll, sideways is the flip */
+.art .flip{position:absolute;right:0;bottom:0;width:44px;height:44px;display:flex;align-items:flex-end;justify-content:flex-end;padding:6px;cursor:pointer;touch-action:pan-y}
+.art .flip i{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:color-mix(in srgb,var(--bg) 88%,transparent);color:var(--accent-ink);border:1px solid var(--line)}
+.art .flip:focus-visible i{outline:2px solid var(--accent-ink);outline-offset:1px}
 .tile .t{font-weight:650;font-size:var(--fs-body);line-height:1.25;margin-bottom:3px}
 .tile .s{font-size:var(--fs-cap);color:var(--dim);line-height:1.35;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -2193,6 +2200,55 @@ const MAXLOCK = {
       opts: `<button class="opt" data-maxad="go"><div class="oi"><b>Watch an ad</b><span>about 30 seconds</span></div></button><button class="opt" data-maxad="no"><div class="oi"><b>Not now</b></div></button>` });
     if (v !== 'go') return; const shown = await PLATFORM.adShow('max'); if (!shown) toast('No ad right now \u2014 try again in a moment'); }
 };
+/* take 128 (the owner's question): when a newer version is on Google Play the app says so, once per version. The source
+   is Play itself (PLATFORM.appUpdateInfo); the Pages manifest's take was ruled out -- it is the merged take, which the
+   owner uploads to Play by hand, so it would announce an update Play does not have (PROTOCOL §10). Asked once per launch,
+   online, after the first-open guide and the consent message are out of the way; a version answered with Later is not
+   asked about again, and About keeps the note. */
+const UPDATE = {
+  KEY: 'vault.updateSeen', info: null, why: 'not asked yet',
+  async check() {
+    if (!navigator.onLine) { this.info = null; this.why = 'offline'; return null; }
+    try { const r = await PLATFORM.appUpdateInfo(); this.info = r || null; this.why = r ? '' : 'this build has no update plugin'; }
+    catch (e) { this.info = null; this.why = String((e && e.message) || e); }
+    return this.info;
+  },
+  newer() { const r = this.info; return r && r.updateAvailability === 2 ? String(r.availableVersionCode || '?') : null; },
+  /* for About and Diagnostics: what Play said, in the app's words (the version code is the take, ci/apk.sh) */
+  note() { const n = this.newer(); if (n) return `Take ${n} is on Google Play \u2014 you have take ${TAKE}`;
+    const a = this.info && this.info.updateAvailability;
+    if (a === 1) return 'Up to date on Google Play'; if (a === 3) return 'An update is being installed';
+    return this.info ? 'Google Play gave no answer' : `Could not ask Google Play \u2014 ${this.why}`; },
+  seen() { try { return localStorage.getItem(this.KEY) || ''; } catch (e) { return ''; } },
+  async offer(choose = o => PICKER.choose(o)) {
+    const n = this.newer(); if (!n || this.seen() === n) return false;
+    saveJson(this.KEY, n);   /* once per version, whatever is chosen: Later is an answer too */
+    const v = await choose({ title: 'A newer version is on Google Play', key: 'upd', why: `Take ${esc(n)} is out; this is take ${TAKE}. Updating keeps your collection and your decks.`,
+      opts: `<button class="opt" data-upd="go"><div class="oi"><b>Update</b><span>opens Google Play</span></div></button><button class="opt" data-upd="no"><div class="oi"><b>Later</b><span>About, under More, keeps the note</span></div></button>` });
+    if (v === 'go') await PLATFORM.openStore();
+    return true;
+  },
+  /* never over the first-open guide, Google's consent message or a sheet the collector is answering (the printing picker
+     shares the sheet, and a new prompt dismisses the one open) -- asked once all three are out of the way */
+  busy() { const on = id => { const e = document.getElementById(id); return !!(e && !e.hidden && e.classList.contains('on')); }; return on('tour') || on('picker') || (ADS_ENABLED && PLATFORM._consent == null); },
+  async ask() { await this.check(); this.lastAt = Date.now(); await this.offer(); const el = document.getElementById('aboutUpd'); if (el) el.textContent = this.note(); },
+  checkWhenFree(delay = 3000) {
+    const tick = async () => { if (this.busy()) { setTimeout(tick, 1000); return; } await this.ask(); };
+    setTimeout(tick, delay);
+  },
+  /* the check is the app's, not the collector's (the owner, take 128: "they shouldn't have to check for updates manually"):
+     at every launch, when the app comes back to the front six hours or more after the last check, and every six hours while
+     it stays open. "Check for updates" under About is the way to ask sooner. A version answered with Later is still offered
+     once only; About keeps the note. */
+  EVERY: 6 * 3600e3, lastAt: 0,
+  due() { return Date.now() - this.lastAt >= this.EVERY; },
+  resume() { if (this.due() && navigator.onLine) this.checkWhenFree(500); },
+  watch() {
+    this.checkWhenFree();
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') this.resume(); });
+    const hourly = () => { this.resume(); setTimeout(hourly, 3600e3); }; setTimeout(hourly, 3600e3);   /* a chain of timeouts: the stub has no setInterval */
+  }
+};
 const price = id => { const p = CAT.byId.get(id); return p ? p.market : null; };
 
 /* Take 109 (A42): the largest picture TCGplayer serves -- `_in_1000x1000`, 600x838
@@ -2223,6 +2279,12 @@ function refArt(p, { size = 'thumb', cls = '' } = {}) {
             onload="this.classList.add('ok');var p=this.parentNode,q=p&&p.querySelector('.ph');if(q)q.style.display='none'"
             onerror="var t=this.dataset.thumb;if(t){delete this.dataset.thumb;this.src=t}else{this.remove()}">`;
 }
+/* take 128 (the owner's note): which picture a scanned line shows -- the collector's own photo, or the catalogue's when
+   the line says so (pic: 'ref'; absent otherwise, so an older backup's line reads as before). One rule for every place a
+   line's photo is drawn: the collection tile and the binder's pocket. `fallback` stands under the catalogue's picture
+   while it loads (the tile's name box); the photo needs none. */
+function lineShowsPhoto(i) { return !!(i && i.photo && i.pic !== 'ref'); }
+function linePic(i, p, fallback = '') { return lineShowsPhoto(i) ? `<img src="${esc(i.photo)}" alt="">` : fallback + refArt(p); }
 /* The card’s own colours for the art’s ground: both of a two-colour card, the one
    and a darker shade of it for a single colour; a product has none, so the mode’s. */
 function artColours(p) {
@@ -3431,7 +3493,7 @@ function paintBinder() {
     const h = heldBy.get(num);
     if (!h) return `<button class="pocket empty" data-ck="${esc(num)}" data-ckid="${byNum.get(num).id}"><span class="n">${esc(numLabel(num, BN.set))}</span></button>`;
     return `<button class="pocket" data-open="${h.p.id}">
-      ${h.i.photo ? `<img src="${esc(h.i.photo)}">` : refArt(h.p)}
+      ${linePic(h.i, h.p)}
       <span class="n">${esc(numLabel(num, BN.set))}${h.i.qty > 1 ? ' \u00d7' + h.i.qty : ''}</span>
       <span class="tag">${esc(h.p.name)}${h.p.treat !== 'base' ? ' \u00b7 ' + esc(TREAT[h.p.treat] || h.p.treat) : ''}</span></button>`;
   };
@@ -4191,10 +4253,9 @@ function paintCollection() {
     const prod = SEALED.isGoods(p);   /* take 111: a box's tile said "NM \u00b7 Normal" under a lone dot */
     return `<button class="tile" data-open="${p.id}"
         style="${sel ? 'border-color:var(--brass);background:var(--accent-bg)' : ''}">
-      <div class="art">${
-        i.photo ? `<img src="${esc(i.photo)}"><span class="own">Your scan</span>`
-                : `<div class="ph"><span class="phl">${esc(p.name)}</span><span class="num">${esc(p.num)}</span></div>` +
-                  refArt(p)}
+      <div class="art">${linePic(i, p, `<div class="ph"><span class="phl">${esc(p.name)}</span><span class="num">${esc(p.num)}</span></div>`)}${
+        lineShowsPhoto(i) ? '<span class="own">Your scan</span>' : ''}${
+        i.photo ? `<span class="flip" role="button" tabindex="0" data-act="flip" data-line="${OWN.items.indexOf(i)}" aria-label="${lineShowsPhoto(i) ? 'Show the catalogue\u2019s picture' : 'Show your scan'}"><i>${G('swap', 16)}</i></span>` : ''}
       </div>
       <div class="cbar">${colourBar(p)}</div>
       <div class="t">${esc(p.name)}${p.treat !== 'base'
@@ -4210,6 +4271,34 @@ function paintCollection() {
       </div></button>`;
   }).join('');
 }
+/* take 128 (the owner's note): a scanned line's picture by choice. The flip is the line's (pic: 'ref', or absent), kept
+   through the one commit path (take 115) so the backup carries it; no snapshot -- the collection's value did not move. */
+const FLIP = { swiped: false };
+function flipLine(idx) {
+  const i = OWN.items[idx]; if (!i || !i.photo) return false;
+  if (i.pic === 'ref') delete i.pic; else i.pic = 'ref';
+  commitOwn('pic', { snap: false }); paintCollection(); return true;
+}
+/* a sideways swipe on the picture flips it; a short move, or one more up or down than across, is the page's (the mode
+   bar's rule, take 119) */
+function flipSwipe(dx, dy) { return Math.abs(dx) >= 40 && Math.abs(dy) < Math.abs(dx); }
+(() => {
+  const g = $('#colGrid'); if (!g || !g.addEventListener) return; let sw = null;
+  const lineOf = t => { const art = t && t.closest ? t.closest('.tile .art') : null, f = art && art.querySelector('[data-act="flip"]'); return f ? { art, line: +f.dataset.line } : null; };
+  g.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && e.button !== 0) return; const l = lineOf(e.target); sw = l ? { id: e.pointerId, x: e.clientX, y: e.clientY, dx: 0, dy: 0, art: l.art, line: l.line, held: false } : null; });
+  /* the first 8 px say which way the finger goes: up or down is the page's; across, the picture takes the pointer -- only then
+     (the look, take 128: a pointer captured on the way down made Chrome aim the tap's click at the picture, not the arrow, so the
+     card opened and nothing flipped) */
+  g.addEventListener('pointermove', e => { if (!sw || e.pointerId !== sw.id) return; sw.dx = e.clientX - sw.x; sw.dy = e.clientY - sw.y;
+    if (sw.held) return; if (Math.hypot(sw.dx, sw.dy) < 8) return;
+    if (Math.abs(sw.dy) > Math.abs(sw.dx)) { sw = null; return; }
+    sw.held = true; try { sw.art.setPointerCapture(e.pointerId); } catch (x) {} });
+  const end = e => { if (!sw || e.pointerId !== sw.id) return; const { dx, dy, line, held } = sw; sw = null; if (!held || !flipSwipe(dx, dy)) return;
+    FLIP.swiped = true; setTimeout(() => { FLIP.swiped = false; }, 350); flipLine(line); };   /* the click a swipe leaves behind is not a tap on the card */
+  g.addEventListener('pointerup', end); g.addEventListener('pointercancel', () => { sw = null; });
+  /* the arrow is a span inside the tile's button (a button cannot hold another, take 115): Enter and Space work it */
+  g.addEventListener('keydown', e => { const f = e.target && e.target.closest ? e.target.closest('[data-act="flip"]') : null; if (!f || (e.key !== 'Enter' && e.key !== ' ')) return; e.preventDefault(); e.stopPropagation(); flipLine(+f.dataset.line); });
+})();
 $('#colq').addEventListener('input', e => { colQuery = e.target.value; paintCollection(); });
 document.addEventListener('click', e => {
   if (e.target.id === 'colClearF') {
@@ -4222,6 +4311,7 @@ $('#favOnly').addEventListener('click', () => {   // take 108: the star fills, a
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-open]');
   if (!t) return;
+  if (e.target.closest('[data-act="flip"]') || FLIP.swiped) return;   /* take 128: the arrow and the swipe are the picture's, not the card's */
   const id = +t.dataset.open;
   if (bulk) { bulk.has(id) ? bulk.delete(id) : bulk.add(id); paintCollection(); }
   else openDetail(id, { dist: !!t.dataset.distinfo });
@@ -4242,8 +4332,10 @@ document.addEventListener('click', e => {
     movers: showMovers,
     trade:  () => go('trade'),
     bulk:   () => { go('collection'); bulkOn(); toast('Tap cards to select'); },
-    import: importCsv
-  })[a.dataset.act]?.();
+    import: importCsv,
+    flip: el => flipLine(+el.dataset.line),   /* take 128: a scanned tile's picture, the photo or the catalogue's */
+    update: async () => { if (UPDATE.newer()) { await PLATFORM.openStore(); return; } await UPDATE.check(); paintSettings(); toast(UPDATE.note()); }   /* take 128: About's Google Play row */
+  })[a.dataset.act]?.(a);
 });
 
 /* Market Movers needs two catalogue builds to compare, and on a fresh install
@@ -4625,6 +4717,9 @@ const HUNT = {
   unreached(D) { return !!D && (!D.ok || !!D.kept); },
   distItems() { const out = []; for (const [k] of this.DISTS) { const D = this.dist(k); if (D && D.ok) for (const it of (D.items || [])) out.push(Object.assign(Object.create(it), { _d: k, _k: k + ':' + (it.sku || it.id) })); } return out; },
   distByCatalogId() { const out = {}; for (const it of this.distItems()) if (it.catalog_id) (out[it.catalog_id] ||= []).push(it); return out; },
+  /* take 128 (D24): every catalogue id a source names -- a distributor's item, Target's, a shop's -- as numbers, for what Sealed lists */
+  listedIds() { const s = new Set(); for (const k of Object.keys(this.distByCatalogId())) s.add(+k); for (const k of Object.keys(this.byCatalogId())) s.add(+k);
+    for (const sh of ((LOCAL.shops && LOCAL.shops.shops) || [])) for (const it of (sh.sealed || [])) if (it.catalog_id) s.add(+it.catalog_id); return s; },
   /* Take 72. The collector’s zip, asked once. The runner serves LOCAL stock
      for a list of zips; the closest honest match is exact, then the same
      3-digit prefix (a sectional centre, roughly one metro), else none --
@@ -4893,6 +4988,11 @@ const SEALED = {
      priced or not; isProduct is what Sealed lists, one with a market price; isDon holds the one DON!! pattern */
   isGoods(p) { return !!p && !!p.sealed && !SEALED.isDon(p); },
   isProduct(p) { return SEALED.isGoods(p) && p.market > 0; },
+  /* take 128 (D24, the owner's (b)): the screen lists a priced product, and an unpriced one that a distributor, Target or a
+     shop names -- the product a source is talking about is Hunt's subject whether TCGplayer has priced it yet or not (the
+     EB-05 pack lost its price for a night and left the screen, landmine 243). `src` is the set of catalogue ids the feed
+     names, built once per paint (HUNT.listedIds); isProduct keeps its meaning, a priced product, for Diagnostics' count. */
+  listed(p, src) { return SEALED.isGoods(p) && (p.market > 0 || !!(src && src.has(p.id))); },
   /* take 111: a DON!! card is filed as sealed (it has no number) but is one card -- a finish, a grade, a condition */
   isDon(p) { return !!p.sealed && /don!! card/i.test(p.name || ''); },
   kindOf(p) { const n = (p.name || '').toLowerCase();
@@ -4902,8 +5002,8 @@ const SEALED = {
     if (/booster pack|pack\b|blister|sleeved/.test(n)) return 'pack';
     if (/collection|illustration box|gift|battle kit/.test(n)) return 'collection';
     return 'other'; },
-  rows() { const q = this.q.trim().toLowerCase();
-    return CAT.rows.filter(p => this.isProduct(p))
+  rows(src = HUNT.listedIds()) { const q = this.q.trim().toLowerCase();
+    return CAT.rows.filter(p => this.listed(p, src))
       .filter(p => this.kind === 'all' || this.kindOf(p) === this.kind)
       .filter(p => !q || (p.name || '').toLowerCase().includes(q) || (CAT.sets.get(p.set)?.name || '').toLowerCase().includes(q))
       .sort((a, b) => (CAT.sets.get(b.set)?.pub || '').localeCompare(CAT.sets.get(a.set)?.pub || '') || a.name.localeCompare(b.name)); }
@@ -4949,8 +5049,8 @@ function setPic(s, w = THUMB.m) {
    section and every set's. Its picture and name; under the name `sub` (the set, or the kind) with low and high, then
    the stock sources' `lines`; its price; the stock bell; where to buy; each distributor's short line */
 function sealedRow(p, sub, lines, byDist) {
-  const on = STOCK.has(p.id);
-  return `<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><button class="row" style="flex:1;min-width:0;text-align:left;padding:0;gap:10px" data-open="${p.id}">${productPic(p)}<div class="nm" style="min-width:0"><b>${esc(p.name)}</b><span>${sub} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}</span>${lines}</div><div class="v"><b>${money(p.market)}</b>${deltaHtml(p, { pctOnly: true })}</div></button>`
+  const on = STOCK.has(p.id), priced = p.market > 0;   /* take 128 (D24): a product with no price yet says so where low and high would be, and its column stays blank */
+  return `<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><button class="row" style="flex:1;min-width:0;text-align:left;padding:0;gap:10px" data-open="${p.id}">${productPic(p)}<div class="nm" style="min-width:0"><b>${esc(p.name)}</b><span>${priced ? `${sub} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}` : `${sub} \u00b7 no market price yet`}</span>${lines}</div><div class="v"><b>${money(priced ? p.market : null)}</b>${priced ? deltaHtml(p, { pctOnly: true }) : ''}</div></button>`
     + `<button class="ghost" data-stock="${p.id}" aria-label="${on ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${on}" style="flex:0 0 auto;padding:8px 10px;${on ? 'color:var(--brass);border-color:var(--brass)' : ''}">${bell(on)}<span style="display:block;font-size:var(--fs-cap);line-height:1.1;margin-top:2px">${on ? 'watching' : 'alert'}</span></button>${buyChips(p)}${distRowLines(p, (byDist || {})[p.id])}</div>`;
 }
 function paintSealedHero() {
@@ -4963,16 +5063,17 @@ function paintSealed() {
   paintSealedHero();
   const asOf = $('#sealedAsOf'); if (asOf) asOf.textContent = 'prices ' + dayText(CAT.man.source_updated_at);
   const cps = $('#curPillSealed'); if (cps) cps.innerHTML = curPill();
-  const counts = {}; for (const p of CAT.rows) if (SEALED.isProduct(p)) { const k = SEALED.kindOf(p); counts[k] = (counts[k] || 0) + 1; counts.all = (counts.all || 0) + 1; }
+  const src = HUNT.listedIds();   /* take 128 (D24): what a source names is listed, priced or not */
+  const counts = {}; for (const p of CAT.rows) if (SEALED.listed(p, src)) { const k = SEALED.kindOf(p); counts[k] = (counts[k] || 0) + 1; counts.all = (counts.all || 0) + 1; }
   $('#sealedKinds').innerHTML = SEALED_KINDS.map(([k, label]) => `<button class="chip${SEALED.kind === k ? ' on' : ''}" data-skind="${k}" aria-pressed="${SEALED.kind === k}">${label} <span class="note">${counts[k] || 0}</span></button>`).join('');
-  const rows = SEALED.rows(); let lastSet = null; const out = [];
+  const rows = SEALED.rows(src); let lastSet = null; const out = [];
   const T = HUNT.feed && HUNT.feed.sources && HUNT.feed.sources.target; const byCat = HUNT.byCatalogId();
   const gts = HUNT.dist('gts'); const byDist = HUNT.distByCatalogId();   // take 94; take 115: gts, not G -- a local G hid the glyph helper
   /* starter decks, their own section (take 87): every deck product, newest set first */
   /* take 117 (the owner's screenshot: starter decks outside their section): every product of a starter-deck SET -- the decks and
      their display -- lives here, and the by-set fold below skips what this section lists, so nothing is listed twice */
   const inDecks = new Set();
-  if (SEALED.kind === 'all' && !SEALED.q) { const decks = CAT.rows.filter(p => SEALED.isProduct(p) && ((CAT.sets.get(p.set) || {}).kind === 'deck' || SEALED.kindOf(p) === 'deck')).sort((a, b) => (CAT.sets.get(b.set)?.pub || '').localeCompare(CAT.sets.get(a.set)?.pub || '') || a.name.localeCompare(b.name)); decks.forEach(p => inDecks.add(p.id));
+  if (SEALED.kind === 'all' && !SEALED.q) { const decks = CAT.rows.filter(p => SEALED.listed(p, src) && ((CAT.sets.get(p.set) || {}).kind === 'deck' || SEALED.kindOf(p) === 'deck')).sort((a, b) => (CAT.sets.get(b.set)?.pub || '').localeCompare(CAT.sets.get(a.set)?.pub || '') || a.name.localeCompare(b.name)); decks.forEach(p => inDecks.add(p.id));
     /* take 110: a strip like every set’s heading, under the newest starter deck’s own top card */
     const dtop = decks.map(p => setTop(p.set)).find(Boolean);
     if (decks.length) out.push(`<button class="fgrp setstrip" data-setfold="decks" aria-expanded="${!SEALED.closed.has('decks')}">${dtop ? artBack(dtop, { crisp: true }) : ''}<span>Starter decks<span class="note">${decks.length} products</span></span><span class="note" aria-hidden="true">${chev(!SEALED.closed.has('decks'))}</span></button>`);
@@ -5621,6 +5722,13 @@ const PLATFORM = {
     window.open(url, '_blank');
     return true;
   },
+  /* take 128 (the owner's question): Google Play's own answer on a newer version -- the in-app updates API through
+     @capawesome/capacitor-app-update, read from its definitions.d.ts (landmine 73): getAppUpdateInfo() -> { updateAvailability
+     (0 unknown, 1 none, 2 available, 3 in progress), availableVersionCode, currentVersionCode }; openAppStore(). The plugin is
+     the Play build's: a browser has none, and a sideload gets no answer from Play. The policy -- when to ask, what to say --
+     is UPDATE's, not this adapter's. */
+  appUpdateInfo() { const U = this.plugin('AppUpdate'); return U && typeof U.getAppUpdateInfo === 'function' ? U.getAppUpdateInfo() : Promise.resolve(null); },
+  async openStore() { const U = this.plugin('AppUpdate'); if (U && typeof U.openAppStore === 'function') { try { await U.openAppStore(); return true; } catch (e) {} } return this.rateApp(); },
   async shareApp() {
     const SH = this.plugin('Share');
     const text = 'OP TCG Hub \u2014 scan, value and track your One Piece Card Game collection. Offline, no scan cap.';
@@ -6328,6 +6436,7 @@ function paintSettings() {
     </div>
     <div class="panel"><h3>About</h3>
       <div class="row"><div class="nm"><b id="aboutTake">Take ${TAKE} \u00b7 built ${esc(momentText(CAT.man.built_at))}</b><span>${CAT.man.cards ? CAT.man.cards.toLocaleString() + ' cards' : ''} \u00b7 prices ${esc(dayText(CAT.man.source_updated_at))}</span></div></div>
+      <div class="row"><div class="nm"><b>Google Play</b><span id="aboutUpd">${esc(UPDATE.note())}</span></div><button class="ghost" data-act="update">${UPDATE.newer() ? 'Update' : 'Check for updates'}</button></div>
       ${note && note.take === TAKE ? `<details class="wn"><summary>New in this update</summary><div class="note">${esc(note.text.charAt(0).toUpperCase() + note.text.slice(1))}</div></details>` : ''}
       <div class="note" id="aboutIcons">Some of the icons are Lucide’s (ISC licence) and Feather’s (MIT licence); their notices travel inside the app.</div></div>
     <div class="panel"><h3>Self-test</h3>
@@ -6977,8 +7086,8 @@ const DIAG = {
     L.push(`OP TCG Hub diagnostics \u2014 take ${TAKE} \u2014 ${new Date().toISOString().slice(0, 16)}Z`);
     L.push('', '## app'); line('build', CAT.man.built_at || '?'); line('mode', MODE.cur); line('screen stack', NAV.stack.join(' > ') || '-');
     line('boot stack', (NAV.bootStack || []).join(' > ') || 'none'); line('screens on', [...document.querySelectorAll('.screen.on')].map(e => e.id).join(',') || 'NONE'); line('overlays on', ['#askSheet', '#picker', '#rulesSheet', '#simSheet', '#detail', '#tour', '#simCurtain'].filter(id => { const el = $(id); return el && el.classList && el.classList.contains('on'); }).join(',') || 'none'); line('splash', $('#splash') ? 'still in the page' : 'gone');
-    line('currency', CUR.active() + (CAT.man.rates ? ` (rates ${CAT.man.rates.date}${CAT.man.rates.stale ? ', stale' : ''})` : ' (no rates)')); line('online', navigator.onLine); line('native', !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())); line('plugins', ['Camera', 'Filesystem', 'Share', 'LocalNotifications', 'Network', 'App', 'AdMob'].filter(n => PLATFORM.plugin(n)).join(', ') || 'none (browser)');
-    line('ads', !CAT.man.ads ? 'none' : PLATFORM.adUnitsNote()); line('consent', !CAT.man.ads ? 'none' : PLATFORM.consentNote());
+    line('currency', CUR.active() + (CAT.man.rates ? ` (rates ${CAT.man.rates.date}${CAT.man.rates.stale ? ', stale' : ''})` : ' (no rates)')); line('online', navigator.onLine); line('native', !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())); line('plugins', ['Camera', 'Filesystem', 'Share', 'LocalNotifications', 'Network', 'App', 'AdMob', 'AppUpdate'].filter(n => PLATFORM.plugin(n)).join(', ') || 'none (browser)');
+    line('ads', !CAT.man.ads ? 'none' : PLATFORM.adUnitsNote()); line('consent', !CAT.man.ads ? 'none' : PLATFORM.consentNote()); line('update', UPDATE.note());   /* take 128 */
     L.push('', '## device'); line('ua', String(navigator.userAgent || '?').slice(0, 120)); line('viewport', `${typeof innerWidth === 'number' ? innerWidth + 'x' + innerHeight : '?'} @${devicePixelRatio || 1}`); line('language', navigator.language || '?'); line('tz', (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return '?'; } })());
     L.push('', '## catalogue'); line('cards', CAT.man.cards); line('printings', CAT.rows.length); line('pictures', picturesLine()); line('prices dated', (CAT.man.source_updated_at || '?').slice(0, 10)); line('history days', (CAT.days || []).length + (CAT.days && CAT.days.length ? ` (${CAT.days[0]}..${CAT.days[CAT.days.length - 1]})` : '')); line('catalogue copy', CAT.man.fromDisk ? 'synced on this phone' : 'the one that came with the app' + (CAT.refused ? ` (${CAT.refused})` : '')); line('sealed products', sealedCountLine()); line('stock decks', (CAT.stock || []).length); line('effects scripted', CAT.man.effects ? effectsLine(CAT.man.effects, Object.keys(CAT.effects || {}).filter(id => CAT.effects[id].some(e => !e.hand)).length) : '?'); line('effects proven', CAT.man.effects && CAT.man.effects.proofs != null ? `${CAT.man.effects.proven} printings proven, ${CAT.man.effects.wrong} proven wrong, from ${CAT.man.effects.proofs} proofs; ${CAT.man.effects.hand} lines by hand` + (CAT.man.effects.stale && CAT.man.effects.stale.length ? `; reopened: ${CAT.man.effects.stale.join(', ')}` : '') : '?'); line('rules', RULEBOOK ? `v${RULES_DB.cur().version}` + (RULES_DB.official && RULES_DB.official.version ? `, official v${RULES_DB.official.version}` : '') : '?');
     L.push('', '## sync'); line('update url', CAT.man.updateUrl || 'NOT SET'); line('manifest', await this.probe(CAT.man.updateUrl ? CAT.man.updateUrl + 'manifest.json' : null));
@@ -7105,6 +7214,7 @@ async function runSelfTest() {
     ADS_ENABLED = !!(CAT.man.ads.scan && PLATFORM.plugin('AdMob'));
     if (ADS_ENABLED) PLATFORM.adsStartWhenFree();   /* take 127: consent first, never over the first-open guide */
   }
+  UPDATE.watch();   /* take 128: Play's answer on a newer version -- at launch once the guide and the consent message are out of the way, on return to the front and every six hours while open */
   paintDevEarn();   /* take 115: after the manifest's numbers, and again whenever Diagnostics opens */
   /* Take 81: the phone’s back button. Read from @capacitor/app’s definitions:
      addListener('backButton', ({ canGoBack })), minimizeApp(). An open sheet
@@ -7122,7 +7232,7 @@ async function runSelfTest() {
      day and a hardcoded placeholder is landmine 62 in a text box. */
   $('#allq').placeholder = `Search all ${(CAT.man.cards || 0).toLocaleString()} cards`;
   paintNet(); paintHome();
-  window.VAULT = { get guidePage() { return guidePage; }, guideOpen, guideClose, guideGo, guideStart, guidePaint, GUIDE, topCard, dotJoin, curLabel, paintBinder, sealedKind, sealedWord, sealedRow, gameColours, distWords, feedLine, sourceLead, picturesLine, sealedCountLine, catalogueNote, setsWithCards, setCards, paintDevEarn, backArrow, closeSheet, setHomeTab, bulkLines, bulkSum, shownLines, signedMoney, pctNum, signedPct, dayText, momentText, fromShown, toShown, setTop, newestTop, paintSealedHero, ownBack, artBack, artUrl, artColours, largeOk, heroLeader, paintDeckHero, paintBack, stockPic, CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, setCond, toast, cameraVerdict, effectsLine, HUNT, targetLine, distLine, distShort, distRowLines, distFold, distFoldTap, distSummary, DISTF, paintDetailDist, distHistory, distHistTap, tlDay, tlWindow, gtsDue, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
+  window.VAULT = { linePic, lineShowsPhoto, flipLine, flipSwipe, FLIP, UPDATE, get guidePage() { return guidePage; }, guideOpen, guideClose, guideGo, guideStart, guidePaint, GUIDE, topCard, dotJoin, curLabel, paintBinder, sealedKind, sealedWord, sealedRow, gameColours, distWords, feedLine, sourceLead, picturesLine, sealedCountLine, catalogueNote, setsWithCards, setCards, paintDevEarn, backArrow, closeSheet, setHomeTab, bulkLines, bulkSum, shownLines, signedMoney, pctNum, signedPct, dayText, momentText, fromShown, toShown, setTop, newestTop, paintSealedHero, ownBack, artBack, artUrl, artColours, largeOk, heroLeader, paintDeckHero, paintBack, stockPic, CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, setCond, toast, cameraVerdict, effectsLine, HUNT, targetLine, distLine, distShort, distRowLines, distFold, distFoldTap, distSummary, DISTF, paintDetailDist, distHistory, distHistTap, tlDay, tlWindow, gtsDue, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
                    cardPic, setPic, picBox, deckRow, paintHome, paintDecks, paintSearch, openDeck,
                    FILT, loadFilter, applyFilter, sortRows, blankFilter, activeCount,
                    DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, THEME, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, simAct, simSeat, simReport, simHandLabel, simTap, simSay, simAt, simSheetOpen, simPaced, simFit, RULEBOOK, RULES_DB, openRules, paintRules, rulesStatus, verNewer, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,

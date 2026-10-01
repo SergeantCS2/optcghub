@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 127.* Paste the block between the rules into a new session
+*Current as of take 128.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 127 takes by previous sessions. The repo is
+built across 128 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -28,7 +28,7 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
 4. Read `docs/HANDOFF.md`, newest entry first, back to take 80 at least. Every
    take ends with a DEFERRED list; the union of those lists is the work.
 5. Read `docs/LANDMINES.md` §0 (the index) and skim §1. When you are about to
-   do something, grep the index first. 200 of them; each is a real failure.
+   do something, grep the index first. 244 of them; each is a real failure.
 6. Read `docs/AGENDA.md`: the Priorities block at the top is the live order.
 
 **The discipline, which the gate enforces:**
@@ -95,6 +95,35 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   them in order with his results (his rule, take 94).
 
 **What is in flight when you arrive:**
+
+- **Take 128 -- the audit, the nightly, the owner's two testing notes**
+  (AGENDA A44; HANDOFF take 128). The nightly of 1 Oct (run 84) went red
+  at smoke on the take-112 fixture: TCGCSV stopped pricing the EB-05 pack
+  that night and Sealed lists priced products only, so the fixture's row
+  vanished (landmine 243; the check now pins the price inside the fixture's
+  window). The look found the arrow's tap opening the card and the swipe
+  dying under the browser's image drag (landmine 244): a gesture over a
+  picture is proven in Chrome, never in the stub. The audit's findings and their fix sketches are A44, in order:
+  the PR check that does not build the APK first, then the structural
+  takes (the app into `src/app/*.js`, one click dispatcher, `ADS` out of
+  `PLATFORM`, `paintScan` into four, smoke into files), each its own take
+  and only when no other branch is open. The owner's notes shipped: a
+  scanned line's tile flips between his photo and the catalogue's picture
+  (an arrow, or a swipe; `pic: 'ref'` on the line, through `commitOwn`), and
+  an update notice from Google Play through `@capawesome/capacitor-app-update`
+  (`PLATFORM.appUpdateInfo`, the `UPDATE` policy object -- the check is the
+  app's: at launch, on return to the front and every six hours while open,
+  the owner's word -- More's About row, Diagnostics' `update:` line) --
+  INFERRED on a device until the Fold runs a take-128 Play build beside a
+  newer one. The owner saw the look: "the screenshots look great". His
+  answers on the PR (1 Oct): **D24 is (b), built** -- Sealed lists a
+  product a distributor, Target or a shop names, priced or not
+  (`SEALED.listed`, `HUNT.listedIds`; the take-112 pin went with it); he
+  opens an **eBay developer key** (the Browse API; the eBay source take
+  follows the key, measured on the runner first; D21 stays open); A44's
+  order is agreed. **Next, the owner's:** the merge and the upload, the
+  Fold's About row, the eBay key, D21. **Yours after it:** A44 item 1, then
+  eBay's Browse API the day the key exists.
 
 - **Take 126 -- the host's "Image Coming Soon" refused at the source**
   (AGENDA A41; HANDOFF take 126). TCGplayer serves one placeholder picture,
@@ -389,6 +418,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 128" and begin with PROTOCOL §0.
+Say "take 129" and begin with PROTOCOL §0.
 
 ---

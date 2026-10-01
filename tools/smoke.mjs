@@ -2966,10 +2966,19 @@ section('take 112 — A32\'s second distributor: Southern Hobby, read off its re
      as one short line that opens the product's page at Distributor info; the long text sits under closed drop-downs */
   V.HUNT.feed = F; V.HUNT.setZip(''); V.MODE.set('hunt', false); V.SEALED.kind = 'all'; V.SEALED.q = ''; V.DISTF.open.clear();
   const eb05 = V.CAT.byId.get(it['78743'] && it['78743'].catalog_id), op18 = V.CAT.byId.get(it['79311'] && it['79311'].catalog_id);
+  /* take 128 (landmine 243): the two items the rows below read must still match a catalogue product under the names TCGCSV
+     lists tonight -- a rename (landmine 231's family) ends here with its name, not three reds further down */
+  ok('the fixture\'s EB-05 pack and OP-18 box each match a catalogue product tonight (a rename at TCGCSV would end here, named)',
+     !!eb05 && !!op18, JSON.stringify({ eb05: it['78743'] && [it['78743'].name, it['78743'].catalog_id], op18: it['79311'] && [it['79311'].name, it['79311'].catalog_id] }));
+  /* take 128 (landmine 243): the EB-05 pack was priced every day from 17 to 29 Sept and not on the 30th, and its row left Sealed
+     with three checks -- the screen listed priced products only. Under D24 (the owner's (b), the same take) Sealed lists what a
+     source names, priced or not, so the fixture's row is on the screen because the fixture names it; the D24 section below holds
+     the controls. */
   for (const p of [eb05, op18]) if (p) { V.SEALED.closed.delete(p.set); V.SEALED.open.add(p.set); }
   V.paintSealed(); const h = ctx.document.querySelector('#sealedList').innerHTML;
+  const line243 = eb05 ? (h.match(new RegExp('<button class="dline" data-open="' + eb05.id + '" data-distinfo="1" aria-label="[^"]*"><span>[^<]*')) || ['no Southern Hobby line under the EB-05 pack\'s row (is its row on Sealed at all? ' + (h.includes('data-open="' + eb05.id + '">') ? 'yes' : 'no') + ')'])[0] : 'no eb05';
   ok('the EB-05 pack (matched) carries Southern Hobby as one short line under its chips: its name and its state, opening its page at Distributor info',
-     !!eb05 && new RegExp('<button class="dline" data-open="' + eb05.id + '" data-distinfo="1" aria-label="[^"]*"><span>Southern Hobby · orders closed ' + D112(I112('78743').due) + '</span>').test(h), (h.match(/<span>Southern Hobby · [^<]{0,60}/) || ['no Southern Hobby line on Sealed'])[0]);
+     !!eb05 && new RegExp('<button class="dline" data-open="' + eb05.id + '" data-distinfo="1" aria-label="[^"]*"><span>Southern Hobby · orders closed ' + D112(I112('78743').due) + '</span>').test(h), line243.slice(-90));
   const nmIn = (html, id) => { const i = html.indexOf('data-open="' + id + '">'); const j = html.indexOf('<div class="v">', i); return i < 0 ? '' : html.slice(i, j); };
   const nm = id => nmIn(h, id);
   const eb05it = V.HUNT.distItems().find(x => x._d === 'southern' && x.id === '78743');
@@ -5486,5 +5495,144 @@ else {
 }
 ok('the boot starts ads through consent, never straight into the SDK', /PLATFORM\.adsStartWhenFree\(\)/.test(js) && !/PLATFORM\.adsInit\(\)\.then/.test(js));
 }
+section('take 128 — a scanned line\'s picture by choice (the owner\'s note): the photo or the catalogue\'s picture, a tap on the arrow or a swipe, kept per line');
+{
+  /* the owner, 1 Oct: "give me the option to change the picture to the default SAMPLE picture instead of my own picture,
+     arrow in the thumbnail that you can click or swipe ... and it'll save what you set it to, directly within your collection" */
+  const keepItems = V.OWN.items.slice(), keepPF = V.PF.active; V.PF.active = 'main';
+  /* a main set with plain numbers: the promo set's "1/1000" and reprinted numbers page the binder elsewhere */
+  const withPic = V.CAT.rows.find(p => /^OP01-0\d\d$/.test(p.num) && !p.sealed && p.img && p.market > 0);
+  const other = V.CAT.rows.find(p => /^OP01-0\d\d$/.test(p.num) && !p.sealed && p.img && p.set === withPic.set && p.num !== withPic.num);
+  const PHOTO = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==';
+  const line = (p, photo) => ({ id: p.id, qty: 1, condition: 'NM', pf: 'main', game: 'optcg', photo, added: '2026-10-01T00:00:00.000Z', fav: false });
+  V.OWN.items = [line(withPic, PHOTO), line(other, null)];
+  V.MODE.set('collect', false); V.go('collection');   /* go() paints through the screen map (landmine 135) */
+  const grid = () => ctx.document.getElementById('colGrid').innerHTML;
+  const tileOf = (h, id) => { const i = h.indexOf('data-open="' + id + '"'); return i < 0 ? '' : h.slice(i, h.indexOf('</button>', i)); };
+  const css128 = (html.match(/<style>([\s\S]*?)<\/style>/) || [, ''])[1];
+  if (typeof V.linePic !== 'function' || typeof V.flipLine !== 'function' || typeof V.flipSwipe !== 'function') ok('take 128\'s picture rule, flip and swipe exist', false, [typeof V.linePic, typeof V.flipLine, typeof V.flipSwipe].join(' '));
+  else {
+    const own = V.linePic({ photo: PHOTO }, withPic), ref = V.linePic({ photo: PHOTO, pic: 'ref' }, withPic), none = V.linePic({ photo: null }, withPic, '<div class="ph">x</div>');
+    ok('one rule says which picture a line shows: the photo, unless the line says the catalogue\'s (pic: \'ref\'); with no photo, the catalogue\'s over the fallback',
+       /^<img src="data:image\/jpeg[^"]*" alt="">$/.test(own) && /class="ref/.test(ref) && !/data:image/.test(ref) && /^<div class="ph">x<\/div><img class="ref/.test(none), JSON.stringify({ own: own.slice(0, 60), ref: ref.slice(0, 40), none: none.slice(0, 50) }));
+    let t = tileOf(grid(), withPic.id); const t2 = tileOf(grid(), other.id);
+    ok('the scanned line\'s tile draws the photo, says "Your scan", and carries the arrow: a control named for what it shows next, keyboard-reachable',
+       /<img src="data:image\/jpeg/.test(t) && /<span class="own">Your scan<\/span>/.test(t) && /<span class="flip" role="button" tabindex="0" data-act="flip" data-line="0" aria-label="Show the catalogue’s picture">/.test(t) && /#g-swap/.test(t), t.slice(0, 320));
+    ok('...control: a line with no photo has no arrow and no badge, and draws the catalogue\'s picture', !!t2 && !/data-act="flip"/.test(t2) && !/Your scan/.test(t2) && /class="ref/.test(t2), t2.slice(0, 200));
+    const stored = () => JSON.parse(store['vault.items'] || '[]');
+    const flipped = V.flipLine(0); t = tileOf(grid(), withPic.id);
+    ok('the flip puts the catalogue\'s picture on the tile, names the way back, and the line keeps the choice -- on the phone and in the backup, through the one commit path',
+       flipped === true && /class="ref/.test(t) && !/data:image/.test(t) && !/Your scan/.test(t) && /aria-label="Show your scan"/.test(t)
+       && V.OWN.items[0].pic === 'ref' && V.OWN.items[0].photo === PHOTO && stored()[0].pic === 'ref' && JSON.parse(V.backupJson()).items[0].pic === 'ref', JSON.stringify({ flipped, pic: V.OWN.items[0].pic, stored: stored()[0] && stored()[0].pic, tile: t.slice(0, 160) }));
+    ok('...flipped back, the photo returns and the line is as it was: no field left behind, on the phone either', V.flipLine(0) === true && !('pic' in V.OWN.items[0]) && /data:image/.test(tileOf(grid(), withPic.id)) && !('pic' in stored()[0]), JSON.stringify(V.OWN.items[0]));
+    ok('...a line with no photo does not flip, and a line that is not there does not throw', V.flipLine(1) === false && V.flipLine(99) === false && !('pic' in V.OWN.items[1]));
+    ok('a sideways swipe flips; a short move, or one more up or down than across, is the page\'s', V.flipSwipe(60, 10) === true && V.flipSwipe(-45, 0) === true && V.flipSwipe(20, 0) === false && V.flipSwipe(30, 80) === false && V.flipSwipe(0, 60) === false);
+    /* the binder honours the line's choice through the same rule (its set and page pinned to the line's: another section turned this set's pages) */
+    const keepBN = { set: V.BN.set, pageOf: { ...V.BN.pageOf } }; V.BN.set = withPic.set; delete V.BN.pageOf[withPic.set];
+    V.OWN.items[0].pic = 'ref'; V.paintBinder(); const bn = ctx.document.getElementById('bnGrid').innerHTML;
+    ok('the binder\'s pocket shows what the line chose -- the catalogue\'s picture here -- through the same rule', new RegExp('data-open="' + withPic.id + '">\\s*<img class="ref').test(bn) && !/data:image/.test(bn), bn.slice(0, 200));
+    delete V.OWN.items[0].pic; V.paintBinder();
+    ok('...control: without the choice the pocket shows the photo', new RegExp('data-open="' + withPic.id + '">\\s*<img src="data:image/jpeg').test(ctx.document.getElementById('bnGrid').innerHTML));
+    V.BN.set = keepBN.set; V.BN.pageOf = keepBN.pageOf;
+    ok('the stylesheet gives the arrow a 44 px target at the picture\'s corner (take 108), keeps up-and-down for the page, and keeps the browser\'s own image drag off the picture (the look)', /\.art \.flip\{[^}]*width:44px;height:44px/.test(css128) && /\.tile \.art\{[^}]*touch-action:pan-y/.test(css128) && /\.tile \.art img\{-webkit-user-drag:none;user-select:none\}/.test(css128));
+  }
+  V.OWN.items = keepItems; V.PF.active = keepPF; V.OWN.save(); V.go('home');
+}
+
+section('take 128 — D24, the owner\'s (b): Sealed lists a product a distributor, Target or a shop names, priced or not, and a row with no price yet says so');
+{ const fxDir = fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-d24-')); const feedF = path.join(fxDir, 'feed-fixture.json');
+  execSync(`python3 tools/hunt.py --from-fixtures --out ${feedF}`, { cwd: ROOT, stdio: 'pipe' });
+  const F = JSON.parse(fs.readFileSync(feedF, 'utf8')); const S = F.sources.southern || {}; const it = Object.fromEntries((S.items || []).map(i => [i.id, i]));
+  const box = V.CAT.byId.get(it['79311'] && it['79311'].catalog_id);   /* the OP-18 booster box: Southern Hobby names it, TCGplayer prices it */
+  if (!box || typeof V.SEALED.listed !== 'function' || typeof V.HUNT.listedIds !== 'function') ok('D24\'s predicate exists and the fixture\'s OP-18 box matches a catalogue product', false, [!!box, typeof V.SEALED.listed, typeof V.HUNT.listedIds].join(' '));
+  else {
+    const keep = { market: box.market, low: box.low, high: box.high, feed: V.HUNT.feed, shops: V.LOCAL.shops, kind: V.SEALED.kind, q: V.SEALED.q };
+    V.MODE.set('hunt', false); V.SEALED.kind = 'all'; V.SEALED.q = ''; V.SEALED.closed.delete(box.set); V.SEALED.open.add(box.set); V.DISTF.open.clear(); V.LOCAL.shops = null;
+    const list = () => ctx.document.querySelector('#sealedList').innerHTML;
+    const rowOf = (h, id) => { const i = h.indexOf('data-open="' + id + '">'); return i < 0 ? '' : h.slice(i, h.indexOf('</button>', i)); };
+    const words = h => h.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
+    const allCount = () => +((ctx.document.querySelector('#sealedKinds').innerHTML.match(/data-skind="all"[^>]*>All <span class="note">(\d+)</) || [, '-1'])[1]);
+    try {
+      box.market = null; box.low = null; box.high = null;
+      V.HUNT.feed = F; V.paintSealed(); const hOn = list(), rowOn = rowOf(hOn, box.id), nOn = allCount();
+      ok('an unpriced product a distributor names is on Sealed: its row says "no market price yet" where low and high would be, its column stays blank, and its distributor line sits under it',
+         !!rowOn && / · no market price yet<\/span>/.test(rowOn) && /<div class="v"><b>—<\/b><\/div>/.test(rowOn) && !/ low /.test(rowOn) && new RegExp('<button class="dline" data-open="' + box.id + '" data-distinfo="1"').test(hOn), words(rowOn) || 'no row');
+      /* the feed names other unpriced products too (the EB-05 pack tonight among them): the count grows by exactly those */
+      V.HUNT.feed = F; const unpriced = [...V.HUNT.listedIds()].filter(id => { const q = V.CAT.byId.get(id); return q && V.SEALED.isGoods(q) && !(q.market > 0); }).length;
+      V.HUNT.feed = null; V.paintSealed(); const hOff = list(), nOff = allCount();
+      ok('negative control: with no source naming it, an unpriced product is not on Sealed, and the kinds\' count grows by exactly the unpriced products the feed names', !rowOf(hOff, box.id) && unpriced >= 1 && nOn === nOff + unpriced, JSON.stringify({ nOn, nOff, unpriced }));
+      box.market = keep.market; box.low = keep.low; box.high = keep.high; V.paintSealed(); const rowBack = rowOf(list(), box.id);
+      ok('...control: priced, it is listed with no source at all, with low, high and its price', !!rowBack && / · low /.test(rowBack) && !/no market price yet/.test(rowBack) && rowBack.includes(V.money(box.market)), words(rowBack));
+      ok('isProduct still means a priced product (Diagnostics counts it so); listed is what the screen draws', !V.SEALED.isProduct({ ...box, market: null }) && V.SEALED.listed({ ...box, market: null }, new Set([box.id])) === true && V.SEALED.listed({ ...box, market: null }, new Set()) === false && V.SEALED.listed(box, new Set()) === true);
+      V.HUNT.feed = F; const ids = V.HUNT.listedIds(); V.HUNT.feed = null;
+      ok('the ids a source names are catalogue ids as numbers, from the distributors, Target and the shops together', ids.has(box.id) && ids.size >= 2 && [...ids].every(x => typeof x === 'number'), JSON.stringify([...ids].slice(0, 8)));
+    } finally { box.market = keep.market; box.low = keep.low; box.high = keep.high; V.HUNT.feed = keep.feed; V.LOCAL.shops = keep.shops; V.SEALED.kind = keep.kind; V.SEALED.q = keep.q; V.MODE.set('collect', false); V.go('home'); }
+  }
+}
+
+section('take 128 — an update notice from Google Play (the owner\'s question): Play\'s own answer, once per version, under About and in Diagnostics');
+{
+  /* the owner, 1 Oct: "a popup that somehow scans google play or something to check for updates, and the app will notify the user
+     if there's an update". The source is Play's in-app updates API (@capawesome/capacitor-app-update, definitions.d.ts read first:
+     getAppUpdateInfo -> updateAvailability 2 = available, availableVersionCode); the Pages manifest's take was ruled out (it is the
+     merged take, not the one on Play). */
+  const U = V.UPDATE, P = V.PLATFORM;
+  ok('the Play build carries the update plugin', /"@capawesome\/capacitor-app-update"/.test(pkg));
+  if (!U || typeof U.check !== 'function' || typeof P.appUpdateInfo !== 'function') ok('take 128\'s update policy and its adapter exist', false, typeof U + ' ' + typeof P.appUpdateInfo);
+  else {
+    const plug0 = P.plugin, online0 = ctx.navigator.onLine, calls = []; let info = null;
+    const stub = { getAppUpdateInfo: async () => { calls.push('info'); if (info instanceof Error) throw info; return { ...info }; }, openAppStore: async () => { calls.push('store'); } };
+    const seenKey = U.KEY, seen0 = store[seenKey]; delete store[seenKey];
+    P.plugin = n => n === 'AppUpdate' ? stub : plug0.call(P, n); ctx.navigator.onLine = true;
+    const NEWER = String(V.TAKE + 1);
+    try {
+      info = { updateAvailability: 2, availableVersionCode: NEWER, currentVersionCode: String(V.TAKE) };
+      await U.check();
+      ok('Play says a newer version is there: the app names its take and the one installed', U.newer() === NEWER && U.note() === `Take ${NEWER} is on Google Play — you have take ${V.TAKE}`, U.note());
+      let asked = 0; const go = async o => { asked++; return /data-upd="go"/.test(o.opts) && /data-upd="no"/.test(o.opts) && o.key === 'upd' && /Take \d+ is out/.test(o.why) ? 'go' : 'bad'; };
+      const offered = await U.offer(go);
+      ok('the sheet offers it once -- Update and Later -- and Update opens Google Play', offered === true && asked === 1 && calls.includes('store'), calls.join(' ') + ' asked ' + asked);
+      calls.length = 0; const again = await U.offer(go);
+      ok('...and not again for the same version: the answer is kept on the phone', again === false && asked === 1 && !calls.includes('store') && store[seenKey] === NEWER, JSON.stringify(store[seenKey]));
+      delete store[seenKey]; calls.length = 0; const later = await U.offer(async () => 'no');
+      ok('Later opens nothing and is remembered the same way; About keeps the note', later === true && !calls.includes('store') && store[seenKey] === NEWER && U.newer() === NEWER);
+      V.go('settings'); let more = ctx.document.getElementById('setBody').innerHTML;
+      ok('More → About carries a Google Play row that names the newer take and offers Update', /<b>Google Play<\/b><span id="aboutUpd">Take \d+ is on Google Play/.test(more) && /data-act="update">Update</.test(more), (more.match(/<b>Google Play<\/b>[\s\S]{0,160}/) || ['no row'])[0]);
+      info = { updateAvailability: 1, availableVersionCode: String(V.TAKE), currentVersionCode: String(V.TAKE) }; await U.check(); V.go('settings'); more = ctx.document.getElementById('setBody').innerHTML;
+      ok('up to date: the row says so and the button offers a check', U.newer() === null && U.note() === 'Up to date on Google Play' && /id="aboutUpd">Up to date on Google Play</.test(more) && /data-act="update">Check for updates</.test(more), U.note());
+      let asked2 = 0; const none = await U.offer(async () => { asked2++; return 'go'; });
+      ok('negative control: nothing newer, no sheet', none === false && asked2 === 0);
+      info = { updateAvailability: 0 }; await U.check();
+      ok('an answer that says nothing claims nothing', U.newer() === null && U.note() === 'Google Play gave no answer', U.note());
+      info = new Error('The app is not installed from Google Play'); await U.check(); const sideload = await U.offer(async () => 'go');
+      ok('Play that does not answer (a sideload): no version named, nothing offered, the reason kept under About', U.newer() === null && U.note() === 'Could not ask Google Play — The app is not installed from Google Play' && sideload === false, U.note());
+      P.plugin = plug0; await U.check();
+      ok('a browser has no plugin: the row says Google Play was not asked, and why', U.newer() === null && /^Could not ask Google Play — this build has no update plugin/.test(U.note()), U.note());
+      P.plugin = n => n === 'AppUpdate' ? stub : plug0.call(P, n); info = { updateAvailability: 2, availableVersionCode: NEWER, currentVersionCode: String(V.TAKE) }; calls.length = 0; ctx.navigator.onLine = false; await U.check();
+      ok('offline, Play is not asked and nothing is claimed', !calls.includes('info') && U.newer() === null && U.note() === 'Could not ask Google Play — offline', U.note());
+      ctx.navigator.onLine = true;
+      const rep = await V.DIAG.report();
+      ok('Diagnostics carries the update line in the same words, and its plugin list knows the update plugin', rep.split('\n').includes('update: ' + U.note()) && /^plugins: .*AppUpdate/m.test(rep), (rep.match(/^(update|plugins): .*$/mg) || []).join(' | '));
+      ok('the boot asks Play once the first-open guide and the consent flow are out of the way, never over them (a static wiring the stub cannot run)', typeof U.watch === 'function' && typeof U.checkWhenFree === 'function' && /UPDATE\.watch\(\)/.test(js) && !/UPDATE\.check\(\)\.then/.test(js));
+      /* the owner: "should happen automatically occasionally ... they shouldn't have to check for updates manually" -- on return to the
+         front, and hourly while open, the app asks again once six hours have passed since the last check */
+      { const keepLast = U.lastAt; U.lastAt = Date.now(); const fresh = U.due(); U.lastAt = Date.now() - U.EVERY - 1; const stale = U.due();
+        ok('the app asks Play again on its own once six hours have passed since the last check, and not before', U.EVERY === 6 * 3600e3 && fresh === false && stale === true, JSON.stringify({ every: U.EVERY, fresh, stale }));
+        info = { updateAvailability: 1, availableVersionCode: String(V.TAKE), currentVersionCode: String(V.TAKE) }; calls.length = 0; ctx.navigator.onLine = true;
+        U.lastAt = Date.now(); U.resume(); await new Promise(r => setTimeout(r, 800));
+        const soon = calls.length;
+        U.lastAt = Date.now() - U.EVERY - 1; U.resume(); await new Promise(r => setTimeout(r, 800));
+        ok('...coming back to the front asks when the last check is old, and leaves Play alone when it is fresh; the check moves the clock', soon === 0 && calls.includes('info') && Date.now() - U.lastAt < 5000, JSON.stringify({ soon, calls, age: Date.now() - U.lastAt }));
+        U.lastAt = keepLast; }
+      { const pk = ctx.document.getElementById('picker'), tour = ctx.document.getElementById('tour'); const was = { pk: pk.classList.contains('on'), tour: tour.classList.contains('on'), hidden: tour.hidden };
+        pk.classList.remove('on'); tour.classList.remove('on'); const free = U.busy();
+        pk.classList.add('on'); const overPicker = U.busy(); pk.classList.remove('on');
+        tour.hidden = false; tour.classList.add('on'); const overGuide = U.busy(); tour.classList.remove('on'); tour.hidden = was.hidden;   /* the guide opens as guideOpen does: unhidden and on */
+        if (was.pk) pk.classList.add('on'); if (was.tour) tour.classList.add('on');
+        ok('...and waits while a sheet is open -- the printing picker shares it, and a new prompt would dismiss the one being answered -- or the guide is up', free === false && overPicker === true && overGuide === true, JSON.stringify({ free, overPicker, overGuide })); }
+    } finally { P.plugin = plug0; ctx.navigator.onLine = online0; if (seen0 === undefined) delete store[seenKey]; else store[seenKey] = seen0; U.info = null; U.why = 'not asked yet'; V.go('home'); }
+  }
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 127.* Ranked by blocking-ness, not by interest.
+*Current as of take 128.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -35,6 +35,13 @@ what it handed on is A43.)
    127 merges ("Do not consent" on, the session's recommendation); then merge
    and upload take 127's AAB; on the Fold, "Test Ad" labels and the
    self-test's ads line reading live units.
+2b. **Take 128** (the audit, the nightly, your two testing notes): the look's
+   pictures -- *seen: "the screenshots look great" (1 Oct)*; after the
+   merge and the upload, on the Fold once online -- does More → About say
+   "Up to date" or name a newer version, and does the sheet appear when a
+   newer take is on Play than the one installed (INFERRED until then);
+   *D24 answered (b) and built (1 Oct)*; the eBay developer key is yours, in
+   progress (1 Oct) -- the eBay source take follows it; D21 stays open.
 3. **Take 113's Fold check:** the launcher on both screens, the splash, a
    reminder's ドン!! glyph (landmine 170).
 4. **Answers still open:** A43's large items -- ad consent (answered take
@@ -65,6 +72,14 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
+0a. *Done at take 128:* the red nightly root-caused and mended (landmine
+   243), the audit of the stack (**A44**, a fix sketch per finding), a scanned
+   line's picture by choice, the update notice from Google Play (the check
+   the app's own, at launch and every six hours), D24 (b) on Sealed. Next, in
+   A44's order -- the owner agreed (1 Oct): its CI finding (the PR check
+   builds the APK's debug variant), then the structural takes one at a time,
+   each when no other branch is open; eBay's Browse API the day his key
+   exists (D19).
 0. *Done at take 127:* the consent flow and D11's units together (the
    owner's word), a free save when no ad loads, More's Privacy choices where
    UMP requires it. Next: the first real impressions and earnings, read from
@@ -1457,6 +1472,65 @@ fixed band costs every screen about 64 px on the cover display); Save in
 the deck's header (take 107: it stays where a deck is finished); Lucide's
 icons wholesale (take 107: the sprite takes a symbol only where the app
 needs one).
+
+## A44 — The take-128 audit: the structure of the stack · OPENED take 128
+
+The owner's ask at take 128, v1 in production: an audit of where the stack is
+and what looks wrong, under the code-quality review skill he named
+(structure before local cleanup). HANDOFF take 128 has the measurements and
+the findings in full; this item carries what is open, with a fix sketch each,
+in the order to take them. **Nothing here is a bug**; every finding is a cost
+the next takes pay in time or risk.
+
+1. **The PR check does not build the APK.** `check.yml` runs the pipeline and
+   the gate; `ci/apk.sh` runs first on `main` after a merge, so a plugin, a
+   Gradle or an R8 change is proven only there (takes 120, 121, 127, 128 all
+   touched that path). Sketch: a second `check` job -- `npm ci`, `cap sync`,
+   `gradlew assembleDebug` with no key -- on `ubuntu-latest`, which carries the
+   SDK; about five minutes; its selftest is a planted dependency that does not
+   resolve. With A43's item 3 (no lockfile) it is one risk with two halves.
+2. **`src/app.html` into `src/app/*.js`**, inlined by `build_app.py` in the
+   present order, as `sim.js` and `scan.js` already are. Proof: `www/app.js`
+   byte-identical before and after (the shipped file does not change, so no
+   harness or scrubber regex moves); the scrubber's file list names the new
+   files (landmine 182). Only when no other branch is open; its own take.
+3. **One click dispatcher** for the 33 document-level delegates: a table of
+   (selector, handler) registered once in the present order; the
+   capture-phase listener of `PICKER` and the scrim rule (landmines 159, 178)
+   stay as they are. Proof in Chrome, never the stub (landmine 136).
+4. **`ADS` out of `PLATFORM`**: consent, units, load and show, the free save
+   beside `CREDITS`; the adapter keeps `plugin()` and the thin calls. Smoke's
+   take-121 and take-127 sections move with it.
+5. **`paintScan` into four**: the camera, the tray, the picker, the wall.
+   After the owner's Fold report on take 125 (A2 is live).
+6. **`tools/smoke.mjs` into `tools/smoke/*.mjs`** with a runner that snapshots
+   and restores the app's state around each section and names a leak itself
+   (landmine 221's cure). Same asserts; mechanical; same caveat as 2.
+7. **Policy for the harness**: no new source regex (`.test(js)`) unless the
+   thing asserted is a static property of the shipped file; a section that is
+   touched trades its regexes for behaviour checks.
+8. **For the UI/UX session**: the 148 inline styles inside templates, with a
+   gate ratchet (the count may only fall) if it wants one.
+9. **More sources for Hunt**: from the runner eBay, Walmart, GameStop and
+   Meijer refuse a cloud IP (A32's tables, takes 67-72); a key opens eBay's
+   Browse API; the phone's own IP serves the rest in a sideload build (D21 a).
+   *1 Oct: the owner opens an eBay developer account; the eBay take follows
+   the key, measured on the runner first. D21 stays open.*
+10. ~~**D24**: Sealed and a product with no price yet (finding 3 in HANDOFF).~~
+   *Answered (b) and built in take 128: `SEALED.listed` -- a priced product,
+   or an unpriced one a distributor, Target or a shop names
+   (`HUNT.listedIds`); the row says "no market price yet"; `isProduct` keeps
+   its meaning for Diagnostics' count.*
+
+**Ruled out:** doing any of 2-6 inside a feature take (a split moves every
+line and would collide with every open branch); changing what Sealed lists
+*to mend the nightly* (the test depended on a price, the screen did not; the
+listing changed at the owner's word, D24 (b), not for the test -- and with
+it the test's pin went); listing every sealed product, priced or not (D24's
+(c): 675 rows, most with neither a source nor a price); a lockfile added here without the owner (A43
+item 3, it changes what a nightly can ship); replacing the 320 source regexes
+in one pass (each is a check watched to fail for a reason the behaviour check
+must keep).
 
 ## A43 — What take 115's production review handed on · OPENED take 115
 

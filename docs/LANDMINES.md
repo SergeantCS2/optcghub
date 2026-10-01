@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 127.*
+*Current as of take 128.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -255,6 +255,8 @@ Start here. Do not read top to bottom.
 | A card's picture is wrong for good although the host has the right one, or a wrong picture never leaves | 240 |
 | A card is shown with another printing's picture: the right card, the wrong illustration | 241 |
 | A picture hash compared in the app differs from the pipeline's by a few bits | 242 |
+| Smoke's row checks on a fixture go red with no code change; the product has no price that day | **243** |
+| A tap on a control inside a picture opens the card instead; a drag across a picture dies after 8 px | **244** |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -3141,6 +3143,47 @@ found it planning to compare pictures in the app, and moved that choice to
 the build (`hashes.lend_map`), where hashes are exact. Rule: a value wider
 than 53 bits crosses into JavaScript as a string, and is compared as a BigInt
 parsed from it. The fix is its own take (queued from take 126).
+
+**243. A fixture's row sat on a screen that lists only priced products, and
+TCGCSV stopped pricing it the night the nightly went red.** The take-112
+smoke section asserts the EB-05 pack's Southern Hobby line *on Sealed*, under
+the row of the catalogue product the fixture item matches (711383). Sealed
+lists a sealed product only while `market > 0` (take 115). The committed
+sidecar prices 711383 every day from 17 to 29 Sept and not on 30 Sept (TCGCSV
+published two price rows for its group that night, neither the pack), so the
+row vanished, three checks went red -- the line, the no-flood predicate and
+its plant control -- and the diagnostic printed the first distributor line
+on the screen, SD-01's "released Sep 18", which read like landmine 123 and
+was landmine 62 through landmine 199's door: a fixture's fact (this item has
+a row) checked against the live catalogue (today's price). Fix, in two steps
+the same take: first the check pinned the pack's price for its read to the
+sidecar's figure on the day the pages were saved (2026-09-24, $24.95); then
+the owner answered D24 -- Sealed lists a product a distributor, Target or a
+shop names whether TCGplayer has priced it yet or not (`SEALED.listed`,
+`HUNT.listedIds`) -- so the fixture's row is on the screen because the
+fixture names it, and the pin went. A named check still says when the
+fixture's items no longer match a catalogue product at all. Rule: whatever a
+screen reads to decide
+whether a fixture's row exists -- a clock (123), a price (62), a count (114),
+a set list (199) -- is the fixture's fact, and is pinned inside the fixture's
+window for the read, not left to the night.
+
+**244. Two browser rules for a gesture over a picture, both found by the look
+and neither by the stub (landmine 136's family).** Take 128 put an arrow and a
+sideways swipe on a scanned tile's picture. (1) The first build captured the
+pointer on `pointerdown` (`setPointerCapture`, to keep the swipe when the
+finger leaves the picture); Chrome then aims the `click` that follows a tap at
+the *capturing* element, not the arrow under the finger, so the tile's card
+opener saw a plain tap on the picture, opened the card, and the arrow's
+handler never ran. Capture only once the first 8 px say the gesture is a
+sideways one (the mode bar's rule, take 119); a tap never captures. (2) A
+pointer dragged across an `<img>` starts the browser's own image drag, which
+fires `pointercancel` after about 8 px and the swipe never ends; the first
+look's event log read pointerdown, one pointermove, pointercancel.
+`-webkit-user-drag: none` (and `user-select: none`) on the picture keeps the
+pointer. Rule: a gesture over a picture is proven by a real pointer in Chrome
+(the look or render), never by the stub, which has no pointer and no
+document-level click.
 
 ## §2 — Inherited from APEX ORV
 
