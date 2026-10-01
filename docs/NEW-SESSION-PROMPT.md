@@ -121,9 +121,11 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   (`SEALED.listed`, `HUNT.listedIds`; the take-112 pin went with it); he
   opens an **eBay developer key** (the Browse API; the eBay source take
   follows the key, measured on the runner first; D21 stays open); A44's
-  order is agreed. **Next, the owner's:** the merge and the upload, the
-  Fold's About row, the eBay key, D21. **Yours after it:** A44 item 1, then
-  eBay's Browse API the day the key exists.
+  order is agreed. **Merged 1 Oct, 03:46Z; build run 85 green; Release
+  take-128 published 03:58:36Z** (HANDOFF take 128, "After the merge"); the
+  first scheduled nightly on take 128 is 2 Oct, 00:40Z. **Next, the
+  owner's:** the upload, the Fold's About row, the eBay key, D21. **Yours
+  after it:** A44 item 1, then eBay's Browse API the day the key exists.
 
 - **Take 126 -- the host's "Image Coming Soon" refused at the source**
   (AGENDA A41; HANDOFF take 126). TCGplayer serves one placeholder picture,

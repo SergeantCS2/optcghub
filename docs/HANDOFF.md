@@ -350,6 +350,36 @@ candidates left.
   or a store lists it.
 - More sources for Hunt: nothing built; D19's key question and D21 decide.
 
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+- **PR #55 merged 1 Oct, 03:46Z**, as be2d6f4. `build` run 85 on main was
+  green in every job (seed, bundle, apk, pages, report). The bundle job's
+  pipeline on the merge: ingest 87 groups, 7,682 products (7,007 cards, 675
+  sealed), 7,431 price rows, the day's 7,213 prices refreshed for 2026-09-30
+  (19 days on file; the sidecar already carried the day from the red
+  nightly, so "prices unchanged"); hashes restored from the sidecar, 6,753;
+  smoke 1618/1618, render 274/274 in Chrome, GATE PASSED; the hunt
+  carry-over 5 of 5 files from Pages; the runner-owned files committed as
+  f3f0a8e (hashes.json alone moved); Pages deployed 03:52:41Z.
+- **Release take-128 published 03:58:36Z**: the APK 28,926,025 bytes, the
+  AAB 22,132,017, the mapping 52,065,550, the Play icon. The AAB is signed
+  by the upload key (SHA256 `32:8E:60:A5:…`, the pinned one), versionCode
+  128. The apk job's Gradle build carried the new module,
+  `capawesome-capacitor-app-update`, through the release variant and R8
+  for the first time (the PR check builds no APK -- A44 item 1 is exactly
+  this gap); the update plugin is in the shipped bundle and the APK, so
+  the Fold's About row reads Play's answer once the AAB is on Play.
+- **The nightly, still to be seen on its own schedule:** run 84 (1 Oct,
+  00:40Z) was the red one; the merge build's smoke passed the take-112
+  section with the day's prices (the EB-05 pack listed under Southern
+  Hobby's line, unpriced), which is the fix proven on the runner. The first
+  scheduled `build` on take 128 is 2 Oct, 00:40Z; until it is green the
+  mend rests on the merge build's run, not on a scheduled one.
+- **The owner's side, from here:** upload the AAB to Play; then, on the
+  Fold once Play serves take 128, More → About's Google Play row ("Up to
+  date on Google Play"; the sheet only when Play has a newer take than
+  the one installed) -- the DEFERRED row above stays INFERRED until that.
+
 ## Take 127 — 2026-09-30 — real ads: the consent message, the three units, and a free save when no ad loads
 
 Opened before any code (PROTOCOL §6), on `main` at take 126 (Release
