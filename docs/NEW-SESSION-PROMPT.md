@@ -111,9 +111,11 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   scanned line's tile flips between his photo and the catalogue's picture
   (an arrow, or a swipe; `pic: 'ref'` on the line, through `commitOwn`), and
   an update notice from Google Play through `@capawesome/capacitor-app-update`
-  (`PLATFORM.appUpdateInfo`, the `UPDATE` policy object, More's About row,
-  Diagnostics' `update:` line) -- INFERRED on a device until the Fold runs a
-  take-128 Play build beside a newer one. **Next, the owner's:** the look's
+  (`PLATFORM.appUpdateInfo`, the `UPDATE` policy object -- the check is the
+  app's: at launch, on return to the front and every six hours while open,
+  the owner's word -- More's About row, Diagnostics' `update:` line) --
+  INFERRED on a device until the Fold runs a take-128 Play build beside a
+  newer one. The owner saw the look: "the screenshots look great". **Next, the owner's:** the look's
   pictures, D24 (Sealed and a product with no price yet), D19's key question
   and D21 for the next Hunt source. **Yours after it:** A44 item 1.
 

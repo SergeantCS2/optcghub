@@ -36,7 +36,7 @@ what it handed on is A43.)
    and upload take 127's AAB; on the Fold, "Test Ad" labels and the
    self-test's ads line reading live units.
 2b. **Take 128** (the audit, the nightly, your two testing notes): the look's
-   pictures (the picture flip on a scanned tile, More's About row); after the
+   pictures -- *seen: "the screenshots look great" (1 Oct)*; after the
    merge and the upload, on the Fold once online -- does More → About say
    "Up to date" or name a newer version, and does the sheet appear when a
    newer take is on Play than the one installed (INFERRED until then);

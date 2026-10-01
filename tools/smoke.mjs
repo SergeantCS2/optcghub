@@ -5586,7 +5586,17 @@ section('take 128 — an update notice from Google Play (the owner\'s question):
       ctx.navigator.onLine = true;
       const rep = await V.DIAG.report();
       ok('Diagnostics carries the update line in the same words, and its plugin list knows the update plugin', rep.split('\n').includes('update: ' + U.note()) && /^plugins: .*AppUpdate/m.test(rep), (rep.match(/^(update|plugins): .*$/mg) || []).join(' | '));
-      ok('the boot asks Play once the first-open guide and the consent flow are out of the way, never over them (a static wiring the stub cannot run)', typeof U.checkWhenFree === 'function' && /UPDATE\.checkWhenFree\(\)/.test(js) && !/UPDATE\.check\(\)\.then/.test(js));
+      ok('the boot asks Play once the first-open guide and the consent flow are out of the way, never over them (a static wiring the stub cannot run)', typeof U.watch === 'function' && typeof U.checkWhenFree === 'function' && /UPDATE\.watch\(\)/.test(js) && !/UPDATE\.check\(\)\.then/.test(js));
+      /* the owner: "should happen automatically occasionally ... they shouldn't have to check for updates manually" -- on return to the
+         front, and hourly while open, the app asks again once six hours have passed since the last check */
+      { const keepLast = U.lastAt; U.lastAt = Date.now(); const fresh = U.due(); U.lastAt = Date.now() - U.EVERY - 1; const stale = U.due();
+        ok('the app asks Play again on its own once six hours have passed since the last check, and not before', U.EVERY === 6 * 3600e3 && fresh === false && stale === true, JSON.stringify({ every: U.EVERY, fresh, stale }));
+        info = { updateAvailability: 1, availableVersionCode: String(V.TAKE), currentVersionCode: String(V.TAKE) }; calls.length = 0; ctx.navigator.onLine = true;
+        U.lastAt = Date.now(); U.resume(); await new Promise(r => setTimeout(r, 800));
+        const soon = calls.length;
+        U.lastAt = Date.now() - U.EVERY - 1; U.resume(); await new Promise(r => setTimeout(r, 800));
+        ok('...coming back to the front asks when the last check is old, and leaves Play alone when it is fresh; the check moves the clock', soon === 0 && calls.includes('info') && Date.now() - U.lastAt < 5000, JSON.stringify({ soon, calls, age: Date.now() - U.lastAt }));
+        U.lastAt = keepLast; }
       { const pk = ctx.document.getElementById('picker'), tour = ctx.document.getElementById('tour'); const was = { pk: pk.classList.contains('on'), tour: tour.classList.contains('on'), hidden: tour.hidden };
         pk.classList.remove('on'); tour.classList.remove('on'); const free = U.busy();
         pk.classList.add('on'); const overPicker = U.busy(); pk.classList.remove('on');

@@ -86,7 +86,15 @@ has no hole (landmine 115 held).
    that does not answer shows nothing and says why under About. The boot's
    check waits while the guide, Google's consent message or a sheet the
    collector is answering is up (the printing picker shares the sheet, and a
-   new prompt dismisses the one open). **Ruled
+   new prompt dismisses the one open). **The owner, on the PR** ("the check
+   for updates should happen automatically occasionally if possible so the
+   user knows, they shouldn't have to check for updates manually"): the
+   check is the app's -- at every launch, when the app comes back to the
+   front six hours or more after the last check, and every six hours while
+   it stays open (`UPDATE.watch`, `resume`, `due`); "Check for updates"
+   under About is only the way to ask sooner. A version answered with Later
+   is still offered once; About keeps the note. His word on the look: "the
+   screenshots look great". **Ruled
    out:** the Pages manifest's take as the source -- it is the merged take,
    which the owner uploads to Play by hand, so the app would announce an
    update Play does not have (dishonest, PROTOCOL §10); scraping Play's
@@ -247,7 +255,7 @@ candidates left.
 
 - This branch, 1 Oct: `ci/deps.sh`; the whole pipeline on take 127's code
   (the baseline above); the checks watched red; then the code: smoke
-  **1612/1612** (25 new: the picture by choice 10, the update notice 15);
+  **1614/1614** (27 new: the picture by choice 10, the update notice 17);
   render **274/274 (mode: chrome)** (9 new, the real pointer's: the
   arrow's target, the tap, the finger across and the finger up and down,
   the sheet, Update, the About row, Check for updates); the look **16/16**

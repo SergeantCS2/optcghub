@@ -2228,12 +2228,25 @@ const UPDATE = {
     if (v === 'go') await PLATFORM.openStore();
     return true;
   },
-  /* at boot: never over the first-open guide, Google's consent message or a sheet the collector is answering (the printing
-     picker shares the sheet, and a new prompt dismisses the one open) -- asked once all three are out of the way */
+  /* never over the first-open guide, Google's consent message or a sheet the collector is answering (the printing picker
+     shares the sheet, and a new prompt dismisses the one open) -- asked once all three are out of the way */
   busy() { const on = id => { const e = document.getElementById(id); return !!(e && !e.hidden && e.classList.contains('on')); }; return on('tour') || on('picker') || (ADS_ENABLED && PLATFORM._consent == null); },
-  checkWhenFree() {
-    const tick = async () => { if (this.busy()) { setTimeout(tick, 1000); return; } await this.check(); await this.offer(); const el = document.getElementById('aboutUpd'); if (el) el.textContent = this.note(); };
-    setTimeout(tick, 3000);
+  async ask() { await this.check(); this.lastAt = Date.now(); await this.offer(); const el = document.getElementById('aboutUpd'); if (el) el.textContent = this.note(); },
+  checkWhenFree(delay = 3000) {
+    const tick = async () => { if (this.busy()) { setTimeout(tick, 1000); return; } await this.ask(); };
+    setTimeout(tick, delay);
+  },
+  /* the check is the app's, not the collector's (the owner, take 128: "they shouldn't have to check for updates manually"):
+     at every launch, when the app comes back to the front six hours or more after the last check, and every six hours while
+     it stays open. "Check for updates" under About is the way to ask sooner. A version answered with Later is still offered
+     once only; About keeps the note. */
+  EVERY: 6 * 3600e3, lastAt: 0,
+  due() { return Date.now() - this.lastAt >= this.EVERY; },
+  resume() { if (this.due() && navigator.onLine) this.checkWhenFree(500); },
+  watch() {
+    this.checkWhenFree();
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') this.resume(); });
+    const hourly = () => { this.resume(); setTimeout(hourly, 3600e3); }; setTimeout(hourly, 3600e3);   /* a chain of timeouts: the stub has no setInterval */
   }
 };
 const price = id => { const p = CAT.byId.get(id); return p ? p.market : null; };
@@ -7192,7 +7205,7 @@ async function runSelfTest() {
     ADS_ENABLED = !!(CAT.man.ads.scan && PLATFORM.plugin('AdMob'));
     if (ADS_ENABLED) PLATFORM.adsStartWhenFree();   /* take 127: consent first, never over the first-open guide */
   }
-  UPDATE.checkWhenFree();   /* take 128: Play's answer on a newer version, once the guide and the consent message are out of the way */
+  UPDATE.watch();   /* take 128: Play's answer on a newer version -- at launch once the guide and the consent message are out of the way, on return to the front and every six hours while open */
   paintDevEarn();   /* take 115: after the manifest's numbers, and again whenever Diagnostics opens */
   /* Take 81: the phone’s back button. Read from @capacitor/app’s definitions:
      addListener('backButton', ({ canGoBack })), minimizeApp(). An open sheet
