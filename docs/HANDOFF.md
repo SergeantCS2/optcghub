@@ -51,13 +51,14 @@ has no hole (landmine 115 held).
 ### What this take changes
 
 1. **Smoke's take-112 section reads the fixture's own world** (landmine
-   243): when the live catalogue carries no price for the EB-05 pack, its
-   price is pinned for that read to what the sidecar held on the day the
-   pages were saved (2026-09-24, $24.95) and put back after; a named check
-   says when the fixture's two items no longer match a catalogue product (a
-   rename, landmine 231's family) instead of three cryptic reds; its
-   control: Sealed refuses the unpriced product and lists the pinned one.
-   Watched red on take 127's build first.
+   243). First, the pin: when the live catalogue carried no price for the
+   EB-05 pack, its price was pinned for that read to what the sidecar held
+   on the day the pages were saved (2026-09-24, $24.95), watched red on take
+   127's build first. Then the owner answered D24 (below) and the pin went:
+   the row is on Sealed because the fixture names the product. What stays:
+   a named check that says when the fixture's two items no longer match a
+   catalogue product (a rename, landmine 231's family) instead of three
+   cryptic reds.
 2. **The audit**, below, and AGENDA **A44** with a fix sketch per finding.
 3. **A scanned line's picture by choice** (the owner's note). A line with
    the collector's own photo shows a small arrow on its tile; a tap on it,
@@ -94,13 +95,41 @@ has no hole (landmine 115 held).
    it stays open (`UPDATE.watch`, `resume`, `due`); "Check for updates"
    under About is only the way to ask sooner. A version answered with Later
    is still offered once; About keeps the note. His word on the look: "the
-   screenshots look great". **Ruled
+   screenshots look great".
+5. **D24 (b), the owner's answer on the PR (1 Oct): Sealed lists what a
+   source names, priced or not.** `SEALED.listed(p, src)` -- a priced
+   product, or an unpriced one that a distributor, Target or a shop names
+   (`HUNT.listedIds()`, the catalogue ids the feed names, built once per
+   paint); `isProduct` keeps its meaning (a priced product) for Diagnostics'
+   count. The kinds' counts and the starter-deck section use the same
+   predicate. An unpriced row says "no market price yet" where low and high
+   would be, and its value column stays blank (take 120's words for the
+   page, in a row). The EB-05 pack is back on Sealed tonight under Southern
+   Hobby's line, with no price and saying so. **Ruled out:** listing every
+   sealed product ((c): 675 rows, most with neither a source nor a price);
+   a column reading "— · market" (UI-AUDIT's old box). **Ruled
    out:** the Pages manifest's take as the source -- it is the merged take,
    which the owner uploads to Play by hand, so the app would announce an
    update Play does not have (dishonest, PROTOCOL §10); scraping Play's
    store page (a host the app does not call, PROVISION). INFERRED until the
    Fold: the plugin's first build is the merge's `apk` job, since
    `check.yml` does not run `ci/apk.sh` (A44's CI finding).
+
+### The owner's answers on the PR (1 Oct)
+
+1. The look: "the screenshots look great" -- go.
+2. D24: (b), the session's recommendation -- built above.
+3. D19 / D21: he works on the eBay developer key (the Browse API, sold and
+   active listings); the eBay source take follows the key, measured on the
+   runner first; D21 (the sideload asking retailers from the phone's own IP)
+   stays open.
+4. A44's order agreed: item 1 (the PR check builds the APK's debug variant)
+   next, then the structural takes one at a time when no other branch is
+   open.
+
+And, before the answers: "the check for updates should happen automatically
+occasionally if possible so the user knows, they shouldn't have to check for
+updates manually" -- item 4 above.
 
 ### The audit: the stack as it stands, under the review skill's lens
 
@@ -255,7 +284,8 @@ candidates left.
 
 - This branch, 1 Oct: `ci/deps.sh`; the whole pipeline on take 127's code
   (the baseline above); the checks watched red; then the code: smoke
-  **1614/1614** (27 new: the picture by choice 10, the update notice 17);
+  **1618/1618** (31 new: the picture by choice 10, the update notice 17, D24
+  5 with two controls; the take-112 pin's control went with the pin);
   render **274/274 (mode: chrome)** (9 new, the real pointer's: the
   arrow's target, the tap, the finger across and the finger up and down,
   the sheet, Update, the About row, Check for updates); the look **16/16**

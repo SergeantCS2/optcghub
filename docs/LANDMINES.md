@@ -3155,12 +3155,15 @@ row vanished, three checks went red -- the line, the no-flood predicate and
 its plant control -- and the diagnostic printed the first distributor line
 on the screen, SD-01's "released Sep 18", which read like landmine 123 and
 was landmine 62 through landmine 199's door: a fixture's fact (this item has
-a row) checked against the live catalogue (today's price). Fix: the check
-pins the pack's price for its read to the sidecar's figure on the day the
-pages were saved (2026-09-24, $24.95) when the live catalogue has none, and
-puts it back after; a named check says when the fixture's items no longer
-match a catalogue product at all; its control: Sealed refuses the unpriced
-product and lists the pinned one. Rule: whatever a screen reads to decide
+a row) checked against the live catalogue (today's price). Fix, in two steps
+the same take: first the check pinned the pack's price for its read to the
+sidecar's figure on the day the pages were saved (2026-09-24, $24.95); then
+the owner answered D24 -- Sealed lists a product a distributor, Target or a
+shop names whether TCGplayer has priced it yet or not (`SEALED.listed`,
+`HUNT.listedIds`) -- so the fixture's row is on the screen because the
+fixture names it, and the pin went. A named check still says when the
+fixture's items no longer match a catalogue product at all. Rule: whatever a
+screen reads to decide
 whether a fixture's row exists -- a clock (123), a price (62), a count (114),
 a set list (199) -- is the fixture's fact, and is pinned inside the fixture's
 window for the read, not left to the night.

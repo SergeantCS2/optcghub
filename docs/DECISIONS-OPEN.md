@@ -75,7 +75,7 @@ upload, and I re-cut it in ten minutes today. See A19.
 
 *Added take 128.*
 
-**D24 — Sealed and a product with no price yet (A44, finding 3).** Sealed lists
+**D24 — Sealed and a product with no price yet (A44, finding 3). ANSWERED 1 Oct, the owner on the PR: (b), built in take 128 -- Sealed lists a product a distributor, Target or a shop names whether TCGplayer has priced it yet or not, its row saying "no market price yet".** *(original)* Sealed lists
 a sealed product only while TCGplayer has a market price for it (take 115). A
 presale's price comes and goes with its listings: the EB-05 pack was priced
 every day from 17 to 29 Sept and not on 30 Sept, so its row -- and Southern
@@ -142,7 +142,7 @@ on Hunt's local value.
 
 *Added take 67.*
 
-**D19 — Retailer price sources for Hunt (A32). ANSWERED take 68: no accounts, no keys — keyless sources only, the runner as the scraper for the Play build, phone-side extras in the sideload build.** *(original)* TCGplayer via TCGCSV
+**D19 — Retailer price sources for Hunt (A32). ANSWERED take 68: no accounts, no keys — keyless sources only, the runner as the scraper for the Play build, phone-side extras in the sideload build.** *1 Oct, the owner on take 128's PR: he opens an eBay developer account (the Browse API -- sold and active listings, the one documented price source among the retailers); the eBay source take follows the key, measured on the runner first (A32's rule). D21 stays open.* *(original)* TCGplayer via TCGCSV
 ships first and needs nothing from you. Beyond that, every retailer feed is
 a key in a repository secret that only you can obtain: a Walmart affiliate
 or marketplace API account is the one with a documented price API; Target,

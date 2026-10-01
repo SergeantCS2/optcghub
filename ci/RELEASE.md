@@ -18,7 +18,7 @@ everything.
 
 ---
 
-**New at take 128:** A scanned card can show the catalogue's picture instead of your own photo: tap the small arrow on its tile, or swipe the picture, and the choice is kept for that card. The app checks Google Play for a newer version on its own — at launch and every few hours — tells you once and offers to open it; More → About says whether you are up to date. The nightly build is mended, and nothing you have saved changes.
+**New at take 128:** A scanned card can show the catalogue's picture instead of your own photo: tap the small arrow on its tile, or swipe the picture, and the choice is kept for that card. The app checks Google Play for a newer version on its own — at launch and every few hours — tells you once and offers to open it; More → About says whether you are up to date. Hunt’s Sealed list now shows a product a distributor or store lists even before it has a price. Nothing you have saved changes.
 
 **New at take 127:** Real ads. Where the law asks for it -- the EEA, the UK and
 Switzerland -- the app asks for your consent first, in Google's own message,

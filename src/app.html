@@ -4717,6 +4717,9 @@ const HUNT = {
   unreached(D) { return !!D && (!D.ok || !!D.kept); },
   distItems() { const out = []; for (const [k] of this.DISTS) { const D = this.dist(k); if (D && D.ok) for (const it of (D.items || [])) out.push(Object.assign(Object.create(it), { _d: k, _k: k + ':' + (it.sku || it.id) })); } return out; },
   distByCatalogId() { const out = {}; for (const it of this.distItems()) if (it.catalog_id) (out[it.catalog_id] ||= []).push(it); return out; },
+  /* take 128 (D24): every catalogue id a source names -- a distributor's item, Target's, a shop's -- as numbers, for what Sealed lists */
+  listedIds() { const s = new Set(); for (const k of Object.keys(this.distByCatalogId())) s.add(+k); for (const k of Object.keys(this.byCatalogId())) s.add(+k);
+    for (const sh of ((LOCAL.shops && LOCAL.shops.shops) || [])) for (const it of (sh.sealed || [])) if (it.catalog_id) s.add(+it.catalog_id); return s; },
   /* Take 72. The collector’s zip, asked once. The runner serves LOCAL stock
      for a list of zips; the closest honest match is exact, then the same
      3-digit prefix (a sectional centre, roughly one metro), else none --
@@ -4985,6 +4988,11 @@ const SEALED = {
      priced or not; isProduct is what Sealed lists, one with a market price; isDon holds the one DON!! pattern */
   isGoods(p) { return !!p && !!p.sealed && !SEALED.isDon(p); },
   isProduct(p) { return SEALED.isGoods(p) && p.market > 0; },
+  /* take 128 (D24, the owner's (b)): the screen lists a priced product, and an unpriced one that a distributor, Target or a
+     shop names -- the product a source is talking about is Hunt's subject whether TCGplayer has priced it yet or not (the
+     EB-05 pack lost its price for a night and left the screen, landmine 243). `src` is the set of catalogue ids the feed
+     names, built once per paint (HUNT.listedIds); isProduct keeps its meaning, a priced product, for Diagnostics' count. */
+  listed(p, src) { return SEALED.isGoods(p) && (p.market > 0 || !!(src && src.has(p.id))); },
   /* take 111: a DON!! card is filed as sealed (it has no number) but is one card -- a finish, a grade, a condition */
   isDon(p) { return !!p.sealed && /don!! card/i.test(p.name || ''); },
   kindOf(p) { const n = (p.name || '').toLowerCase();
@@ -4994,8 +5002,8 @@ const SEALED = {
     if (/booster pack|pack\b|blister|sleeved/.test(n)) return 'pack';
     if (/collection|illustration box|gift|battle kit/.test(n)) return 'collection';
     return 'other'; },
-  rows() { const q = this.q.trim().toLowerCase();
-    return CAT.rows.filter(p => this.isProduct(p))
+  rows(src = HUNT.listedIds()) { const q = this.q.trim().toLowerCase();
+    return CAT.rows.filter(p => this.listed(p, src))
       .filter(p => this.kind === 'all' || this.kindOf(p) === this.kind)
       .filter(p => !q || (p.name || '').toLowerCase().includes(q) || (CAT.sets.get(p.set)?.name || '').toLowerCase().includes(q))
       .sort((a, b) => (CAT.sets.get(b.set)?.pub || '').localeCompare(CAT.sets.get(a.set)?.pub || '') || a.name.localeCompare(b.name)); }
@@ -5041,8 +5049,8 @@ function setPic(s, w = THUMB.m) {
    section and every set's. Its picture and name; under the name `sub` (the set, or the kind) with low and high, then
    the stock sources' `lines`; its price; the stock bell; where to buy; each distributor's short line */
 function sealedRow(p, sub, lines, byDist) {
-  const on = STOCK.has(p.id);
-  return `<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><button class="row" style="flex:1;min-width:0;text-align:left;padding:0;gap:10px" data-open="${p.id}">${productPic(p)}<div class="nm" style="min-width:0"><b>${esc(p.name)}</b><span>${sub} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}</span>${lines}</div><div class="v"><b>${money(p.market)}</b>${deltaHtml(p, { pctOnly: true })}</div></button>`
+  const on = STOCK.has(p.id), priced = p.market > 0;   /* take 128 (D24): a product with no price yet says so where low and high would be, and its column stays blank */
+  return `<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><button class="row" style="flex:1;min-width:0;text-align:left;padding:0;gap:10px" data-open="${p.id}">${productPic(p)}<div class="nm" style="min-width:0"><b>${esc(p.name)}</b><span>${priced ? `${sub} \u00b7 low ${money(p.low)} \u00b7 high ${money(p.high)}` : `${sub} \u00b7 no market price yet`}</span>${lines}</div><div class="v"><b>${money(priced ? p.market : null)}</b>${priced ? deltaHtml(p, { pctOnly: true }) : ''}</div></button>`
     + `<button class="ghost" data-stock="${p.id}" aria-label="${on ? 'Stop watching stock for' : 'Alert when in stock:'} ${esc(p.name)}" aria-pressed="${on}" style="flex:0 0 auto;padding:8px 10px;${on ? 'color:var(--brass);border-color:var(--brass)' : ''}">${bell(on)}<span style="display:block;font-size:var(--fs-cap);line-height:1.1;margin-top:2px">${on ? 'watching' : 'alert'}</span></button>${buyChips(p)}${distRowLines(p, (byDist || {})[p.id])}</div>`;
 }
 function paintSealedHero() {
@@ -5055,16 +5063,17 @@ function paintSealed() {
   paintSealedHero();
   const asOf = $('#sealedAsOf'); if (asOf) asOf.textContent = 'prices ' + dayText(CAT.man.source_updated_at);
   const cps = $('#curPillSealed'); if (cps) cps.innerHTML = curPill();
-  const counts = {}; for (const p of CAT.rows) if (SEALED.isProduct(p)) { const k = SEALED.kindOf(p); counts[k] = (counts[k] || 0) + 1; counts.all = (counts.all || 0) + 1; }
+  const src = HUNT.listedIds();   /* take 128 (D24): what a source names is listed, priced or not */
+  const counts = {}; for (const p of CAT.rows) if (SEALED.listed(p, src)) { const k = SEALED.kindOf(p); counts[k] = (counts[k] || 0) + 1; counts.all = (counts.all || 0) + 1; }
   $('#sealedKinds').innerHTML = SEALED_KINDS.map(([k, label]) => `<button class="chip${SEALED.kind === k ? ' on' : ''}" data-skind="${k}" aria-pressed="${SEALED.kind === k}">${label} <span class="note">${counts[k] || 0}</span></button>`).join('');
-  const rows = SEALED.rows(); let lastSet = null; const out = [];
+  const rows = SEALED.rows(src); let lastSet = null; const out = [];
   const T = HUNT.feed && HUNT.feed.sources && HUNT.feed.sources.target; const byCat = HUNT.byCatalogId();
   const gts = HUNT.dist('gts'); const byDist = HUNT.distByCatalogId();   // take 94; take 115: gts, not G -- a local G hid the glyph helper
   /* starter decks, their own section (take 87): every deck product, newest set first */
   /* take 117 (the owner's screenshot: starter decks outside their section): every product of a starter-deck SET -- the decks and
      their display -- lives here, and the by-set fold below skips what this section lists, so nothing is listed twice */
   const inDecks = new Set();
-  if (SEALED.kind === 'all' && !SEALED.q) { const decks = CAT.rows.filter(p => SEALED.isProduct(p) && ((CAT.sets.get(p.set) || {}).kind === 'deck' || SEALED.kindOf(p) === 'deck')).sort((a, b) => (CAT.sets.get(b.set)?.pub || '').localeCompare(CAT.sets.get(a.set)?.pub || '') || a.name.localeCompare(b.name)); decks.forEach(p => inDecks.add(p.id));
+  if (SEALED.kind === 'all' && !SEALED.q) { const decks = CAT.rows.filter(p => SEALED.listed(p, src) && ((CAT.sets.get(p.set) || {}).kind === 'deck' || SEALED.kindOf(p) === 'deck')).sort((a, b) => (CAT.sets.get(b.set)?.pub || '').localeCompare(CAT.sets.get(a.set)?.pub || '') || a.name.localeCompare(b.name)); decks.forEach(p => inDecks.add(p.id));
     /* take 110: a strip like every set’s heading, under the newest starter deck’s own top card */
     const dtop = decks.map(p => setTop(p.set)).find(Boolean);
     if (decks.length) out.push(`<button class="fgrp setstrip" data-setfold="decks" aria-expanded="${!SEALED.closed.has('decks')}">${dtop ? artBack(dtop, { crisp: true }) : ''}<span>Starter decks<span class="note">${decks.length} products</span></span><span class="note" aria-hidden="true">${chev(!SEALED.closed.has('decks'))}</span></button>`);

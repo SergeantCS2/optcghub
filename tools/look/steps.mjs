@@ -2252,6 +2252,23 @@ const take128 = [
         const s = document.getElementById('aboutUpd'); if (s) window.scrollTo(0, Math.max(0, s.getBoundingClientRect().top + window.scrollY - 200));
         return { ok: !!s && /^Could not ask Google Play — this build has no update plugin/.test(s.textContent), text: s && s.textContent };
       });
+    } },
+  { name: 'hunt-sealed-a-product-with-no-price-yet-that-a-distributor-lists', run: async (page) => {
+      /* D24, the owner's (b): the OP-18 box with its price taken away for the picture, listed because Southern Hobby names it */
+      await page.evaluate(F => { window.__F128 = F; }, feed112());
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.HUNT.sync = async () => false; V.HUNT.syncHistory = async () => false; V.NAV.zipAsked = true; V.HUNT.feed = window.__F128;
+        const it = (window.__F128.sources.southern.items || []).find(i => i.id === '79311'); const box = it && V.CAT.byId.get(it.catalog_id); if (!box) return { ok: false, why: 'no OP-18 box' };
+        window.__k128p = { id: box.id, market: box.market, low: box.low, high: box.high }; box.market = null; box.low = null; box.high = null;
+        V.SEALED.kind = 'all'; V.SEALED.q = ''; V.SEALED.closed.delete(box.set); V.SEALED.open.add(box.set); V.DISTF.open.clear();
+        V.MODE.set('hunt', true); await ${pause}; V.HUNT.feed = window.__F128; V.go('sealed'); V.HUNT.feed = window.__F128; V.paintSealed(); await ${pause};
+        const row = document.querySelector('#sealedList button.row[data-open="' + box.id + '"]'), wrap = row && row.parentElement;   /* the distributor's line is the wrapping row's, beside the button */
+        if (wrap) wrap.scrollIntoView({ block: 'center' });
+        return { ok: !!row && /no market price yet/.test(row.textContent) && !!(wrap && wrap.querySelector('.dline')), words: row ? row.querySelector('.nm span').textContent : null, value: row ? row.querySelector('.v').textContent : null, line: wrap && wrap.querySelector('.dline') ? wrap.querySelector('.dline').textContent.trim() : null }; })()`);
+      await waitArt(page, '#sealedList img'); await wait(300);
+      return m;
+    } },
+  { name: 'hunt-sealed-restored', run: async (page) => {
+      return page.evaluate(() => { const V = window.VAULT, k = window.__k128p; if (k) { const b = V.CAT.byId.get(k.id); Object.assign(b, { market: k.market, low: k.low, high: k.high }); } delete window.__k128p; V.HUNT.feed = null; while (V.closeAnyOverlay()) {} V.MODE.set('collect', true); V.go('home'); return { ok: true }; });
     } }
 ];
 

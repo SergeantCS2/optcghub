@@ -115,9 +115,15 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   app's: at launch, on return to the front and every six hours while open,
   the owner's word -- More's About row, Diagnostics' `update:` line) --
   INFERRED on a device until the Fold runs a take-128 Play build beside a
-  newer one. The owner saw the look: "the screenshots look great". **Next, the owner's:** the look's
-  pictures, D24 (Sealed and a product with no price yet), D19's key question
-  and D21 for the next Hunt source. **Yours after it:** A44 item 1.
+  newer one. The owner saw the look: "the screenshots look great". His
+  answers on the PR (1 Oct): **D24 is (b), built** -- Sealed lists a
+  product a distributor, Target or a shop names, priced or not
+  (`SEALED.listed`, `HUNT.listedIds`; the take-112 pin went with it); he
+  opens an **eBay developer key** (the Browse API; the eBay source take
+  follows the key, measured on the runner first; D21 stays open); A44's
+  order is agreed. **Next, the owner's:** the merge and the upload, the
+  Fold's About row, the eBay key, D21. **Yours after it:** A44 item 1, then
+  eBay's Browse API the day the key exists.
 
 - **Take 126 -- the host's "Image Coming Soon" refused at the source**
   (AGENDA A41; HANDOFF take 126). TCGplayer serves one placeholder picture,

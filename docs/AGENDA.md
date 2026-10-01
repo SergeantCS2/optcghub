@@ -40,8 +40,8 @@ what it handed on is A43.)
    merge and the upload, on the Fold once online -- does More → About say
    "Up to date" or name a newer version, and does the sheet appear when a
    newer take is on Play than the one installed (INFERRED until then);
-   **D24** (Sealed and a product with no price yet); your answers on D19's
-   key question and D21 decide the next Hunt source (A44's last item).
+   *D24 answered (b) and built (1 Oct)*; the eBay developer key is yours, in
+   progress (1 Oct) -- the eBay source take follows it; D21 stays open.
 3. **Take 113's Fold check:** the launcher on both screens, the splash, a
    reminder's ドン!! glyph (landmine 170).
 4. **Answers still open:** A43's large items -- ad consent (answered take
@@ -74,9 +74,12 @@ what take 115 changed on screen.
    owner's scan results and photographs.
 0a. *Done at take 128:* the red nightly root-caused and mended (landmine
    243), the audit of the stack (**A44**, a fix sketch per finding), a scanned
-   line's picture by choice, the update notice from Google Play. Next, in
-   A44's order: its CI finding (the PR check builds the APK's debug variant),
-   then the structural takes one at a time, each when no other branch is open.
+   line's picture by choice, the update notice from Google Play (the check
+   the app's own, at launch and every six hours), D24 (b) on Sealed. Next, in
+   A44's order -- the owner agreed (1 Oct): its CI finding (the PR check
+   builds the APK's debug variant), then the structural takes one at a time,
+   each when no other branch is open; eBay's Browse API the day his key
+   exists (D19).
 0. *Done at take 127:* the consent flow and D11's units together (the
    owner's word), a free save when no ad loads, More's Privacy choices where
    UMP requires it. Next: the first real impressions and earnings, read from
@@ -1508,16 +1511,23 @@ the next takes pay in time or risk.
    touched trades its regexes for behaviour checks.
 8. **For the UI/UX session**: the 148 inline styles inside templates, with a
    gate ratchet (the count may only fall) if it wants one.
-9. **More sources for Hunt** wait on D19's key question and D21: from the
-   runner eBay, Walmart, GameStop and Meijer refuse a cloud IP (A32's tables,
-   takes 67-72); a key opens eBay's Browse API; the phone's own IP serves the
-   rest in a sideload build (D21 a).
-10. **D24**: Sealed and a product with no price yet (finding 3 in HANDOFF).
+9. **More sources for Hunt**: from the runner eBay, Walmart, GameStop and
+   Meijer refuse a cloud IP (A32's tables, takes 67-72); a key opens eBay's
+   Browse API; the phone's own IP serves the rest in a sideload build (D21 a).
+   *1 Oct: the owner opens an eBay developer account; the eBay take follows
+   the key, measured on the runner first. D21 stays open.*
+10. ~~**D24**: Sealed and a product with no price yet (finding 3 in HANDOFF).~~
+   *Answered (b) and built in take 128: `SEALED.listed` -- a priced product,
+   or an unpriced one a distributor, Target or a shop names
+   (`HUNT.listedIds`); the row says "no market price yet"; `isProduct` keeps
+   its meaning for Diagnostics' count.*
 
 **Ruled out:** doing any of 2-6 inside a feature take (a split moves every
 line and would collide with every open branch); changing what Sealed lists
-to mend the nightly (the test depended on a price, the screen did not; the
-listing is a design choice, D24); a lockfile added here without the owner (A43
+*to mend the nightly* (the test depended on a price, the screen did not; the
+listing changed at the owner's word, D24 (b), not for the test -- and with
+it the test's pin went); listing every sealed product, priced or not (D24's
+(c): 675 rows, most with neither a source nor a price); a lockfile added here without the owner (A43
 item 3, it changes what a nightly can ship); replacing the 320 source regexes
 in one pass (each is a check watched to fail for a reason the behaviour check
 must keep).
