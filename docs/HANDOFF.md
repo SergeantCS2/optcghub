@@ -166,6 +166,31 @@ watched fail and pass here before the PR, not on the PR. Three runs:
 - The structural takes (A44 items 2-6): each its own take, only when no
   other branch is open.
 
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+- **PR #56 merged 1 Oct, 21:25Z**, as 3f27332, nine minutes after its check
+  went green and the PR left draft. `build` run 86 on main was green in
+  every job: seed; bundle 21:25:42 to 21:30:52, which committed the day's
+  prices first (878d392: 2026-10-01, 20 days on file -- TCGCSV had the day
+  up by then) and the sidecars after the gate (2c7ec40); pages deployed
+  21:32:20Z; apk 21:30:56 to 21:36:08 with Publish release; report green.
+- **Release take-129 published 21:36:06Z**: the APK 28,937,777 bytes, the
+  AAB 22,143,779, the mapping 52,065,550, the Play icon. Nothing on screen
+  changed, so there is nothing for the owner to upload unless he wants Play
+  on the pinned dependencies.
+- **The PR's own check, run 85 on 8d55966**: the `check` job 5 min 22 s, the
+  new `apk` job 4 min 51 s on its first run on a runner -- `npm ci` from the
+  lockfile, the signer the sideload key, the Latin-only OCR, the mapping
+  readback, the catalogue found in the listing file, the AAB dev-signed and
+  named unfit to upload, the `PR_CHECK` line in place of the warning. One
+  expected difference from the merge's build: 16 `assets/public` entries
+  where the merge's has 20. The PR check's `www` carries no hourly Hunt
+  files, because only `build.yml`'s bundle job reads them from Pages (the
+  carry-over); a PR cannot prove the hourly files' presence in the APK and
+  does not need to -- the merge build proves it, as it did here.
+- The take's cost, measured: a PR check that was five minutes is now about
+  ten, the second half on a second runner.
+
 ---
 
 ## Take 128 — 2026-10-01 — the nightly mended (the EB-05 pack lost its price), the audit of the stack, a scanned line's picture by choice, an update notice from Google Play
