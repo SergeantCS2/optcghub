@@ -1,4 +1,4 @@
-# OP TCG Hub — take 128
+# OP TCG Hub — take 129
 
 ## Installing — read this first
 
@@ -17,6 +17,8 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 129:** Nothing visible. Every change to the app is now built into the Android app itself, the way a release is, before it can be merged — so a change to a plugin or to the build is caught before it reaches you — and the app's dependencies are pinned to the versions that were tested. Nothing you have saved changes.
 
 **New at take 128:** A scanned card can show the catalogue's picture instead of your own photo: tap the small arrow on its tile, or swipe the picture, and the choice is kept for that card. The app checks Google Play for a newer version on its own — at launch and every few hours — tells you once and offers to open it; More → About says whether you are up to date. Hunt’s Sealed list now shows a product a distributor or store lists even before it has a price. Nothing you have saved changes.
 

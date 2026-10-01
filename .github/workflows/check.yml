@@ -57,3 +57,37 @@ jobs:
           path: www/render.png
           if-no-files-found: ignore
           retention-days: 7
+
+      # take 129: what the pipeline built, for the apk job below (12 MB, a week)
+      - uses: actions/upload-artifact@v6
+        with:
+          name: www
+          path: www
+          retention-days: 7
+
+  # ── the APK, on every pull request (take 129, A44 item 1) ─────────────────
+  # The same five steps as build.yml's apk job, on the PR's merge commit, with
+  # NO secret: ci/apk.sh builds the sideload APK with the committed key (R8,
+  # the shrink, the signer and the mapping read back off the artifact) and the
+  # AAB dev-signed and named unfit to upload. Nothing is published -- the
+  # token is read-only and the Release step lives in build.yml alone. Until
+  # this job, a plugin, Gradle or R8 change was proven only after the merge
+  # (takes 120, 121, 127, 128). The release variant, not a debug one: a debug
+  # build runs no R8, and R8 is what bit (landmines 141, 183). The gate
+  # (check_pr_builds_apk) keeps this job here.
+  apk:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v7
+        with: { name: www, path: www }
+      - uses: actions/setup-java@v5
+        with: { distribution: temurin, java-version: '21' }
+      - uses: actions/setup-node@v5
+        with: { node-version: '22' }
+      - name: Build the sideload APK and a dev-signed AAB, as the merge will
+        env:
+          PR_CHECK: '1'
+        run: bash ci/apk.sh

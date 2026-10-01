@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 128.* Paste the block between the rules into a new session
+*Current as of take 129.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 128 takes by previous sessions. The repo is
+built across 129 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -28,7 +28,7 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
 4. Read `docs/HANDOFF.md`, newest entry first, back to take 80 at least. Every
    take ends with a DEFERRED list; the union of those lists is the work.
 5. Read `docs/LANDMINES.md` §0 (the index) and skim §1. When you are about to
-   do something, grep the index first. 244 of them; each is a real failure.
+   do something, grep the index first. 245 of them; each is a real failure.
 6. Read `docs/AGENDA.md`: the Priorities block at the top is the live order.
 
 **The discipline, which the gate enforces:**
@@ -96,6 +96,34 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
 
 **What is in flight when you arrive:**
 
+- **Take 129 -- the PR check builds the APK (A44 item 1), the lockfile, the
+  owner's local-stock list probed** (AGENDA A44, A32's take-129 table;
+  HANDOFF take 129). `check.yml` gains an `apk` job that runs `ci/apk.sh`
+  itself on the PR's merge commit -- the committed sideload key, R8 and the
+  shrink, the mapping readback, a dev-signed AAB named unfit to upload,
+  nothing published -- so a plugin, Gradle or R8 change is red on the PR
+  and not on `main` first (takes 120, 121, 127, 128 were proven only by the
+  merge). The release variant, not the debug one the sketch said: a debug
+  build runs no R8. `package-lock.json` is committed and `seal.sh` no
+  longer deletes it; the nightly's AAB under the same versionCode (A43
+  item 3's second half) stays the owner's call. The script's first run off
+  a runner (an SDK in the session's scratchpad) found its last guard
+  refusing a true artifact -- `unzip -l | grep -q` under pipefail, 29 in 30
+  -- landmine 245: every readback in `ci/*.sh` now reads a file or a
+  variable, and `apk.sh --selftest` greps for the shape. The owner's answers after
+  Release take-128: the AAB uploaded ("I pushed 128"); **Cardmarket struck,
+  EU only** (its free daily EUR files were measured and put to him); A44
+  item 1 next; local stock from GameStop, Barnes & Noble, Walmart, Target,
+  Meijer, Five Below, Hot Topic sometimes, and more -- each probed from the
+  session VM (A32's table): Walmart now answers with product JSON but no
+  price or shelf without a store context and the runner's own IP is
+  unmeasured; Hot Topic serves tiles; the other four refuse a cloud IP, so
+  **D21** (the phone fetching for its own zip) decides them. **Next, the
+  owner's:** D21, the Walmart take's go-ahead, the eBay key, the Fold's
+  About row. **Yours after it:** A44 item 2 (the app into `src/app/*.js`),
+  only when no other branch is open; the Walmart take measured on the
+  runner first; eBay's Browse API the day the key exists.
+
 - **Take 128 -- the audit, the nightly, the owner's two testing notes**
   (AGENDA A44; HANDOFF take 128). The nightly of 1 Oct (run 84) went red
   at smoke on the take-112 fixture: TCGCSV stopped pricing the EB-05 pack
@@ -121,9 +149,11 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   (`SEALED.listed`, `HUNT.listedIds`; the take-112 pin went with it); he
   opens an **eBay developer key** (the Browse API; the eBay source take
   follows the key, measured on the runner first; D21 stays open); A44's
-  order is agreed. **Next, the owner's:** the merge and the upload, the
-  Fold's About row, the eBay key, D21. **Yours after it:** A44 item 1, then
-  eBay's Browse API the day the key exists.
+  order is agreed. **Merged 1 Oct, 03:46Z; build run 85 green; Release
+  take-128 published 03:58:36Z** (HANDOFF take 128, "After the merge"); the
+  first scheduled nightly on take 128 is 2 Oct, 00:40Z. **Next, the
+  owner's:** the upload, the Fold's About row, the eBay key, D21. **Yours
+  after it:** A44 item 1, then eBay's Browse API the day the key exists.
 
 - **Take 126 -- the host's "Image Coming Soon" refused at the source**
   (AGENDA A41; HANDOFF take 126). TCGplayer serves one placeholder picture,
@@ -418,6 +448,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 129" and begin with PROTOCOL §0.
+Say "take 130" and begin with PROTOCOL §0.
 
 ---

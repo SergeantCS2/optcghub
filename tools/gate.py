@@ -109,7 +109,8 @@ def check_docs_complete():
             fail("docs", f"docs/{fn} is {os.path.getsize(path)} bytes — a stub is not a doc")
     for fn in ("AGENTS.md", "README.md", "BUILD", "ci/RELEASE.md", "ci/build.yml",
                "ci/bootstrap.yml", "ci/hunt.yml", "ci/check.yml", "ci/apk.sh",
-               "ci/bundle.sh", "ci/check.sh", "ci/deps.sh", "ci/icon.py"):
+               "ci/bundle.sh", "ci/check.sh", "ci/deps.sh", "ci/icon.py",
+               "package-lock.json"):      # take 129: a lockfile that goes missing is a silent npm install, not a fallback
         if not os.path.exists(os.path.join(ROOT, fn)):
             fail("docs", f"{fn} is missing from the tree")
 
@@ -133,6 +134,29 @@ def check_workflow_copies():
             fail("workflows", f".github/workflows/{fn} has no copy at ci/{fn} (the gate and the scrubber read ci/)")
         elif a != b:
             fail("workflows", f"ci/{fn} and .github/workflows/{fn} differ — they are one file; copy one over the other")
+
+
+def check_pr_builds_apk():
+    """Take 129 (A44 item 1). The PR check must build the APK the way the merge
+    does: a job in ci/check.yml that needs the pipeline's job, takes its `www`
+    artifact and runs `bash ci/apk.sh`. Takes 120, 121, 127 and 128 each changed
+    a plugin, Gradle or R8 and were proven only by build.yml on main."""
+    y = read("ci", "check.yml")
+    if not y:
+        return fail("pr-apk", "ci/check.yml is missing, so the PR check cannot be read")
+    jobs = y.split("\njobs:", 1)[-1]
+    m = re.search(r"^  apk:\n(.*?)(?=^  [A-Za-z_-]+:|\Z)", jobs, re.S | re.M)
+    if not m:
+        return fail("pr-apk", "ci/check.yml has no `apk` job: the PR check would not build the APK (A44 item 1)")
+    body = m.group(1)
+    if "bash ci/apk.sh" not in body:
+        fail("pr-apk", "ci/check.yml's apk job does not run `bash ci/apk.sh`")
+    if not re.search(r"needs:\s*check\b", body):
+        fail("pr-apk", "ci/check.yml's apk job does not need the pipeline's `check` job")
+    if "name: www" not in body:
+        fail("pr-apk", "ci/check.yml's apk job does not take the pipeline's `www` artifact")
+    if "name: www" not in jobs.split("\n  apk:", 1)[0]:
+        fail("pr-apk", "ci/check.yml's check job does not upload `www` for the apk job")
 
 
 def check_ledger_integrity():
@@ -723,7 +747,7 @@ def selftest():
             n = take()
             check_docs_current(n); check_handoff(n); check_agenda()
             check_landmine_citations(); check_secrets(); check_render_receipt()
-            check_workflow_copies(); check_offline(provision_hosts()); check_icon_characters(); check_stale_copy()
+            check_workflow_copies(); check_pr_builds_apk(); check_offline(provision_hosts()); check_icon_characters(); check_stale_copy()
             check_ads(); check_pictures()
             if cat == "sim":
                 check_sim()
@@ -873,6 +897,17 @@ def selftest():
         open(os.path.join(t, ".github", "workflows", "probe.yml"), "w").write("name: probe\n")
         open(os.path.join(t, "ci", "probe.yml"), "w").write("name: probe # drifted\n")
     probe("workflow copies drift (ci/ vs .github/workflows)", drift, "workflows")
+    def no_apk_job(t):
+        # take 129: the PR check without its apk job, in both copies (else the drift guard fires instead)
+        for parts in (("ci", "check.yml"), (".github", "workflows", "check.yml")):
+            f = os.path.join(t, *parts); y = open(f).read()
+            open(f, "w").write(re.sub(r"\n  apk:\n.*", "\n", y, flags=re.S))
+    probe("the PR check without its apk job (take 129, A44 item 1)", no_apk_job, "pr-apk")
+    def apk_job_without_script(t):
+        for parts in (("ci", "check.yml"), (".github", "workflows", "check.yml")):
+            f = os.path.join(t, *parts); y = open(f).read()
+            open(f, "w").write(y.replace("run: bash ci/apk.sh", "run: echo built"))
+    probe("the PR check's apk job that does not run ci/apk.sh (take 129)", apk_job_without_script, "pr-apk")
     probe("seed zip not ignored",
           lambda t: open(os.path.join(t, ".gitignore"), "w")
           .write(read(".gitignore").replace("optcghub-seed*.zip", "")), "secrets")
@@ -898,6 +933,7 @@ if __name__ == "__main__":
     check_ledger_integrity()
     check_docs_complete()
     check_workflow_copies()
+    check_pr_builds_apk()
     check_stale_copy()
     check_play_readiness()
     check_ads()

@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 128.*
+*Current as of take 129.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -257,6 +257,7 @@ Start here. Do not read top to bottom.
 | A picture hash compared in the app differs from the pipeline's by a few bits | 242 |
 | Smoke's row checks on a fixture go red with no code change; the product has no price that day | **243** |
 | A tap on a control inside a picture opens the card instead; a drag across a picture dies after 8 px | **244** |
+| A readback guard refuses a true artifact: a producer piped into a quiet grep under pipefail | **245** |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -3184,6 +3185,21 @@ look's event log read pointerdown, one pointermove, pointercancel.
 pointer. Rule: a gesture over a picture is proven by a real pointer in Chrome
 (the look or render), never by the stub, which has no pointer and no
 document-level click.
+
+**245. A readback guard that pipes a producer into a quiet grep refuses a true
+artifact under `pipefail`.** The first run of `ci/apk.sh` outside a runner
+(take 129, the VM's own SDK) built the APK and then stopped on "catalog.json
+is NOT in the APK" with the file plainly in the listing. The guard was
+`unzip -l "$APK" | grep -q 'assets/public/bundle/catalog.json'`: `grep -q`
+exits on its first match (line 40 of 830), `unzip` keeps writing, takes
+SIGPIPE (status 141), and under `set -o pipefail` the pipeline is a failure --
+29 runs in 30, measured. The same shape had passed on the runner since take
+5 by scheduling luck, and `apksigner | grep -m1` sat beside it. The producer's
+output goes to a file or a variable first, and the grep reads that;
+`apk.sh --selftest` now greps `ci/*.sh` for the shape and fails on it. Rule:
+under `pipefail`, never pipe a producer into a consumer that can exit early
+(`grep -q`, `grep -m`, `head`); and the first run of a CI script on a new
+machine is a measurement, not a formality.
 
 ## §2 — Inherited from APEX ORV
 
