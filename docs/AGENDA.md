@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 128.* Ranked by blocking-ness, not by interest.
+*Current as of take 129.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -42,6 +42,8 @@ what it handed on is A43.)
    newer take is on Play than the one installed (INFERRED until then);
    *D24 answered (b) and built (1 Oct)*; the eBay developer key is yours, in
    progress (1 Oct) -- the eBay source take follows it; D21 stays open.
+   *Take 128's AAB uploaded by you (1 Oct, "I pushed 128")*; the About row
+   on the Fold is what is left of take 128.
 3. **Take 113's Fold check:** the launcher on both screens, the splash, a
    reminder's ドン!! glyph (landmine 170).
 4. **Answers still open:** A43's large items -- ad consent (answered take
@@ -77,7 +79,8 @@ what take 115 changed on screen.
    line's picture by choice, the update notice from Google Play (the check
    the app's own, at launch and every six hours), D24 (b) on Sealed. Next, in
    A44's order -- the owner agreed (1 Oct): its CI finding (the PR check
-   builds the APK's debug variant), then the structural takes one at a time,
+   builds the APK -- **take 129**, the release variant with the committed
+   sideload key, not the debug one the sketch said), then the structural takes one at a time,
    each when no other branch is open; eBay's Browse API the day his key
    exists (D19).
 0. *Done at take 127:* the consent flow and D11's units together (the
@@ -968,6 +971,37 @@ either way.** Each source needs one session with its real page structure in
 hand, and its parser needs a saved real response in smoke with a control
 that fails on a changed shape. That is a take per source, not a line.
 
+### MEASURED take 129 — the owner's list for local stock, probed from the session VM's egress (1 Oct)
+
+The owner, after Release take-128: as much local data as possible --
+GameStop, Barnes & Noble, Walmart, Target, Meijer, Five Below, Hot Topic
+sometimes, and more. Cardmarket (free daily EUR files, no account) was put
+to him and struck: EU only. One plain request each, a phone's user agent,
+from the session VM; **the runner's own IP is the one that counts** and is
+measured by the source take, never assumed from here.
+
+| source | result | status |
+|---|---|---|
+| **Walmart** search | 200, 1.1 MB, the page's own JSON: 75 products, 54 of them One Piece, every one a marketplace seller's (Toywiz, Rares Market, Fun G's); availability "In stock"; every price an empty string and the nearby-store field null with no store chosen | **reachable from this egress** (a 15 KB captcha page at take 68); the runner UNKNOWN; price and shelf stock need a store context the search page does not carry |
+| **Hot Topic** search | 200, 844 KB, 45 server-rendered tiles with prices; today's One Piece hits are Cardquest mystery packs and Kabao packs, not the game's own boosters | reachable from this egress; "sometimes" is the right word |
+| **Five Below** search | 403, a bot-challenge page (5.7 KB) | cloud-blocked |
+| **GameStop** search | 403, Cloudflare | cloud-blocked, as at take 72 |
+| **Meijer** search | 403 Access Denied | cloud-blocked, as at take 68 |
+| **Barnes & Noble** | 404 of 9 bytes on every search and category path tried; the home page 200 (7.6 MB) with no trading-card link in it | the search path is bot-walled, not merely wrong (take 72 read it as the wrong URL) |
+| **Target** search HTML | 200 with captcha markers; RedSky JSON is the source | unchanged since take 68; shelf stock by store, hourly, PROVEN |
+
+What this says about "as much local data as possible": Target is the one
+retailer whose shelf stock a runner reads today. Walmart is the next
+candidate and needs two measurements before a take -- the runner's IP, and
+the store-context call that puts a price and a shelf on a product. GameStop,
+Meijer, Five Below and Barnes & Noble answer only a residential IP, which is
+the phone's: **D21** (the phone fetching for its own zip -- the sideload
+build on tap, or the Play build with the Data Safety form re-reviewed)
+decides whether those four exist at all. Walmart's affiliate API is the one
+documented key among them and offers a store locator, not shelf stock
+(unverified beyond its index page, which answered empty). **Ruled out:**
+Cardmarket (EU only, the owner); a cloud probe standing in for the runner.
+
 **The distance filter.** A dropdown on the local view — 10, 25, 50, 100
 miles — over stores with a location, from the collector's own position (the
 device, with permission) or a zip they type. Fifty is the default and the
@@ -1489,6 +1523,14 @@ the next takes pay in time or risk.
    `gradlew assembleDebug` with no key -- on `ubuntu-latest`, which carries the
    SDK; about five minutes; its selftest is a planted dependency that does not
    resolve. With A43's item 3 (no lockfile) it is one risk with two halves.
+   *Take 129: built -- not the debug variant the sketch said but the release
+   one, through `ci/apk.sh` itself with the committed sideload key and no
+   secret (a debug build runs no R8, and R8 is what bit at takes 103, 105 and
+   128); the check job hands its `www` to an `apk` job; the AAB is built
+   dev-signed and named unfit to upload; nothing is published. The lockfile
+   is committed and `seal.sh` stops deleting it (A43 item 3's first half); the
+   nightly's versionCode (its second half) stays the owner's. The gate's
+   `check_pr_builds_apk` keeps the job in the workflow, with its probe.*
 2. **`src/app.html` into `src/app/*.js`**, inlined by `build_app.py` in the
    present order, as `sim.js` and `scan.js` already are. Proof: `www/app.js`
    byte-identical before and after (the shipped file does not change, so no
@@ -1516,6 +1558,10 @@ the next takes pay in time or risk.
    Browse API; the phone's own IP serves the rest in a sideload build (D21 a).
    *1 Oct: the owner opens an eBay developer account; the eBay take follows
    the key, measured on the runner first. D21 stays open.*
+   *1 Oct, later: Cardmarket struck (EU only); his local-stock list probed,
+   A32's take-129 table -- Walmart now answers this egress with product JSON
+   (the runner's IP unmeasured), Hot Topic serves tiles, GameStop, Meijer,
+   Five Below and Barnes & Noble refuse a cloud IP; D21 decides those four.*
 10. ~~**D24**: Sealed and a product with no price yet (finding 3 in HANDOFF).~~
    *Answered (b) and built in take 128: `SEALED.listed` -- a priced product,
    or an unpriced one a distributor, Target or a shop names

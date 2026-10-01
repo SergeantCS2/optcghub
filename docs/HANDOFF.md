@@ -1,4 +1,172 @@
-# HANDOFF — through Take 128
+# HANDOFF — through Take 129
+
+## Take 129 — 2026-10-01 — the PR check builds the APK (A44 item 1), the lockfile, and the owner's local-stock list probed
+
+Opened before any code (PROTOCOL §6), from `main` after take 128's merge
+(`be2d6f4`, 03:46 UTC; `build` run 85 green in every job; Release take-128
+published 03:58 UTC; the nightly's sidecar commit `f3f0a8e`). The branch is
+take 128's, reset onto `main`, and carries take 128's after-the-merge note
+(cca2a5b) as PROTOCOL §6 step 6 says. No PR open. The owner, after the
+Release: take 128's AAB uploaded ("I pushed 128"); two questions answered on
+the way in (the "Trading cards" tag is picked from Play Console's fixed tag
+list under Store settings → Manage tags; the competitor's four prices are
+TCGplayer, Cardmarket, eBay and PSA, and what each needs is in A44 item 9
+and D19); then his decisions: **Cardmarket struck -- EU only**; **A44 item
+1 next**; and local stock stays the standing goal, as much as possible, from
+GameStop, Barnes & Noble, Walmart, Target, Meijer, Five Below, Hot Topic
+sometimes, and more.
+
+### What this take changes
+
+1. **`check.yml` gains an `apk` job.** It needs `check`, takes the `www`
+   the pipeline built (the check job now uploads it, 12 MB, kept a week),
+   sets up Temurin 21 and Node 22, and runs **`ci/apk.sh` itself** with
+   `PR_CHECK=1` and no secret: `npm ci` (the lockfile, below), `cap sync`,
+   the android config patches, the icon, the ABI filter, the shrink, the
+   committed sideload key, `assembleRelease`, the signer read back off the
+   APK, the Latin-only OCR check, the mapping readback, `bundleRelease`
+   dev-signed and named `DEVKEY-DO-NOT-UPLOAD`, the size table. Nothing is
+   published: the token is read-only and the Release step lives in
+   `build.yml` alone. Not the debug variant the audit's sketch said: a debug
+   build runs no R8, and R8 is what bit at takes 103, 105 and 128 (the keep
+   rules, the annotation classes, the update plugin's module). The job is
+   the same five steps as `build.yml`'s `apk` job, so what the PR proves is
+   what the merge ships.
+2. **`ci/apk.sh`:** under `PR_CHECK=1` the no-secrets branch of the AAB
+   step says it is the check's and builds on, instead of the `::warning::`
+   that on `main` means the secrets are missing. A warning on every PR is a
+   warning nobody reads. The three Gradle lines the selftest counts are
+   unchanged.
+3. **`package-lock.json` is committed** (A43 item 3's first half) and
+   `tools/seal.sh` stops deleting it, so `npm ci` in `apk.sh` runs as
+   written and the runner installs the versions this tree was tested with;
+   until now every build resolved `^8.x` afresh, and a plugin's point
+   release could reach a production upload through a nightly with no PR.
+   The second half -- the nightly replacing take N's AAB under the same
+   versionCode -- stays the owner's call (A43 item 3). `ci/deps.sh`'s
+   puppeteer and acorn are `--no-save` and stay unpinned, on purpose: they
+   never ship.
+4. **The gate: `check_pr_builds_apk`.** `ci/check.yml` must carry a job that
+   runs `bash ci/apk.sh` after the pipeline's job and takes the `www`
+   artifact; its probe in `--selftest` removes the job from both copies and
+   watches the guard fire. The required-files list gains
+   `package-lock.json`: a lockfile that goes missing is a gate failure, not
+   a silent fallback to `npm install`.
+5. **Nothing on screen changes**, so no look (A40): the take is CI and the
+   build. `smoke`, `render` and the gate run unchanged.
+
+### The owner's local-stock list, probed (A32's take-129 table)
+
+One plain request per retailer from the session VM's egress, a phone's user
+agent, 1 Oct: **Walmart** answers 200 with the page's own JSON -- 75
+products, 54 One Piece, all marketplace sellers', "In stock", every price an
+empty string and the nearby-store field null with no store chosen (a 15 KB
+captcha page at take 68); **Hot Topic** 200 with 45 server-rendered priced
+tiles, today's One Piece hits being Cardquest mystery packs and Kabao packs,
+not the game's boosters; **Five Below** 403 challenge; **GameStop** 403
+Cloudflare; **Meijer** 403; **Barnes & Noble** 404 of 9 bytes on every
+search and category path with the home page served whole; **Target** as at
+take 68. The runner's own IP is the one that counts and was not measured
+here (A32's rule: a cloud probe stands in for nothing). What it means for
+"as much local data as possible" is in A32: Target is the one shelf a
+runner reads today; Walmart is the next candidate and needs the runner's IP
+and the store-context call measured first; the other four answer only a
+residential IP, which is the phone's, so **D21** decides whether they exist.
+
+### Cardmarket, measured and struck
+
+`downloads.s3.cardmarket.com` publishes a product list and a price guide
+per game daily, no account: game 18 is One Piece, 12,586 singles and 798
+sealed products, EUR, with average, low, trend and the 1-, 7- and 30-day
+averages; fetched whole from the session VM. The product list names a card
+by name and number only, up to 26 products per number across 149
+expansions, several inside one expansion with nothing but the price between
+the base art and the alt art, and the site that names the variants refuses
+a cloud IP (403); keying a price to a printing would have needed a map built
+from the owner's PC. Put to the owner with that caveat; struck as EU only.
+Recorded in D19 so the next session does not measure it again.
+
+### Measured
+
+- The merge build's `apk` job on take 128 (run 85): 03:52:34 to 03:58:22,
+  the first real build of the update plugin's module; the PR check (run
+  84) 03:00:20 to 03:05:20 with no APK. The expected cost of the new job is
+  that six minutes on a fresh runner, after the five-minute check.
+- Cardmarket's files: 2.76 MB price guide, 2.24 MB singles list, 155 KB
+  sealed list, 13,380 price rows, 560 of them with no average.
+
+### The script run where no runner is: what the first local run of `ci/apk.sh` found
+
+An Android SDK was installed into the session's scratchpad (command-line
+tools, platform 36, build-tools 36.0.0; Java 21 was already there; Gradle,
+maven.google.com and Maven Central reachable) so the new job could be
+watched fail and pass here before the PR, not on the PR. Three runs:
+
+1. The first died in Gradle on a Maven Central **429** (Too Many Requests)
+   through the session's proxy while fetching the Kotlin build tools -- the
+   environment, not the build; the second run found them cached.
+2. The second built everything: `assembleRelease` BUILD SUCCESSFUL in 4 m
+   05 s cold, the APK signer read back as the committed sideload key, OCR
+   models Latin 4 / non-Latin 0, R8 mapping 500,999 lines with 71,225 of
+   usage, `bundleRelease` 26 s, the `PR_CHECK` line printed in place of the
+   warning, the size table (APK 29.0 MB, AAB 22.2 MB) -- and then **the
+   last guard refused it: "catalog.json is NOT in the APK"**, with the file
+   plainly in the listing. `unzip -l "$APK" | grep -q ...` under `pipefail`:
+   grep exits on its match at line 40 of 830, unzip takes SIGPIPE (status
+   141), the pipeline is a failure. Measured 29 refusals in 30 runs of that
+   line against the same APK; 0 in 30 with the listing written to a file
+   first. It had passed on the runner since take 5 by scheduling. Landmine
+   245; the two readbacks in `apk.sh` and the two in `signer.sh` now read the
+   producer's output from a file or a variable, and `apk.sh --selftest`
+   greps `ci/*.sh` for the shape (watched finding four lines in the old
+   files, none in the new).
+3. The planted control (rule 2): a dependency in `package.json` that the
+   lockfile does not carry (`@capacitor/nonesuch-probe`). `npm ci` refused
+   it, `apk.sh` stopped with its own `::error::` line, **0 Gradle lines in
+   the log**, exit 1; `package.json` restored and `git diff` empty.
+4. The third run, on the fixed script: exit 0 in 130 s warm (`assembleRelease`
+   1 m 23 s, `bundleRelease` 23 s), the catalogue found in the listing file,
+   the signer the sideload key, 16 `assets/public` entries (this tree's `www/`
+   carries no hourly files; the runner's has 20), no listing file left behind.
+
+### Tests
+
+- `bash ci/apk.sh --selftest`: the three Gradle controls and the landmine-245
+  shape control, green on the new files.
+- `python3 tools/gate.py --selftest`: 36 of 36 after the stamp (the first run
+  reported every probe's copy stale at take 128 against BUILD's 129 -- the
+  stamp step had not run yet; not a defect, the order of the morning).
+- The pipeline, whole, on this tree after `ci/deps.sh` put puppeteer back:
+  smoke 1618/1618, render 274/274 in Chrome (202 s), GATE PASSED (70 s), 403 s
+  end to end; no step changed, no check added -- the take is CI, the build
+  and the ledgers. `bash tools/seal.sh --gate-only`, bare: green; the
+  runner-owned files restored before the commit.
+- The look: nothing on screen changed, so no steps and no pictures (A40
+  applies to the UI; this take has none).
+
+### What I got wrong
+
+- The audit's sketch said `assembleDebug`; a debug build runs no R8, which is
+  the thing that bit at takes 103, 105 and 128, so the job runs the release
+  script whole. Corrected in A44 item 1.
+- `npm ci` on a tree that `ci/deps.sh` had prepared wipes `node_modules`,
+  puppeteer with it: the next render would have run in DOM mode (landmine
+  112) had `deps.sh` not been run again before the pipeline. Said here so
+  the next local run of `apk.sh` knows.
+- The first selftest after the ledgers: stale stamps, see Tests.
+
+### DEFERRED
+
+- The runner's IP against Walmart and Hot Topic: unmeasured; the Walmart
+  take measures it first (A32's rule) and the store-context call with it.
+- D21 and the four residential-only retailers (GameStop, Meijer, Five
+  Below, Barnes & Noble): the owner's decision.
+- A43 item 3's second half, the nightly's AAB under take N's versionCode:
+  the owner's call.
+- The structural takes (A44 items 2-6): each its own take, only when no
+  other branch is open.
+
+---
 
 ## Take 128 — 2026-10-01 — the nightly mended (the EB-05 pack lost its price), the audit of the stack, a scanned line's picture by choice, an update notice from Google Play
 

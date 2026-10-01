@@ -32,3 +32,5 @@ optcghub-seed*.zip
 # the look (take 99): screenshots and the report of the session's browser review — they go to the owner, never into the tree.
 # Anchored: an unanchored `look/` also ignored tools/look/ and the step lists vanished from the commit (landmine 138)
 /look/
+# the Play icon ci/apk.sh draws on every build (ci/icon.py); it rides the Release, never the tree. Anchored, as /look/ is (landmine 138)
+/play-assets/

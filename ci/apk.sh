@@ -33,6 +33,12 @@ $line
       || { echo "  FAIL  a passing build did not go on from the tree's root ($rc: ${out##*$'\n'}): $line"; ok=0; }
   done < <(grep -E '^[^#]*(gradlew|^[[:space:]]*gradle )' "$0" | grep -v '^gradle()')
   [ "$n" -ge 3 ] && echo "  ok    three Gradle runs found, as the build has (sideload APK, Play AAB, dev AAB): $n" || { echo "  FAIL  $n Gradle runs found, not the build's three"; ok=0; }
+  # take 129, landmine 245: no readback in ci/*.sh pipes a producer into a consumer that exits early (a quiet
+  # or first-match grep, head) -- under pipefail the producer dies of SIGPIPE and a true artifact is refused.
+  # The shape is found by its text; the producer's output goes to a file or a variable first.
+  bad=$(grep -nE '[|][[:space:]]*(grep[[:space:]]+-[a-zA-Z]*[qm]|head[[:space:]]+-)' ci/*.sh | grep -v 'landmine 245' || true)
+  [ -z "$bad" ] && echo "  ok    no readback in ci/*.sh pipes into a quiet or first-match grep or a head (landmine 245)" \
+    || { echo "  FAIL  a readback pipes a producer into a consumer that exits early (landmine 245):"; echo "$bad" | sed 's/^/        /'; ok=0; }
   [ "$ok" = 1 ] && exit 0 || exit 1
 fi
 
@@ -44,7 +50,10 @@ echo "take=$TAKE" >> "$GITHUB_OUTPUT"
 VC=$TAKE
 
 echo "::group::capacitor"
-npm ci --silent || npm install --silent
+# take 129: the lockfile is committed, so `npm ci` installs the versions this tree was tested with and
+# nothing else. It used to fall back to `npm install`, which resolved ^8.x afresh on every build and
+# would hide a lockfile that package.json had outgrown; now that is the failure it is, said in words.
+npm ci --silent || { echo "::error::npm ci failed -- package.json and package-lock.json disagree (run 'npm install --package-lock-only' and commit the lockfile), or the registry was refused; nothing was built"; exit 1; }
 # The newest build-tools present, not a pinned one: a runner image carries
 # several and the pinned 36.0.0 may not be among them (landmine 105).
 BT=$(ls -d "${ANDROID_HOME:-/usr/local/lib/android/sdk}"/build-tools/* 2>/dev/null | sort -V | tail -1)
@@ -278,7 +287,10 @@ cp android/app/build/outputs/apk/release/*.apk "$APK"
 # signed by the committed sideload key, or the next one will not install over
 # it and the collection is gone. This was checked by hand for eleven takes;
 # now it is a gate.
-SIGNER=$("$BT/apksigner" verify --print-certs "$APK" | grep -m1 'certificate DN' || echo none)
+# Landmine 245: the producer's output is read into a variable first; piped straight into `grep -m1`
+# it could die of SIGPIPE under pipefail and the guard would read a true artifact as unsigned.
+CERTS=$("$BT/apksigner" verify --print-certs "$APK" || true)
+SIGNER=$(grep -m1 'certificate DN' <<<"$CERTS" || echo none)
 echo "  APK signer: $SIGNER"
 case "$SIGNER" in *"CN=OP TCG Hub, OU=sideload"*) ;;
   *) echo "::error::APK is not signed by the committed sideload key — takes would not install over each other (A8)"; exit 1;; esac
@@ -286,8 +298,10 @@ case "$SIGNER" in *"CN=OP TCG Hub, OU=sideload"*) ;;
 echo "apk=$APK" >> "$GITHUB_OUTPUT"
 # take 103: what the shrink promised, read back off the artifact (landmine A-211's
 # rule applies to every patch, not just the signer)
-NONLATIN=$(unzip -l "$APK" | grep -cE "Beng_ctc|Deva_ctc|Hani_ctc|Jpan_ctc|Kore_ctc" || true)
-LATIN=$(unzip -l "$APK" | grep -c "Latn_ctc" || true)
+# The APK's listing, read once into a file; every readback below greps the file (landmine 245)
+unzip -l "$APK" > "$APK.list"
+NONLATIN=$(grep -cE "Beng_ctc|Deva_ctc|Hani_ctc|Jpan_ctc|Kore_ctc" "$APK.list" || true)
+LATIN=$(grep -c "Latn_ctc" "$APK.list" || true)
 echo "  OCR models in the APK: Latin entries $LATIN, non-Latin entries $NONLATIN"
 [ "$NONLATIN" = 0 ] || { echo "::error::the APK still carries $NONLATIN non-Latin OCR model entries — the exclude did not take (A14)"; exit 1; }
 [ "$LATIN" -gt 0 ] || { echo "::error::the APK carries no Latin OCR model — the scanner would read nothing (landmine 11)"; exit 1; }
@@ -334,7 +348,14 @@ else
   gradle bundleRelease
   AAB="optcghub-take-$TAKE-DEVKEY-DO-NOT-UPLOAD.aab"
   cp android/app/build/outputs/bundle/release/*.aab "$AAB"
-  echo "::warning::No Play secrets set — AAB is dev-signed and named unfit to upload."
+  if [ "${PR_CHECK:-}" = 1 ]; then
+    # take 129: the PR check runs this script with no secret on purpose (a pull request has none);
+    # the dev-signed AAB proves bundleRelease and is never uploaded. On main the line below is a
+    # real warning -- the secrets are missing -- and a warning on every PR is one nobody reads.
+    echo "  the PR check: no Play secret in a pull request, so the AAB is dev-signed and named unfit to upload; nothing is published from here"
+  else
+    echo "::warning::No Play secrets set — AAB is dev-signed and named unfit to upload."
+  fi
 fi
 echo "aab=$AAB" >> "$GITHUB_OUTPUT"
 echo "::endgroup::"
@@ -345,9 +366,12 @@ ls -lh "$APK" "$AAB"
 # for both artifacts -- the owner read 56 MB on the phone for a 34.9 MB file and
 # the answer is this table. A size take is measured against it, never guessed.
 python3 tools/shipped.py "$APK" "$AAB" || echo "::warning::the size table failed — a report, never a reason to hold a release"
-echo "  assets/public entries in the APK: $(unzip -l "$APK" | grep -c 'assets/public' || true)"   # take 103: labelled; it printed a bare count
+echo "  assets/public entries in the APK: $(grep -c 'assets/public' "$APK.list" || true)"   # take 103: labelled; it printed a bare count
 # The catalogue must actually be inside the APK. An app that ships without it
 # shows an empty binder and the only thing that catches that is a count.
-unzip -l "$APK" | grep -q 'assets/public/bundle/catalog.json' \
+# Take 129, landmine 245: this read `unzip -l | grep -q` and refused a true artifact 29 times in 30 --
+# grep -q exited on its match, unzip took SIGPIPE, pipefail called it a failure. The listing file above.
+grep -q 'assets/public/bundle/catalog.json' "$APK.list" \
   || { echo "::error::catalog.json is NOT in the APK"; exit 1; }
+rm -f "$APK.list"
 echo "::endgroup::"

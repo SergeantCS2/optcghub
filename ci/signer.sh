@@ -24,8 +24,10 @@ UPLOAD_SHA256='32:8E:60:A5:CE:9C:A9:93:97:25:EE:61:D7:11:F9:2A:1C:D6:A0:C4:00:0C
 _cert() {   # the signature block, whatever the key type; keytool reads the certificate out of it
   unzip -p "$1" 'META-INF/*.RSA' 'META-INF/*.DSA' 'META-INF/*.EC' 2>/dev/null | keytool -printcert 2>/dev/null || true
 }
-read_signer() { local o; o=$(_cert "$1" | grep -m1 'Owner:' || true); echo "${o:-unreadable}"; }
-signer_sha256() { _cert "$1" | grep -m1 'SHA256:' | sed 's/^[[:space:]]*//' || true; }
+# Landmine 245 (take 129): keytool's output is read into a variable first, never piped straight into a
+# first-match grep -- under pipefail the producer dies of SIGPIPE and a readable signer reads as unreadable.
+read_signer() { local c o; c=$(_cert "$1"); o=$(grep -m1 'Owner:' <<<"$c" || true); echo "${o:-unreadable}"; }
+signer_sha256() { local c; c=$(_cert "$1"); grep -m1 'SHA256:' <<<"$c" | sed 's/^[[:space:]]*//' || true; }
 classify_signer() {
   case "$1" in
     *"$UPLOAD_DN"*)   echo upload;;          # the only signer a Play bundle may ship with

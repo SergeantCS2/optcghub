@@ -29,7 +29,7 @@ fi
 # node_modules stays: the zip excludes it below, and removing it was what sent
 # render into DOM mode on the next take without anyone noticing (landmine 112).
 rm -rf __pycache__ tools/__pycache__ android www/render.png assets/gen play-assets
-rm -f catalog/catalog.json.gz package-lock.json   # manifest.json stays: the gate reads it
+rm -f catalog/catalog.json.gz   # manifest.json stays: the gate reads it; package-lock.json stays since take 129: it is committed, and apk.sh's npm ci reads it
 mkdir -p "$OUT"
 zip -qr "$OUT/optcghub-seed-t$TAKE.zip" . -x 'www/*' 'tcgcsv_cache/*' 'catalog/catalog.sqlite' '*.pyc' '*__pycache__*' 'android/*' 'node_modules/*' '.git/*'
 mkdir -p "$OUT/docs-t$TAKE" && cp docs/*.md "$OUT/docs-t$TAKE/"
