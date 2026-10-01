@@ -1,6 +1,6 @@
 # OPEN DECISIONS — needed from the owner
 
-*Current as of take 127.* Everything else is decided and recorded in AGENDA.
+*Current as of take 128.* Everything else is decided and recorded in AGENDA.
 
 **D1 — App id and name. ANSWERED: registered with Play at the take-35 upload as `com.optcghub.app` / "OP TCG Hub", permanent.** *(original)* Proposed `com.optcghub.app` / "OP TCG Hub". Permanent
 once registered under developer verification and fixed from first Play upload
@@ -72,6 +72,22 @@ WEEK — the package name `com.optcghub.app` cannot change after the first Play
 upload, and I re-cut it in ten minutes today. See A19.
 
 ---
+
+*Added take 128.*
+
+**D24 — Sealed and a product with no price yet (A44, finding 3).** Sealed lists
+a sealed product only while TCGplayer has a market price for it (take 115). A
+presale's price comes and goes with its listings: the EB-05 pack was priced
+every day from 17 to 29 Sept and not on 30 Sept, so its row -- and Southern
+Hobby's "orders closed May 17" line under it -- left the screen for the night
+while the product's page and Releases kept the words. Nothing is wrong, but
+the Hunt screen hides exactly the product a distributor is talking about.
+Options: (a) as it is -- Sealed is a price screen; (b) list a product with no
+price when a distributor or a store lists it, with take 120's wording for a
+product with no market price ("no market price yet") and no total; (c) list
+every sealed product, priced or not. (b) is the session's recommendation; the
+listing is the UI/UX session's screen, so it is yours to call. The nightly no
+longer depends on the answer (landmine 243).
 
 *Added take 79.*
 

@@ -1,4 +1,316 @@
-# HANDOFF — through Take 127
+# HANDOFF — through Take 128
+
+## Take 128 — 2026-10-01 — the nightly mended (the EB-05 pack lost its price), the audit of the stack, a scanned line's picture by choice, an update notice from Google Play
+
+Opened before any code (PROTOCOL §6), from `main` at the nightly of 1 Oct
+(`41c5b89`: Release take-127 present, published 16:23 UTC on 30 Sept by the
+merge's `build`, run 83, green; **the nightly after it, run 84, red at
+smoke** -- the first fact of the take). No PR open. The owner: v1 is
+production -- "every MAIN feature I want" -- and what is left is small
+features, polish and more Hunt sources; an audit of where the stack is, what
+is outstanding and what looks wrong, under the code-quality review skill he
+named (`npx skills use .../cursor/plugins --skill
+thermo-nuclear-code-quality-review`, read whole: its lens is structure before
+local cleanup -- file size, special-case branching, boundaries, duplicate
+helpers, orchestration -- and it names no supporting files); the red build;
+and two notes from his testing: an update notice from Google Play, and a
+scanned line's picture switchable between his own photo and the catalogue's,
+by an arrow or a swipe, saved per line.
+
+### The red nightly, root-caused (PROVEN, not inferred)
+
+Run 84's `bundle` job: smoke 1582 passed, 3 failed, all three in the take-112
+section -- the EB-05 pack's Southern Hobby line on Sealed, the no-flood
+predicate and its plant control -- then `smoke failed (1) — pipeline
+stopped`. Reproduced here on untouched `main` with a fresh ingest: the same
+three, and nothing else.
+
+- The fixture's EB-05 item (78743) still matches catalogue product 711383,
+  "Extra Booster: One Piece Heroines Edition Vol.2 - Booster Pack", score
+  1.0, state `orders_closed`: the match did not move.
+- Product 711383 has **no market price on 30 Sept**. The committed sidecar
+  (`catalog/prices_daily.json`) prices it every day from 17 Sept ($24.95) to
+  29 Sept ($22.45) and not on the 30th; TCGCSV's price file for its group
+  (`/tcgplayer/68/24820/prices`) carries two rows today, 711385 and 711386,
+  neither the pack. A presale's market price comes and goes with its
+  listings.
+- Sealed lists priced products only (`SEALED.isProduct`: a sealed product
+  that is not a DON!! card, with `market > 0`; take 115). With no price the
+  pack has no row, so no distributor line under it; the check's diagnostic
+  then printed the first Southern Hobby line it found -- SD-01's "released
+  Sep 18" -- which read like a clock fault (landmine 123) and was not one.
+- The pack's own page still carries the full words (that check passed) and
+  Releases still carries the set's short line.
+
+Nothing in the app broke; a fixture's row depended on TCGCSV's price for one
+product on the day (landmine 62's shape through landmine 199's door). The
+hourly `hunt` runs were green throughout, and the nightly committed the day's
+prices (`41c5b89`, 00:40:55) before smoke stopped it at 00:42, so the history
+has no hole (landmine 115 held).
+
+### What this take changes
+
+1. **Smoke's take-112 section reads the fixture's own world** (landmine
+   243): when the live catalogue carries no price for the EB-05 pack, its
+   price is pinned for that read to what the sidecar held on the day the
+   pages were saved (2026-09-24, $24.95) and put back after; a named check
+   says when the fixture's two items no longer match a catalogue product (a
+   rename, landmine 231's family) instead of three cryptic reds; its
+   control: Sealed refuses the unpriced product and lists the pinned one.
+   Watched red on take 127's build first.
+2. **The audit**, below, and AGENDA **A44** with a fix sketch per finding.
+3. **A scanned line's picture by choice** (the owner's note). A line with
+   the collector's own photo shows a small arrow on its tile; a tap on it,
+   or a sideways swipe on the picture, flips the tile between the photo and
+   the catalogue's picture, and the choice is the line's (`pic: 'ref'`),
+   saved through the one commit path, so it rides the backup and the
+   restore, and honoured wherever the photo is drawn -- the tile and the
+   binder's pocket, through one helper (`linePic`) that replaces the two
+   copies of the photo-or-reference branch. A vertical drag scrolls as
+   before; the mode swipe is the mode bar's only (take 119), so nothing
+   competes. A UI change at the owner's word, not refinement (take 104's
+   rule).
+4. **An update notice from Google Play** (the owner's question). The honest
+   source is Play itself: the in-app updates API, through
+   `@capawesome/capacitor-app-update` 8.0.5 (landmine 73: its
+   `definitions.d.ts` read first -- `getAppUpdateInfo()` returns
+   `updateAvailability` (2 = available), `availableVersionCode`,
+   `currentVersionCode`; `openAppStore()`; `performImmediateUpdate` and
+   `startFlexibleUpdate` for later; the plugin's name is `AppUpdate`, its
+   Java package `io.capawesome.capacitorjs.plugins.appupdate`, already under
+   the build's keep rules, landmine 141). Once per launch, online and only
+   once the first-open guide and the consent flow are out of the way, the
+   app asks Play; when a newer version is there it says so once per version
+   in a sheet (Update, or Later), More's About row says it under the take,
+   and Diagnostics gains an `update:` line. A sideload, a browser, or a Play
+   that does not answer shows nothing and says why under About. The boot's
+   check waits while the guide, Google's consent message or a sheet the
+   collector is answering is up (the printing picker shares the sheet, and a
+   new prompt dismisses the one open). **Ruled
+   out:** the Pages manifest's take as the source -- it is the merged take,
+   which the owner uploads to Play by hand, so the app would announce an
+   update Play does not have (dishonest, PROTOCOL §10); scraping Play's
+   store page (a host the app does not call, PROVISION). INFERRED until the
+   Fold: the plugin's first build is the merge's `apk` job, since
+   `check.yml` does not run `ci/apk.sh` (A44's CI finding).
+
+### The audit: the stack as it stands, under the review skill's lens
+
+Measured on `main` at `41c5b89`: `src/app.html` 7,136 lines (CSS 1,100,
+markup about 600, one script of about 5,400) with 216 names exported on
+`window.VAULT` for the harness; `src/sim.js` 746 and `src/scan.js` 294 are
+already separate files the build inlines; `tools/smoke.mjs` 5,490 lines, 87
+sections, 1,534 `ok()` calls, of which 320 are regexes over the shipped
+source (`.test(js|html|css)`) and 50 assign `V.OWN.items` directly;
+`tools/render.mjs` 2,205 lines, 264 checks, none over the source; 33
+document-level click delegates in the app; 217 inline `style="` attributes
+(148 inside JS templates); the longest functions `paintScan` 450 lines,
+`loadCatalogue` 182, `paintSealed` 149, `openDetail` 115, `paintSettings`
+111. The pipeline and the gate are the opposite: `pipeline.py` is 44 lines,
+one deps script, 29 named gate checks. Findings, structure first:
+
+1. **The one-file app has outgrown the one file, and the tree already knows
+   it.** Takes 122 and 125 moved the Sim's engine and the scanner's stages
+   into their own files, inlined by `build_app.py` at a marker. The map of
+   `app.html` shows the same seams everywhere else -- storage (lines
+   1700-1810), the catalogue (1944-2445), the collection (2059-2200), decks
+   (2446-2890), the small screens (2889-3565), navigation and Home
+   (3565-3930), filters and the collection screen (3927-4550), Hunt
+   (4548-5340, about 800 lines), the platform adapter (5485-5857), the
+   scanner screen (5899-6080), the card page, More and the rules, the Sim's
+   board (6451-6970), diagnostics and the boot. The judo move is the one
+   already made twice: `src/app/*.js`, inlined in the same order, and the
+   proof is a byte-identical `www/app.js` before and after (the shipped
+   file does not change, so smoke, render, the look and the scrubber's
+   regexes are untouched -- the scrubber's file list must name the new
+   files, landmine 182). Mechanical, behaviour-preserving, its own take,
+   and only when no other branch is open: a split moves every line.
+2. **The test surface is the app's internals.** 320 smoke assertions read
+   the shipped source with a regex, and 216 internals are exported for the
+   stub. A regex check cannot fail for the right reason (landmine 111 is
+   this family) and every rename or reformat breaks checks that never ran
+   the behaviour. Policy, not a refactor: a new `.test(js)` only for a
+   static property of the shipped file (no `prompt()`, no comment, no
+   marker); when a section is next touched, its source regexes become
+   behaviour checks in the stub or in Chrome. This take follows it.
+3. **Two predicates for one fact, in two languages, and today's red is the
+   gap between them.** `hunt.py`'s SQL (`is_sealed=1 AND name NOT LIKE
+   '%DON!! Card%'`) matches a distributor item to any sealed product; the
+   app's Sealed lists only a *priced* one. A feed line can point at a row
+   the screen will not draw -- exactly what happened. The runner cannot
+   know the phone's price of the day, so the boundary fix is in the app:
+   either Sealed lists a product with no price yet when a distributor or a
+   store lists it (take 120 already has the words for a product with no
+   market price), or the line moves to where the product is drawn
+   (Releases, its page). A design choice: **D24**, the owner's. A43's
+   "runner's copy of the DON!! predicate" is the same family.
+4. **`PLATFORM` is the native adapter and a feature home at once** (about
+   370 lines): file export, the store link, the share sheet, the file
+   picker, the catalogue sync, the backup, OCR, photos, haptics -- and the
+   whole ads and consent flow (about 150 lines), which is one feature with
+   `CREDITS` yet split across the two. Judo: `PLATFORM` keeps the thin
+   adapters; `ADS` (consent, the units, load and show, the free save)
+   stands beside `CREDITS`. Behaviour-preserving, medium; smoke's take-121
+   and take-127 sections drive `P.adsStart`, `P.adShow`, `P._consent`, so
+   the move is coordinated with them. This take keeps to the rule: one
+   adapter method in `PLATFORM` (`appUpdateInfo`), the policy in its own
+   small `UPDATE` object.
+5. **The `[data-act]` table at the collection screen is the right shape;
+   the other 32 click delegates are the wrong one.** Each take added a
+   `document.addEventListener('click', e => { const t =
+   e.target.closest(...) ... })` of its own; order of registration decides
+   who answers, and two of them already needed a capture-phase listener
+   and a flag to agree (landmines 159, 178). Judo: one dispatcher table
+   (selector, handler) registered once, in the present order. Its own
+   take; the order is the risk, and the stub cannot see a document-level
+   handler (landmine 136), so the proof is Chrome.
+6. **`paintScan` is 450 lines**: the camera's lifecycle, the batch tray,
+   the picker, the credit wall and the hints in one function. Take 125
+   extracted the stages and left the screen. Four functions, one each;
+   its own take, after the owner's Fold report on take 125 (A2 is live).
+7. **Inline styles inside templates (148) beside a token system (take
+   106)**: layout decisions the stylesheet cannot see and the tokens do
+   not reach (`style="flex:1;min-width:0;text-align:left;padding:0;gap:
+   10px"` on every Sealed row). The UI/UX session's, with one mechanism
+   from this repo's own book: a ratchet in the gate like
+   `check_prompt_ratchet` -- the count may only fall. Not added this take
+   (the UI/UX session owns the number); offered.
+8. **The harness files have the same shape problem as the app**: one
+   5,490-line file with shared mutable state across 87 sections (50
+   direct writes to `V.OWN.items`, 34 to `V.HUNT.feed`, each restored by
+   hand). A section that forgets to restore fails the *next* one, which
+   is landmine 221 word for word. Judo: a section is a file under
+   `tools/smoke/`, a 50-line runner snapshots and restores the app's state
+   around each and names a leak itself. Same asserts, mechanical, its own
+   take, and the same "no other branch open" caveat.
+9. **CI, one gap with a failure mode**: `check.yml` never runs `ci/apk.sh`,
+   so a plugin, a Gradle or an R8 change is first proven on `main` by the
+   merge's `apk` job -- takes 120, 121, 127 and this one all touched that
+   path. A `check` job running `cap sync` and an unsigned debug assemble
+   (the runner image carries the SDK) would catch a broken dependency on
+   the PR for about five minutes of runner time. Offered, with A43's item 3
+   (no lockfile, so the nightly can ship a plugin update to production
+   without a PR) as the other half of the same risk.
+10. **What is right and should stay so**: `pipeline.py` as a 44-line list of
+    steps; one deps script for two workflows (landmine 121); the gate as
+    the contract with a probe per check; `SIM.act` as the one entry point
+    and `SIM.view(seat)` as the one thing a board draws from (takes
+    122-123); `commitOwn` as the one path a collection change takes
+    (take 115); `readJson`/`saveJson` as the one reader and writer. Small
+    legibility smells seen in passing, not fixed: two helpers named
+    `kindOf` (a type-of at 1778, `SEALED.kindOf` for a product's kind);
+    `go` exported twice on `window.VAULT`.
+
+**Outstanding, from the record** (the union of the DEFERRED lists, takes
+120-127, and the Priorities): the owner's -- take 125's scan on the Fold and
+its questions (A2), take 113's Fold check, the upload of take 127's AAB and
+the first real impressions, D16, D20-D22, shop URLs; the session's -- A2's
+printing from the picture, A43's small items, A32's Next (date moves, a
+delisted item, Southern Hobby's paging, the retailers that need a residential
+IP), A41's EB05 and OP18 pictures (the nightly retries them), landmine 242's
+hashes as strings (queued), A23's tail, A31 on a real file; the UI/UX
+session's -- UI-AUDIT's eight unticked boxes and A43's UI part. **More
+sources for Hunt** (eBay, Walmart, local stock), measured at takes 67-72 and
+unchanged: eBay's search HTML and Walmart's site answer a GitHub runner with
+a robot check or a captcha (A32's table), GameStop and Meijer the same; from
+a phone's own IP they serve -- D19 (no keys, no accounts, the owner's take-68
+word) and D21 (a typed zip sent to a retailer from the Play build needs the
+Data Safety form re-reviewed) cap them. What a key would open: eBay's Browse
+API (a developer account, free, the one documented price source for sold and
+active listings), Walmart's affiliate API (an affiliate account the listing's
+"no affiliate links" rule would have to be squared with -- a key is not a
+link, A32's note). Nothing built; the owner's answers to D19's key question
+and D21 decide the next source take. Bandai's own shop and the two official
+retailers were probed at take 72 (A32's second table) and are the keyless
+candidates left.
+
+### Measured
+
+- Take 127's code on untouched `main` (`41c5b89`), the whole pipeline from a
+  fresh ingest (87 groups, 7,682 printings, hash coverage 100 %): smoke
+  **1582 passed, 3 failed** -- the nightly's three, reproduced to the word;
+  the pipeline stopped at smoke as the runner's did.
+- The take-112 pin on take 127's build: smoke 1587/1587 (the three reds
+  gone, two checks new).
+- The take-128 sections watched red on take 127's build before the code:
+  3 failed (the picture rule, flip and swipe absent; the update policy and
+  adapter absent; no update plugin in `package.json`).
+- The first look on the first build: 12 of 16 -- a real tap on the arrow
+  opened the card and flipped nothing at both sizes (the pointer captured
+  on the way down, landmine 244); the second: 14 of 16 -- the swipe died
+  after 8 px (the browser's image drag; the step's event log read
+  pointerdown, one pointermove, pointercancel); the third: 16 of 16.
+- The audit's numbers are in its section above, measured on `main` before
+  any change.
+
+### Tests
+
+- This branch, 1 Oct: `ci/deps.sh`; the whole pipeline on take 127's code
+  (the baseline above); the checks watched red; then the code: smoke
+  **1612/1612** (25 new: the picture by choice 10, the update notice 15);
+  render **274/274 (mode: chrome)** (9 new, the real pointer's: the
+  arrow's target, the tap, the finger across and the finger up and down,
+  the sheet, Update, the About row, Check for updates); the look **16/16**
+  at both Fold sizes, every picture read: the
+  photo at size with its badge and the arrow at the picture's corner, the
+  catalogue's SAMPLE picture after the tap with the card still closed, the
+  photo back after the swipe, About's Google Play row in its three states,
+  the sheet with Update and Later; `gate.py --selftest` 34/34; the guards'
+  selftests (hunt, hashes, shipped, signer, shrink, scrub) green;
+  `scrub.py --check --docs` clean.
+- No pipeline step changed, so no clean run (PROTOCOL §6b): `tcgcsv.py`,
+  `history.py`, `build_catalog.py`, `hashes.py`, `validate.py` and
+  `build_app.py` are untouched; the app, the harnesses, the look and the
+  ledgers moved.
+- `seal.sh --gate-only`, bare: GATE PASSED; `catalog/prices_daily.json`,
+  `catalog/hashes.json` and `catalog/rates.json` restored to `main`'s before
+  the commit (the first two are the nightly's, landmine 116; the third is a
+  sidecar this take did not mean to move).
+
+### What I got wrong
+
+- Read the red nightly's first FAIL line -- "released Sep 18" -- as a clock
+  fault (landmine 123) for a quarter of an hour before reproducing it; the
+  diagnostic printed the first distributor line on the screen, not the
+  product's. The check now names the product's own line or its absence.
+- Captured the pointer on `pointerdown` for the swipe, the way a drag
+  usually is; Chrome aims the tap's click at the capturing element, so the
+  arrow's tap opened the card. The stub cannot see a document-level click
+  (landmine 136), so only the look found it -- and then the browser's own
+  image drag under the swipe. Both are landmine 244.
+- The smoke section's first fixture was the first priced card in the
+  catalogue -- a promo set whose numbers are other sets' ("1/1000",
+  ST05-002) and whose binder pages another section had turned; the binder
+  check went red twice before the fixture was a plain OP01 card with the
+  binder's set and page pinned (the harness's own pattern, take 111).
+- Killed this session's own shell twice with `pkill -f` on a pattern the
+  command line itself carried; a note for sessions, not a landmine.
+- Render's take-128 block first crashed, then failed its tap: a viewport
+  that gains touch (`hasTouch: true`, for the CDP finger) reloads the page
+  under puppeteer, so the app boots again -- the block now waits for the
+  catalogue and for the splash to go, as the look's `open()` does (the
+  splash covered the arrow, landmine 169's rule named it). Its corner
+  measure allowed no room for the picture's 1 px border; 2 px now.
+
+### DEFERRED
+
+- The update notice on a device: INFERRED until the Fold runs a take-128
+  Play build beside a newer take on Play; the sheet, the About row and the
+  Diagnostics line are proven in the stub and in Chrome against a planted
+  plugin only.
+- The flexible in-app update (download in the background, install on the
+  next open): the plugin has it (`startFlexibleUpdate`); this take opens
+  the store page, the simplest honest flow. The owner's call once the notice
+  is seen.
+- The card page's hero keeps the catalogue's picture whatever the line's
+  choice; the flip is the tile's and the binder's (the owner: "directly
+  within your collection").
+- The audit's structural moves (A44 items 1, 4, 5, 6, 8): each its own take,
+  none started here; the picture flip's one helper and the update check's
+  adapter-and-policy split are the only structure this take changes.
+- D24: whether Sealed lists a product with no price yet when a distributor
+  or a store lists it.
+- More sources for Hunt: nothing built; D19's key question and D21 decide.
 
 ## Take 127 — 2026-09-30 — real ads: the consent message, the three units, and a free save when no ad loads
 
