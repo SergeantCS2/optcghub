@@ -1,4 +1,4 @@
-# OP TCG Hub — take 130
+# OP TCG Hub — take 131
 
 ## Installing — read this first
 
@@ -17,6 +17,8 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 131:** Play a friend across the internet. Under Prep & Play → Sim, Host a match and the app shows a six-character code; your friend taps Join and types it. Each of you picks a deck, the host deals, and every move travels between the two phones, which run the same rules. A dropped connection picks up where it left off. Only the code, the two deck lists and the moves leave the phone, kept a day at most, with no account. Nothing you have saved changes.
 
 **New at take 130:** Hunt reads Walmart. Under a sealed product, a Walmart line shows the price its page stated, whether it ships, who sells it there (every One Piece item on Walmart is a marketplace seller's) and when the app's hourly check read it; Where to buy gains a Walmart chip, and a stock alert can watch Walmart online. A shelf at a Walmart near you is not here yet. Nothing you have saved changes.
 

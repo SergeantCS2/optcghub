@@ -128,7 +128,7 @@ async function main() {
       const dir = path.join(OUT, vp); fs.mkdirSync(dir, { recursive: true });
       const ctx = { viewport: vp, dir, url, report, errors, shots: 0,
         /* an extra picture mid-step, for a moment the after-step shot would miss (a splash, a toast) */
-        shot: async (label) => { ctx.shots += 1; const p = path.join(dir, `${label}.png`); await page.screenshot({ path: p }); return path.relative(ROOT, p); },
+        shot: async (label, pg = page) => { ctx.shots += 1; const p = path.join(dir, `${label}.png`); await pg.screenshot({ path: p }); return path.relative(ROOT, p); },   /* take 131: a second page's picture (the joiner) */
         /* a page load that waits for the catalogue */
         open: async () => { await page.goto(url, { waitUntil: 'networkidle' }); await page.waitForFunction(() => window.VAULT && window.VAULT.CAT && window.VAULT.CAT.ready, null, { timeout: 30000 }); await page.waitForFunction(() => !document.querySelector('#splash'), null, { timeout: 15000 }).catch(() => {}); /* the splash lingers a moment (take 86); a step's picture is what is under it */ await page.evaluate(() => { const s = [...document.querySelectorAll('#tour button')].find(b => /skip/i.test(b.textContent)); if (s) s.click(); }); } };
       console.log(`\n── look ${selftest ? 'selftest' : 'take ' + take} · ${vp} ${v.width}×${v.height} @${v.dpr}${v.note ? '  (' + v.note + ')' : ''} \u00b7 ${OWNER_TZ}`);

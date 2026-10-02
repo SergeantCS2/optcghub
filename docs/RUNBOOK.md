@@ -1,6 +1,6 @@
 # RUNBOOK — from nothing to a repo that builds every night
 
-*Current as of take 130.* **Since take 89 the repo is the record:** a session
+*Current as of take 131.* **Since take 89 the repo is the record:** a session
 works on a branch and opens a pull request; you merge; the merge builds. §6
 is every take. §1–§5 are how the repo was first stood up from a seed zip and
 remain the recovery procedure; you need them again only for a new repo or a
@@ -227,6 +227,37 @@ came before the label existed). Since take 115 the **report** job files it for
 any job -- seed, bundle, pages or apk -- and a night whose Pages deploy was
 skipped (pages=skip) neither opens nor closes it. The reason is in the failed
 job's log; the table below maps the common ones.
+
+---
+
+## 9. The relay for two-phone play (take 131)
+
+The Sim's *Play online* crosses a relay: a Cloudflare Worker with one Durable
+Object per room, in `relay/`. The repo deploys it (`relay.yml`); the account
+is yours. Once, about ten minutes:
+
+1. **A Cloudflare account** (free plan; `dash.cloudflare.com`). Under
+   *Workers & Pages* note the **account ID** (the overview's right column) and
+   the **workers.dev subdomain** you choose there (say `yourname`): the relay
+   will answer at `https://optcghub-relay.yourname.workers.dev`.
+2. **An API token**: *My Profile → API Tokens → Create Token → "Edit
+   Cloudflare Workers"* template, scoped to the one account. Copy it once.
+3. **Two repository secrets** (`Settings → Secrets and variables → Actions`):
+   `CLOUDFLARE_API_TOKEN` (the token) and `CLOUDFLARE_ACCOUNT_ID` (the id).
+4. **Run `relay`** (*Actions → relay → Run workflow*). Green means the Worker
+   is live; the log's last lines name its address. Without the secrets the
+   job says so and stops green: nothing is deployed.
+5. **Tell the build:** add `VAULT_RELAY=https://optcghub-relay.yourname.workers.dev`
+   as a line in `BUILD` (a session does this with the take that follows), and
+   add that host to `docs/PROVISION.md`'s runtime table -- the gate refuses an
+   undeclared host. Until that line exists the app paints no *Play online*
+   entry and Diagnostics says "no relay in this build".
+
+What the relay holds: a room's code, two seat tokens, the host's deal and the
+moves, in SQLite, forgotten a day after the room's last frame; it reads no
+account, no name and no address. The free plan's 100,000 requests a day are
+thousands of games; a parked socket costs nothing. `cd relay && npx wrangler
+dev` runs it on a PC with no account; `node relay/test.mjs --dev` tests it.
 
 ---
 

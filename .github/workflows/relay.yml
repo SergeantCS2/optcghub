@@ -1,0 +1,51 @@
+name: relay
+
+# OP TCG Hub — the relay's deploy (take 131, D18). The Sim's two-phone play
+# crosses a relay: a Cloudflare Worker with one Durable Object per room,
+# under relay/. This deploys it from the owner's account with `wrangler
+# deploy`, on a dispatch or on a push to main that changes relay/. Without
+# the two secrets (RUNBOOK §9: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID)
+# it says so and stops green -- the build ships with no relay until then.
+# The relay's own tests run in check.yml on every pull request; this file
+# deploys and nothing else.
+#
+# Lives in git; kept BYTE-IDENTICAL to ci/relay.yml (the gate compares the
+# two). If a push of .github/workflows is refused, paste ci/relay.yml here
+# (RUNBOOK §5b).
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'relay/**'
+      - .github/workflows/relay.yml
+
+concurrency:
+  group: relay
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: The relay's own checks first
+        run: cd relay && npm ci --no-audit --no-fund && node test.mjs && node test.mjs --selftest
+      - name: Deploy, when the owner's secrets exist
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::notice::no CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID in the repository secrets -- nothing deployed (RUNBOOK §9)"
+            exit 0
+          fi
+          cd relay && npx wrangler deploy

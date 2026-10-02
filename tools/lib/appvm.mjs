@@ -60,6 +60,7 @@ export function makeDom(html) {
 /* One app: the built page and script, a store, a network that answers only the two boot reads
    (a section may answer others through ctx._net), and the app's own VAULT once it has booted. */
 export async function boot({ quiet = false, app = null } = {}) {
+  app = app || process.env.SMOKE_APP || null;   // take 131: one build for a whole run, every boot in it (a section that boots more copies boots that build)
   /* `app`: another build's directory (its app.js and bundle/catalog.json) -- how a new check is watched failing on the
      previous take; the page and manifest are this build's, which only name elements and counts */
   const from = (p, fallback) => app && fs.existsSync(path.join(app, p)) ? path.join(app, p) : fallback;
@@ -79,7 +80,7 @@ export async function boot({ quiet = false, app = null } = {}) {
     navigator: { vibrate: () => true },
     location: { href: 'https://localhost/' },
     URL, Blob: class { constructor(p) { this.p = p; } },
-    BigInt, Math, Date, JSON, Promise, setTimeout, clearTimeout, devicePixelRatio: 2,
+    BigInt, Math, Date, JSON, Promise, setTimeout, clearTimeout, setInterval, clearInterval, devicePixelRatio: 2,   // take 131: the wire's keepalive
     AbortController,   // take 115: a browser has it; the fetch wrapper aborts at its deadline with it
     fetch: async (u, o) => {
       if (ctx._net) { const r = await ctx._net(String(u), o); if (r !== undefined) return r; }   // take 115: a section answers "Pages" itself; undefined falls through

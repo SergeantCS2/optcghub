@@ -1,4 +1,152 @@
-# HANDOFF — through Take 130
+# HANDOFF — through Take 131
+
+## Take 131 — 2026-10-02 — the Sim across the internet: a room code, a relay, two phones (A23 step 4, D18)
+
+Opened before any code (PROTOCOL §6), on the branch behind take 130's PR
+(57: the check and the APK job green, marked ready at the owner's word, not
+yet merged -- this take's commits stay local until it is, then ride a branch
+restarted from `main`). The owner, 2 Oct, after the look of take 130:
+"Continue" -- the session's recommendation on where the relay runs stands,
+his US East server left out as he hoped (D18): **a Cloudflare Worker with
+one Durable Object per room.** MEASURED first, here: `wrangler dev` runs a
+SQLite-backed Durable Object with the WebSocket hibernation API on this VM
+(wrangler 4.147.0, workerd 1.20261002.1 from the registry): two clients on
+one room each received the other's frame with the room's count from its
+SQLite table, no account involved.
+
+### What this take changes
+
+1. **`relay/`** -- the room module (`relay/src/room.js`: a room's state and
+   what each frame does to it, pure, no I/O, so one module serves the
+   Worker, the smoke's in-memory relay and, if ever, a Node process on the
+   owner's server), the Worker (`relay/src/worker.js`: the HTTP entry that
+   makes a room, and the Durable Object that owns one room's two sockets
+   and its SQLite log), `wrangler.toml`, its own `package.json` and lockfile
+   (wrangler is the relay's dependency, never the app's), and `relay/test.mjs`
+   (the module's checks with their controls; and against the real relay
+   under `wrangler dev` when it runs, as the PR check does).
+2. **The wire.** `POST /new` answers a six-character code (an alphabet
+   without 0/O/1/I) and the host's seat token; `GET /ws/<code>` upgrades a
+   socket: with the token, that seat; with none, the empty seat and a token
+   of its own; a third is refused. Frames are JSON, under 16 KB: `hello`
+   with `since` (how many moves the phone holds); `deck` (the joiner's
+   list, forwarded live, never kept); `spec` (the host's deal, kept once);
+   `move` (numbered by the relay in the order it receives them, kept,
+   forwarded to both seats -- a phone applies a move on the relay's echo,
+   never before it, so both tables see one order); `peer` (the other seat
+   came or went); `err` (`full`, `behind`, `big`, `nospec`). The relay
+   orders; it never judges a move -- the engine on each phone refuses an
+   illegal one (`SIM.act` returns `ok: false`), and a refusal from the
+   other phone ends the match with its reason on screen. A room is
+   forgotten a day after its last frame (the Durable Object's alarm), and
+   holds at most 2,000 moves.
+3. **The app.** Prep & Play → Sim → the setup panel gains *Play online*:
+   Host (the code large, Share, "waiting for your friend") or Join (type
+   the code). Each picks a deck; the joiner's deck crosses to the host;
+   the host deals (`SIM.new` with a random seed; who goes first is the
+   seed's coin, §5-2-1-4 said so on screen) and sends `g.spec`; the joiner
+   rebuilds it with `SIM.replay(spec, [])`. The table from take 124 draws
+   each phone's own seat (`simSeat()` is the room's seat online); a move
+   goes through `simAct` to the relay and is applied on its echo; the
+   curtain and the bot stay out; a dropped socket reconnects with the code
+   and the token and asks for the moves since N; Leave concedes and
+   closes. The relay's address is a build constant (`VAULT_RELAY=` in
+   `BUILD`, `__RELAY__` in the built script); empty, the entry is not
+   painted and Diagnostics says why -- never a dead button. "Friends, not
+   strangers" is said where a match is hosted: both phones hold the whole
+   seed.
+4. **`relay.yml`** (and its `ci/` copy): `wrangler deploy` from
+   `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, on a dispatch or a
+   push to `main` that changes `relay/`; without the secrets it says so and
+   stops green. RUNBOOK §9: the owner's steps -- the account, the token,
+   the two secrets, the `workers.dev` address into `BUILD`.
+5. **The record.** The privacy page and PLAY-LISTING's Data Safety say what
+   crosses the wire (a code, two deck lists, the moves; nothing kept past a
+   day; no account); V1-STATE's "no server" is amended by the owner's word;
+   PROVISION carries the runtime host row.
+
+### Measured
+
+- `wrangler dev` on this VM (wrangler 4.147.0, workerd 1.20261002.1, 221 MB
+  of `node_modules` under `relay/`, 15 s to install): a SQLite-backed
+  Durable Object with the hibernation API served two WebSocket clients on
+  one room; each got the other's frame with the room's row count; a
+  `ping` is answered `pong` by the runtime without the object waking.
+- The relay's suite: 43 checks on the room module and the memory adapter,
+  then the same exchange against the real Worker under `wrangler dev` --
+  58 in all, 0 failing; the four plants (a relay that forwards a move
+  whatever its number, one that lets the joiner deal, one with no frame
+  limit, one that trusts the frame's seat over the socket's) each named
+  by the check written for them.
+- A frame is under a kilobyte (a `keep` echo is 50 bytes); a room holds at
+  most 2,000 moves and is forgotten 24 h after its last frame.
+
+### Tests
+
+- `node relay/test.mjs`: 58 checks (the room module, the memory adapter, the
+  Worker under `wrangler dev`), 0 failing; `--selftest`: the four plants
+  named. The gate runs the first two; `ci/check.sh` runs `--dev` on the
+  runner, and `relay.yml` runs the suite before any deploy.
+- Smoke 1667/1667, **33 new** in the take-131 section: two boots of the
+  shipped app on the memory relay -- the host's code, the joiner's typed
+  code in any case and spacing, a code with a 0 refused before the wire,
+  the decks across, a deal from the joiner refused, the host's deal
+  rebuilt on the joiner (same seed, same hands, who goes first the seed's
+  coin), each phone its own seat, a move pending until the echo and then
+  applied on both, a second move refused while one is pending, "your turn"
+  and "their turn" on the right phones, a move the rules refuse pushed by
+  the idle seat refused by both engines and counted, a dropped socket's
+  reconnect catching up with `since`, Diagnostics' line, a fresh boot
+  resuming the kept seat (and the replaced socket told so), leaving
+  conceding on both, an expired room said on the board, only the named
+  frames on the wire. **Watched on take 130's app: all 33 fail by name**
+  (the run's other 11 failures there are take 130's script against take
+  131's page and release note -- the control's noise, not a check).
+- The look, take 131 at both Fold sizes, against the real Worker under
+  `wrangler dev` with two browser contexts (the host's page is the look's,
+  the joiner's rides as an extra shot per step): 12 steps, 12 ok -- the
+  Play online panel; the host's code large with Share and "waiting for your
+  friend"; the friend joining from the second browser (the host's lobby
+  says so, names their deck and enables Deal; the joiner's says Player 2
+  and has no Deal); the deal (the same seed and first on both, five cards
+  each, the joiner's own Keep); both keeping over the wire (the same game,
+  "your turn" on one phone and "their turn" on the other); the joiner's
+  Leave conceding (Player 1 wins on the host, the joiner's room, game and
+  kept seat gone). Eighteen PNGs read and sent to the owner.
+- Render in Chrome 274/274 `(mode: chrome)`, run alone: a run beside the look
+  read Collect's colour where Prep & Play's charcoal was asked for (the mode
+  slide mid-way under load), and alone it did not. The seal's gate green;
+  `gate.py --selftest` names its two new probes (a relay deploy without the
+  secrets guard; a PR check that skips the exchange against `wrangler dev`).
+
+### What I got wrong
+
+- The code's cleaner first "repaired" a typed 0 to O and 1 to I -- but the
+  alphabet has no O or I either, so the repair made a code that cannot
+  exist. A typed 0, O, 1 or I is refused with the alphabet named; the suite's
+  own first run caught it.
+- The look's second list found no relay: the first list's `wrangler dev`
+  had been killed, its `workerd` had not, and it held the port (landmine
+  246). The server is spawned in its own process group, stopped by the
+  group, and every start takes a fresh port.
+- The smoke's top-bar check read the whole board, where the band and the
+  log name the players ("Player 1 ..."), and so it failed on words it was
+  not written for; it reads the bar's own span now.
+- A dropped socket left the board's mirror saying live: `drop()` set the
+  session's flag and refreshed nothing. The mirror is refreshed there.
+- Two words the pictures caught and no check had: End turn on the joiner's
+  table still said "then pass the phone" (the hot seat's line; online it
+  says "then their turn"), and a finished game's bar said "reconnecting…"
+  once the relay was gone -- a game that is over owes the wire nothing.
+  Both are measured by the look now.
+
+### DEFERRED
+
+- Fairness beyond friends: a commitment scheme so neither phone holds the
+  other's hand (D18); accounts and names; a spectator seat; a QR for the
+  code; rate limits on room creation beyond the frame and log caps.
+- The deploy itself: the owner's Cloudflare account and the two secrets;
+  until then the build ships with no relay and the entry hidden.
 
 ## Take 130 — 2026-10-02 — Walmart measured on the runner, the runner's own probe, and the Sim's wire decided (A23 step 4)
 

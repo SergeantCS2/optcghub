@@ -66,3 +66,9 @@ echo "::endgroup::"
 echo "::group::pipeline"
 python3 tools/pipeline.py
 echo "::endgroup::"
+
+# take 131: the Sim's relay -- its own suite and controls, then the same exchange against the real Worker under
+# wrangler dev on this runner (relay/ has its own lockfile; the registry serves the local runtime)
+echo "::group::the relay (take 131)"
+( cd relay && npm ci --no-audit --no-fund && node test.mjs --selftest && node test.mjs --dev )
+echo "::endgroup::"

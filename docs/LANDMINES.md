@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 130.*
+*Current as of take 131.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -258,6 +258,7 @@ Start here. Do not read top to bottom.
 | Smoke's row checks on a fixture go red with no code change; the product has no price that day | **243** |
 | A tap on a control inside a picture opens the card instead; a drag across a picture dies after 8 px | **244** |
 | A readback guard refuses a true artifact: a producer piped into a quiet grep under pipefail | **245** |
+| A spawned dev server's child outlives the parent's kill and keeps the port; the next start reads as "did not start" | **246** |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -3200,6 +3201,20 @@ output goes to a file or a variable first, and the grep reads that;
 under `pipefail`, never pipe a producer into a consumer that can exit early
 (`grep -q`, `grep -m`, `head`); and the first run of a CI script on a new
 machine is a measurement, not a formality.
+
+**246. A spawned dev server's child outlives the parent's kill and keeps the
+port; the next start reads as "did not start".** The look's take-131 list
+starts `wrangler dev` for the relay and stops it after its last step; the
+cover list ran green and the inner list failed at its first step, "wrangler
+dev did not start", with the Worker plainly running -- the first list's.
+`npx` had been killed, `wrangler` and its `workerd` had not (five processes
+still alive after the run), and the second start met its own port held. A
+`child.kill()` reaches one process; a server spawns its own. Now the
+server is spawned `detached` (its own process group), stopped with
+`process.kill(-pid)`, and each start takes a fresh port, so a survivor
+cannot pass for the relay that was asked for. Rule: stop a spawned server by
+its process group, and never reuse the port a stopped one had; a start that
+answers at once on a reused port may be the one you thought you killed.
 
 ## §2 — Inherited from APEX ORV
 

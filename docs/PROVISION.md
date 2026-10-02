@@ -1,6 +1,6 @@
 # PROVISION
 
-*Current as of take 130.*
+*Current as of take 131.*
 
 Every host this project touches, in either phase, with its purpose, licence and
 cadence. The gate refuses an undeclared host named in the built `www/` or
@@ -54,6 +54,7 @@ the airplane-mode invariant in PROTOCOL §8 holds without every one of them.
 | `en.onepiece-cardgame.com` | the official rules PDF, opened by the Rules sheet's link (take 122) | the collector taps the link | No — the app never fetches it; the OS browser opens it |
 | `www.tcgplayer.com` | a set's full listing, opened by the *Details ↗* link on every Releases row (take 82) — a search of the set's name on TCGplayer; and a sealed product's own page, `…/product/<id>` with the catalogue's product id, from the chip under its Sealed row and the *Where to buy* panel on its sheet (take 96) | the collector taps the link | No — the app never fetches it; the OS browser opens it. No affiliate or tracking parameter |
 | the sellers the feed names — Target, a shop's Shopify storefront, the distributor | the *Where to buy* chips and panel (take 96): each item's own link as the feed carries it, plus the roster's address and phone for a shop (a `tel:` link) | the collector taps a chip | No — data in `hunt/*.json`, never a literal in the app and never fetched by it; the OS browser or dialler opens it |
+| the match relay (take 131, D18): the owner's Worker at `optcghub-relay.<subdomain>.workers.dev` -- its literal host is declared on its own row here the take `BUILD` gains `VAULT_RELAY` (RUNBOOK §9) | *Play online*: `POST /new` for a room code, then one WebSocket per seat; what crosses is the code, a token per seat, the two deck lists and the moves; the relay forgets a room a day after its last frame | the collector hosts or joins a match | No — with no `VAULT_RELAY` in `BUILD` the entry is not painted; the app never speaks to it otherwise |
 | `play.google.com` | the app's OWN Play listing, handed to the OS by More → *Rate this app* and *Tell someone about the app* (take 65) | the collector taps one of those two rows | No — the app never fetches it. The URL is `…/details?id=com.optcghub.app` and carries no referral, campaign or tracking parameter (A30) |
 
 ## Citation hosts — displayed, never requested

@@ -1,0 +1,15 @@
+# The relay's Worker (take 131, D18). One Durable Object per room, SQLite-backed (the free plan's), the
+# WebSocket hibernation API. Deployed by relay.yml from the owner's account (RUNBOOK §9); developed and
+# tested anywhere with `npx wrangler dev` -- no account until the deploy.
+name = "optcghub-relay"
+main = "src/worker.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+[[durable_objects.bindings]]
+name = "ROOM"
+class_name = "Room"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]

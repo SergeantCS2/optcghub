@@ -1,6 +1,6 @@
 # Play listing — copy, in the shape the console wants
 
-*Current as of take 130.* Plain text: the console shows asterisks and hashes
+*Current as of take 131.* Plain text: the console shows asterisks and hashes
 literally, so there is no markdown in the paste blocks. The disclaimer is the
 first line of the full description, not the last (landmine 30, A8). Every URL
 below was requested before it was written down (RUNBOOK-play §C, take 36).
@@ -62,6 +62,11 @@ previews; no user-generated content; rewarded ads (AdMob).
   AdMob), for advertising. Optional? No.
 - **Photos** — the camera is used to scan cards; photos stay on the device;
   not collected.
+- **Play online (take 131):** while a player hosts or joins a match, the
+  match code, the two deck lists and the moves go to the project's relay
+  and are forgotten a day later; nothing links them to a person. Declare
+  under *App activity → Other user-generated content* as collected (not
+  shared), optional, for app functionality, with no retention past a day.
 - Nothing else. No account, no analytics, no crash reporting.
 
 ## Privacy policy URL

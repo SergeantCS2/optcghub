@@ -1,6 +1,6 @@
 # OPEN DECISIONS — needed from the owner
 
-*Current as of take 130.* Everything else is decided and recorded in AGENDA.
+*Current as of take 131.* Everything else is decided and recorded in AGENDA.
 
 **D1 — App id and name. ANSWERED: registered with Play at the take-35 upload as `com.optcghub.app` / "OP TCG Hub", permanent.** *(original)* Proposed `com.optcghub.app` / "OP TCG Hub". Permanent
 once registered under developer verification and fixed from first Play upload
@@ -205,7 +205,17 @@ recommends (a). Either amends "no server since take 1" by his word, and the
 privacy page says what crosses the wire (a code, two deck lists, moves). The
 build is take 131, after this answer.
 
-*Added take 33; brought up to date take 122; the design and the one decision left, take 130.*
+**Take 131 -- decided, (a).** The owner, 2 Oct, after the look of take 130:
+"Continue" -- the recommendation stands and his server stays out, as he had
+hoped. The relay is a Cloudflare Worker with one Durable Object per room,
+under `relay/`, built at take 131 (HANDOFF). The room module is pure and
+shared, so (b) remains one adapter away if he ever wants it. The deploy
+waits on his account and two repository secrets (RUNBOOK §9); until then
+the build ships with no relay and the entry hidden. Fairness beyond
+friends (a commitment scheme), accounts and a spectator seat stay open
+here.
+
+*Added take 33; brought up to date take 122; the design and the one decision left, take 130; decided, take 131.*
 
 **D16 — The named fonts (A26).** Luckiest Guy, Bangers, Open Sans and Nunito Sans ship as the four roles. If you want Impress BT, Anime Ace BB or Avenir Black themselves: buy the app-embed licence, drop the file into `assets/user/fonts/` as `display`, `comic` or `heavy` with its extension, and the next build uses it. Trebuchet MS cannot be shipped at all; Fira Sans is its free twin if you want a third plain face. Yes to the defaults as they are, or which files are coming?
 
