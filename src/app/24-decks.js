@@ -369,7 +369,7 @@ $('#dkSave').addEventListener('click', () => {
   const isNew = !dkCur.saved;
   if (!CREDITS.canSaveDeck(isNew)) {
     toast('A deck save needs a credit \u2014 watch a short ad');
-    PLATFORM.adShow('deck'); return;
+    ADS.show('deck'); return;
   }
   if (isNew) { CREDITS.spendDeck(); dkCur.saved = true; }
   DECKS.save(); scheduleBackup('deck');

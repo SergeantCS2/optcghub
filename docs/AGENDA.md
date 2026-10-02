@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 133.* Ranked by blocking-ness, not by interest.
+*Current as of take 134.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -74,8 +74,10 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0b. *Take 133, in flight (2 Oct):* A44 item 3 -- one click dispatcher: the
-   29 document-level delegates as rows of one table in the present order,
+0b. *Take 134, in flight (2 Oct):* A44 item 4 -- `ADS` out of `PLATFORM`:
+   the ads and consent flow beside CREDITS, the adapter keeps the plugin.
+   *Done at take 133 (PR 60):* A44 item 3 -- one click dispatcher: the 29
+   document-level delegates as rows of one table in the present order,
    proven in Chrome. *Done at take 132 (PR 59):* A44 item 2 -- the one source
    file into files under `src/app/`, inlined by the build in the present
    order, the shipped script byte-identical. *Done at take 131 (PR 58):* the Sim
@@ -1607,6 +1609,17 @@ the next takes pay in time or risk.
 4. **`ADS` out of `PLATFORM`**: consent, units, load and show, the free save
    beside `CREDITS`; the adapter keeps `plugin()` and the thin calls. Smoke's
    take-121 and take-127 sections move with it.
+   *Take 134: built -- `src/app/19-ads.js` holds `ADS` beside `CREDITS`:
+   the units, consent, the start after the guide, init, load, show, the
+   free save's gate, the privacy row and Diagnostics' notes, each body as
+   it was; `PLATFORM` keeps `plugin()` and the thin calls; the smoke's
+   take-121 and take-127 sections and the take-127 look drive `ADS`; the
+   gate's `check_ads_home` refuses an ad method inside `PLATFORM`.*
+   **Ruled out:** moving `CREDITS.freeSave` into `ADS` (the free save is a
+   credit, spent by CREDITS' drain); an adapter of `ADS`'s own for the
+   plugin (the plugin is PLATFORM's to find, and the harnesses stub it
+   there); renaming `_consent` and `_canRequestAds`, which the look and
+   the smoke read.
 5. **`paintScan` into four**: the camera, the tray, the picker, the wall.
    After the owner's Fold report on take 125 (A2 is live).
 6. **`tools/smoke.mjs` into `tools/smoke/*.mjs`** with a runner that snapshots

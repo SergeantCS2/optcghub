@@ -82,7 +82,7 @@ const MAXLOCK = {
   async ask() { const v = await PICKER.choose({ title: 'All-time history', key: 'maxad',
       why: 'Watch one short ad and the MAX range is open for a day. The other ranges stay free.',
       opts: `<button class="opt" data-maxad="go"><div class="oi"><b>Watch an ad</b><span>about 30 seconds</span></div></button><button class="opt" data-maxad="no"><div class="oi"><b>Not now</b></div></button>` });
-    if (v !== 'go') return; const shown = await PLATFORM.adShow('max'); if (!shown) toast('No ad right now \u2014 try again in a moment'); }
+    if (v !== 'go') return; const shown = await ADS.show('max'); if (!shown) toast('No ad right now \u2014 try again in a moment'); }
 };
 /* take 128 (the owner's question): when a newer version is on Google Play the app says so, once per version. The source
    is Play itself (PLATFORM.appUpdateInfo); the Pages manifest's take was ruled out -- it is the merged take, which the

@@ -242,7 +242,7 @@ CLICKS.on('[data-act]', e => {
     rate: () => PLATFORM.rateApp(),
     currency: pickCurrency,
     shareapp: async () => { const r = await PLATFORM.shareApp(); if (r === 'copied') toast('Link copied'); if (r === false) toast('Could not share'); },
-    adprivacy: () => PLATFORM.adPrivacy(),   /* take 127: UMP's privacy options, when it requires the entry point */
+    adprivacy: () => ADS.privacy(),   /* take 127: UMP's privacy options, when it requires the entry point */
     backup: () => { if (scheduleBackup('manual') !== false) toast('Backing up to Documents/OPTCGHub'); },
     restore: restoreFromBackup,
     wants: () => go('wants'),

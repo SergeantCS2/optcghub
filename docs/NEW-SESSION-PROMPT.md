@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 133.* Paste the block between the rules into a new session
+*Current as of take 134.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 133 takes by previous sessions. The repo is
+built across 134 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -95,6 +95,19 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   them in order with his results (his rule, take 94).
 
 **What is in flight when you arrive:**
+
+- **Take 134 -- `ADS` out of `PLATFORM`** (AGENDA A44 item 4; HANDOFF take
+  134). `src/app/19-ads.js` holds `ADS` beside `CREDITS`: the units a build
+  may load, consent through UMP, the start after the first-open guide, the
+  SDK's init and listeners, load and show by kind, the free save's gate,
+  More's privacy row and Diagnostics' notes, each body as it was with the
+  `ad` prefix dropped; `PLATFORM` keeps `plugin()` and the thin native
+  calls, and the plugin is still reached through `PLATFORM.plugin('AdMob')`.
+  The smoke's take-121 and take-127 sections and the take-127 look drive
+  `ADS`; the gate's `check_ads_home` refuses an ad method inside `PLATFORM`.
+  No look: nothing a collector can see changes. PR 60 (take 133) was open
+  when this take began; its commits ride a branch restarted from `main`
+  after the merge.
 
 - **Take 133 -- one click dispatcher** (AGENDA A44 item 3; HANDOFF take
   133). `src/app/13-clicks.js` holds `CLICKS`, a table of (selectors,
@@ -502,6 +515,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 134" and begin with PROTOCOL §0.
+Say "take 135" and begin with PROTOCOL §0.
 
 ---

@@ -1,4 +1,97 @@
-# HANDOFF — through Take 133
+# HANDOFF — through Take 134
+
+## Take 134 — 2026-10-02 — `ADS` out of `PLATFORM` (A44 item 4): the ads and consent flow beside CREDITS, the adapter keeps the plugin
+
+Opened before any code (PROTOCOL §6), on the branch behind take 133's PR
+(60, marked ready at 18:06 UTC with its check and APK job green; this
+take's commits stay local until the merge, as takes 131 to 133's did).
+A44's order, agreed 1 Oct: the structural takes one at a time, each when no
+other branch is open; item 4 is this one. **Nothing a collector can see
+changes.**
+
+### What this take changes
+
+1. **`ADS`, in `src/app/19-ads.js`, beside `CREDITS`.** The whole ads and
+   consent flow leaves `PLATFORM` (about 130 lines of its 370): the units a
+   build may load and their note, consent through UMP (`consentAsk`), the
+   start that waits for the first-open guide, the SDK's init with its four
+   listeners, load and show by kind, the free save's gate (`none`), More's
+   privacy row, Diagnostics' notes, and the state behind them. `PLATFORM`
+   keeps `plugin()` and the thin native calls (files, OCR, share, haptics,
+   the status bar, the catalogue sync, the backup). Each method keeps its
+   body; the names drop the `ad`/`ads` prefix the object now gives
+   (`ADS.show`, `ADS.start`, `ADS.units`, `ADS.privacy` ...), and of the
+   state only `_adReady`, `_adIds`, `_adsStarted` and `_adFailed` lose it
+   (`_ready`, `_ids`, `_started`, `_failed`); `_consent`, `_canRequestAds`,
+   `_pendingKind`, `_lastKind`, `_loadErr`, `_starting` keep their names.
+2. **Every caller moves with it**: the scan screen's +20 button, a refused
+   deck save, MAX's ad, More's Privacy choices row, Diagnostics' ads and
+   consent lines, the self-test's units check, `CREDITS.ready`, and the
+   boot's start after the guide. The plugin is still reached through
+   `PLATFORM.plugin('AdMob')`, so the harnesses' stub of it serves `ADS`
+   unchanged.
+3. **The harnesses follow**: the smoke's take-121 and take-127 sections
+   drive `ADS` where they drove `PLATFORM`, each behind one check that
+   `ADS` exists (watched failing on take 133's build); the take-127 look's
+   steps read `ADS._consent`. The gate's `check_ads_home` refuses an ad or
+   consent method inside `PLATFORM` from here, with a probe that plants one.
+
+### Measured
+
+- 126 lines left `PLATFORM` (its block from the A17 comment to `adShow`'s
+  close) and stand in `src/app/19-ads.js` (136 lines with its header);
+  `PLATFORM` holds no `ad`, `ads`, `consent` or `_consent` member now, and
+  outside `ADS` the plugin is named twice, as a presence check (MAX's lock,
+  the self-test's units check). Ten caller lines moved across eight files;
+  one export.
+- `www/app.js` 492,240 bytes (take 133's 492,373): the moved block plus the
+  header, less the dropped prefixes.
+- The smoke: 1681 of 1681 (one new check; take 127's existence guard now
+  names `ADS`). On take 133's build (`SMOKE_APP`) three fail by name --
+  `ADS` absent, take 127's guard, the boot's start through `ADS` -- and the
+  32 checks behind the two guards do not run there, so the sections prove
+  the flow only where it exists; the flow's own behaviour is the same 32
+  checks as before, passing against the same plugin stub, now served
+  through `PLATFORM.plugin` to `ADS`.
+- The gate's `check_ads_home` on the tree notes the home; a planted
+  `adShow()` inside `PLATFORM` is named with its file and line.
+
+### Tests
+
+- `python3 tools/pipeline.py` from the top (ingest, history, catalogue,
+  hashes, the app, smoke 1681/1681, render 277/277 `(mode: chrome)`, the
+  gate), 687 s; `bash tools/seal.sh --gate-only` green, bare, with the
+  gate's new note; `gate.py --selftest` 42 probes named, "an ad method
+  inside PLATFORM, outside ADS (take 134)" firing among them;
+  `ci/icon.py --selftest` green; the scrubber clean on 161 files.
+- Negative controls, each watched: the new smoke on take 133's build
+  (`SMOKE_APP`, three named failures, the guarded 32 not run), the gate's
+  planted `adShow()` inside `PLATFORM` -- both under Measured.
+- No look: nothing a collector can see changes. The take-127 look's steps
+  read `ADS._consent` now, so `node tools/look.mjs 127` still runs.
+
+### What I got wrong
+
+- The AGENDA write anchored on a line the audit's HANDOFF entry has, not
+  the agenda item ("sections move with it" is the item's line, the drive
+  list is the entry's), and its assertion stopped it before the write; the
+  grep-check found the file untouched and the write was redone. The ledger
+  rule's grep is what caught it.
+- The smoke's two sections do not share one closing shape: take 121's
+  block closes before the next block's own brace, take 127's before the
+  next `section(` line; my search for a brace followed by a brace found
+  nothing for 127 and the edit stopped. Each section is bounded by what
+  follows it, not by a pattern.
+- Ran the first seal through `| tail` to shorten its output -- the hole
+  AGENTS names (a pipe hides the exit status). It said green; it was run
+  again bare, and that run is the one the Tests line cites.
+
+### DEFERRED
+
+- The two `PLATFORM.plugin('AdMob')` presence checks outside `ADS` (MAX's
+  lock, the self-test's units check) stay: they ask the adapter whether the
+  plugin exists, which is the adapter's question.
+- A44 items 5 to 7, in order, each when no other branch is open.
 
 ## Take 133 — 2026-10-02 — one click dispatcher (A44 item 3): the 29 document-level delegates as rows of one table, in the present order
 
@@ -127,6 +220,18 @@ changes.**
 - The three capture-phase one-shots as rows with a lifetime: not now; each
   removes itself and is its sheet's.
 - A44 items 4 to 7, in order, each when no other branch is open.
+
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+PR 60 merged 2 Oct at 20:49 UTC (`a9aec24`, a merge commit, the owner's,
+two hours and forty minutes after it was marked ready); `build` run 91
+green in every job (seed, bundle, apk, pages, report), 15 minutes; Release
+take-133 published 21:04 UTC with the APK (28,954,877 bytes, 10,464 more
+than take 132's: the dispatcher and its table), the AAB (22,160,944), the
+mapping and the Play icon. Take 134's commit, held local since 18:27 UTC,
+was rebased onto the merge and pushed at 20:50 UTC; its PR (61) opened as a
+draft in the same minute, its check and APK job green at 21:04 UTC, and
+this note rides it, pushed before it was marked ready.
 
 ## Take 132 — 2026-10-02 — the one source file into files (A44 item 2): the same shipped script, byte for byte
 

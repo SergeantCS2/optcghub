@@ -37,7 +37,7 @@ function paintSettings() {
       <button class="linkish" id="guideAgain">Show the guide again</button>
       <button class="linkish" data-act="currency">Show prices in\u2026 ${esc(CUR.active())}${CUR.active() !== 'USD' ? ' (converted)' : ''}</button>
       <button class="linkish" data-act="rate">Rate this app on Google Play</button>
-      <button class="linkish" data-act="shareapp">Tell someone about the app</button>${PLATFORM.adPrivacyShown() ? '<button class="linkish" data-act="adprivacy">Privacy choices for ads</button>' : ''}</div>
+      <button class="linkish" data-act="shareapp">Tell someone about the app</button>${ADS.privacyShown() ? '<button class="linkish" data-act="adprivacy">Privacy choices for ads</button>' : ''}</div>
     <div class="panel"><h3>Appearance</h3>
       <div class="seg" id="themeSeg" role="radiogroup" aria-label="Appearance">${['dark', 'light', 'system'].map(t => `<button role="radio" data-theme="${t}" class="${THEME.cur === t ? 'on' : ''}" aria-checked="${THEME.cur === t}">${{ dark: 'Dark', light: 'Light', system: 'Auto' }[t]}</button>`).join('')}</div>
       <div class="note">Dark is the app\u2019s own look. Light gives each mode a paper ground \u2014 parchment for Collect, chalk for Prep &amp; Play, cream for Hunt. Auto follows the phone\u2019s dark mode.</div></div>
