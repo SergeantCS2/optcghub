@@ -23,8 +23,56 @@ East Linux server and would rather not use it, but can.
    as an artifact for a week. A32's rule, "measured on the runner first",
    becomes a button, and the session VM's egress (which Walmart answered at
    take 129) stops standing in for the runner.
-2. **Walmart, measured on the runner:** (filled after the first dispatch)
-3. **The Walmart source**, if the runner passes: (filled)
+2. **Walmart, measured on the runner** (probe run 1, 05:02 UTC, an Azure
+   `centralus` runner; the dispatch from the branch answered 404 -- GitHub
+   lists a workflow for dispatch only once its file is on `main` -- so the
+   probe also runs on a push that changes it, and that push was the first
+   run): **the search page and the item page are served whole.** The search
+   page, 1.03 MB, carries its own JSON: 70 items, 53 of them One Piece, every
+   one a marketplace seller's (859Essentials, Anon TCG LLC, CRFStore,
+   Collectors Expedition), availability "In stock", **every price an empty
+   string** on the search page, and the store the site assumed from the
+   runner's IP (1723). The item page, 420 KB, carries the product whole:
+   **price $26.98, IN_STOCK, the seller named (Expedition Gaming Corp),
+   three fulfillment options and the nearby-store availability key** -- for
+   the store the IP implied, never for a zip we choose. The store finder's
+   page (149 KB) carries no store list: the site loads stores by a request
+   its own scripts make. So: **online price and availability per product
+   are the runner's to read, hourly, from the item page; a shelf for a
+   chosen zip needs the site's location cookie**, which a plain request does
+   not have (DEFERRED below). The page's text names "captcha", "challenge"
+   and "akamai" inside its scripts on every served page, so those words are
+   not a wall by themselves; the status, the bytes and the JSON are.
+   The rest of the owner's list from the same runner, for the record: Hot
+   Topic 200 with tiles (86 One Piece hits); GameStop 403 on the search and
+   the store finder; Barnes & Noble 404 of 9 bytes; Meijer 200 but 12.9 KB
+   (a challenge-sized page); Five Below 403 "Just a moment"; Target's HTML
+   with captcha markers as always, RedSky being its source.
+3. **The Walmart source** (`tools/hunt/walmart.py`, in the hourly feed as
+   `sources.walmart`): a committed list of One Piece items
+   (`tools/hunt/walmart_items.json`, 37 ids with their titles and page
+   URLs, drafted by the session from one search page read by hand on 2 Oct
+   -- the Japanese releases, mystery packs, lots and bundles left out) read
+   from their item pages at most 12 a run, 2 s apart, in a round-robin with
+   a cursor, so every item is read a few times a day. Each item carries what
+   its page said and when: the price as a number and as the page's own text,
+   the status, the marketplace seller's name (every One Piece item there is a
+   seller's, never Walmart's own), whether it ships and whether pickup is
+   offered; an item the run did not reach carries the previous feed's answer
+   with ITS time, or nothing. A price the page did not state is None, never
+   0; a run every page of which is refused is not ok and the feed keeps the
+   last good one with `stale_since`. The title is matched by the feed's own
+   matcher (28 of 37 key to a catalogue product; the rest are counted, never
+   shown under a product -- rule 4). The runner never fetches `/search`
+   (robots.txt disallows it): a person grows the list with `walmart.py
+   --discover <a page they saved> --write`. In the app: a Walmart line under
+   a matched product on Sealed (`Walmart $26.98 · ships · sold by X · 2 h
+   ago`, or "online stock not checked yet"), a Walmart chip under Where to
+   buy (the item's own page, no referral), a stock-alert source ("Walmart
+   online"), Diagnostics' feed line (`walmart 37 items, 1 with an answer`,
+   placed before the distributors so take 115's tail check still holds),
+   and `listedIds` counts the matched products (D24 (b)). A feed from before
+   this take, with no `walmart` key, paints as it did.
 4. **The Sim's wire, decided and recorded** (D18, A23 step 4): the design
    below, the owner's one decision named.
 
@@ -80,15 +128,78 @@ With no relay configured the build hides the entry and says why
 
 ### Measured
 
-(filled)
+- Probe run 1 (05:02 UTC) and run 2 (05:11 UTC), both on Azure `centralus`
+  runners, 34 s and 31 s of requests: the item page 419,591 and 419,709
+  bytes with the product whole; the search page 1,034,463 and 1,011,551
+  bytes with 70 and 69 items; the store finder's own query **418 Access
+  Denied, 216 bytes**, from the runner as from the session VM; GameStop 403
+  with Cloudflare's "Sorry, you have been blocked"; Five Below 403 "Just a
+  moment... Enable JavaScript and cookies"; Meijer 200 with the 12.9 KB app
+  shell; Barnes & Noble 404 of 9 bytes.
+- The session's own browser capture (puppeteer through the proxy, the
+  certificate ignored for the measurement): the finder page loads its
+  stores by `storeFinderNearbyNodesQuery` with the zip and radius in its
+  variables (White Lake Supercenter, 4.25 mi, the first of them for 48329);
+  the item page in a headless browser hit "Robot or human?" where a plain
+  request is served -- the wall fingerprints the browser, not the request.
+- The feed's matcher over the 37 committed items: 28 keyed to a catalogue
+  product, 9 counted (a code in the title pins the set; a title with no
+  kind word -- box, pack, deck -- matches nothing, as rule 4 wants).
+- The page's text names "captcha", "challenge" and "akamai" in its scripts
+  on every served page: those words alone are not a wall, which is why the
+  probe quotes a small page's title and text instead.
 
 ### Tests
 
-(filled before the seal)
+- `python3 tools/hunt.py --selftest`: the Walmart parser on the saved page
+  (id, price 26.98 with its text, IN_STOCK, the seller, ships); the controls
+  -- a page with no product parses to None, a price the page does not state
+  is None and never 0, the search parse for a person's `--discover`, the
+  committed list (37, none Japanese, most keyed by the matcher), a fetch
+  that reads its budget and no more and moves the cursor, the next run
+  keeping the earlier answers with THEIR time, a run refused whole not ok
+  with its reason and the earlier answers riding on.
+- Smoke 1634/1634, 16 new in the take-130 section; **watched on take 129's
+  app: 11 fail by name** (the five feed-level checks pass there, the feed
+  being the new tool's), 1623/11. The first control run was a crash, not a
+  failure: the section called `HUNT.wmByCatalogId` unguarded and the run
+  stopped with no named failure, which is what "0 failing" meant until the
+  guard (`wmBy`, `wline`) made each check fail by name.
+- The runner's probe, twice (runs 1 and 2 of `probe.yml`, both green, 34 s
+  and 31 s of requests); the rows are "Measured".
+- The look, take 130 at both Fold sizes: 6 steps, 6 ok -- the Walmart line
+  under the Premium Booster Vol. 2 pack ("Walmart $26.98 · ships · sold by
+  Expedition Gaming Corp · N min ago", the age counted from the fixture's
+  time), the Walmart chip beside TCGplayer, and the pack's sheet listing
+  both under Where to buy with the item's own page behind Open. Every PNG
+  read and sent to the owner.
+- Render in Chrome 274/274 `(mode: chrome)`; the seal's gate green.
 
 ### What I got wrong
 
-(filled before the seal)
+- The probe's first dispatch answered 404: GitHub lists a workflow for
+  `workflow_dispatch` only once its file is on the default branch. The
+  probe also runs on a push that changes it, on any branch but `main`.
+- An edit to the probe's summary displaced the item page's branch into the
+  next function, and run 2 printed no product line for the item page --
+  caught by running the probe here before reading the runner's row as a
+  change in Walmart. The function was rewritten whole.
+- The smoke section's helper `wm` was shadowed by a `const wm` for the chip
+  further down the same block, and the temporal dead zone threw on the new
+  build too. Renamed; the control run is what found it.
+- The session VM's egress read Walmart's search page as served while the
+  take-68 record said captcha: both were true of their own IPs. Only the
+  runner's answer went into the record as the runner's.
+- The look's sheet step failed twice before it measured anything: first it
+  tagged `line.closest('.row')`, which is the wrapping row, and then looked
+  for the opener inside the row the tag never reached (the opener IS the
+  `button.row`, landmine 243's family: tag the opener); then it read the
+  sheet's Where to buy as chips, while the sheet paints a row per seller
+  under `#dBuyList` and the chips are the sealed row's. A third version
+  refused the link for Walmart's own selectors (`conditionGroupCode`,
+  `classType`, `selectedSellerId`, which opens the seller whose price the
+  line shows); the rule is the smoke's, no referral or tracking parameter,
+  and the step now applies that one.
 
 ### DEFERRED
 

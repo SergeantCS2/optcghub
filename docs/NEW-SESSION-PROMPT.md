@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 129.* Paste the block between the rules into a new session
+*Current as of take 130.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -101,8 +101,16 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   owner (2 Oct): the Walmart take next, measured on the runner first; and
   multiplayer for the Sim -- host a match, a code, the other player joins --
   with a US East Linux server of his he would rather not use. `probe.yml`
-  (`tools/hunt/probe.py`) is the runner's own measurement, a button; what
-  it found for Walmart and what was built on it is HANDOFF take 130. The
+  (`tools/hunt/probe.py`) is the runner's own measurement, a button: it
+  runs on a dispatch from `main` and on a push that changes it on any other
+  branch. Walmart's item page is served whole to the runner (price, status,
+  the marketplace seller); robots.txt disallows `/search`, so
+  `tools/hunt/walmart.py` reads a committed list of item pages
+  (`walmart_items.json`, grown by a person with `--discover`) at most 12 a
+  run, and the app draws a Walmart line under a matched product, a
+  Where-to-buy chip and an alert source; the store finder's own query
+  answers 418 to a plain request, so a shelf for a chosen zip waits (A32,
+  D21). The
   Sim's wire: a relay keyed by a six-character code, two WebSocket seats,
   the spec and the move log kept for the room's life, no account; the
   engine refuses an illegal move from the other phone; both phones hold the

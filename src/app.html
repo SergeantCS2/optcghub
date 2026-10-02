@@ -4705,6 +4705,9 @@ const HUNT = {
   /* per catalogue product: the retailer lines that matched it */
   byCatalogId() { const out = {}; const t = this.feed && this.feed.sources && this.feed.sources.target; if (!t || !t.items) return out;
     for (const it of t.items) if (it.catalog_id) (out[it.catalog_id] ||= []).push(it); return out; },
+  /* take 130: Walmart, per catalogue product -- the items of its committed list that matched (A32) */
+  wmByCatalogId() { const out = {}; const w = this.feed && this.feed.sources && this.feed.sources.walmart; if (!w || !w.items) return out;
+    for (const it of w.items) if (it.catalog_id) (out[it.catalog_id] ||= []).push(it); return out; },
   /* take 94: per catalogue product, the distributor’s listings that matched it. Take 112: two
      distributors -- GTS and Southern Hobby -- each item carrying which one it is from (_d) and a
      key that is unique across both (_k) */
@@ -4718,7 +4721,7 @@ const HUNT = {
   distItems() { const out = []; for (const [k] of this.DISTS) { const D = this.dist(k); if (D && D.ok) for (const it of (D.items || [])) out.push(Object.assign(Object.create(it), { _d: k, _k: k + ':' + (it.sku || it.id) })); } return out; },
   distByCatalogId() { const out = {}; for (const it of this.distItems()) if (it.catalog_id) (out[it.catalog_id] ||= []).push(it); return out; },
   /* take 128 (D24): every catalogue id a source names -- a distributor's item, Target's, a shop's -- as numbers, for what Sealed lists */
-  listedIds() { const s = new Set(); for (const k of Object.keys(this.distByCatalogId())) s.add(+k); for (const k of Object.keys(this.byCatalogId())) s.add(+k);
+  listedIds() { const s = new Set(); for (const k of Object.keys(this.distByCatalogId())) s.add(+k); for (const k of Object.keys(this.byCatalogId())) s.add(+k); for (const k of Object.keys(this.wmByCatalogId())) s.add(+k);
     for (const sh of ((LOCAL.shops && LOCAL.shops.shops) || [])) for (const it of (sh.sealed || [])) if (it.catalog_id) s.add(+it.catalog_id); return s; },
   /* Take 72. The collector’s zip, asked once. The runner serves LOCAL stock
      for a list of zips; the closest honest match is exact, then the same
@@ -4735,6 +4738,13 @@ async function askZip() {
   const v = await ask({ title: 'Your zip code', kind: 'number', placeholder: '37203', ok: 'Use this zip',
     why: 'Online prices and shipping stock show for everywhere. Your zip adds what is on the shelf at stores near you, where that area is covered. The zip stays on this phone.' });
   const z = String(v || '').replace(/\D/g, ''); if (z.length === 5) { HUNT.setZip(z); return true; } return false;
+}
+/* take 130: Walmart's line under a product -- what its item page said and when, the marketplace seller named
+   (every One Piece item there is a seller's, not Walmart's own), or that it has not been read yet */
+function walmartLine(it) {
+  const o = it.online;
+  const what = o ? `${o.price != null ? money(o.price) : 'no price stated'} \u00b7 ${o.status === 'IN_STOCK' ? 'ships' : String(o.status || '?').toLowerCase().replace(/_/g, ' ') + ' online'}${o.seller ? ' \u00b7 sold by ' + esc(o.seller) : ''} \u00b7 ${HUNT.ageLabel(o.checked_at)}` : 'online stock not checked yet';
+  return `<span style="display:block;color:var(--brass)">Walmart ${what}</span>`;
 }
 function targetLine(it, T) {
   /* every check carries its own time (take 72): the feed rotates through items
@@ -4832,7 +4842,9 @@ function paintDevEarn() { const de = $('#devEarn'); if (de) de.textContent = `+$
 function feedLine() {
   if (!HUNT.feed) return 'none';
   const kept = D => D && D.kept ? ` (kept; not reached since ${momentText(D.stale_since || D.fetched_at)})` : '', T = HUNT.feed.sources && HUNT.feed.sources.target;
+  const W = HUNT.feed.sources && HUNT.feed.sources.walmart;   // take 130: after Target, before the distributors (the line's tail is the distributors', take 115)
   return [`${HUNT.ageLabel(HUNT.feed.fetched_at)}`, `target ${T && T.ok ? 'ok' : 'not ok'}${kept(T)}`,
+    `walmart ${W ? (W.ok ? (W.items || []).length + ' items, ' + (W.items || []).filter(i => i.online).length + ' with an answer' + kept(W) : 'not ok') : 'absent'}`,
     ...HUNT.DISTS.map(([k]) => { const D = HUNT.dist(k); return `${k} ${D ? (D.ok ? (D.items || []).length + ' products' + kept(D) : 'not ok') : 'absent'}`; })].join(', ');
 }
 /* take 115 (SPEC-112-54): what a source's panel leads with -- when it was checked; or since when it could not be
@@ -4970,6 +4982,8 @@ function buySources(p) {
   const T = HUNT.feed && HUNT.feed.sources && HUNT.feed.sources.target;
   for (const it of (HUNT.byCatalogId()[p.id] || [])) if (it.url) out.push({ kind: 'online', label: 'Target', url: it.url,
     note: `${money(it.price)} \u00b7 ${it.online ? (it.online.status === 'IN_STOCK' ? 'ships' : String(it.online.status || '?').toLowerCase().replace(/_/g, ' ') + ' online') : 'online stock not checked yet'} \u00b7 ${HUNT.ageLabel(it.online_at || (T && T.fetched_at))}` });
+  for (const it of (HUNT.wmByCatalogId()[p.id] || [])) if (it.url) out.push({ kind: 'online', label: 'Walmart', url: it.url,   // take 130: the item's own page, no referral
+    note: it.online ? `${it.online.price != null ? money(it.online.price) : 'no price stated'} \u00b7 ${it.online.status === 'IN_STOCK' ? 'ships' : String(it.online.status || '?').toLowerCase().replace(/_/g, ' ') + ' online'}${it.online.seller ? ' \u00b7 sold by ' + it.online.seller : ''} \u00b7 ${HUNT.ageLabel(it.online.checked_at)}` : 'online stock not checked yet' });
   for (const l of LOCAL.shopLines(p.id)) if (l.url) out.push({ kind: 'local', label: l.shop, url: l.url, addr: l.addr, phone: l.phone, mi: l.mi,
     note: `${money(l.price)} \u00b7 ${l.available ? 'in stock online' : 'sold out online'} \u00b7 ${HUNT.ageLabel(LOCAL.shops && LOCAL.shops.fetched_at)}` });
   /* take 112: the distributors left this list for the page's Distributor info -- they sell to stores, and their
@@ -5067,7 +5081,7 @@ function paintSealed() {
   const counts = {}; for (const p of CAT.rows) if (SEALED.listed(p, src)) { const k = SEALED.kindOf(p); counts[k] = (counts[k] || 0) + 1; counts.all = (counts.all || 0) + 1; }
   $('#sealedKinds').innerHTML = SEALED_KINDS.map(([k, label]) => `<button class="chip${SEALED.kind === k ? ' on' : ''}" data-skind="${k}" aria-pressed="${SEALED.kind === k}">${label} <span class="note">${counts[k] || 0}</span></button>`).join('');
   const rows = SEALED.rows(src); let lastSet = null; const out = [];
-  const T = HUNT.feed && HUNT.feed.sources && HUNT.feed.sources.target; const byCat = HUNT.byCatalogId();
+  const T = HUNT.feed && HUNT.feed.sources && HUNT.feed.sources.target; const byCat = HUNT.byCatalogId(); const byWm = HUNT.wmByCatalogId();   // take 130
   const gts = HUNT.dist('gts'); const byDist = HUNT.distByCatalogId();   // take 94; take 115: gts, not G -- a local G hid the glyph helper
   /* starter decks, their own section (take 87): every deck product, newest set first */
   /* take 117 (the owner's screenshot: starter decks outside their section): every product of a starter-deck SET -- the decks and
@@ -5077,7 +5091,7 @@ function paintSealed() {
     /* take 110: a strip like every set’s heading, under the newest starter deck’s own top card */
     const dtop = decks.map(p => setTop(p.set)).find(Boolean);
     if (decks.length) out.push(`<button class="fgrp setstrip" data-setfold="decks" aria-expanded="${!SEALED.closed.has('decks')}">${dtop ? artBack(dtop, { crisp: true }) : ''}<span>Starter decks<span class="note">${decks.length} products</span></span><span class="note" aria-hidden="true">${chev(!SEALED.closed.has('decks'))}</span></button>`);
-    if (decks.length && !SEALED.closed.has('decks')) for (const p of decks.slice(0, 240)) out.push(sealedRow(p, esc(CAT.sets.get(p.set)?.name || ''), (byCat[p.id] || []).map(i => targetLine(i, T)).join(''), byDist)); }
+    if (decks.length && !SEALED.closed.has('decks')) for (const p of decks.slice(0, 240)) out.push(sealedRow(p, esc(CAT.sets.get(p.set)?.name || ''), (byCat[p.id] || []).map(i => targetLine(i, T)).join('') + (byWm[p.id] || []).map(walmartLine).join(''), byDist)); }
   /* stock alerts: what is watched, and where it was last seen */
   if (STOCK.list.length) out.push(`<div class="panel"><h3>Stock alerts</h3>${STOCK.list.map(a => { const srcs = STOCK.sourcesFor(a.id); const on = srcs.filter(x => x.available);
     return `<div class="row"><div class="nm"><b>${esc(a.name)}</b><span>${on.length ? 'in stock: ' + esc(on.map(x => x.label).join(', ')) : srcs.length ? 'not in stock at ' + srcs.length + ' watched source' + (srcs.length === 1 ? '' : 's') : 'no source carries it yet'}${a.fired && a.fired.length ? ' \u00b7 last alert ' + esc(HUNT.ageLabel(a.fired[0].t)) : ''}</span></div><div class="v"><button class="ghost" data-stock="${a.id}" aria-label="Stop watching ${esc(a.name)}">${G('trash', 18)}</button></div></div>`; }).join('')}
@@ -5125,7 +5139,7 @@ function paintSealed() {
     out.push(`<button class="fgrp setstrip" data-setfold="${esc(setId)}" aria-expanded="${open}">${top ? artBack(top, { crisp: true }) : ''}<span>${esc(st.name || 'Other')}${st.pub ? `<span class="note">${st.pub > TODAY ? 'Releases' : 'Released'} ${esc(dayText(st.pub))}</span>` : ''}</span><span class="note" aria-hidden="true">${chev(open)}</span></button>`);
     if (!open) continue;
     for (const p of ps) {
-    const tl = (byCat[p.id] || []).map(i => targetLine(i, T)).join('') + LOCAL.shopLines(p.id).map(l => `<span style="display:block;color:var(--brass)">${esc(l.shop)}${l.mi != null ? ' ~' + l.mi + ' mi' : ''} ${money(l.price)} \u00b7 ${l.available ? 'in stock online' : 'sold out online'} \u00b7 ${esc(HUNT.ageLabel(LOCAL.shops.fetched_at))}</span>`).join('');
+    const tl = (byCat[p.id] || []).map(i => targetLine(i, T)).join('') + (byWm[p.id] || []).map(walmartLine).join('') + LOCAL.shopLines(p.id).map(l => `<span style="display:block;color:var(--brass)">${esc(l.shop)}${l.mi != null ? ' ~' + l.mi + ' mi' : ''} ${money(l.price)} \u00b7 ${l.available ? 'in stock online' : 'sold out online'} \u00b7 ${esc(HUNT.ageLabel(LOCAL.shops.fetched_at))}</span>`).join('');
     out.push(sealedRow(p, esc(sealedWord(p)), tl, byDist));   /* take 120: the singular -- one product read "Boxes" */
     }
   }
@@ -5155,6 +5169,7 @@ const STOCK = {
       if (it.online) out.push({ key: 'target:online:' + it.tcin, label: 'Target online', available: it.online.status === 'IN_STOCK', at: it.online_at });
       if (sv.how !== 'none') { const zz = T.zips[sv.zip]; const st = zz && zz.ok && zz.stock[it.tcin]; if (st) { const on = Object.entries(st).filter(([, v]) => (v.qty || 0) > 0).map(([sid]) => { const x = zz.stores.find(y => y.id === sid); return x ? x.name : sid; });
         out.push({ key: 'target:shelf:' + sv.zip + ':' + it.tcin, label: on.length ? 'Target ' + on.join(', ') : 'a Target shelf near ' + sv.zip, available: on.length > 0, at: zz.checked_at && zz.checked_at[it.tcin] }); } } }
+    for (const it of (HUNT.wmByCatalogId()[id] || [])) if (it.online) out.push({ key: 'walmart:online:' + it.id, label: 'Walmart online', available: it.online.status === 'IN_STOCK', at: it.online.checked_at, url: it.url });   // take 130
     for (const sh of ((LOCAL.shops && LOCAL.shops.shops) || [])) for (const it of (sh.sealed || [])) if (it.catalog_id === id) out.push({ key: 'shop:' + sh.url + ':' + it.url, label: sh.name + ' online', available: !!it.available, at: LOCAL.shops.fetched_at, url: it.url });
     /* take 94: the distributor -- available to STORES when it shows stock; the flip is the reprint wave arriving. Take 114,
        the owner's answer: stock only -- 'preorder' is GTS's state after stores' orders were due, not an open preorder */
@@ -7232,7 +7247,7 @@ async function runSelfTest() {
      day and a hardcoded placeholder is landmine 62 in a text box. */
   $('#allq').placeholder = `Search all ${(CAT.man.cards || 0).toLocaleString()} cards`;
   paintNet(); paintHome();
-  window.VAULT = { linePic, lineShowsPhoto, flipLine, flipSwipe, FLIP, UPDATE, get guidePage() { return guidePage; }, guideOpen, guideClose, guideGo, guideStart, guidePaint, GUIDE, topCard, dotJoin, curLabel, paintBinder, sealedKind, sealedWord, sealedRow, gameColours, distWords, feedLine, sourceLead, picturesLine, sealedCountLine, catalogueNote, setsWithCards, setCards, paintDevEarn, backArrow, closeSheet, setHomeTab, bulkLines, bulkSum, shownLines, signedMoney, pctNum, signedPct, dayText, momentText, fromShown, toShown, setTop, newestTop, paintSealedHero, ownBack, artBack, artUrl, artColours, largeOk, heroLeader, paintDeckHero, paintBack, stockPic, CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, setCond, toast, cameraVerdict, effectsLine, HUNT, targetLine, distLine, distShort, distRowLines, distFold, distFoldTap, distSummary, DISTF, paintDetailDist, distHistory, distHistTap, tlDay, tlWindow, gtsDue, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
+  window.VAULT = { linePic, lineShowsPhoto, flipLine, flipSwipe, FLIP, UPDATE, get guidePage() { return guidePage; }, guideOpen, guideClose, guideGo, guideStart, guidePaint, GUIDE, topCard, dotJoin, curLabel, paintBinder, sealedKind, sealedWord, sealedRow, gameColours, distWords, feedLine, sourceLead, picturesLine, sealedCountLine, catalogueNote, setsWithCards, setCards, paintDevEarn, backArrow, closeSheet, setHomeTab, bulkLines, bulkSum, shownLines, signedMoney, pctNum, signedPct, dayText, momentText, fromShown, toShown, setTop, newestTop, paintSealedHero, ownBack, artBack, artUrl, artColours, largeOk, heroLeader, paintDeckHero, paintBack, stockPic, CAT, OWN, resolve, candidates, hamming, TAKE, NET, go, productPic, CUR, money, exportCsv, collectionPage, shareCollectionPage, simLogText, simReadiness, paintStock, deckCover, PLATFORM, SEALED, paintSealed, paintReleases, browseSet, RELALERTS, RELF, relBand, releaseEvent, openDetail, setCond, toast, cameraVerdict, effectsLine, HUNT, targetLine, walmartLine, distLine, distShort, distRowLines, distFold, distFoldTap, distSummary, DISTF, paintDetailDist, distHistory, distHistTap, tlDay, tlWindow, gtsDue, buySources, buyChips, askZip, LOCAL, paintLocal, EVENTS, paintEvents, STOCK, icsFor, addEventToCalendar, DIAG, ERRS, NAV, go, closeAnyOverlay,
                    cardPic, setPic, picBox, deckRow, paintHome, paintDecks, paintSearch, openDeck,
                    FILT, loadFilter, applyFilter, sortRows, blankFilter, activeCount,
                    DECKS, RULES, legality, analysis, colourLegal, CREDITS, get ADS_ENABLED() { return ADS_ENABLED; }, PF, TRADE, MODE, THEME, PLAY, plCurtain, paintPlay, SELFTEST, runSelfTest, SIM, SIMUI, BOT, simBotRun, paintSim, simAct, simSeat, simReport, simHandLabel, simTap, simSay, simAt, simSheetOpen, simPaced, simFit, RULEBOOK, RULES_DB, openRules, paintRules, rulesStatus, verNewer, CD, paintCards, WANT, openChecklist, ALERTS, BN, deckHistory, binderSets,

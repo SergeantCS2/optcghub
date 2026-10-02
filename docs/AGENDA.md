@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 129.* Ranked by blocking-ness, not by interest.
+*Current as of take 130.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -999,8 +999,32 @@ measured by the source take, never assumed from here.
 **Take 130 (2 Oct): the owner chose Walmart next, measured on the runner
 first.** The runner's own probe is a `workflow_dispatch` (`probe.yml`,
 `tools/hunt/probe.py`): one plain request per line from a GitHub-hosted
-runner, a row each, every body kept a week. What it found for Walmart is
-HANDOFF take 130's "Measured". Cardmarket stays struck.
+runner, a row each, every body kept a week. Cardmarket stays struck. **Built
+on the measurement:** `tools/hunt/walmart.py` reads a committed list of
+item pages (`walmart_items.json`, 37 ids, a person grows it with
+`--discover` over a page they saved; the runner never fetches `/search`,
+robots.txt disallows it) at most 12 a run in a round-robin; the feed's
+`sources.walmart` carries price, status, seller and the time per item; the
+app draws a line under a matched product, a Where-to-buy chip and an alert
+source. **Ruled out:** reading the search page from the runner (robots.txt);
+the store finder's own query from a plain request (418 from the runner and
+the VM alike); a headless browser on the runner (the item page answered it
+"Robot or human?"). The shelf for a chosen zip waits on a measured way to
+ask -- the owner's home probe, or the phone's own request (D21).
+
+**MEASURED take 130 -- from a GitHub-hosted runner (probe run 1, 2 Oct, 05:02 UTC, Azure centralus):**
+
+| source | result | status |
+|---|---|---|
+| **Walmart** item page (`/ip/<id>`) | 200, 420 KB, the product whole in the page's JSON: price $26.98, IN_STOCK, the marketplace seller named, three fulfillment options, the nearby-store key -- for the store the IP implied | **readable from the runner**; robots.txt allows `/ip/`; the source reads these |
+| **Walmart** search page | 200, 1.03 MB, 70 items (53 One Piece), every price empty, the IP's store | served, but robots.txt **disallows `/search`**: never fetched by the source |
+| **Walmart** store finder | 200, 149 KB, no store list in the page (its scripts load it) | allowed by robots.txt; useless to a plain request; the location cookie is the next measurement |
+| **Hot Topic** search | 200, 848 KB, tiles, 86 One Piece hits | reachable from the runner |
+| **Meijer** search | 200 but 12.9 KB: the app shell, "You need to enable JavaScript" | the runner is not refused (the session VM was); its API is the next probe |
+| **GameStop** search and store finder | 403 | cloud-blocked |
+| **Barnes & Noble** search | 404 of 9 bytes | bot-walled |
+| **Five Below** search | 403 "Just a moment" | cloud-blocked |
+| **Target** search HTML | 200 with captcha markers | RedSky is the source, as always |
 
 What this says about "as much local data as possible": Target is the one
 retailer whose shelf stock a runner reads today. Walmart is the next

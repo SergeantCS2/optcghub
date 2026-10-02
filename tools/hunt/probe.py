@@ -95,6 +95,17 @@ def walmart_summary(name, d):
     if name.startswith("walmart-stores"):
         stores = [o for o in walk(d) if isinstance(o.get("id"), (str, int)) and (o.get("displayName") or o.get("storeType")) and (o.get("address") or o.get("distance") is not None)]
         return f"stores {len(stores)}: " + "; ".join(f"{o.get('id')} {o.get('displayName') or ''} {o.get('distance') or ''}".strip() for o in stores[:4])
+    if name.startswith("walmart-item"):
+        prod = next((o for o in walk(d) if isinstance(o.get("name"), str) and ("usItemId" in o or "availabilityStatus" in o)), None)
+        if not prod:
+            return "no product object"
+        pi = prod.get("priceInfo") or {}
+        cur = pi.get("currentPrice")
+        price = pi.get("linePrice") or (cur.get("priceString") if isinstance(cur, dict) else cur) or ""
+        keys = sorted(k for k in prod if re.search(r"(?i)fulfil|store|pickup|avail|seller", k))
+        fo = prod.get("fulfillmentOptions")
+        return (f"product {prod.get('usItemId')} '{prod['name'][:50]}', price '{price}', availability '{prod.get('availabilityStatus') or ''}', "
+                f"seller '{prod.get('sellerName') or ''}', fulfillmentOptions {len(fo) if isinstance(fo, list) else fo}, keys {keys[:10]}")
     return ""
 
 
@@ -108,18 +119,6 @@ def walmart_api_summary(body):
     if nodes:
         return f"nodes {len(nodes)}: " + "; ".join(f"{n.get('id')} {n.get('displayName') or n.get('name') or ''} {n.get('distance') or ''} mi" for n in nodes[:4])
     return "no nodes: " + json.dumps(d)[:160]
-    if name.startswith("walmart-item"):
-        prod = next((o for o in walk(d) if isinstance(o.get("name"), str) and ("usItemId" in o or "availabilityStatus" in o)), None)
-        if not prod:
-            return "no product object"
-        pi = prod.get("priceInfo") or {}
-        cur = pi.get("currentPrice")
-        price = pi.get("linePrice") or (cur.get("priceString") if isinstance(cur, dict) else cur) or ""
-        keys = sorted(k for k in prod if re.search(r"(?i)fulfil|store|pickup|avail|seller", k))
-        fo = prod.get("fulfillmentOptions")
-        return (f"product {prod.get('usItemId')} '{prod['name'][:50]}', price '{price}', availability '{prod.get('availabilityStatus') or ''}', "
-                f"seller '{prod.get('sellerName') or ''}', fulfillmentOptions {len(fo) if isinstance(fo, list) else fo}, keys {keys[:10]}")
-    return ""
 
 
 def main():
