@@ -50,7 +50,7 @@ function paintCards() {
     </div>`;
   }).join('') || emptyHtml('filter', 'Nothing matches', 'Loosen a chip, or clear them.');
 }
-document.addEventListener('click', e => {
+CLICKS.on('[data-cdkw],[data-cdcol],[data-cdcost],[data-cdadd],#cdForDeck', e => {
   const k = e.target.closest('[data-cdkw]'); if (k) { const v = k.dataset.cdkw; CD.kw.has(v) ? CD.kw.delete(v) : CD.kw.add(v); return paintCards(); }
   const c = e.target.closest('[data-cdcol]'); if (c) { const v = c.dataset.cdcol; CD.col.has(v) ? CD.col.delete(v) : CD.col.add(v); return paintCards(); }
   const co = e.target.closest('[data-cdcost]'); if (co) { CD.cost = CD.cost === co.dataset.cdcost ? null : co.dataset.cdcost; return paintCards(); }

@@ -111,7 +111,7 @@ function paintDecks() {
       <div class="v mono">${money(A.value)}</div></button>`;
   }).join('') : emptyHtml('leader', 'No decks yet', 'Tap <b>+ New deck</b> and choose a Leader.');
 }
-document.addEventListener('click', e => {
+CLICKS.on('[data-deck]', e => {
   const b = e.target.closest('[data-deck]'); if (b) openDeck(b.dataset.deck);
 });
 /* A deck’s cover, drawn by the app from data it already has: the Leader’s
@@ -152,7 +152,7 @@ function paintStock() {
       ${stockPic(d)}
       <div style="flex:1;min-width:0"><b>${esc(d.name)}</b><div class="note"><span class="badge">ready-made</span> ${d.cards.reduce((a, c) => a + c.n, 0)} cards</div></div></button>`).join('')}`;   /* take 111: the badge beside the name took its width, and the name already says the Leader and the set */
 }
-document.addEventListener('click', e => {
+CLICKS.on('[data-stock]', e => {
   const b = e.target.closest('[data-stock]'); if (!b) return;
   const d = (CAT.stock || []).find(x => x.id === b.dataset.stock); if (!d) return;
   SIMUI.pre = d.id; MODE.set('play'); go('sim'); toast(`${d.name} \u2014 pick it as your deck`);
@@ -276,7 +276,7 @@ function deckAdd(id, delta) {
   if (row.n <= 0) dkCur.cards = dkCur.cards.filter(c => c !== row);
   DECKS.save(); paintDeck();
 }
-document.addEventListener('click', e => {
+CLICKS.on('[data-dkadd],[data-dkinc],[data-dkdec]', e => {
   const a = e.target.closest('[data-dkadd]'); if (a) return deckAdd(+a.dataset.dkadd, 1);
   const i = e.target.closest('[data-dkinc]'); if (i) return deckAdd(+i.dataset.dkinc, 1);
   const d = e.target.closest('[data-dkdec]'); if (d) return deckAdd(+d.dataset.dkdec, -1);
@@ -327,7 +327,7 @@ function paintLeaderPick() {
 $('#dkLead').addEventListener('click', () => { $('#lpq').value = ''; lpColour = null; paintLeaderPick(); $('#leaderPick').classList.add('on'); });
 $('#lpq').addEventListener('input', paintLeaderPick);
 $('#lpCancel').addEventListener('click', () => $('#leaderPick').classList.remove('on'));
-document.addEventListener('click', e => {
+CLICKS.on('[data-lpc],[data-lp]', e => {
   const c = e.target.closest('[data-lpc]'); if (c) { lpColour = lpColour === c.dataset.lpc ? null : c.dataset.lpc; paintLeaderPick(); return; }
   const l = e.target.closest('[data-lp]'); if (!l) return;
   dkCur.leader = +l.dataset.lp; DECKS.save();
@@ -336,7 +336,7 @@ document.addEventListener('click', e => {
 
 /* ---- Printing swap: tap a deck row’s name to choose which printing --------- */
 let ppRow = null;
-document.addEventListener('click', e => {
+CLICKS.on('.dkrow .n', e => {
   const n = e.target.closest('.dkrow .n'); if (!n) return;
   const row = n.closest('[data-dk]'); if (!row || !dkCur) return;
   const cur = CAT.byId.get(+row.dataset.dk); if (!cur) return;
@@ -357,7 +357,7 @@ document.addEventListener('click', e => {
   $('#printPick').classList.add('on');
 });
 $('#ppCancel').addEventListener('click', () => $('#printPick').classList.remove('on'));
-document.addEventListener('click', e => {
+CLICKS.on('[data-pp]', e => {
   const b = e.target.closest('[data-pp]'); if (!b || !ppRow) return;
   const to = +b.dataset.pp;
   const existing = dkCur.cards.find(c => c.id === to && c !== ppRow);

@@ -4651,7 +4651,7 @@ section('take 120 — the light theme: dark by default, a switch under More, thr
   ok('...control: the total\'s light gradient written as the shorthand is caught', !/:root\[data-theme="light"\] #home \.total\{background-image:/.test(css.replace(':root[data-theme="light"] #home .total{background-image:', ':root[data-theme="light"] #home .total{background:')));
   /* the switch */
   ok('THEME in the script: vault.theme read with dark the default (the owner: off by default), light or Auto -- the phone through matchMedia, live; the root\'s data-theme set before the first paint and the bars at boot; the status bar told LIGHT or DARK through the plugin; the seg\'s handler a named function (landmine 136)',
-     /const THEME = \{/.test(js) && /cur: \(v => v === 'light' \|\| v === 'system' \? v : 'dark'\)\(localStorage\.getItem\('vault\.theme'\)\)/.test(js) && /matchMedia\('\(prefers-color-scheme: dark\)'\)/.test(js) && /if \(root && root\.dataset\) root\.dataset\.theme = t;/.test(js) && /\nTHEME\.apply\(false\);\n/.test(js) && /\n  THEME\.apply\(\);/.test(js) && /function themeSegClick\(e\) \{ const b = e\.target\.closest\('#themeSeg \[data-theme\]'\); if \(!b\) return; THEME\.set\(b\.dataset\.theme\); \}/.test(js) && /document\.addEventListener\('click', themeSegClick\);/.test(js) && /statusBar\(theme\) \{ const SB = this\.plugin\('StatusBar'\);/.test(js) && /style: theme === 'light' \? 'LIGHT' : 'DARK'/.test(js) && /"@capacitor\/status-bar": "\^8\.0\.0"/.test(pkg));
+     /const THEME = \{/.test(js) && /cur: \(v => v === 'light' \|\| v === 'system' \? v : 'dark'\)\(localStorage\.getItem\('vault\.theme'\)\)/.test(js) && /matchMedia\('\(prefers-color-scheme: dark\)'\)/.test(js) && /if \(root && root\.dataset\) root\.dataset\.theme = t;/.test(js) && /\nTHEME\.apply\(false\);\n/.test(js) && /\n  THEME\.apply\(\);/.test(js) && /function themeSegClick\(e\) \{ const b = e\.target\.closest\('#themeSeg \[data-theme\]'\); if \(!b\) return; THEME\.set\(b\.dataset\.theme\); \}/.test(js) && /CLICKS\.on\('#themeSeg \[data-theme\]', themeSegClick\);/.test(js) && /statusBar\(theme\) \{ const SB = this\.plugin\('StatusBar'\);/.test(js) && /style: theme === 'light' \? 'LIGHT' : 'DARK'/.test(js) && /"@capacitor\/status-bar": "\^8\.0\.0"/.test(pkg));
   if (!V.THEME) ok('THEME on the harness surface (the live checks below need it)', false); else {
   const stored = () => { try { return ctx.localStorage.getItem('vault.theme'); } catch (e) { return undefined; } };
   const rootEl = ctx.document.documentElement, rootTheme = () => (rootEl && rootEl.dataset ? rootEl.dataset.theme : '(no root dataset in the stub)');
@@ -5750,6 +5750,55 @@ section('take 131 — Play online: two app copies, one game, the relay between t
   ok('nothing but the named frames crossed the wire', mem.log.length > 10 && mem.log.every(l => ['seat', 'peer', 'spec', 'move', 'synced', 'err', 'deck'].includes(l.frame.t)));
   ok('the online panel is a painter between the table\'s markers, so the painters\' rule above reads it', /function simOnlineHtml\(/.test(js.slice(js.indexOf("const SIM_PAINTERS = 'begin'"), js.indexOf("const SIM_PAINTERS_END = 'end'"))));
   ok('the hot-seat and the app\'s opponent are untouched: with no room on, simAct applies at once', has && !V.ONLINE.on() && !V.ONLINE.playing() && V.SIMUI.wire.on === false && /if \(ONLINE\.playing\(\)\) return ONLINE\.move\(i, a\)/.test(js));
+}
+
+section('take 133 — one click dispatcher (A44 item 3): the document-level delegates as rows of one table, in the present order; the mechanics on a scratch table, the real table pinned, one bubbling listener at boot');
+{
+  const C = V.CLICKS;
+  ok('the dispatcher exists, with a table, on() and fire()', !!C && Array.isArray(C.table) && typeof C.on === 'function' && typeof C.fire === 'function');
+  const ROWS = ['[data-deck]', '[data-stock]', '[data-dkadd],[data-dkinc],[data-dkdec]', '[data-lpc],[data-lp]', '.dkrow .n', '[data-pp]',
+    '[data-tradd],[data-trinc],[data-trdec]', '#themeSeg [data-theme]', '[data-pl],#plFirst,#plHot,#plCurtain,#plNext,#plReset,[data-plleader]',
+    '[data-cdkw],[data-cdcol],[data-cdcost],[data-cdadd],#cdForDeck', '[data-bnset],#bnPrev,#bnNext', '[data-alrm],[data-alrearm]',
+    '[data-checklist],[data-ckmode],[data-ck],#ckWantAll,[data-want]', '[data-go],[data-rules],[data-back],[data-close]', '[data-pf]', '[data-pfname]', '[data-r]',
+    '[data-pfmove]', '[data-bulkcond]', '#colClearF', '[data-open]', '[data-act]', '[data-distfold],[data-disthist]', '[data-browse-set]',
+    '[data-setpick]', '#earnBtn', '[data-pick]', '[data-cond]', '#diagRun,#devEarn,#diagCopy,#diagShare'];
+  const have = C ? C.table.map(r => r.sel.join(',')) : [];
+  ok('29 rows: the former listeners\' selectors, in the files\' order -- the registration order the separate listeners had', have.length === 29 && have.every((s, i) => s === ROWS[i]), JSON.stringify(have));
+  ok('every row\'s handler is a function and every selector a non-empty string', !!C && C.table.every(r => typeof r.fn === 'function' && r.sel.length > 0 && r.sel.every(s => typeof s === 'string' && s.length > 0)));
+  /* the mechanics, on a scratch table in the real dispatcher's place */
+  if (C) {
+    const saved = C.table, calls = [];
+    C.table = [];
+    C.on('[data-a]', (e, m) => calls.push('a1:' + m.tag));
+    C.on('[data-b], [data-c]', (e, m) => calls.push('bc:' + m.tag));
+    C.on('[data-a]', () => { throw new Error('planted'); });
+    C.on('#only', () => calls.push('id'));
+    C.on('[data-a]', () => calls.push('a2'));
+    const target = (answers, id = '') => ({ id, closest: s => answers[s] || null });
+    const fake = t => { try { return { n: C.fire({ target: t }), threw: null }; } catch (err) { return { n: null, threw: err.message }; } };
+    const n0 = C.n;
+    const r1 = fake(target({ '[data-a]': { tag: 'A' }, '[data-c]': { tag: 'C' } }));
+    ok('a target matching two rows runs every matching row in table order, each with its own matched element, and a row it does not match is skipped', calls.join(' ') === 'a1:A bc:C a2', JSON.stringify({ calls, r1 }));
+    ok('...a throw in the middle did not stop the rows after it, and is rethrown after the walk (window.onerror sees it, as before)', calls.includes('a2') && r1.threw === 'planted' && r1.n === null, JSON.stringify(r1));
+    ok('...the click is counted and the rows that ran are named', C.n === n0 + 1 && C.last.join(' ') === '[data-a] [data-b],[data-c] [data-a] [data-a]', JSON.stringify(C.last));
+    calls.length = 0;
+    const r2 = fake(target({}));
+    ok('a target matching no row runs nothing and returns 0', r2.n === 0 && calls.length === 0 && r2.threw === null, JSON.stringify(r2));
+    const r3 = fake({ id: 'only' });
+    ok('a target with no closest answers a #id row by its id alone (a test\'s fake), nothing else', r3.n === 1 && calls.join('') === 'id' && r3.threw === null, JSON.stringify({ r3, calls }));
+    calls.length = 0;
+    const r4 = fake(target({}, 'only'));
+    ok('...and one whose closest answers nothing still answers a #id row by its id, as the listener that tested e.target.id did (the binder\'s page turns)', r4.n === 1 && calls.join('') === 'id', JSON.stringify({ r4, calls }));
+    const r5 = fake(null);
+    ok('no target at all: nothing runs, nothing throws', r5.n === 0 && r5.threw === null, JSON.stringify(r5));
+    let bad = null; try { C.on('', () => {}); } catch (e) { bad = e.message; }
+    ok('a row with no selector is refused at registration', /selector/.test(bad || ''), String(bad));
+    C.table = saved;
+  }
+  /* one bubbling listener: a fresh app registers the dispatcher and the scrim rule (capture-phase; the stub keeps no phase) and nothing else */
+  const F = await boot({ quiet: true });
+  ok('a fresh boot registers two document click listeners -- the dispatcher and the scrim rule -- where take 132 registered 30', (F.listeners.click || []).length === 2, String((F.listeners.click || []).length));
+  ok('the dispatcher is exported, with the count of the clicks it answered and the rows of the last one', !!C && typeof C.n === 'number' && Array.isArray(C.last));
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

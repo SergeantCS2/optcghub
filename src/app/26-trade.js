@@ -71,7 +71,7 @@ function tradeSearch(side) {
 }
 $('#trGiveQ').addEventListener('input', () => tradeSearch('give'));
 $('#trGetQ').addEventListener('input', () => tradeSearch('get'));
-document.addEventListener('click', e => {
+CLICKS.on('[data-tradd],[data-trinc],[data-trdec]', e => {
   const a = e.target.closest('[data-tradd]'); if (a) { const [side, id] = a.dataset.tradd.split(':'); TRADE.add(side, +id);
     $(side === 'give' ? '#trGiveQ' : '#trGetQ').value = ''; tradeSearch(side); paintTrade(); return; }
   const i = e.target.closest('[data-trinc]'); if (i) { const [side, id] = i.dataset.trinc.split(':'); TRADE.bump(side, +id, 1); paintTrade(); return; }

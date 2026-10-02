@@ -55,7 +55,7 @@ $('#setChip').addEventListener('click', () => {
       <div class="op" style="font-size:var(--fs-cap);color:var(--dim2)">${esc((s.pub || '').slice(0, 4))}</div></button>`).join('');
   $('#picker').classList.add('on');
 });
-document.addEventListener('click', e => {
+CLICKS.on('[data-setpick]', e => {
   const b = e.target.closest('[data-setpick]'); if (!b) return;
   BATCH.setId = +b.dataset.setpick || null; BATCH.save();
   $('#picker').classList.remove('on'); paintScan();
@@ -609,7 +609,7 @@ $('#btnTorch').addEventListener('click', async () => {
   try { await tr.applyConstraints({ advanced: [{ torch: on }] }); $('#btnTorch').style.color = on ? 'var(--gold)' : ''; }
   catch (e) { toast('Torch not available'); }
 });
-document.addEventListener('click', e => {
+CLICKS.on('#earnBtn', e => {
   if (e.target.id !== 'earnBtn') return;
   PLATFORM.adShow('scan');
 });
@@ -688,7 +688,7 @@ function openPicker(number, r, photo) {
   $('#picker').classList.add('on');
 }
 $('#pkCancel').addEventListener('click', () => PICKER.dismiss());   // take 115: a pending prompt answers no
-document.addEventListener('click', e => {
+CLICKS.on('[data-pick]', e => {
   const b = e.target.closest('[data-pick]'); if (!b) return;
   $('#picker').classList.remove('on');
   accept(CAT.byId.get(+b.dataset.pick), 'you picked it', _pickerPhoto);

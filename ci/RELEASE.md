@@ -1,4 +1,4 @@
-# OP TCG Hub — take 132
+# OP TCG Hub — take 133
 
 ## Installing — read this first
 
@@ -17,6 +17,8 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 133:** Nothing you can see changes. Inside, every tap on the app is answered from one list instead of twenty-nine separate listeners, so the order in which the app decides what a tap meant is written in one place and checked in a real browser. Nothing you have saved changes.
 
 **New at take 132:** Nothing you can see changes. The app's one source file is now several, assembled into the same script byte for byte, so the next takes read and change smaller files. Nothing you have saved changes.
 

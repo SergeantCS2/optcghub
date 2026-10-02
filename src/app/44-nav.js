@@ -78,7 +78,7 @@ function go(id) {
      diag: () => { const out = $('#diagOut'); if (out && !out.textContent) out.textContent = 'Tap Run.'; paintDevEarn(); },
      events: () => { paintEvents(); if (navigator.onLine && HUNT.url()) { const jobs = []; if (!LOCAL.stores || HUNT.ageMin(LOCAL.stores.fetched_at) > 24 * 60) jobs.push(LOCAL.syncStores()); if (!EVENTS.tab || HUNT.ageMin(EVENTS.tab.fetched_at) > 24 * 60) jobs.push(EVENTS.sync()); if (jobs.length) Promise.all(jobs).then(r => { if (r.some(Boolean)) paintEvents(); }); } } })[id]?.();
 }
-document.addEventListener('click', e => {
+CLICKS.on('[data-go],[data-rules],[data-back],[data-close]', e => {
   const g = e.target.closest('[data-go]'); if (g) go(g.dataset.go);
   const rb = e.target.closest('[data-rules]'); if (rb) openRules(rb.dataset.rules);
   if (e.target.closest('[data-back]')) backArrow();
@@ -107,7 +107,7 @@ $('#pfSwitch').addEventListener('click', () => {
          <button class="opt" data-pf="__delete"><div class="oi"><b style="color:var(--down)">Delete \u201c${esc(PF.name(PF.active))}\u201d</b><span>its lines move to ${esc(PF.name('main'))}, nothing is lost</span></div></button>` : '');
   $('#picker').classList.add('on');
 });
-document.addEventListener('click', e => {
+CLICKS.on('[data-pf]', e => {
   const b = e.target.closest('[data-pf]'); if (!b) return;
   const id = b.dataset.pf;
   if (id === '__new' || id === '__rename') {
@@ -123,7 +123,7 @@ document.addEventListener('click', e => {
   else { PF.active = id; PF.save(); }
   $('#picker').classList.remove('on'); OWN.snapshot(); paintHome();
 });
-document.addEventListener('click', e => {
+CLICKS.on('[data-pfname]', e => {
   const b = e.target.closest('[data-pfname]'); if (!b) return;
   const nm = ($('#pfNameIn').value || '').trim(); if (!nm) return toast('Give it a name');
   if (b.dataset.pfname === 'new') PF.add(nm); else PF.rename(PF.active, nm);

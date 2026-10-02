@@ -61,7 +61,7 @@ function paintBinder() {
 /* take 115 (SPEC-111-49): a page turn counts from the page on screen -- a set opened at its first held card's
    page had no page stored, and Next from page 5 of 14 went to page 2. paintBinder keeps it inside the set. */
 function bnTurn(d) { const step = bnSpread() ? 2 : 1, at = bnSpread() ? BN.page - (BN.page % 2) : BN.page; BN.pageOf[BN.set] = Math.max(0, at + d * step); return paintBinder(); }   /* take 120: a spread turns by two */
-document.addEventListener('click', e => {
+CLICKS.on('[data-bnset],#bnPrev,#bnNext', e => {
   const st = e.target.closest('[data-bnset]'); if (st) { BN.set = +st.dataset.bnset; return paintBinder(); }
   if (e.target.id === 'bnPrev') return bnTurn(-1);
   if (e.target.id === 'bnNext') return bnTurn(1);

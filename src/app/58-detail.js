@@ -157,7 +157,7 @@ function setCond(c) {
   $('#dPaid').textContent = owned && owned.paid ? money(owned.paid) : 'Set';
   return true;
 }
-document.addEventListener('click', e => {
+CLICKS.on('[data-cond]', e => {
   const c = e.target.closest('[data-cond]'); if (!c) return;
   setCond(c.dataset.cond);
 });

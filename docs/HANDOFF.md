@@ -1,4 +1,132 @@
-# HANDOFF — through Take 132
+# HANDOFF — through Take 133
+
+## Take 133 — 2026-10-02 — one click dispatcher (A44 item 3): the 29 document-level delegates as rows of one table, in the present order
+
+Opened before any code (PROTOCOL §6), on the branch behind take 132's PR
+(59, marked ready at 16:48 UTC with its check and APK job green and merged
+at 17:31 UTC, `f613f7a`, while this take was under its harnesses; its
+commits stayed local until then, as takes 131 and 132's did, and ride a
+branch restarted on that merge).
+A44's order, agreed 1 Oct: the structural takes one at a time, each when no
+other branch is open; item 3 is this one. **Nothing a collector can see
+changes.**
+
+### What this take changes
+
+1. **One dispatcher, `src/app/13-clicks.js`.** `CLICKS` holds a table of
+   rows, each a selector list and a handler, and one bubbling `click`
+   listener on the document walks it: a row whose selector the tap's target
+   or an ancestor matches runs, every matching row in turn, in the order the
+   rows were registered. Each of the 29 document-level delegates
+   (`document.addEventListener('click', e => { const t =
+   e.target.closest(...) ... })`, added one take at a time since take 22)
+   becomes `CLICKS.on('<its selectors>', e => { ... })` where it was, its
+   body unchanged, so the table's order is the files' order, which was the
+   registration order. Who answers a tap is one list now, readable at
+   `VAULT.CLICKS.table`, where it was 29 listeners whose order only the
+   source could tell.
+2. **What a separate listener did, the row does.** Every listener ran on
+   every click and returned when nothing of its matched; a row is called
+   only when one of its selectors matches, which is the same thing, and the
+   row's handler keeps its own `closest` calls, so a smoke fake that answers
+   one selector still reaches it (the dispatcher tries each selector on its
+   own, never a selector list). A handler that throws no longer stops the
+   rest: the browser reported the exception and went on to the next
+   listener; the dispatcher records it (`ERRS`, kind `click`, the row's
+   selectors) and goes on. An `async` handler's rejection reaches
+   `unhandledrejection` as before. Nothing is first-match: two rows that
+   both match both run, as two listeners did.
+3. **Three listeners stay as they are**, outside the table: PICKER's
+   capture-phase one-shot (landmine 178), the Play counter's Leader pick
+   (the same shape: registered while its sheet is open, removed by its own
+   first match) and the rising-scrim rule (landmine 159). Each is
+   capture-phase, lives as long as its sheet, and is no delegate.
+4. **The proof is Chrome** (the audit: the stub cannot see a document-level
+   handler, landmine 136). `render.mjs` asks Chrome itself, through CDP's
+   `DOMDebugger.getEventListeners` on the document, how many `click`
+   listeners the page registered: one bubbling (the dispatcher) and one
+   capture (the scrim rule) -- take 132's build counts 29 bubbling and the
+   one capture, watched.
+   A real tap on a row's target is then counted through the table
+   (`CLICKS.n`, `CLICKS.last`), and every row's selector is parsed by
+   Chrome's `querySelector`. The smoke proves the mechanics on a scratch
+   table (order, a non-match skipped, a throw recorded and the walk
+   continued, a target with no `closest`) and pins the table: 29 rows, their
+   selectors in the files' order, each failing on take 132's build.
+5. **The gate holds the shape**: `check_click_dispatcher` reads the files
+   under `src/app/` and refuses a bubbling `click` listener on the document
+   anywhere but the dispatcher's own line; a capture-phase one (`, true)`)
+   is allowed, named. Its probe plants a delegate of the old shape.
+
+### Measured
+
+- The 33 `document.addEventListener('click'` lines of take 132 are 5: the
+  dispatcher's own and the four capture-phase registrations (PICKER's two
+  paths, the Leader pick's, the scrim rule's). 29 `CLICKS.on` rows, one per
+  former delegate, in 16 files; the diff under `src/app/` is 30 lines for
+  30 (the 29 first lines and the export) beside the 51-line dispatcher file
+  and its slot.
+- Chrome's own count of the document's click listeners (CDP,
+  `DOMDebugger.getEventListeners`): take 132's build 29 bubbling and 1
+  capture-phase; take 133's 1 and 1. The stub's count at boot, which keeps
+  no phase: 30 and 2.
+- `www/app.js` 492,373 bytes, SHA-256 `3536d098…` (take 132's 491,320,
+  `61448dbd…`): the shipped file changes this time, by the dispatcher and
+  the 29 first lines. Of the smoke's regexes over the source one moved, the
+  theme's, which named `themeSegClick`'s registration and names its row.
+- The smoke: 1680 of 1680, 13 new. On take 132's build (`SMOKE_APP`) the
+  five that read the real table fail (no `CLICKS`; 30 listeners at boot);
+  the eight mechanics checks sit behind the dispatcher's existence and do
+  not run there, so they were watched on a plant instead: a dispatcher that
+  stops at its first match fails exactly the three it should (every
+  matching row runs; the throw is rethrown after the walk; the rows named).
+- Render: 277 of 277 in Chrome, 3 new. On take 132's build 274 passed and
+  the 3 failed, with Chrome's "bubbling 29, capture 1" and "no CLICKS".
+- The gate: `check_click_dispatcher` notes 29 rows and 4 capture-phase
+  registrations on the tree; a planted
+  `document.addEventListener('click', e => {})` at the end of
+  `24-decks.js` is named with its file and line.
+
+### Tests
+
+- `python3 tools/pipeline.py` from the top (ingest from cache, history,
+  catalogue, hashes, the app, smoke 1680/1680, render 277/277 `(mode:
+  chrome)`); the two stamps the stamp step leaves to the hand (RELEASE's
+  heading, HANDOFF's header) set, then `bash tools/seal.sh --gate-only`
+  green with the gate's new note; `gate.py --selftest` 41 probes named, "a
+  click delegate registered outside the dispatcher's table (take 133)"
+  firing among them; `ci/icon.py --selftest` green; the scrubber clean on
+  160 files.
+- Negative controls, each watched: the new smoke on take 132's build
+  (`SMOKE_APP`), the new render on take 132's `app.js` swapped in, the
+  planted first-match dispatcher, the gate's planted delegate -- all
+  under Measured.
+- No look: nothing a collector can see changes (a real tap is proven by
+  render in Chrome instead).
+
+### What I got wrong
+
+- The entry's first draft said take 132's build "counts 30 bubbling": 30 is
+  the stub's count, which keeps no phase; Chrome counts 29 bubbling and one
+  capture. Corrected when measured.
+- The first build failed four binder checks: the smoke's page-turn fakes
+  carry an `id` and a `closest` that answers nothing, the shape the
+  listener's `e.target.id` test had served, and the dispatcher's `hit`
+  answered a `#id` row by `closest` alone. It answers by the id too now
+  (in a browser `closest('#x')` already includes the target, so nothing
+  moves there), and the section's mechanics check that shape.
+- My extractor of the 33 bodies ran past two one-liners to the next `});`
+  (Hunt's and the scrim's) and printed six hundred lines of Hunt for one
+  row; the conversion itself was by exact line, so nothing moved.
+
+### DEFERRED
+
+- First-match: a tap that matches two rows runs both, as before. Choosing
+  one is a behaviour change for its own take, after a measurement of which
+  pairs of selectors can meet on one element.
+- The three capture-phase one-shots as rows with a lifetime: not now; each
+  removes itself and is its sheet's.
+- A44 items 4 to 7, in order, each when no other branch is open.
 
 ## Take 132 — 2026-10-02 — the one source file into files (A44 item 2): the same shipped script, byte for byte
 
@@ -98,6 +226,17 @@ see changes.**
   other branch is open.
 - The look: no step list for this take -- the app does not change, and the
   shipped script is proven identical; the next UI take's look covers it.
+
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+PR 59 merged 2 Oct at 17:31 UTC (`f613f7a`, a merge commit, the owner's);
+`build` run 90 green in every job (seed, bundle, apk, pages, report), 15
+minutes; Release take-132 published 17:46 UTC with the APK (28,944,413
+bytes, 164 fewer than take 131's), the AAB (22,150,433), the mapping and
+the Play icon -- the split's build on the runner, the same script. Take
+133's PR (60) was opened as a draft at 17:46 UTC from a branch restarted
+on this merge, take 131's note riding it; this note rides it too, pushed
+before its first check was through.
 
 ## Take 131 — 2026-10-02 — the Sim across the internet: a room code, a relay, two phones (A23 step 4, D18)
 
@@ -246,6 +385,23 @@ SQLite table, no account involved.
   code; rate limits on room creation beyond the frame and log caps.
 - The deploy itself: the owner's Cloudflare account and the two secrets;
   until then the build ships with no relay and the entry hidden.
+
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+PR 58 merged 2 Oct at 16:25 UTC (`1a4b771`, a merge commit); `build` run
+89 green in every job (seed, bundle, apk, pages, report), 15 minutes;
+Release take-131 published 16:40 UTC with the APK (28.9 MB), the AAB
+(22.1 MB), the mapping and the Play icon. The relay workflow ran on `main`
+for the first time in the same minute, nine seconds end to end: `npm ci`
+put 40 packages in 3 s, the memory suite passed 43 of 43, the four plants
+were named, and the deploy step printed its notice -- no
+`CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` in the repository secrets,
+nothing deployed (RUNBOOK §9) -- and exited 0, the guard as built. The
+relay is not deployed; the owner's steps in RUNBOOK §9 stand, and the app
+ships with no relay and the entry hidden until `VAULT_RELAY=` names one.
+Take 132's PR (59) was opened at 16:26 UTC from this branch, one commit on
+the merge; its check and APK job green at 16:44 and the PR marked ready at
+16:48 UTC, with no look, since nothing visible changes in it.
 
 ## Take 130 — 2026-10-02 — Walmart measured on the runner, the runner's own probe, and the Sim's wire decided (A23 step 4)
 

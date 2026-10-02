@@ -2153,6 +2153,25 @@ json.dump(H.build(F["zips"], F["radius"], previous=copy.deepcopy(F)), sys.stdout
   const checked128 = await page.evaluate(() => { const t = document.getElementById('toast'); return { toast: t.textContent, on: t.classList.contains('on') }; });
   ok('take 128: a real tap on Check for updates asks Play again and says its answer', checked128.on && checked128.toast === 'Up to date on Google Play', JSON.stringify({ ...checked128, taps: tapNotes }));
   await page.evaluate(() => { delete window.Capacitor; const V = window.VAULT; V.UPDATE.info = null; V.UPDATE.why = 'not asked yet'; localStorage.removeItem('vault.updateSeen'); while (V.closeAnyOverlay()) {} V.go('home'); });
+  /* take 133 (A44 item 3): the click dispatcher, proven here because the stub cannot see a document-level listener
+     (landmine 136). Chrome's own count of the document's click listeners, through CDP: one bubbling (the dispatcher)
+     and one capture-phase (the rising scrim's rule, landmine 159) -- take 132's build counts 29 bubbling. Then every
+     row's selector parsed by Chrome, and a real tap on a row's target counted through the table. */
+  const cdp133 = await page.createCDPSession();
+  const doc133 = await cdp133.send('Runtime.evaluate', { expression: 'document' });
+  const ls133 = (await cdp133.send('DOMDebugger.getEventListeners', { objectId: doc133.result.objectId })).listeners.filter(l => l.type === 'click');
+  await cdp133.detach();
+  const bub133 = ls133.filter(l => !l.useCapture).length, cap133 = ls133.filter(l => l.useCapture).length;
+  ok('take 133: Chrome counts one bubbling click listener on the document -- the dispatcher -- and one capture-phase, the scrim rule', bub133 === 1 && cap133 === 1, `bubbling ${bub133}, capture ${cap133}`);
+  const rows133 = await page.evaluate(() => { const V = window.VAULT; if (!V.CLICKS) return { n: 0, bad: ['no CLICKS'] };
+    return { n: V.CLICKS.table.length, bad: V.CLICKS.table.flatMap(r => r.sel).filter(s => { try { document.querySelector(s); return false; } catch (e) { return true; } }) }; });
+  ok('take 133: 29 rows, every selector one Chrome parses', rows133.n === 29 && rows133.bad.length === 0, JSON.stringify(rows133));
+  await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('collect'); V.go('home'); window.__n133 = V.CLICKS ? V.CLICKS.n : -1; });
+  await new Promise(r => setTimeout(r, 300));
+  await tap('#home [data-go="settings"]'); await new Promise(r => setTimeout(r, 400));
+  const went133 = await page.evaluate(() => { const V = window.VAULT; return { n: V.CLICKS ? V.CLICKS.n - window.__n133 : null, last: V.CLICKS ? V.CLICKS.last : null, screen: V.NAV.stack[V.NAV.stack.length - 1] }; });
+  ok('take 133: a real tap on Home\'s gear goes through the table -- one click, the nav row the one that ran -- and opens More', went133.n === 1 && !!went133.last && went133.last.length === 1 && went133.last[0] === '[data-go],[data-rules],[data-back],[data-close]' && went133.screen === 'settings', JSON.stringify({ ...went133, taps: tapNotes.slice(-1) }));
+  await page.evaluate(() => { window.VAULT.go('home'); delete window.__n133; });
   await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });   /* touch gone: the page reloads once more; nothing below reads it */
 
   await browser.close();

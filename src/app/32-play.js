@@ -60,7 +60,7 @@ function plCurtain(nextIdx) {
     <div class="note">Turn ${PLAY.turn} \u00b7 tap when you have it</div>`;
   c.classList.add('on');
 }
-document.addEventListener('click', e => {
+CLICKS.on('[data-pl],#plFirst,#plHot,#plCurtain,#plNext,#plReset,[data-plleader]', e => {
   const b = e.target.closest('[data-pl]');
   if (b) { const [i, k, d] = b.dataset.pl.split(':'); const pl = PLAY.p[+i];
     if (k === 'life') pl.life = Math.max(0, pl.life + +d);
