@@ -74,6 +74,12 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
+0b. *Take 130, in flight (2 Oct):* the Walmart take, measured on the runner
+   first by the runner's own probe (`probe.yml`, a button); the Sim's wire
+   designed and recorded (D18, HANDOFF take 130) -- **the owner's one
+   decision: the relay on a Cloudflare Worker (recommended) or on his US
+   East server**; take 131 builds it. *Done at take 129:* the PR check
+   builds the APK (A44 item 1), the lockfile, landmine 245.
 0a. *Done at take 128:* the red nightly root-caused and mended (landmine
    243), the audit of the stack (**A44**, a fix sketch per finding), a scanned
    line's picture by choice, the update notice from Google Play (the check
@@ -989,6 +995,12 @@ measured by the source take, never assumed from here.
 | **Meijer** search | 403 Access Denied | cloud-blocked, as at take 68 |
 | **Barnes & Noble** | 404 of 9 bytes on every search and category path tried; the home page 200 (7.6 MB) with no trading-card link in it | the search path is bot-walled, not merely wrong (take 72 read it as the wrong URL) |
 | **Target** search HTML | 200 with captcha markers; RedSky JSON is the source | unchanged since take 68; shelf stock by store, hourly, PROVEN |
+
+**Take 130 (2 Oct): the owner chose Walmart next, measured on the runner
+first.** The runner's own probe is a `workflow_dispatch` (`probe.yml`,
+`tools/hunt/probe.py`): one plain request per line from a GitHub-hosted
+runner, a row each, every body kept a week. What it found for Walmart is
+HANDOFF take 130's "Measured". Cardmarket stays struck.
 
 What this says about "as much local data as possible": Target is the one
 retailer whose shelf stock a runner reads today. Walmart is the next

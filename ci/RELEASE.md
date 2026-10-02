@@ -1,4 +1,4 @@
-# OP TCG Hub — take 129
+# OP TCG Hub — take 130
 
 ## Installing — read this first
 
@@ -17,6 +17,8 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 130:** Nothing visible yet. The build gains a way to measure a store's website from the build's own machine before a store is added as a source; Walmart is the first measured. Nothing you have saved changes.
 
 **New at take 129:** Nothing visible. Every change to the app is now built into the Android app itself, the way a release is, before it can be merged — so a change to a plugin or to the build is caught before it reaches you — and the app's dependencies are pinned to the versions that were tested. Nothing you have saved changes.
 

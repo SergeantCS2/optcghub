@@ -1,0 +1,47 @@
+name: probe
+
+# OP TCG Hub — the runner's own probe (take 130). A32's rule: a retailer is
+# measured on the runner first -- the hourly feed runs here, so only this IP's
+# answer counts; a probe from a session VM or a PC stands in for nothing. Run
+# by hand (workflow_dispatch) with a zip and, optionally, the probe names;
+# tools/hunt/probe.py makes one plain request per line and prints a row each;
+# every body rides the run as an artifact for a week. A measurement, never a
+# feed: nothing it reads reaches www/ or Pages, and the token is read-only.
+#
+# Lives in git; kept BYTE-IDENTICAL to ci/probe.yml (the gate compares the
+# two). If a push of .github/workflows is refused, paste ci/probe.yml here
+# (RUNBOOK §5b).
+
+on:
+  workflow_dispatch:
+    inputs:
+      zip:
+        description: 'the zip for the store lookups'
+        default: '48329'
+      only:
+        description: 'probe names, comma-separated; empty for all'
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: One plain request per line, from this runner
+        env:
+          PROBE_ZIP: ${{ inputs.zip }}
+          PROBE_ONLY: ${{ inputs.only }}
+        run: python3 tools/hunt/probe.py --zip "$PROBE_ZIP" --only "$PROBE_ONLY" --out probe-out
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: probe
+          path: probe-out
+          retention-days: 7

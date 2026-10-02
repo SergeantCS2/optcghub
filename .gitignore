@@ -34,3 +34,5 @@ optcghub-seed*.zip
 /look/
 # the Play icon ci/apk.sh draws on every build (ci/icon.py); it rides the Release, never the tree. Anchored, as /look/ is (landmine 138)
 /play-assets/
+# the runner's probe writes its bodies here (take 130); anchored
+/probe-out/

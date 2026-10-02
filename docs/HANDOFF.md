@@ -1,4 +1,105 @@
-# HANDOFF — through Take 129
+# HANDOFF — through Take 130
+
+## Take 130 — 2026-10-02 — Walmart measured on the runner, the runner's own probe, and the Sim's wire decided (A23 step 4)
+
+Opened before any code (PROTOCOL §6), from `main` at the nightly of 2 Oct
+(`2c7ec40`; `build` run 87 at 00:59 UTC, the first scheduled nightly on take
+129's build, green in every job; Release take-129 published 21:36 UTC on 1
+Oct by the merge's run 86). The branch carries take 129's after-the-merge
+note (1b58ecd), which rides this PR. No PR open. The owner, after the
+Release: **the Walmart take next, measured on the runner first**; and
+**multiplayer for the Sim** -- host a match, a random code, the other player
+enters it and plays, "or any other system you can think of"; he has a US
+East Linux server and would rather not use it, but can.
+
+### What this take changes
+
+1. **The runner's own probe** (`tools/hunt/probe.py`, `probe.yml` and its
+   `ci/` copy): a `workflow_dispatch` that makes one plain request per line
+   of a list -- a retailer's search page, its store finder, an item page --
+   from a GitHub-hosted runner, prints a row each (status, bytes, the bot
+   walls it names, One Piece hits, and for Walmart what the page's own JSON
+   carries: items, prices, store ids, fulfillment keys) and keeps every body
+   as an artifact for a week. A32's rule, "measured on the runner first",
+   becomes a button, and the session VM's egress (which Walmart answered at
+   take 129) stops standing in for the runner.
+2. **Walmart, measured on the runner:** (filled after the first dispatch)
+3. **The Walmart source**, if the runner passes: (filled)
+4. **The Sim's wire, decided and recorded** (D18, A23 step 4): the design
+   below, the owner's one decision named.
+
+### The Sim across the internet: the design (A23 step 4, D18)
+
+What take 122 made true: a game is its seed and its moves; `SIM.replay(spec,
+moves)` rebuilds it; two copies of the shipped app exchanging only moves
+hold the same game after every move (`tools/selfplay.mjs --two-apps`, run by
+the gate). So the wire carries three things and nothing else: the spec once
+(both decks as card ids, who goes first, the seed), then each move as the
+engine's own `{t, ...}` object, then nothing. A move is under a kilobyte; a
+game is a few hundred.
+
+**The relay.** Phones behind home NATs cannot reach each other directly
+without a signalling server and, one time in five or so, a TURN relay; so a
+relay of some kind is the cost of "across the internet", exactly as D18 said
+at take 33. The smallest honest one: a room keyed by a six-character code
+(an alphabet without 0/O/1/I, 32^6 codes), two seats, a WebSocket each; the
+relay forwards frames between the seats, keeps the spec and the move log for
+the life of the room so a phone that drops reconnects with the code and its
+seat token and asks for the moves since N, and forgets the room a day after
+its last frame. No account, no name, no identity: the code is the only key.
+
+**Where it runs -- the owner's one decision.** (a) A Cloudflare Worker with
+one Durable Object per room (SQLite-backed, the WebSocket hibernation API):
+no machine to keep up, the free plan allows 100,000 requests a day and
+charges nothing for a hibernated socket, the relay is ~150 lines in the
+tree under `relay/`, deployed by a workflow with an API token in a
+repository secret, and developed and tested here with `wrangler dev` (a
+local runtime, no account needed until the deploy). (b) The same room code
+as a Node process on his US East server behind Caddy: no new account, a
+machine to keep up. The session's recommendation is (a); (b) is the same
+module with a different adapter if he prefers no new account. Either way the
+record's "no server since take 1" is amended by the owner's word, and the
+privacy page says what crosses the wire (a code, two deck lists, moves).
+
+**Fairness, as D18 says:** both phones hold the whole seed, so each holds
+the other's hand, hidden by the app and not by the wire -- friends, not
+strangers; the app says so where a match is hosted. The engine on each
+phone refuses an illegal move from the other (`SIM.act` returns `ok:
+false`), so a modified client cannot push one; it can only read.
+
+**The app's side (take 131):** Prep & Play → Sim → *Play online*: Host (the
+code on screen, a Share button) or Join (type it); each picks a deck; the
+host's phone deals (`SIM.new` with a random seed) and sends the spec; the
+table from take 124 draws each seat's own view as it does today; a move goes
+through `simAct` and over the wire; a reconnect replays what was missed.
+Proofs: smoke with two app copies joined by an in-memory relay (the
+`--two-apps` shape), a Node test against the real relay under `wrangler
+dev`, and the look with two browser contexts, host and joiner, against it.
+With no relay configured the build hides the entry and says why
+(Diagnostics' line), never a dead button.
+
+### Measured
+
+(filled)
+
+### Tests
+
+(filled before the seal)
+
+### What I got wrong
+
+(filled before the seal)
+
+### DEFERRED
+
+- The Walmart source's store context (a price and a shelf need a store
+  chosen) if the runner's probe shows the search page only.
+- D21 and the four residential-only retailers: unchanged; the home probe
+  (sent to the owner at take 129) is theirs to run.
+- The Sim's wire: the owner's decision between the Worker and his server;
+  the build is take 131.
+
+---
 
 ## Take 129 — 2026-10-01 — the PR check builds the APK (A44 item 1), the lockfile, and the owner's local-stock list probed
 
