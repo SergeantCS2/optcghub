@@ -221,6 +221,18 @@ changes.**
   removes itself and is its sheet's.
 - A44 items 4 to 7, in order, each when no other branch is open.
 
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+PR 60 merged 2 Oct at 20:49 UTC (`a9aec24`, a merge commit, the owner's,
+two hours and forty minutes after it was marked ready); `build` run 91
+green in every job (seed, bundle, apk, pages, report), 15 minutes; Release
+take-133 published 21:04 UTC with the APK (28,954,877 bytes, 10,464 more
+than take 132's: the dispatcher and its table), the AAB (22,160,944), the
+mapping and the Play icon. Take 134's commit, held local since 18:27 UTC,
+was rebased onto the merge and pushed at 20:50 UTC; its PR (61) opened as a
+draft in the same minute, its check and APK job green at 21:04 UTC, and
+this note rides it, pushed before it was marked ready.
+
 ## Take 132 — 2026-10-02 — the one source file into files (A44 item 2): the same shipped script, byte for byte
 
 Opened before any code (PROTOCOL §6), on the branch behind take 131's PR
