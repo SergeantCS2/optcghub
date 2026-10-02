@@ -40,6 +40,7 @@ missing=
 for f in BUILD tools/pipeline.py src/app.html tools/config.py; do
   [ -f "$f" ] || missing="$missing $f"
 done
+[ -d src/app ] && ls src/app/*.js >/dev/null 2>&1 || missing="$missing src/app/*.js"   # take 132: the script's files
 if [ -n "$missing" ]; then
   echo "::error::This repo has no OP TCG Hub source. Missing:$missing"
   echo "Files at root:"; ls -A | sed 's/^/  /'

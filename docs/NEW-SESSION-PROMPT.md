@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 131.* Paste the block between the rules into a new session
+*Current as of take 132.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 131 takes by previous sessions. The repo is
+built across 132 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -95,6 +95,17 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   them in order with his results (his rule, take 94).
 
 **What is in flight when you arrive:**
+
+- **Take 132 -- the one source file into files** (AGENDA A44 item 2;
+  HANDOFF take 132). `src/app.html` keeps the page; its script block is a
+  list of slots naming `src/app/NN-name.js` in the present order;
+  `build_app.py` inlines them as it does `sim.js` and `scan.js`; the
+  shipped `www/app.js` is byte-identical (the hash is in HANDOFF); every
+  reader of the source by name (the scrubber, the gate, the smoke, the
+  bundle script) reads the split; `check_app_split` keeps slot and file
+  one to one. No look: nothing a collector can see changes. PR 58 (take
+  131) was open when this take began; its commits ride a branch restarted
+  from `main` after the merge.
 
 - **Take 131 -- the Sim across the internet: a room code, a relay, two
   phones** (AGENDA A23 step 4; D18 decided; HANDOFF take 131). The owner (2
@@ -477,6 +488,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 132" and begin with PROTOCOL §0.
+Say "take 133" and begin with PROTOCOL §0.
 
 ---

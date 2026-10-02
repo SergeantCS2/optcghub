@@ -18,6 +18,8 @@ import zlib from 'node:zlib';
 
 const ROOT = path.dirname(path.dirname(new URL(import.meta.url).pathname));
 const W = p => path.join(ROOT, 'www', p);
+/* take 132: the page and its script's files as one string, the way src/app.html alone read until the split */
+const appSource = () => fs.readFileSync(path.join(ROOT, 'src', 'app.html'), 'utf8') + fs.readdirSync(path.join(ROOT, 'src', 'app')).filter(f => f.endsWith('.js')).sort().map(f => fs.readFileSync(path.join(ROOT, 'src', 'app', f), 'utf8')).join('');
 
 let pass = 0, fail = 0;
 const ok = (name, cond, extra = '') => {
@@ -918,7 +920,7 @@ V.OWN.items = [];
 section('take 35 — the scrubber: what ships carries no comments and no markers');
 ok('app.js ships without a single comment', !/\/\*[\s\S]*?\*\//.test(js) && !/^\s*\/\/.*$/m.test(js));
 ok('index.html ships without HTML comments outside scripts', !/<!--[\s\S]*?-->/.test(html.replace(/<script[\s\S]*?<\/script>/g, '')));
-ok('the source still carries its record (the strip is on the artifact, not src/)', /\/\* PROTOCOL §10\. A portfolio line/.test(fs.readFileSync(path.join(ROOT, 'src', 'app.html'), 'utf8')));
+ok('the source still carries its record (the strip is on the artifact, not src/)', /\/\* PROTOCOL §10\. A portfolio line/.test(appSource()));
 /* take 89: the install list lives once, in ci/deps.sh, and BOTH runners of the pipeline call it (landmine 121);
    the hourly, which only builds the app, installs the parser itself */
 ok('CI installs the parser the strip needs (A-83: every job is a fresh runner)', /npm install --silent --no-save puppeteer acorn/.test(fs.readFileSync(path.join(ROOT, 'ci', 'deps.sh'), 'utf8')));
@@ -2672,10 +2674,10 @@ section('take 110 — the voice (A42, UI-AUDIT §5): the developer\'s wording ou
   ok('...control: the take-109 ISO forms are caught', !/^[A-Z][a-z]{2} \d/.test('2026-09-23') && /T\d/.test('2026-09-24T06:23'));
   /* take 110's review, from the look's pictures: Market movers' heading still read "2026-09-22 \u2192 2026-09-23" */
   const isoShown = t => ['${esc(prev)} \\u2192 ${esc(day)}', '(${g.from} \\u2192 ${g.to})', "' of ' + esc(R.date)", "market \\u00b7 ${(CAT.man.source_updated_at || '').slice(0, 10)}", '\\u00b7 ${esc(n.when)}', 'via TCGCSV, ${esc(asOf)}', 'Trade \\u2014 ${new Date().toISOString().slice(0, 10)}'].filter(w => t.includes(w));
-  const appSrc = fs.readFileSync(path.join(ROOT, 'src', 'app.html'), 'utf8');
+  const appSrc = appSource();
   ok('...no day on a screen in ISO: the movers\' heading, the range label, the rate\'s date, where to buy, your own notes; a shared page and a trade\'s text carry the year', isoShown(appSrc).length === 0 && dayText(`${yr}-09-23`, { year: true }) === `Sep 23, ${yr}`, isoShown(appSrc).join(' | '));
   ok('...control: each take-109 form is caught', isoShown(`\${esc(prev)} \\u2192 \${esc(day)} (\${g.from} \\u2192 \${g.to}) ' of ' + esc(R.date) market \\u00b7 \${(CAT.man.source_updated_at || '').slice(0, 10)} \\u00b7 \${esc(n.when)} via TCGCSV, \${esc(asOf)} Trade \\u2014 \${new Date().toISOString().slice(0, 10)}`).length === 7);
-  ok('...ISO stays only where a machine reads it: the diagnostics and self-test reports', (js.match(/slice\(0, 16\)/g) || []).length === 2 && /diagnostics \\u2014 take \$\{TAKE\} \\u2014 \$\{new Date\(\)\.toISOString\(\)\.slice\(0, 16\)\}Z/.test(fs.readFileSync(path.join(ROOT, 'src', 'app.html'), 'utf8')));
+  ok('...ISO stays only where a machine reads it: the diagnostics and self-test reports', (js.match(/slice\(0, 16\)/g) || []).length === 2 && /diagnostics \\u2014 take \$\{TAKE\} \\u2014 \$\{new Date\(\)\.toISOString\(\)\.slice\(0, 16\)\}Z/.test(appSource()));
   V.MODE.set('hunt', false); V.paintSealed();
   ok('...Sealed\'s line under its title says the prices\' day in words', /^prices [A-Z][a-z]{2} \d{1,2}(, \d{4})?$/.test(ctx.document.getElementById('sealedAsOf').textContent), ctx.document.getElementById('sealedAsOf').textContent);
   V.MODE.set('collect', false); V.go('home');
@@ -4437,7 +4439,7 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
        nAll >= 150 && one48 === V.pctNum(100 / nAll) && one48 !== '0%' && near48 === V.pctNum(100 * (nAll - 2) / nAll) && near48 !== '100%' && !/numbers \\u00b7 \$\{pct\}%/.test(js), `${one48} | ${near48}`);
 
     /* the open Fold, measured (the owner's Diagnostics at take 114): the Fold block's comment says what was measured */
-    const src4 = fs.readFileSync(path.join(ROOT, 'src', 'app.html'), 'utf8');
+    const src4 = appSource();
     ok('the Fold block says the open Fold is MEASURED at 749 x 832 CSS px (2.625), no longer "about 840, INFERRED"', /open Fold \(749 x 832 CSS px at a pixel ratio of 2\.625, MEASURED/.test(src4) && !/about 840 px wide, INFERRED/.test(src4));
   });
 

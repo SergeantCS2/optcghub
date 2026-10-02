@@ -1,4 +1,103 @@
-# HANDOFF — through Take 131
+# HANDOFF — through Take 132
+
+## Take 132 — 2026-10-02 — the one source file into files (A44 item 2): the same shipped script, byte for byte
+
+Opened before any code (PROTOCOL §6), on the branch behind take 131's PR
+(58, a draft, its check running; this take's commits stay local until the
+merge, as take 131's did). The owner, 2 Oct: "Merged, continue" -- PR 57
+was the merge; 58 waits on its check. A44's order, agreed 1 Oct: after the
+PR check builds the APK (take 129), the structural takes one at a time, each
+when no other branch is open; item 2 is this one. **Nothing a collector can
+see changes.**
+
+### What this take changes
+
+1. **`src/app.html` keeps the page** -- the styles, the markup, the fonts
+   slot -- and its `<script id="app">` block becomes a list of slots, one
+   per file, in the present order: `/* __APP__ 10-boot.js */` and so on. The
+   script's 5,680 lines move into **`src/app/NN-name.js`**, cut at the
+   file's own section banners (the network wrapper, stored values, the
+   catalogue, the collection, screens, Hunt, the scanner, the Sim, the
+   wire, Diagnostics, boot ...), each file a slice with its banner at its
+   head and nothing rewritten inside. `build_app.py` inlines each slot the
+   way it inlines `__SIM__` and `__SCAN__` (take 122), and refuses a slot
+   with no file, a file with no slot, or a slot named twice.
+2. **The proof is the shipped file.** `www/app.js` built from the split is
+   compared byte for byte with the one built from the single file at the
+   same tree (its SHA-256 recorded under Measured); the smoke's 320 source
+   regexes and the scrubber's reads are then unmoved by construction. The
+   gate's `check_app_split` holds the shape from here: every file under
+   `src/app/` has its slot and every slot its file, in one order, and the
+   build's own refusal is probed (a file renamed under a slot fails).
+3. **Every reader of `src/app.html` by name reads the split too**: the
+   scrubber's code list (landmine 182), the gate's icon and prompt and
+   consent and condition-multiplier reads, the stale-copy list, the smoke's
+   two source reads, `ci/bundle.sh`'s source-present list. A helper,
+   `app_source()`, returns the page and its files joined, so a check reads
+   one string as before.
+
+### Measured
+
+- The shipped script from the single file, at this tree and BUILD 132:
+  `www/app.js` 491,320 bytes, SHA-256
+  `61448dbd1b4c64f2263c8381a8184a87b46805a2e4f17454d12ff98ab3e63e33`;
+  `www/index.html` SHA-256
+  `49d6183bf809198e6cfc794bde1fb3ef37e62cc9a77aa0c0f6b24dde6a61c3d5`.
+  From the split: the same two hashes, `cmp` silent on both. 31 files,
+  5,681 lines moved, `src/app.html` down from 7,375 lines to 1,725 (the
+  page and 31 slot lines), nothing rewritten inside a file.
+- The build's refusals, watched: a file renamed under its slot
+  (`12-net.js` to `12-network.js`) stops the build naming both; a line of
+  script left beside the slots (`const stray = 1;`) stops it naming the
+  line; restored, the build is byte-identical again.
+- The scrubber reads 159 files with the split, 31 of them under
+  `src/app/` (128 before); the gate's split check, icon check (a line now
+  named with its file), prompt ratchet, condition-multiplier and
+  stale-copy reads pass on the split.
+
+### Tests
+
+- The clean run (PROTOCOL §6b, `python3 tools/pipeline.py` from the top
+  after the build change): ingest, history, catalogue, hashes, validate,
+  the app, smoke 1667/1667, render 274/274 `(mode: chrome)`; the gate on
+  the first run named the icon check's read (below), green on the second.
+- `bash tools/seal.sh --gate-only` green; `gate.py --selftest` 40 probes
+  named, the two new ones among them (a file renamed under its slot; a
+  line of script left beside the slots); `ci/icon.py --selftest` green
+  with its reminder controls reading the split.
+- No look: nothing a collector can see changes and the shipped files are
+  the same bytes (Measured).
+
+### What I got wrong
+
+- The split script's own sanity check -- a file's `/*` and `*/` counts
+  equal -- stopped it on the Hunt slice, where a comment's opener and
+  closer sit on different lines of the same file and a regex carries one
+  of them; the check was mine and wrong, the byte-for-byte comparison is
+  the proof, and the page was untouched until the second run.
+- The gate patch anchored one replacement on a line the terminal had cut
+  at 200 characters, and left the line's tail dangling as a syntax error;
+  a parse before any run caught it.
+- The smoke had a fourth read of `src/app.html` by name, inline in the
+  ISO-dates check, beside the three I had listed; the clean pipeline run
+  found it (the diagnostics line it looks for lives in
+  `src/app/68-diagnostics.js` now). It reads the joined source like the
+  others, and the record of the readers in item 3 above is the grep, not
+  my memory.
+- A fifth: `ci/icon.py`'s reminder check read the page for `smallIcon`
+  (now in `src/app/56-scanner.js`), and its two controls with it; the
+  gate's run of its selftest went red on the clean pipeline run. My grep
+  had covered `tools/*.py` and `ci/*.sh`, not `ci/*.py`. The check reads
+  the page and its files as one; the scene read keeps the page alone, the
+  splash's markup never moved.
+
+### DEFERRED
+
+- A44 items 3-7 (the click dispatcher, ADS out of PLATFORM, paintScan into
+  four, the smoke into files, the harness policy), one take each, when no
+  other branch is open.
+- The look: no step list for this take -- the app does not change, and the
+  shipped script is proven identical; the next UI take's look covers it.
 
 ## Take 131 — 2026-10-02 — the Sim across the internet: a room code, a relay, two phones (A23 step 4, D18)
 
@@ -359,6 +458,17 @@ With no relay configured the build hides the entry and says why
   the build is take 131.
 
 ---
+
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+PR 57 merged 2 Oct at 15:17 UTC (`b4e811d`, a merge
+commit); `build` run 88 green in every job, 15 minutes; Release take-130
+published 15:32 UTC with the APK (28.9 MB), the AAB (22.1 MB), the mapping
+and the Play icon. The probe workflow is on `main` now, so a dispatch from
+Actions runs it with a zip of choice. Take 131's PR (58) was opened from a
+branch restarted on this merge and marked ready at 15:33 UTC with its check
+and APK job green, the relay's exchange against `wrangler dev` having run on
+the runner for the first time there.
 
 ## Take 129 — 2026-10-01 — the PR check builds the APK (A44 item 1), the lockfile, and the owner's local-stock list probed
 

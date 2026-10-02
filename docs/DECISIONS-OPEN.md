@@ -1,6 +1,6 @@
 # OPEN DECISIONS — needed from the owner
 
-*Current as of take 131.* Everything else is decided and recorded in AGENDA.
+*Current as of take 132.* Everything else is decided and recorded in AGENDA.
 
 **D1 — App id and name. ANSWERED: registered with Play at the take-35 upload as `com.optcghub.app` / "OP TCG Hub", permanent.** *(original)* Proposed `com.optcghub.app` / "OP TCG Hub". Permanent
 once registered under developer verification and fixed from first Play upload
@@ -142,7 +142,7 @@ on Hunt's local value.
 
 *Added take 67.*
 
-**D19 — Retailer price sources for Hunt (A32). ANSWERED take 68: no accounts, no keys — keyless sources only, the runner as the scraper for the Play build, phone-side extras in the sideload build.** *1 Oct, the owner on take 128's PR: he opens an eBay developer account (the Browse API -- sold and active listings, the one documented price source among the retailers); the eBay source take follows the key, measured on the runner first (A32's rule). D21 stays open.* *1 Oct, later: Cardmarket's free daily price files (game 18, One Piece, 12,586 singles and 798 sealed products, EUR, no account; measured from the session VM) were put to him and **struck -- EU only, his word**; no Cardmarket source. His retailer list for local stock, as expansive as possible: GameStop, Barnes & Noble, Walmart, Target, Meijer, Five Below, Hot Topic sometimes, and more; each probed from the session VM at take 129 (A32's fourth table) -- the runner's own IP is the one that counts and is measured by the source take.* *(original)* TCGplayer via TCGCSV
+**D19 — Retailer price sources for Hunt (A32). ANSWERED take 68: no accounts, no keys — keyless sources only, the runner as the scraper for the Play build, phone-side extras in the sideload build.** *1 Oct, the owner on take 128's PR: he opens an eBay developer account (the Browse API -- sold and active listings, the one documented price source among the retailers); the eBay source take follows the key, measured on the runner first (A32's rule). D21 stays open.* *2 Oct: eBay rejected the developer registration -- "problems with the data provided or other irregularities" -- on two accounts; the owner keeps trying. Nothing is built on a key that may not come: no eBay source, no eBay line anywhere in the app, and the eBay take stays off the plan until a key exists. Ruled out meanwhile: scraping eBay's own pages (its terms forbid it, and a listing price is not a sale) and third-party sold-price aggregators (they scrape the same pages; a number with no source of record).* *1 Oct, later: Cardmarket's free daily price files (game 18, One Piece, 12,586 singles and 798 sealed products, EUR, no account; measured from the session VM) were put to him and **struck -- EU only, his word**; no Cardmarket source. His retailer list for local stock, as expansive as possible: GameStop, Barnes & Noble, Walmart, Target, Meijer, Five Below, Hot Topic sometimes, and more; each probed from the session VM at take 129 (A32's fourth table) -- the runner's own IP is the one that counts and is measured by the source take.* *(original)* TCGplayer via TCGCSV
 ships first and needs nothing from you. Beyond that, every retailer feed is
 a key in a repository secret that only you can obtain: a Walmart affiliate
 or marketplace API account is the one with a documented price API; Target,

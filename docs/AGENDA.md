@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 131.* Ranked by blocking-ness, not by interest.
+*Current as of take 132.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -74,11 +74,14 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0b. *Take 131, in flight (2 Oct):* the Sim across the internet (A23 step 4,
-   D18 decided): a room code, a relay on a Cloudflare Worker with a Durable
-   Object per room under `relay/`, Host and Join under Sim, every move over
-   the wire and applied on the relay's echo; the deploy waits on the owner's
-   account (RUNBOOK §9). *Done at take 130 (PR 57, ready):* the Walmart
+0b. *Take 132, in flight (2 Oct):* A44 item 2 -- the one source file into
+   files under `src/app/`, inlined by the build in the present order, the
+   shipped script byte-identical. *Done at take 131 (PR 58):* the Sim
+   across the internet (A23 step 4, D18 decided): a room code, a relay on a
+   Cloudflare Worker with a Durable Object per room under `relay/`, Host
+   and Join under Sim, every move over the wire and applied on the relay's
+   echo; the deploy waits on the owner's account (RUNBOOK §9). *Done at
+   take 130 (PR 57, merged 2 Oct):* the Walmart
    take, measured on the runner first by the runner's own probe
    (`probe.yml`, a button); the Sim's wire designed and recorded. *Done at
    take 129:* the PR check
@@ -91,7 +94,8 @@ what take 115 changed on screen.
    builds the APK -- **take 129**, the release variant with the committed
    sideload key, not the debug one the sketch said), then the structural takes one at a time,
    each when no other branch is open; eBay's Browse API the day his key
-   exists (D19).
+   exists (D19) -- *2 Oct: eBay rejected his registration on two accounts;
+   he keeps trying; nothing waits on it.*
 0. *Done at take 127:* the consent flow and D11's units together (the
    owner's word), a free save when no ad loads, More's Privacy choices where
    UMP requires it. Next: the first real impressions and earnings, read from
@@ -1575,6 +1579,15 @@ the next takes pay in time or risk.
    byte-identical before and after (the shipped file does not change, so no
    harness or scrubber regex moves); the scrubber's file list names the new
    files (landmine 182). Only when no other branch is open; its own take.
+   *Take 132: built -- the slots in `src/app.html`'s script block name the
+   files in order, `build_app.py` inlines them as it does `sim.js` and
+   `scan.js`, the shipped script is proven byte-identical (HANDOFF take
+   132's hash), every reader of the source by name reads the split, and the
+   gate's `check_app_split` keeps slot and file one to one.* **Ruled out:**
+   ES modules or a bundler (the shipped file would change, and with it
+   every harness regex and the scrubber's reads; the point is one script,
+   unchanged); a split by feature across the present order (the order is
+   load-bearing: a `const` read before its line is a crash at boot).
 3. **One click dispatcher** for the 33 document-level delegates: a table of
    (selector, handler) registered once in the present order; the
    capture-phase listener of `PICKER` and the scrim rule (landmines 159, 178)

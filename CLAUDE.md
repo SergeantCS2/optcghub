@@ -32,7 +32,7 @@ in-flight state — before touching anything.
 
 ## Where things are
 
-- `src/app.html` — the whole app, one file; built into `www/` by the pipeline. `tools/*.py` — the pipeline; `tools/hunt/` — the Hunt feed's sources; `tools/look/steps.mjs` — the look's step lists, one per take.
+- `src/app.html` — the page (the styles, the markup) and the slots that name `src/app/NN-name.js`, the script in the order it runs (take 132); `src/sim.js` and `src/scan.js` inlined where named; built into `www/` by the pipeline. `tools/*.py` — the pipeline; `tools/hunt/` — the Hunt feed's sources; `tools/look/steps.mjs` — the look's step lists, one per take.
 - `docs/` — the record: HANDOFF (newest first), LANDMINES (§0 index), AGENDA (Priorities at the top), PROTOCOL, PROVISION (every host, or the gate refuses), RUNBOOK and RUNBOOK-play, V1-STATE (PROVEN / BUILT / DEFERRED), NEW-SESSION-PROMPT.
 - `ci/` — `apk.sh`, `signer.sh`, `deps.sh`, `check.sh`, the workflow copies (`ci/*.yml` must equal `.github/workflows/*.yml`; the gate refuses a difference).
 - Generated, never committed: `www/bundle/`, `www/app.js`, `www/index.html`, `catalog/*.sqlite`, `android/`, `node_modules/`, `look/`.

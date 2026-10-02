@@ -1,4 +1,4 @@
-# OP TCG Hub — take 131
+# OP TCG Hub — take 132
 
 ## Installing — read this first
 
@@ -17,6 +17,8 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 132:** Nothing you can see changes. The app's one source file is now several, assembled into the same script byte for byte, so the next takes read and change smaller files. Nothing you have saved changes.
 
 **New at take 131:** Play a friend across the internet. Under Prep & Play → Sim, Host a match and the app shows a six-character code; your friend taps Join and types it. Each of you picks a deck, the host deals, and every move travels between the two phones, which run the same rules. A dropped connection picks up where it left off. Only the code, the two deck lists and the moves leave the phone, kept a day at most, with no account. Nothing you have saved changes.
 

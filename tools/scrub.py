@@ -57,7 +57,9 @@ FIXTURES = "tools/fixtures/"   # saved third-party responses: scanned, never rew
 
 
 def files_code(root=ROOT):
-    out = ["src/app.html", "src/sim.js", "src/scan.js"]     # take 122: the Sim's engine is its own source file; take 125: the scanner's stages
+    app_dir = os.path.join(root, "src", "app")   # take 132: the script's files, named by the page's slots (landmine 182: a new source file is named here)
+    out = ["src/app.html"] + ["src/app/" + f for f in sorted(os.listdir(app_dir)) if f.endswith(".js")] if os.path.isdir(app_dir) else ["src/app.html"]
+    out += ["src/sim.js", "src/scan.js"]     # take 122: the Sim's engine is its own source file; take 125: the scanner's stages
     for d in ("tools", "ci"):
         for dp, dirs, fs in os.walk(os.path.join(root, d)):
             dirs[:] = sorted(x for x in dirs if x not in ("__pycache__", "node_modules"))
