@@ -227,6 +227,17 @@ see changes.**
 - The look: no step list for this take -- the app does not change, and the
   shipped script is proven identical; the next UI take's look covers it.
 
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+PR 59 merged 2 Oct at 17:31 UTC (`f613f7a`, a merge commit, the owner's);
+`build` run 90 green in every job (seed, bundle, apk, pages, report), 15
+minutes; Release take-132 published 17:46 UTC with the APK (28,944,413
+bytes, 164 fewer than take 131's), the AAB (22,150,433), the mapping and
+the Play icon -- the split's build on the runner, the same script. Take
+133's PR (60) was opened as a draft at 17:46 UTC from a branch restarted
+on this merge, take 131's note riding it; this note rides it too, pushed
+before its first check was through.
+
 ## Take 131 — 2026-10-02 — the Sim across the internet: a room code, a relay, two phones (A23 step 4, D18)
 
 Opened before any code (PROTOCOL §6), on the branch behind take 130's PR
