@@ -27,6 +27,21 @@ def read(*p):
     return open(fn).read() if os.path.exists(fn) else ""
 
 
+def app_files():
+    """Take 132 (A44 item 2): the script's files under src/app/, in the order they run -- the names' order."""
+    d = os.path.join(ROOT, "src", "app")
+    return sorted(f for f in os.listdir(d) if f.endswith(".js")) if os.path.isdir(d) else []
+
+
+def app_parts():
+    """The page and the script's files, each named: what a check reads where it read src/app.html alone."""
+    return [("src/app.html", read("src", "app.html"))] + [("src/app/" + f, read("src", "app", f)) for f in app_files()]
+
+
+def app_source():
+    return "".join(t for _, t in app_parts())
+
+
 def take():
     for line in read("BUILD").splitlines():
         if line.startswith("VAULT_TAKE="):
@@ -136,6 +151,35 @@ def check_workflow_copies():
             fail("workflows", f"ci/{fn} and .github/workflows/{fn} differ — they are one file; copy one over the other")
 
 
+def check_app_split():
+    """Take 132 (A44 item 2). The page's script block is a list of slots naming the files under src/app/ in
+    the order they run; every slot has its file and every file its slot, each once, in the names' order, and
+    each file ends in its newline (the join glues two lines otherwise). The build refuses the same drift at
+    build time (build_app.app_script); this holds it before a build, and names what moved."""
+    src = read("src", "app.html")
+    m = re.search(r'<script id="app">\n(.*?)\n\s*</script>', src, re.S)
+    if not m:
+        return fail("app-split", "src/app.html has no <script id=\"app\"> block")
+    slots, stray = [], []
+    for line in m.group(1).split("\n"):
+        mm = re.fullmatch(r"/\* __APP__ ([0-9]{2}-[a-z]+\.js) \*/", line.strip())
+        (slots if mm else stray).append(mm.group(1) if mm else line.strip()[:60])
+    if stray:
+        fail("app-split", f"src/app.html's script block holds {len(stray)} line(s) that are not slots -- the script lives under src/app/: {stray[0]!r}")
+    files = app_files()
+    if len(set(slots)) != len(slots):
+        fail("app-split", "a slot is named twice in src/app.html")
+    elif slots != files:
+        fail("app-split", "the slots in src/app.html and the files under src/app/ differ: "
+             f"slots with no file {sorted(set(slots) - set(files))}, files with no slot {sorted(set(files) - set(slots))}"
+             + ("" if sorted(slots) == slots else "; the slot order is not the names' order"))
+    for f in files:
+        if not read("src", "app", f).endswith("\n"):
+            fail("app-split", f"src/app/{f} does not end in a newline: the join would glue its last line to the next file's first")
+    if not stray and slots == files:
+        note(f"app-split: {len(files)} files under src/app/, one slot each, in the names' order")
+
+
 def check_relay():
     """Take 131 (D18). The Sim's relay lives in relay/: its room module's suite and its negative
     controls run here (pure, a second); the exchange against the real Worker is the PR check's
@@ -151,8 +195,8 @@ def check_relay():
         fail("relay", "ci/relay.yml must deploy with wrangler from CLOUDFLARE_API_TOKEN and say so when the secrets are absent")
     if "node test.mjs --dev" not in read("ci", "check.sh"):
         fail("relay", "ci/check.sh must run the relay's suite against wrangler dev (node test.mjs --dev)")
-    if read("src", "app.html").count("'__RELAY__'") != 1:
-        fail("relay", "src/app.html must carry exactly one '__RELAY__' token (ONLINE.relay), filled by the build from BUILD")
+    if app_source().count("'__RELAY__'") != 1:
+        fail("relay", "the app's source must carry exactly one '__RELAY__' token (ONLINE.relay, src/app/66-online.js), filled by the build from BUILD")
     for args, what in ((["node", "test.mjs"], "the suite"), (["node", "test.mjs", "--selftest"], "its negative controls")):
         r = subprocess.run(args, cwd=rd, capture_output=True, text=True)
         if r.returncode != 0:
@@ -240,7 +284,7 @@ def check_prompt_ratchet():
     ceiling is recorded here and lowered when one is removed; a new prompt()
     fails the gate the same take it is written."""
     CEILING = 0
-    n = read("src", "app.html").count("prompt('")
+    n = app_source().count("prompt('")
     if n > CEILING:
         fail("prompt-ratchet", f"src/app.html has {n} prompt() calls; the ceiling is {CEILING}. "
                                f"Build a sheet, not a prompt.")
@@ -279,7 +323,15 @@ def check_icon_characters():
     halves, neither an emoji: the take-108 icons it removed, as escapes, passed);
     and the times sign as a button's whole face -- a remove drawn as a character
     -- is refused, while the times of a count stays."""
-    src = read("src", "app.html") + read("src", "sim.js") + read("src", "scan.js")   # take 122: the Sim's engine is src/sim.js; take 125: the scanner's stages src/scan.js; both inlined at build
+    parts = app_parts() + [("src/sim.js", read("src", "sim.js")), ("src/scan.js", read("src", "scan.js"))]   # take 122: the Sim's engine is src/sim.js; take 125: the scanner's stages src/scan.js; both inlined at build; take 132: the script's files
+    src = "".join(t for _, t in parts)
+    def where(ln):   # a line of the joined text, as its file's line (take 132)
+        for name, text in parts:
+            n = text.count("\n")
+            if ln <= n:
+                return f"{name}:{ln}"
+            ln -= n
+        return f"line {ln}"
     if not src:
         return
     keep_lines = lambda m: "\n" * m.group(0).count("\n")   # noqa: E731   a comment goes, its lines stay: "near line N" is the source's N
@@ -307,7 +359,7 @@ def check_icon_characters():
             see(ch, i)
     if found:
         fail("icons", "src/app.html draws " + str(len(found)) + " icon(s) as characters: "
-             + ", ".join(f"U+{ord(c):04X} near line {ln}" for c, ln in sorted(found.items(), key=lambda kv: kv[1])[:6])
+             + ", ".join(f"U+{ord(c):04X} near {where(ln)}" for c, ln in sorted(found.items(), key=lambda kv: kv[1])[:6])
              + " -- use a sprite symbol, G('name') or <use href=\"#g-name\">")
 
 
@@ -359,7 +411,7 @@ def check_stale_copy():
         ("carries no character art",             "take 109: the listing never said so, and the app shows card art (A29's correction)"),
         ("no character art, no publisher mark",  "take 109: card art is shown; marks stay out of the name, icon, splash and listing (V1-STATE)"),
     ]
-    files = ["src/app.html", "src/sim.js", "src/scan.js", "README.md", "ci/RELEASE.md", "docs/RUNBOOK.md", "docs/RUNBOOK-play.md",
+    files = ["src/app.html", *("src/app/" + f for f in app_files()), "src/sim.js", "src/scan.js", "README.md", "ci/RELEASE.md", "docs/RUNBOOK.md", "docs/RUNBOOK-play.md",
              # take 109: the present-tense record that carried the old line; the append-only
              # history (HANDOFF, LANDMINES, AGENDA) keeps what it said and is not read here
              "docs/V1-STATE.md", "docs/NEW-SESSION-PROMPT.md", "docs/PROVISION.md", "docs/PLAY-LISTING.md",
@@ -381,7 +433,7 @@ def check_no_condition_multiplier():
     """PROTOCOL §10.3. TCGCSV publishes no per-condition pricing (landmine 4), so
     any arithmetic that scales value by condition is invented — a confident wrong
     answer about someone's money. Structural, not a resolution to be careful."""
-    for p in ("src/app.html", "www/app.js"):
+    for p in ("src/app.html", *("src/app/" + f for f in app_files()), "www/app.js"):
         s = read(p)
         if re.search(r"(0\.8[05]|0\.9[05]|0\.7[05])\s*(?://.*)?$", s, re.M) and \
            re.search(r"cond", s, re.I):
@@ -557,7 +609,7 @@ def check_ads():
     if not isinstance(f, int) or f < ADMOB_LIVE_FLOOR:
         fail("ads", f"ads.live.from is {f!r}: take 121 names the linked app but asks no consent, so no build "
                     f"before take {ADMOB_LIVE_FLOOR} loads real units")
-    if "requestConsentInfo" not in read("src", "app.html"):
+    if "requestConsentInfo" not in app_source():
         fail("ads", "ads.live is set and the app asks for no consent (no requestConsentInfo): the app is "
                     "worldwide (the owner, take 121; A43)")
 
@@ -780,6 +832,8 @@ def selftest():
             check_ads(); check_pictures()
             if cat == "relay":
                 check_relay()
+            if cat == "app-split":
+                check_app_split()
             if cat == "sim":
                 check_sim()
             fired = any(f.startswith(cat + ":") for f in FAILS) if cat else bool(FAILS)
@@ -833,6 +887,11 @@ def selftest():
     probe("a relay deploy that runs without the secrets guard", relay_unguarded, "relay")
     probe("a PR check that skips the relay's exchange against wrangler dev", lambda t: open(os.path.join(t, "ci", "check.sh"), "w")
           .write(read("ci", "check.sh").replace("node test.mjs --dev", "node test.mjs")), "relay")
+    # take 132: the script's files and the page's slots are one list; a file renamed under its slot, and a line
+    # of script left in the page, are each named
+    probe("a script file renamed under its slot (take 132)", lambda t: os.rename(os.path.join(t, "src", "app", "12-net.js"), os.path.join(t, "src", "app", "12-network.js")), "app-split")
+    probe("a line of script left in the page beside the slots (take 132)", lambda t: open(os.path.join(t, "src", "app.html"), "w")
+          .write(read("src", "app.html").replace("/* __APP__ 70-boot.js */", "/* __APP__ 70-boot.js */\nconst stray = 1;")), "app-split")
     probe("render receipt missing (DOM-mode seal)",
           lambda t: os.path.exists(os.path.join(t, "www", "render.png")) and os.remove(os.path.join(t, "www", "render.png")), "render")
     # take 108: an icon drawn as a character in the app, literally and as an escape
@@ -924,8 +983,9 @@ def selftest():
     def no_consent(t):
         # take 127: the app asks for consent now, so the probe takes it out of the copy first
         ads(t, live=good)
-        f = os.path.join(t, "src", "app.html")
-        open(f, "w").write(open(f).read().replace("requestConsentInfo", "requestNothing"))
+        for rel in ["src/app.html"] + ["src/app/" + x for x in sorted(os.listdir(os.path.join(t, "src", "app"))) if x.endswith(".js")]:   # take 132: the flow is in a script file
+            f = os.path.join(t, rel)
+            open(f, "w").write(open(f).read().replace("requestConsentInfo", "requestNothing"))
     probe("ads: a live block and no consent flow in the app (take 121; the flow removed, 127)",
           no_consent, "ads")
     probe("control: a whole live block from the floor, with a consent flow, passes (take 121; 127)",
@@ -975,6 +1035,7 @@ if __name__ == "__main__":
     check_workflow_copies()
     check_pr_builds_apk()
     check_relay()
+    check_app_split()
     check_stale_copy()
     check_play_readiness()
     check_ads()

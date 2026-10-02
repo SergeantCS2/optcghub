@@ -388,8 +388,11 @@ def selftest():
             buff = im.getpixel((int(W * 0.08), int(H * 0.80)))
             verdict(f"{sub}, {W}x{H}: the scene -- the band's Prussian at the top, the buff at four-fifths {buff}",
                     max(abs(a - b) for a, b in zip(im.getpixel((2, 2)), SPLASH_BG)) <= 12 and buff[0] > 225 and buff[2] < 205 and buff[0] > buff[2] + 30)
-        app = open(os.path.join(ROOT, "src", "app.html"), encoding="utf8").read()
-        verdict("src/app.html's reminders ask for the drawable this step writes (ic_stat_don)", asked(app) == [])
+        # take 132: the reminders are script, under src/app/ (56-scanner.js); the page and its files are read as one
+        app_dir = os.path.join(ROOT, "src", "app")
+        app = open(os.path.join(ROOT, "src", "app.html"), encoding="utf8").read() + "".join(
+            open(os.path.join(app_dir, f), encoding="utf8").read() for f in sorted(os.listdir(app_dir)) if f.endswith(".js"))
+        verdict("the app's reminders ask for the drawable this step writes (ic_stat_don)", asked(app) == [])
         verdict("control: a reminder asking for ic_launcher, a mipmap the plugin cannot see, is refused",
                 asked(app.replace("smallIcon: 'ic_stat_don'", "smallIcon: 'ic_launcher'", 1)) == ["ic_launcher"])
         # take 115: reminders that name no smallIcon at all get the plugin's default -- the sabotage proved to land (landmine 55)

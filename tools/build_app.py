@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Assemble www/ — the shipped app plus its catalogue bundle.
 
-`src/app.html` is the source of truth and the only file a human edits. This
-splits it into www/index.html + www/app.js so that smoke.mjs can execute the
-SHIPPED code rather than a copy of it (APEX landmine 39), and emits the
-catalogue the app reads.
+`src/app.html` is the page -- the styles, the markup -- and its script block
+names the files under `src/app/` in the order they run (take 132); `src/sim.js`
+and `src/scan.js` are inlined where the script names them. This assembles
+www/index.html + www/app.js so that smoke.mjs can execute the SHIPPED code
+rather than a copy of it (APEX landmine 39), and emits the catalogue the app
+reads.
 
 The version stamp is written into the BUILT artifact, not the source, because a
 stamp that lives in src/ is a stamp that lies whenever www/ is stale
@@ -158,6 +160,42 @@ def catalogue_json(db):
             "valid_numbers": valid, "star": star, "days": days, "hist": hist}
 
 
+APP_DIR = os.path.join(ROOT, "src", "app")
+
+
+def app_slots(block):
+    """Take 132 (A44 item 2): the page's script block is a list of slots, one per file under src/app/, in the
+    order the script runs -- `/* __APP__ 10-head.js */` -- and nothing else. The names, in that order."""
+    names = []
+    for line in block.split("\n"):
+        m = re.fullmatch(r"/\* __APP__ ([0-9]{2}-[a-z]+\.js) \*/", line.strip())
+        if not m:
+            raise SystemExit(f"build_app: src/app.html's script block holds a line that is not a slot: {line.strip()[:60]!r}")
+        names.append(m.group(1))
+    return names
+
+
+def app_script(block):
+    """The shipped script: the files the slots name, joined in slot order, each file ending in its newline and the
+    join losing the last one (what the single file held between its tags). A slot with no file, a file with no
+    slot, a slot named twice or an order that disagrees with the names refuses the build."""
+    names = app_slots(block)
+    if len(set(names)) != len(names):
+        raise SystemExit("build_app: a slot is named twice in src/app.html")
+    have = sorted(f for f in os.listdir(APP_DIR) if f.endswith(".js")) if os.path.isdir(APP_DIR) else []
+    if names != have:
+        raise SystemExit(f"build_app: the slots in src/app.html and the files under src/app/ differ -- "
+                         f"slots not on disk {sorted(set(names) - set(have))}, files with no slot {sorted(set(have) - set(names))}, "
+                         f"or the order is not the names' order")
+    out = []
+    for name in names:
+        text = open(os.path.join(APP_DIR, name), encoding="utf-8").read()
+        if not text.endswith("\n"):
+            raise SystemExit(f"build_app: src/app/{name} does not end in a newline")
+        out.append(text)
+    return "".join(out)[:-1]
+
+
 def build(verbose=True):
     n = take()
     # Clean, not just create. A step that only ever adds leaves every file it
@@ -174,7 +212,7 @@ def build(verbose=True):
     m = re.search(r"<script id=\"app\">\n(.*?)\n\s*</script>", src, re.S)
     if not m:
         raise SystemExit("build_app: no <script id=\"app\"> block in src/app.html")
-    js = m.group(1)
+    js = app_script(m.group(1))
     html = src[:m.start()] + '<script src="app.js"></script>' + src[m.end():]
     # take 122: the Sim's engine and opponent are their own file (src/sim.js), put where
     # the source names them -- one script at runtime, one module to read and review;

@@ -23,7 +23,7 @@ them, computes a perceptual hash per printing, builds a SQLite catalogue, and
 assembles `www/`. `tools/gate.py` refuses to let anything ship that has drifted.
 CI runs the pipeline and the harnesses on every pull request (`check.yml`) and
 again on every merge to `main` (`build.yml`), which also produces a signed APK
-plus a Play AAB and publishes Release `take-N`. You change `src/app.html` and
+plus a Play AAB and publishes Release `take-N`. You change `src/app.html`, the files under `src/app/` (the script, in the order their names give) and
 `tools/*.py`; everything else is generated.
 
 ## Rules that are not negotiable

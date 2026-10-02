@@ -1,13 +1,13 @@
 # SIM-UI — the contract the Sim's UI pass builds against
 
-*Current as of take 131.*
+*Current as of take 132.*
 
 For the Sim's board (Prep & Play → Sim). Takes 122 and 123 made the game
 underneath right, provable and private; take 124 drew it as a table -- the
 playmat, the pictures, the zoom -- on the owner's word that the session make
 the UI pass. This page is what a board may rely on, what it must not do, and
 what will tell it when it has. The engine is `src/sim.js`; the board is the
-painters in `src/app.html` -- every function between `const SIM_PAINTERS` and
+painters in `src/app/64-sim.js` (take 132; one script with `src/app.html`'s other files) -- every function between `const SIM_PAINTERS` and
 `const SIM_PAINTERS_END` -- and the controller after them (`paintSim`,
 `simTap`, `simBotRun`, `simFit`, the motion).
 
