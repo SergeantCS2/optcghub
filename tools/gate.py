@@ -180,6 +180,33 @@ def check_app_split():
         note(f"app-split: {len(files)} files under src/app/, one slot each, in the names' order")
 
 
+def check_click_dispatcher():
+    """Take 133 (A44 item 3). A bubbling click listener on the document is the dispatcher's alone
+    (src/app/13-clicks.js); every other document-level click delegate is a row of CLICKS, registered with
+    CLICKS.on where its code lives, in the files' order. A capture-phase listener (`, true)` on its line) is a
+    one-shot of its sheet's (PICKER's, the Leader pick's) or the rising scrim's rule, and is allowed, counted."""
+    own, stray, capture, rows = [], [], [], 0
+    for name, text in app_parts():
+        for i, ln in enumerate(text.split("\n"), 1):
+            if ln.startswith("CLICKS.on("):
+                rows += 1
+            if "document.addEventListener('click'" not in ln:
+                continue
+            if re.search(r",\s*true\s*\)", ln):
+                capture.append(f"{name}:{i}")
+            elif name == "src/app/13-clicks.js":
+                own.append(f"{name}:{i}")
+            else:
+                stray.append(f"{name}:{i}")
+    if len(own) != 1:
+        fail("clicks", f"src/app/13-clicks.js registers {len(own)} bubbling click listener(s) on the document; the dispatcher is one")
+    if stray:
+        fail("clicks", "a document-level click delegate outside the dispatcher's table (take 133, A44 item 3): "
+             + ", ".join(stray) + " -- make it a CLICKS.on row where its code lives")
+    if len(own) == 1 and not stray:
+        note(f"clicks: one bubbling click listener on the document, {rows} rows, {len(capture)} capture-phase registrations (PICKER's two paths, the Leader pick, the scrim rule)")
+
+
 def check_relay():
     """Take 131 (D18). The Sim's relay lives in relay/: its room module's suite and its negative
     controls run here (pure, a second); the exchange against the real Worker is the PR check's
@@ -834,6 +861,8 @@ def selftest():
                 check_relay()
             if cat == "app-split":
                 check_app_split()
+            if cat == "clicks":
+                check_click_dispatcher()
             if cat == "sim":
                 check_sim()
             fired = any(f.startswith(cat + ":") for f in FAILS) if cat else bool(FAILS)
@@ -892,6 +921,9 @@ def selftest():
     probe("a script file renamed under its slot (take 132)", lambda t: os.rename(os.path.join(t, "src", "app", "12-net.js"), os.path.join(t, "src", "app", "12-network.js")), "app-split")
     probe("a line of script left in the page beside the slots (take 132)", lambda t: open(os.path.join(t, "src", "app.html"), "w")
           .write(read("src", "app.html").replace("/* __APP__ 70-boot.js */", "/* __APP__ 70-boot.js */\nconst stray = 1;")), "app-split")
+    # take 133: a document-level click delegate of the old shape, outside the dispatcher's table
+    probe("a click delegate registered outside the dispatcher's table (take 133)", lambda t: open(os.path.join(t, "src", "app", "24-decks.js"), "a")
+          .write("document.addEventListener('click', e => {});\n"), "clicks")
     probe("render receipt missing (DOM-mode seal)",
           lambda t: os.path.exists(os.path.join(t, "www", "render.png")) and os.remove(os.path.join(t, "www", "render.png")), "render")
     # take 108: an icon drawn as a character in the app, literally and as an escape
@@ -1036,6 +1068,7 @@ if __name__ == "__main__":
     check_pr_builds_apk()
     check_relay()
     check_app_split()
+    check_click_dispatcher()
     check_stale_copy()
     check_play_readiness()
     check_ads()

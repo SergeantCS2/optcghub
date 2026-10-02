@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 132.* Ranked by blocking-ness, not by interest.
+*Current as of take 133.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -74,9 +74,11 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0b. *Take 132, in flight (2 Oct):* A44 item 2 -- the one source file into
-   files under `src/app/`, inlined by the build in the present order, the
-   shipped script byte-identical. *Done at take 131 (PR 58):* the Sim
+0b. *Take 133, in flight (2 Oct):* A44 item 3 -- one click dispatcher: the
+   29 document-level delegates as rows of one table in the present order,
+   proven in Chrome. *Done at take 132 (PR 59):* A44 item 2 -- the one source
+   file into files under `src/app/`, inlined by the build in the present
+   order, the shipped script byte-identical. *Done at take 131 (PR 58):* the Sim
    across the internet (A23 step 4, D18 decided): a room code, a relay on a
    Cloudflare Worker with a Durable Object per room under `relay/`, Host
    and Join under Sim, every move over the wire and applied on the relay's
@@ -1592,6 +1594,16 @@ the next takes pay in time or risk.
    (selector, handler) registered once in the present order; the
    capture-phase listener of `PICKER` and the scrim rule (landmines 159, 178)
    stay as they are. Proof in Chrome, never the stub (landmine 136).
+   *Take 133: built -- `src/app/13-clicks.js` holds the table; each
+   delegate is a row where its code lives, in the files' order, its body
+   unchanged; Chrome counts one bubbling click listener on the document
+   (render, through CDP), and the gate's `check_click_dispatcher` refuses
+   a delegate of the old shape.* **Ruled out:** first-match (a tap that
+   matches two rows runs both, as two listeners did; choosing one is a
+   behaviour change for its own take, measured first); the three
+   capture-phase listeners as rows (each lives as long as its sheet and
+   removes itself); element-level listeners (`$('#x').addEventListener`,
+   bound to one element, not delegates).
 4. **`ADS` out of `PLATFORM`**: consent, units, load and show, the free save
    beside `CREDITS`; the adapter keeps `plugin()` and the thin calls. Smoke's
    take-121 and take-127 sections move with it.

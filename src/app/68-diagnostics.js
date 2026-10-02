@@ -108,7 +108,7 @@ const SELFTEST = {
       ...r.checks.map(c => `${c.s.padEnd(4)} ${c.name}${c.note ? ' \u2014 ' + c.note : ''}`)].join('\n');
   }
 };
-document.addEventListener('click', async e => {
+CLICKS.on('#diagRun,#devEarn,#diagCopy,#diagShare', async e => {
   if (e.target.closest('#diagRun')) { const b = $('#diagRun'); b.disabled = true; $('#diagOut').textContent = 'Running\u2026'; const t = await DIAG.report(); $('#diagOut').textContent = t; b.disabled = false; $('#diagCopy').disabled = false; $('#diagShare').disabled = false; }
   if (e.target.closest('#devEarn')) { CREDITS.earn('scan'); toast(`${CREDITS.state.scan} save credits`); }
   if (e.target.closest('#diagCopy')) { try { await navigator.clipboard.writeText($('#diagOut').textContent); toast('Copied'); } catch (err) { toast('Select the text and copy it'); } }

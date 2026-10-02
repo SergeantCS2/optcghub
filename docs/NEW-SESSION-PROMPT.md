@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 132.* Paste the block between the rules into a new session
+*Current as of take 133.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 132 takes by previous sessions. The repo is
+built across 133 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -95,6 +95,20 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   them in order with his results (his rule, take 94).
 
 **What is in flight when you arrive:**
+
+- **Take 133 -- one click dispatcher** (AGENDA A44 item 3; HANDOFF take
+  133). `src/app/13-clicks.js` holds `CLICKS`, a table of (selectors,
+  handler) rows and the one bubbling click listener on the document that
+  walks it; each of the 29 document-level delegates is a row where its code
+  was, in the files' order, its body unchanged; the three capture-phase
+  listeners (PICKER's, the Leader pick's, the scrim rule's) stay. Proof in
+  Chrome: render counts the document's click listeners through CDP (one
+  bubbling, one capture) and taps a row's target through the table; the
+  smoke proves the mechanics and pins the 29 rows; the gate's
+  `check_click_dispatcher` refuses a delegate of the old shape. No look:
+  nothing a collector can see changes. PR 59 (take 132) was open when this
+  take began; its commits ride a branch restarted from `main` after the
+  merge.
 
 - **Take 132 -- the one source file into files** (AGENDA A44 item 2;
   HANDOFF take 132). `src/app.html` keeps the page; its script block is a
@@ -488,6 +502,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 133" and begin with PROTOCOL §0.
+Say "take 134" and begin with PROTOCOL §0.
 
 ---

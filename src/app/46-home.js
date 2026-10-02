@@ -210,7 +210,7 @@ function spark(series, kind = 'record') {
     }
   }
 }
-document.addEventListener('click', e => {
+CLICKS.on('[data-r]', e => {
   const r = e.target.closest('[data-r]');
   if (r) { if (r.dataset.r === 'MAX' && !MAXLOCK.open()) { MAXLOCK.ask(); return; } range = r.dataset.r; paintHome(); }
 });

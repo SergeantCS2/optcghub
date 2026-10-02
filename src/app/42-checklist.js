@@ -32,7 +32,7 @@ function paintChecklist() {
   $('#ckWantAll').textContent = missing.length ? `Want the ${missing.length} missing` : 'Complete';
   $('#ckWantAll').disabled = !missing.length;
 }
-document.addEventListener('click', e => {
+CLICKS.on('[data-checklist],[data-ckmode],[data-ck],#ckWantAll,[data-want]', e => {
   const c = e.target.closest('[data-checklist]'); if (c) return openChecklist(+c.dataset.checklist);
   const m = e.target.closest('[data-ckmode]'); if (m) { ckMode = m.dataset.ckmode; return paintChecklist(); }
   const k = e.target.closest('[data-ck]');

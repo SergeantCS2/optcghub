@@ -44,7 +44,7 @@ const THEME = {
 };
 THEME.apply(false);
 function themeSegClick(e) { const b = e.target.closest('#themeSeg [data-theme]'); if (!b) return; THEME.set(b.dataset.theme); }
-document.addEventListener('click', themeSegClick);
+CLICKS.on('#themeSeg [data-theme]', themeSegClick);
 /* Take 119: the slide (the owner: "animations between modes like a swipe"; take 110's crossfade before it). On a tap or a
    swipe only -- MODE.set itself stays instant for the guide, Back and the harness. The screen leaving is kept painted
    under the one arriving: fixed where it was (its top read before the switch), its palette's tokens copied onto it so the

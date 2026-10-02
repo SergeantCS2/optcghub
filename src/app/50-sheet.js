@@ -133,7 +133,7 @@ $('#bulkMove').addEventListener('click', () => {
       <div class="oi"><b>${esc(p.name)}</b><span>${OWN.items.filter(i => (i.pf || 'main') === p.id).length} lines</span></div></button>`).join('');
   $('#picker').classList.add('on');
 });
-document.addEventListener('click', e => {
+CLICKS.on('[data-pfmove]', e => {
   const b = e.target.closest('[data-pfmove]'); if (!b || !bulk) return;
   const to = PF.list.find(p => p.id === b.dataset.pfmove); if (!to) return;
   const lines = new Set(bulkLines(bulk)); OWN.items.forEach(i => { if (lines.has(i)) i.pf = to.id; });
@@ -146,7 +146,7 @@ $('#bulkCond').addEventListener('click', () => {
   $('#pkOpts').innerHTML = CONDS.map(c => `<button class="opt" data-bulkcond="${c}"><div class="oi"><b>${c}</b><span>${COND_NAMES[c]}</span></div></button>`).join('');
   $('#picker').classList.add('on');
 });
-document.addEventListener('click', e => {
+CLICKS.on('[data-bulkcond]', e => {
   const b = e.target.closest('[data-bulkcond]'); if (!b || !bulk) return;
   const lines = new Set(bulkLines(bulk)); OWN.items.forEach(i => { if (lines.has(i)) i.condition = b.dataset.bulkcond; });
   commitOwn('bulk', { snap: false }); $('#picker').classList.remove('on'); paintCollection(); toast('Condition set to ' + b.dataset.bulkcond);
@@ -218,7 +218,7 @@ function flipSwipe(dx, dy) { return Math.abs(dx) >= 40 && Math.abs(dy) < Math.ab
   g.addEventListener('keydown', e => { const f = e.target && e.target.closest ? e.target.closest('[data-act="flip"]') : null; if (!f || (e.key !== 'Enter' && e.key !== ' ')) return; e.preventDefault(); e.stopPropagation(); flipLine(+f.dataset.line); });
 })();
 $('#colq').addEventListener('input', e => { colQuery = e.target.value; paintCollection(); });
-document.addEventListener('click', e => {
+CLICKS.on('#colClearF', e => {
   if (e.target.id === 'colClearF') {
     Object.assign(FILT.own, blankFilter('own')); FILT.save('own'); paintCollection();
   }
@@ -226,7 +226,7 @@ document.addEventListener('click', e => {
 $('#favOnly').addEventListener('click', () => {   // take 108: the star fills, and says so
   favOnly = !favOnly; const b = $('#favOnly'); b.classList.toggle('on', favOnly); b.setAttribute('aria-pressed', String(favOnly)); paintCollection();
 });
-document.addEventListener('click', e => {
+CLICKS.on('[data-open]', e => {
   const t = e.target.closest('[data-open]');
   if (!t) return;
   if (e.target.closest('[data-act="flip"]') || FLIP.swiped) return;   /* take 128: the arrow and the swipe are the picture's, not the card's */
@@ -234,7 +234,7 @@ document.addEventListener('click', e => {
   if (bulk) { bulk.has(id) ? bulk.delete(id) : bulk.add(id); paintCollection(); }
   else openDetail(id, { dist: !!t.dataset.distinfo });
 });
-document.addEventListener('click', e => {
+CLICKS.on('[data-act]', e => {
   const a = e.target.closest('[data-act]'); if (!a) return;
   ({
     export: exportCsv,

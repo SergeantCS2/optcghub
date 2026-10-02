@@ -41,7 +41,7 @@ function browseSet(id, q) {
   Object.assign(FILT.all, blankFilter('all'), { set: [id], sort: 'num', dir: 1 });
   FILT.save('all'); paintSearch(); go('search'); window.scrollTo(0, 0);
 }
-document.addEventListener('click', e => {
+CLICKS.on('[data-browse-set]', e => {
   const b = e.target.closest('[data-browse-set]'); if (!b) return;
   browseSet(+b.dataset.browseSet, b.dataset.browseQ);
 });

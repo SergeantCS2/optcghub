@@ -48,7 +48,7 @@ function paintAlerts() {
       <div class="cnt">${a.fired ? `<button data-alrearm="${a.key}" aria-label="Watch again">${G('refresh', 18)}</button>` : ''}<button data-alrm="${a.key}" aria-label="Remove the alert">${G('trash', 18)}</button></div>
     </div>`; }).join('') : emptyHtml('bell', 'No alerts yet', 'Open a card and tap <b>Alert me</b>.');
 }
-document.addEventListener('click', e => {
+CLICKS.on('[data-alrm],[data-alrearm]', e => {
   const r = e.target.closest('[data-alrm]'); if (r) { ALERTS.remove(r.dataset.alrm); paintAlerts(); return; }
   const a = e.target.closest('[data-alrearm]'); if (a) { ALERTS.rearm(a.dataset.alrearm); paintAlerts(); return; }
 });

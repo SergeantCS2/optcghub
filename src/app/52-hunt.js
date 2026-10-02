@@ -234,7 +234,7 @@ function distHistTap(d) {
   if (DISTF.hist.has(d)) DISTF.hist.delete(d); else DISTF.hist.add(d);
   if (dCur) paintDetailDist(dCur);
 }
-document.addEventListener('click', e => { const f = e.target.closest('[data-distfold]'); if (f) return distFoldTap(f.dataset.distfold);
+CLICKS.on('[data-distfold],[data-disthist]', e => { const f = e.target.closest('[data-distfold]'); if (f) return distFoldTap(f.dataset.distfold);
   const h = e.target.closest('[data-disthist]'); if (h) distHistTap(h.dataset.disthist); });
 function distWords(it) {
   /* take 94: the distributor, in the words it uses. A distributor sells to
