@@ -1625,6 +1625,20 @@ the next takes pay in time or risk.
 6. **`tools/smoke.mjs` into `tools/smoke/*.mjs`** with a runner that snapshots
    and restores the app's state around each section and names a leak itself
    (landmine 221's cure). Same asserts; mechanical; same caveat as 2.
+   *Measured 2 Oct (after take 134), by acorn's tokens and declarations
+   over the 93 sections: 26 sections read 50 names declared at the top
+   level of an earlier section, nearly all fixtures that sections 3 to 16
+   build once after the boot -- the catalogue's (`vivi`, `nami`, `eb`,
+   `leaders`), the filter's (`F`, `G`, `S`, `O`, `c`, `OWNROWS`, `dear`),
+   the deck builder's (`d`, `A`, `mk`), the scanner's (`SC`, `pr`) and a
+   few measures (`auto`, `ask`, `has`, `before`, `single`, `base`,
+   `faces`); the six newest sections (takes 128 to 133) are self-contained
+   blocks. So the split is not a cut per section: a fixtures module builds
+   those names once and every section file takes them with the app, and
+   the runner snapshots the collection, the stores, the mode and the
+   navigation stack around each file and names what a file left changed.
+   A regex over the text counted 84 sections and 1,178 links, mostly
+   English words in check names; the tokens are the measurement.*
 7. **Policy for the harness**: no new source regex (`.test(js)`) unless the
    thing asserted is a static property of the shipped file; a section that is
    touched trades its regexes for behaviour checks.
