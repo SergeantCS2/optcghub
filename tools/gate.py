@@ -180,6 +180,17 @@ def check_app_split():
         note(f"app-split: {len(files)} files under src/app/, one slot each, in the names' order")
 
 
+def smoke_files():
+    """Take 135 (A44 item 6): the smoke's sections, one file each under tools/smoke/, in the order they run."""
+    d = os.path.join(ROOT, "tools", "smoke")
+    return sorted(f for f in os.listdir(d) if re.fullmatch(r"\d\d-[a-z0-9-]+\.mjs", f)) if os.path.isdir(d) else []
+
+
+def smoke_source():
+    """The runner and every section file as one string: what a check reads where it read tools/smoke.mjs alone."""
+    return read("tools", "smoke.mjs") + "".join(read("tools", "smoke", f) for f in smoke_files())
+
+
 def check_click_dispatcher():
     """Take 133 (A44 item 3). A bubbling click listener on the document is the dispatcher's alone
     (src/app/13-clicks.js); every other document-level click delegate is a row of CLICKS, registered with
@@ -229,6 +240,33 @@ def check_ads_home():
         fail("ads-home", "an ad or consent member inside PLATFORM (take 134, A44 item 4: the flow is ADS's): " + "; ".join(stray))
     else:
         note("ads-home: ADS holds the ads and consent flow; PLATFORM keeps the plugin and the thin calls")
+
+
+def check_smoke_split():
+    """Take 135 (A44 item 6). The smoke's sections are files under tools/smoke/, NN-name.mjs in the order they run,
+    each exporting run(harness); the runner (tools/smoke.mjs) holds the boot, ok and the loop, never a section of its
+    own, and the foundation file (00-) returns the fixtures the later files read."""
+    files = smoke_files()
+    if not files:
+        return fail("smoke-split", "no section files under tools/smoke/ (NN-name.mjs)")
+    nums = [f[:2] for f in files]
+    if len(set(nums)) != len(nums):
+        fail("smoke-split", "two section files share a number under tools/smoke/: " + ", ".join(f for f in files if nums.count(f[:2]) > 1))
+    if not files[0].startswith("00-"):
+        fail("smoke-split", f"the first section file is {files[0]}, not the foundation (00-)")
+    for f in files:
+        t = read("tools", "smoke", f)
+        if "export async function run(harness)" not in t:
+            fail("smoke-split", f"tools/smoke/{f} does not export run(harness)")
+        if "section('" not in t:
+            fail("smoke-split", f"tools/smoke/{f} names no section")
+    runner = read("tools", "smoke.mjs")
+    if re.search(r"^section\('", runner, re.M):
+        fail("smoke-split", "a section is left in the runner tools/smoke.mjs: the sections live under tools/smoke/")
+    if "harness.fx = r" not in runner or "return { " not in read("tools", "smoke", files[0]):
+        fail("smoke-split", "the foundation's fixtures do not reach the later files (the runner keeps harness.fx from the 00- file's return)")
+    if not FAILS or not any(f.startswith("smoke-split:") for f in FAILS):
+        note(f"smoke-split: {len(files)} section files under tools/smoke/, the runner holds none")
 
 
 def check_relay():
@@ -680,8 +718,8 @@ def check_catalogue():
 def check_harness():
     """APEX landmine 39: a verifier that passes while the product fails. Smoke
     must execute the SHIPPED artifact, not a copy of it."""
-    s = read("tools", "smoke.mjs")
-    if not s:
+    s = smoke_source()   # take 135: the runner and its section files
+    if not read("tools", "smoke.mjs"):
         return fail("harness", "tools/smoke.mjs missing")
     if "www/app.js" not in s and "'app.js'" not in s:
         fail("harness", "smoke.mjs does not load www/app.js — it is testing a copy")
@@ -788,7 +826,7 @@ def check_selftests():
     # Landmine 114/115 lint (take 80): a smoke assertion that pins a number to
     # something the nightly moves -- the day count, the source date, a price --
     # is a test that expires, and one that expired in bundle.sh cost five nights.
-    smoke_src = open(os.path.join(ROOT, "tools", "smoke.mjs"), encoding="utf8").read()
+    smoke_src = smoke_source()   # take 135: the runner and its section files, as one text
     pinned = []
     for m in re.finditer(r"(history_days|\.days\.length|source_updated_at|\.market|\.low|\.high)[^\n;]{0,40}?===\s*(\d+(?:\.\d+)?)\b", smoke_src):
         line = smoke_src[:m.start()].count("\n") + 1
@@ -889,6 +927,8 @@ def selftest():
                 check_click_dispatcher()
             if cat == "ads-home":
                 check_ads_home()
+            if cat == "smoke-split":
+                check_smoke_split()
             if cat == "sim":
                 check_sim()
             fired = any(f.startswith(cat + ":") for f in FAILS) if cat else bool(FAILS)
@@ -953,6 +993,11 @@ def selftest():
     # take 134: an ad method planted back inside PLATFORM
     probe("an ad method inside PLATFORM, outside ADS (take 134)", lambda t: open(os.path.join(t, "src", "app", "56-scanner.js"), "w")
           .write(read("src", "app", "56-scanner.js").replace("const PLATFORM = {\n", "const PLATFORM = {\n  adShow() { return false; },\n", 1)), "ads-home")
+    # take 135: a section written back into the runner, and a section file that exports no run()
+    probe("a section left in the smoke's runner (take 135)", lambda t: open(os.path.join(t, "tools", "smoke.mjs"), "a")
+          .write("\nsection('stray');\n"), "smoke-split")
+    probe("a smoke section file without run(harness) (take 135)", lambda t: open(os.path.join(t, "tools", "smoke", "99-stray.mjs"), "w")
+          .write("section('stray');\n"), "smoke-split")
     probe("render receipt missing (DOM-mode seal)",
           lambda t: os.path.exists(os.path.join(t, "www", "render.png")) and os.remove(os.path.join(t, "www", "render.png")), "render")
     # take 108: an icon drawn as a character in the app, literally and as an escape
@@ -1099,6 +1144,7 @@ if __name__ == "__main__":
     check_app_split()
     check_click_dispatcher()
     check_ads_home()
+    check_smoke_split()
     check_stale_copy()
     check_play_readiness()
     check_ads()

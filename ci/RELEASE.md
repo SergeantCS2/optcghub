@@ -1,4 +1,4 @@
-# OP TCG Hub — take 134
+# OP TCG Hub — take 135
 
 ## Installing — read this first
 
@@ -17,6 +17,8 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 135:** Nothing you can see changes, and nothing in the app itself. The checks that run on every change before it reaches you are kept in many files now instead of one, so each can be read on its own, and each is told what it leaves behind for the next. Nothing you have saved changes.
 
 **New at take 134:** Nothing you can see changes. Inside, the app's ad and consent code now lives in one place of its own, beside the save credits it pays for, instead of among the phone's file, camera and share helpers. Nothing you have saved changes.
 

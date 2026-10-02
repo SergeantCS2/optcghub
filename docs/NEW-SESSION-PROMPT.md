@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 134.* Paste the block between the rules into a new session
+*Current as of take 135.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 134 takes by previous sessions. The repo is
+built across 135 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -95,6 +95,17 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   them in order with his results (his rule, take 94).
 
 **What is in flight when you arrive:**
+
+- **Take 135 -- the smoke into files** (AGENDA A44 item 6; HANDOFF take
+  135). `tools/smoke.mjs` is the runner; the sections are files under
+  `tools/smoke/` in the order they ran, each exporting `run(S)` with the
+  app's handles, `ok` and the fixtures; the foundation file (`00-`) holds
+  sections 0 to 16 and returns what they built at the top level, which 26
+  later files read from `harness.fx`; the runner snapshots the collection, the store, the mode,
+  the navigation stack, the active collection and the credits around each
+  file and names what a file left changed, as a note. The same 1,681
+  checks by name, diffed with `SMOKE_NAMES=1`. Nothing in the shipped app
+  changes; no look.
 
 - **Take 134 -- `ADS` out of `PLATFORM`** (AGENDA A44 item 4; HANDOFF take
   134). `src/app/19-ads.js` holds `ADS` beside `CREDITS`: the units a build
@@ -515,6 +526,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 135" and begin with PROTOCOL §0.
+Say "take 136" and begin with PROTOCOL §0.
 
 ---
