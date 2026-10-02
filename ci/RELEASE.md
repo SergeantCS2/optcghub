@@ -1,4 +1,4 @@
-# OP TCG Hub — take 129
+# OP TCG Hub — take 130
 
 ## Installing — read this first
 
@@ -17,6 +17,8 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 130:** Hunt reads Walmart. Under a sealed product, a Walmart line shows the price its page stated, whether it ships, who sells it there (every One Piece item on Walmart is a marketplace seller's) and when the app's hourly check read it; Where to buy gains a Walmart chip, and a stock alert can watch Walmart online. A shelf at a Walmart near you is not here yet. Nothing you have saved changes.
 
 **New at take 129:** Nothing visible. Every change to the app is now built into the Android app itself, the way a release is, before it can be merged — so a change to a plugin or to the build is caught before it reaches you — and the app's dependencies are pinned to the versions that were tested. Nothing you have saved changes.
 

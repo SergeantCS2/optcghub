@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 129.* Paste the block between the rules into a new session
+*Current as of take 130.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 129 takes by previous sessions. The repo is
+built across 130 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -95,6 +95,32 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   them in order with his results (his rule, take 94).
 
 **What is in flight when you arrive:**
+
+- **Take 130 -- Walmart measured on the runner, the runner's own probe, the
+  Sim's wire decided** (AGENDA A32, A23 step 4; D18; HANDOFF take 130). The
+  owner (2 Oct): the Walmart take next, measured on the runner first; and
+  multiplayer for the Sim -- host a match, a code, the other player joins --
+  with a US East Linux server of his he would rather not use. `probe.yml`
+  (`tools/hunt/probe.py`) is the runner's own measurement, a button: it
+  runs on a dispatch from `main` and on a push that changes it on any other
+  branch. Walmart's item page is served whole to the runner (price, status,
+  the marketplace seller); robots.txt disallows `/search`, so
+  `tools/hunt/walmart.py` reads a committed list of item pages
+  (`walmart_items.json`, grown by a person with `--discover`) at most 12 a
+  run, and the app draws a Walmart line under a matched product, a
+  Where-to-buy chip and an alert source; the store finder's own query
+  answers 418 to a plain request, so a shelf for a chosen zip waits (A32,
+  D21). The
+  Sim's wire: a relay keyed by a six-character code, two WebSocket seats,
+  the spec and the move log kept for the room's life, no account; the
+  engine refuses an illegal move from the other phone; both phones hold the
+  seed (friends, not strangers, said on screen). **The owner's one
+  decision:** the relay on a Cloudflare Worker with a Durable Object per
+  room (recommended: no machine, developed here with `wrangler dev`) or on
+  his server. **Take 131 builds it** once he answers: `relay/`, the deploy
+  workflow, Play online under Sim, smoke with two app copies on an
+  in-memory relay, a Node test against `wrangler dev`, the look with two
+  browser contexts.
 
 - **Take 129 -- the PR check builds the APK (A44 item 1), the lockfile, the
   owner's local-stock list probed** (AGENDA A44, A32's take-129 table;
@@ -448,6 +474,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 130" and begin with PROTOCOL §0.
+Say "take 131" and begin with PROTOCOL §0.
 
 ---

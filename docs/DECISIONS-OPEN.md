@@ -1,6 +1,6 @@
 # OPEN DECISIONS — needed from the owner
 
-*Current as of take 129.* Everything else is decided and recorded in AGENDA.
+*Current as of take 130.* Everything else is decided and recorded in AGENDA.
 
 **D1 — App id and name. ANSWERED: registered with Play at the take-35 upload as `com.optcghub.app` / "OP TCG Hub", permanent.** *(original)* Proposed `com.optcghub.app` / "OP TCG Hub". Permanent
 once registered under developer verification and fixed from first Play upload
@@ -187,7 +187,25 @@ is still the owner's to decide:
 A yes to "friends in one room, trusting the seed" is enough to build the
 first version; anything wider is this decision.
 
-*Added take 33; brought up to date take 122.*
+**Take 130 -- the owner asks for it (2 Oct): host a match, a random code,
+the other player enters it; "any other system you can think of"; a US East
+Linux server of his exists, which he would rather not use but can.** The
+session's design is in HANDOFF take 130: a relay keyed by a six-character
+code, two WebSocket seats, the spec and the move log kept for the life of
+the room and forgotten a day after its last frame, no account; both phones
+hold the whole seed (friends, not strangers, said on screen); the engine
+refuses an illegal move from the other phone. **The one decision left:
+where the relay runs** -- (a) a Cloudflare Worker with one Durable Object
+per room: no machine, the free plan (100,000 requests a day, hibernated
+sockets unbilled), ~150 lines under `relay/`, deployed by a workflow from a
+token in a repository secret, developed here with `wrangler dev` without an
+account until the deploy; or (b) the same room module as a Node process on
+his server behind Caddy: no new account, a machine to keep up. The session
+recommends (a). Either amends "no server since take 1" by his word, and the
+privacy page says what crosses the wire (a code, two deck lists, moves). The
+build is take 131, after this answer.
+
+*Added take 33; brought up to date take 122; the design and the one decision left, take 130.*
 
 **D16 — The named fonts (A26).** Luckiest Guy, Bangers, Open Sans and Nunito Sans ship as the four roles. If you want Impress BT, Anime Ace BB or Avenir Black themselves: buy the app-embed licence, drop the file into `assets/user/fonts/` as `display`, `comic` or `heavy` with its extension, and the next build uses it. Trebuchet MS cannot be shipped at all; Fira Sans is its free twin if you want a third plain face. Yes to the defaults as they are, or which files are coming?
 

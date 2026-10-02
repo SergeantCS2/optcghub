@@ -1,0 +1,227 @@
+{
+ "about": "Walmart item ids the hourly feed reads (tools/hunt/walmart.py; A32, take 130). Drafted by the session from one search page read by hand on 2 Oct 2026 (robots.txt disallows the search path to crawlers, so the workflow never fetches it); grown by a person with `walmart.py --discover <saved page> --write`. Each item is matched to the catalogue by the feed's matcher at build time; an unmatched item is counted, never shown under a product.",
+ "items": [
+  {
+   "id": "19974261480",
+   "title": "Collectible Bandai Trading Card Games One Piece Double Pack 10",
+   "url": "https://www.walmart.com/ip/BANDAI-ONE-PIECE-DOUBLE-PACK-10/19974261480?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "20102351151",
+   "title": "Collectible Bandai One Piece Trading Card Games Illustration Box Volume 8",
+   "url": "https://www.walmart.com/ip/BAN-ONE-PIECE-ILLUSTRATION-BOX-08/20102351151?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "20180856917",
+   "title": "Collectible Bandai One Piece Trading Card Games Illustration Box Volume 7",
+   "url": "https://www.walmart.com/ip/BAN-ONE-PIECE-ILLUSTRATION-BOX-07/20180856917?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "20830674713",
+   "title": "Collectible One Piece Trading Card Game The World's Strongest Warriors Booster Pack [ENGLISH, 12 Cards]",
+   "url": "https://www.walmart.com/ip/One-Piece-Trading-Card-Game-The-World-s-Strongest-Warriors-Booster-Pack-ENGLISH-12-Cards/20830674713?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "15840957168",
+   "title": "Collectible One Piece Starter Deck 23: RED Shanks",
+   "url": "https://www.walmart.com/ip/BAN-ONE-PIECE-STARTER-DECK-23/15840957168?conditionGroupCode=4&classType=REGULAR&selectedSellerId=101515736",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "7011855158",
+   "title": "Collectible Bandai Trading Card Games One Piece Two Legends Double Pack 5",
+   "url": "https://www.walmart.com/ip/Bandai-Trading-Card-Games-One-Piece-Two-Legends-Double-Pack-5/7011855158?conditionGroupCode=4&classType=REGULAR&selectedSellerId=101358615",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "5799199906",
+   "title": "Bandai One Piece Card Game - Premium Card Collection - Live Action",
+   "url": "https://www.walmart.com/ip/One-Piece-Premium-Collection-Live-Action-Edition-Set/5799199906?classType=REGULAR&selectedSellerId=102543961",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "2935183215",
+   "title": "Bandai One Piece UTA Starter Deck Set 11",
+   "url": "https://www.walmart.com/ip/Bandai-Trading-Card-Games-One-Piece-UTA-Starter-Deck-Set-11/2935183215?classType=REGULAR&selectedSellerId=103211052",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "3124600436",
+   "title": "Collectible One Piece Trading Card Game Paramount War Booster Pack (12 Cards)",
+   "url": "https://www.walmart.com/ip/One-Piece-TCG-Paramount-War-Booster-Pack-12-Cards/3124600436?conditionGroupCode=4&classType=REGULAR&selectedSellerId=102932863",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "15804221609",
+   "title": "Collectible One Piece Starter Deck 25: BLUE Buggy",
+   "url": "https://www.walmart.com/ip/BAN-ONE-PIECE-STARTER-DECK-25/15804221609?conditionGroupCode=4&classType=REGULAR&selectedSellerId=103160724",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "15826912810",
+   "title": "Collectible One Piece Starter Deck 26: PURPLE/BLACK Monkey.D.Luffy",
+   "url": "https://www.walmart.com/ip/BAN-ONE-PIECE-STARTER-DECK-26/15826912810?conditionGroupCode=4&classType=REGULAR&selectedSellerId=102481045",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "15827713804",
+   "title": "Collectible One Piece Starter Deck 28: GREEN/YELLOW Yamato",
+   "url": "https://www.walmart.com/ip/BAN-ONE-PIECE-STARTER-DECK-28/15827713804?conditionGroupCode=4&classType=REGULAR&selectedSellerId=101050887",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "2891694264",
+   "title": "Collectible BAN ONE PIECE PILLARS OF STRENGTH SET 3 BLISTER",
+   "url": "https://www.walmart.com/ip/BAN-ONE-PIECE-PILLARS-OF-STRENGTH-SET-3-BLISTER/2891694264?conditionGroupCode=4&classType=REGULAR&selectedSellerId=102710536",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "15792974477",
+   "title": "Collectible One Piece Starter Deck 24: GREEN Jewelry Bonney",
+   "url": "https://www.walmart.com/ip/BAN-ONE-PIECE-STARTER-DECK-24/15792974477?conditionGroupCode=4&classType=REGULAR&selectedSellerId=102897759",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "20141358301",
+   "title": "Collectible Bandai One Piece Trading Card Games Red/Black Sabo ST-35 Starter Deck",
+   "url": "https://www.walmart.com/ip/BANDAI-ONE-PIECE-STARTER-DECK-35/20141358301?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "18309465326",
+   "title": "Collectible Bandai Trading Card Games One Piece Illustration Box Vol. 6",
+   "url": "https://www.walmart.com/ip/BAN-ONE-PIECE-ILLUSTRATION-BOX-06/18309465326?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "20167955663",
+   "title": "Collectible Bandai One Piece Trading Card Games Yellow Eustass\"Captain\"Kid- ST-36 Starter Deck",
+   "url": "https://www.walmart.com/ip/BANDAI-ONE-PIECE-STARTER-DECK-36/20167955663?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "19923270943",
+   "title": "Collectible Bandai Trading Card Games One Piece Double Pack 11",
+   "url": "https://www.walmart.com/ip/BANDAI-ONE-PIECE-DOUBLE-PACK-11/19923270943?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "20818420005",
+   "title": "Collectible The World's Strongest Warrior [OP-17] One Piece Bandai Booster Box",
+   "url": "https://www.walmart.com/ip/One-Piece-TCG-The-World-s-Strongest-Warriors-Booster-Box-OP-17-24-Packs/20818420005?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "20426060116",
+   "title": "Collectible One Piece Card Game The Time of Battle Booster Pack OP-16 - 12 Cards",
+   "url": "https://www.walmart.com/ip/One-Piece-Trading-Card-Game-The-Time-of-Battle-Booster-Pack-ENGLISH-12-Cards/20426060116?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "14654551842",
+   "title": "Collectible Bandai Trading Card Games One Piece Illustration Box Volume 1",
+   "url": "https://www.walmart.com/ip/Bandai-One-Piece-Illustration-Box-01/14654551842?conditionGroupCode=4&classType=REGULAR&selectedSellerId=16272",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "9824354312",
+   "title": "Collectible Bandai Trading Card Games One Piece Devil Fruits Collection Volume 2",
+   "url": "https://www.walmart.com/ip/BAN-ONE-PIECE-DEVIL-FRUITS-COL-VOL-2/9824354312?conditionGroupCode=4&classType=REGULAR&selectedSellerId=101358615",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "16417069740",
+   "title": "Collectible Bandai Trading Card Games One Piece Double Pack 7 - A Fist of Divine Speed",
+   "url": "https://www.walmart.com/ip/One-Piece-TCG-A-Fist-of-Divine-Speed-Double-Pack-Set-Vol-7-DP-07/16417069740?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "17608114078",
+   "title": "Collectible Bandai Trading Card Games One Piece Devil Fruits Collection Volume 3",
+   "url": "https://www.walmart.com/ip/BAN-ONE-PIECE-DEVIL-FRUITS-COLLECTION-OP-OP-FRUIT-VOL-3/17608114078?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "16850770458",
+   "title": "Collectible One Piece TCG: The Best One Vol. 2 (PRB-02) Booster Pack - 12 Cards",
+   "url": "https://www.walmart.com/ip/Premium-Booster-Vol-2-Booster-Pack/16850770458?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "18261474519",
+   "title": "Collectible Bandai Trading Card Games One Piece Illustration Box Vol. 5",
+   "url": "https://www.walmart.com/ip/BAN-ONE-PIECE-ILLUSTRATION-BOX-05/18261474519?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "20145363997",
+   "title": "Collectible Bandai One Piece Trading Card Games RED Monkey.D. Luffy ST-31",
+   "url": "https://www.walmart.com/ip/BANDAI-ONE-PIECE-STARTER-DECK-31/20145363997?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "19218954341",
+   "title": "Collectible BANDAI ONE PIECE SET 15 BLISTER",
+   "url": "https://www.walmart.com/ip/BANDAI-ONE-PIECE-SET-15-BLISTER/19218954341?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "20144405851",
+   "title": "Collectible One Piece Trading Card Game Adventure on KAMI's Island SLEEVED Booster Pack [ENGLISH, 12 Cards]",
+   "url": "https://www.walmart.com/ip/One-Piece-Trading-Card-Game-Adventure-on-KAMI-s-Island-SLEEVED-Booster-Pack-ENGLISH-12-Cards/20144405851?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "20329455531",
+   "title": "Collectible Bandai Trading Card Games One Piece Double Pack Set Vol.12",
+   "url": "https://www.walmart.com/ip/BANDAI-ONE-PIECE-DOUBLE-PACK-12/20329455531?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "15593974228",
+   "title": "Collectible One Piece Trading Card Game",
+   "url": "https://www.walmart.com/ip/One-Piece-Trading-Card-Game-Royal-Blood-Return-to-Dressrosa-Booster-Pack-ENGLISH-12-Cards/15593974228?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "18101660354",
+   "title": "Collectible One Piece Heroines Edition [EB-03] One Piece Extra Booster Box",
+   "url": "https://www.walmart.com/ip/One-Piece-2026-Heroines-Edition-Extra-Booster-Box-24-Packs/18101660354?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "18311952984",
+   "title": "Collectible Bandai Trading Card Games One Piece Double Pack Set Volume 9",
+   "url": "https://www.walmart.com/ip/BAN-ONE-PIECE-DOUBLE-PACK-SET-9/18311952984?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "20557073794",
+   "title": "Collectible One Piece Trading Card Game Starter Deck Ace & Luffy (ENGLISH, 51 Cards)",
+   "url": "https://www.walmart.com/ip/One-Piece-Trading-Card-Game-Starter-Deck-Ace-Luffy-ENGLISH-51-Cards/20557073794?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "20149600074",
+   "title": "Collectible Bandai One Piece Trading Card Games Purple Charlotte Katakuri ST-34 Starter Deck",
+   "url": "https://www.walmart.com/ip/BANDAI-ONE-PIECE-STARTER-DECK-34/20149600074?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "14340660670",
+   "title": "One Piece Card Game Premium Card Collection -Best Selection Vol. 2",
+   "url": "https://www.walmart.com/ip/One-Piece-Premium-Card-Collection-Best-Selection-Vol-2/14340660670?classType=REGULAR",
+   "added": "2026-10-02"
+  },
+  {
+   "id": "19286851344",
+   "title": "Collectible One Piece Trading Card Game The Azure Sea's Seven Sleeved Booster Pack [ENGLISH, 12 Cards]",
+   "url": "https://www.walmart.com/ip/One-Piece-Trading-Card-Game-The-Azure-Sea-s-Seven-Sleeved-Booster-Pack-ENGLISH-12-Cards/19286851344?conditionGroupCode=4&classType=REGULAR",
+   "added": "2026-10-02"
+  }
+ ]
+}

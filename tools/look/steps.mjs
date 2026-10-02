@@ -2272,4 +2272,35 @@ const take128 = [
     } }
 ];
 
-export const STEPS = { 128: take128, 127: take127, 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
+/* take 130: Walmart under a product -- the line the feed's item page gave (price, ships, the seller, the age), and
+   the chip on the product's sheet; every row built from the saved real pages through --from-fixtures */
+const take130 = [
+  { name: 'open', run: async (page, ctx) => { await ctx.open(); await page.evaluate(F => { window.__F130 = F; }, feed112()); return { ok: true }; } },
+  { name: 'hunt-sealed-walmart-line', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.HUNT.sync = async () => false; V.HUNT.syncHistory = async () => false; V.NAV.zipAsked = true;
+        V.HUNT.feed = window.__F130; V.HUNT.setZip('48329'); V.SEALED.kind = 'all'; V.SEALED.q = ''; V.DISTF.open.clear();
+        for (const id of Object.keys(V.HUNT.wmByCatalogId())) { const p = V.CAT.byId.get(+id); if (p) { V.SEALED.closed.delete(p.set); V.SEALED.open.add(p.set); } }
+        V.MODE.set('hunt', true); await ${pause}; V.HUNT.feed = window.__F130; V.go('sealed'); V.paintSealed(); await ${pause};
+        const line = [...document.querySelectorAll('#sealedList .nm span[style*="display:block"]')].find(x => /^Walmart \\$/.test(x.textContent.trim()));
+        /* the row's opener is itself a button.row (sealedRow): tag the opener, the sheet step clicks it */
+        const row = line && line.closest('button[data-open]'); if (row) { row.scrollIntoView({ block: 'center' }); row.setAttribute('data-look', 'wm'); }
+        return { line: line ? line.textContent.trim() : null, row: row ? row.querySelector('.nm b').textContent : null, lines: [...document.querySelectorAll('#sealedList .nm span[style*="display:block"]')].filter(x => /^Walmart/.test(x.textContent.trim())).length }; })()`);
+      await waitArt(page, '#sealedList img'); await wait(300);
+      return { ok: !!m.line && /^Walmart \$26\.98 · ships · sold by .+ · /.test(m.line) && m.lines >= 1, ...m };
+    } },
+  { name: 'hunt-sheet-where-to-buy-walmart', run: async (page) => {
+      await page.evaluate(() => { const r = document.querySelector('#sealedList button[data-look="wm"]'); r.scrollIntoView({ block: 'center' }); });
+      await page.click('#sealedList button[data-look="wm"]'); await wait(700);
+      /* the sheet's Where to buy is #dBuyList: a row per seller (its name in .nm b, its words in .nm span, an Open link) -- not the chips.
+         The link is the item's own page as the site names it, with Walmart's own selectors (condition, class, the seller whose
+         price the line shows); the rule is the smoke's: no referral or tracking parameter */
+      const m = await page.evaluate(() => { const d = document.getElementById('detail'); const rows = [...d.querySelectorAll('#dBuyList .row')];
+        const sellers = rows.map(r => r.querySelector('.nm b').textContent.trim()); const wm = rows.find(r => /Walmart/.test(r.querySelector('.nm b').textContent)); if (wm) wm.scrollIntoView({ block: 'center' });
+        const a = wm && wm.querySelector('a.ghost[href^="http"]');
+        return { on: d.classList.contains('on'), sellers, note: wm ? wm.querySelector('.nm span').textContent.trim() : null, href: a ? a.getAttribute('href') : null }; });
+      await wait(300);
+      return { ok: m.on && m.sellers.some(c => /Walmart/.test(c)) && /^https:\/\/www\.walmart\.com\/ip\//.test(m.href || '') && !/[?&](aff|tag|ref|utm|irgwc|cid|wmlspartner)/i.test(m.href || '') && /^TCGplayer/.test(m.sellers[0] || '') && /^\$26\.98 · ships · sold by /.test(m.note || ''), ...m };
+    } },
+];
+
+export const STEPS = { 130: take130, 128: take128, 127: take127, 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };

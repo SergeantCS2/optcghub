@@ -13,7 +13,7 @@ as failed with the reason and the last good time stays in the feed.
 import argparse, json, os, re, sqlite3, sys, time
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tools"))
-from hunt import target, roster, shops, gts, southern  # noqa: E402   (landmine 133: this is the package tools/hunt/, not this file)
+from hunt import target, roster, shops, gts, southern, walmart  # noqa: E402   (landmine 133: this is the package tools/hunt/, not this file)
 
 OUT = os.path.join(ROOT, "www", "hunt", "feed.json")
 HIST = os.path.join(ROOT, "www", "hunt", "history.json")
@@ -317,6 +317,17 @@ def build(zips, radius, previous=None, fixtures=False):
         last = prev_s; last["stale_since"] = last.get("stale_since") or feed["fetched_at"]; last["error"] = so.get("error"); last["kept"] = True
         so = last
     feed["sources"]["southern"] = so
+    # take 130: Walmart, from its item pages (A32). Each item is matched by its title as the
+    # page states it; a failed run keeps the last good one and says since when.
+    prev_w = (previous or {}).get("sources", {}).get("walmart")
+    w = walmart.from_fixture(os.path.join(fx, "walmart_item.html")) if fixtures else walmart.fetch(previous=prev_w)
+    if w.get("ok"):
+        for it in w["items"]:
+            it["catalog_id"], it["match_score"] = match(it["title"], sealed)
+    elif prev_w and prev_w.get("ok"):
+        last = prev_w; last["stale_since"] = last.get("stale_since") or feed["fetched_at"]; last["error"] = w.get("error"); last["kept"] = True
+        w = last
+    feed["sources"]["walmart"] = w
     return feed
 
 
@@ -706,6 +717,27 @@ def selftest():
             fn(bad); check(f"control: a changed {name} shape is refused", False)
         except (KeyError, TypeError):
             check(f"control: a changed {name} shape is refused", True)
+    # take 130: Walmart's item page, read off the saved real page; what the page did not say stays unsaid
+    wi = walmart.parse_item(open(os.path.join(fx, "walmart_item.html"), encoding="utf-8").read())
+    check("walmart item parse: id, title, a price with its text, the status, the seller, ships", bool(wi) and wi["id"] == "16850770458" and wi["price"] == 26.98 and wi["price_text"] == "$26.98" and wi["status"] == "IN_STOCK" and wi["seller"] and wi["ships"], json.dumps(wi)[:120] if wi else "none")
+    check("control: a page with no product in it parses to None, never to a product", walmart.parse_item("<html><body>Robot or human?</body></html>") is None and walmart.parse_item('<script id="__NEXT_DATA__">{"props":{"pageProps":{}}}</script>') is None)
+    nop = walmart.parse_item(open(os.path.join(fx, "walmart_item.html"), encoding="utf-8").read().replace('"currentPrice":{"price":26.98,', '"currentPrice":{"price":null,'))
+    check("control: a price the page does not state is None, never 0", bool(nop) and nop["price"] is None and nop["status"] == "IN_STOCK")
+    ws = walmart.parse_search(open(os.path.join(fx, "walmart_search.html"), encoding="utf-8").read())
+    check("walmart search parse (a person's --discover): tiles with id, title and url", len(ws) >= 30 and all(t["id"] and t["title"] and t["url"].startswith("https://www.walmart.com/") for t in ws), f"{len(ws)} tiles")
+    wl = walmart.load_items()
+    check("the committed Walmart list: ids, titles, urls, no Japanese item", len(wl) >= 20 and all(i["id"] and i["title"] and i["url"] for i in wl) and not any("japan" in i["title"].lower() for i in wl), f"{len(wl)} items")
+    if sealed:
+        check("...and the feed's matcher keys most of it to the catalogue", sum(1 for i in wl if match(i["title"], sealed)[0]) >= len(wl) // 2, f"{sum(1 for i in wl if match(i['title'], sealed)[0])} of {len(wl)}")
+    fx_html = open(os.path.join(fx, "walmart_item.html"), encoding="utf-8").read()
+    served = lambda url: (200, fx_html)   # noqa: E731
+    walled = lambda url: (418, "")   # noqa: E731
+    f1 = walmart.fetch(items=wl[:5], previous=None, max_calls=2, pause=0, now="2026-10-02T06:00:00Z", get=served, sleep=lambda s: None)
+    check("walmart fetch: a run reads its budget and no more, carries the rest unchecked, and moves the cursor", f1["ok"] and f1["calls"] == 2 and f1["read"] == 2 and f1["cursor"] == 2 and sum(1 for i in f1["items"] if i.get("online")) == 2 and all(i["online"]["checked_at"] == "2026-10-02T06:00:00Z" for i in f1["items"] if i.get("online")), f"calls {f1['calls']} read {f1['read']} cursor {f1['cursor']}")
+    f2 = walmart.fetch(items=wl[:5], previous=f1, max_calls=2, pause=0, now="2026-10-02T07:00:00Z", get=served, sleep=lambda s: None)
+    check("...the next run continues from the cursor and keeps the earlier answers with THEIR time", f2["ok"] and f2["cursor"] == 4 and sum(1 for i in f2["items"] if i.get("online")) == 4 and sum(1 for i in f2["items"] if (i.get("online") or {}).get("checked_at") == "2026-10-02T06:00:00Z") == 2)
+    f3 = walmart.fetch(items=wl[:5], previous=f2, max_calls=2, pause=0, now="2026-10-02T08:00:00Z", get=walled, sleep=lambda s: None)
+    check("control: a run every page of which is refused is not ok and says why; the earlier answers ride on with their time", not f3["ok"] and "418" in f3["error"] and sum(1 for i in f3["items"] if i.get("online")) == 4)
     return ok
 
 
@@ -879,4 +911,14 @@ if __name__ == "__main__":
               + (f"; the budget was spent, {so.get('pages_skipped')} page(s) wait for the next run" if so.get("budget_spent") else ""))
     else:
         print(f"   southern: FAILED {so.get('error')}")
+    w = feed["sources"].get("walmart") or {}
+    if w.get("kept"):
+        print(f"   walmart: this fetch FAILED ({w.get('error')}); kept the last good fetch from {w.get('fetched_at')} (stale since {w.get('stale_since')})")
+    elif w.get("ok"):
+        n = w["items"]; on = [i for i in n if i.get("online")]
+        print(f"   walmart: {len(n)} items ({sum(1 for i in n if i.get('catalog_id'))} matched), {w.get('read')} read this run, {len(on)} with an answer on file, "
+              f"{sum(1 for i in on if i['online'].get('status') == 'IN_STOCK')} in stock online, {sum(1 for i in on if i['online'].get('price') is None)} without a price; {w.get('calls')} call(s), cursor {w.get('cursor')}"
+              + (f"; errors: {'; '.join(w['errors'][:2])}" if w.get("errors") else ""))
+    else:
+        print(f"   walmart: FAILED {w.get('error')}")
     print(f"   feed: {os.path.relpath(a.out, ROOT)} {os.path.getsize(a.out) // 1024} KB")
