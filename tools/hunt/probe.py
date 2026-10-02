@@ -16,10 +16,11 @@ for a page that carries its own JSON (Walmart's __NEXT_DATA__) what that JSON
 holds -- items, prices, store ids, fulfillment keys. Honest about absence: an
 empty price is printed as empty, never as zero.
 """
-import argparse, json, os, re, sys, time, urllib.request, urllib.error
+import argparse, json, os, re, sys, time, urllib.parse, urllib.request, urllib.error
 
 UA = "Mozilla/5.0 (Linux; Android 14; SM-F966U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Mobile Safari/537.36"
 WALLS = ("captcha", "challenge", "Access Denied", "Robot or human", "px-captcha", "Just a moment", "incapsula", "akamai")
+STORE_QUERY = "/orchestra/home/graphql/storeFinderNearbyNodesQuery/d99972cb2bebae830d3024353653c48d935f157bb846c0980e7ab0ab4b744e98"
 
 
 def probes(zip_code):
@@ -30,6 +31,9 @@ def probes(zip_code):
         ("walmart-item", "https://www.walmart.com/ip/16850770458", {}),
         # the same item with a store named the way the site's own cookie names it: does a price or a shelf appear?
         ("walmart-item-store", "https://www.walmart.com/ip/16850770458", {"Cookie": "assortmentStoreId=2648; hasLocData=1"}),
+        # the request the store finder's own page makes for its list (read off a real browser, take 130): a
+        # persisted GraphQL query by hash, the zip and radius in `variables`; the finder page itself carries no stores
+        ("walmart-stores-api", "https://www.walmart.com" + "%s?variables=" % STORE_QUERY + urllib.parse.quote(json.dumps({"input": {"postalCode": z, "nodeTypes": ["STORE"], "accessTypes": ["PICKUP_INSTORE", "PICKUP_CURBSIDE"], "radius": 50}})), {"Accept": "application/json"}),
         ("hottopic-search", "https://www.hottopic.com/search?q=one+piece+card+game", {}),
         ("gamestop-search", "https://www.gamestop.com/search/?q=one+piece+card+game", {}),
         ("gamestop-stores", f"https://www.gamestop.com/on/demandware.store/Sites-gamestop-us-Site/default/Stores-FindStores?postalCode={z}&radius=50", {}),
@@ -91,6 +95,19 @@ def walmart_summary(name, d):
     if name.startswith("walmart-stores"):
         stores = [o for o in walk(d) if isinstance(o.get("id"), (str, int)) and (o.get("displayName") or o.get("storeType")) and (o.get("address") or o.get("distance") is not None)]
         return f"stores {len(stores)}: " + "; ".join(f"{o.get('id')} {o.get('displayName') or ''} {o.get('distance') or ''}".strip() for o in stores[:4])
+    return ""
+
+
+def walmart_api_summary(body):
+    """The store finder's own query answers JSON, not a page: the nodes it names, or what it said instead."""
+    try:
+        d = json.loads(body)
+    except Exception:
+        return "not JSON"
+    nodes = ((d.get("data") or {}).get("nearByNodes") or {}).get("nodes") or []
+    if nodes:
+        return f"nodes {len(nodes)}: " + "; ".join(f"{n.get('id')} {n.get('displayName') or n.get('name') or ''} {n.get('distance') or ''} mi" for n in nodes[:4])
+    return "no nodes: " + json.dumps(d)[:160]
     if name.startswith("walmart-item"):
         prod = next((o for o in walk(d) if isinstance(o.get("name"), str) and ("usItemId" in o or "availabilityStatus" in o)), None)
         if not prod:
@@ -124,7 +141,12 @@ def main():
         op = len(re.findall(r"(?i)one piece", text))
         with open(os.path.join(a.out, name + ".html"), "wb") as f:
             f.write(body)
-        extra_note = walmart_summary(name, next_data(body)) if name.startswith("walmart") else ""
+        extra_note = walmart_api_summary(body) if name == "walmart-stores-api" else walmart_summary(name, next_data(body)) if name.startswith("walmart") else ""
+        if 0 < len(body) < 20000:   # a small page is a wall or a stub more often than a listing: say what it says
+            title = re.search(r"(?is)<title>(.*?)</title>", text)
+            words = re.sub(r"(?is)<script.*?</script>|<style.*?</style>|<[^>]+>", " ", text)
+            words = re.sub(r"\s+", " ", words).strip()
+            extra_note += ("  " if extra_note else "") + f"title '{(title.group(1).strip() if title else '')[:60]}' text '{words[:140]}'"
         print(f"{name:<20} {str(status):>6} {len(body):>8} {op:>8}  {','.join(walls) or '-'}{'  ' + err if err else ''}{'  ' + extra_note if extra_note else ''}")
         time.sleep(1.5)
     print(f"bodies under {a.out}/")
