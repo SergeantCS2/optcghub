@@ -8,6 +8,11 @@ name: probe
 # every body rides the run as an artifact for a week. A measurement, never a
 # feed: nothing it reads reaches www/ or Pages, and the token is read-only.
 #
+# GitHub dispatches a workflow only once its file is on the default branch
+# (the first dispatch from a branch answered 404, take 130), so a push that
+# changes the probe on any other branch runs it there as well, with the
+# defaults; main is left to the dispatch.
+#
 # Lives in git; kept BYTE-IDENTICAL to ci/probe.yml (the gate compares the
 # two). If a push of .github/workflows is refused, paste ci/probe.yml here
 # (RUNBOOK §5b).
@@ -21,6 +26,11 @@ on:
       only:
         description: 'probe names, comma-separated; empty for all'
         default: ''
+  push:
+    branches-ignore: [ main ]
+    paths:
+      - tools/hunt/probe.py
+      - .github/workflows/probe.yml
 
 permissions:
   contents: read
@@ -38,7 +48,7 @@ jobs:
         env:
           PROBE_ZIP: ${{ inputs.zip }}
           PROBE_ONLY: ${{ inputs.only }}
-        run: python3 tools/hunt/probe.py --zip "$PROBE_ZIP" --only "$PROBE_ONLY" --out probe-out
+        run: python3 tools/hunt/probe.py --zip "${PROBE_ZIP:-48329}" --only "${PROBE_ONLY:-}" --out probe-out
       - uses: actions/upload-artifact@v6
         if: always()
         with:
