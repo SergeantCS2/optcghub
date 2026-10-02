@@ -1,6 +1,6 @@
-# V1-STATE — what exists, as of take 130
+# V1-STATE — what exists, as of take 131
 
-*Current as of take 130.* The honest inventory: sorted into what is PROVEN on a
+*Current as of take 131.* The honest inventory: sorted into what is PROVEN on a
 device, what is BUILT and verified in the harness, and what is DEFERRED with
 the reason. Numbers are measured, not remembered; the take that measured
 each is named.
@@ -17,8 +17,10 @@ official Comprehensive Rules, a deck-building card browse, a Life/DON!!
 counter, the hot-seat Sim) and **Hunt** (sealed products and their prices,
 Releases, stock from Target, local shops and two distributors, Local,
 Events; take 70 on). Rewarded ads gate *saving*, never scanning (A17). No
-account, no server; the network calls are the catalogue refresh from Pages
-(take 27) and Hunt's feed files from Pages (take 71). Live on Google Play
+account; no server but the Sim's match relay, spoken to only while a player
+hosts or joins a match (take 131, D18 by the owner's word); the other network
+calls are the catalogue refresh from Pages (take 27) and Hunt's feed files
+from Pages (take 71). Live on Google Play
 since 24 Sept 2026.
 
 ## PROVEN on a device (the Fold, take 16), on a runner (take 32), and in the Play Console (take 39)
@@ -245,10 +247,13 @@ reproductions, outside the harness).
 | Simulator step (2), the rest | more whole templates with tests; Event timings; chained sentences — coverage is 6.1% and grows only by whole templates | A23 |
 | Simulator step (4) | two phones (D18); a stronger opponent is a different promise | A23 |
 | The board on the Fold | two people, one phone; the curtain and the battle window unmeasured | A23 |
+| Two phones across the internet | *Take 131:* the relay's suite (58 checks, four plants named) and the exchange against the real Worker under `wrangler dev`; two app copies on the in-memory relay in smoke; the look with two browser contexts. A match between two real phones waits on the owner's deploy (RUNBOOK §9) | A23 step 4, D18 |
 
 ## What is NOT in the app, by design
 
-No account, no server, no analytics, no crash reporting, no social feed, no
+No account, no server but the match relay (take 131, D18, the owner's word:
+spoken to only while a player hosts or joins), no analytics, no crash
+reporting, no social feed, no
 shop, no affiliate links, no bundled or cached art (card art is shown
 hot-linked, display-only -- the owner's ruling at take 106, used from take 109),
 no character or publisher mark in the name, icon, splash or store listing, and

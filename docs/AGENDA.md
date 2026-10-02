@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 130.* Ranked by blocking-ness, not by interest.
+*Current as of take 131.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -74,11 +74,14 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0b. *Take 130, in flight (2 Oct):* the Walmart take, measured on the runner
-   first by the runner's own probe (`probe.yml`, a button); the Sim's wire
-   designed and recorded (D18, HANDOFF take 130) -- **the owner's one
-   decision: the relay on a Cloudflare Worker (recommended) or on his US
-   East server**; take 131 builds it. *Done at take 129:* the PR check
+0b. *Take 131, in flight (2 Oct):* the Sim across the internet (A23 step 4,
+   D18 decided): a room code, a relay on a Cloudflare Worker with a Durable
+   Object per room under `relay/`, Host and Join under Sim, every move over
+   the wire and applied on the relay's echo; the deploy waits on the owner's
+   account (RUNBOOK §9). *Done at take 130 (PR 57, ready):* the Walmart
+   take, measured on the runner first by the runner's own probe
+   (`probe.yml`, a button); the Sim's wire designed and recorded. *Done at
+   take 129:* the PR check
    builds the APK (A44 item 1), the lockfile, landmine 245.
 0a. *Done at take 128:* the red nightly root-caused and mended (landmine
    243), the audit of the stack (**A44**, a fix sketch per finding), a scanned
@@ -2397,6 +2400,30 @@ in the future, the simulator.
 
 ## A23 — An OP TCG simulator · SCOPED take 24 · STEP (1) BOARD take 46 · STEP (2) EFFECTS takes 47–51 · STEP (3) OPPONENT take 55 · THE AUDIT AND CARD PROOFS take 122 · PHASE
 
+- **Take 131 -- step 4, the wire: two phones across the internet (D18
+  decided).** The owner (2 Oct): host a match, a random code, the other
+  player enters it; "any other system you can think of"; his US East server
+  rather not. Built: `relay/` -- a pure room module (state and what each
+  frame does to it), a Cloudflare Worker with one SQLite Durable Object per
+  room (the WebSocket hibernation API, a day's alarm), `wrangler.toml`, its
+  own lockfile, `relay/test.mjs` with controls and a run against `wrangler
+  dev`; in the app, Host and Join on the Sim's setup, the joiner's deck
+  across, the host's `g.spec` across, every move applied on the relay's
+  echo, a reconnect by code and token with `since`, the entry hidden with
+  no `VAULT_RELAY` in `BUILD`; `relay.yml` deploys from two secrets. MEASURED
+  (2 Oct, this VM): `wrangler dev` runs the SQLite Durable Object with
+  hibernating sockets locally -- two clients on one room each got the
+  other's frame. **Ruled out: peer to peer without a server** -- phones
+  behind home NATs need signalling and, one time in five or so, a TURN
+  relay (D18, take 33). **Ruled out: the code or a QR as the whole wire** --
+  it carries the first message, and each move needs a path. **Ruled out:
+  the relay judging a move** -- the engine on each phone refuses an illegal
+  one; the relay orders frames and keeps them, nothing else, so it holds no
+  rules to drift. **Ruled out: applying a move before the relay's echo** --
+  two code paths and a rollback where one path and the relay's order
+  suffice; a tap waits one round trip. **Ruled out: the owner's server** --
+  his word; the pure room module leaves it one adapter away. Fairness beyond
+  friends, accounts and a spectator seat stay in D18.
 - **Take 122 — the owner's priority: the engine right, the rules current,
   every card provable.** The owner: the Sim "has dawdled behind", "extremely
   buggy" (unlimited cards with ST01 Luffy); a code review, a rules review,

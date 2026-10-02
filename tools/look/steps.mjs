@@ -2303,4 +2303,73 @@ const take130 = [
     } },
 ];
 
-export const STEPS = { 130: take130, 128: take128, 127: take127, 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
+/* take 131: Play online -- two browser contexts, host and joiner, joined by the real relay (relay/src/worker.js) under
+   `wrangler dev`, started here for the list and stopped by its last step. The host's page is the look's; the joiner's
+   is a second context (its own storage) whose picture rides beside each step as an extra shot. */
+/* a fresh port per start: the first list's workerd (wrangler's child, its own process group) held the port after wrangler was
+   killed and the second list's relay never came up (take 131's first look); so the group is killed, and the port is new */
+const relay131 = { proc: null, url: null };
+async function relayStart() {
+  if (relay131.proc) return;
+  const { spawn } = await import('node:child_process'); const path = await import('node:path');
+  const cwd = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', '..', 'relay'), port = 8700 + Math.floor(Math.random() * 250);
+  const p = spawn('npx', ['wrangler', 'dev', '--port', String(port), '--ip', '127.0.0.1'], { cwd, detached: true, env: { ...process.env, WRANGLER_SEND_METRICS: 'false', CI: '1' }, stdio: ['ignore', 'pipe', 'pipe'] });
+  let out = ''; p.stdout.on('data', d => { out += d; }); p.stderr.on('data', d => { out += d; });
+  const t0 = Date.now(); while (!/Ready on/.test(out) && Date.now() - t0 < 90000 && p.exitCode === null) await wait(250);
+  if (!/Ready on/.test(out)) { try { process.kill(-p.pid, 'SIGKILL'); } catch (e) {} throw new Error('wrangler dev did not start: ' + out.slice(-300)); }
+  relay131.proc = p; relay131.url = `http://127.0.0.1:${port}`;
+}
+async function relayStop() { const p = relay131.proc; relay131.proc = null; if (p) { try { process.kill(-p.pid, 'SIGTERM'); } catch (e) {} await wait(400); try { process.kill(-p.pid, 'SIGKILL'); } catch (e) {} } }
+const toSimOnline = () => `(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.ONLINE.relay = '${relay131.url}'; V.ONLINE.mirror(); V.MODE.set('play', true); await ${pause}; V.go('sim'); V.paintSim(); await ${pause}; const p = document.querySelector('#simOnline'); if (p) p.scrollIntoView({ block: 'start' }); })()`;
+const take131 = [
+  { name: 'open', run: async (page, ctx) => { await ctx.open(); await relayStart(); await page.evaluate(toSimOnline()); await wait(300);
+      const m = await page.evaluate(() => { const p = document.querySelector('#simOnline'); return { panel: !!p, host: !!document.querySelector('#simOnline [data-sim="host"]'), join: !!document.querySelector('#simOnline [data-sim="join"]'), words: p ? /friends, not strangers/.test(p.textContent) : false }; });
+      return { ok: m.panel && m.host && m.join && m.words, ...m }; } },
+  { name: 'online-host-the-code', run: async (page) => {
+      await page.click('#simOnline [data-sim="host"]'); await page.waitForFunction(() => window.VAULT.ONLINE.sess && window.VAULT.ONLINE.sess.live && window.VAULT.ONLINE.sess.code, null, { timeout: 15000 }); await wait(400);
+      const m = await page.evaluate(() => { const s = window.VAULT.ONLINE.sess, p = document.querySelector('#simOnline'); return { code: s.code, seat: s.seat, live: s.live, peer: s.peer, shown: p ? p.textContent.includes(s.code) : false, waiting: p ? /waiting for your friend/.test(p.textContent) : false, dealOff: !!document.querySelector('#simOnline [data-sim="deal"][disabled]'), share: !!document.querySelector('#simOnline [data-sim="sharecode"]') }; });
+      return { ok: /^[A-HJ-NP-Z2-9]{6}$/.test(m.code) && m.seat === 0 && m.live && !m.peer && m.shown && m.waiting && m.dealOff && m.share, ...m }; } },
+  { name: 'online-the-friend-joins', run: async (page, ctx) => {
+      const code = await page.evaluate(() => window.VAULT.ONLINE.sess.code);
+      const v = SIZES[ctx.viewport]; const browser = page.context().browser(); const c2 = await browser.newContext({ viewport: { width: v.width, height: v.height }, deviceScaleFactor: v.dpr, timezoneId: OWNER_TZ });
+      const p2 = ctx.page2 = await c2.newPage(); await p2.goto(ctx.url, { waitUntil: 'networkidle' }); await p2.waitForFunction(() => window.VAULT && window.VAULT.CAT && window.VAULT.CAT.ready, null, { timeout: 30000 });
+      await p2.evaluate(() => { const s = [...document.querySelectorAll('#tour button')].find(b => /skip/i.test(b.textContent)); if (s) s.click(); }); await p2.evaluate(toSimOnline()); await wait(300);
+      await p2.evaluate(() => { const sel = document.querySelector('#simDO'); if (sel && sel.options.length > 1) { sel.value = '1'; sel.dispatchEvent(new Event('change', { bubbles: true })); } });
+      await p2.fill('#simCode', code.toLowerCase()); await p2.click('#simOnline [data-sim="join"]');
+      await p2.waitForFunction(() => window.VAULT.ONLINE.sess && window.VAULT.ONLINE.sess.live && window.VAULT.ONLINE.sess.peer, null, { timeout: 15000 });
+      await page.waitForFunction(() => window.VAULT.ONLINE.sess && window.VAULT.ONLINE.sess.peer && window.VAULT.ONLINE.sess.deckTheirs, null, { timeout: 15000 }); await wait(400);
+      const shot = await ctx.shot('03b-the-joiner-in-the-lobby', p2);
+      const m = await page.evaluate(() => { const s = window.VAULT.ONLINE.sess, p = document.querySelector('#simOnline'); return { here: p ? /your friend is here/.test(p.textContent) : false, theirs: s.deckTheirs && s.deckTheirs.name, dealOn: !!document.querySelector('#simOnline [data-sim="deal"]:not([disabled])') }; });
+      const j = await p2.evaluate(() => { const s = window.VAULT.ONLINE.sess, p = document.querySelector('#simOnline'); return { seat: s.seat, joined: p ? p.textContent.includes(s.code) && /Player 2/.test(p.textContent) && /the host is here/.test(p.textContent) : false, noDeal: !document.querySelector('#simOnline [data-sim="deal"]') }; });
+      return { ok: m.here && !!m.theirs && m.dealOn && j.seat === 1 && j.joined && j.noDeal, shot, ...m, joiner: j }; } },
+  { name: 'online-the-host-deals', run: async (page, ctx) => {
+      await page.click('#simOnline [data-sim="deal"]'); await page.waitForFunction(() => window.VAULT.SIM.g && window.VAULT.ONLINE.sess.state === 'play', null, { timeout: 15000 });
+      await ctx.page2.waitForFunction(() => window.VAULT.SIM.g && window.VAULT.ONLINE.sess.state === 'play', null, { timeout: 15000 }); await wait(500);
+      const shot = await ctx.shot('04b-the-joiner-dealt', ctx.page2);
+      const h = await page.evaluate(() => { const g = window.VAULT.SIM.g; return { seed: g.spec.seed, first: g.first, seat: window.VAULT.simSeat(), mull: !!document.querySelector('#simBoard .tb-mull'), cards: document.querySelectorAll('#simBoard .tb-mhand .sc').length, keep: !!document.querySelector('#simBoard [data-sim="keep:0"]') }; });
+      const j = await ctx.page2.evaluate(() => { const g = window.VAULT.SIM.g; return { seed: g.spec.seed, first: g.first, seat: window.VAULT.simSeat(), mull: !!document.querySelector('#simBoard .tb-mull'), cards: document.querySelectorAll('#simBoard .tb-mhand .sc').length, keep: !!document.querySelector('#simBoard [data-sim="keep:1"]') }; });
+      return { ok: h.seed === j.seed && h.first === j.first && h.seat === 0 && j.seat === 1 && h.mull && j.mull && h.cards === 5 && j.cards === 5 && h.keep && j.keep, shot, host: h, joiner: j }; } },
+  { name: 'online-both-keep-over-the-wire', run: async (page, ctx) => {
+      /* the first player keeps first (§5-2-1-6): whichever phone that is taps Keep, then the other; each keep is applied on the relay's echo */
+      const first = await page.evaluate(() => window.VAULT.SIM.g.first); const P = [page, ctx.page2];
+      for (const seat of [first, 1 - first]) { const pg = P[seat]; await pg.click(`#simBoard [data-sim="keep:${seat}"]`);
+        await page.waitForFunction(n => window.VAULT.SIM.g.actions.length === n, seat === first ? 1 : 2, { timeout: 15000 }); await ctx.page2.waitForFunction(n => window.VAULT.SIM.g.actions.length === n, seat === first ? 1 : 2, { timeout: 15000 }); await wait(300); }
+      await wait(500); const shot = await ctx.shot('05b-the-joiner-at-the-table', ctx.page2);
+      const snap = () => { const g = window.VAULT.SIM.g; return JSON.stringify({ p: g.players, t: g.turn, a: g.active, ph: g.phase }); };
+      const h = await page.evaluate(`(${snap})()`), j = await ctx.page2.evaluate(`(${snap})()`);
+      const m = await page.evaluate(() => ({ turn: window.VAULT.SIM.g.turn, top: (document.querySelector('#simBoard .tb-stat') || {}).textContent || '', mat: !!document.querySelector('#simBoard .tb-mat'), end: (document.querySelector('#simBoard .tb-end') || {}).textContent || '' }));
+      const m2 = await ctx.page2.evaluate(() => ({ top: (document.querySelector('#simBoard .tb-stat') || {}).textContent || '', mat: !!document.querySelector('#simBoard .tb-mat'), end: (document.querySelector('#simBoard .tb-end') || {}).textContent || '' }));
+      const ends = m.end + m2.end;   /* End turn's note online is "then their turn", never the hot seat's "then pass the phone" (the first look read it on the joiner's table) */
+      return { ok: h === j && m.turn === 1 && m.mat && m2.mat && ((/your turn/.test(m.top) && /their turn/.test(m2.top)) || (/your turn/.test(m2.top) && /their turn/.test(m.top))) && !/pass the phone/.test(ends) && /then their turn/.test(ends), shot, same: h === j, host: m.top, joiner: m2.top, end: ends.trim() }; } },
+  { name: 'online-the-joiner-leaves-and-concedes', run: async (page, ctx) => {
+      await ctx.page2.click('#simBoard [data-sim="leave"]'); await wait(400); await ctx.page2.click('#simSheet [data-sim="leavenow"]');
+      await page.waitForFunction(() => window.VAULT.SIM.g && window.VAULT.SIM.g.over === 0, null, { timeout: 15000 }); await wait(500);
+      const m = await page.evaluate(() => { const b = document.querySelector('#simBoard'); return { over: window.VAULT.SIM.g.over, wins: /Player 1[^<]*wins/.test(b.textContent), state: window.VAULT.ONLINE.sess && window.VAULT.ONLINE.sess.state }; });
+      const j = await ctx.page2.evaluate(() => ({ room: !!window.VAULT.ONLINE.sess, game: !!window.VAULT.SIM.g, kept: !!localStorage.getItem('optcghub.online') }));
+      await ctx.page2.context().close(); ctx.page2 = null; await relayStop(); await wait(900);
+      /* the relay is gone and the game is over: the bar says so and owes the wire nothing (the first look read "reconnecting…" here) */
+      const bar = await page.evaluate(() => (document.querySelector('#simBoard .tb-stat') || {}).textContent || '');
+      return { ok: m.over === 0 && m.wins && m.state === 'over' && !j.room && !j.game && !j.kept && /The game is over/.test(bar) && !/reconnect|sending|away/.test(bar), bar, ...m, joiner: j }; } },
+];
+
+export const STEPS = { 131: take131, 130: take130, 128: take128, 127: take127, 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };

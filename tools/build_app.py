@@ -26,6 +26,18 @@ def take():
     raise SystemExit("BUILD has no VAULT_TAKE")
 
 
+def relay():
+    """Take 131: the Sim's relay, `VAULT_RELAY=https://...` in BUILD -- or empty, and the app paints no Play online.
+    A value that is not an https origin is refused: a stray path or a space would ship as a dead entry."""
+    for line in open(os.path.join(ROOT, "BUILD")):
+        if line.startswith("VAULT_RELAY="):
+            v = line.split("=", 1)[1].strip().rstrip("/")
+            if v and not re.fullmatch(r"https://[a-z0-9.-]+(?::\d+)?", v):
+                raise SystemExit(f"BUILD: VAULT_RELAY must be an https origin (host only), got {v!r}")
+            return v
+    return ""
+
+
 def catalogue_json(db):
     """Compact arrays, not objects. 6,860 printings as {"k":[...],"r":[[...]]}
     is roughly a third the size of a list of dicts and parses faster."""
@@ -235,6 +247,11 @@ def build(verbose=True):
     js = js.replace("__TAKE__", str(n))
     if "__TAKE__" in html or "__TAKE__" in js:
         raise SystemExit("build_app: unreplaced __TAKE__ remains")
+    # take 131: the relay's address rides the built script only; the source carries the token
+    assert js.count("'__RELAY__'") == 1, "src/app.html: ONLINE.relay must carry the one __RELAY__ token"
+    js = js.replace("'__RELAY__'", repr(relay()).replace('"', "'"))
+    if "__RELAY__" in html or "__RELAY__" in js:
+        raise SystemExit("build_app: unreplaced __RELAY__ remains")
 
     open(os.path.join(WWW, "index.html"), "w").write(html)
     open(os.path.join(WWW, "app.js"), "w").write(js)

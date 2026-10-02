@@ -1,0 +1,15 @@
+{
+  "name": "optcghub-relay",
+  "private": true,
+  "type": "module",
+  "description": "OP TCG Hub's relay for two-phone play: a room code, two seats, the deal and the moves (take 131, D18)",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "node test.mjs",
+    "test:dev": "node test.mjs --dev"
+  },
+  "devDependencies": {
+    "wrangler": "^4.147.0"
+  }
+}

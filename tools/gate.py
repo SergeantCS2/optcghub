@@ -136,6 +136,35 @@ def check_workflow_copies():
             fail("workflows", f"ci/{fn} and .github/workflows/{fn} differ — they are one file; copy one over the other")
 
 
+def check_relay():
+    """Take 131 (D18). The Sim's relay lives in relay/: its room module's suite and its negative
+    controls run here (pure, a second); the exchange against the real Worker is the PR check's
+    (ci/check.sh, --dev). The deploy workflow must exist in both copies and refuse to deploy
+    without the owner's secrets; the check script must run the relay's suite; the app's source
+    must carry the one __RELAY__ token the build fills from BUILD."""
+    rd = os.path.join(ROOT, "relay")
+    for fn in ("src/room.js", "src/worker.js", "src/memory.js", "test.mjs", "wrangler.toml", "package.json", "package-lock.json"):
+        if not os.path.exists(os.path.join(rd, fn)):
+            return fail("relay", f"relay/{fn} is missing")
+    y = read("ci", "relay.yml")
+    if "wrangler deploy" not in y or "CLOUDFLARE_API_TOKEN" not in y or "nothing deployed" not in y:
+        fail("relay", "ci/relay.yml must deploy with wrangler from CLOUDFLARE_API_TOKEN and say so when the secrets are absent")
+    if "node test.mjs --dev" not in read("ci", "check.sh"):
+        fail("relay", "ci/check.sh must run the relay's suite against wrangler dev (node test.mjs --dev)")
+    if read("src", "app.html").count("'__RELAY__'") != 1:
+        fail("relay", "src/app.html must carry exactly one '__RELAY__' token (ONLINE.relay), filled by the build from BUILD")
+    for args, what in ((["node", "test.mjs"], "the suite"), (["node", "test.mjs", "--selftest"], "its negative controls")):
+        r = subprocess.run(args, cwd=rd, capture_output=True, text=True)
+        if r.returncode != 0:
+            fail("relay", f"relay/test.mjs: {what} failed -- {(r.stdout + r.stderr).strip().splitlines()[-1][:160] if (r.stdout + r.stderr).strip() else 'no output'}")
+        elif what == "the suite":
+            m = re.search(r"relay: (\d+) passed, (\d+) failed", r.stdout)
+            if not m or int(m.group(2)) or int(m.group(1)) < 40:
+                fail("relay", f"relay/test.mjs: expected 40+ passing checks and none failing, got {r.stdout.strip().splitlines()[-1][:120] if r.stdout.strip() else 'nothing'}")
+            else:
+                note(f"relay: {m.group(1)} checks pass; the Worker is proven on the PR check (wrangler dev)")
+
+
 def check_pr_builds_apk():
     """Take 129 (A44 item 1). The PR check must build the APK the way the merge
     does: a job in ci/check.yml that needs the pipeline's job, takes its `www`
@@ -749,6 +778,8 @@ def selftest():
             check_landmine_citations(); check_secrets(); check_render_receipt()
             check_workflow_copies(); check_pr_builds_apk(); check_offline(provision_hosts()); check_icon_characters(); check_stale_copy()
             check_ads(); check_pictures()
+            if cat == "relay":
+                check_relay()
             if cat == "sim":
                 check_sim()
             fired = any(f.startswith(cat + ":") for f in FAILS) if cat else bool(FAILS)
@@ -793,6 +824,15 @@ def selftest():
     probe("bogus landmine citation",
           lambda t: open(os.path.join(t, "tools/config.py"), "a")
           .write("\n# see land" + "mine 9999\n"), "landmines")
+    # take 131: the relay's deploy must refuse to run without the owner's secrets, and the check must prove the Worker
+    # take 131: in both copies, like the apk probe above (else the drift guard fires instead)
+    def relay_unguarded(t):
+        y = read("ci", "relay.yml").replace("nothing deployed", "deployed anyway")
+        for fn in ("ci/relay.yml", ".github/workflows/relay.yml"):
+            open(os.path.join(t, fn), "w").write(y)
+    probe("a relay deploy that runs without the secrets guard", relay_unguarded, "relay")
+    probe("a PR check that skips the relay's exchange against wrangler dev", lambda t: open(os.path.join(t, "ci", "check.sh"), "w")
+          .write(read("ci", "check.sh").replace("node test.mjs --dev", "node test.mjs")), "relay")
     probe("render receipt missing (DOM-mode seal)",
           lambda t: os.path.exists(os.path.join(t, "www", "render.png")) and os.remove(os.path.join(t, "www", "render.png")), "render")
     # take 108: an icon drawn as a character in the app, literally and as an escape
@@ -934,6 +974,7 @@ if __name__ == "__main__":
     check_docs_complete()
     check_workflow_copies()
     check_pr_builds_apk()
+    check_relay()
     check_stale_copy()
     check_play_readiness()
     check_ads()
