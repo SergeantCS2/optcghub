@@ -247,6 +247,23 @@ SQLite table, no account involved.
 - The deploy itself: the owner's Cloudflare account and the two secrets;
   until then the build ships with no relay and the entry hidden.
 
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+PR 58 merged 2 Oct at 16:25 UTC (`1a4b771`, a merge commit); `build` run
+89 green in every job (seed, bundle, apk, pages, report), 15 minutes;
+Release take-131 published 16:40 UTC with the APK (28.9 MB), the AAB
+(22.1 MB), the mapping and the Play icon. The relay workflow ran on `main`
+for the first time in the same minute, nine seconds end to end: `npm ci`
+put 40 packages in 3 s, the memory suite passed 43 of 43, the four plants
+were named, and the deploy step printed its notice -- no
+`CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` in the repository secrets,
+nothing deployed (RUNBOOK §9) -- and exited 0, the guard as built. The
+relay is not deployed; the owner's steps in RUNBOOK §9 stand, and the app
+ships with no relay and the entry hidden until `VAULT_RELAY=` names one.
+Take 132's PR (59) was opened at 16:26 UTC from this branch, one commit on
+the merge; its check and APK job green at 16:44 and the PR marked ready at
+16:48 UTC, with no look, since nothing visible changes in it.
+
 ## Take 130 — 2026-10-02 — Walmart measured on the runner, the runner's own probe, and the Sim's wire decided (A23 step 4)
 
 Opened before any code (PROTOCOL §6), from `main` at the nightly of 2 Oct
