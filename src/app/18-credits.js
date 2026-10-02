@@ -21,7 +21,7 @@ const CREDITS = {
   state: readJson('vault.credits', { scan: 20, deck: 1, earned: 0, spent: 0, pending: [] }),
   save() { saveJson('vault.credits', this.state); },
   enabled() { return ADS_ENABLED; },
-  get ready() { return PLATFORM._adReady; },
+  get ready() { return ADS._ready; },
   /* How many of `n` commits can proceed now; the rest go to the tray. */
   canCommit(n) { return this.enabled() ? Math.min(n, this.state.scan) : n; },
   spendScan(n) { if (!this.enabled()) return; this.state.scan -= n; this.state.spent += n; this.save(); },

@@ -2150,7 +2150,7 @@ const take127 = [
          two share rows; the owner's Fold, in the US, never draws it */
       return page.evaluate(async () => {
         const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('collect', true);
-        V.PLATFORM._consent = { status: 'OBTAINED', privacy: 'REQUIRED', can: true }; V.go('settings');
+        V.ADS._consent = { status: 'OBTAINED', privacy: 'REQUIRED', can: true }; V.go('settings');
         await new Promise(r => setTimeout(r, 300));
         const b = document.querySelector('#setBody [data-act="adprivacy"]');
         if (b) window.scrollTo(0, Math.max(0, b.getBoundingClientRect().top + window.scrollY - 220));
@@ -2159,12 +2159,12 @@ const take127 = [
     } },
   { name: 'more-without-the-row-where-it-is-not-required', run: async (page) => {
       return page.evaluate(async () => {
-        const V = window.VAULT; V.PLATFORM._consent = { status: 'NOT_REQUIRED', privacy: 'NOT_REQUIRED', can: true }; V.go('settings');
+        const V = window.VAULT; V.ADS._consent = { status: 'NOT_REQUIRED', privacy: 'NOT_REQUIRED', can: true }; V.go('settings');
         await new Promise(r => setTimeout(r, 300));
         const share = document.querySelector('#setBody [data-act="shareapp"]');
         if (share) window.scrollTo(0, Math.max(0, share.getBoundingClientRect().top + window.scrollY - 220));
         const ok = !document.querySelector('#setBody [data-act="adprivacy"]');
-        V.PLATFORM._consent = null; return { ok, rowAbsent: ok };
+        V.ADS._consent = null; return { ok, rowAbsent: ok };
       });
     } },
   { name: 'diagnostics-ads-and-consent-lines', run: async (page) => {

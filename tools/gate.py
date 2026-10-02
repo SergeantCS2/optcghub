@@ -207,6 +207,30 @@ def check_click_dispatcher():
         note(f"clicks: one bubbling click listener on the document, {rows} rows, {len(capture)} capture-phase registrations (PICKER's two paths, the Leader pick, the scrim rule)")
 
 
+def check_ads_home():
+    """Take 134 (A44 item 4). The ads and consent flow lives in ADS (src/app/19-ads.js), beside CREDITS;
+    PLATFORM keeps plugin() and the thin native calls and holds no ad or consent method. The plugin is
+    reached through PLATFORM.plugin('AdMob') from ADS, which is the adapter's one part in it."""
+    ads = read("src", "app", "19-ads.js")
+    if "const ADS = {" not in ads:
+        return fail("ads-home", "src/app/19-ads.js does not define ADS")
+    for need in ("consentAsk(", "async show(", "async init(", "startWhenFree(", "PLATFORM.plugin('AdMob')"):
+        if need not in ads:
+            fail("ads-home", f"ADS has no {need!r}: the flow is not whole in src/app/19-ads.js")
+    sc = read("src", "app", "56-scanner.js").split("\n")
+    try:
+        a = next(i for i, ln in enumerate(sc) if ln.startswith("const PLATFORM = {"))
+        b = next(i for i in range(a, len(sc)) if sc[i] == "};")
+    except StopIteration:
+        return fail("ads-home", "src/app/56-scanner.js has no PLATFORM object")
+    stray = [f"src/app/56-scanner.js:{i + 1} {sc[i].strip()[:50]}" for i in range(a, b)
+             if re.match(r"\s+(async\s+)?(ad[A-Z]\w*|ads[A-Z]\w*|consent\w*|_ad\w*|_consent|_canRequestAds)\s*[:(]", sc[i])]
+    if stray:
+        fail("ads-home", "an ad or consent member inside PLATFORM (take 134, A44 item 4: the flow is ADS's): " + "; ".join(stray))
+    else:
+        note("ads-home: ADS holds the ads and consent flow; PLATFORM keeps the plugin and the thin calls")
+
+
 def check_relay():
     """Take 131 (D18). The Sim's relay lives in relay/: its room module's suite and its negative
     controls run here (pure, a second); the exchange against the real Worker is the PR check's
@@ -863,6 +887,8 @@ def selftest():
                 check_app_split()
             if cat == "clicks":
                 check_click_dispatcher()
+            if cat == "ads-home":
+                check_ads_home()
             if cat == "sim":
                 check_sim()
             fired = any(f.startswith(cat + ":") for f in FAILS) if cat else bool(FAILS)
@@ -924,6 +950,9 @@ def selftest():
     # take 133: a document-level click delegate of the old shape, outside the dispatcher's table
     probe("a click delegate registered outside the dispatcher's table (take 133)", lambda t: open(os.path.join(t, "src", "app", "24-decks.js"), "a")
           .write("document.addEventListener('click', e => {});\n"), "clicks")
+    # take 134: an ad method planted back inside PLATFORM
+    probe("an ad method inside PLATFORM, outside ADS (take 134)", lambda t: open(os.path.join(t, "src", "app", "56-scanner.js"), "w")
+          .write(read("src", "app", "56-scanner.js").replace("const PLATFORM = {\n", "const PLATFORM = {\n  adShow() { return false; },\n", 1)), "ads-home")
     probe("render receipt missing (DOM-mode seal)",
           lambda t: os.path.exists(os.path.join(t, "www", "render.png")) and os.remove(os.path.join(t, "www", "render.png")), "render")
     # take 108: an icon drawn as a character in the app, literally and as an escape
@@ -1069,6 +1098,7 @@ if __name__ == "__main__":
     check_relay()
     check_app_split()
     check_click_dispatcher()
+    check_ads_home()
     check_stale_copy()
     check_play_readiness()
     check_ads()
