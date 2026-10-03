@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 134.* Ranked by blocking-ness, not by interest.
+*Current as of take 135.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -74,9 +74,12 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0b. *Take 134, in flight (2 Oct):* A44 item 4 -- `ADS` out of `PLATFORM`:
-   the ads and consent flow beside CREDITS, the adapter keeps the plugin.
-   *Done at take 133 (PR 60):* A44 item 3 -- one click dispatcher: the 29
+0b. *Take 135, in flight (2 Oct):* A44 item 6 -- the smoke into files under
+   `tools/smoke/`: a fixtures module, a runner that snapshots state around
+   each file and names a leak, the same 1,681 checks. *Done at take 134
+   (PR 61):* A44 item 4 -- `ADS` out of `PLATFORM`: the ads and consent
+   flow beside CREDITS, the adapter keeps the plugin. *Done at take 133
+   (PR 60):* A44 item 3 -- one click dispatcher: the 29
    document-level delegates as rows of one table in the present order,
    proven in Chrome. *Done at take 132 (PR 59):* A44 item 2 -- the one source
    file into files under `src/app/`, inlined by the build in the present
@@ -1625,6 +1628,34 @@ the next takes pay in time or risk.
 6. **`tools/smoke.mjs` into `tools/smoke/*.mjs`** with a runner that snapshots
    and restores the app's state around each section and names a leak itself
    (landmine 221's cure). Same asserts; mechanical; same caveat as 2.
+   *Measured 2 Oct (after take 134), by acorn's tokens and declarations
+   over the 93 sections: 26 sections read 50 names declared at the top
+   level of an earlier section, nearly all fixtures that sections 3 to 16
+   build once after the boot -- the catalogue's (`vivi`, `nami`, `eb`,
+   `leaders`), the filter's (`F`, `G`, `S`, `O`, `c`, `OWNROWS`, `dear`),
+   the deck builder's (`d`, `A`, `mk`), the scanner's (`SC`, `pr`) and a
+   few measures (`auto`, `ask`, `has`, `before`, `single`, `base`,
+   `faces`); the six newest sections (takes 128 to 133) are self-contained
+   blocks. So the split is not a cut per section: a fixtures module builds
+   those names once and every section file takes them with the app, and
+   the runner snapshots the collection, the stores, the mode and the
+   navigation stack around each file and names what a file left changed.
+   A regex over the text counted 84 sections and 1,178 links, mostly
+   English words in check names; the tokens are the measurement.*
+   *Take 135: built -- `tools/smoke.mjs` is the runner, the 93 sections
+   are 74 files under `tools/smoke/` cut on acorn's top-level statements
+   (the foundation holds sections 0 to 16 and returns the fixtures; three
+   blocks that held two sections stay one file each); the same 1,681
+   checks by name, diffed; the runner snapshots the collection, the
+   store's keys, the mode, the navigation stack, the active collection
+   and the credits around each file and names what it left changed (32
+   files do); the gate's `check_smoke_split` holds the shape with two
+   probes, a third plant watched by hand.* **Ruled out:** a fixtures module apart from the sections (the
+   fixtures are built by checks); cutting a block's two sections into two
+   files (the second reads the first's block-scoped names); making a leak
+   note a failure now (32 files would fail; each is its own small take);
+   one file per take instead of per section (the order and the names are
+   the proof, and a section is the unit the runner measures).
 7. **Policy for the harness**: no new source regex (`.test(js)`) unless the
    thing asserted is a static property of the shipped file; a section that is
    touched trades its regexes for behaviour checks.

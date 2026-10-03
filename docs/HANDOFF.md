@@ -1,4 +1,108 @@
-# HANDOFF — through Take 134
+# HANDOFF — through Take 135
+
+## Take 135 — 2026-10-02 — the smoke into files (A44 item 6): a fixtures module, a runner that snapshots the app's state around each file, the same checks
+
+Opened before any code (PROTOCOL §6), on the branch restarted on take
+134's merge (PR 61, merged 21:24 UTC, three minutes after it was marked
+ready); no other branch is open. A44's order, agreed 1 Oct: the structural
+takes one at a time; item 6 is this one, and item 5 waits on the owner's
+Fold report of take 125's scanner. **Nothing a collector can see changes,
+and nothing in the shipped app**: this take is the harness's.
+
+### What this take changes
+
+1. **`tools/smoke.mjs` becomes the runner; the sections become files under
+   `tools/smoke/`**, named in the order they ran (`NN-name.mjs`), each
+   exporting `run(S)` with the app's handles (`V`, `ctx`, `doc`,
+   `listeners`, `store`, `remote`, `html`, `js`, `catalog`, `manifest`,
+   `pkg`), `ok` and `section`, and the fixtures. The same `ok()` calls in
+   the same words and order: the proof is the list of check names and its
+   count, 1,681, printed by `SMOKE_NAMES=1` before the split and after it,
+   and diffed.
+2. **The foundation file, `tools/smoke/00-shipped-artifact.mjs`, holds
+   sections 0 to 16 as they were and returns what they built at the top
+   level** and 26 later sections read (measured 2 Oct, the acorn scan under
+   A44 item 6): the catalogue's `vivi`, `nami`, `eb`, `leaders`; the
+   filter's `F`, `G`, `S`, `O`, `c`, `OWNROWS`, `dear`; the deck builder's
+   `d`, `A`, `mk`; the scanner's `SC`, `pr`; the measures `auto`, `ask`,
+   `has`, `before`, `single`, `base`, `faces`. Those fixtures are built by
+   checks, so no module apart from the sections could build them; a
+   later file reads the ones it uses from `harness.fx`, by the same names.
+   Three blocks held two sections each (takes 14, 60 with 91, 124 with
+   126); each stays one file, cut on acorn's top-level statements.
+3. **The runner snapshots the app's state around each file** -- the
+   collection's lines, the store's keys, the mode, the navigation stack,
+   the active collection, the credits -- and after the file names what it
+   left changed, as a note and never a failure (landmine 221's family: a
+   check that passes or fails with what an earlier section left). The
+   notes are the next take's list; this take moves nothing else.
+4. **Every reader of the smoke by name follows**: the gate's
+   `check_harness` reads the runner and the files, `pipeline.py` and
+   `ci/check.sh` run the same entry point, CLAUDE.md names the shape.
+
+### Measured
+
+- 74 files under `tools/smoke/`: the foundation (sections 0 to 16, 556
+  lines) and 73 for the 76 other sections, three of them holding two
+  sections that shared one block. `tools/smoke.mjs` is 95 lines: the head
+  as it was, `V` and `onField`, the loop. Cut on acorn's top-level
+  statements (408 in the file), never on lines.
+- The proof: `SMOKE_NAMES=1` printed 1,681 check names before the split
+  and 1,681 after, and `diff` found no difference -- the same checks, in
+  the same words and order. 1,681 passed on the split, as before.
+- The runner's notes: 32 of the 74 files leave the app's state changed for
+  the next -- the navigation stack 25 times, the credits 22, the store's
+  keys 10, the collection's lines 6, the mode once (take 130's file leaves
+  Hunt on), the active collection once. Each note names the file and the
+  change; none fails a run. That list is the next take's.
+- Watched failing: a section file whose relative import kept its old depth
+  (take 131's, the relay's memory adapter) threw inside the runner, which
+  counted it as a failure and named the file, and the names diff showed
+  its 33 checks missing -- then the import was rebased and the diff
+  emptied. The gate's `check_smoke_split`, on planted copies: a section
+  left in the runner, a file without `run(harness)`, and the foundation
+  removed are each named.
+
+### Tests
+
+- `python3 tools/pipeline.py` from the top (ingest, history, catalogue,
+  hashes, the app, smoke 1681/1681 through the runner, render 277/277
+  `(mode: chrome)`, the gate), 601 s; `bash tools/seal.sh --gate-only`
+  green, bare, with the gate's new note; `gate.py --selftest` 44 probes
+  named, "a section left in the smoke's runner (take 135)" and "a smoke
+  section file without run(harness) (take 135)" firing among them, the
+  third plant (the foundation removed) watched by hand through the gate's
+  own function; `ci/icon.py --selftest` green; the scrubber clean on 235
+  files (the 74 new ones walked by `tools/`).
+- Negative controls, each watched: the rebased import (a file that threw,
+  named, its 33 checks missing from the diff), the gate's three plants --
+  under Measured.
+- No look: nothing visible changes, and nothing in the shipped app.
+
+### What I got wrong
+
+- The brief and this entry's first draft said a `00-fixtures.mjs` would
+  build the fixtures apart from the sections. The fixtures are built by
+  the sections' own checks (section 3 asserts on `vivi` as it builds it),
+  so the foundation file is the fixtures module; the entry says so now.
+- The first cut was by line number and swallowed the opening brace of
+  section 17's block into the foundation, and three blocks turned out to
+  hold two sections each (takes 14, 60 with 91, 124 with 126): the cut is
+  on acorn's statements now, and a block's sections share one file.
+- A guard in the splitter refused the whole run because the word
+  "harness" appears in the smoke's prose (take 99's title names the look
+  harness); it read strings as identifiers. Narrowed to declaration and
+  use forms.
+- My own one-line edit to `ok()` moved every line number the splitter had
+  been anchored on; the anchors are content now.
+
+### DEFERRED
+
+- What the leak notes name: each is a section that leaves state for the
+  next, to be made self-contained one at a time, with the note as the
+  measure.
+- A44 item 5 (`paintScan` into four), on the owner's Fold report; item 7
+  is policy, kept; item 9 waits on eBay's key and D21.
 
 ## Take 134 — 2026-10-02 — `ADS` out of `PLATFORM` (A44 item 4): the ads and consent flow beside CREDITS, the adapter keeps the plugin
 
@@ -92,6 +196,16 @@ changes.**
   lock, the self-test's units check) stay: they ask the adapter whether the
   plugin exists, which is the adapter's question.
 - A44 items 5 to 7, in order, each when no other branch is open.
+
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+PR 61 merged 2 Oct at 21:24 UTC (`5159b4b`, a merge commit, the owner's,
+three minutes after it was marked ready); `build` run 92 green in every
+job (seed, bundle, apk, pages, report), 14 minutes; Release take-134
+published 21:38 UTC with the APK (28,954,573 bytes, 304 fewer than take
+133's: the dropped prefixes), the AAB (22,160,649), the mapping and the
+Play icon. Take 135 began on the branch restarted on this merge, no other
+branch open, and this note rides its PR.
 
 ## Take 133 — 2026-10-02 — one click dispatcher (A44 item 3): the 29 document-level delegates as rows of one table, in the present order
 
