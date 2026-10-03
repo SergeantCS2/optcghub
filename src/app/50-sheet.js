@@ -324,8 +324,10 @@ function importCsv() {
       if (iPf >= 0 && c[iPf]) { const ex = PF.list.find(p => p.name === c[iPf]); pf = ex ? ex.id : PF.add(c[iPf]); }
       /* take 115: the cost basis goes on the line this row counted into (OWN.add's), never the printing's first
          line in any collection; a quantity that is not a number is 1 (it was NaN) */
+      /* take 136 (A43): no write per row -- the one commitOwn('import') below writes the collection once (a file of
+         thousands of lines wrote it thousands of times) */
       const it = OWN.add(pid, { qty: Math.max(1, +c[iQty] || 1),
-                                condition: (c[iCond] || 'NM').toUpperCase(), pf });
+                                condition: (c[iCond] || 'NM').toUpperCase(), pf, save: false });
       if (it && iPaid >= 0 && +c[iPaid] > 0) it.paid = +c[iPaid];
       added++;
     }
@@ -369,7 +371,10 @@ function backupJson(keepPhotos = false) {
     portfolios: PF.list, activePortfolio: PF.active, wants: WANT.list, alerts: ALERTS.list,
     snaps: OWN.snaps, decks: DECKS.list, credits: CREDITS.state,
     stockAlerts: STOCK.list, relAlerts: RELALERTS.list, notes: LOCAL.notes, trade: { give: TRADE.give, get: TRADE.get },
-    filters: { own: FILT.own, all: FILT.all }
+    filters: { own: FILT.own, all: FILT.all },
+    /* take 136 (A43, A2): the cards scanned and accepted but not yet saved -- in no backup until now, so an uninstall
+       or a lost phone mid-scan lost them. Photos as a line's are: on the device, kept only in the copy kept aside. */
+    batch: { rows: BATCH.rows.map(r => ({ ...r, photo: r.photo ? (keepPhotos ? r.photo : '(on device)') : null })), setId: BATCH.setId || null }
   });
 }
 /* take 115 (STAN-111-17, loose-production 4): one commit for the collection -- saved, today's reading taken again
@@ -388,7 +393,7 @@ function backupHeld() {
   try { return localStorage.getItem('vault.backupHold') != null; } catch (e) { return false; }
 }
 function releaseBackupHold() { STORE.holdBackup = false; try { localStorage.removeItem('vault.backupHold'); } catch (e) {} }
-function scheduleBackup(reason) {
+function scheduleBackup(reason, wait = 400) {   /* take 136: wait -- the batch's backup waits for a pause in scanning */
   if (reason === 'manual' && backupHeld()) {
     if (!confirm(`The ${heldWhat()} saved on this phone could not be read, so your last backup may hold what the app cannot show now.\n\nBack up now and replace it? Restore from backup brings it back instead.`)) return false;
     releaseBackupHold();
@@ -402,7 +407,7 @@ function scheduleBackup(reason) {
     OWN.lastBackup = where ? { at: new Date().toISOString(), where, reason } : { failed: true, at: new Date().toISOString(), why };
     saveJson('vault.lastBackup', OWN.lastBackup);
     if (!where) { ERRS.push('backup', `backup failed: ${why}`, 'scheduleBackup'); toast('Backup failed — export your collection'); }
-  }, 400);
+  }, wait);
 }
 /* take 115 (loose-production 4): a restore reads the file before it replaces anything -- this app's backup, each
    list in it a list, each line naming a printing (a record or a word where a list belongs broke every screen that
@@ -419,11 +424,12 @@ function backupProblem(b) {
   if (b.decks && b.decks.some(d => !isRecord(d) || !Array.isArray(d.cards))) return 'a deck in it has no card list';
   if (b.trade != null && (!isRecord(b.trade) || [b.trade.give, b.trade.get].some(x => x != null && !Array.isArray(x)))) return 'its trade lists are not lists';
   if (b.credits != null && !isRecord(b.credits)) return 'its credits are not a record';
+  if (b.batch != null && (!isRecord(b.batch) || !Array.isArray(b.batch.rows) || b.batch.rows.some(r => !isRecord(r) || r.id == null))) return 'its waiting scans are not a list of cards';   /* take 136 */
   return '';
 }
 function keptBeforeRestore() { try { return localStorage.getItem('vault.beforeRestore'); } catch (e) { return null; } }
 async function keepBeforeRestore() {
-  const any = [OWN.items, DECKS.list, WANT.list, ALERTS.list, STOCK.list, RELALERTS.list, LOCAL.notes, TRADE.give, TRADE.get].some(l => l && l.length);
+  const any = [OWN.items, DECKS.list, WANT.list, ALERTS.list, STOCK.list, RELALERTS.list, LOCAL.notes, TRADE.give, TRADE.get, BATCH.rows].some(l => l && l.length);   /* take 136: the waiting scans too */
   if (!any) { try { localStorage.removeItem('vault.beforeRestore'); } catch (e) {} return true; }   // nothing to keep; no older copy left to pass for it
   const json = backupJson(true), here = saveJson('vault.beforeRestore', json);
   await PLATFORM.keepAside(json);   // on the phone, the file beside the backups too: it outlives an uninstall
@@ -453,8 +459,9 @@ async function restoreFromBackup() {
   let b; try { b = JSON.parse(raw); } catch (e) { return toast('Backup is not readable'); }
   const why = backupProblem(b);
   if (why) { ERRS.push('restore', `refused: ${why}`, 'restoreFromBackup'); return toast(`Nothing restored \u2014 ${why}`, 6000); }
-  const n = b.items.length, d = (b.decks || []).length;
-  if (!confirm(`Restore ${n} collection line${n === 1 ? '' : 's'} and ${d} deck${d === 1 ? '' : 's'} from ${momentText(b.at)}?\n\nThis replaces what is on the phone now. What it replaces is kept: Restore from backup offers it.`)) return;
+  const n = b.items.length, d = (b.decks || []).length, w = b.batch ? b.batch.rows.length : 0;   /* take 136: the waiting scans, named when there are any */
+  const decksW = `${d} deck${d === 1 ? '' : 's'}`, waitW = `${w} waiting scan${w === 1 ? '' : 's'}`;
+  if (!confirm(`Restore ${n} collection line${n === 1 ? '' : 's'}${w ? `, ${decksW} and ${waitW}` : ` and ${decksW}`} from ${momentText(b.at)}?\n\nThis replaces what is on the phone now. What it replaces is kept: Restore from backup offers it.`)) return;
   if (!(await keepBeforeRestore())) {
     if (!confirm('What is on the phone now could not be kept aside (the storage is full).\n\nRestore anyway? Cancel, then Export CSV, keeps it.')) return;
     try { localStorage.removeItem('vault.beforeRestore'); } catch (e) {}   // an older copy must not pass for what this restore replaced
@@ -470,9 +477,10 @@ async function restoreFromBackup() {
   if (b.notes) { LOCAL.notes = b.notes; LOCAL.saveNotes(); }
   if (b.trade) { TRADE.give = b.trade.give || []; TRADE.get = b.trade.get || []; TRADE.save(); }
   if (b.credits) CREDITS.state = b.credits;
+  if (b.batch) { BATCH.rows = b.batch.rows.map(r => ({ ...r, photo: own && r.photo && r.photo !== '(on device)' ? r.photo : null })); BATCH.setId = b.batch.setId || null; BATCH.save(); }   /* take 136 */
   DECKS.save(); CREDITS.save(); releaseBackupHold();   // take 115: a restore ends the hold on backups
   commitOwn('restore');
-  toast(`Restored ${n} lines, ${d} decks`); go('collection');
+  toast(`Restored ${n} lines, ${d} decks` + (w ? `, ${w} waiting scans` : '')); go('collection');
 }
 
 /* Landmine 20 / PROTOCOL §9: export exists before charts do. Take 34: on a

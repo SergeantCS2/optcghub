@@ -1,4 +1,4 @@
-# OP TCG Hub — take 135
+# OP TCG Hub — take 136
 
 ## Installing — read this first
 
@@ -17,6 +17,8 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 136:** Cards you have scanned but not yet saved are now in the backup, so a reinstall or a new phone brings them back with Restore. A new or renamed collection is backed up at once instead of at your next save, and importing a large CSV file is much quicker. Nothing you have saved changes.
 
 **New at take 135:** Nothing you can see changes, and nothing in the app itself. The checks that run on every change before it reaches you are kept in many files now instead of one, so each can be read on its own, and each is told what it leaves behind for the next. Nothing you have saved changes.
 
