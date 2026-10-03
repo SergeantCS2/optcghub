@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 135.* Paste the block between the rules into a new session
+*Current as of take 136.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 135 takes by previous sessions. The repo is
+built across 136 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -95,6 +95,17 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   them in order with his results (his rule, take 94).
 
 **What is in flight when you arrive:**
+
+- **Take 136 -- four of A43's small items** (AGENDA Priorities, Mine 1;
+  HANDOFF take 136). The backup carries the waiting scans (`batch`), a
+  restore brings them back and its confirm names them, a change to the
+  batch backs up after five quiet seconds; a new or renamed collection is
+  backed up at once; CSV import writes the collection once; the gate's
+  `check_catalogue_shape` holds every column and top-level list or record
+  any shipped take reads (`tools/catalog_shape.json`, which grows and never
+  shrinks) and `check_docs_current` refuses a "Say take N" that is not
+  BUILD + 1. The other two small items (Restore's file picker, the cost
+  basis's currency) are the next take's, with a look.
 
 - **Take 135 -- the smoke into files** (AGENDA A44 item 6; HANDOFF take
   135). `tools/smoke.mjs` is the runner; the sections are files under
@@ -526,6 +537,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 136" and begin with PROTOCOL §0.
+Say "take 137" and begin with PROTOCOL §0.
 
 ---

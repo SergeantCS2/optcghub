@@ -1,4 +1,98 @@
-# HANDOFF — through Take 135
+# HANDOFF — through Take 136
+
+## Take 136 — 2026-10-03 — four of A43's small items: the waiting scans in the backup, a new or renamed collection backed up at once, CSV import's one write, two gate checks
+
+Opened before any code (PROTOCOL §6), on the branch restarted on take
+135's merge (PR 62, merged 3 Oct 03:17 UTC); no other branch is open. The
+owner, 3 Oct: "Continue". With A44's structural items done but for the two
+that wait on the owner (item 5 on his Fold report, item 9 on eBay's key),
+the session's own order is A43's small items, then A32's Next, A41, A23's
+tail, A31 (the Priorities block). A43 names five; this take does the four
+that change nothing a collector sees but one line of a confirm. The other
+two -- Restore's file picker when no kept copy exists, and the cost basis
+in the currency on screen -- change screens, so they are the next take's,
+with a look.
+
+### What this take changes
+
+1. **The waiting scans are in the backup.** `vault.batch` -- the cards
+   scanned and accepted but not yet committed -- was in no backup (A43, "the
+   waiting scan batch is in no backup", A2): an uninstall, or a phone lost
+   mid-scan, lost them. The backup carries `batch` (its rows, photos as
+   "(on device)" as a line's are, and the set it was scanning); a restore
+   brings them back, `keepBeforeRestore` keeps them, the hold counts an
+   unreadable batch as a list the backup carries, and `backupProblem`
+   refuses a batch that is not a record of rows. A change to the batch
+   schedules the backup after five quiet seconds, so a scanning session
+   writes it once a pause, not once a card. Restore's confirm names the
+   waiting scans when the backup has any -- the one line a collector can
+   see change.
+2. **A new or renamed collection is backed up at once.** `PF.add` and
+   `PF.rename` saved the list and scheduled nothing; the backup caught up at
+   the next commit of a card (A43, A2). Both schedule it now, as
+   `PF.remove` already did through `commitOwn`.
+3. **CSV import writes the collection once.** Each row's `OWN.add` saved
+   the whole collection, so a file of thousands of lines wrote it thousands
+   of times (A43, take 115's self-review). The loop adds with `save: false`
+   and the one `commitOwn('import')` after it writes it -- the `moveIn`
+   pattern.
+4. **Two gate checks.** `check_catalogue_shape`: the built catalogue keeps
+   every column and every top-level list or record, of its kind, that any
+   shipped take reads -- `tools/catalog_shape.json`, the record, grows when a
+   take adds one and never shrinks, because every installed build refuses a
+   synced catalogue without a column it shipped with (`catalogueProblem`,
+   take 115) and Pages serves the newest catalogue to every install. And
+   `check_docs_current` refuses a session prompt whose closing "Say take N"
+   is not BUILD + 1 (the miss happened at takes 113 and 114).
+
+### Measured
+
+- The shipped catalogues of the two production uploads, read out of their
+  Release APKs (`assets/public/bundle/catalog.json`): take 101 and take
+  121 both carry the same 36 columns as today and 12 lists or records,
+  none gone since and no kind changed; today's carries 14. So today's
+  shape is a sound first record, and no install in the field refuses
+  today's syncs on its shape.
+- CSV import of a 300-row file: `vault.items` written 301 times on take
+  135's build, once on this one.
+- `www/app.js` 493,164 bytes (take 135's 492,240).
+- The smoke: 1,694 of 1,694 -- 12 new checks in
+  `tools/smoke/93-take-136-…`, and take 115's control moved to a cache
+  (one more check). On take 135's build (`SMOKE_APP`) 11 of the 12 new
+  checks fail by name, and so do the three take-115 checks moved to the
+  new rule; the companion "every row is in the collection" and the new
+  cache control pass on both builds, as they should.
+- The gate on planted copies: a dropped column, an unrecorded column, a
+  list turned into a record, and the session prompt a take behind are
+  each named, with the file and the reason.
+
+### Tests
+
+- `python3 tools/pipeline.py` from the top (ingest, history, catalogue,
+  hashes, the app, smoke 1694/1694 through the runner, render 277/277
+  `(mode: chrome)`, the gate), 614 s; `bash tools/seal.sh --gate-only`
+  green, bare, with the gate's new `catalog-shape` note; `gate.py
+  --selftest` 47 probes named, the three new ones firing (the prompt a
+  take behind, a dropped column, an unrecorded column); `ci/icon.py
+  --selftest` green; the scrubber clean on 237 files.
+- No look: the one visible change is the text of Restore's question, a
+  native confirm the look cannot draw; the smoke asserts its words.
+
+### What I got wrong
+
+- Three take-115 checks asserted the rule this take changes -- "an
+  unreadable batch (in no backup) holds nothing" and the hold's count of
+  "10 other lists" -- and failed on the first run. I had grepped the app
+  for the batch's readers and not the smoke for the checks of the old
+  rule. They assert the new rule now, and the control that the hold is not
+  wider than the backup moved to a cache, which is in no backup.
+
+### DEFERRED
+
+- A43's other two small items, the next take's with a look: Restore's
+  "Choose a file" when no kept copy exists, and the cost basis and a Hunt
+  note's price typed in the currency on screen.
+- A43's other small items stay listed there, each with why.
 
 ## Take 135 — 2026-10-02 — the smoke into files (A44 item 6): a fixtures module, a runner that snapshots the app's state around each file, the same checks
 
@@ -103,6 +197,18 @@ and nothing in the shipped app**: this take is the harness's.
   measure.
 - A44 item 5 (`paintScan` into four), on the owner's Fold report; item 7
   is policy, kept; item 9 waits on eBay's key and D21.
+
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+PR 62 merged 3 Oct at 03:17 UTC (`ee01d77`, a merge commit, the owner's);
+`build` run 94 green in every job (seed, bundle, apk, pages, report), 14
+minutes, the split smoke run on the runner for the first time on `main`;
+Release take-135 published 03:31 UTC with the APK (28,953,665 bytes, 908
+fewer than take 134's: the app's code did not change, and the APK bundles
+a catalogue a night newer -- INFERRED, not measured file by file), the AAB (22,159,702), the mapping and the Play icon. The
+nightly between the merges (run 93, 00:36 UTC) green. Take 136 began on
+the branch restarted on this merge, no other branch open, and this note
+rides its PR.
 
 ## Take 134 — 2026-10-02 — `ADS` out of `PLATFORM` (A44 item 4): the ads and consent flow beside CREDITS, the adapter keeps the plugin
 

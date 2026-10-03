@@ -15,10 +15,11 @@ const STORE = { unreadable: [], failed: new Set(), holdBackup: false, _w: null,
   warn() { if (this._w) return; this._w = setTimeout(() => { this._w = null; toast('Could not save on this phone \u2014 export your collection now (Export CSV)', 6000); }, 0); } };
 /* take 115 (self-review): the lists the backup carries, each by the name the hold's words use. An unreadable
    one starts empty, and the first commit wrote that over the backup's copy -- the hold was the collection's
-   alone. vault.batch is in no backup, so it holds nothing. */
+   alone. Take 136: vault.batch is in the backup now, so an unreadable one holds it too. */
 const HELD = { 'vault.items': 'collection', 'vault.snaps': 'value history', 'vault.decks': 'decks', 'vault.pfs': 'collections',
   'vault.credits': 'waiting cards', 'vault.wants': 'wants', 'vault.alerts': 'price alerts', 'vault.stockAlerts': 'stock alerts',
-  'vault.relAlerts': 'release reminders', 'vault.hunt.notes': 'Hunt notes', 'vault.trade.give': 'trade lists', 'vault.trade.get': 'trade lists' };
+  'vault.relAlerts': 'release reminders', 'vault.hunt.notes': 'Hunt notes', 'vault.trade.give': 'trade lists', 'vault.trade.get': 'trade lists',
+  'vault.batch': 'waiting scans' };
 function heldKeys() {
   let h = null; try { h = JSON.parse(localStorage.getItem('vault.backupHold') || 'null'); } catch (e) {}
   const had = h && Array.isArray(h.keys) ? h.keys : [];

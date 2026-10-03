@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 135.* Ranked by blocking-ness, not by interest.
+*Current as of take 136.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -74,10 +74,12 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0b. *Take 135, in flight (2 Oct):* A44 item 6 -- the smoke into files under
-   `tools/smoke/`: a fixtures module, a runner that snapshots state around
-   each file and names a leak, the same 1,681 checks. *Done at take 134
-   (PR 61):* A44 item 4 -- `ADS` out of `PLATFORM`: the ads and consent
+0b. *Take 136, in flight (3 Oct):* four of A43's small items -- the waiting
+   scans in the backup, a new or renamed collection backed up at once, CSV
+   import's one write, the catalogue-shape and "Say take N" gate checks.
+   *Done at take 135 (PR 62):* A44 item 6 -- the smoke into files under
+   `tools/smoke/`: a runner that snapshots state around each file and names
+   a leak, the same 1,681 checks. *Done at take 134 (PR 61):* A44 item 4 -- `ADS` out of `PLATFORM`: the ads and consent
    flow beside CREDITS, the adapter keeps the plugin. *Done at take 133
    (PR 60):* A44 item 3 -- one click dispatcher: the 29
    document-level delegates as rows of one table in the present order,
@@ -111,6 +113,16 @@ what take 115 changed on screen.
    shape; "Say take N" = BUILD + 1), the Restore file picker, the waiting
    batch in the backup, the cost basis in the currency on screen, CSV
    import's one write.
+   *Take 136: the gate checks, the waiting batch (and a new or renamed
+   collection) in the backup, CSV import's one write -- built. The Restore
+   file picker and the cost basis in the currency on screen change screens:
+   the next take's, with a look.* **Ruled out:** a backup on every scan
+   (a session of scans would write the whole collection once a card; the
+   batch's backup waits for five quiet seconds); merging a restored batch
+   into the one on the phone (every other list is replaced, the kept copy
+   undoes it, and a merge would count a card twice); freezing the
+   catalogue's keys and columns in the app (the app's check already
+   refuses what it cannot read; the gate stops a take from shipping one).
 2. **A32's Next** (its take-115 section): date moves, a delisted item, the
    history on Releases, Southern Hobby's paging, the retailers that need a
    residential IP.

@@ -72,6 +72,13 @@ def check_docs_current(n):
     # take 110: the Release body is ci/RELEASE.md as committed, and its heading is typed by
     # hand -- Release take-109 went out under "# OP TCG Hub — take 108" (the title, from
     # BUILD, was right; the body a take behind). The same tripwire as V1-STATE's heading.
+    # take 136 (A43): the session prompt's closing line names the next take -- BUILD + 1. Takes 113 and 114 shipped
+    # it a take behind, and the next session began with the wrong number.
+    say = re.findall(r'^Say "take (\d+)"', read("docs", "NEW-SESSION-PROMPT.md"), re.M)
+    if len(say) != 1:
+        fail("docs-current", f"docs/NEW-SESSION-PROMPT.md has {len(say)} 'Say \"take N\"' lines; it closes with one")
+    elif int(say[0]) != n + 1:
+        fail("docs-current", f"docs/NEW-SESSION-PROMPT.md says 'take {say[0]}' next, BUILD says {n}: the next take is {n + 1}")
     r = re.search(r"^# OP TCG Hub — take (\d+)$", read("ci", "RELEASE.md"), re.M)
     if not r:
         fail("docs-current", "ci/RELEASE.md has no '# OP TCG Hub — take N' heading")
@@ -267,6 +274,39 @@ def check_smoke_split():
         fail("smoke-split", "the foundation's fixtures do not reach the later files (the runner keeps harness.fx from the 00- file's return)")
     if not FAILS or not any(f.startswith("smoke-split:") for f in FAILS):
         note(f"smoke-split: {len(files)} section files under tools/smoke/, the runner holds none")
+
+
+def check_catalogue_shape():
+    """Take 136 (A43). Every installed build refuses a synced catalogue that lacks a column it shipped with, or whose
+    list or record has another kind (the app's catalogueProblem, take 115), and Pages serves the newest take's
+    catalogue to every install. tools/catalog_shape.json records what any shipped take reads; the built catalogue
+    keeps all of it, and a column or a list the record does not hold is recorded there before it ships -- so the
+    record grows and is never taken from."""
+    b = os.path.join(ROOT, "www", "bundle", "catalog.json")
+    if not os.path.exists(b):
+        return note("no bundle catalogue — the catalogue's shape not checked")
+    try:
+        rec = json.loads(read("tools", "catalog_shape.json"))
+    except Exception as e:
+        return fail("catalog-shape", f"tools/catalog_shape.json does not read: {e}")
+    cat = json.load(open(b))
+    kind = lambda v: "list" if isinstance(v, list) else "object" if isinstance(v, dict) else type(v).__name__
+    cols = cat.get("cols") or []
+    gone = [c for c in rec.get("cols", []) if c not in cols]
+    if gone:
+        fail("catalog-shape", f"the catalogue has no {', '.join(gone)} column(s): every install that shipped with them refuses its sync (catalogueProblem)")
+    for k, want in rec.get("kinds", {}).items():
+        if k in cat and cat[k] is not None and kind(cat[k]) != want:
+            fail("catalog-shape", f"the catalogue's {k} is a {kind(cat[k])}; installs read a {want} and refuse the sync")
+        elif k not in cat:
+            fail("catalog-shape", f"the catalogue has no {k}: installs that read it lose it with no word")
+    new_cols = [c for c in cols if c not in rec.get("cols", [])]
+    new_keys = [k for k, v in cat.items() if isinstance(v, (list, dict)) and v and k not in rec.get("kinds", {})]
+    if new_cols or new_keys:
+        fail("catalog-shape", "not in tools/catalog_shape.json yet -- record it, since every install of this take will "
+             f"refuse a catalogue without it: columns {new_cols}, lists or records {new_keys}")
+    if not gone and not new_cols and not new_keys:
+        note(f"catalog-shape: {len(cols)} columns and {len(rec.get('kinds', {}))} lists or records, as recorded")
 
 
 def check_relay():
@@ -929,6 +969,8 @@ def selftest():
                 check_ads_home()
             if cat == "smoke-split":
                 check_smoke_split()
+            if cat == "catalog-shape":
+                check_catalogue_shape()
             if cat == "sim":
                 check_sim()
             fired = any(f.startswith(cat + ":") for f in FAILS) if cat else bool(FAILS)
@@ -998,6 +1040,17 @@ def selftest():
           .write("\nsection('stray');\n"), "smoke-split")
     probe("a smoke section file without run(harness) (take 135)", lambda t: open(os.path.join(t, "tools", "smoke", "99-stray.mjs"), "w")
           .write("section('stray');\n"), "smoke-split")
+    # take 136 (A43): the session prompt a take behind; a column dropped from the catalogue; a column not recorded
+    probe("the session prompt says the take we are on, not the next (take 136)", lambda t: open(os.path.join(t, "docs", "NEW-SESSION-PROMPT.md"), "w")
+          .write(re.sub(r'^Say "take (\d+)"', lambda m: f'Say "take {int(m.group(1)) - 1}"', read("docs", "NEW-SESSION-PROMPT.md"), flags=re.M)), "docs-current")
+    def catalog_drop(t):
+        b = os.path.join(t, "www", "bundle", "catalog.json"); c = json.load(open(b)); i = c["cols"].index("market")
+        c["cols"].pop(i); c["rows"] = [r[:i] + r[i + 1:] for r in c["rows"]]; json.dump(c, open(b, "w"))
+    probe("a catalogue with a shipped column dropped (take 136)", catalog_drop, "catalog-shape")
+    def catalog_new(t):
+        b = os.path.join(t, "www", "bundle", "catalog.json"); c = json.load(open(b))
+        c["cols"].append("planted"); c["rows"] = [r + [None] for r in c["rows"]]; json.dump(c, open(b, "w"))
+    probe("a catalogue column added and not recorded (take 136)", catalog_new, "catalog-shape")
     probe("render receipt missing (DOM-mode seal)",
           lambda t: os.path.exists(os.path.join(t, "www", "render.png")) and os.remove(os.path.join(t, "www", "render.png")), "render")
     # take 108: an icon drawn as a character in the app, literally and as an escape
@@ -1145,6 +1198,7 @@ if __name__ == "__main__":
     check_click_dispatcher()
     check_ads_home()
     check_smoke_split()
+    check_catalogue_shape()
     check_stale_copy()
     check_play_readiness()
     check_ads()

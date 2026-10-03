@@ -10,6 +10,9 @@ const BATCH = Object.assign({ rows: [], setId: null },
 BATCH.save = function () {
   saveJson('vault.batch', { rows: this.rows, setId: this.setId });
   paintBatchBadge();
+  /* take 136 (A43, A2): the waiting scans are in the backup now; it is written after five quiet seconds, so a
+     session of scans writes it once a pause, not once a card (a commit's own backup, 400 ms, replaces this one) */
+  if (typeof scheduleBackup === 'function') scheduleBackup('scan', 5000);
 };
 function paintBatchBadge() {
   const b = $('nav button[data-go="scan"]'); if (!b) return;

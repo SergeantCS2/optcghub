@@ -383,7 +383,7 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
        !!B.V && B.V.OWN.items.length === 0 && B.st['vault.items.unreadable'] === corrupt['vault.items'] && B.st['vault.items'] !== corrupt['vault.items'], JSON.stringify({ kept: B.st['vault.items.unreadable'], now: B.st['vault.items'] }));
     ok('...a cache or a preference that does not read is simply refetched or reset: recorded, no copy kept', !!B.V && ['vault.hunt', 'vault.filt.own'].every(k => B.V.ERRS.list.some(e => e.msg.startsWith(k + ' was unreadable')) && !((k + '.unreadable') in B.st)));
     await sleep(5);
-    ok('...the collector is told, and pointed at Restore (the collection first, then how many other lists)', /^Your saved collection and 10 other lists could not be read — use Restore from backup, under More$/.test(toastText(B.d)), toastText(B.d));
+    ok('...the collector is told, and pointed at Restore (the collection first, then how many other lists -- 11 since take 136, the waiting scans among them)', /^Your saved collection and 11 other lists could not be read — use Restore from backup, under More$/.test(toastText(B.d)), toastText(B.d));
     /* take 115 (self-review): what Back up asked is recorded, and a throw is a failure -- holds() read a throw as false,
        the Cancel's own value, so a Back up that crashed or refused without asking passed */
     const call = f => { try { return { v: f() }; } catch (e) { return { e: String((e && e.message) || e) }; } };
@@ -399,7 +399,7 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
        JSON.stringify({ kManual, asked: kAsked.length, held: holds(() => K.V.backupHeld()) }));
     const R = await bootFresh({ st: B.st, answers: [true] }); await sleep(5);
     ok('...the hold outlives the launch: the next launch, on an empty collection that now reads, still keeps the file and says so again',
-       !!R.V && R.V.backupHeld() === true && R.V.OWN.items.length === 0 && /^Your saved collection and 10 other lists could not be read/.test(toastText(R.d)) && (R.V.scheduleBackup('sync'), await sleep(450), R.st['vault.backup'] === good), R.V ? toastText(R.d) : 'no app');
+       !!R.V && R.V.backupHeld() === true && R.V.OWN.items.length === 0 && /^Your saved collection and 11 other lists could not be read/.test(toastText(R.d)) && (R.V.scheduleBackup('sync'), await sleep(450), R.st['vault.backup'] === good), R.V ? toastText(R.d) : 'no app');
     if (R.V) await R.V.restoreFromBackup();
     ok('...and a restore brings the collection back and ends the hold: the next backup is written again', !!R.V && R.V.OWN.items.length === 1 && R.V.OWN.items[0].qty === 3 && !R.V.backupHeld()
        && (R.V.scheduleBackup('batch'), await sleep(450), JSON.parse(R.st['vault.backup']).at !== JSON.parse(good).at && JSON.parse(R.st['vault.backup']).items.length === 1), R.V ? JSON.stringify({ n: R.V.OWN.items.length, held: R.V.backupHeld() }) : 'no app');
@@ -411,9 +411,14 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
     const dHeld = holds(() => D.V.backupHeld()); holds(() => D.V.commitOwn('detail')); await sleep(450);
     ok('an unreadable list the backup carries (the decks) holds the backup too: a commit keeps the file\'s deck, and the collector is told which list could not be read',
        dHeld === true && D.st['vault.backup'] === goodD && /^Your saved decks could not be read — use Restore from backup, under More$/.test(toastText(D.d)), JSON.stringify({ dHeld, kept: D.st['vault.backup'] === goodD, toast: toastText(D.d) }));
+    /* take 136 (A43): the waiting scans are in the backup now, so an unreadable batch holds it as every list it
+       carries does; the control moves to a cache, which is in no backup */
     const Bt = await bootFresh({ st: { 'vault.items': line1, 'vault.batch': '[1,', 'vault.backup': goodD } });
     const btHeld = holds(() => Bt.V.backupHeld()); holds(() => Bt.V.commitOwn('detail')); await sleep(450);
-    ok('control: an unreadable batch (in no backup) holds nothing -- the backup is written', btHeld === false && !!Bt.st['vault.backup'] && Bt.st['vault.backup'] !== goodD, JSON.stringify({ btHeld }));
+    ok('an unreadable batch holds the backup too since take 136 (the waiting scans are in it): a commit keeps the file', btHeld === true && Bt.st['vault.backup'] === goodD, JSON.stringify({ btHeld, kept: Bt.st['vault.backup'] === goodD }));
+    const Hc = await bootFresh({ st: { 'vault.items': line1, 'vault.hunt': '[1,', 'vault.backup': goodD } });
+    const hcHeld = holds(() => Hc.V.backupHeld()); holds(() => Hc.V.commitOwn('detail')); await sleep(450);
+    ok('control: an unreadable cache (the Hunt feed, in no backup) holds nothing -- the backup is written', hcHeld === false && !!Hc.st['vault.backup'] && Hc.st['vault.backup'] !== goodD, JSON.stringify({ hcHeld }));
     const N = await bootFresh({ st: { 'vault.backupHold': 'x', 'vault.items': '[]' } });
     const nHeld = holds(() => N.V.backupHeld()); holds(() => N.V.scheduleBackup('batch')); await sleep(450);
     ok('control: a hold with no backup on file protects nothing -- the first backup is written and ends it', nHeld === true && !!N.st['vault.backup'] && holds(() => N.V.backupHeld() === false), JSON.stringify({ nHeld, wrote: !!N.st['vault.backup'] }));

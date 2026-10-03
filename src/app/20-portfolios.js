@@ -13,8 +13,9 @@ const PF = {
   save() { saveJson('vault.pfs', this.list); saveJson('vault.pf', this.active); },
   name(id) { return (this.list.find(p => p.id === id) || {}).name || 'One Piece'; },
   scope(items) { return this.active === 'all' ? items : items.filter(i => (i.pf || 'main') === this.active); },
-  add(name) { const id = 'pf' + Date.now(); this.list.push({ id, name }); this.active = id; this.save(); return id; },
-  rename(id, name) { const p = this.list.find(x => x.id === id); if (p) { p.name = name; this.save(); } },
+  /* take 136 (A43, A2): a new or renamed collection is backed up at once; it waited for the next card's commit */
+  add(name) { const id = 'pf' + Date.now(); this.list.push({ id, name }); this.active = id; this.save(); scheduleBackup('collections'); return id; },
+  rename(id, name) { const p = this.list.find(x => x.id === id); if (p) { p.name = name; this.save(); scheduleBackup('collections'); } },
   remove(id) {
     if (id === 'main' || this.list.length < 2) return false;
     OWN.items.forEach(i => { if ((i.pf || 'main') === id) i.pf = 'main'; });   // never lose a line
