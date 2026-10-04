@@ -1,6 +1,6 @@
 # SIM-UI — the contract the Sim's UI pass builds against
 
-*Current as of take 139.*
+*Current as of take 140.*
 
 For the Sim's board (Prep & Play → Sim). Takes 122 and 123 made the game
 underneath right, provable and private; take 124 drew it as a table -- the

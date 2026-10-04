@@ -208,10 +208,10 @@ function paintDeck() {
   const dv = $('#dkValue');
   if (dv) {
     const d1 = hist.length > 1 ? hist[hist.length - 1][1] - hist[hist.length - 2][1] : null;
-    dv.innerHTML = `<div class="row"><div class="nm"><b>Deck value</b><span>${dkOwnedValue(A)} \u00b7 at the sleeved printings, today</span></div>
+    dv.innerHTML = `<div class="row"><div class="nm"><b>Deck value</b><span>${dkOwnedValue(A)}</span></div>
       <div class="v mono">${money(A.value)}${d1 != null ? `<span class="${d1 > 0.005 ? 'up' : d1 < -0.005 ? 'down' : 'flat'}">${signedMoney(d1)} ${esc(sinceLabel())}</span>` : ''}</div></div>
       <canvas id="dkSpark" height="56" style="width:100%;display:block;margin-top:6px"></canvas>
-      <div class="note" style="margin-top:4px">${hist.length > 1 ? 'Dashed: this list at each day\u2019s prices, estimated. Solid history arrives as the catalogue accrues days.' : 'One day of prices on file; the line appears as days accrue.'}</div>`;
+      <div class="note" style="margin-top:4px">${hist.length > 1 ? 'Dashed: estimated from each day\u2019s prices.' : 'One day of prices so far; the line appears as days add up.'}</div>`;
     if (hist.length > 1) sparkOn($('#dkSpark'), hist, 'estimate');
   }
   $('#dkRows').innerHTML = A.rows.length ? A.rows.slice().sort((a, b) =>
@@ -402,7 +402,7 @@ function parseListLine(raw) {
    dropped silently; a Leader line sets the Leader. */
 $('#dkImport').addEventListener('click', async () => {
   const txt = await ask({ title: 'Import a deck list', kind: 'multiline', ok: 'Import',
-    why: 'One card per line: <b>4 OP01-016 Nami</b>. A Leader line sets the Leader. Lines the catalogue does not know are reported, never dropped.',
+    why: 'One card per line, like <b>4 OP01-016 Nami</b>; a Leader line sets the Leader. Unknown lines are listed, not dropped.',
     placeholder: '1 ST01-001 Monkey.D.Luffy\n4 OP01-016 Nami\n4 OP01-025 Roronoa Zoro' });
   if (!txt) return;
   const ownedIds = new Set(OWN.items.map(i => i.id));
