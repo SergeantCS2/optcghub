@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 137.*
+*Current as of take 138.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -262,6 +262,7 @@ Start here. Do not read top to bottom.
 | A negative control handed a path that is not a build ran this build and passed everything | **247** |
 | A day the collector reads, written as the UTC date: tomorrow's on a US evening | **248** |
 | A check on a saved fixture's age goes red on the clock alone, every build at once | **249** |
+| A `\uXXXX` typed into a command reached the file as the character; an anchor on the escape missed | **250** |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -3258,6 +3259,17 @@ under a clock pinned 1 minute to 400 days after the read. Rule: a pattern for
 a time-dependent label is written from the label's code, every branch of it,
 and proved under a pinned clock across them; a fixture's age is the one input
 that changes with nothing committed.
+
+**250. A `\uXXXX` typed into a session's command can reach the file as the
+character itself.** Take 138 patched twenty sentences in `src/app/52-hunt.js`,
+whose strings hold escapes as six characters (`\u2014`, `\u00b7`); the
+patch's anchors were typed with the same escapes and matched nothing. The
+script on disk held the dash's three UTF-8 bytes where `\u2014` had been
+typed -- the expansion happened before Python ran, and not in every command
+(a plain `cat` heredoc kept one literally). The assertion stopped it, as rule
+6 asks. Rule: to anchor on a literal escape, type a placeholder (`@u2014`) and
+build the backslash in code (`chr(92) + 'u'`); then grep the file for the
+escape, never for the character.
 
 ## §2 — Inherited from APEX ORV
 

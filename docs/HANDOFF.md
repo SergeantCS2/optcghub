@@ -1,4 +1,100 @@
-# HANDOFF — through Take 137
+# HANDOFF — through Take 138
+
+## Take 138 — 2026-10-04 — Hunt's explanations cut short and plain (the owner's word)
+
+Opened before any code (PROTOCOL §6), while take 137's PR (64) finished its
+APK job. The owner, 4 Oct, on the look: "The look is fine, mark it ready";
+then: "Merged this when it finishes - continue - try to cut down on the text
+explanations a bit, keep it short and simple - human like and only
+necessary info - such as Refreshes stock near you based on X info - finds
+events near you based on x & sourced from x, just examples. Continue on
+anything you can overnight." His examples are Hunt's, so this take is
+Hunt's text; Collect, More and Prep & Play follow, a take each, with a
+look each. The owner asked for it, so the UI session's rule (take 104)
+does not hold it back.
+
+### What this take changes
+
+1. **Hunt's notes say what a list is and where it comes from, and stop.**
+   Every panel note on Sealed, Local, Events and Releases is cut to its
+   source, its age and what the list is; the explanations of why the app
+   says so (what a registered store is not, what the feed rotates through,
+   what a store that publishes nothing still is) are gone. Every source and
+   every age stays: AGENTS' rule that a fact carries where and when it came
+   from is not what was cut. Twenty sentences, in `src/app/52-hunt.js`,
+   `src/app/58-detail.js` and `src/app.html`. Target's panel now opens
+   "Online and shelf stock at Target, refreshed hourly" (the owner's own
+   example: "Refreshes stock near you"); Local's shop list "Stores near you
+   that run One Piece events. From Bandai TCG+, 2 h ago"; Events' footer
+   "One Piece events near you, from Bandai TCG+ via onepieceevents.com.
+   Register in the TCG+ app or site" (his second example); the zip prompt
+   "Adds shelf stock at stores near you. It stays on this phone"; the
+   distributor history's note one sentence instead of a paragraph.
+2. **One count left the screen.** GTS's panel said how many unreleased
+   products had an order due date ahead *and* how many had none; it says the
+   first ("1 with orders open") and drops the second, which no collector
+   acts on. `gtsDue` still computes both.
+
+### Measured
+
+- Hunt's note text in `src/app/52-hunt.js`, every `class="note"` string of 20
+  characters or more: 3,632 characters on take 137, 2,832 now (a fifth
+  less; the sentences that remain carry a source and an age where they did).
+- The pipeline from a fresh ingest: 87 groups, 7,684 products (7,009 cards,
+  675 sealed), 22 days of history; smoke 1713 of 1713; render 277 of 277
+  `(mode: chrome)` after the fix below, 275 / 2 before it.
+
+### Tests
+
+- The smoke: 1713 of 1713. Eighteen checks of takes 60 to 114 pinned the old
+  sentences; each now guards the fact it carried (the source, the age, the
+  count, the limit) in the new words. On take 137's build (`SMOKE_APP`, a
+  directory) 18 fail by name -- the 17 rewritten that the build draws and
+  the new control below; the market-price note sits in the page, which
+  `SMOKE_APP` does not swap, so its check passes on both. Two negated checks
+  (a closed fold shows no distributor panel) were re-pointed at a sentence
+  that still exists; with the old words gone they would have passed on
+  anything.
+- The control that told GTS's two unreleased counts apart (by state, take
+  114 as first built, against by dates) could not once the second count
+  left: on this fixture the first agrees either way. It now moves one due
+  date into the past, every state as GTS gave it: by dates "orders open"
+  drops by one. Watched failing on a plant that counts by state (it alone
+  fails, 1712 / 1) and passing on the build.
+
+### The look
+
+- `node tools/look.mjs 138`: 16 steps, 16 ok, at both Fold sizes -- Sealed's
+  Target panel and the distributors opened, Local's top and its shops and
+  notes, Events' footer, Releases' notes -- on the smoke's fixtures (the
+  events moved forward 19 days so the list is full; the shop list's own
+  next-event lines are the fixture's September days). Every picture read;
+  the first pass found "checked hourly. Checked just now" on Target (now
+  "refreshed hourly") and "before TCGplayer lists it" (now "them"), and the
+  second pass confirmed both.
+
+### What I got wrong
+
+- My first patch of the sentences failed its own anchors: a `\u2014` I typed
+  into a command reached the file as the dash itself (measured: the script
+  on disk held its three bytes), while the app's files hold the escape as
+  six characters. Not Python's doing, as I first wrote -- the session's own
+  input. Written as a placeholder and swapped in code, it went through
+  (landmine 250).
+- I first wrote Target's lead as "checked hourly" beside the panel's own
+  "Checked just now"; the look read it as said twice.
+- I grepped the smoke and the look for the old sentences but not
+  `tools/render.mjs` for the history note: the pipeline's render stopped on
+  two take-114 checks that read its first words. Both now read the new
+  note; on take 137's `app.js` the two fail by name, on this build 277 of
+  277.
+
+### DEFERRED
+
+- A45 items 2 to 4 -- Collect, More, Prep & Play -- a take each, each with a
+  look; the next take starts on Collect.
+- The phone's-day family (AGENDA A43, landmine 248) -- Events', Releases' and
+  Sealed's "today", the value snapshot's day, the export names.
 
 ## Take 137 — 2026-10-03 — A43's last two small items: Restore reaches an earlier day's backup, and a cost basis or a Hunt note's price is typed in the currency on screen
 
@@ -115,6 +211,19 @@ change a screen, so this take has a look.
   those (Android's scoped storage, landmine 239's family) is INFERRED from
   the plugin's definitions; only the Fold proves it. If it lists nothing,
   Restore behaves as it did.
+
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+The owner, 4 Oct: "The look is fine, mark it ready", then "Merged this when
+it finishes". With `check` and `apk` green on `afaea5c` the session marked
+PR 64 ready and merged it at his word (07:47 UTC, `537cab3`, a merge
+commit) -- the first take merged by the session, not the owner. `build` run
+97 green in 14 minutes; Release take-137 published 08:01 UTC with the APK
+(28,955,969 bytes, 4,988 fewer than take 136's -- INFERRED a night's
+catalogue, not measured file by file), the AAB (22,162,032), the mapping
+and the Play icon. Take 130's Walmart check is fixed on `main` before the
+night's smoke. Take 138 began on the branch restarted on this merge, and
+this note rides its PR.
 
 ## Take 136 — 2026-10-03 — four of A43's small items: the waiting scans in the backup, a new or renamed collection backed up at once, CSV import's one write, two gate checks
 

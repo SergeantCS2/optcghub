@@ -23,7 +23,7 @@ function paintDetailDist(p) {
     return HUNT.unreached(D) ? `could not reach it${D.stale_since ? ' since ' + esc(nbsp(momentText(D.stale_since))) : ''}; its last check, ${esc(HUNT.ageLabel(D.fetched_at))}, is shown` : esc(HUNT.ageLabel(D.fetched_at)); };
   el.innerHTML = distFold('detail', summary,
     list.map((it, i) => `<div class="dsec"><div class="row" style="align-items:center;gap:10px;padding:0"><div class="nm" style="min-width:0"><b>${esc(HUNT.distName(it._d))}</b><span>${distWords(it).join(' \u00b7 ')} \u00b7 ${when(it)}</span></div>${it.url ? `<a class="ghost" href="${esc(it.url)}" target="_blank" rel="noopener" style="flex:0 0 auto;padding:8px 12px" aria-label="Open ${esc(HUNT.distName(it._d))}'s page for ${esc(p.name)}">Open ${ext()}</a>` : ''}</div>${distHistory(it, tls[i])}</div>`).join('')
-    + '<div class="note" style="margin-top:10px">A distributor sells to stores, not to you: these are the dates and words it gives the shops.</div>'
+    + '<div class="note" style="margin-top:10px">What the distributor tells shops. It sells to stores, not to you.</div>'
     + (list.some((it, i) => tlNeedsNote(it, tls[i])) ? `<div class="note" style="margin-top:6px">${esc(TL_NOTE)}</div>` : ''));
 }
 function scrollToPanel(el) {
