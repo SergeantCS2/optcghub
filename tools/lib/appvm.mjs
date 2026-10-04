@@ -64,6 +64,9 @@ export async function boot({ quiet = false, app = null } = {}) {
   /* `app`: another build's directory (its app.js and bundle/catalog.json) -- how a new check is watched failing on the
      previous take; the page and manifest are this build's, which only name elements and counts */
   const from = (p, fallback) => app && fs.existsSync(path.join(app, p)) ? path.join(app, p) : fallback;
+  /* take 137 (landmine 247): a build that is not there is refused -- SMOKE_APP given the app.js itself fell back to this
+     build without a word, and every new check "failed on the previous take" by passing */
+  if (app && !fs.existsSync(path.join(app, 'app.js'))) throw new Error(`SMOKE_APP ${app}: no app.js in it -- the build's directory, not a file`);
   const html = fs.readFileSync(W('index.html'), 'utf8');
   const js = fs.readFileSync(from('app.js', W('app.js')), 'utf8');
   const catalog = JSON.parse(fs.readFileSync(from('bundle/catalog.json', from('catalog.json', W('bundle/catalog.json'))), 'utf8'));

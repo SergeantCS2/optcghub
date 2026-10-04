@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 136.*
+*Current as of take 137.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -259,6 +259,9 @@ Start here. Do not read top to bottom.
 | A tap on a control inside a picture opens the card instead; a drag across a picture dies after 8 px | **244** |
 | A readback guard refuses a true artifact: a producer piped into a quiet grep under pipefail | **245** |
 | A spawned dev server's child outlives the parent's kill and keeps the port; the next start reads as "did not start" | **246** |
+| A negative control handed a path that is not a build ran this build and passed everything | **247** |
+| A day the collector reads, written as the UTC date: tomorrow's on a US evening | **248** |
+| A check on a saved fixture's age goes red on the clock alone, every build at once | **249** |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -3215,6 +3218,46 @@ server is spawned `detached` (its own process group), stopped with
 cannot pass for the relay that was asked for. Rule: stop a spawned server by
 its process group, and never reuse the port a stopped one had; a start that
 answers at once on a reused port may be the one you thought you killed.
+
+**247. A negative control handed a path that is not a build ran this build,
+and every new check "failed on the previous take" by passing.** Take 137's
+control for the phone's day was the take with its three lines put back, built
+to a scratch directory; `SMOKE_APP=<dir>/app.js` was given the file, and
+`tools/lib/appvm.mjs` joins `app.js` onto what it is given, found nothing at
+`<dir>/app.js/app.js`, and fell back to `www/app.js` -- the take's own build --
+without a word. The run printed 1709 passed and the new checks looked as if
+they proved nothing; with the directory, three of them failed by name. The
+fallback is per file on purpose (an old build may lack a bundle), so the guard
+is on `app.js` alone: `boot()` now throws when `SMOKE_APP` names no build.
+Rule: a control that passes everything has first to prove it ran the other
+build; a harness that falls back quietly turns every control into this one.
+
+**248. The phone's day is `localDay()`, never `toISOString().slice(0, 10)`.**
+The UTC date is tomorrow's on a US evening -- from 8 PM in New York in summer,
+7 PM in winter. Take 115 fixed it for an alert's fired day; take 137's look
+found it twice more on screens it was building: a Hunt note written at 8:05 PM
+read "Oct 4" with the phone at Oct 3, and the dated backup copy was named by
+the UTC day while the new Restore sheet names it as the phone's, so an
+evening's backup filed under tomorrow and "The backup of" today could sit
+under the latest of today. Both now use `localDay()` (`src/app/52-hunt.js`).
+Still UTC and compared with calendar days, open in AGENDA A43: Events'
+"today" (tonight's event can leave the list after 8 PM), Releases', Sealed's
+and the newest set's "today", the value snapshot's day, the export names.
+Rule: a day the collector reads, or one compared with a day a store or
+publisher announced, is the phone's; only a day the runner or TCGCSV wrote
+(a price day, `utcDay()`) stays UTC.
+
+**249. A check on a saved fixture's age passes until the fixture is old
+enough, then goes red on the clock alone.** Take 130's smoke drew Walmart's
+line from a page saved on 2 Oct 05:02 UTC and matched its age against
+`(just now|\d+ (min|h|d) ago|...)`. `HUNT.ageLabel` writes "N days ago" from
+48 hours on, never "N d ago", so at 05:02 UTC on 4 Oct the check failed on
+every build -- found by take 137's fresh pipeline run, the nightly next. The
+pattern now takes the four forms the label writes, and a check runs the line
+under a clock pinned 1 minute to 400 days after the read. Rule: a pattern for
+a time-dependent label is written from the label's code, every branch of it,
+and proved under a pinned clock across them; a fixture's age is the one input
+that changes with nothing committed.
 
 ## §2 — Inherited from APEX ORV
 

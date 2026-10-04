@@ -2372,4 +2372,64 @@ const take131 = [
       return { ok: m.over === 0 && m.wins && m.state === 'over' && !j.room && !j.game && !j.kept && /The game is over/.test(bar) && !/reconnect|sending|away/.test(bar), bar, ...m, joiner: j }; } },
 ];
 
-export const STEPS = { 131: take131, 130: take130, 128: take128, 127: take127, 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
+/* take 137 (A43): what you paid and a Hunt note's price, typed in the currency on screen (euros here) and read back as typed;
+   Restore's sheet with this install's earlier days -- the Filesystem a stub in the page holding dated copies, as the smoke's,
+   named by the phone's day (the look's clock is a New York evening when it runs after 8 PM there) */
+const take137 = [
+  { name: 'open', run: async (page, ctx) => { await ctx.open(); return { ok: true }; } },
+  { name: 'what-you-paid-asks-in-euros', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('collect', true); await ${pause};
+        V.CUR.set('EUR'); const p = V.CAT.rows.find(r => r.num && !r.sealed && r.market > 5 && r.img);
+        window.__k137 = { items: V.OWN.items, notes: V.LOCAL.notes, zip: V.HUNT.zip };
+        V.OWN.items = [{ id: p.id, qty: 1, condition: 'NM', pf: 'main', game: 'optcg', added: new Date().toISOString(), fav: false }]; V.OWN.save();
+        V.openDetail(p.id); await ${pause};
+        const b = document.getElementById('dPaid'); b.scrollIntoView({ block: 'center' }); b.click(); await ${pause};
+        return { on: document.getElementById('askSheet').classList.contains('on'), title: document.getElementById('askTitle').textContent, why: document.getElementById('askWhy').textContent, name: p.name }; })()`);
+      await wait(400);
+      return { ok: m.on && m.title === 'What you paid' && /in € EUR, converted \(≈\); it is kept in US dollars/.test(m.why), ...m };
+    } },
+  { name: 'what-you-paid-reads-back-as-typed', run: async (page) => {
+      await page.fill('#askIn', '20'); await page.click('#askOk'); await wait(800);
+      const m = await page.evaluate(() => { const b = document.getElementById('dPaid'); b.scrollIntoView({ block: 'center' }); return { paid: b.textContent.trim() }; });
+      await wait(300);
+      return { ok: m.paid === '≈€20.00', ...m };
+    } },
+  { name: 'hunt-note-price-asks-in-euros', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.NAV.zipAsked = true; V.HUNT.setZip('48329');
+        V.MODE.set('hunt', true); await ${pause}; V.go('local'); V.paintLocal(); await ${pause};
+        window.__note137 = V.addLocalNote('Take 137 Games'); await ${pause}; return true; })()`);
+      await page.fill('#askIn', '3 OP-11 boxes'); await page.click('#askOk'); await wait(600);
+      const q = await page.evaluate(() => ({ title: document.getElementById('askTitle').textContent, why: document.getElementById('askWhy').textContent, placeholder: document.getElementById('askIn').getAttribute('placeholder') }));
+      return { ok: m && q.title === 'Price, if you saw one' && q.placeholder === '€ EUR, optional' && /in € EUR; it is kept in US dollars/.test(q.why), ...q };
+    } },
+  { name: 'hunt-note-shows-the-price-as-typed', run: async (page) => {
+      await page.fill('#askIn', '20'); await page.click('#askOk'); await wait(500);
+      await page.fill('#askIn', ''); await page.click('#askOk'); await wait(800);
+      const m = await page.evaluate(() => { const row = [...document.querySelectorAll('#localList .row')].find(r => /Take 137 Games/.test(r.textContent));
+        if (row) row.scrollIntoView({ block: 'center' }); return { note: row ? row.querySelector('.nm span').textContent.trim() : null }; });
+      await wait(300);
+      return { ok: !!m.note && /3 OP-11 boxes · ≈€20\.00/.test(m.note), ...m };
+    } },
+  { name: 'restore-offers-an-earlier-day', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.CUR.set('USD'); V.MODE.set('collect', true); await ${pause};
+        V.OWN.items = window.__k137.items; V.OWN.save(); V.LOCAL.notes = window.__k137.notes; V.LOCAL.saveNotes();
+        const iso = n => new Date(Date.now() + n * 864e5).toISOString(), now = iso(0), base = JSON.parse(V.backupJson());
+        const latest = JSON.stringify({ ...base, at: now }), names = [0, 1, 2, 3, 7].map(n => 'backup-' + V.localDay(iso(-n)) + '.json');
+        window.Capacitor = { Plugins: { Filesystem: { readdir: async () => ({ files: ['backup-latest.json', ...names, 'backup-before-restore.json'].map(name => ({ name, type: 'file' })) }),
+          readFile: async ({ path }) => { if (/backup-latest\\.json$/.test(path)) return { data: latest }; throw new Error('File does not exist'); }, writeFile: async o => ({ uri: 'file:///' + o.path }) } } };
+        try { localStorage.removeItem('vault.beforeRestore'); } catch (e) {}
+        V.go('settings'); await ${pause}; window.__r137 = V.restoreFromBackup(); await ${pause};
+        const pk = document.getElementById('picker'), opts = [...pk.querySelectorAll('.opt')].map(b => ({ t: b.querySelector('b').textContent, s: (b.querySelector('span') || {}).textContent || '', h: Math.round(b.getBoundingClientRect().height) }));
+        return { on: pk.classList.contains('on'), title: document.getElementById('pkTitle').textContent, opts, days: [1, 2, 3].map(n => V.dayText(V.localDay(iso(-n)))) }; })()`);
+      await wait(400);
+      return { ok: m.on && m.title === 'Restore from' && m.opts.length === 5 && m.opts[0].t === 'The latest backup' && m.days.every((d, i) => m.opts[i + 1].t === 'The backup of ' + d) && m.opts[4].t === 'Choose a file' && m.opts.every(o => o.h >= 44), ...m };
+    } },
+  { name: 'restore-cancelled-nothing-changed', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; const n = V.OWN.items.length; V.PICKER.dismiss(); await window.__r137; delete window.Capacitor;
+        if (window.__k137) { V.HUNT.setZip(window.__k137.zip || ''); } await ${pause};
+        return { closed: !document.getElementById('picker').classList.contains('on'), same: V.OWN.items.length === n, screen: V.NAV.stack[V.NAV.stack.length - 1] }; })()`);
+      return { ok: m.closed && m.same && m.screen === 'settings', ...m };
+    } },
+];
+
+export const STEPS = { 137: take137, 131: take131, 130: take130, 128: take128, 127: take127, 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };

@@ -23,7 +23,16 @@ section('take 130 — Walmart, from its item pages (A32): the feed carries what 
     const p = V.CAT.byId.get(+read.catalog_id); for (const id of Object.keys(wmBy())) { const q = V.CAT.byId.get(+id); if (q) { V.SEALED.closed.delete(q.set); V.SEALED.open.add(q.set); } }
     ok('HUNT.wmByCatalogId keys the matched items by catalogue product, and listedIds counts them (D24 (b): what a source names is listed)', Object.keys(wmBy()).includes(String(read.catalog_id)) && V.HUNT.listedIds().has(+read.catalog_id));
     V.paintSealed(); const h = ctx.document.querySelector('#sealedList').innerHTML;
-    ok('the product\'s row carries a Walmart line: the price, "ships", the seller, and the age of the read', new RegExp(`Walmart \\$26\\.98 · ships · sold by ${read.online.seller.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} · (just now|\\d+ (min|h|d) ago|[A-Z][a-z]{2} \\d+)`).test(h), (h.match(/Walmart [^<]{0,90}/) || [''])[0]);
+    /* take 137 (landmine 249): the age in the four forms HUNT.ageLabel writes -- the pattern allowed "2 d ago", a form the
+       app never writes, and the check went red on the clock alone two days after the saved page was read (2 Oct, 05:02 UTC) */
+    const wmPat = new RegExp(`Walmart \\$26\\.98 · ships · sold by ${read.online.seller.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} · (just now|\\d+ min ago|\\d+ h ago|\\d+ days ago)`);
+    ok('the product\'s row carries a Walmart line: the price, "ships", the seller, and the age of the read', wmPat.test(h), (h.match(/Walmart \$[^<]{0,90}/) || h.match(/Walmart [^<]{0,90}/) || [''])[0]);
+    const RealDate = ctx.Date, t0 = RealDate.parse(read.online.checked_at);
+    const aged = [1, 45, 30 * 60, 3 * 1440, 400 * 1440].map(min => { const now = t0 + min * 6e4;
+      ctx.Date = class extends RealDate { constructor(...a) { super(...(a.length ? a : [now])); } static now() { return now; } };
+      try { return wline(read).replace(/<[^>]+>/g, ''); } finally { ctx.Date = RealDate; } });
+    ok('...whatever day the run falls on: the line a minute, 45 minutes, 30 hours, 3 days and 400 days after the read matches it (it went red two days after the fixture was saved)', aged.length === 5 && aged.every(a => wmPat.test(a)), JSON.stringify(aged));
+    ok('control: the line with its age cut off does not', !wmPat.test(`Walmart $26.98 · ships · sold by ${read.online.seller}`));
     ok('an item the run has not read says so under its product, never a stale number dressed as now', /online stock not checked yet/.test(wline({ id: '1', title: 't', url: 'https://www.walmart.com/ip/1' })));
     ok('a page that stated no price is "no price stated", never $0', /no price stated · ships/.test(wline({ id: '1', title: 't', url: 'https://www.walmart.com/ip/1', online: { price: null, price_text: '', status: 'IN_STOCK', seller: 'X', checked_at: W.fetched_at } })) && !/\$0/.test(wline({ id: '1', title: 't', url: 'https://www.walmart.com/ip/1', online: { price: null, status: 'IN_STOCK', checked_at: W.fetched_at } })));
     ok('a status other than in stock is said in words', /out of stock online/.test(wline({ id: '1', title: 't', url: 'https://www.walmart.com/ip/1', online: { price: 9.5, status: 'OUT_OF_STOCK', checked_at: W.fetched_at } })));

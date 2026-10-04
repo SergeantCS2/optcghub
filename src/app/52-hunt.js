@@ -634,9 +634,13 @@ function paintLocal() {
 async function addLocalNote(store) {
   const st = store || await ask({ title: 'Which store?', kind: 'text', placeholder: 'Store name', ok: 'Next', why: 'Any store \u2014 it need not be on the list.' }); if (!st) return;
   const what = await ask({ title: `What did you see at ${st}?`, kind: 'text', placeholder: 'e.g. 3 OP-11 boxes, 20 packs', ok: 'Next', why: 'Stock, product, anything worth remembering.' }); if (what == null) return;
-  const price = await ask({ title: 'Price, if you saw one', kind: 'number', placeholder: 'USD, optional', ok: 'Next', why: 'Per box or pack, as marked.' });
+  /* take 137 (A43): in the currency on screen, kept in US dollars like every price the app shows (money() converts back) */
+  const c = CUR.active();
+  const price = await ask({ title: 'Price, if you saw one', kind: 'number', placeholder: `${c === 'USD' ? 'USD' : curLabel(c)}, optional`, ok: 'Next',
+    why: `Per box or pack, as marked${c === 'USD' ? '' : `, in ${esc(curLabel(c))}; it is kept in US dollars`}.` });
+  const pr = typedAmount(price);
   const phone = await ask({ title: 'Their phone, optional', kind: 'text', placeholder: '(248) 555-0100', ok: 'Save', why: 'Adds a Call button to the note.' });
-  LOCAL.notes.push({ store: st, what: what || '', price: parseFloat(price) || null, phone: (phone || '').trim() || null, when: new Date().toISOString().slice(0, 10) }); LOCAL.saveNotes(); paintLocal();
+  LOCAL.notes.push({ store: st, what: what || '', price: pr > 0 ? fromShown(pr) : null, phone: (phone || '').trim() || null, when: localDay(new Date().toISOString()) }); LOCAL.saveNotes(); paintLocal();   // take 137: the phone's day (the UTC date was tomorrow's on a US evening)
 }
 $('#localRadius').addEventListener('change', e => { LOCAL.radius = +e.target.value; saveJson('vault.hunt.radius', String(LOCAL.radius)); paintLocal(); });
 $('#local').addEventListener('click', e => { const n = e.target.closest('[data-localnote]'); if (n) { addLocalNote(n.dataset.localnote); return; }

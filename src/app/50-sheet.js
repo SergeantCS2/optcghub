@@ -440,17 +440,25 @@ async function keepBeforeRestore() {
 async function restoreFromBackup() {
   let raw = await PLATFORM.readBackup(), src = 'latest';
   const kept = keptBeforeRestore();
-  if (kept) {
+  /* take 137 (A43): an earlier day than the latest's is a choice to offer -- a dated copy is written every day the app
+     backs up, and Restore went straight to the latest unless an earlier restore had kept something, so the backup
+     from before a mistake was out of reach. With nothing earlier and nothing kept it still goes straight there. */
+  let latestDay = ''; try { latestDay = localDay(JSON.parse(raw).at); } catch (e) {}   // the phone's day, as the copies are named
+  const earlier = (await PLATFORM.backupDays()).filter(d => !latestDay || d < latestDay).slice(0, 3);
+  if (kept || earlier.length) {
     const about = j => { try { const x = JSON.parse(j), n = (x.items || []).length, d = (x.decks || []).length;
       return esc(`${momentText(x.at)} \u00b7 ${n} line${n === 1 ? '' : 's'} \u00b7 ${d} deck${d === 1 ? '' : 's'}`); } catch (e) { return ''; } };
     const opt = (k, t, sub) => `<button class="opt" data-rsrc="${k}"><div class="oi"><b>${t}</b><span>${sub}</span></div></button>`;
     src = await PICKER.choose({ title: 'Restore from', key: 'rsrc',
       why: 'What is on the phone now is replaced, and kept: a restore can be undone the same way.',
-      opts: (raw ? opt('latest', 'The latest backup', about(raw)) : '') + opt('kept', 'What the last restore replaced', about(kept))
-        + opt('file', 'Choose a file', 'a dated backup \u2014 Documents \u203a OPTCGHub') });
+      opts: (raw ? opt('latest', 'The latest backup', about(raw)) : '')
+        + earlier.map(d => opt('day:' + d, `The backup of ${esc(dayText(d))}`, 'its dated copy \u2014 Documents \u203a OPTCGHub')).join('')
+        + (kept ? opt('kept', 'What the last restore replaced', about(kept)) : '')
+        + opt('file', 'Choose a file', 'any backup \u2014 Documents \u203a OPTCGHub') });
     if (!src) return;
-    raw = src === 'kept' ? kept : src === 'file' ? await PLATFORM.pickTextFile('.json,application/json') : raw;
-    if (!raw) return toast('No backup chosen');
+    const day = src.startsWith('day:') ? src.slice(4) : null;
+    raw = src === 'kept' ? kept : src === 'file' ? await PLATFORM.pickTextFile('.json,application/json') : day ? await PLATFORM.readBackupDay(day) : raw;
+    if (!raw) return toast(day ? 'That day\u2019s backup could not be read \u2014 Choose a file reaches it' : 'No backup chosen');
   } else if (!raw) {
     toast('No backup of this install \u2014 choose the newest file in Documents \u203a OPTCGHub');   // take 125: another install's latest can be backup-latest-<time>.json (landmine 239)
     raw = await PLATFORM.pickTextFile('.json,application/json');

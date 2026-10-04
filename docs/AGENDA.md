@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 136.* Ranked by blocking-ness, not by interest.
+*Current as of take 137.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -74,10 +74,14 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0b. *Take 136, in flight (3 Oct):* four of A43's small items -- the waiting
-   scans in the backup, a new or renamed collection backed up at once, CSV
-   import's one write, the catalogue-shape and "Say take N" gate checks.
-   *Done at take 135 (PR 62):* A44 item 6 -- the smoke into files under
+0b. *Take 137, in flight (3 Oct):* A43's last two small items -- Restore
+   reaches an earlier day's backup; a cost basis and a Hunt note's price in
+   the currency on screen; the phone's day for the dated copy and a Hunt
+   note (landmine 248); take 130's Walmart check, red on the clock since
+   4 Oct 05:02 UTC (landmine 249). *Done at take 136 (PR 63):* four of A43's small
+   items -- the waiting scans in the backup, a new or renamed collection
+   backed up at once, CSV import's one write, the catalogue-shape and "Say
+   take N" gate checks. *Done at take 135 (PR 62):* A44 item 6 -- the smoke into files under
    `tools/smoke/`: a runner that snapshots state around each file and names
    a leak, the same 1,681 checks. *Done at take 134 (PR 61):* A44 item 4 -- `ADS` out of `PLATFORM`: the ads and consent
    flow beside CREDITS, the adapter keeps the plugin. *Done at take 133
@@ -123,6 +127,29 @@ what take 115 changed on screen.
    undoes it, and a merge would count a card twice); freezing the
    catalogue's keys and columns in the app (the app's check already
    refuses what it cannot read; the gate stops a take from shipping one).
+   *Take 137: the other two -- Restore lists this install's dated copies and
+   offers an earlier day when there is one; the cost basis and a Hunt
+   note's price are typed in the currency on screen and kept in US
+   dollars -- built, with a look. A43's small items named here are done.*
+   **Ruled out (take 137):** always showing the "Restore from" sheet (take
+   115's rule stands: straight to the latest when nothing earlier and
+   nothing kept); listing every dated copy (three earlier days and "Choose a
+   file" for the rest); reading each day's file to describe it before the
+   collector picks one (a day reads only when chosen).
+   *Take 137's look found the phone's day (landmine 248):* the dated copy
+   was named by the UTC date and a Hunt note dated by it, tomorrow's on a US
+   evening -- both now `localDay()`. **Open, a small item of its own:** the
+   rest of that family, each compared with a calendar day a store or
+   publisher announced or read by the collector as a day -- Events' "today"
+   (`EVENTS.rows`, tonight's event leaves the list after 8 PM in New York),
+   Releases' (`paintReleases`), Sealed's and the newest set's "today", the
+   value snapshot's day (`OWN.snapshot`, an evening's value filed under
+   tomorrow), the CSV and web-page export names. Each wants its own US
+   evening check, the take-115 shape. **Ruled out (take 137):** widening
+   take 137 to all of them (two of them are its own screens; the rest are
+   not, and Events' list wants its own look); a gate check refusing
+   `toISOString().slice(0, 10)` (price days and the runner's days are UTC on
+   purpose -- `utcDay()` -- and a blanket refusal would refuse them).
 2. **A32's Next** (its take-115 section): date moves, a delisted item, the
    history on Releases, Southern Hobby's paging, the retailers that need a
    residential IP.

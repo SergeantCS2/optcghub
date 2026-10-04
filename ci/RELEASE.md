@@ -1,4 +1,4 @@
-# OP TCG Hub — take 136
+# OP TCG Hub — take 137
 
 ## Installing — read this first
 
@@ -17,6 +17,8 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 137:** Restore can bring back an earlier day's backup, not only the latest, so a mistake saved into today's backup can be undone. What you paid for a card, and a price in a Hunt note, are typed in the currency you chose under More and shown back as you typed them; a decimal comma works. A Hunt note written in the evening carries your phone's date, not tomorrow's. Nothing you have saved changes.
 
 **New at take 136:** Cards you have scanned but not yet saved are now in the backup, so a reinstall or a new phone brings them back with Restore. A new or renamed collection is backed up at once instead of at your next save, and importing a large CSV file is much quicker. Nothing you have saved changes.
 
