@@ -2507,4 +2507,68 @@ const take138 = [
     } },
 ];
 
-export const STEPS = { 138: take138, 137: take137, 131: take131, 130: take130, 128: take128, 127: take127, 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
+/* ---- take 139 — Collect's and More's notes cut short (A45 items 2 and 3, the owner's word) ---- */
+const notes139 = sel => `[...document.querySelectorAll('${sel} .note')].map(e => e.textContent.replace(/\\s+/g, ' ').trim()).filter(t => t.length > 15)`;
+const scrollTo139 = (sel, y = -90) => `(() => { const e = document.querySelector('${sel}'); if (e) { e.scrollIntoView({ block: 'start' }); window.scrollBy(0, ${y}); } return !!e; })()`;
+const take139 = [
+  { name: 'open', run: async (page, ctx) => { await ctx.open(); return { ok: true }; } },
+  { name: 'home-sources', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('collect', true); await ${pause}; V.go('home'); V.paintHome(); await ${pause};
+        ${scrollTo139('#srcPanel')}; return { note: document.getElementById('srcNote').textContent.replace(/\\s+/g, ' ').trim() }; })()`);
+      await wait(400);
+      return { ok: /^Prices from TCGplayer, via TCGCSV, updated [A-Z][a-z]{2} \d+\./.test(m.note) && /Not affiliated with/.test(m.note), ...m };
+    } },
+  { name: 'more-backup', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.go('settings'); await ${pause};
+        const b = [...document.querySelectorAll('#setBody .note')].find(e => /Backed up to/.test(e.textContent)); if (b) { b.scrollIntoView({ block: 'center' }); }
+        return { notes: ${notes139('#setBody')}.filter(t => /Backed up|Icons from/.test(t)) }; })()`);
+      await wait(400);
+      return { ok: m.notes.some(t => /^Backed up to Documents\/OPTCGHub on every save; photos aren’t included\. Before you uninstall or switch to the Play version, Export CSV and keep the file\.$/.test(t)), ...m };
+    } },
+  { name: 'more-appearance-and-sync', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const h = [...document.querySelectorAll('#setBody h3')].find(e => e.textContent.trim() === 'Appearance'); if (h) { h.scrollIntoView({ block: 'start' }); window.scrollBy(0, -90); }
+        return { notes: ${notes139('#setBody')}.filter(t => /Auto follows|Gets new prices/.test(t)) }; })()`);
+      await wait(400);
+      return { ok: m.notes.includes('Auto follows your phone’s setting.') && m.notes.includes('Gets new prices nightly when you’re online. Everything else works offline.'), ...m };
+    } },
+  { name: 'more-catalogue-and-what-it-does-not-know', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const h = [...document.querySelectorAll('#setBody h3')].find(e => e.textContent.trim() === 'Catalogue'); if (h) { h.scrollIntoView({ block: 'start' }); window.scrollBy(0, -90); }
+        const t = document.getElementById('setBody').textContent.replace(/\\s+/g, ' '); return { stamps: /\\d{4}-\\d\\d-\\d\\dT/.test(t), src: (t.match(/Source updated [^A-Z]{0,30}/) || [''])[0] }; })()`);
+      await wait(400);
+      return { ok: !m.stamps && /Source updated [A-Z]?[a-z]*/.test(m.src), ...m };
+    } },
+  { name: 'more-does-not-know-and-sources', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const h = [...document.querySelectorAll('#setBody h3')].find(e => /does not know/.test(e.textContent)); if (h) { h.scrollIntoView({ block: 'start' }); window.scrollBy(0, -90); }
+        return { notes: ${notes139('#setBody')}.filter(t => /Condition does not|Catalogue and prices/.test(t)) }; })()`);
+      await wait(400);
+      return { ok: m.notes.length === 2, ...m };
+    } },
+  { name: 'card-page-graded', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.go('home'); await ${pause}; const p = V.CAT.rows.find(r => r.num && !r.sealed && r.market > 5 && r.img);
+        V.openDetail(p.id); await ${pause}; const n = [...document.querySelectorAll('.note')].find(e => /A slab is recorded/.test(e.textContent)); if (n) { n.scrollIntoView({ block: 'center' }); }
+        return { note: n ? n.textContent.replace(/\\s+/g, ' ').trim() : null }; })()`);
+      await wait(400);
+      return { ok: m.note === 'A slab is recorded, not scanned. There are no graded prices here, so the value shown is the ungraded price — a graded copy is usually worth more.', ...m };
+    } },
+  { name: 'sealed-page-where-to-buy', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.go('home'); await ${pause}; const p = V.CAT.rows.find(r => V.SEALED.isProduct(r) && r.img);
+        V.openDetail(p.id); await ${pause}; const b = document.getElementById('dBuy'); if (b) { b.scrollIntoView({ block: 'center' }); }
+        return { note: b ? [...b.querySelectorAll('.note')].map(e => e.textContent.trim()).join(' | ') : null }; })()`);
+      await wait(400);
+      return { ok: /Opens the seller’s own page\. No referral links\./.test(m.note || ''), ...m };
+    } },
+  { name: 'trade', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.go('trade'); await ${pause}; window.scrollTo(0, 0);
+        return { notes: ${notes139('#trade')} }; })()`);
+      await wait(400);
+      return { ok: m.notes.some(t => /^What you give, what you get, and the difference at today’s prices\. Paste a list \(4 OP01-016 per line\) or pick from your collection\.$/.test(t)), ...m };
+    } },
+  { name: 'wants', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.go('wants'); await ${pause}; window.scrollTo(0, 0);
+        return { notes: ${notes139('#wants')} }; })()`);
+      await wait(400);
+      return { ok: m.notes.includes('Cards you’re after. Add them from a checklist, a search or a card’s page.') && m.notes.includes('Checked nightly with new prices. One notification each.'), ...m };
+    } },
+];
+
+export const STEPS = { 139: take139, 138: take138, 137: take137, 131: take131, 130: take130, 128: take128, 127: take127, 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };

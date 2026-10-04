@@ -34,7 +34,7 @@ ok('trade values each side at market x qty',
 ok('low and high spreads are carried, not just market', T.low('give') <= T.value('give') && T.high('give') >= T.value('give'));
 T.bump('give', a.id, -2);
 ok('bumping to zero removes the line', T.give.length === 0);
-ok('the verdict says market is a model, not a sale', /model of recent sales, not an offer/.test(js));
+ok('the verdict says market is an estimate of recent sales (take 139: in fewer words)', /Market prices estimate recent sales; low to high is the spread\./.test(js));
 ok('pasted lists resolve to the LIKELIEST printing (landmine 84)', /likelihood\(b, null\) - likelihood\(a, null\)/.test(js));
 ok('the Trade Analyzer is no longer a toast', !/Trade Analyzer — ROADMAP/.test(js));
 }

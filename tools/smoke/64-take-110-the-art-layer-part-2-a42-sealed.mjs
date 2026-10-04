@@ -13,7 +13,7 @@ section('take 110 — the art layer, part 2 (A42): Sealed under the newest set\'
   ok('the three texts the owner asked gone are gone: the line under the art, the paragraph under the ready-made decks\' heading, the note under a card\'s conditions', quiet(html + js));
   ok('...control: each of the take-109 lines is caught', !quiet('<p class="credit">OP10-001 Smoker</p>') && !quiet('<div class="note" id="dCondNote">') && !quiet("const COND_NOTE_CARD = '';") && !quiet('17 legal decks built from the starter-deck sets'));
   ok('...the per-condition gap is still said: in More\'s "What this app does not know", on the trade screen and in the bulk picker (the honesty the note carried)',
-     /What this app does not know/.test(js) && /Condition does not change the price shown/.test(js) && /Condition is not priced in/.test(js) && /never multiplied into it/.test(js));
+     /What this app does not know/.test(js) && /Condition does not change the price shown/.test(js) && /Condition isn’t priced in/.test(js) && /never multiplied into it/.test(js));
   { const c = V.CAT.rows.find(p => !p.sealed && p.market > 0), b = V.CAT.rows.find(p => V.SEALED.isProduct(p));
     V.openDetail(c.id); const lc = ctx.document.getElementById('dCond').innerHTML.replace(/<[^>]+>/g, ''); V.openDetail(b.id); const lb = ctx.document.getElementById('dCond').innerHTML.replace(/<[^>]+>/g, ''); V.go('home');
     ok('...a card\'s page still names its condition on its line, and a sealed product\'s still says it has none', /^Condition · /.test(lc) && lb === 'No condition to record', `${lc} | ${lb}`); }

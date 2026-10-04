@@ -50,8 +50,7 @@ function paintTrade() {
     <div class="row"><div class="nm"><b>You get</b><span>market \u00b7 low ${money(TRADE.low('get'))} to high ${money(TRADE.high('get'))}</span></div><div class="v mono">${money(gt)}</div></div>
     <div class="row"><div class="nm"><b>Difference</b><span>${d > 0.005 ? 'in your favour' : d < -0.005 ? 'against you' : 'even'} at today’s market${pct != null ? ` \u00b7 ${signedPct(pct, true)}` : ''}</span></div>
       <div class="v mono ${d > 0.005 ? 'up' : d < -0.005 ? 'down' : 'flat'}">${signedMoney(d)}</div></div>
-    <div class="note">Market prices are a model of recent sales, not an offer; the low-to-high spread is the honest width.
-      Condition is not priced in (the feed has no per-condition data), and a card’s real value to you is yours to decide.</div>`;
+    <div class="note">Market prices estimate recent sales; low to high is the spread. Condition isn’t priced in, so what a card is worth to you is your call.</div>`;
 }
 function tradeSearch(side) {
   const q = ($(side === 'give' ? '#trGiveQ' : '#trGetQ').value || '').trim().toLowerCase();

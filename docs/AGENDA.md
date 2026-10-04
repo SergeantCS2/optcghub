@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 138.* Ranked by blocking-ness, not by interest.
+*Current as of take 139.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -74,8 +74,10 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0a. *Take 138, in flight (4 Oct):* A45 item 1 -- Hunt's explanations cut to
-   what a list is, its source and its age (the owner's word).
+0a. *Take 139, built locally behind PR 65 (4 Oct):* A45 items 2 and 3 --
+   Collect's and More's explanations cut short. *Take 138 (PR 65, draft, the
+   look with the owner):* A45 item 1 -- Hunt's explanations cut to what a
+   list is, its source and its age (the owner's word).
 0b. *Done at take 137 (PR 64, merged at the owner's word, Release take-137):* A43's last two small items -- Restore
    reaches an earlier day's backup; a cost basis and a Hunt note's price in
    the currency on screen; the phone's day for the dated copy and a Hunt
@@ -1609,7 +1611,7 @@ and every age stays (AGENTS, "Honesty is a feature here").
 
 1. **Hunt** -- Sealed, Local, Events, Releases. *Take 138.*
 2. **Collect** -- Home, Collection, a card's page, Search, Scan, Trade,
-   Binder, Checklist, Wants.
+   Binder, Checklist, Wants. *Take 139, with item 3.*
 3. **More** -- backup, restore, sync, currency, About, Diagnostics' visible
    lines (its report stays as it is: it is for the developer).
 4. **Prep & Play** -- Decks, a deck, Play, the Sim's prompts.
@@ -1617,7 +1619,8 @@ and every age stays (AGENTS, "Honesty is a feature here").
 Each a take with a look at both Fold sizes; the smoke's checks that pinned a
 sentence are rewritten to guard the fact the sentence carried (its source,
 its age, its count), not the old words.
-**Ruled out (take 138):** one take for every screen (four modes' worth of
+**Ruled out (take 139):** Collect and More apart (Collect's own notes are
+few; one look reads both). **Ruled out (take 138):** one take for every screen (four modes' worth of
 sentences in one look is more than the owner can read in one sitting);
 dropping a source or an age to save words; shortening the sheets' titles
 and buttons (already three words or fewer since take 110).

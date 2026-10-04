@@ -1159,9 +1159,7 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
 
   <div class="panel" id="setComp">
     <h3>Set completion</h3>
-    <div class="note" style="margin:0 0 10px">
-      Cards you own, by set. Sealed product is excluded — it has no card number.
-    </div>
+    <div class="note" style="margin:0 0 10px">Cards you own, by set.</div>
     <div id="setDone"></div>
   </div>
 
@@ -1241,7 +1239,7 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
   <header class="appbar"><button class="icb ab-back" data-back aria-label="Back"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-back"/></svg></button>
     <div class="ab-text"><h1 class="ab-title">Diagnostics</h1></div>
   </header>
-  <div class="note" style="margin:6px 0 10px">Everything needed to read this phone from a report: endpoints and their live status, what is stored, the last errors, the self-test. No collection contents. Copy it and send it.</div>
+  <div class="note" style="margin:6px 0 10px">A report for the developer: what this phone stores and runs, with no collection contents. Copy it and send it.</div>
   <div class="row" style="gap:8px;margin-bottom:10px;flex-wrap:wrap"><button class="ghost go" id="diagRun">Run</button><button class="ghost" id="diagCopy" disabled>Copy report</button><button class="ghost" id="diagShare" disabled>Share</button><button class="ghost" id="devEarn">Test credits</button></div>
   <pre id="diagOut" style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:var(--fs-cap);line-height:1.45;color:var(--dim);background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);padding:12px;min-height:80px"></pre>
 </section>
@@ -1341,7 +1339,7 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
   <div class="panel" id="dBuy" hidden>
     <h3>Where to buy</h3>
     <div id="dBuyList"></div>
-    <div class="note">Each link opens the seller’s own page; nothing is bought here, and no link carries a referral.</div>
+    <div class="note">Opens the seller’s own page. No referral links.</div>
   </div>
 
   <div class="panel" id="dDist" hidden></div>
@@ -1364,11 +1362,7 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
     <h3>Graded</h3>
     <div id="dGradedList"></div>
     <button class="linkish" id="dAddGraded">+ Add a graded card</button>
-    <div class="note">
-      A slab is recorded, not scanned. The free price feed has no graded prices,
-      so the value shown is the <b>ungraded</b> market price — a graded copy is
-      almost always worth more.
-    </div>
+    <div class="note">A slab is recorded, not scanned. There are no graded prices here, so the value shown is the <b>ungraded</b> price — a graded copy is usually worth more.</div>
   </div>
 
   <div class="panel" id="dSibsP">
@@ -1466,11 +1460,11 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
     <div class="ab-text"><h1 class="ab-title">Want list</h1></div>
     <div class="ab-act"><button class="ghost" id="wtClear">Clear</button></div>
   </header>
-  <div class="note" style="margin:2px 0 12px">Cards you are after, valued the same way as the ones you have. Add from a set checklist, a search result or a card’s page.</div>
+  <div class="note" style="margin:2px 0 12px">Cards you’re after. Add them from a checklist, a search or a card’s page.</div>
   <div class="panel" id="wtSummary"></div>
   <div id="wtRows"></div>
   <div class="panel" style="margin-top:18px"><h3>Price alerts</h3>
-    <div class="note" style="margin-bottom:8px">Checked when a fresh catalogue lands. One notification each, then it rests.</div>
+    <div class="note" style="margin-bottom:8px">Checked nightly with new prices. One notification each.</div>
     <div id="alRows"></div></div>
 </section>
 
@@ -1519,9 +1513,8 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
   <header class="appbar"><button class="icb ab-back" data-back aria-label="Back"><svg class="g" width="24" height="24" aria-hidden="true"><use href="#g-back"/></svg></button>
     <div class="ab-text"><h1 class="ab-title">Trade</h1></div>
   </header>
-  <div class="note" style="margin:4px 0 14px">Two lists, valued the same way. What you give, what you get, and
-    the difference at today’s market. Paste the other side’s list as <b>4 OP01-016</b> lines, or
-    pick from your collection.</div>
+  <div class="note" style="margin:4px 0 14px">What you give, what you get, and the difference at today’s prices.
+    Paste a list (<b>4 OP01-016</b> per line) or pick from your collection.</div>
   <div class="panel">
     <h3>You give <span class="note" id="trGiveN"></span></h3>
     <div class="search" style="margin-bottom:8px"><span><svg class="g" width="16" height="16"><use href="#g-spyglass"/></svg></span>

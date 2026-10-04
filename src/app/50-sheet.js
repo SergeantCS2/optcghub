@@ -548,7 +548,7 @@ td,th{padding:6px 8px;border-bottom:1px solid #26394B;text-align:left;vertical-a
 <h2>Most valuable</h2><table><tr><th>Number</th><th>Card</th><th>Printing</th><th class="n">Qty</th><th>Condition</th><th class="n">Market</th></tr>${top.map(i => row({ i, p: CAT.byId.get(i.id) })).join('')}</table>
 <h2>Set completion</h2><table>${prog.map(r => `<tr><td>${esc(r.s.name || '')}</td><td class="n">${r.have} / ${r.all}</td><td style="width:40%"><div class="bar"><i style="width:${r.all ? Math.round(100 * r.have / r.all) : 0}%"></i></div></td><td class="n">${esc(money(r.val))}</td></tr>`).join('')}</table>
 ${sets}
-<div class="note">A market price is an estimate, not an offer, and condition is the collector’s own assertion \u2014 it does not change the figure shown. Made with OP TCG Hub. Not affiliated with Bandai, Shueisha, Toei Animation, Viz Media or TCGplayer.</div>
+<div class="note">Market prices are estimates. Condition is the owner’s own call and doesn’t change the price shown. Made with OP TCG Hub. Not affiliated with Bandai, Shueisha, Toei Animation, Viz Media or TCGplayer.</div>
 </body></html>`;
 }
 async function shareCollectionPage() {
