@@ -5,7 +5,10 @@
 Opened before any code (PROTOCOL §6), with take 138's PR (65) open and its
 look with the owner; this take's commits stay local until that merge, as
 takes 131 to 133's did. The owner's word of 4 Oct, A45: "short and simple -
-human like and only necessary info". Collect's own notes are few (most of
+human like and only necessary info". On take 138's look: "Looks good"; then, take
+138 merged: "Merged, yes merge them yourself when green" -- from this take
+the session merges a take's PR once `check` and `apk` are green, the look
+still sent (CLAUDE.md, AGENTS *Shipping a take*, PROTOCOL §6 say so now). Collect's own notes are few (most of
 its screens are lists), and More's sit in two panels, so items 2 and 3 are
 one take and one look.
 

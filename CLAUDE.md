@@ -27,7 +27,7 @@ in-flight state — before touching anything.
 2. Ledgers first (PROTOCOL §6): `BUILD`, the HANDOFF entry, `ci/RELEASE.md`'s "New at take N", a landmine for anything that bit, the AGENDA item with its **Ruled out** line, the NSP counters. Each ledger write is its own command, `grep`-checked in the file.
 3. Code, every guard with a negative control watched to fail on the previous build first.
 4. Harnesses, the look, the seal. Then `git checkout -- catalog/prices_daily.json catalog/hashes.json` — the nightly owns them.
-5. Commit named paths (never `git add -A`), push, open a **draft** PR titled `take N — …`; the runner's `check` is the seal; mark it ready when green and the owner has seen the look. The owner merges; the merge builds Release `take-N`.
+5. Commit named paths (never `git add -A`), push, open a **draft** PR titled `take N — …`; the runner's `check` is the seal; mark it ready when green, send the owner the look, and merge it: once `check` and `apk` are green (the owner's word, 4 Oct: "merge them yourself when green"). The merge builds Release `take-N`.
 6. A note written after the merge rides the next take's PR from the same branch, never a PR of its own.
 
 ## Where things are

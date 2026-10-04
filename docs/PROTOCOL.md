@@ -37,8 +37,9 @@ tab, not a folder a previous session remembers filling.
    `BUILD`. Write the `ci/RELEASE.md` paragraph.
 5. **Ship as a PR** (AGENTS, *Shipping a take*): gate green bare, the
    runner-owned files restored, named paths committed, the branch pushed, a
-   PR titled `take N — …`, the `check` workflow green. The owner merges; the
-   merge builds.
+   PR titled `take N — …`, the `check` workflow green. Since take 139 the
+   session merges once `check` and `apk` are green (the owner's word, 4 Oct);
+   the merge builds.
 
 **Recovery, not the flow:** `bash tools/seal.sh` still writes a seed zip —
 outside the tree — and the `seed` and `bootstrap` jobs still rebuild the tree

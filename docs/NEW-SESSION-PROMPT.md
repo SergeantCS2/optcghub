@@ -101,6 +101,9 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   merges. The same rule as take 138: a note says what a thing is and where
   its numbers come from; the not-affiliated line, the licences and "Export
   CSV before you uninstall" stay.
+  **The owner's word, 4 Oct: "merge them yourself when green"** -- the
+  session merges each take's PR once `check` and `apk` are green, and still
+  sends the look.
 
 - **Take 138 -- Hunt's explanations cut short** (AGENDA A45 item 1, the
   owner's word of 4 Oct: "short and simple - human like and only necessary
