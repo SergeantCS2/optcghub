@@ -63,12 +63,9 @@ function paintHome() {
 
   const m = CAT.man;
   $('#srcNote').innerHTML =
-    `Catalogue and prices: <b>TCGplayer</b>, via <b>TCGCSV</b>.<br>` +
-    `${(m.cards || 0).toLocaleString()} cards across ${setsWithCards()} sets \u00b7 ` +   /* take 115: the sets the cards are in, not every group the source lists (87 with an empty one and a sealed-only one) */
-    `source updated ${esc(dayText(m.source_updated_at))} \u00b7 ` +
-    `built ${esc(dayText(m.built_at))}.<br><br>` +
-    `A market price is an estimate, not an offer, and it is not what the card sold ` +
-    `for. Every figure in this app shows the day it was fetched.<br><br>` +
+    `Prices from <b>TCGplayer</b>, via <b>TCGCSV</b>, updated ${esc(dayText(m.source_updated_at))}.<br>` +   /* take 139: the source and its day, then the count (A45) */
+    `${(m.cards || 0).toLocaleString()} cards across ${setsWithCards()} sets.<br><br>` +   /* take 115: the sets the cards are in, not every group the source lists (87 with an empty one and a sealed-only one) */
+    `A market price is an estimate, not a sale.<br><br>` +
     `Not affiliated with, endorsed by or sponsored by Bandai, Shueisha, Toei, ` +
     `Viz Media or TCGplayer.`;
 }

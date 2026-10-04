@@ -1,4 +1,4 @@
-# OP TCG Hub — take 138
+# OP TCG Hub — take 139
 
 ## Installing — read this first
 
@@ -17,6 +17,8 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 139:** Collect and More say less, too. Home, your wants, alerts, a card's page, Trade and More now say what each thing is and where its numbers come from, and nothing more. Nothing you have saved changes.
 
 **New at take 138:** Hunt says less. Each list on Sealed, Local, Events and Releases now says what it is, where it comes from and when it was checked, and nothing more. Nothing you have saved changes.
 

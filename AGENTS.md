@@ -78,7 +78,7 @@ DRAW", which no stub can. Both must pass; they measure different things on purpo
 ## Shipping a take
 
 Takes are numbered and never reused. Since take 89, **one take is one branch
-and one pull request**, titled `take N — …`. The owner merges; the merge to
+and one pull request**, titled `take N — …`. Since take 139 the session merges it once `check` and `apk` are green (the owner's word, 4 Oct: "merge them yourself when green"); the merge to
 `main` runs `build.yml`, which publishes Release `take-N` and deploys Pages.
 In order:
 

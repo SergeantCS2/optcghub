@@ -116,8 +116,7 @@ function openDetail(id, { dist = false } = {}) {
   $('#dProv').innerHTML =
     `${p.market != null ? `${money(p.market)} \u00b7 market` : 'No market price yet'} \u00b7 TCGplayer via TCGCSV \u00b7 as of ` +   /* take 120: it read "— \u00b7 market" */
     `<span style="white-space:nowrap">${esc(dayText(CAT.man.source_updated_at))}</span>.<br>` +
-    `${p.low != null || p.high != null ? `Low ${money(p.low)} \u2013 high ${money(p.high)} on the same day. ` : ''}The market ` +
-    `price is a model, not a sale.` +
+    `${p.low != null || p.high != null ? `Low ${money(p.low)} \u2013 high ${money(p.high)} that day. ` : ''}Market is an estimate, not a sale.` +   /* take 139: in fewer words (A45) */
     (p.d7p != null || p.d30p != null
       ? `<br>${p.d7p != null ? `7d ${signedPct(p.d7p, true)}` : ''}` +
         `${p.d7p != null && p.d30p != null ? ' \u00b7 ' : ''}` +
@@ -172,7 +171,7 @@ $('#dSave').addEventListener('click', () => {
 $('#dAlert').addEventListener('click', async () => {
   if (!dCur) return;
   const dir = await PICKER.choose({ title: 'Alert when the price\u2026', key: 'aldir',
-    why: `${esc(dCur.name)} is ${money(dCur.market)} today. The check runs each time a fresh catalogue lands (nightly). One notification, then it rests until you re-arm it.`,
+    why: `${esc(dCur.name)} is ${money(dCur.market)} today. Checked nightly with new prices; one notification, then it rests until you set it again.`,
     opts: `<button class="opt" data-aldir="below"><div class="oi"><b>Drops below</b><span>a buying price</span></div></button>
       <button class="opt" data-aldir="above"><div class="oi"><b>Rises above</b><span>a selling price</span></div></button>` });
   if (!dir) return;

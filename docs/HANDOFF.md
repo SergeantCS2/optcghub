@@ -1,4 +1,78 @@
-# HANDOFF — through Take 138
+# HANDOFF — through Take 139
+
+## Take 139 — 2026-10-04 — Collect's and More's explanations cut short (A45 items 2 and 3)
+
+Opened before any code (PROTOCOL §6), with take 138's PR (65) open and its
+look with the owner; this take's commits stay local until that merge, as
+takes 131 to 133's did. The owner's word of 4 Oct, A45: "short and simple -
+human like and only necessary info". On take 138's look: "Looks good"; then, take
+138 merged: "Merged, yes merge them yourself when green" -- from this take
+the session merges a take's PR once `check` and `apk` are green, the look
+still sent (CLAUDE.md, AGENTS *Shipping a take*, PROTOCOL §6 say so now). Collect's own notes are few (most of
+its screens are lists), and More's sit in two panels, so items 2 and 3 are
+one take and one look.
+
+### What this take changes
+
+1. **Collect's and More's notes say what a thing is and where its numbers
+   come from, and stop.** Home's sources panel, Set completion, Wants,
+   price alerts, a card's graded note and its where-to-buy line, Trade, the
+   shared web page's footer; More's backup, sync, appearance and icon
+   notes. What stays word for word in substance: the not-affiliated line,
+   the licences, "Export CSV before you uninstall", the price's date and
+   source, that a condition is the collector's own call. The look found more
+   below More's Sync: Save credits, Network, "What this app does not know"
+   (its four facts kept, one line each), Data sources -- cut the same way.
+2. **A card's price block** says "Low $53.96 -- high $100.00 that day. Market
+   is an estimate, not a sale." instead of "on the same day. The market price
+   is a model, not a sale."; the caveat is kept, shorter, since it sits under
+   every price.
+3. **More's Catalogue panel says its days in words.** "Source updated" and
+   "Built" showed the raw stamps (`2026-10-03T20:05:38+0000`); they read
+   "Oct 3, 4:05 PM" now (`momentText`).
+
+### Measured
+
+- The pipeline from a fresh ingest: 87 groups, 7,684 products (7,009 cards,
+  675 sealed); smoke 1727 of 1727; render 277 of 277 `(mode: chrome)`; the
+  gate green; 645 s.
+- Home's sources note: 5 sentences and two dates (source and build) to 4 and
+  one -- the build's day is About's.
+
+### Tests
+
+- The smoke: 1727 of 1727, 14 new in `tools/smoke/95-…` and five of takes 18
+  to 120 rewritten to the new words (Trade's verdict, where to buy, the icon
+  licences, the per-condition gap, Appearance's note). On take 138's build
+  (`SMOKE_APP`) 13 fail by name: the four rewritten ones the app draws and
+  the nine new wording checks. What passes on both: the static notes (the
+  page is this build's under `SMOKE_APP`), where to buy (the same), and the
+  controls -- not affiliated on Home and on the shared page, "Export CSV"
+  still bold, none of the long forms left.
+
+### The look
+
+- `node tools/look.mjs 139`: 20 steps, 20 ok, at both Fold sizes -- Home's
+  sources, More's backup, appearance and sync, its catalogue and what it
+  does not know, a card's graded note, a sealed product's price block and
+  where to buy, Trade, Wants. Every picture read. The first pass found the
+  catalogue's raw stamps and the panels below Sync still long (items 1 and
+  3); the second, after the price block, confirmed all.
+
+### What I got wrong
+
+- I surveyed Collect's text by pattern and missed the panels drawn below
+  More's Sync and a card's price block; the look found them. Patterns find
+  sentences in source, not the screens a collector scrolls to.
+- One check I labelled a control read the new wording, so it failed on take
+  138's build; a control passes on both. Relabelled before it was counted.
+- I ran the seal piped once (`| tail`), as at take 134; rerun bare, green.
+  Landmine 103's rule holds: the seal's last line is read off a bare run.
+
+### DEFERRED
+
+- A45 item 4 -- Prep & Play's text (Decks, a deck, Play, the Sim).
+- The phone's-day family (AGENDA A43, landmine 248).
 
 ## Take 138 — 2026-10-04 — Hunt's explanations cut short and plain (the owner's word)
 
