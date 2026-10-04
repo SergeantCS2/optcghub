@@ -24,13 +24,13 @@ V.HUNT.setZip('48329'); ok('an exactly served zip is matched exactly', V.HUNT.se
 V.HUNT.setZip('48340'); ok('a zip in the same 3-digit area uses that area\'s check and says so', V.HUNT.served().how === 'area' && V.HUNT.served().zip === '48329');
 V.HUNT.setZip('90210'); ok('a zip nowhere near a served area is NONE, never silently the nearest', V.HUNT.served().how === 'none');
 V.HUNT.setZip('48201'); V.paintSealed();
-ok('a served zip whose check did not run says so plainly, naming the limit', /Near 48201: the store check did not finish this hour \(Target’s limit\) — it resumes next hour/.test(ctx.document.querySelector('#sealedList').innerHTML));
+ok('a served zip whose check did not run says so plainly, naming the limit', /The shelf check near 48201 didn’t finish this hour \(Target’s limit\); it resumes next hour/.test(ctx.document.querySelector('#sealedList').innerHTML));
 /* sets are folded since take 81: open every set that carries a matched product so its line is on screen */
 for (const id of Object.keys(V.HUNT.byCatalogId())) { const p = V.CAT.byId.get(+id); if (p) V.SEALED.open.add(p.set); }
 V.HUNT.setZip('90210'); V.paintSealed(); let h = ctx.document.querySelector('#sealedList').innerHTML;
-ok('with no local coverage the national online layer still shows for every product, and the covered areas are named', /<h3>Target<\/h3>/.test(h) && /no local check for your area yet/.test(h) && /48329/.test(h) && /ships/.test(h));
+ok('with no local coverage the national online layer still shows for every product, and the covered areas are named', /<h3>Target<\/h3>/.test(h) && /No shelf check near \d{5} yet\. Covered: [^<]*48329/.test(h) && /ships/.test(h));
 V.HUNT.setZip('48329'); V.paintSealed(); h = ctx.document.querySelector('#sealedList').innerHTML;
-ok('with a served zip the panel says how many stores and how many products have a shelf check on file', /4 stores within 50 mi, shelf checks on file for 2 products/.test(h));
+ok('with a served zip the panel says how many stores and how many products have a shelf check on file', /4 Target stores within 50 mi of \d{5}( \(same area as yours\))? · 2 products checked on their shelves, a few each hour\./.test(h), (h.match(/\d+ Target stores within[^<]*/) || [''])[0]);
 ok('a matched product carries a Target line with price, shipping status and shelf state', (() => { const by = V.HUNT.byCatalogId(); const ids = Object.keys(by); return ids.length >= 1 && ids.every(id => new RegExp('data-open="' + id + '"[\\s\\S]*?Target \\$').test(h)); })());
 ok('a checked item carries the age of its shelf check', /(on the shelf|not on a shelf within 50 mi of 48329) (just now|\d+ min ago)/.test(h));
 ok('an item the local check has not reached says the shelf was not checked yet (never "not on a shelf")', /shelf not checked yet for this item/.test(V.targetLine(T.items.find(i => /japanese/i.test(i.title)), T)));
@@ -42,7 +42,7 @@ V.HUNT.feed = dead; V.paintSealed();
 ok('a failed source says it could not reach Target and since when, never an empty list', /Could not reach Target since/.test(ctx.document.querySelector('#sealedList').innerHTML));
 V.HUNT.feed = null; V.paintSealed();
 ok('with no feed on the phone it says so and offers a fetch', /Not fetched yet/.test(ctx.document.querySelector('#sealedList').innerHTML) && /id="huntSync"/.test(ctx.document.querySelector('#sealedList').innerHTML));
-ok('the zip is asked once per launch (take 81: not once forever, since the first ask was unreadable on the owner\'s phone), stays on the phone, and can be changed from the panel', /NAV\.zipAsked/.test(js) && /vault\.hunt\.zip'/.test(js) && /id="huntZip"/.test(js) && /The zip stays on this phone/.test(js));
+ok('the zip is asked once per launch (take 81: not once forever, since the first ask was unreadable on the owner\'s phone), stays on the phone, and can be changed from the panel', /NAV\.zipAsked/.test(js) && /vault\.hunt\.zip'/.test(js) && /id="huntZip"/.test(js) && /Adds shelf stock at stores near you\. It stays on this phone\./.test(js));
 ok('the hourly workflow exists as a file to paste, takes a zip LIST, and deploys www/ to Pages', fs.existsSync(path.join(ROOT, 'ci', 'hunt.yml')) && /--zips/.test(fs.readFileSync(path.join(ROOT, 'ci', 'hunt.yml'), 'utf8')) && /deploy-pages/.test(fs.readFileSync(path.join(ROOT, 'ci', 'hunt.yml'), 'utf8')));
 /* take 73: the time series -- built by the runner from its own last deploy, read by the app as dated restocks */
 {
@@ -76,7 +76,7 @@ ok('distance from the zip area to a store is computed in miles, about right (Ann
 ok('a store the app cannot place has no distance and is kept only when the filter is Any', V.LOCAL.miles(null) === null && (V.LOCAL.radius = 50, !V.LOCAL.within(null)) && (V.LOCAL.radius = 0, V.LOCAL.within(null)));
 V.LOCAL.radius = 50; V.paintLocal(); const hl = ctx.document.querySelector('#localList').innerHTML;
 ok('Local lists the shops within the radius with address, miles (exact where the file has the point, ~ otherwise), a Call and their next event', /Shops that run (One Piece )?events/.test(hl) && /~?\d+ mi/.test(hl) && /<span style="display:block;color:var\(--brass\)">[A-Z][a-z]{2} \d{1,2}\b/.test(hl) && /href="tel:\d+"/.test(hl));   // take 115: the next event's day in words (SPEC-110-43)
-ok('...and says what the list means: registered to run events, not proof of shelf stock', /registered to run events/.test(hl));
+ok('...and says what the list is and where it comes from, with its age (take 138: in fewer words)', new RegExp('Stores near you that run One Piece events\\. From [^<,]+, (just now|\d+ min ago|\d+ h ago|\d+ days ago)\\.').test(hl), (hl.match(/Stores near you[^<]*/) || [''])[0]);
 V.LOCAL.radius = 10; V.paintLocal();
 ok('the distance dropdown narrows the list', (ctx.document.querySelector('#localList').innerHTML.match(/~?\d+ mi/g) || []).length < (hl.match(/~?\d+ mi/g) || []).length);
 V.LOCAL.radius = 50;
@@ -86,7 +86,7 @@ V.LOCAL.notes = []; V.HUNT.setZip(''); V.paintLocal();
 ok('with no zip it asks for one and offers nothing it cannot place', /Where are you\?/.test(ctx.document.querySelector('#localList').innerHTML));
 /* take 79: exact distances on request */
 V.HUNT.setZip('48329'); V.LOCAL.zcta = null; V.paintLocal();
-ok('by default distances are "about" and the screen offers to make them exact', /about ±10 mi/.test(ctx.document.querySelector('#localList').innerHTML) && /id="localExact"/.test(ctx.document.querySelector('#localList').innerHTML));
+ok('by default distances are "about" and the screen offers to make them exact', /distances ±10 mi/.test(ctx.document.querySelector('#localList').innerHTML) && /id="localExact"/.test(ctx.document.querySelector('#localList').innerHTML));
 const before79 = V.LOCAL.miles([42.26, -83.72]);
 V.LOCAL.zcta = JSON.parse(fs.readFileSync(path.join(ROOT, 'catalog', 'zcta.json'), 'utf8'));
 ok('with the table, the zip is placed at its own centroid and the screen says so', V.LOCAL.exact() && V.LOCAL.here()[0] === 42.69 && (V.paintLocal(), /within a mile or two/.test(ctx.document.querySelector('#localList').innerHTML)));
@@ -101,7 +101,7 @@ ok('the run writes the shops file from the verified list: per shop its sealed li
 V.LOCAL.shops = JSON.parse(fs.readFileSync(shopsFile, 'utf8')); V.HUNT.setZip('48329'); V.LOCAL.radius = 0; V.paintLocal();
 const hs75 = ctx.document.querySelector('#localList').innerHTML;
 ok('Local shows the shop with what it lists: sealed count, in-stock count, singles, and a link into the store', /Black Vault Gaming/.test(hs75) && /2 sealed listed, 2 in stock, 2 singles/.test(hs75) && /href="https:\/\/blackvaultgaming\.com"/.test(hs75));
-ok('...and says a shop lists what it chooses and the shelf may hold more', /the shelf may hold more/.test(hs75));
+ok('...and says what the list is -- what each shop lists on its own site, hourly -- and when it was fetched (take 138: in fewer words)', new RegExp('What each shop lists on its own site, checked hourly\\. Fetched (just now|\d+ min ago|\d+ h ago|\d+ days ago)\\.').test(hs75), (hs75.match(/What each shop[^<]*/) || [''])[0]);
 for (const sh of V.LOCAL.shops.shops) for (const it of sh.sealed) { const p = it.catalog_id && V.CAT.byId.get(it.catalog_id); if (p) V.SEALED.open.add(p.set); }
 V.paintSealed(); const hsl = ctx.document.querySelector('#sealedList').innerHTML;
 ok('a matched sealed product carries the shop\'s line: name, price, in stock online, fetched when', /Black Vault Gaming[^<]*\$8\.99 · in stock online · (just now|\d+ min ago)/.test(hsl));
@@ -124,7 +124,7 @@ V.EVENTS.tab = JSON.parse(fs.readFileSync(evFile, 'utf8')); V.LOCAL.stores = JSO
 const evRows = V.EVENTS.rows();
 ok('events join back to their stores, carry a distance and a registration link, and are sorted by date', evRows.length >= 5 && evRows.every(e => e.store.name && e.url && /bandai-tcg-plus\.com\/event\/\d+/.test(e.url)) && evRows.every((e, i) => i === 0 || e.d >= evRows[i - 1].d));
 V.paintEvents(); const he = ctx.document.querySelector('#eventsList').innerHTML;
-ok('the Events screen groups by STORE (take 87): each store once with address, miles, a Call, then its next events with fee or free, seats, Register and Calendar', /stores, \d+ events in the next 14 days/.test(he) && />Calendar<\/button>/.test(he) && /~?\d+ mi/.test(he) && /href="tel:\d+"/.test(he) && /(free|\$\d)/.test(he) && /Register/.test(he) && /id="eventsDays"/.test(he) && /Registration is on Bandai TCG\+/.test(he));
+ok('the Events screen groups by STORE (take 87): each store once with address, miles, a Call, then its next events with fee or free, seats, Register and Calendar', /stores, \d+ events in the next 14 days/.test(he) && />Calendar<\/button>/.test(he) && /~?\d+ mi/.test(he) && /href="tel:\d+"/.test(he) && /(free|\$\d)/.test(he) && /Register/.test(he) && /id="eventsDays"/.test(he) && /One Piece events near you, from Bandai TCG\+ via onepieceevents\.com\. Register in the TCG\+ app or site\./.test(he));
 V.LOCAL.radius = 10; V.paintEvents();
 ok('the distance dropdown narrows the events too', (ctx.document.querySelector('#eventsList').innerHTML.match(/Register/g) || []).length <= (he.match(/Register/g) || []).length);
 /* take 78: an event onto the calendar as a plain .ics */
@@ -161,7 +161,7 @@ const n3 = await V.STOCK.check();
 ok('out and back in fires again, for that source only', n3 === 1 && /Black Vault Gaming online/.test(notes[notes.length - 1].body));
 V.paintSealed(); const hst = ctx.document.querySelector('#sealedList').innerHTML;
 ok('the Stock alerts panel lists the watches with where each is in stock and when it last fired; the row shows it watched', /Stock alerts/.test(hst) && /in stock: /.test(hst) && /last alert (just now|\d+ min ago)/.test(hst) && new RegExp('data-stock="' + watched.id + '"[^>]*aria-pressed="true"').test(hst));
-ok('...and says plainly that the check runs when the app is opened', /the app must be opened for that/.test(hst));
+ok('...and says plainly that the check runs when the app is opened', /Checked when you open the app\./.test(hst));
 V.STOCK.toggle(watched.id); V.STOCK.toggle(watched2.id); ok('toggling again stops the watch', !V.STOCK.has(watched.id) && V.STOCK.list.length === 0);
 V.PLATFORM.notify = _n; V.HUNT.setZip(''); V.LOCAL.shops = null;
 }

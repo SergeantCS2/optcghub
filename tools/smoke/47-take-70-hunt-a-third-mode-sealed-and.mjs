@@ -20,7 +20,7 @@ ok('the search narrows by product or set name', V.SEALED.rows().length >= 1 && V
 V.SEALED.q = '';
 V.paintSealed();
 ok('the Sealed screen draws rows with market, low, high and a delta, grouped by set', /data-open="/.test(ctx.document.querySelector('#sealedList').innerHTML) && /low \$/.test(ctx.document.querySelector('#sealedList').innerHTML) && (ctx.document.querySelector('#sealedList').innerHTML.match(/class="fgrp setstrip"/g) || []).length >= 10);
-ok('...and says plainly it is the marketplace price, not the shelf', /not the shelf price/.test(html));
+ok('...and says where the price comes from: TCGplayer\'s market, via TCGCSV (take 138: in fewer words)', /Market prices from TCGplayer, via TCGCSV\./.test(html));
 V.paintReleases();
 const rel = ctx.document.querySelector('#relList').innerHTML;
 ok('Releases lists what is upcoming with a countdown and what was recent', /Upcoming/.test(rel) && /in \d+ days?|today/.test(rel) && /days ago/.test(rel));

@@ -38,18 +38,25 @@ ok('the matched products\' rows are on screen (their sets opened) -- every one S
 /* take 112, the owner's word ("I don't want them flooding the screen"): the distributors' panels sit under one closed
    Distributor info; a row carries one short line per distributor, which opens its page at Distributor info */
 ok('the Sealed screen carries one closed Distributor info that says what it holds, and none of the panels\' text until it opens',
-   /data-distfold="sealed" aria-expanded="false"/.test(h94) && /<span class="ttl">Distributor info<\/span><span class="note">2 distributors · checked (just now|\d+ min ago)<\/span>/.test(h94) && !/One Piece products at the distributor/.test(h94),
+   /data-distfold="sealed" aria-expanded="false"/.test(h94) && /<span class="ttl">Distributor info<\/span><span class="note">2 distributors · checked (just now|\d+ min ago)<\/span>/.test(h94) && !/Sells to stores, not to you/.test(h94),
    (h94.match(/Distributor info[\s\S]{0,160}/) || ['no Distributor info on Sealed'])[0]);
 V.distFoldTap('sealed'); const h94o = ctx.document.querySelector('#sealedList').innerHTML; V.distFoldTap('sealed');
 /* take 114 (the review): the two unreleased counts are dates, counted here over every item, sold out or not -- unreleased is a
    release after the UTC day GTS was read (gts.status_of's day), and "ahead" an order due date on or after it (the due day kept open) */
 const read94 = G.fetched_at.slice(0, 10), un94 = G.items.filter(i => i.release && i.release > read94), ahead94 = un94.filter(i => i.preorder && i.preorder >= read94).length;
-const due94 = (a, w) => `${a} with an order due date ahead, ${w} unreleased without one`, n94 = s => G.items.filter(i => i.status === s).length;
-ok('...opened, it carries GTS Distribution with the counts and what a distributor is, and a second tap closes it -- of the unreleased products, how many have an order due date ahead and how many do not, by their dates',
-   /data-distfold="sealed" aria-expanded="true"/.test(h94o) && /<b>GTS Distribution<\/b>/.test(h94o) && h94o.includes(`11 One Piece products at the distributor: <b>7</b> sold out, <b>8</b> allocated, ${due94(ahead94, un94.length - ahead94)}, 1 in stock for stores`) && /A distributor sells to stores, not to you/.test(h94o)
-   && /data-distfold="sealed" aria-expanded="false"/.test(ctx.document.querySelector('#sealedList').innerHTML), `${due94(ahead94, un94.length - ahead94)} :: ${(h94o.match(/One Piece products at the distributor:[^.]*/) || ['no GTS counts'])[0]}`);
-ok('...control: counted by state (take 114 as first built: coming, then preorder), the same words say something else on this feed -- a sold-out product that is unreleased and past its due date was in neither count',
-   due94(n94('coming'), n94('preorder')) !== due94(ahead94, un94.length - ahead94), `${due94(n94('coming'), n94('preorder'))} | ${due94(ahead94, un94.length - ahead94)}`);
+const due94 = (a, w) => `${a} with orders open`, n94 = s => G.items.filter(i => i.status === s).length;
+ok('...opened, it carries GTS Distribution with the counts and what a distributor is, and a second tap closes it -- of the unreleased products, how many still take orders, by their dates (take 138: the count without a due date left the screen)',
+   /data-distfold="sealed" aria-expanded="true"/.test(h94o) && /<b>GTS Distribution<\/b>/.test(h94o) && h94o.includes(`11 products: <b>7</b> sold out, <b>8</b> allocated, ${due94(ahead94, un94.length - ahead94)}, 1 in stock for stores`) && /Sells to stores, not to you/.test(h94o)
+   && /data-distfold="sealed" aria-expanded="false"/.test(ctx.document.querySelector('#sealedList').innerHTML), `${due94(ahead94, un94.length - ahead94)} :: ${(h94o.match(/\d+ products: [^.]*/) || ['no GTS counts'])[0]}`);
+/* take 138: the count of products without a due date left the screen, and with it what told the two counts apart here (by
+   state, take 114 as first built, they agreed with the dates on "ahead"). The control now moves one due date into the past
+   and leaves every state as GTS gave it: counted by dates, "orders open" drops by one; counted by state it would not move */
+const G2 = JSON.parse(JSON.stringify(G)), mv = G2.items.find(i => i.release && i.release > read94 && i.preorder && i.preorder >= read94);
+if (mv) mv.preorder = '2000-01-01';
+V.HUNT.feed = { ...F94, sources: { ...F94.sources, gts: G2 } }; V.distFoldTap('sealed'); const h94m = ctx.document.querySelector('#sealedList').innerHTML; V.distFoldTap('sealed'); V.HUNT.feed = F94;
+ok('...control: the count is by dates, not by state -- one due date moved into the past, its state left as GTS gave it, and "orders open" drops by one',
+   !!mv && ahead94 >= 1 && h94m.includes(`<b>${n94('sold_out')}</b> sold out`) && h94m.includes(`${due94(ahead94 - 1)}, `) && G2.items.filter(i => i.status === 'coming').length === n94('coming'),
+   `${mv ? mv.status : 'no item to move'} :: ${(h94m.match(/\d+ products: [^.]*/) || ['no GTS counts'])[0]}`);
 ok('a matched row carries one short line per distributor under its chips -- its name and its state -- which opens its page at Distributor info',
    new RegExp('data-open="' + by.BJP2850164.catalog_id + '" data-distinfo="1" aria-label="GTS Distribution · sold out: open [^"]+ at Distributor info"><span>GTS Distribution · sold out</span>').test(h94),
    (h94.match(/<button class="dline"[^>]*>[^<]*<span>[^<]*/) || ['no distributor line in #sealedList'])[0]);

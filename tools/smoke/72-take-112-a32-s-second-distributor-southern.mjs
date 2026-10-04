@@ -59,11 +59,11 @@ section('take 112 — A32\'s second distributor: Southern Hobby, read off its re
   ok('the open handler passes a distributor line\'s wish to the page, and only its', /else openDetail\(id, \{ dist: !!t\.dataset\.distinfo \}\);/.test(js) && /data-distinfo="1"/.test(js));
   while (V.closeAnyOverlay()) {} V.go('sealed');
   ok('Where to buy offers no distributor now: they sell to stores, and their words are under Distributor info', eb05 && !V.buySources(eb05).some(s => s.kind === 'dist'), JSON.stringify(eb05 && V.buySources(eb05).map(s => s.label)));
-  ok('Sealed carries one closed Distributor info saying how many distributors and when they were checked', /data-distfold="sealed" aria-expanded="false"/.test(h) && /<span class="note">2 distributors · checked (just now|\d+ min ago)<\/span>/.test(h) && !/listed to stores/.test(h));
+  ok('Sealed carries one closed Distributor info saying how many distributors and when they were checked', /data-distfold="sealed" aria-expanded="false"/.test(h) && /<span class="note">2 distributors · checked (just now|\d+ min ago)<\/span>/.test(h) && !/Lists order deadlines/.test(h));
   V.distFoldTap('sealed'); const ho = ctx.document.querySelector('#sealedList').innerHTML; V.distFoldTap('sealed');
-  ok('...opened: Southern Hobby\'s counts from its dates, the in-store count from the pages read, and why allocation goes unsaid',
-     /<b>Southern Hobby<\/b>/.test(ho) && /20 One Piece products listed to stores: <b>1<\/b> still taking their orders, 18 with orders closed, 1 released; 1 in-store only \(3 of 20 product pages read so far\)/.test(ho)
-     && /marks every One Piece presell subject to allocation, so that says nothing about one product/.test(ho), (ho.match(/<b>Southern Hobby<\/b>[\s\S]{0,300}/) || ['no Southern Hobby section'])[0].replace(/\s+/g, ' '));
+  ok('...opened: Southern Hobby\'s counts from its dates, the in-store count from the pages read, and that it lists dates, not stock (take 138: in fewer words)',
+     /<b>Southern Hobby<\/b>/.test(ho) && /20 products: <b>1<\/b> taking orders, 18 orders closed, 1 released; 1 in-store only \(3 of 20 read so far\)/.test(ho)
+     && /Lists order deadlines and release dates for stores, not stock\./.test(ho), (ho.match(/<b>Southern Hobby<\/b>[\s\S]{0,300}/) || ['no Southern Hobby section'])[0].replace(/\s+/g, ' '));
   /* take 115 (self-review): the fixture's unlisted products are sets TCGCSV had not listed on 25 Sept, and since take 115
      a group enters the catalogue as soon as it lists one product -- any night could list one and turn the count and the
      rows below red with nothing wrong. They are the fixture's facts, so the fixture's catalogue is read: those sets are

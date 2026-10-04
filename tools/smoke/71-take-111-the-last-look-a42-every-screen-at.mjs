@@ -96,7 +96,7 @@ section('take 111 — the last look (A42): every screen at both of the Fold\'s s
   /* Hunt, More */
   { const keepS = V.LOCAL.stores, keepZ = V.HUNT.zip; V.LOCAL.stores = null; V.HUNT.setZip('48329'); V.paintLocal(); const lo = el('localList').innerHTML;
     V.LOCAL.stores = keepS; V.HUNT.setZip(keepZ || ''); V.paintLocal();
-    ok('Local, before its shop list is fetched, names its source in a sentence ("From Bandai TCG+."), not "From Bandai TCG+, ."', /From Bandai TCG\+\. A store/.test(lo) && !/, \./.test(lo), (lo.match(/From [^<]{0,40}/) || [''])[0]); }
+    ok('Local, before its shop list is fetched, names its source in a sentence ("From Bandai TCG+."), not "From Bandai TCG+, ."', /From Bandai TCG\+\.<\/div>/.test(lo) && !/, \./.test(lo), (lo.match(/From [^<]{0,40}/) || [''])[0]); }
   { V.go('settings'); const ab = el('setBody').innerHTML; V.go('home');
     const d = (ab.match(/ · prices ([^<]*)</) || [])[1];
     ok('More → About gives the prices\' day in words, as every other day in the app is ("Sep 23", not "2026-09-23")', d != null && /^[A-Z][a-z]{2} \d{1,2}(, \d{4})?$/.test(d), JSON.stringify(d)); }

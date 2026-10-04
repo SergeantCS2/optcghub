@@ -1823,7 +1823,7 @@ if (puppeteer) {
         for (let t = w.nextNode(); t; t = w.nextNode()) for (const m of t.data.matchAll(RE)) { const r = document.createRange(); r.setStart(t, m.index); r.setEnd(t, m.index + m[0].length);
           n++; worst = Math.max(worst, new Set([...r.getClientRects()].map(x => Math.round(x.top))).size); } } return { n, worst }; };
       const name = { gts: 'GTS Distribution', southern: 'Southern Hobby' }, L = lines(tls), S = lines(nms);
-      const note = [...d.querySelectorAll('.note')].find(e => /^Where a change worked out from its dates gives two checks, not a day/.test(e.textContent.trim())), nb = note && note.getBoundingClientRect();
+      const note = [...d.querySelectorAll('.note')].find(e => /^Some changes are worked out from dates, so they show between two checks, not on a day\./.test(e.textContent.trim())   /* take 138: the note in fewer words */), nb = note && note.getBoundingClientRect();
       return { on: [...document.querySelectorAll('.screen.on')].map(e => e.id).join(), open: !!f && f.getAttribute('aria-expanded') === 'true', n: tls.length, ds: tls.map(t => t.dataset.tl).join(),
         inside: tls.length > 0 && tls.every(t => { const b = t.getBoundingClientRect(), sec = t.parentElement, row = t.previousElementSibling;
           return !!sec && sec.classList.contains('dsec') && !!row && row.classList.contains('row') && b.height > 0 && b.left >= db.left - 0.5 && b.right <= db.right + 0.5
@@ -1904,7 +1904,7 @@ if (puppeteer) {
     await page.evaluate(({ F, H, PID }) => { const V = window.VAULT; V.HUNT.feed = F; V.HUNT.hist = H; V.openDetail(PID, { dist: true }); }, { F, H, PID });
     const hist114 = () => page.evaluate(() => { const b = [...document.querySelectorAll('#dDist .dtl')].map(t => { const h = t.querySelector('.dtl-h');
       return { d: t.dataset.tl, btn: !!h && h.tagName === 'BUTTON', exp: h ? h.getAttribute('aria-expanded') : null, h: h ? Math.round(h.getBoundingClientRect().height) : 0, lines: t.querySelectorAll(':scope > span:not(.dtl-h)').length }; });
-      return { b, note: [...document.querySelectorAll('#dDist .note')].some(e => /^Where a change worked out from its dates/.test(e.textContent.trim())) }; });
+      return { b, note: [...document.querySelectorAll('#dDist .note')].some(e => /^Some changes are worked out from dates/.test(e.textContent.trim())) }; });
     const tk0 = await hist114();
     await tap('#dDist .dtl[data-tl="gts"] .dtl-h'); await new Promise(r => setTimeout(r, 250)); const tk1 = await hist114();
     await tap('#dDist .dtl[data-tl="gts"] .dtl-h'); await new Promise(r => setTimeout(r, 250)); const tk2 = await hist114();

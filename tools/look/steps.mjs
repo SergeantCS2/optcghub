@@ -2432,4 +2432,79 @@ const take137 = [
     } },
 ];
 
-export const STEPS = { 137: take137, 131: take131, 130: take130, 128: take128, 127: take127, 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
+/* ---- take 138 — Hunt's notes cut to what a list is, its source and its age (the owner's word, A45 item 1) ----
+   The feed, the store roster, the shops and the events are the fixture smoke builds (hunt.py --from-fixtures); the page's
+   own syncs are stubbed, and the events are moved forward so that they fall in the next two weeks. */
+let FX138 = null;
+const fx138 = () => {
+  if (!FX138) { const d = fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-look-138-')), f = path.join(d, 'feed-fixture.json');
+    execSync(`python3 tools/hunt.py --from-fixtures --out ${f}`, { cwd: ROOT, stdio: 'pipe' });
+    const rd = n => JSON.parse(fs.readFileSync(path.join(d, n), 'utf8'));
+    FX138 = { feed: rd('feed-fixture.json'), stores: rd('stores-fixture.json'), shops: rd('shops-fixture.json'), events: rd('events-fixture.json') };
+    fs.rmSync(d, { recursive: true, force: true }); }
+  return FX138;
+};
+const HUNT138 = `V.HUNT.sync = async () => false; V.HUNT.syncHistory = async () => false; V.NAV.zipAsked = true;
+  V.LOCAL.syncStores = async () => false; V.LOCAL.syncShops = async () => false; V.EVENTS.sync = async () => false;
+  V.HUNT.feed = window.__X138.feed; V.LOCAL.stores = window.__X138.stores; V.LOCAL.shops = window.__X138.shops; V.EVENTS.tab = window.__X138.events;
+  if (V.HUNT.zip !== '48329') V.HUNT.setZip('48329'); V.LOCAL.radius = 50; V.MODE.set('hunt', true); await ${pause}`;
+const note138 = sel => `[...document.querySelectorAll('${sel} .note')].map(e => e.textContent.replace(/\\s+/g, ' ').trim()).filter(t => t.length > 20)`;
+const take138 = [
+  { name: 'open', run: async (page, ctx) => {
+      await ctx.open();
+      const X = JSON.parse(JSON.stringify(fx138()));
+      /* the fixture's events, moved so the first is tomorrow (the screen lists the next two weeks) */
+      const days = X.events.rows.map(r => r[1]).sort(), shift = Math.round((Date.parse(new Date(Date.now() + 864e5).toISOString().slice(0, 10)) - Date.parse(days[0])) / 864e5);
+      X.events.rows.forEach(r => { r[1] = new Date(Date.parse(r[1]) + shift * 864e5).toISOString().slice(0, 10); });
+      await page.evaluate(x => { window.__X138 = x; window.__K138 = { zip: window.VAULT.HUNT.zip, radius: window.VAULT.LOCAL.radius }; }, X);
+      return { ok: true, shift };
+    } },
+  { name: 'sealed-target-panel', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} ${HUNT138}; V.DISTF.open.clear(); V.go('sealed'); V.paintSealed(); await ${pause};
+        const h = [...document.querySelectorAll('#sealedList h3')].find(e => e.textContent.trim() === 'Target'); const pn = h && h.closest('.panel'); if (pn) { const d = pn.querySelector('details'); if (d) d.open = true; pn.scrollIntoView({ block: 'start' }); window.scrollBy(0, -90); }
+        return { notes: pn ? ${note138('#sealedList .panel')}.filter(t => /Target|shelf|stores within/.test(t)) : [] }; })()`);
+      await wait(400);
+      return { ok: m.notes.some(t => /^Online and shelf stock at Target, refreshed hourly\. Checked /.test(t)) && m.notes.some(t => /Target stores within 50 mi of 48329 · \d+ products checked on their shelves, a few each hour\./.test(t)), ...m };
+    } },
+  { name: 'sealed-distributors-open', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.DISTF.open.clear(); V.DISTF.open.add('sealed'); V.go('sealed'); V.paintSealed(); await ${pause};
+        const b = [...document.querySelectorAll('#sealedList b')].find(e => e.textContent.trim() === 'GTS Distribution'); if (b) { b.scrollIntoView({ block: 'start' }); window.scrollBy(0, -110); }
+        const fold = b && b.closest('.dbody'); return { notes: fold ? [...fold.querySelectorAll('.note')].map(e => e.textContent.replace(/\\s+/g, ' ').trim()) : [] }; })()`);
+      await wait(400);
+      return { ok: m.notes.some(t => /\d+ products: \d+ sold out, \d+ allocated, \d+ with orders open, \d+ in stock for stores\./.test(t)) && m.notes.includes('Sells to stores, not to you. Allocated: stores get part of what they ordered. MSRP: the suggested shelf price.')
+        && m.notes.includes('Lists order deadlines and release dates for stores, not stock.'), ...m };
+    } },
+  { name: 'local-top', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.DISTF.open.clear(); ${HUNT138}; V.go('local'); V.paintLocal(); await ${pause}; window.scrollTo(0, 0);
+        return { notes: ${note138('#localList')} }; })()`);
+      await wait(400);
+      return { ok: m.notes.some(t => /^Zip 48329 · distances ±10 mi/.test(t)) && m.notes.some(t => /^Stores near you that run One Piece events\. From .+, (just now|\d+ min ago|\d+ h ago|\d+ days ago)\.$/.test(t)), ...m };
+    } },
+  { name: 'local-shops-and-notes', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const h = [...document.querySelectorAll('#localList h3')].find(e => /Shops with an online store/.test(e.textContent)); if (h) { h.scrollIntoView({ block: 'start' }); window.scrollBy(0, -90); }
+        return { notes: ${note138('#localList')}.filter(t => /each shop|on a shelf/.test(t)) }; })()`);
+      await wait(400);
+      return { ok: m.notes.some(t => /^What each shop lists on its own site, checked hourly\. Fetched /.test(t)), ...m };
+    } },
+  { name: 'events', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.go('events'); V.paintEvents && V.paintEvents(); await ${pause};
+        const n = [...document.querySelectorAll('#eventsList .note, #events .note')].map(e => e.textContent.replace(/\\s+/g, ' ').trim()); const last = [...document.querySelectorAll('#events .note')].pop(); if (last) last.scrollIntoView({ block: 'end' }); window.scrollBy(0, 120);
+        return { notes: n.filter(t => /events/.test(t)) }; })()`);
+      await wait(400);
+      return { ok: m.notes.includes('One Piece events near you, from Bandai TCG+ via onepieceevents.com. Register in the TCG+ app or site.') && m.notes.some(t => /^\d+ stores, \d+ events in the next 14 days within 50 mi of 48329/.test(t)), ...m };
+    } },
+  { name: 'releases-notes', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.DISTF.open.clear(); V.DISTF.open.add('releases'); V.go('releases'); V.paintReleases(); await ${pause};
+        const n = [...document.querySelectorAll('#relList .note')].map(e => e.textContent.replace(/\\s+/g, ' ').trim()); const t = [...document.querySelectorAll('#relList .note')].find(e => /Announced to stores/.test(e.textContent)); if (t) { t.scrollIntoView({ block: 'center' }); }
+        return { notes: n.filter(x => /Announced|Dates from/.test(x)) }; })()`);
+      await wait(400);
+      return { ok: m.notes.some(t => /^Announced to stores before TCGplayer lists them\. Checked /.test(t)) && m.notes.includes('Dates from TCGplayer via TCGCSV, nightly. Remind me notifies you the day before.'), ...m };
+    } },
+  { name: 'restore', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.DISTF.open.clear(); const k = window.__K138 || {};
+        V.HUNT.setZip(k.zip || ''); V.LOCAL.radius = k.radius || V.LOCAL.radius; V.MODE.set('collect', true); await ${pause}; return { zip: V.HUNT.zip }; })()`);
+      return { ok: true, ...m };
+    } },
+];
+
+export const STEPS = { 138: take138, 137: take137, 131: take131, 130: take130, 128: take128, 127: take127, 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };

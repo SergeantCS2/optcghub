@@ -38,7 +38,7 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
   /* the words, stated here: TL_* stays out of window.VAULT */
   const TLW = { gts: { sold_out: 'sold out', call: 'call to order', in_stock: 'in stock for stores', coming: 'order due date ahead', preorder: 'no order due date ahead', out: 'out of stock', unknown: 'no status' },
     southern: { orders_open: 'order due date ahead', orders_closed: 'stores’ orders closed', released: 'released', unknown: 'no dates' } };
-  const TL_NOTE = 'Where a change worked out from its dates gives two checks, not a day, the dates it lists now do not explain it: the history keeps the state, not the date, so a moved date and a passing one look the same.';
+  const TL_NOTE = 'Some changes are worked out from dates, so they show between two checks, not on a day.';   // take 138: in fewer words
   /* what the rows say, counted here: the rows that read a distributor, and after its first, the ones that did not */
   const isRead = (r, d) => !!r[d] && typeof r[d] === 'object' && !Array.isArray(r[d]) && Object.keys(r[d]).length > 0;
   const facts = (rows, d) => { const read = rows.filter(r => isRead(r, d)), i0 = rows.indexOf(read[0]);
@@ -142,7 +142,7 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
   V.HUNT.feed = F; openP({ dist: true }); const d1h = dist(), gl1 = lines(blk(d1h, 'gts'));
   const exp1 = [exp2[0], exp2[1], `${TLW.gts.coming} → ${TLW.gts.preorder} · ${btw(K1)} · worked out from its dates`, exp2[3]];
   ok('...with the fixture\'s own date, which does not put the change between its checks: the calendar change keeps its two checks and says it was worked out from its dates, and one note after the distributor note says why',
-     JSON.stringify(gl1) === JSON.stringify(exp1) && d1h.split(TL_NOTE).length === 2 && d1h.indexOf(TL_NOTE) > d1h.indexOf('A distributor sells to stores, not to you'), JSON.stringify(gl1));
+     JSON.stringify(gl1) === JSON.stringify(exp1) && d1h.split(TL_NOTE).length === 2 && d1h.indexOf(TL_NOTE) > d1h.indexOf('It sells to stores, not to you'), JSON.stringify(gl1));
   const sl = lines(blk(d1h, 'southern'));
   ok('...Southern Hobby\'s: its checks and the day they span, the same state at both, and no "since" anywhere in a history',
      !!blk(d1h, 'southern') && JSON.stringify(sl) === JSON.stringify([`History · ${fsh.checks} checks on file, ${spanOf(fsh)}`, `${TLW.southern[S.state]} at both checks · no change seen`]) && !/since/i.test(blk(d1h, 'gts') + blk(d1h, 'southern') + blk(d2h, 'gts')), JSON.stringify(sl));
@@ -938,9 +938,9 @@ json.dump(H.build(F["zips"], F["radius"], previous=None), sys.stdout)
     V.distFoldTap('sealed'); const ho = ctx.document.querySelector('#sealedList').innerHTML; V.DISTF.open.clear();
     const gtsNote = txt((ho.match(/<b>GTS Distribution<\/b>\s*<div class="note">([\s\S]*?)<\/div>/) || [, ''])[1]);
     ok('...opened, GTS\'s panel says it could not be reached since the failure, and that the check shown is its last good one -- while still showing what that check read',
-       gtsNote.startsWith(txt(`Could not reach GTS Distribution since ${V.momentText(kg.stale_since)}; its last check, `) + ' ') && gtsNote.includes(`${kg.items.length} One Piece products at the distributor`), gtsNote);
+       gtsNote.startsWith(txt(`Could not reach GTS Distribution since ${V.momentText(kg.stale_since)}; its last check, `) + ' ') && gtsNote.includes(`${kg.items.length} products: `), gtsNote);
     const tNote = txt((ho.match(/<h3>Target<\/h3>\s*<div class="note">([\s\S]*?)<\/div>/) || [, ''])[1]);
-    ok('...and Target\'s panel the same, for its kept copy', tNote.startsWith(txt(`Could not reach Target since ${V.momentText(kt.stale_since)}; its last check, `) + ' ') && tNote.includes(`${kt.items.length} One Piece products online`), tNote);
+    ok('...and Target\'s panel the same, for its kept copy', tNote.startsWith(txt(`Online and shelf stock at Target, refreshed hourly. Could not reach Target since ${V.momentText(kt.stale_since)}; its last check, `) + ' ') && tNote.includes(`${kt.items.length} products online`), tNote);
     ok('...the kept copy is still what the rows show: GTS\'s short lines stay under their products', /<span>GTS Distribution · [^<]+<\/span>/.test(hk));
     V.paintReleases(); const rk = ctx.document.querySelector('#relList').innerHTML, rsum = sumOf(rk, 'releases');
     V.distFoldTap('releases'); const ro = ctx.document.querySelector('#relList').innerHTML; V.DISTF.open.clear();
