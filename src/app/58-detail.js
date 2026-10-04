@@ -201,12 +201,17 @@ $('#dWant').addEventListener('click', () => {
 $('#dPaid').addEventListener('click', async () => {
   if (!dCur) return;
   const it = dLine();
+  /* take 137 (A43): typed in the currency on screen and kept in US dollars, as a price alert is (take 115). It asked
+     for dollars and kept the figure as dollars whatever the currency, so a cost basis typed in euros read back
+     converted; and the figure lost every character but digits and the point, so "11,36" became 1136. 0 clears it. */
+  const c = CUR.active();
   const v = await ask({ title: 'What you paid', kind: 'number', ok: 'Save', placeholder: '0.00',
-    why: 'Per copy, in USD. Only you know this; it drives the Performance tab and nothing else.',
-    value: it && it.paid ? String(it.paid) : '' });
+    why: `Per copy, ${c === 'USD' ? 'in USD' : `in ${esc(curLabel(c))}, converted (\u2248); it is kept in US dollars`}. Only you know this; it drives the Performance tab and nothing else.`,
+    value: it && it.paid ? toShown(it.paid) : '' });
   if (v === null) return;
-  const n = parseFloat(String(v).replace(/[^0-9.]/g, ''));
-  if (!isFinite(n)) return toast('Not a number');
+  const x = typedAmount(v);
+  if (!(x >= 0)) return toast('Not a number');
+  const n = x > 0 ? fromShown(x) : 0;
   if (it) { it.paid = n; commitOwn('detail', { snap: false }); }
   else { OWN.add(dCur.id, { qty: dQty, condition: dCond }).paid = n; commitOwn('detail'); }   /* take 111: in today's reading too */
   toast('Cost basis set to ' + money(n)); openDetail(dCur.id);

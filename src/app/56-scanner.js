@@ -162,8 +162,9 @@ const PLATFORM = {
     const FS = this.plugin('Filesystem');
     if (!FS) { localStorage.setItem('vault.backup', json); return 'browser storage'; }
     const latest = await this.writeOwnDoc('backup-latest.json', json);
-    /* the dated copy is the history: kept when it can be (on the day of a reinstall the name can be the old install's) */
-    const day = new Date().toISOString().slice(0, 10);
+    /* the dated copy is the history: kept when it can be (on the day of a reinstall the name can be the old install's).
+       Take 137: named by the phone's day, which Restore shows -- the UTC date was tomorrow's on a US evening */
+    const day = localDay(new Date().toISOString());
     try { await FS.writeFile({ path: `OPTCGHub/backup-${day}.json`, data: json, directory: 'DOCUMENTS', recursive: true, encoding: 'utf8' }); }
     catch (e) { ERRS.push('backup', `backup-${day}.json could not be written: ${e.message || e}`, 'backup'); }
     return latest === 'backup-latest.json' ? 'Documents/OPTCGHub' : `Documents/OPTCGHub/${latest}`;
@@ -202,6 +203,23 @@ const PLATFORM = {
     if (!FS) return localStorage.getItem('vault.backup');
     const name = readJson('vault.docNames', {}, false)['backup-latest.json'] || 'backup-latest.json';
     try { return (await FS.readFile({ path: `OPTCGHub/${name}`, directory: 'DOCUMENTS', encoding: 'utf8' })).data; }
+    catch (e) { return null; }
+  },
+  /* take 137 (A43): this install's dated copies (backup(), above, writes one a day), newest first -- the days Restore
+     can offer beside the latest. readdir({ path, directory }) -> { files: [{ name, ... }] }, read from the plugin's
+     definitions (landmine 73); that it lists this install's own files in Documents is INFERRED (scoped storage,
+     landmine 239's family) -- the Fold proves it. None on the web. */
+  async backupDays() {
+    const FS = this.plugin('Filesystem'); if (!FS || typeof FS.readdir !== 'function') return [];
+    try {
+      const r = await FS.readdir({ path: 'OPTCGHub', directory: 'DOCUMENTS' });
+      const days = ((r && r.files) || []).map(f => /^backup-(\d{4}-\d\d-\d\d)\.json$/.exec((f && typeof f === 'object' ? f.name : f) || '')).filter(Boolean).map(m => m[1]);
+      return [...new Set(days)].sort().reverse();
+    } catch (e) { return []; }
+  },
+  async readBackupDay(day) {
+    const FS = this.plugin('Filesystem'); if (!FS || !/^\d{4}-\d\d-\d\d$/.test(String(day))) return null;
+    try { return (await FS.readFile({ path: `OPTCGHub/backup-${day}.json`, directory: 'DOCUMENTS', encoding: 'utf8' })).data; }
     catch (e) { return null; }
   },
   /* Take 34, landmine 110. A download link does NOTHING in Capacitor’s WebView:

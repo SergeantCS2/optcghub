@@ -1,4 +1,120 @@
-# HANDOFF — through Take 136
+# HANDOFF — through Take 137
+
+## Take 137 — 2026-10-03 — A43's last two small items: Restore reaches an earlier day's backup, and a cost basis or a Hunt note's price is typed in the currency on screen
+
+Opened before any code (PROTOCOL §6), on the branch restarted on take
+136's merge (PR 63, merged 3 Oct 23:43 UTC); no other branch is open. The
+owner merged take 136 with no word since "Continue"; the next in the
+session's order is what take 136 left of A43's small items, both of which
+change a screen, so this take has a look.
+
+### What this take changes
+
+1. **Restore offers an earlier day's backup.** The app writes a dated copy
+   beside the latest every day it backs up (`backup-YYYY-MM-DD.json`, take
+   15), but Restore went straight to the latest when nothing was kept from
+   an earlier restore, so a backup from before a mistake could be reached
+   only after a restore had kept something (A43, A1/A2). Restore now lists
+   this install's dated copies (`PLATFORM.backupDays`, Filesystem
+   `readdir`) and, when there is an earlier day than the latest's, shows the
+   "Restore from" sheet with the latest, up to three earlier days, the kept
+   copy if any, and "Choose a file"; an earlier day is read straight from
+   its file. Take 115's rule stands where it applies: with nothing earlier
+   and nothing kept, Restore goes straight to the latest.
+2. **A cost basis is typed in the currency on screen.** "What you paid"
+   asked for US dollars and read the figure by stripping everything but
+   digits and the point, so "11,36" in euros became 1136, and a figure typed
+   in another currency was kept as dollars and shown converted -- a €20
+   cost basis read ≈€18.40. It gets the price alert's treatment (take 115):
+   the sheet names the currency, the figure is read by `typedAmount`
+   (a decimal comma, a thousands comma), kept in US dollars through
+   `fromShown`, and shown back as typed; 0 still clears it.
+3. **A Hunt note's price, the same.** "Price, if you saw one" said USD and
+   was read by `parseFloat`; it is typed in the currency on screen and kept
+   in US dollars like the rest.
+4. **The phone's day, twice** (found by the look; landmine 248). The dated
+   copy was named by the UTC date, which the new sheet shows as the phone's
+   day: on a US evening a backup filed under tomorrow, and "The backup of"
+   today could sit under the latest of today. A Hunt note was dated the same
+   way and read "Oct 4" with the phone at Oct 3, 8:05 PM. Both use
+   `localDay()` (take 115's fix for an alert's fired day), and Restore
+   compares the latest's day the same way. Copies written before this take
+   keep their UTC names, so an evening's copy from before it is labelled a
+   day late; the rest of the family is open in AGENDA A43.
+5. **A control that names no build is refused** (landmine 247).
+   `tools/lib/appvm.mjs` throws when `SMOKE_APP` holds no `app.js`; given the
+   file instead of its directory it ran this take's build and passed.
+6. **Take 130's Walmart check, red on the clock alone** (landmine 249).
+   From 4 Oct 05:02 UTC the saved Walmart page's read is "2 days ago", and
+   the check's pattern allowed only "N d ago"; it failed on every build,
+   take 136's included, so the next nightly on `main` fails its smoke until
+   this merges. The pattern takes `ageLabel`'s four forms, and a new check
+   runs the line under a clock pinned from a minute to 400 days after the
+   read.
+
+### Measured
+
+- The clock under the two day mistakes: the look's first run at 00:05 UTC
+  on 4 Oct was 8:05 PM on 3 Oct in New York; the note it wrote carried
+  `2026-10-04`, the phone's day `2026-10-03`. The smoke pins 23:30 in New
+  York: UTC is already the next day there (the precondition, asserted).
+- Take 130's Walmart line for product 628451 (PRB-02's booster pack) drawn
+  on take 136's build and this one on the same data: "Walmart $26.98 ·
+  ships · sold by Expedition Gaming Corp · 2 days ago"; the saved page's
+  read is 2026-10-02T05:02:48Z, so the check turned at 05:02 UTC on 4 Oct.
+- The pipeline from a fresh ingest: 87 groups, 7,684 products (7,009 cards,
+  675 sealed), 7,432 price rows, 22 days of history; smoke 1713 of 1713,
+  render 277 of 277 `(mode: chrome)`, the card proofs 25 / 85 printings /
+  346 scenarios, 0 failed; 607 s.
+
+### Tests
+
+- The smoke: 1713 of 1713, 19 new -- 17 in section 94 (`tools/smoke/94-…`)
+  and two in section 90 (take 130's Walmart line under a pinned clock, and
+  its control). On take 136's build (`SMOKE_APP`, a directory) 12 of section
+  94's 17 fail by name; the five that pass are its controls and its
+  precondition. On take 137 with its three phone's-day lines put back (the
+  UTC control) the three US-evening checks fail by name, the precondition and
+  the noon control pass. Take 130's old pattern put back fails the row's
+  check and the pinned-clock check by name; the cut-age control passes on
+  both. `SMOKE_APP` given a file now stops the run (exit 1) with its reason;
+  given that file before the fix it ran this build and printed 1709 passed.
+
+### The look
+
+- `node tools/look.mjs 137`: 14 steps, 14 ok, at both of the Fold's sizes
+  (cover 411×960, inner 749×832), run twice: at 00:05 UTC (8:05 PM in New
+  York, the owner's zone) and at 07:03 UTC after the fix. What you paid asks
+  in "€ EUR, converted (≈); it is kept in US dollars" and reads back ≈€20.00
+  as typed; the Hunt note's price sheet says "€ EUR, optional" and the note
+  shows ≈€20.00; Restore from lists the latest, three earlier days in words,
+  and Choose a file, every row 63 px. The first run's note read "Oct 4" at
+  8:05 PM on Oct 3 -- item 4. Every picture read.
+
+### What I got wrong
+
+- I built the sheet's day labels on the dated copy's name without asking
+  which clock named it: take 15 named it by the UTC date, and only the
+  look's evening run showed "The backup of Oct 3" under a latest of Oct 3 --
+  and the Hunt note dated tomorrow. The smoke ran at a UTC hour where the two
+  agree, so it could not have caught it; now it pins a New York evening.
+- I gave `SMOKE_APP` the file instead of its directory, and the UTC control
+  passed everything. I nearly read that as "the checks prove nothing";
+  the harness had run the wrong build. Landmine 247; the harness refuses it.
+- In the smoke, a fake ask field without `focus()` crashed the run from the
+  ask sheet's 60 ms focus timer, and the first call of the new code was
+  unguarded, so the control on take 136 stopped at it instead of failing by
+  name. Both fixed before the controls were counted.
+- Take 130's check went red on the clock while this take was being built;
+  I first read it as a data change from the fresh ingest. Running take 136's
+  build on the same data, then drawing the row, showed "2 days ago".
+
+### DEFERRED
+
+- Whether `readdir` on the Fold lists this install's dated copies and only
+  those (Android's scoped storage, landmine 239's family) is INFERRED from
+  the plugin's definitions; only the Fold proves it. If it lists nothing,
+  Restore behaves as it did.
 
 ## Take 136 — 2026-10-03 — four of A43's small items: the waiting scans in the backup, a new or renamed collection backed up at once, CSV import's one write, two gate checks
 
@@ -93,6 +209,25 @@ with a look.
   "Choose a file" when no kept copy exists, and the cost basis and a Hunt
   note's price typed in the currency on screen.
 - A43's other small items stay listed there, each with why.
+
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+PR 63 merged 3 Oct at 23:43 UTC (`3bf2d6d`, a merge commit, the owner's).
+The merge's `build` (run 95) was cancelled at 23:58 by the scheduled
+nightly's (run 96, the same workflow, started 23:58:03 on the nightly's own
+commit `b1e1fa0`, prices 2026-10-03, 22 days on file), which went green in
+16 minutes and published Release take-136 at 00:14 UTC: the APK (28,960,957
+bytes, 7,292 more than take 135's), the AAB (22,167,018), the mapping and
+the Play icon. So the Release carries the merge and one more night of
+prices; no take's build was lost, but the merge's own run has no result of
+its own -- MEASURED from the runs list; the cause read in `build.yml`
+(`concurrency: group: build, cancel-in-progress: true`: the nightly's cron,
+21:30 UTC, ran two and a half hours late and landed on the merge's run).
+The hunt run at 02:36 UTC
+green. Take 137 began on the branch restarted on the merge, no other branch
+open, and this note rides its PR. At 05:02 UTC on 4 Oct take 130's Walmart
+check went red on the clock (landmine 249): the next nightly fails its smoke
+until take 137 merges.
 
 ## Take 135 — 2026-10-02 — the smoke into files (A44 item 6): a fixtures module, a runner that snapshots the app's state around each file, the same checks
 
