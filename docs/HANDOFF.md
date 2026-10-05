@@ -1,4 +1,74 @@
-# HANDOFF — through Take 143
+# HANDOFF — through Take 144
+
+## Take 144 — 2026-10-05 — Southern Hobby's further pages read, not refused (A32's Next)
+
+Opened before any code (PROTOCOL §6), on the branch restarted on take 143's
+merge (PR 72, `6a5d413`; Release take-143 at 03:20 UTC). The owner's word, 4
+Oct: "Continue on anything you can overnight". A32's Next said Southern
+Hobby's paging was UNKNOWN: if its One Piece category grew past one page,
+the fetch would fail on its count, by design, and keep the last good copy --
+for good. The history on Releases' not-in-the-catalogue list, the item before
+it, is left for the UI session: its History opens per distributor, so one
+tap there would open every item's at once -- a design call, not a fix.
+
+### What this take changes
+
+1. **The listing reads every page its footer counts.** MEASURED this take,
+   off the site's own larger categories: 40 rows a page, the rest at
+   `?page=2` and on, the footer the whole count on every page (Pokémon 40 + 1
+   = 41, Magic 40 + 20 = 60, every id distinct). One Piece lists 21 today. The
+   fetch now reads page 2 and on while the rows fall short of the footer, and
+   the count check holds on the whole -- short, a repeated id, or a page that
+   adds nothing is still a failed fetch that keeps the last good copy.
+
+### Measured
+
+- Read off the live site this take (5 Oct, ~03:30 UTC): the Pokémon category
+  41 items, 40 on its first page and 1 at `?page=2`; Magic 60, 40 and 20;
+  every id distinct, every page's footer the whole count. One Piece: 21, one
+  page.
+- Live, through the new `read_listing`: One Piece 21 of 21 in 1 call;
+  pointed at Pokémon, 41 of 41 in 2 calls, all distinct.
+- The pipeline from a fresh ingest: 87 groups, 7,684 products; smoke 1769 of
+  1769; render 277 of 277 `(mode: chrome)`; the gate green; 581 s. No pipeline
+  step changed (`tools/hunt/southern.py` is the hourly's), so no clean run.
+
+### Tests
+
+- `tools/hunt.py --selftest`: 162 of 162, 6 new for the paging, on two saved
+  pages of the Pokémon category (`tools/fixtures/southern_listing_p1_of2.html`
+  and `_p2_of2.html`, cut as the One Piece fixture was): read over two pages to
+  41; a one-page listing asks for no second; a page 2 that serves page 1 again,
+  one the host refuses, and one whose footer disagrees are each a failed
+  fetch; a footer past six pages is refused before page 2 is asked. A plant
+  that reads page 1 only (take 143's behaviour) fails the main probe by name.
+
+### The look
+
+- No look: nothing on screen changes; the hourly's Southern Hobby list reads
+  as it does while it fits one page.
+
+### What I got wrong
+
+- My first error message reached for `chr()` to dodge nested quotes; it
+  read like a puzzle. Rewritten plainly before anything ran.
+- Two of the new probes found the code short, not themselves: a page that
+  repeats page 1 was said to "add none" instead of naming the repeat, and a
+  footer far past six pages was only refused when page 3 failed. Both are
+  refused up front and named now. And one probe proved "before page 2 is
+  asked" from a counter that never moves on a failure; it reads the URLs
+  asked now.
+- I ran the seal piped (`| tail -3`) once more, as at takes 134 and 139; rerun
+  bare, green. The rule is landmine 103's and stands.
+
+### DEFERRED
+
+- The history on Releases' not-in-the-catalogue list: for the UI session
+  (AGENDA A32).
+- The hourly's feed apart from validate, and the retailers that need a
+  residential IP (A32's Next).
+- Whether the site serves page 1 for a page past the last is INFERRED from
+  take 112's probe; a repeat is refused either way.
 
 ## Take 143 — 2026-10-05 — a product a distributor stops listing keeps its line (A32's Next, second item)
 
@@ -75,6 +145,17 @@ dropped lost its line and its history with it, silently.
   retailers that need a residential IP.
 - Sealed and Releases rows do not show a dropped distributor; only the
   product's page does (AGENDA A32, Ruled out).
+
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+With `check` (10 min) and `apk` (6 min) green on `1aa3911`, and the last
+build (run 103) and hourly (run 98) green, the session merged PR 72 at 03:05
+UTC on 5 Oct (`6a5d413`, a merge commit). Release take-143 published 03:20
+UTC with the APK (28,961,365 bytes, 268 more than take 142's), the AAB
+(22,167,338), the mapping and the Play icon. The map fills from the first
+hourly on this take's code; until then no product's page calls a
+distributor gone. Take 144 began on the branch restarted on this merge, and
+this note rides its PR.
 
 ## Take 142 — 2026-10-05 — a distributor's date moves, on file and in its history (A32's Next, first item)
 

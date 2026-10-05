@@ -1,4 +1,4 @@
-# OP TCG Hub — take 143
+# OP TCG Hub — take 144
 
 ## Installing — read this first
 
@@ -17,6 +17,8 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 144:** Nothing you can see changes. Hunt's Southern Hobby list keeps updating once Southern Hobby lists more than 40 One Piece products, instead of freezing on its last full read. Nothing you have saved changes.
 
 **New at take 143:** If a distributor stops listing a product, the product's page still shows that distributor under Distributor info, as "no longer on its list" with the day it was last listed, and its history. Nothing you have saved changes.
 
