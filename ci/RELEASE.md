@@ -1,4 +1,4 @@
-# OP TCG Hub — take 141
+# OP TCG Hub — take 142
 
 ## Installing — read this first
 
@@ -17,6 +17,8 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 142:** When a distributor moves a release day or the day stores must order by, its History under Distributor info now says so, like "release moved Nov 20 → Dec 4". It knows from this update on. Nothing you have saved changes.
 
 **New at take 141:** Dates now follow your phone's calendar. In the evening, tonight's events stay on Events, a release counts down to the right day, and a release reminder no longer comes a day early. The day's collection value and an export's file name carry your phone's date too. Prices update again: one card's real price jump had stopped last night's update. Nothing you have saved changes.
 

@@ -153,7 +153,50 @@ def append_history(prev_hist, feed):
     h["runs"].append(snapshot(feed)); h["runs"] = h["runs"][-KEEP_RUNS:]
     h["since"] = h["runs"][0]["t"]; h["stores"] = {z: zz.get("stores", []) for z, zz in feed["sources"]["target"].get("zips", {}).items()} if feed["sources"]["target"].get("ok") else h.get("stores", {})
     h["titles"] = {it["tcin"]: it["title"] for it in feed["sources"]["target"].get("items", [])} if feed["sources"]["target"].get("ok") else h.get("titles", {})
+    h["dates"] = record_dates(h.get("dates"), feed, h["since"])   # take 142 (A32's Next): a date move, on file
     return h
+
+
+# take 142: per distributor, the item's key and its two days -- the release, and the day stores must order by
+DATE_KEYS = {"gts": ("sku", "release", "preorder"), "southern": ("id", "release", "due")}
+
+
+def record_dates(prev_dates, feed, since):
+    """Take 142 (A32's Next, "release moved Nov 20 -> Dec 4"): the rows keep each item's state, never its dates, so a
+    moved day that changed no state was invisible. Per distributor, per item, [run time, release, due] -- written when
+    the item is first seen and at each fresh read that finds a different pair; a kept copy writes nothing. Cut with
+    the runs: an item keeps its entries from `since` on and the one before it (the days that held at the first run on
+    file); an item a fresh read no longer lists, with nothing from `since` on, is dropped. Entries of a shape this
+    version does not know are dropped, never guessed at."""
+    prev = prev_dates if isinstance(prev_dates, dict) else {}
+    t, out = feed["fetched_at"], {}
+    for d, (key, rel, due) in DATE_KEYS.items():
+        old = prev.get(d) if isinstance(prev.get(d), dict) else {}
+        cur = {str(k): sorted((list(e) for e in v if isinstance(e, list) and len(e) == 3 and isinstance(e[0], str)), key=lambda e: e[0])
+               for k, v in old.items() if isinstance(v, list)}
+        src = feed["sources"].get(d) or {}
+        fresh = bool(src.get("ok")) and not src.get("kept")
+        seen = set()
+        if fresh:
+            for it in src.get("items", []):
+                if not it.get(key):
+                    continue
+                k = str(it[key]); seen.add(k)
+                pair = [it.get(rel), it.get(due)]
+                es = cur.setdefault(k, [])
+                if not es or es[-1][1:] != pair:
+                    es.append([t] + pair)
+        kept = {}
+        for k, es in cur.items():
+            if not es:
+                continue
+            after = [e for e in es if e[0] >= since]
+            if not after and fresh and k not in seen:
+                continue
+            kept[k] = [e for e in es if e[0] < since][-1:] + after
+        if kept:
+            out[d] = kept
+    return out
 
 
 def gts_due(items, fetched_at):
@@ -441,6 +484,35 @@ def selftest():
     for k in ("gts", "southern"):
         kept = copy.deepcopy(fd); kept["sources"][k]["kept"] = True; dead = copy.deepcopy(fd); dead["sources"][k] = {"ok": False, "error": "HTTP 503", "items": []}
         check(f"a kept or failed {k} writes no {k} key -- 'not read', never 'nothing listed' (the timeline's hole)", k not in snapshot(kept) and k not in snapshot(dead) and k in snapshot(fd))
+    # take 142 (A32's Next): a date move on file -- [run time, release, due] per item, when first seen and when it moves
+    gi, si = fd["sources"]["gts"]["items"], fd["sources"]["southern"]["items"]
+    d1 = record_dates(None, fd, fd["fetched_at"])
+    check("take 142: a first fresh read files each item's release and order due day once, by its own id",
+          set(d1.get("gts", {})) == {i["sku"] for i in gi} and set(d1.get("southern", {})) == {i["id"] for i in si}
+          and all(d1["gts"][i["sku"]] == [[fd["fetched_at"], i.get("release"), i.get("preorder")]] for i in gi)
+          and all(d1["southern"][i["id"]] == [[fd["fetched_at"], i.get("release"), i.get("due")]] for i in si), f"{len(d1.get('gts', {}))} + {len(d1.get('southern', {}))}")
+    f2 = copy.deepcopy(fd); f2["fetched_at"] = "2026-09-25T03:10:00Z"
+    d2 = record_dates(copy.deepcopy(d1), f2, fd["fetched_at"])
+    check("...the same days at the next read add nothing", d2 == d1, json.dumps(d2)[:160])
+    mv = next(i for i in f2["sources"]["gts"]["items"] if i.get("release")); old_rel = mv["release"]; mv["release"] = "2027-12-31"
+    sv = f2["sources"]["southern"]["items"][0]; old_due = sv.get("due"); sv["due"] = "2027-01-15"
+    d3 = record_dates(copy.deepcopy(d1), f2, fd["fetched_at"])
+    check("...a moved release (GTS) or a moved order due day (Southern Hobby) adds an entry at the read that saw it, the earlier one kept",
+          d3["gts"][mv["sku"]] == [[fd["fetched_at"], old_rel, mv.get("preorder")], [f2["fetched_at"], "2027-12-31", mv.get("preorder")]]
+          and d3["southern"][sv["id"]] == [[fd["fetched_at"], sv.get("release"), old_due], [f2["fetched_at"], sv.get("release"), "2027-01-15"]]
+          and sum(len(v) for v in d3["gts"].values()) == len(gi) + 1, json.dumps(d3["gts"][mv["sku"]]))
+    f3 = copy.deepcopy(f2); f3["sources"]["gts"]["kept"] = True; f3["sources"]["southern"] = {"ok": False, "error": "HTTP 503", "items": []}
+    check("...a kept copy or a failed read writes nothing, though its days differ -- a kept copy is not a read",
+          record_dates(copy.deepcopy(d1), f3, fd["fetched_at"]) == d1)
+    gone = next(i["sku"] for i in gi if i["sku"] != mv["sku"]); f4 = copy.deepcopy(f2)   # the moved days still hold; f4["fetched_at"] = "2026-11-20T03:00:00Z"
+    f4["sources"]["gts"]["items"] = [i for i in f4["sources"]["gts"]["items"] if i["sku"] != gone]
+    d4 = record_dates(copy.deepcopy(d3), f4, "2026-10-01T00:00:00Z")   # every entry older than the first run on file
+    check("...cut with the runs: an item keeps the entry before the first run on file (the day that held then); one a fresh read no longer lists, with nothing since, is dropped",
+          gone not in d4["gts"] and d4["gts"].get(mv["sku"]) == [[f2["fetched_at"], "2027-12-31", mv.get("preorder")]] and len(d4["gts"]) == len(gi) - 1, f"{len(d4['gts'])} {d4['gts'].get(mv['sku'])}")
+    odd = {"gts": {"X1": "2026-01-01", "X2": [["2026-09-24T00:00:00Z", "2026-10-01"]], "X3": [[1, None, None]]}, "southern": [1, 2]}
+    check("...entries of a shape this version does not know are dropped, never guessed at", record_dates(odd, f3, fd["fetched_at"]) == {})
+    h0 = {"runs": [row]}; h1 = append_history(copy.deepcopy(h0), f2)
+    check("...append_history writes the dates beside the runs, and the runs guard still holds", h1.get("dates", {}).get("gts", {}).get(mv["sku"], [[None]])[-1][1] == "2027-12-31" and keeps_past([row], h1) == [])
     # the hourly reads the history before any source is fetched, and stops rather than start it over
     hist = {"runs": [row]}; calls, naps, said = [], [], []
     def answers(*a):

@@ -2677,4 +2677,29 @@ const take141 = [
       return { ok: true, ...m };
     } },
 ];
-export const STEPS = { 141: take141, 140: take140, 139: take139, 138: take138, 137: take137, 131: take131, 130: take130, 128: take128, 127: take127, 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
+/* take 142 (A32's Next): a distributor's date moves in the History -- take 114's fixture and sheet, with the runner's dates
+   beside its rows: the OP-18 box's release moved three weeks later at run 45, and Southern Hobby's order due day moved a week at
+   its last read */
+const take142 = [
+  { name: 'open', run: async (page, ctx) => {
+      await ctx.open(); const X = fixture114(); await page.evaluate(x => { window.__X114 = x; }, X);
+      const G = X.F.sources.gts.items.find(i => i.sku === 'BJP2873812'), S = X.F.sources.southern.items.find(i => i.id === '79311'), R = X.H.runs, N = R.length;
+      const shift = (d, n) => new Date(Date.parse(d + 'T00:00:00Z') + n * 864e5).toISOString().slice(0, 10);
+      const H = { ...X.H, dates: { gts: { BJP2873812: [[R[6].t, shift(G.release, -21), G.preorder ?? null], [R[45].t, G.release, G.preorder ?? null]] },
+        southern: { '79311': [[R[N - 2].t, S.release, shift(S.due, -7)], [R[N - 1].t, S.release, S.due]] } } };
+      await page.evaluate(h => { window.__H142 = h; }, H);
+      return { ok: !!G.release && !!S.due, release: G.release, due: S.due };
+    } },
+  { name: 'history-date-moves', run: async (page) => {
+      const m = await page.evaluate(sheet114('X.F', 'window.__H142'));
+      await wait(400);
+      const all = lines114(m);
+      return { ok: m.on === 'detail' && all.some(l => /^release moved [A-Z][a-z]{2} \d{1,2}(, \d{4})? → [A-Z][a-z]{2} \d{1,2}(, \d{4})? · between /.test(l))
+          && all.some(l => /^order due date moved .+ → .+ · between /.test(l)), gts: m.gts, southern: m.southern };
+    } },
+  { name: 'restore', run: async (page) => {
+      await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.DISTF.open.clear(); V.MODE.set('collect', true); await ${pause}; })()`);
+      return { ok: true };
+    } },
+];
+export const STEPS = { 142: take142, 141: take141, 140: take140, 139: take139, 138: take138, 137: take137, 131: take131, 130: take130, 128: take128, 127: take127, 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
