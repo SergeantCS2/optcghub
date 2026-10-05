@@ -74,7 +74,7 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0. *Take 145, in flight (5 Oct):* A32's Next -- the hourly ships its feed
+0. *Take 145 (PR 74, merged by the session; Release take-145):* A32's Next -- the hourly ships its feed
    over the live catalogue when the fresh one is refused (`ci/hunt.sh`,
    `hunt.py --live-bundle`). **Ruled out (take 145):** below, in A32.
    *Take 144 (PR 73, merged by the session; Release take-144):* A32's Next -- Southern Hobby's further

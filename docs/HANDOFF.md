@@ -93,6 +93,20 @@ catalogue.
 - The history on Releases' not-in-the-catalogue list (the UI session's), the
   retailers that need a residential IP.
 
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+With `check` (8 min) and `apk` (5 min) green on `51cd8fe`, and the last
+build (run 105) and hourly (run 98) green, the session merged PR 74 at 04:42
+UTC on 5 Oct (`e2a266c`, a merge commit). Release take-145 published 04:56
+UTC with the APK (28,961,401 bytes, 52 more than take 144's), the AAB
+(22,167,384), the mapping and the Play icon. The first hourly on this take's
+code (`hunt` run 99, 09:01 UTC) took the fresh path: `ci/hunt.sh` ran in the
+same step, set the `catalogue` output, deployed, and the report job read
+"every job ran green: feed". No refusal yet, so the live-catalogue path is
+still INFERRED on the runner. GitHub fired the hourly twice in fifteen
+hours (01:59 and 09:01 UTC; landmine 173), so the feed on Pages was eight
+hours old at 16:55 UTC.
+
 ## Take 144 — 2026-10-05 — Southern Hobby's further pages read, not refused (A32's Next)
 
 Opened before any code (PROTOCOL §6), on the branch restarted on take 143's
