@@ -1,6 +1,6 @@
 # RUNBOOK — from nothing to a repo that builds every night
 
-*Current as of take 144.* **Since take 89 the repo is the record:** a session
+*Current as of take 145.* **Since take 89 the repo is the record:** a session
 works on a branch and opens a pull request; you merge; the merge builds. §6
 is every take. §1–§5 are how the repo was first stood up from a seed zip and
 remain the recovery procedure; you need them again only for a new repo or a
@@ -153,6 +153,15 @@ public repo's free runner time.
   **pages** job shows as skipped. The APK and the Release are still built.
   Pages keeps the hourly's last deploy, with its history whole, and the
   next hourly deploys as usual.
+
+- The hourly's line `the fresh catalogue was refused (above) -- the feed
+  ships over the catalogue Pages already serves` (take 145) means validate
+  refused the day's catalogue, or TCGCSV was out. The stock feed still
+  deployed; the prices stay at the day Pages already had, and phones adopt
+  nothing new. The run is green with a notice, and the failure thread is
+  left as it is: the nightly's own report covers the catalogue. If the line
+  that follows is `live catalogue: … -- nothing deploys`, the run is red and
+  Pages keeps its last deploy, as before take 145.
 
 **The first run is yours to start:** Actions → hunt → *Run workflow*. A new
 schedule's first cron run can lag by an hour or more; a manual run proves the

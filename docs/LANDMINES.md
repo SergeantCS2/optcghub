@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 144.*
+*Current as of take 145.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -3300,6 +3300,11 @@ measured: 64% of products sit within 3x), named in the build's log; one the
 listing disagrees with, or with no listing, still stops the build. Rule: a guard
 against a glitch asks the same day's data whether it agrees before it calls a
 move a glitch; and a red nightly is read before the take that follows it.
+*Take 145:* the same refusal froze Hunt's stock lists too (hunt run 97, 23:08
+UTC): the hourly validated before it deployed, and one job shipped both the
+catalogue and the feed. A refused catalogue now ships the feed over the one
+Pages already serves (`ci/hunt.sh`, `hunt.py --live-bundle`). Rule: a guard
+on one product stops that product only.
 
 ## §2 — Inherited from APEX ORV
 

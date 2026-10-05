@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 144.* Ranked by blocking-ness, not by interest.
+*Current as of take 145.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -74,7 +74,10 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0. *Take 144, in flight (5 Oct):* A32's Next -- Southern Hobby's further
+0. *Take 145, in flight (5 Oct):* A32's Next -- the hourly ships its feed
+   over the live catalogue when the fresh one is refused (`ci/hunt.sh`,
+   `hunt.py --live-bundle`). **Ruled out (take 145):** below, in A32.
+   *Take 144 (PR 73, merged by the session; Release take-144):* A32's Next -- Southern Hobby's further
    pages read (its paging measured). The history on Releases'
    not-in-the-catalogue list waits for the UI session (a design call).
    *Take 143 (PR 72, merged by the session; Release take-143):* A32's Next, its second item -- a
@@ -1493,6 +1496,19 @@ failed read is a hole, not "nothing listed".
 - The hourly's feed is still tied to TCGCSV and to validate: an outage or a
   refused catalogue stops the feed's deploy too. Separating them means
   deploying the feed over the live catalogue (take 115's runner lane).
+  *Take 145 builds it:* the hourly's build is `ci/hunt.sh`; a failed ingest
+  or a refused catalogue builds the page from the last green nightly's
+  catalogue (its cache), puts back the live `manifest.json` and
+  `catalog.json` from Pages byte for byte (`hunt.py --live-bundle`, read
+  and checked: one deploy's pair, the shape this build reads), and ships the
+  feed; the report job leaves the thread as it is and names the refusal.
+  **Ruled out (take 145):** deploying the refused catalogue with the feed
+  (validate's refusal is the point; take 115 put it there); deploying the
+  last green nightly's catalogue (Pages would go back to an older day than
+  the live one); skipping the deploy and keeping the feed for the next run
+  (the history and the rotation are read back from Pages, so an undeployed
+  run is a lost run); a red run for it (the nightly's report owns the
+  catalogue, and a red hourly would say "nothing was deployed").
 - GameStop, Walmart, Meijer and eBay need a residential IP: they wait for
   the sideload build.
 - UNKNOWN: whether stores can still order on GTS's due day itself.

@@ -1,4 +1,97 @@
-# HANDOFF — through Take 144
+# HANDOFF — through Take 145
+
+## Take 145 — 2026-10-05 — the hourly ships its feed when the catalogue is refused (A32's Next)
+
+Opened before any code (PROTOCOL §6), on the branch restarted on take 144's
+merge (PR 73, `817a1de`). The owner's word, 4 Oct: "Continue on anything you
+can overnight". On 4 Oct the hourly stopped with the nightly: validate
+refused a real price move (landmine 252), and the hourly runs validate
+before it deploys, so the stock feed froze with the catalogue (hunt run 97,
+23:08 UTC). A32's Next named it: the feed was tied to TCGCSV and to
+validate, and separating them means deploying the feed over the live
+catalogue.
+
+### What this take changes
+
+1. **A refused catalogue no longer stops the feed.** The hourly's build moves
+   into `ci/hunt.sh`. When the fresh ingest or validate fails, the run builds
+   the page from the last green nightly's catalogue (its cache), puts back
+   the catalogue Pages already serves (`hunt.py --live-bundle`: the live
+   `manifest.json` and `catalog.json`, byte for byte, read and checked first),
+   fetches the feed and deploys. Phones adopt nothing new: the manifest's
+   date is the one they already have. If the live catalogue cannot be read
+   or checked, nothing deploys, as before.
+2. **The report says it.** The run is not red (the feed went out) and not
+   green (the catalogue did not refresh): the report job leaves the thread as
+   it is and names the refused catalogue. The nightly's own report covers the
+   catalogue.
+
+### Measured
+
+- `ci/hunt.sh` end to end in the session (5 Oct, 04:03-04:06 UTC), validate
+  made to refuse by a shell function and nothing else stood in: the fresh
+  ingest (87 groups, 7,684 products, 47.6 s), the warning, the app built on
+  the last green catalogue, `--live-bundle` putting back the deploy of
+  03:56 UTC (prices Oct 4, 7,684 printings), and the real feed (GTS 50,
+  Southern Hobby 21, Walmart 12 read; Target refused this machine, as
+  always). `catalogue=live` written; `www/bundle/manifest.json` and
+  `catalog.json` byte-identical to Pages afterwards; `catalog.sqlite`
+  byte-identical to the copy kept aside. Nothing was deployed.
+- `--live-bundle` alone against Pages: 1.7 s, both files byte-identical.
+- The pipeline from a fresh ingest: 87 groups, 7,684 products; smoke 1769 of
+  1769; render 277 of 277 `(mode: chrome)`. No pipeline step changed
+  (`ci/hunt.sh` and `hunt.py` are the hourly's), so no clean run.
+
+### Tests
+
+- `tools/hunt.py --selftest`: 170 of 170 (162 at take 144; take 115's two
+  hourly checks read `hunt.yml`'s lines and now run `ci/hunt.sh`'s). The
+  script runs with a stand-in `python3` that logs each call and the
+  catalogue it sees: a fresh catalogue is validated before the app and
+  says `catalogue=fresh`; a refused one, or TCGCSV out, builds the app on
+  the last green catalogue, puts the live one back, fetches the feed and
+  says `catalogue=live`; a live catalogue that cannot be put back, or no
+  green one to build from, fails before the feed, so nothing deploys.
+  `--live-bundle` on a fake site: put back byte for byte; eight refusals
+  write neither file (unread three times, absent, not JSON, undated, a
+  column or a kind this build reads missing, a pair from two deploys); a
+  catalogue with additions is put back. The report: a live-catalogue run
+  leaves the thread as it is.
+- Eight plants, each watched to fail its probe: the pair check dropped; the
+  files re-dumped, not byte for byte; the manifest written before the
+  checks; the shape not checked; the refused catalogue left in place; the
+  live one not put back; take 144's behaviour (a refusal stops the run);
+  the report closing on a live catalogue.
+- The gate requires `ci/hunt.sh`.
+
+### The look
+
+- No look: nothing on screen changes.
+
+### What I got wrong
+
+- My first `--strict` check read the whole script and caught the comment
+  that says why the hourly does not use it. It reads the validate line now.
+- I wrote hunt run 97's minute from its start (23:07); the refusal is in
+  its log at 23:08. Corrected before the commit.
+- The two smoke checks that read the hourly's lines out of `hunt.yml`
+  (acorn installed, `--zips`) went red on the first pipeline run; they
+  read `ci/hunt.sh` now, each watched to fail on a planted script.
+- Running `ci/hunt.sh` here ran its `npm install --no-save acorn`, which
+  dropped puppeteer from this machine's `node_modules`: render fell back to
+  its DOM check and failed. `bash ci/deps.sh` put it back; the runner's
+  hourly installs nothing else and needs nothing else.
+
+### DEFERRED
+
+- The runner's first real refusal: the fallback is proven with stand-ins
+  and once end to end in the session; on the runner it is INFERRED until a
+  day validate refuses.
+- A merge whose nightly is red, then a refused hourly: the page's script is
+  the new take's and the bundle the live one's. Phones never read the
+  page's script (the APK carries its own); only the Pages page does.
+- The history on Releases' not-in-the-catalogue list (the UI session's), the
+  retailers that need a residential IP.
 
 ## Take 144 — 2026-10-05 — Southern Hobby's further pages read, not refused (A32's Next)
 
@@ -69,6 +162,16 @@ tap there would open every item's at once -- a design call, not a fix.
   residential IP (A32's Next).
 - Whether the site serves page 1 for a page past the last is INFERRED from
   take 112's probe; a repeat is refused either way.
+
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+With `check` (9 min) and `apk` (6 min) green on `6294267`, and the last
+build (run 104) and hourly (run 98) green, the session merged PR 73 at 03:55
+UTC on 5 Oct (`817a1de`, a merge commit). Release take-144 published 04:10
+UTC (run 105) with the APK (28,961,349 bytes, 16 fewer than take 143's), the
+AAB (22,167,323), the mapping and the Play icon. One Piece still fits one
+page at Southern Hobby, so the next hourly reads it in one call, as before.
+Take 145 began on the branch restarted on this merge.
 
 ## Take 143 — 2026-10-05 — a product a distributor stops listing keeps its line (A32's Next, second item)
 

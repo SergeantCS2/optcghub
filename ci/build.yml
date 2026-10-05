@@ -276,8 +276,9 @@ jobs:
           # Every job this one needs, and how it ended. A job that failed, or
           # was cancelled in a run that was not (a waiting pages job a newer
           # hourly replaced), is red. Every job a success is green. Anything
-          # else -- a Pages deploy skipped on pages=skip -- is neither:
-          # nothing is opened and nothing is closed.
+          # else -- a Pages deploy skipped on pages=skip, an hourly that
+          # shipped its feed over the live catalogue (take 145) -- is
+          # neither: nothing is opened and nothing is closed.
           v=$(python3 -c '
           import json, os
           needs = json.loads(os.environ["NEEDS"])
@@ -285,6 +286,7 @@ jobs:
           red = [job for job, r in res.items() if r in ("failure", "cancelled")]
           off = [job + " " + str(r) for job, r in res.items() if r != "success"]
           off += [job + " pages=skip" for job, n in needs.items() if (n.get("outputs") or {}).get("pages") == "skip"]
+          off += [job + " catalogue=live (the fresh catalogue was refused; the feed shipped over the live one)" for job, n in needs.items() if (n.get("outputs") or {}).get("catalogue") == "live"]
           print("red " + ", ".join(red) if red else "partial " + "; ".join(off) if off or not res else "green " + ", ".join(res))
           ')
           verdict=${v%% *}; what=${v#* }; day=$(date -u +%Y-%m-%d)

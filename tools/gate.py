@@ -132,6 +132,7 @@ def check_docs_complete():
     for fn in ("AGENTS.md", "README.md", "BUILD", "ci/RELEASE.md", "ci/build.yml",
                "ci/bootstrap.yml", "ci/hunt.yml", "ci/check.yml", "ci/apk.sh",
                "ci/bundle.sh", "ci/check.sh", "ci/deps.sh", "ci/icon.py",
+               "ci/hunt.sh",              # take 145: the hourly's build; hunt.yml runs it
                "package-lock.json"):      # take 129: a lockfile that goes missing is a silent npm install, not a fallback
         if not os.path.exists(os.path.join(ROOT, fn)):
             fail("docs", f"{fn} is missing from the tree")
