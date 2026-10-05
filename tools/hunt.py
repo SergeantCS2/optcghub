@@ -42,10 +42,21 @@ def fetch_json(url, timeout=20):
 def fetch_json_why(url, timeout=20):
     """Take 114: (json, None); (None, 404) when the host says there is no such file; (None, "<Type>: <msg>")
     otherwise -- fetch_json's None cannot tell a history that is not there from one that could not be read."""
+    raw, why = fetch_raw_why(url, timeout)
+    if raw is None:
+        return None, why
+    try:
+        return json.loads(raw.decode("utf8")), None
+    except Exception as e:                                   # noqa: BLE001
+        return None, f"{type(e).__name__}: {str(e)[:80]}"
+
+
+def fetch_raw_why(url, timeout=20):
+    """Take 145: fetch_json_why's request, the bytes as served -- (bytes, None) | (None, 404) | (None, why)."""
     import urllib.request, urllib.error
     try:
         with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "optcghub-hunt/1"}), timeout=timeout) as r:
-            return json.loads(r.read().decode("utf8")), None
+            return r.read(), None
     except urllib.error.HTTPError as e:
         if e.code == 404:
             return None, 404
@@ -749,9 +760,10 @@ def selftest():
     check("build.yml's report job opens or comments on any red job, closes only when every job ran green, and leaves a pages=skip night as it is (8 cases)",
           not bad and "Failed: apk" in named and opened[:1] and opened[0].startswith("label create nightly-failure") and any(c.startswith("issue create") and "--label nightly-failure" in c for c in opened),
           json.dumps(bad)[:220])
-    hourly = {"green: closed": ({"feed": {"result": "success", "outputs": {}}}, "3", ["close"]), "red: opened": ({"feed": {"result": "failure", "outputs": {}}}, "", ["create"])}
+    hourly = {"green: closed": ({"feed": {"result": "success", "outputs": {"catalogue": "fresh"}}}, "3", ["close"]), "red: opened": ({"feed": {"result": "failure", "outputs": {}}}, "", ["create"]),
+              "the feed shipped over the live catalogue (take 145): left as it is": ({"feed": {"result": "success", "outputs": {"catalogue": "live"}}}, "3", [])}
     hgot = {k: report(hyml, n_, o) for k, (n_, o, _) in hourly.items()}
-    check("hunt.yml's report job does the same under its own label: a red hourly opens the thread, a green one closes it",
+    check("hunt.yml's report job does the same under its own label: a red hourly opens the thread, a green one closes it, and one that shipped its feed over the live catalogue leaves it as it is",
           all(hgot[k][:2] == (0, w) for k, (_, _, w) in hourly.items()) and any("--label hourly-failure" in c for c in hgot["red: opened"][2]), json.dumps({k: v[:2] for k, v in hgot.items()}))
     def report_wired(text, per_job):
         r, env_, body = report_step(text); js = blocks(text)
@@ -770,20 +782,101 @@ def selftest():
           yml not in muts and not any(report_wired(m, False) for m in muts))
     # take 115: the hourly validates the catalogue it deploys (every installed app adopts it at its next sync), and reads the nightly's cache for landmine 5.
     # Its self-review: every refusal but hash coverage -- the hourly never hashes, so --strict read the committed sidecar against a
-    # fresh ingest, and a new set's 139th unhashed printing refused every hourly until the nightly's hashes committed (MEASURED)
-    def validates(text):
-        lines = [x.strip() for x in text.splitlines()]
-        at = lambda rx: next((i for i, x in enumerate(lines) if re.match(rx, x)), -1)
-        cat, val, app = at(r"python3 tools/pipeline\.py( [a-z]+)* catalog( |$)"), at(r"python3 tools/validate\.py( |$)"), at(r"python3 tools/pipeline\.py( [a-z]+)* app( |$)")
-        return 0 <= cat < val < app and "--strict" not in lines[val] and not re.search(r"python3 tools/pipeline\.py( [a-z]+)* (validate|hashes)( |$)", text, re.M) \
-            and "uses: actions/cache/restore@" in text and "uses: actions/cache@" not in text
-    check("the hourly runs validate.py between the catalogue and the app it deploys -- every refusal but the hash coverage only the nightly can meet -- and reads the nightly's cache without saving one",
-          validates(hyml), " | ".join(re.findall(r"python3 tools/(?:pipeline|validate)\.py[a-z -]*", hyml)) or "no pipeline line")
-    t115 = hyml.replace("python3 tools/pipeline.py ingest history catalog\n          python3 tools/validate.py\n          python3 tools/pipeline.py app", "python3 tools/pipeline.py ingest history catalog validate app")
-    muts = [t115, t115.replace(" catalog validate app", " catalog app"), hyml.replace("python3 tools/validate.py", "python3 tools/validate.py --strict"),
-            hyml.replace("python3 tools/validate.py\n          python3 tools/pipeline.py app", "python3 tools/pipeline.py app\n          python3 tools/validate.py"), hyml.replace("actions/cache/restore@", "actions/cache@")]
-    check("...control: take 115's first list (validate --strict), take 114's (none), --strict by hand, validate after the app, or a cache step that saves every hour, does not pass",
-          len(set(muts)) == len(muts) and hyml not in muts and not any(validates(m) for m in muts))
+    # fresh ingest, and a new set's 139th unhashed printing refused every hourly until the nightly's hashes committed (MEASURED).
+    # Take 145: the lines are ci/hunt.sh's, run here with a stand-in python3 (it logs each call and the catalogue it sees; an ingest
+    # writes over the catalogue; a step named in STANDIN_FAIL exits 1, --live-bundle exits STANDIN_LIVE) and stand-in pip and npm.
+    hsh = open(os.path.join(ROOT, "ci", "hunt.sh"), encoding="utf8").read()
+    def hourly_run(script, fail=(), green=True, live="0"):
+        with tempfile.TemporaryDirectory() as td:
+            bin_, work = os.path.join(td, "bin"), os.path.join(td, "work"); os.makedirs(bin_); os.makedirs(os.path.join(work, "catalog"))
+            if green:
+                open(os.path.join(work, "catalog", "catalog.sqlite"), "w").write("green\n")
+            lg, gho = os.path.join(td, "log"), os.path.join(td, "out"); open(gho, "w").close()
+            stand = {"python3": '#!/bin/sh\necho "$* :: $(cat catalog/catalog.sqlite 2>/dev/null)" >> "$STANDIN_LOG"\n'
+                                'case "$*" in *"ingest history catalog"*) echo fresh > catalog/catalog.sqlite;; esac\n'
+                                'for f in $STANDIN_FAIL; do case "$*" in *"$f"*) exit 1;; esac; done\n'
+                                'case "$*" in *--live-bundle*) exit $STANDIN_LIVE;; esac\nexit 0\n',
+                     "pip": "#!/bin/sh\nexit 0\n", "npm": "#!/bin/sh\nexit 0\n"}
+            for b, body in stand.items():
+                open(os.path.join(bin_, b), "w").write(body); os.chmod(os.path.join(bin_, b), 0o755)
+            open(os.path.join(td, "hunt.sh"), "w").write(script)
+            r = subprocess.run(["bash", os.path.join(td, "hunt.sh")], cwd=work, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30,
+                               env=dict(os.environ, PATH=bin_ + os.pathsep + os.environ.get("PATH", ""), STANDIN_LOG=lg, STANDIN_FAIL=" ".join(fail),
+                                        STANDIN_LIVE=live, GITHUB_OUTPUT=gho, RUNNER_TEMP=td, HUNT_ZIPS="", HUNT_RADIUS=""))
+            return r.returncode, open(gho).read().strip(), open(lg).read().splitlines() if os.path.exists(lg) else []
+    ING, VAL, APP, LIVE, FEED = "tools/pipeline.py ingest history catalog", "tools/validate.py", "tools/pipeline.py app", "tools/hunt.py --live-bundle", "tools/hunt.py --zips 48329 --radius 50"
+    want = {"fresh": (0, "catalogue=fresh", [f"{ING} :: green", f"{VAL} :: fresh", f"{APP} :: fresh", f"{FEED} :: fresh"]),
+            "refused": (0, "catalogue=live", [f"{ING} :: green", f"{VAL} :: fresh", f"{APP} :: green", f"{LIVE} :: green", f"{FEED} :: green"]),
+            "tcgcsv out": (0, "catalogue=live", [f"{ING} :: green", f"{APP} :: green", f"{LIVE} :: green", f"{FEED} :: green"])}
+    case = {"fresh": {}, "refused": {"fail": ("validate.py",)}, "tcgcsv out": {"fail": ("ingest",)}}
+    def hourly_ok(script, yml_text):
+        return all(hourly_run(script, **case[k]) == w for k, w in want.items()) and not re.search(r"python3 tools/validate\.py[^\n;&|]*--strict", script) \
+            and not re.search(r"python3 tools/pipeline\.py( [a-z]+)* (validate|hashes)( |$)", script, re.M) \
+            and "uses: actions/cache/restore@" in yml_text and "uses: actions/cache@" not in yml_text
+    hgo = {k: hourly_run(hsh, **case[k]) for k in want}
+    check("the hourly (ci/hunt.sh, with stand-ins): validate.py runs between the catalogue and the app -- every refusal but the hash coverage only the nightly "
+          "can meet -- the feed is fetched over the catalogue validated, and the run says catalogue=fresh; it reads the nightly's cache without saving one",
+          hgo["fresh"] == want["fresh"] and hourly_ok(hsh, hyml), json.dumps(hgo["fresh"])[:200])
+    check("take 145: a refused catalogue no longer stops the feed -- the page is built from the last green catalogue (the cache's, put back over the "
+          "refused one), the live catalogue is put back over its bundle, the feed is fetched over it, and the run says catalogue=live",
+          hgo["refused"] == want["refused"], json.dumps(hgo["refused"])[:200])
+    check("...the same when TCGCSV is out: the ingest fails, nothing is validated, the feed ships over the live catalogue", hgo["tcgcsv out"] == want["tcgcsv out"], json.dumps(hgo["tcgcsv out"])[:200])
+    unread, nogreen = hourly_run(hsh, fail=("validate.py",), live="3"), hourly_run(hsh, fail=("validate.py",), green=False)
+    check("...and nothing deploys when the live catalogue cannot be put back (--live-bundle exits 3), or when there is no last green catalogue to build from: "
+          "the step fails before the feed, so the upload and the deploy do not run and Pages keeps its last deploy",
+          unread[0] != 0 and unread[2][-1:] == [f"{LIVE} :: green"] and unread[1] == "" and nogreen[0] != 0 and not any(APP in c for c in nogreen[2]) and nogreen[1] == "",
+          json.dumps([unread, nogreen])[:220])
+    feed_job = blocks(hyml).get("feed", "")
+    wired = "\n        id: feed\n        run: bash ci/hunt.sh\n" in feed_job and "\n    outputs:\n      catalogue: ${{ steps.feed.outputs.catalogue }}\n" in feed_job \
+        and 0 <= feed_job.find("run: bash ci/hunt.sh") < feed_job.find("uses: actions/upload-pages-artifact@") < feed_job.find("uses: actions/deploy-pages@")
+    check("...and hunt.yml's feed job runs it before the upload and the deploy, and exposes its catalogue= line to the report job", wired, feed_job[-400:].replace("\n", " | ")[:200])
+    t115 = re.sub(r"(?m)^if python3 tools/pipeline\.py ingest history catalog && python3 tools/validate\.py; then$", "if python3 tools/pipeline.py ingest history catalog validate app; then", hsh)
+    muts = {"take 115's first list, one pipeline call": t115, "take 114's, no validate": t115.replace(" catalog validate app;", " catalog app;"),
+            "--strict": hsh.replace("python3 tools/validate.py;", "python3 tools/validate.py --strict;"),
+            "the refused catalogue left in place": hsh.replace('  cp "$good" catalog/catalog.sqlite\n', ""),
+            "the live catalogue not put back": hsh.replace("  python3 tools/hunt.py --live-bundle\n", ""),
+            "a refused catalogue still stops the run (take 144)": hsh.replace('  echo "::warning::', '  exit 1\n  echo "::warning::', 1)}
+    passed = [k for k, m in muts.items() if m == hsh or hourly_ok(m, hyml)]
+    check("...control: take 115's first list, take 114's (none), --strict, the refused catalogue left in place, the live one not put back, or a refusal that "
+          "stops the run as through take 144 does not pass; nor a cache step that saves every hour", not passed and not hourly_ok(hsh, hyml.replace("actions/cache/restore@", "actions/cache@")),
+          ", ".join(passed))
+    # take 145: --live-bundle -- Pages' manifest.json and catalog.json put back over this build's bundle, byte for byte, checked first
+    own = {"sets": [{"id": "OP01"}], "cols": ["id", "name", "market"], "rows": [[1, "a", 1.5], [2, "b", None]], "days": ["2026-10-03", "2026-10-04"],
+           "hist": {"1": [1.5]}, "stock": [{"id": "st01", "cards": []}]}
+    lcat = dict(own, rows=[[1, "a", 1.75], [2, "b", 3.0]])
+    lman = {"source_updated_at": "2026-10-04T20:05:38+0000", "printings": 2, "history_days": ["2026-10-03", "2026-10-04"], "take": 144}
+    raw = lambda o, **kw: json.dumps(o, **kw).encode("utf8")   # noqa: E731
+    def lb(serve, base="https://x/"):
+        with tempfile.TemporaryDirectory() as td:
+            open(os.path.join(td, "catalog.json"), "w").write(json.dumps(own)); open(os.path.join(td, "manifest.json"), "w").write("{}")
+            srv = {k: list(v) for k, v in serve.items()}; asked, naps, said = [], [], []
+            def site(url):
+                asked.append(url); return srv[url.split("/bundle/")[1]].pop(0)
+            why = live_bundle(td, base=base, fetch=site, sleep=naps.append, out=said.append)
+            files = {f: open(os.path.join(td, f), "rb").read() for f in LIVE_BUNDLE}
+            return why, files, asked, naps, said
+    good_m, good_c = raw(lman, indent=1), raw(lcat, separators=(",", ":"))
+    w, files, asked, naps, said = lb({"manifest.json": [(good_m, None)], "catalog.json": [(good_c, None)]})
+    check("--live-bundle puts Pages' manifest.json and catalog.json back over this build's, byte for byte as served, read at their plain addresses, and says the day",
+          w == "" and files == {"manifest.json": good_m, "catalog.json": good_c} and asked == ["https://x/bundle/manifest.json", "https://x/bundle/catalog.json"]
+          and any("prices 2026-10-04, 2 printings" in x for x in said), f"{w!r} {asked}")
+    kept = lambda f: f == {"manifest.json": b"{}", "catalog.json": raw(own)}   # noqa: E731
+    bad = {"catalog.json timing out three times": ({"manifest.json": [(good_m, None)], "catalog.json": [(None, "TimeoutError: timed out")] * 3}, "the live catalog.json could not be read (TimeoutError"),
+           "a manifest.json Pages has not got": ({"manifest.json": [(None, 404)], "catalog.json": [(good_c, None)]}, "the live manifest.json could not be read (404)"),
+           "a catalog.json that is not JSON": ({"manifest.json": [(good_m, None)], "catalog.json": [(b"<html>", None)]}, "the live catalog.json does not parse"),
+           "a manifest with no date": ({"manifest.json": [(raw({"printings": 2}), None)], "catalog.json": [(good_c, None)]}, "has no source_updated_at"),
+           "a catalogue without a column this build reads": ({"manifest.json": [(good_m, None)], "catalog.json": [(raw(dict(lcat, cols=["id", "name"], rows=[[1, "a"], [2, "b"]])), None)]}, "not one this build reads: no market column"),
+           "a catalogue whose hist is a list": ({"manifest.json": [(good_m, None)], "catalog.json": [(raw(dict(lcat, hist=[])), None)]}, "hist is a list, this build reads a object"),
+           "a manifest from another deploy (one more printing)": ({"manifest.json": [(raw(dict(lman, printings=3)), None)], "catalog.json": [(good_c, None)]}, "not one deploy's: 3 printings against 2 rows"),
+           "a manifest from another deploy (a newer price day)": ({"manifest.json": [(raw(dict(lman, history_days=lman["history_days"] + ["2026-10-05"])), None)], "catalog.json": [(good_c, None)]}, "price days to 2026-10-05 against 2026-10-04")}
+    got = {k: lb(v[0]) for k, v in bad.items()}
+    miss = {k: got[k][0] for k, (_, why) in bad.items() if why not in got[k][0] or not kept(got[k][1])}
+    check(f"...and writes neither file, and says why, on each of {len(bad)} refusals: unread (three tries, ten seconds apart), absent, not JSON, undated, "
+          "of a shape this build does not read, or a pair from two deploys", not miss and got["catalog.json timing out three times"][3] == [10, 10], json.dumps(miss)[:240])
+    added = lb({"manifest.json": [(good_m, None)], "catalog.json": [(raw(dict(lcat, cols=["id", "name", "market", "new"], rows=[[1, "a", 1.75, 0], [2, "b", 3.0, 0]], extra=[])), None)]})
+    check("...control: a live catalogue with a column and a list this build does not know is put back -- additions are fine, as the app's own check says",
+          added[0] == "" and not kept(added[1]), repr(added[0]))
+    check("...control: no site address, nothing asked and nothing written", lb({}, base="")[0].startswith("no site address") and not lb({}, base="")[2])
     # take 115 (SPEC-113-56): the Play icon ci/apk.sh draws rides the Release, on the first publish and on every nightly's
     apk_sh = open(os.path.join(ROOT, "ci", "apk.sh"), encoding="utf8").read()
     def icon_rides(text):
@@ -950,11 +1043,92 @@ def carry_over(out_dir, base=None, fetch=None, sleep=time.sleep, out=print):
     return CARRY_UNREAD if unread else n
 
 
+def kind_of(v):
+    """The app's kindOf (src/app/14-store.js) for the values a catalogue holds."""
+    return "list" if isinstance(v, list) else "null" if v is None else "object" if isinstance(v, dict) else type(v).__name__
+
+
+def catalogue_shape(cat):
+    """Take 145: the app's catalogueShape (src/app/16-catalogue.js): every list or record the catalogue holds, by kind, and its columns."""
+    return {"kinds": {k: kind_of(v) for k, v in cat.items() if isinstance(v, (list, dict))}, "cols": list(cat.get("cols") or [])}
+
+
+def catalogue_problem(cat, shape):
+    """Take 145: the app's catalogueProblem, line for line -- '' when a build of this shape reads `cat`, else why not."""
+    if not isinstance(cat, dict):
+        return "not a catalogue"
+    for k in ("sets", "cols", "rows"):
+        if not isinstance(cat.get(k), list):
+            return f"no {k} list"
+    for k, kind in shape["kinds"].items():
+        if cat.get(k) is not None and kind_of(cat[k]) != kind:
+            return f"{k} is a {kind_of(cat[k])}, this build reads a {kind}"
+    miss = [c for c in shape["cols"] if c not in cat["cols"]]
+    if miss:
+        return f"no {', '.join(miss[:4])} column{'' if len(miss) == 1 else 's'}"
+    n = len(cat["cols"]); bad = next((i for i, r in enumerate(cat["rows"]) if not isinstance(r, list) or len(r) != n), -1)
+    if bad >= 0:
+        return f"row {bad} does not match the {n} columns"
+    if any(not isinstance(x, dict) for x in cat["sets"]):
+        return "a set that is not a record"
+    st = cat.get("stock")
+    if st is not None and (not isinstance(st, list) or any(not isinstance(d, dict) or not isinstance(d.get("cards"), list) for d in st)):
+        return "a ready-made deck with no card list"
+    return ""
+
+
+LIVE_BUNDLE = ("manifest.json", "catalog.json")
+
+
+def live_bundle(bundle_dir, base=None, fetch=None, sleep=time.sleep, out=print):
+    """Take 145: put the catalogue Pages serves back over this build's bundle, byte for byte -- the hourly's way
+    past a refused catalogue (ci/hunt.sh). Each file three tries, as the carry-over reads (fetch_tries). Checked
+    before anything is written: both parse; the manifest has its date; the catalogue is one this build reads (the
+    app's own check, against the catalog.json this build just made); and the two are one deploy's (the manifest's
+    printings and price days are the catalogue's -- Pages' CDN keeps each file's copy apart). Returns '' when
+    both are written, else why neither was."""
+    base = pages_base() if base is None else base
+    if not base:
+        return "no site address (UPDATE_URL) to read the live catalogue from"
+    got = {}
+    for name in LIVE_BUNDLE:
+        raw, why = fetch_tries(base + "bundle/" + name, fetch or fetch_raw_why, sleep=sleep)
+        if raw is None:
+            return f"the live {name} could not be read ({why})"
+        try:
+            got[name] = (raw, json.loads(raw.decode("utf8")))
+        except Exception as e:                               # noqa: BLE001
+            return f"the live {name} does not parse ({type(e).__name__})"
+    man, cat = got["manifest.json"][1], got["catalog.json"][1]
+    if not isinstance(man, dict) or not isinstance(man.get("source_updated_at"), str):
+        return "the live manifest.json has no source_updated_at"
+    try:
+        own = json.load(open(os.path.join(bundle_dir, "catalog.json"), encoding="utf8"))
+    except Exception as e:                                   # noqa: BLE001
+        return f"this build's own catalog.json does not read ({type(e).__name__}): no shape to check the live one against"
+    why = catalogue_problem(cat, catalogue_shape(own) if isinstance(own, dict) else {"kinds": {}, "cols": []})
+    if why:
+        return f"the live catalog.json is not one this build reads: {why}"
+    if man.get("printings") != len(cat["rows"]) or man.get("history_days") != cat.get("days"):
+        return (f"the live manifest.json and catalog.json are not one deploy's: {man.get('printings')} printings against "
+                f"{len(cat['rows'])} rows, price days to {(man.get('history_days') or ['none'])[-1]} against {(cat.get('days') or ['none'])[-1]}")
+    for name, (raw, _) in got.items():
+        open(os.path.join(bundle_dir, name), "wb").write(raw)
+    out(f"   live catalogue: Pages' manifest.json and catalog.json put back, prices {man['source_updated_at'][:10]}, {len(cat['rows'])} printings")
+    return ""
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(); ap.add_argument("--zips", default="48329", help="comma-separated served zips for the local layer"); ap.add_argument("--radius", type=int, default=50)
     ap.add_argument("--out", default=OUT); ap.add_argument("--selftest", action="store_true"); ap.add_argument("--from-fixtures", action="store_true")
     ap.add_argument("--carry-over", action="store_true", help="copy the live hunt files from Pages into www/hunt (the nightly, before it deploys)")
+    ap.add_argument("--live-bundle", action="store_true", help="put Pages' live manifest.json and catalog.json back over www/bundle (ci/hunt.sh, past a refused catalogue)")
     a = ap.parse_args()
+    if a.live_bundle:
+        why = live_bundle(os.path.join(ROOT, "www", "bundle"))
+        if why:
+            print(f"::error::live catalogue: {why} -- nothing deploys; Pages keeps its last deploy")
+        raise SystemExit(3 if why else 0)
     if a.carry_over:
         raise SystemExit(3 if carry_over(os.path.dirname(a.out)) == CARRY_UNREAD else 0)   # take 114 review: ci/bundle.sh skips Pages on any non-zero
     if a.selftest:

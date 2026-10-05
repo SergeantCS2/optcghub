@@ -43,7 +43,7 @@ ok('a failed source says it could not reach Target and since when, never an empt
 V.HUNT.feed = null; V.paintSealed();
 ok('with no feed on the phone it says so and offers a fetch', /Not fetched yet/.test(ctx.document.querySelector('#sealedList').innerHTML) && /id="huntSync"/.test(ctx.document.querySelector('#sealedList').innerHTML));
 ok('the zip is asked once per launch (take 81: not once forever, since the first ask was unreadable on the owner\'s phone), stays on the phone, and can be changed from the panel', /NAV\.zipAsked/.test(js) && /vault\.hunt\.zip'/.test(js) && /id="huntZip"/.test(js) && /Adds shelf stock at stores near you\. It stays on this phone\./.test(js));
-ok('the hourly workflow exists as a file to paste, takes a zip LIST, and deploys www/ to Pages', fs.existsSync(path.join(ROOT, 'ci', 'hunt.yml')) && /--zips/.test(fs.readFileSync(path.join(ROOT, 'ci', 'hunt.yml'), 'utf8')) && /deploy-pages/.test(fs.readFileSync(path.join(ROOT, 'ci', 'hunt.yml'), 'utf8')));
+ok('the hourly workflow exists as a file to paste, takes a zip LIST, and deploys www/ to Pages', fs.existsSync(path.join(ROOT, 'ci', 'hunt.yml')) && /\n {8}run: bash ci\/hunt\.sh\n/.test(fs.readFileSync(path.join(ROOT, 'ci', 'hunt.yml'), 'utf8')) && /^python3 tools\/hunt\.py --zips /m.test(fs.readFileSync(path.join(ROOT, 'ci', 'hunt.sh'), 'utf8')) && /deploy-pages/.test(fs.readFileSync(path.join(ROOT, 'ci', 'hunt.yml'), 'utf8')));   /* take 145: its build is ci/hunt.sh */
 /* take 73: the time series -- built by the runner from its own last deploy, read by the app as dated restocks */
 {
 const histFile = path.join(fxDir, 'history-fixture.json');

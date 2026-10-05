@@ -1,6 +1,6 @@
 # PROTOCOL
 
-*Current as of take 144.*
+*Current as of take 145.*
 
 The working rules for this project. The gate enforces the ones it can.
 

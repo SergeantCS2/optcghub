@@ -1,4 +1,4 @@
-# OP TCG Hub — take 144
+# OP TCG Hub — take 145
 
 ## Installing — read this first
 
@@ -17,6 +17,8 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 145:** Nothing you can see changes. Hunt's stock lists keep updating hourly on a night the day's prices are held back, as they were on 4 Oct, instead of stopping with them. Nothing you have saved changes.
 
 **New at take 144:** Nothing you can see changes. Hunt's Southern Hobby list keeps updating once Southern Hobby lists more than 40 One Piece products, instead of freezing on its last full read. Nothing you have saved changes.
 
