@@ -444,7 +444,8 @@ def selftest():
         print("  skip  no catalogue here; match checks run where catalog.sqlite exists")
     ok &= gts.selftest(open(os.path.join(fx, "gts_listing.html"), encoding="utf8").read())
     ok &= southern.selftest(open(os.path.join(fx, "southern_listing.html"), encoding="utf8").read(),
-                            {k: open(os.path.join(fx, v), encoding="utf8").read() for k, v in southern.FIXTURE_PAGES.items()})
+                            {k: open(os.path.join(fx, v), encoding="utf8").read() for k, v in southern.FIXTURE_PAGES.items()},
+                            paged=tuple(open(os.path.join(fx, f"southern_listing_p{n}_of2.html"), encoding="utf8").read() for n in (1, 2)))   # take 144
     if sealed:
         # take 112: Southern Hobby's names, through its own normaliser; the unit it is sold as picks Display from single
         sm = lambda n, codes, sold: name(southern_match(n, codes, sold, sealed)[0])   # noqa: E731

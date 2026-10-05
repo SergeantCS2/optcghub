@@ -35,6 +35,8 @@ HEADINGS = ["", "Product Name", "Item #", "Release Date", "Order Due", "Price", 
 STATES = ("orders_open", "orders_closed", "released", "unknown")
 PAGE_EVERY_DAYS = 7          # a product page is read again after a week
 PAGES_PER_RUN = 25           # at most this many product pages in one run (a new category's worth)
+LISTING_PAGES_MAX = 6        # take 144: the category pages at 40 rows (MEASURED on the site's Pokemon and Magic pages, 5 Oct);
+                             # six pages is 240 products against One Piece's 21 -- a footer past it is a changed site, refused
 PAGE_BUDGET_S = 90           # and no page is started this long after the run began: a host that hangs costs
                              # one run about two minutes, never the hourly job's fifteen (25 pages x 30 s would)
 PAGE_TIMEOUT_S = 15
@@ -187,6 +189,36 @@ def _age_days(iso, now):
         return 9e9
 
 
+def read_listing(getter, pause=0):
+    """Take 144 (A32's Next: "Southern Hobby's paging ... UNKNOWN"): the category's rows over every page its footer
+    counts. MEASURED 5 Oct on the site's own larger categories: 40 rows a page, the rest at ?page=2 and on, every page's
+    footer the whole count (Pokemon 40 + 1 = 41, Magic 40 + 20 = 60, every id distinct). A further page is read only
+    while the rows fall short of the footer, and must agree with page 1's footer and add only new rows: take 112's
+    page-2 probe of the one-page list got its 20 back (INFERRED: a page past the last serves page 1 again), so a
+    repeat is a failed fetch, never more rows. Returns
+    ({"count", "items"}, calls) or raises ValueError, as parse_listing does."""
+    r = parse_listing(getter(CATEGORY)); calls = 1
+    items, seen, n = list(r["items"]), {it["id"] for it in r["items"]}, 1
+    if items and r["count"] > LISTING_PAGES_MAX * len(items):
+        raise ValueError(f"the footer says {r['count']} items, past {LISTING_PAGES_MAX} pages of {len(items)}")
+    while items and len(items) < r["count"]:
+        n += 1
+        if n > LISTING_PAGES_MAX:
+            raise ValueError(f"the footer says {r['count']} items, past {LISTING_PAGES_MAX} pages of {len(r['items'])}")
+        if pause:
+            time.sleep(pause)
+        p = parse_listing(getter(f"{CATEGORY}?page={n}")); calls += 1
+        if p["count"] != r["count"]:
+            raise ValueError(f"page {n}'s footer says {p['count']} items, page 1's {r['count']}")
+        new = [it for it in p["items"] if it["id"] not in seen]
+        rep = len(p["items"]) - len(new)
+        if rep or not new:
+            what = f"repeats {rep} already read" if rep else "carries no rows"
+            raise ValueError(f"the footer says {r['count']} items and the table carries {len(items)}: page {n} {what}")
+        items += new; seen |= {it["id"] for it in new}
+    return {"count": r["count"], "items": items}, calls
+
+
 def fetch(previous=None, now=None, getter=None, today=None, pause=1.5, max_pages=PAGES_PER_RUN, budget=PAGE_BUDGET_S, clock=time.monotonic):
     """Never raises. The category page must carry exactly the count its footer
     states (AGENTS rule 8); short is an error, and the caller keeps the last
@@ -205,7 +237,7 @@ def fetch(previous=None, now=None, getter=None, today=None, pause=1.5, max_pages
     getter = getter or get
     out = {"ok": False, "fetched_at": now, "calls": 0, "pages_read": 0, "pages_failed": 0, "pages_skipped": 0}
     try:
-        r = parse_listing(getter(CATEGORY)); out["calls"] += 1
+        r, calls = read_listing(getter, pause); out["calls"] += calls
         if len(r["items"]) != r["count"]:
             raise ValueError(f"the footer says {r['count']} items and the table carries {len(r['items'])}")
         if not r["items"]:
@@ -258,8 +290,8 @@ def from_fixture(listing_path, product_dir):
     return r
 
 
-def selftest(listing_html, product_pages, out=print):
-    """product_pages: {id: html} for the saved product pages."""
+def selftest(listing_html, product_pages, out=print, paged=None):
+    """product_pages: {id: html} for the saved product pages; paged: (page 1, page 2) of a category past one page."""
     ok = True
     def check(name, cond, note=""):
         nonlocal ok; out(f"  {'ok  ' if cond else 'FAIL'}  {name}{('  ' + note) if note else ''}"); ok &= bool(cond)
@@ -347,4 +379,28 @@ def selftest(listing_html, product_pages, out=print):
           json.dumps({k: calm.get(k) for k in ("calls", "pages_skipped")}))
     dead = fetch(getter=lambda u: (_ for _ in ()).throw(OSError("HTTP Error 503")), pause=0)
     check("control: a refused host is a failed fetch with the reason, never a raise", dead["ok"] is False and "503" in dead["error"])
+    # take 144: a category past one page, read over its pages (the site's Pokemon category, saved 5 Oct: 40 rows, then 1)
+    if paged:
+        p1, p2 = paged; asked = []
+        def two(u, second=p2):
+            asked.append(u)
+            if u == CATEGORY:
+                return p1
+            if u == CATEGORY + "?page=2":
+                return second
+            raise OSError("HTTP Error 404")
+        both = fetch(getter=two, pause=0, max_pages=0, today=FIXTURE_TODAY)
+        check("take 144: a listing past one page is read over its pages, ?page=2 and on, until the rows meet the footer's count",
+              both["ok"] and both["count"] == len(both["items"]) == 41 and len({i["id"] for i in both["items"]}) == 41 and both["calls"] == 2
+              and asked == [CATEGORY, CATEGORY + "?page=2"], json.dumps({k: both.get(k) for k in ("ok", "count", "calls", "error")}))
+        asked.clear(); one = fetch(getter=lambda u: (asked.append(u), listing_html)[1], pause=0, max_pages=0, today=FIXTURE_TODAY)
+        check("...control: a listing on one page asks for no second", one["ok"] and one["calls"] == 1 and asked == [CATEGORY], str(asked))
+        again = fetch(getter=lambda u: two(u, second=p1), pause=0, max_pages=0, today=FIXTURE_TODAY)
+        check("...a page 2 that serves page 1 again is a failed fetch, never more rows", again["ok"] is False and "repeats 40" in again.get("error", ""), again.get("error"))
+        gone = fetch(getter=lambda u: two(u, second=None) if u == CATEGORY else (_ for _ in ()).throw(OSError("HTTP Error 503")), pause=0, max_pages=0, today=FIXTURE_TODAY)
+        check("...a page 2 the host refuses is a failed fetch, with the reason", gone["ok"] is False and "503" in gone.get("error", ""), gone.get("error"))
+        other = fetch(getter=lambda u: two(u, second=re.sub(r'class="pageresults">\s*41 items', 'class="pageresults">42 items', p2)), pause=0, max_pages=0, today=FIXTURE_TODAY)
+        check("...a page 2 whose footer disagrees with page 1's is a failed fetch", other["ok"] is False and "page 2's footer says 42" in other.get("error", ""), other.get("error"))
+        asked.clear(); many = fetch(getter=lambda u: re.sub(r'class="pageresults">\s*41 items', 'class="pageresults">400 items', two(u)), pause=0, max_pages=0, today=FIXTURE_TODAY)
+        check("...a footer past six pages is a changed site, refused before page 2 is asked", many["ok"] is False and "past 6 pages of 40" in many.get("error", "") and asked == [CATEGORY], f"{many.get('error')} {asked}")
     return ok

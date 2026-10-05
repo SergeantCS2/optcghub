@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 143.* Ranked by blocking-ness, not by interest.
+*Current as of take 144.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -74,7 +74,10 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0. *Take 143, in flight (5 Oct):* A32's Next, its second item -- a
+0. *Take 144, in flight (5 Oct):* A32's Next -- Southern Hobby's further
+   pages read (its paging measured). The history on Releases'
+   not-in-the-catalogue list waits for the UI session (a design call).
+   *Take 143 (PR 72, merged by the session; Release take-143):* A32's Next, its second item -- a
    delisted item keeps its line on the product's page.
    *Take 142 (PR 71, merged by the session; Release take-142):* A32's Next, its first item -- a date
    move on file and in the History (A32's take-115 section).
@@ -1478,6 +1481,15 @@ failed read is a hole, not "nothing listed".
 - Southern Hobby's paging: if its One Piece category grows past one page,
   the fetch fails on its count, by design, and keeps the last good copy. How
   the site pages is UNKNOWN (the page-2 probe returned the same 20).
+  *Take 144 measures and builds it:* 40 rows a page, the rest at `?page=2`
+  and on, the footer the whole count (Pokémon 41, Magic 60, read off the
+  site; One Piece 21 today); the fetch reads further pages while short and
+  checks the count on the whole. **Ruled out (take 144):** a larger page size
+  by a parameter (none on the site's own links); reading every page every
+  run whatever the count (a call per page for nothing).
+- The history on Releases' not-in-the-catalogue list: its History opens per
+  distributor (`DISTF.hist`), so one tap would open every item's -- for the
+  UI session to shape (take 144).
 - The hourly's feed is still tied to TCGCSV and to validate: an outage or a
   refused catalogue stops the feed's deploy too. Separating them means
   deploying the feed over the live catalogue (take 115's runner lane).
