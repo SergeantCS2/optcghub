@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 142.* Ranked by blocking-ness, not by interest.
+*Current as of take 143.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -74,7 +74,9 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0. *Take 142, in flight (5 Oct):* A32's Next, its first item -- a date
+0. *Take 143, in flight (5 Oct):* A32's Next, its second item -- a
+   delisted item keeps its line on the product's page.
+   *Take 142 (PR 71, merged by the session; Release take-142):* A32's Next, its first item -- a date
    move on file and in the History (A32's take-115 section).
    *Take 141 (PR 70, merged by the session; Release take-141):* A43's phone's-day family (below, Mine 1),
    and the red night first: validate's >10x guard refused a real move
@@ -1460,6 +1462,17 @@ failed read is a hole, not "nothing listed".
   state change (a moved date often changes no state); claiming moves before
   the first run that records dates.
 - A delisted item: the rows carry no map from an id to its product.
+  *Take 143 builds it:* `items` in the history (per distributor and id
+  matched to a product, its catalogue id and the last fresh read that listed
+  it; names left out -- 9,075 bytes against 1,574, read by no screen); a product's
+  page keeps a distributor that dropped it, "no longer on its list · last
+  listed Oct 3", with its History. **Ruled out (take 143):** reading the
+  previous feed for the dropped item's name (the hourly's feed is a rotation
+  and a kept copy; the history is the one record that spans runs); showing
+  dropped items on Sealed and Releases rows (a product a distributor dropped
+  is a fact for its page, not a row's headline); calling an item gone when
+  this phone holds no list from its distributor (a kept list, the last read
+  that worked, does count).
 - The history on Releases' not-in-the-catalogue list; the first real change
   is INFERRED for PEB-01 on 15 Oct UTC.
 - Southern Hobby's paging: if its One Piece category grows past one page,

@@ -2702,4 +2702,27 @@ const take142 = [
       return { ok: true };
     } },
 ];
-export const STEPS = { 142: take142, 141: take141, 140: take140, 139: take139, 138: take138, 137: take137, 131: take131, 130: take130, 128: take128, 127: take127, 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
+/* take 143 (A32's Next): a product a distributor stops listing keeps its line -- take 114's fixture, GTS dropping the OP-18
+   box from run 50 on, the history's names beside its rows, and the feed now without it on GTS's list */
+const take143 = [
+  { name: 'open', run: async (page, ctx) => {
+      await ctx.open(); const X = fixture114(); await page.evaluate(x => { window.__X114 = x; }, X);
+      const G = X.F.sources.gts.items.find(i => i.sku === 'BJP2873812'), R = X.H.runs.map(r => ({ ...r, ...(r.gts ? { gts: { ...r.gts } } : {}) }));
+      R.forEach((r, i) => { if (i >= 50 && r.gts) delete r.gts.BJP2873812; });
+      const H = { ...X.H, runs: R, items: { gts: { BJP2873812: { catalog_id: X.PID, seen: R[49].t } } } };
+      const F = JSON.parse(JSON.stringify(X.F)); F.sources.gts.items = F.sources.gts.items.filter(i => i.sku !== 'BJP2873812');
+      await page.evaluate(([f, h]) => { window.__F143 = f; window.__H143 = h; }, [F, H]);
+      return { ok: !!X.PID, last: R[49].t };
+    } },
+  { name: 'dropped-distributor-line', run: async (page) => {
+      const m = await page.evaluate(sheet114('window.__F143', 'window.__H143'));
+      await wait(400);
+      const d = await page.evaluate(() => [...document.querySelectorAll('#dDist .dsec')].map(e => e.textContent.replace(/\s+/g, ' ').trim().slice(0, 200)));
+      return { ok: m.on === 'detail' && d.some(t => /^GTS Distribution\s*no longer on its list · last listed [A-Z][a-z]{2} \d{1,2}/.test(t)) && m.gts.some(l => / → not on its list · between /.test(l)), secs: d, gts: m.gts };
+    } },
+  { name: 'restore', run: async (page) => {
+      await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.DISTF.open.clear(); V.MODE.set('collect', true); await ${pause}; })()`);
+      return { ok: true };
+    } },
+];
+export const STEPS = { 143: take143, 142: take142, 141: take141, 140: take140, 139: take139, 138: take138, 137: take137, 131: take131, 130: take130, 128: take128, 127: take127, 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };

@@ -1,4 +1,80 @@
-# HANDOFF — through Take 142
+# HANDOFF — through Take 143
+
+## Take 143 — 2026-10-05 — a product a distributor stops listing keeps its line (A32's Next, second item)
+
+Opened before any code (PROTOCOL §6), on the branch restarted on take 142's
+merge (PR 71, `9148c3b`; Release take-142 at 02:16 UTC, the hourly green
+again). The owner's word, 4 Oct: "Continue on anything you can overnight".
+Next on A32's Next list: a delisted item. The history rows carry each item's
+state by its id, but nothing maps an id to its product, and a product's page
+draws a distributor only from the current list -- so a product a distributor
+dropped lost its line and its history with it, silently.
+
+### What this take changes
+
+1. **The runner keeps a product per item.** `tools/hunt.py` writes `items`
+   into the history: per distributor, per item id matched to a product, its
+   catalogue id and the last fresh read that listed it. Cut with the runs: an
+   item last listed before the first run on file is dropped.
+2. **A product's page keeps the distributor that dropped it.** Under
+   Distributor info, a distributor that listed the product and lists it no
+   more reads "no longer on its list · last listed Oct 3", with its History
+   (which ends "→ not on its list"). Only on the product's own page; Sealed
+   and Releases stay as they are.
+
+### Measured
+
+- On the history and feed deployed at 5 Oct 01:59 UTC (97 runs, 96,226
+  bytes): 24 of the 71 distributor items are matched to a product; their map
+  is 1,574 bytes (1.6%). With every item and its name it was 9,075 bytes, and
+  no screen reads a name, so the map keeps matched items and no names.
+- The pipeline from a fresh ingest: 87 groups, 7,684 products; smoke 1769 of
+  1769; render 277 of 277 `(mode: chrome)`; the gate green once this entry
+  was written. No pipeline step changed (`tools/hunt.py` is the hourly's),
+  so no clean run (PROTOCOL §6b).
+
+### Tests
+
+- `tools/hunt.py --selftest`: 156 of 156, 5 new (a matched item kept by its
+  id and one matched to nothing not kept; an item no longer listed keeps its
+  last listing; a kept copy or a failed read writes nothing; cut with the
+  runs; an odd shape dropped). Plants watched: a kept copy taken for a read
+  fails its probe, and no cut fails its probe.
+- The smoke: 1769 of 1769, 7 new in `tools/smoke/99-…` in New York's zone.
+  On take 142's build (`SMOKE_APP`) the 3 app checks fail by name: the box
+  found gone, the page's "no longer on its list" line with no Open, its
+  History ending "→ not on its list". What passes on both: the runner's own
+  check, the premise, Southern Hobby's line kept as before, and the control
+  (nothing gone while listed, with no list from that distributor on this
+  phone, with no map, or with a map of an odd shape).
+
+### The look
+
+- `node tools/look.mjs 143`: 3 steps at each Fold size, 6 ok -- the OP-18
+  box's page over take 114's fixture with GTS dropping it from run 50: "GTS
+  Distribution · no longer on its list · last listed Oct 3", its History
+  ending "sold out → not on its list", no Open; Southern Hobby's line above
+  it as before. Every picture read.
+
+### What I got wrong
+
+- I first kept every item with its name: 9,075 bytes a run for words no
+  screen reads. Measured, then cut to the matched items' ids (1,574).
+- My kill of a running pipeline (`pkill -f "tools/pipeline.py"`) matched its
+  own shell and took the command down with it; the edit in that command
+  never ran. Checked, and run again.
+- Two probes and one look check were wrong before the code was: a comment
+  that swallowed the line after it, a kept-copy probe left reading a feed
+  with no products (it passed a plant, so it proved nothing until rebuilt),
+  and a look regex wanting a no-break space the step had folded to a space.
+
+### DEFERRED
+
+- A32's Next, the rest: the history on Releases' not-in-the-catalogue
+  list, Southern Hobby's paging, the hourly's feed apart from validate, the
+  retailers that need a residential IP.
+- Sealed and Releases rows do not show a dropped distributor; only the
+  product's page does (AGENDA A32, Ruled out).
 
 ## Take 142 — 2026-10-05 — a distributor's date moves, on file and in its history (A32's Next, first item)
 
@@ -78,6 +154,17 @@ day was invisible unless it happened to change the state.
   the retailers that need a residential IP.
 - A move before this take's first hourly is not on file and is never
   claimed.
+
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+With `check` (9 min) and `apk` (6 min) green on `6d70569`, the last build
+(run 102) green and the hourly's first run on take 141's code (`hunt` run 98,
+01:59 UTC) green -- the feed healed -- the session merged PR 71 at 02:01 UTC
+on 5 Oct (`9148c3b`, a merge commit). Release take-142 published 02:16 UTC
+with the APK (28,961,097 bytes, 244 more than take 141's), the AAB
+(22,167,076), the mapping and the Play icon. The first hourly on this take's
+code files the dates; until then the History shows no move. Take 143 began on
+the branch restarted on this merge, and this note rides its PR.
 
 ## Take 141 — 2026-10-04 — the phone's day wherever the collector reads one (A43, landmine 248)
 

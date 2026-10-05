@@ -9,7 +9,9 @@ const dLine = () => dCur && OWN.line(dCur.id, dCond);   // take 115: OWN decides
 /* take 112: a sealed product's distributors, each in its full words with its own page, under a closed "Distributor
    info" -- opened when the page was reached from a row's distributor line */
 function paintDetailDist(p) {
-  const el = $('#dDist'); const list = (SEALED.isGoods(p) && HUNT.distByCatalogId()[p.id]) || [];
+  const el = $('#dDist'), goods = SEALED.isGoods(p);
+  /* take 143: and a distributor that listed it and lists it no more, by the history -- its line and its history stay */
+  const list = ((goods && HUNT.distByCatalogId()[p.id]) || []).concat(goods ? HUNT.goneFor(p.id) : []);
   el.hidden = !list.length; if (!list.length) { el.innerHTML = ''; return; }
   const tls = list.map(distTl);   /* take 114: each distributor's history on file, under its own words, drawn only inside the open fold */
   /* take 115 (SPEC-112-54, the look): Sealed and Releases said a distributor kept after a failed fetch was not reached,
@@ -22,7 +24,8 @@ function paintDetailDist(p) {
   const when = it => { const D = HUNT.dist(it._d) || {};
     return HUNT.unreached(D) ? `could not reach it${D.stale_since ? ' since ' + esc(nbsp(momentText(D.stale_since))) : ''}; its last check, ${esc(HUNT.ageLabel(D.fetched_at))}, is shown` : esc(HUNT.ageLabel(D.fetched_at)); };
   el.innerHTML = distFold('detail', summary,
-    list.map((it, i) => `<div class="dsec"><div class="row" style="align-items:center;gap:10px;padding:0"><div class="nm" style="min-width:0"><b>${esc(HUNT.distName(it._d))}</b><span>${distWords(it).join(' \u00b7 ')} \u00b7 ${when(it)}</span></div>${it.url ? `<a class="ghost" href="${esc(it.url)}" target="_blank" rel="noopener" style="flex:0 0 auto;padding:8px 12px" aria-label="Open ${esc(HUNT.distName(it._d))}'s page for ${esc(p.name)}">Open ${ext()}</a>` : ''}</div>${distHistory(it, tls[i])}</div>`).join('')
+    list.map((it, i) => it._gone ? `<div class="dsec"><div class="row" style="align-items:center;gap:10px;padding:0"><div class="nm" style="min-width:0"><b>${esc(HUNT.distName(it._d))}</b><span>no longer on its list \u00b7 last listed ${esc(nbsp(dayText(localDay(it.seen))))}</span></div></div>${distHistory(it, tls[i])}</div>`
+      : `<div class="dsec"><div class="row" style="align-items:center;gap:10px;padding:0"><div class="nm" style="min-width:0"><b>${esc(HUNT.distName(it._d))}</b><span>${distWords(it).join(' \u00b7 ')} \u00b7 ${when(it)}</span></div>${it.url ? `<a class="ghost" href="${esc(it.url)}" target="_blank" rel="noopener" style="flex:0 0 auto;padding:8px 12px" aria-label="Open ${esc(HUNT.distName(it._d))}'s page for ${esc(p.name)}">Open ${ext()}</a>` : ''}</div>${distHistory(it, tls[i])}</div>`).join('')
     + '<div class="note" style="margin-top:10px">What the distributor tells shops. It sells to stores, not to you.</div>'
     + (list.some((it, i) => tlNeedsNote(it, tls[i])) ? `<div class="note" style="margin-top:6px">${esc(TL_NOTE)}</div>` : ''));
 }

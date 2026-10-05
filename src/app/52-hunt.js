@@ -92,6 +92,14 @@ const HUNT = {
      key that is unique across both (_k) */
   DISTS: [['gts', 'GTS Distribution'], ['southern', 'Southern Hobby']],
   dist(k) { return this.feed && this.feed.sources && this.feed.sources[k]; },
+  /* take 143 (A32's Next): the items a distributor listed for this product, by the history's names, and lists no more on
+     this phone's copy of its list -- a kept list counts, it is the last read that worked; no list at all, nothing is said */
+  goneFor(pid) { const h = this.hist, out = []; if (!h || !h.items || typeof h.items !== 'object') return out;
+    for (const [d] of this.DISTS) { const D = this.dist(d), m = h.items[d]; if (!D || !Array.isArray(D.items) || !D.items.length || !m || typeof m !== 'object' || Array.isArray(m)) continue;
+      const key = this.DIST_KEY[d] || 'id', listed = new Set(D.items.map(i => String(i[key])));
+      for (const [id, v] of Object.entries(m)) if (v && typeof v === 'object' && v.catalog_id === pid && typeof v.seen === 'string' && !isNaN(Date.parse(v.seen)) && !listed.has(id))
+        out.push({ _d: d, _gone: true, [key]: id, catalog_id: pid, seen: v.seen }); }
+    return out; },
   distName(k) { return (this.DISTS.find(d => d[0] === k) || [k, k])[1]; },
   /* take 115 (SPEC-112-54): a source whose fetch failed after a good one is kept by the feed with ok still true --
      kept, stale_since, the error (tools/hunt.py, where it keeps the last good fetch). It was not reached: said so

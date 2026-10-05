@@ -154,7 +154,32 @@ def append_history(prev_hist, feed):
     h["since"] = h["runs"][0]["t"]; h["stores"] = {z: zz.get("stores", []) for z, zz in feed["sources"]["target"].get("zips", {}).items()} if feed["sources"]["target"].get("ok") else h.get("stores", {})
     h["titles"] = {it["tcin"]: it["title"] for it in feed["sources"]["target"].get("items", [])} if feed["sources"]["target"].get("ok") else h.get("titles", {})
     h["dates"] = record_dates(h.get("dates"), feed, h["since"])   # take 142 (A32's Next): a date move, on file
+    h["items"] = record_items(h.get("items"), feed, h["since"])   # take 143: an id's name and product, past its last listing
     return h
+
+
+def record_items(prev_items, feed, since):
+    """Take 143 (A32's Next, "a delisted item: the rows carry no map from an id to its product"): per distributor, per
+    item id, its catalogue id and the last fresh read that listed it -- so a product a distributor stops listing keeps
+    its line on its page, with the history its id carries. Only items matched to a product: the page is the product's
+    (MEASURED 5 Oct: 24 of 71 items, 1,574 bytes; their names too were 9,075, and no screen reads them). Written at each
+    fresh read for every such item it lists; a kept copy writes nothing. Cut with the runs: an item last listed before
+    the first run on file is dropped (no row left names it). Entries of a shape this version does not know are dropped."""
+    prev = prev_items if isinstance(prev_items, dict) else {}
+    t, out = feed["fetched_at"], {}
+    for d, (key, _rel, _due) in DATE_KEYS.items():
+        old = prev.get(d) if isinstance(prev.get(d), dict) else {}
+        cur = {str(k): {"catalog_id": v["catalog_id"], "seen": v["seen"]}
+               for k, v in old.items() if isinstance(v, dict) and isinstance(v.get("seen"), str) and isinstance(v.get("catalog_id"), int)}
+        src = feed["sources"].get(d) or {}
+        if src.get("ok") and not src.get("kept"):
+            for it in src.get("items", []):
+                if it.get(key) and isinstance(it.get("catalog_id"), int):
+                    cur[str(it[key])] = {"catalog_id": it["catalog_id"], "seen": t}
+        kept = {k: v for k, v in cur.items() if v["seen"] >= since}
+        if kept:
+            out[d] = kept
+    return out
 
 
 # take 142: per distributor, the item's key and its two days -- the release, and the day stores must order by
@@ -511,6 +536,28 @@ def selftest():
           gone not in d4["gts"] and d4["gts"].get(mv["sku"]) == [[f2["fetched_at"], "2027-12-31", mv.get("preorder")]] and len(d4["gts"]) == len(gi) - 1, f"{len(d4['gts'])} {d4['gts'].get(mv['sku'])}")
     odd = {"gts": {"X1": "2026-01-01", "X2": [["2026-09-24T00:00:00Z", "2026-10-01"]], "X3": [[1, None, None]]}, "southern": [1, 2]}
     check("...entries of a shape this version does not know are dropped, never guessed at", record_dates(odd, f3, fd["fetched_at"]) == {})
+    # take 143: an id's product, kept past its last listing -- the parser fixture joins no catalogue, so each item is given one
+    fdc = copy.deepcopy(fd)
+    for n, i in enumerate(fdc["sources"]["gts"]["items"] + fdc["sources"]["southern"]["items"]):
+        i["catalog_id"] = 900000 + n
+    fdc["sources"]["southern"]["items"][0]["catalog_id"] = None   # one matched to no product
+    gi, si = fdc["sources"]["gts"]["items"], fdc["sources"]["southern"]["items"]
+    i1 = record_items(None, fdc, fd["fetched_at"])
+    check("take 143: a fresh read keeps each matched item's catalogue id and the read that listed it, by its own id; an item matched to no product is not kept",
+          all(i1["gts"][i["sku"]] == {"catalog_id": i["catalog_id"], "seen": fd["fetched_at"]} for i in gi)
+          and all(i1["southern"][i["id"]] == {"catalog_id": i["catalog_id"], "seen": fd["fetched_at"]} for i in si[1:]) and si[0]["id"] not in i1["southern"])
+    drop = gi[0]; f5 = copy.deepcopy(fdc); f5["fetched_at"] = "2026-09-25T03:10:00Z"
+    f5["sources"]["gts"]["items"] = [i for i in f5["sources"]["gts"]["items"] if i["sku"] != drop["sku"]]
+    i2 = record_items(copy.deepcopy(i1), f5, fd["fetched_at"])
+    check("...an item a later read no longer lists keeps its name, product and last listing; the rest move to the new read",
+          i2["gts"][drop["sku"]] == i1["gts"][drop["sku"]] and all(v["seen"] == f5["fetched_at"] for k, v in i2["gts"].items() if k != drop["sku"]))
+    f3c = copy.deepcopy(fdc); f3c["fetched_at"] = "2026-09-25T07:00:00Z"; f3c["sources"]["gts"]["kept"] = True; f3c["sources"]["southern"] = {"ok": False, "error": "HTTP 503", "items": []}
+    check("...a kept copy or a failed read writes nothing, though a later run carries it", record_items(copy.deepcopy(i1), f3c, fd["fetched_at"]) == i1)
+    i3 = record_items(copy.deepcopy(i2), f5, "2026-09-25T00:00:00Z")
+    check("...cut with the runs: an item last listed before the first run on file is dropped, the listed ones kept",
+          drop["sku"] not in i3["gts"] and len(i3["gts"]) == len(gi) - 1, str(len(i3["gts"])))
+    check("...entries of a shape this version does not know are dropped", record_items({"gts": {"X": "a", "Y": {"seen": "2026-09-25T00:00:00Z"}, "Z": {"catalog_id": "1", "seen": "2026-09-25T00:00:00Z"}}, "southern": [1]}, f3, fd["fetched_at"]) == {})
+    gi, si = fd["sources"]["gts"]["items"], fd["sources"]["southern"]["items"]
     h0 = {"runs": [row]}; h1 = append_history(copy.deepcopy(h0), f2)
     check("...append_history writes the dates beside the runs, and the runs guard still holds", h1.get("dates", {}).get("gts", {}).get(mv["sku"], [[None]])[-1][1] == "2027-12-31" and keeps_past([row], h1) == [])
     # the hourly reads the history before any source is fetched, and stops rather than start it over
