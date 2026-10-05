@@ -259,9 +259,13 @@ ok('deltas are internally consistent: pct = abs / yesterday',
      const yesterday = p.market - p.d1a;
      return yesterday > 0 && Math.abs(100 * p.d1a / yesterday - p.d1p) < 0.06;
    }));
-ok('no printing moved more than 10x overnight (landmine 7)',
-   withD.every(p => Math.abs(p.d1p) < 900),
-   String(withD.filter(p => Math.abs(p.d1p) >= 900).length));
+/* take 141 (landmine 252): validate ships a >10x move the day's cheapest listing agrees with (within 3x) -- a new
+   promo's price found, 710255 $0.49 -> $18.75 against a $36.99 listing -- and refuses one it does not */
+const tenX = p => Math.abs(p.d1p) < 900 || (p.low > 0 && p.market / p.low <= 3 && p.market / p.low >= 1 / 3);
+ok('no printing moved more than 10x overnight unless the day\'s cheapest listing agrees, within 3x (landmines 7, 252)',
+   withD.every(tenX),
+   withD.filter(p => !tenX(p)).map(p => `${p.id} ${p.d1p}% low ${p.low}`).slice(0, 5).join(' | ') || `${withD.filter(p => Math.abs(p.d1p) >= 900).length} corroborated`);
+ok('...control: a 37x move with its cheapest listing 5x off is refused, one with no listing too', !tenX({ d1p: 3727, market: 187.5, low: 36.99 }) && !tenX({ d1p: 3727, market: 18.75, low: null }) && tenX({ d1p: 3727, market: 18.75, low: 36.99 }));
 /* Landmine 114: this froze "two days" at take 20 and went red on the runner
    the first night TCGCSV published a third. The count grows nightly; assert
    the SHAPE -- at least two, consecutive, ending on the source date. */

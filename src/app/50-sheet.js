@@ -507,7 +507,7 @@ async function exportCsv() {
   });
   const csv = [head, ...rows].map(r => r.map(v =>
     `"${String(v == null ? '' : v).replace(/"/g, '""')}"`).join(',')).join('\n');
-  const name = `optcghub-${new Date().toISOString().slice(0, 10)}.csv`;
+  const name = `optcghub-${phoneToday()}.csv`;
   const shared = await PLATFORM.shareFile(name, csv, 'Keep this somewhere safe');
   if (shared === 'shared') return toast(`Exported ${rows.length} rows`);
   if (shared === 'cancelled') return;
@@ -553,7 +553,7 @@ ${sets}
 }
 async function shareCollectionPage() {
   const html = collectionPage();
-  const name = `optcghub-${new Date().toISOString().slice(0, 10)}.html`;
+  const name = `optcghub-${phoneToday()}.html`;
   const shared = await PLATFORM.shareFile(name, html, 'Share your collection page');
   if (shared === 'shared') return toast('Collection page shared');
   if (shared === 'cancelled') return;

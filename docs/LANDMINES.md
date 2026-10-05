@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 140.*
+*Current as of take 141.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -264,6 +264,7 @@ Start here. Do not read top to bottom.
 | A check on a saved fixture's age goes red on the clock alone, every build at once | **249** |
 | A `\uXXXX` typed into a command reached the file as the character; an anchor on the escape missed | **250** |
 | The screen names a version the code moved past: a fact typed by hand beside the one the code carries | **251** |
+| Every build stops on a >10x price move that is real: a new promo's first market price | **252** |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -3247,7 +3248,9 @@ Still UTC and compared with calendar days, open in AGENDA A43: Events'
 and the newest set's "today", the value snapshot's day, the export names.
 Rule: a day the collector reads, or one compared with a day a store or
 publisher announced, is the phone's; only a day the runner or TCGCSV wrote
-(a price day, `utcDay()`) stays UTC.
+(a price day, `utcDay()`) stays UTC. *Take 141:* the family above reads
+`phoneToday()` (`src/app/14-store.js`), each with a check at 23:30 in New York
+that fails on take 140's build.
 
 **249. A check on a saved fixture's age passes until the fixture is old
 enough, then goes red on the clock alone.** Take 130's smoke drew Walmart's
@@ -3282,6 +3285,21 @@ cut. A smoke check now reads both and wants them equal, watched failing on the
 panel as it was. Rule: a version, a count or a date the screen states twice is
 written once and read everywhere; where the page cannot read it, a check pins
 the copy to the source.
+
+**252. Landmine 7's >10x guard fired on a real market move, and every build
+stopped.** On 4 Oct TCGCSV moved product 710255 -- Charlotte Smoothie (CS 26-27
+Event Pack), a promo listed on 2 Oct -- from a market of $0.49 for four days to
+$18.75, with its cheapest listing at $36.99 and its mid at $45.00 the same day.
+The nightly (run 100) and take 140's merge build (run 101) both stopped at
+validate, so take 140 had no Release by morning. It was the guard's first real
+positive in 23 days of history (landmine 67's was its own bug), and it was a
+new printing's price being found, not a slip. A slip moves the market alone; the
+same day's cheapest listing does not follow it. Since take 141 a >10x move ships
+when that listing sits within 3x of the new market (`PRICE_CORROBORATE_FACTOR`,
+measured: 64% of products sit within 3x), named in the build's log; one the
+listing disagrees with, or with no listing, still stops the build. Rule: a guard
+against a glitch asks the same day's data whether it agrees before it calls a
+move a glitch; and a red nightly is read before the take that follows it.
 
 ## §2 — Inherited from APEX ORV
 

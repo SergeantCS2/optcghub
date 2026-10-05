@@ -51,6 +51,10 @@ VALIDATE_AGAINST_CATALOGUE = True
 
 # Landmine 7: an upstream decimal slip is likelier than a 10x market move.
 MAX_DAILY_PRICE_FACTOR = 10.0
+# Take 141 (landmine 252): a move past that factor ships when the same day's cheapest listing agrees with the new
+# market price within this factor -- a slip moves the market alone. MEASURED 5 Oct, 7,221 products: market and low
+# sit within 3x for 64%; the one >10x move in 23 days of history (710255, $0.49 -> $18.75, a new promo) at 0.51x.
+PRICE_CORROBORATE_FACTOR = 3.0
 # Landmine 6: a cached payload must not masquerade as a fresh one.
 MAX_MANIFEST_AGE_HOURS = 36
 # MEASURED take 1: 6,860 card products. Landmine 8 — the catalogue is small.

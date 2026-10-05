@@ -206,7 +206,7 @@ function catalogueNote() {
 }
 /* take 115 (loose-diagnostics 1): a set with products but no cards -- One Piece Collection Sets, sealed only -- is in
    the catalogue now, so a set's line says what it holds rather than "0 cards" */
-function setCards(s, today = new Date().toISOString().slice(0, 10)) { return s.n ? `${s.n} cards` : s.pub && s.pub >= today ? 'card list not published yet' : 'sealed products only'; }
+function setCards(s, today = phoneToday()) { return s.n ? `${s.n} cards` : s.pub && s.pub >= today ? 'card list not published yet' : 'sealed products only'; }
 /* take 115 (STAN-110-11, landmine 157): the button says what a tap adds -- CREDITS.PER_AD, which the manifest sets at boot */
 function paintDevEarn() { const de = $('#devEarn'); if (de) de.textContent = `+${CREDITS.PER_AD} test credits`; }
 function feedLine() {
@@ -286,7 +286,6 @@ const TL_DAYW = { gts: { preorder: D => `orders were due ${D}`, out: D => `relea
   southern: { orders_closed: D => `stores\u2019 orders closed ${D}`, released: D => `released ${D}` } };
 const TL_NOTE = 'Some changes are worked out from dates, so they show between two checks, not on a day.';
 const utcDay = (iso, add = 0) => new Date(Date.parse(iso) + add * 864e5).toISOString().slice(0, 10);
-const localDay = iso => { const d = new Date(iso || ''); return isNaN(d) ? '' : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };   /* a run's UTC time as this phone's calendar day, for dayText (take 115: an alert's fired day too -- its UTC date was a day late on a US evening) */
 const tlWord = (d, st) => { if (st == null) return 'not on its list'; const w = TL_WORDS[d]; return w && Object.prototype.hasOwnProperty.call(w, st) ? w[st] : String(st); };
 const tlClock = iso => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 /* a change's two checks: the second end drops its day on the same local day -- unless the clocks changed between them
@@ -503,7 +502,7 @@ function paintSealed() {
   /* folded by set (take 81): a header with a count per set; the two newest
      open, the rest open on tap, a search opens everything it matches */
   const bySet = new Map(); for (const p of rows.slice(0, 600)) { if (inDecks.has(p.id)) continue; if (!bySet.has(p.set)) bySet.set(p.set, []); bySet.get(p.set).push(p); }
-  let n = 0; const TODAY = new Date().toISOString().slice(0, 10);
+  let n = 0; const TODAY = phoneToday();
   for (const [setId, ps] of bySet) { const st = CAT.sets.get(setId) || {}; const open = SEALED.q || !SEALED.closed.has(setId); n++;
     const top = setTop(setId);   /* take 110: the set’s own top card behind its name */
     out.push(`<button class="fgrp setstrip" data-setfold="${esc(setId)}" aria-expanded="${open}">${top ? artBack(top, { crisp: true }) : ''}<span>${esc(st.name || 'Other')}${st.pub ? `<span class="note">${st.pub > TODAY ? 'Releases' : 'Released'} ${esc(dayText(st.pub))}</span>` : ''}</span><span class="note" aria-hidden="true">${chev(open)}</span></button>`);
@@ -657,7 +656,7 @@ const EVENTS = {
     try { const r = await fetch(u.replace(/feed\.json$/, 'events.json'), { cache: 'no-store' }); if (!r.ok) return false; const j = await r.json(); if (!j || !Array.isArray(j.rows)) return false;
       this.tab = j; try { localStorage.setItem('vault.hunt.events', JSON.stringify(j)); } catch (e) { toast('Event list too large to keep offline; showing it now'); } return true; } catch (e) { return false; } },
   rows() { const t = this.tab, R = LOCAL.stores; if (!t || !R || !R.stores) return [];
-    const today = new Date().toISOString().slice(0, 10);
+    const today = phoneToday();   // take 141: tonight's event stays until the phone's day ends
     return t.rows.map(r => { const st = R.stores[r[0]]; if (!st) return null; return { store: st, d: r[1], title: t.titles[r[2]] || '', id: r[3], fee: r[4], cap: r[5], release: !!r[6], mi: LOCAL.miles(st.ll), url: r[3] ? t.url + r[3] : null }; })
       .filter(e => e && e.d >= today && LOCAL.within(e.mi)).sort((a, b) => a.d.localeCompare(b.d) || (a.mi ?? 9e9) - (b.mi ?? 9e9)); }
 };
@@ -701,7 +700,7 @@ const RELALERTS = {
     return true;
   },
   /* once, on or after the day before: the app opened and the day has come */
-  async check(today = new Date().toISOString().slice(0, 10)) {
+  async check(today = phoneToday()) {
     const fired = [];
     for (const a of this.list) {
       if (a.fired || today < this.dayBefore(a.pub)) continue;
@@ -726,7 +725,7 @@ function paintEvents() {
   const out = [];
   if (!HUNT.zip) { out.push(`<div class="panel"><h3>Where are you?</h3><div class="note">Enter your zip to see events near you.</div><div class="row" style="margin-top:8px"><button class="ghost go" id="eventsZip">Enter zip</button></div></div>`); }
   else if (!EVENTS.tab || !LOCAL.stores) { out.push(`<div class="panel"><h3>Store events</h3><div class="note">Not fetched yet on this phone. Refresh when you are online.</div><div class="row" style="margin-top:8px"><button class="ghost" id="eventsSync">Refresh</button></div></div>`); }
-  else { const all = EVENTS.rows(); const horizon = EVENTS.days; const lim = new Date(Date.now() + horizon * 864e5).toISOString().slice(0, 10);
+  else { const all = EVENTS.rows(); const horizon = EVENTS.days; const lim = utcDay(phoneToday() + 'T00:00:00Z', horizon);
     const rows = all.filter(e => e.d <= lim);
     /* take 87: the list was real -- every store runs about one event a week --
        so it is grouped by STORE: each store once, nearest first, its next events
@@ -751,7 +750,7 @@ $('#eventsRadius').addEventListener('change', e => { LOCAL.radius = +e.target.va
 $('#events').addEventListener('click', e => { const n = e.target.closest('[data-localnote]'); if (n) { addLocalNote(n.dataset.localnote); return; } const b = e.target.closest('[data-evcal]'); if (!b) return; const ev = EVENTS.rows()[+b.dataset.evcal]; if (ev) addEventToCalendar(ev); });
 $('#events').addEventListener('change', e => { if (e.target.id === 'eventsDays') { EVENTS.days = +e.target.value; saveJson('vault.hunt.eventDays', String(EVENTS.days)); paintEvents(); } });
 function paintReleases() {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = phoneToday();
   const sets = [...CAT.sets.values()].filter(s => s.pub);
   const up = sets.filter(s => s.pub >= today).sort((a, b) => a.pub.localeCompare(b.pub));
   const past = sets.filter(s => s.pub < today).sort((a, b) => b.pub.localeCompare(a.pub)).slice(0, 12);

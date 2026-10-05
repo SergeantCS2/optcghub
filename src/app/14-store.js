@@ -99,6 +99,11 @@ const dayText = (iso, { year = false } = {}) => { const m = /^(\d{4})-(\d\d)-(\d
   return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(year || +m[1] !== new Date().getFullYear() ? { year: 'numeric' } : {}) }); };
 const momentText = iso => { const d = new Date(iso || ''); if (!iso || isNaN(d)) return iso || '?';
   return d.toLocaleString('en-US', { month: 'short', day: 'numeric', ...(d.getFullYear() !== new Date().getFullYear() ? { year: 'numeric' } : {}), hour: 'numeric', minute: '2-digit' }); };
+const localDay = iso => { const d = new Date(iso || ''); return isNaN(d) ? '' : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };   /* a moment as this phone's calendar day, for dayText (take 115: an alert's fired day; take 137: the dated backup, a Hunt note) */
+/* take 141: today as the phone has it -- for every day the collector reads or that meets a day a store or publisher
+   announced (Events, Releases, Sealed, the value snapshot, the export names). The UTC date is tomorrow's on a US evening
+   (landmine 248); only a price day or the runner's stays UTC (utcDay, in the Hunt). */
+const phoneToday = () => localDay(new Date().toISOString());
 const RANGE_WORDS = { '1D': 'in the last day', '7D': 'in the last 7 days', '1M': 'in the last month', '3M': 'in the last 3 months', '6M': 'in the last 6 months', MAX: 'since the first day on file' };
 /* take 115 (SPEC-107-33): #picker is also a prompt -- the currency, the MAX range's ad, a price alert's direction,
    a slab's grader -- and a prompt closed by the sheet's cross, Cancel or Back stayed pending with its listener
