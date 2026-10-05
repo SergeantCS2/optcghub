@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 140.* Paste the block between the rules into a new session
+*Current as of take 141.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 140 takes by previous sessions. The repo is
+built across 141 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -96,8 +96,16 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
 
 **What is in flight when you arrive:**
 
+- **Take 141 -- the phone's day wherever the collector reads one** (AGENDA
+  A43, landmine 248). Events, Releases, Sealed, the newest set, the release
+  reminder's on-open check, the value snapshot and the export names use
+  `phoneToday()` (`src/app/14-store.js`, beside `dayText`); price days and
+  the runner's stay UTC (`utcDay`). Also the red night of 4-5 Oct: the
+  >10x price guard ships a move the day's cheapest listing agrees with
+  (landmine 252).
+
 - **Take 140 -- Prep & Play's explanations cut short** (A45 item 4, the
-  last). Deck rules, Play, the Sim's and Play online's intros, a deck's
+  last; PR 67). Deck rules, Play, the Sim's and Play online's intros, a deck's
   chart and import notes; the in-game prompts keep their rule citations.
 
 - **Take 139 -- Collect's and More's explanations cut short** (A45 items 2
@@ -572,6 +580,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 141" and begin with PROTOCOL §0.
+Say "take 142" and begin with PROTOCOL §0.
 
 ---

@@ -64,10 +64,12 @@ const OWN = {
   /* A snapshot series, not a reconstruction (AGENDA A10): if you sell half the
      collection the chart must show that, and a per-card replay cannot. */
   snapshot() {
-    const day = new Date().toISOString().slice(0, 10);
+    const day = phoneToday();   // take 141: the phone's day; an evening's value went under tomorrow (landmine 248)
     const n = this.items.reduce((a, i) => a + i.qty, 0);
     const last = this.snaps[this.snaps.length - 1];
-    if (last && last[0] === day) { last[1] = this.total(); last[2] = n; }
+    /* a day ahead of the phone's is one filed by the UTC date before take 141: it keeps its day and takes the value,
+       so the series stays in order and no day is written twice */
+    if (last && last[0] >= day) { last[1] = this.total(); last[2] = n; }
     else this.snaps.push([day, this.total(), n]);
     this.save();
   },
@@ -214,7 +216,7 @@ function setTop(setId) {
   return SET_TOP.map.get(setId) || null;
 }
 /* the newest booster set out (kind main) with a card picture; any kind if none */
-function newestTop(today = new Date().toISOString().slice(0, 10)) {
+function newestTop(today = phoneToday()) {
   const sets = [...CAT.sets.values()].filter(s => s.pub && s.pub <= today).sort((a, b) => b.pub.localeCompare(a.pub));
   for (const pool of [sets.filter(s => s.kind === 'main'), sets]) for (const s of pool) { const p = setTop(s.id); if (p) return { p, set: s }; }
   return null;

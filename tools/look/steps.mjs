@@ -2622,4 +2622,59 @@ const take140 = [
     } },
 ];
 
-export const STEPS = { 140: take140, 139: take139, 138: take138, 137: take137, 131: take131, 130: take130, 128: take128, 127: take127, 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
+/* take 141 (A43, landmine 248): the phone's day on a US evening. The clock is fixed at 23:30 in the owner's zone, when the
+   UTC date is already tomorrow's; tonight's event, a set out today and one out tomorrow are drawn as the collector sees them. */
+const ownerAt = (hh, mm) => {   // today's hh:mm in OWNER_TZ, as an instant (the zone's offset read off Intl, so DST is right)
+  const parts = d => Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: OWNER_TZ, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+    .formatToParts(d).map(p => [p.type, p.value]));
+  const n = parts(new Date()), guess = Date.UTC(+n.year, +n.month - 1, +n.day, hh, mm), g = parts(new Date(guess));
+  const off = Date.UTC(+g.year, +g.month - 1, +g.day, +g.hour, +g.minute) - guess;
+  return { at: new Date(guess - off), day: `${n.year}-${n.month}-${n.day}` };
+};
+const take141 = [
+  { name: 'open', run: async (page, ctx) => {
+      await ctx.open();
+      const { at, day } = ownerAt(23, 30); await page.clock.setFixedTime(at);
+      const X = JSON.parse(JSON.stringify(fx138()));
+      /* the fixture's events, moved so the first is tonight on the phone's calendar */
+      const days = X.events.rows.map(r => r[1]).sort(), shift = Math.round((Date.parse(day) - Date.parse(days[0])) / 864e5);
+      X.events.rows.forEach(r => { r[1] = new Date(Date.parse(r[1]) + shift * 864e5).toISOString().slice(0, 10); });
+      const m = await page.evaluate(x => { window.__X138 = x; window.__K141 = { zip: window.VAULT.HUNT.zip, radius: window.VAULT.LOCAL.radius };
+        return { phone: window.VAULT.phoneToday(), utc: new Date().toISOString(), tonight: x.events.rows.filter(r => r[1] === window.VAULT.phoneToday()).length }; }, X);
+      return { ok: m.phone === day && m.utc.slice(0, 10) !== day && m.tonight > 0, day, ...m };
+    } },
+  { name: 'events-tonight', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} ${HUNT138}; V.EVENTS.days = 14; V.go('events'); V.paintEvents(); await ${pause}; window.scrollTo(0, 0);
+        const today = V.phoneToday(), rows = V.EVENTS.rows();
+        return { today, tonight: rows.filter(e => e.d === today).length, first: rows[0] && rows[0].d, head: ((document.querySelector('#eventsList .note') || {}).textContent || '').replace(/\\s+/g, ' ').trim() }; })()`);
+      await wait(400);
+      return { ok: m.tonight > 0 && m.first === m.today, ...m };
+    } },
+  { name: 'releases-today', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} const today = V.phoneToday();
+        const s = [...V.CAT.sets.values()].filter(x => x.kind === 'main' && x.pub).sort((a, b) => b.pub.localeCompare(a.pub))[0];
+        window.__P141 = { id: s.id, pub: s.pub }; s.pub = today; V.DISTF.open.clear(); V.go('releases'); V.paintReleases(); await ${pause};
+        const b = document.querySelector('#relList [data-browse-set="' + s.id + '"]'); if (b) { b.scrollIntoView({ block: 'center' }); }
+        const cd = b ? b.closest('.rel').querySelector('span.note.cd1, span.note.cd2, span.note.cd3, span.note.cd4') : null;
+        const up = [...document.querySelectorAll('#relList h3')].find(h => /Upcoming/i.test(h.textContent)), inUp = !!(b && up && up.closest('.panel').contains(b));
+        return { set: s.name, today, countdown: cd ? cd.textContent.trim() : '', inUpcoming: inUp }; })()`);
+      await wait(400);
+      return { ok: m.countdown === 'today' && m.inUpcoming, ...m };
+    } },
+  { name: 'sealed-tomorrow', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} const P = window.__P141, s = V.CAT.sets.get(P.id);
+        const t = new Date(Date.parse(V.phoneToday() + 'T00:00:00Z') + 864e5).toISOString().slice(0, 10); s.pub = t;
+        V.SEALED.kind = 'all'; V.SEALED.q = ''; V.SEALED.closed.delete(s.id); V.go('sealed'); V.paintSealed(); await ${pause};
+        const b = document.querySelector('#sealedList [data-setfold="' + s.id + '"]'); if (b) { b.scrollIntoView({ block: 'start' }); window.scrollBy(0, -120); }
+        return { set: s.name, tomorrow: t, strip: b ? b.textContent.replace(/\\s+/g, ' ').trim().slice(0, 120) : '' }; })()`);
+      await wait(400);
+      return { ok: /Releases [A-Z][a-z]{2} \d{1,2}/.test(m.strip) && !/Released/.test(m.strip), ...m };
+    } },
+  { name: 'restore', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} const P = window.__P141, k = window.__K141 || {};
+        if (P) { const s = V.CAT.sets.get(P.id); if (s) s.pub = P.pub; }
+        V.HUNT.setZip(k.zip || ''); V.LOCAL.radius = k.radius || V.LOCAL.radius; V.MODE.set('collect', true); await ${pause}; return { zip: V.HUNT.zip, pub: P && V.CAT.sets.get(P.id).pub }; })()`);
+      return { ok: true, ...m };
+    } },
+];
+export const STEPS = { 141: take141, 140: take140, 139: take139, 138: take138, 137: take137, 131: take131, 130: take130, 128: take128, 127: take127, 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };

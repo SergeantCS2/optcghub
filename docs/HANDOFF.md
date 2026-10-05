@@ -1,4 +1,107 @@
-# HANDOFF — through Take 140
+# HANDOFF — through Take 141
+
+## Take 141 — 2026-10-04 — the phone's day wherever the collector reads one (A43, landmine 248)
+
+Opened before any code (PROTOCOL §6), with take 140's PR (67) waiting on its
+check; the session merges it when green (the owner's word, 4 Oct), and this
+take's commits follow it. A45 is done; next in the session's order is what
+take 137 left open of A43: the rest of the phone's-day family.
+
+**The first fact of the take, found after take 140 merged:** the nightly
+(run 100) and take 140's merge build (run 101) were red -- validate refused
+product 710255's move from $0.49 to $18.75 (landmine 252), so Release
+take-140 was not published. The move is real (the day's cheapest listing
+$36.99, mid $45.00, a promo listed on 2 Oct). Reproduced in the session's own
+pipeline (`validate failed (1)`) before any change; fixed here, item 0.
+
+### What this take changes
+
+0. **A >10x price move ships when the same day's cheapest listing agrees.**
+   `tools/validate.py` still stops the build on a move past 10x that the
+   day's cheapest listing disagrees with (more than 3x from the new market),
+   or that has no listing; one it agrees with ships, named in the build's log
+   as a market move. `PRICE_CORROBORATE_FACTOR = 3.0` in `tools/config.py`,
+   with its measurement beside it. Four probes in validate's selftest.
+1. **"Today" is the phone's day wherever it meets a day a store or a
+   publisher announced.** Events' list and its horizon (tonight's event left
+   the list after 8 PM in New York); Releases' upcoming and past and its
+   countdown; Sealed's "Releases" or "Released"; a set's "card list not
+   published yet"; the newest set that Home and Decks open under; and the
+   release reminder's on-open check, which fired "releases tomorrow" on the
+   evening two days before.
+2. **The collection's value is filed under the phone's day.** An evening's
+   value went under tomorrow. An entry already filed under a day ahead of the
+   phone's keeps its day and takes the new value, so the series stays in
+   order across the change and no day is written twice.
+3. **The CSV and web-page exports** are named by the phone's day.
+4. `localDay` moves beside `dayText` (`src/app/14-store.js`), with
+   `phoneToday()`; `utcDay` stays for price days and the runner's, which are
+   UTC on purpose.
+
+### Measured
+
+- The price guard, on the catalogue of 4 Oct (7,221 products with a market
+  and a low): market and low sit within 3x of each other for 64%, within 10x
+  for 91%. Across the 23 days on file, one day-over-day move past 10x:
+  710255, $0.49 to $18.75, its low $36.99 (0.51x).
+- The pipeline from a fresh ingest: 87 groups, 7,684 products (7,009 cards,
+  675 sealed), 23 days of history; validate names the one move and ships it;
+  smoke 1753 of 1753; render 277 of 277 `(mode: chrome)`.
+- The clean run (PROTOCOL §6b: `validate.py` changed): a fresh worktree of
+  `main` (`bd542ae`) with this take's files, its own `ci/deps.sh`, the
+  pipeline from ingest: validate names 710255 and ships it; smoke 1753 of
+  1753; render 277 of 277 `(mode: chrome)`; GATE PASSED; 574 s.
+
+### Tests
+
+- The smoke: 1753 of 1753, 16 new in `tools/smoke/97-…`, every one at 23:30
+  in New York with the clock pinned (UTC already tomorrow). On take 140's build
+  (`SMOKE_APP`, a directory) 11 fail by name: `phoneToday`, Events' tonight
+  and its horizon, a set's card list, Releases' "today", Sealed's
+  "Releases", the newest set, both release-reminder checks, the value
+  snapshot, the export names. What passes on both: the two preconditions,
+  last night's event gone, a release a week off not announced, and the
+  snapshot guard -- take 140 filed by the UTC date, so it passes there; a
+  plant comparing days with `===` fails it alone (1751 / 1).
+- Take 8's smoke check "no printing moved more than 10x overnight" read the
+  shipped catalogue and went red on 710255 with the guard's change; it now
+  holds the same rule as validate (a move past 10x needs its low within 3x),
+  with a control: a 37x move with its low 5x off, or with none, is refused.
+- `validate.py --selftest`: 10 probes, 4 new (a 100x move its cheapest
+  listing is 5x off fails; a move it agrees with ships, named; the same move
+  with no listing fails; the planted 200x still fails). On the real catalogue
+  of 4 Oct: take 140's `validate.py` FAILs on 710255, this take's ships it
+  with a note naming the listing.
+
+### The look
+
+- `node tools/look.mjs 141`: 5 steps at each Fold size, 10 ok, with the
+  page's clock fixed at 23:30 in New York (UTC 03:30 the next day): Events
+  keeps Sunday's events at the top; Releases lists a set out today under
+  Upcoming as "today"; Sealed says "Releases Oct 5" for a set out tomorrow.
+  Every picture read. The first run's Releases step measured the row's first
+  160 characters, which ended before the countdown; it reads the countdown
+  now.
+
+### What I got wrong
+
+- I merged take 140 without reading the night's runs: the scheduled build at
+  00:04 had already gone red, twelve minutes before the merge. The PR's own
+  check ran at 19:44 UTC, before TCGCSV's 20:05 update, so green there said
+  nothing about the night. PROTOCOL §0's first fact is the last nightly; it
+  is read before a merge too, not only at a session's start.
+- The Releases step of the look first read a truncated row and reported a
+  failure the picture did not show.
+- I changed validate's rule without grepping the smoke for a copy of it; the
+  pipeline's smoke found take 8's (1751 / 1). A rule held in two places is
+  landmine 251's shape again, the day after it was written.
+
+### DEFERRED
+
+- The app's daily badge is not capped (landmine 7 asked for one): 710255
+  shows its real +3,727%. Left as the honest number; a cap is the UI
+  session's call.
+- A Release for take 140 alone: none; take 141's carries both.
 
 ## Take 140 — 2026-10-04 — Prep & Play's explanations cut short (A45 item 4, the last)
 
@@ -62,6 +165,17 @@ human like and only necessary info" on Prep & Play.
 ### DEFERRED
 
 - The phone's-day family (AGENDA A43, landmine 248) -- next.
+
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+With `check` (8 min) and `apk` (5 min) green on `047a1dd` the session marked
+PR 67 ready and merged it at the owner's word at 00:16 UTC on 5 Oct
+(`bd542ae`, a merge commit), after the night's price commit (`290996b`).
+`build` run 101 went **red** at validate in under two minutes, as the
+scheduled run 100 had at 00:04: product 710255's real move from $0.49 to
+$18.75 (landmine 252). **No Release take-140 was published**; Pages and the
+Play upload did not run. Take 141 carries the fix, and its merge builds the
+next Release with take 140's changes in it.
 
 ## Take 139 — 2026-10-04 — Collect's and More's explanations cut short (A45 items 2 and 3)
 

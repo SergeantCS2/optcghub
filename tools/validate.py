@@ -13,7 +13,8 @@ import json, os, sqlite3, sys, time
 from datetime import datetime, timezone
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from config import (CATALOG_DB, MANIFEST, EXPECTED_CARDS, COUNT_TOLERANCE,
-                    MAX_DAILY_PRICE_FACTOR, MAX_MANIFEST_AGE_HOURS, ROOT)
+                    MAX_DAILY_PRICE_FACTOR, PRICE_CORROBORATE_FACTOR,
+                    MAX_MANIFEST_AGE_HOURS, ROOT)
 
 PREV = os.path.join(ROOT, "catalog", "previous_manifest.json")
 
@@ -23,7 +24,7 @@ def _fail(msgs, m):
 
 
 def check(db, man, prev=None, strict_hashes=True):
-    bad = []
+    bad, moves = [], []
 
     # 1. Card count. Landmine 8 pins the expected size; a real set release moves
     #    it by a few hundred, a broken ingest moves it by thousands.
@@ -75,10 +76,24 @@ def check(db, man, prev=None, strict_hashes=True):
             if p and p > 0 and (m / p > MAX_DAILY_PRICE_FACTOR or
                                 p / m > MAX_DAILY_PRICE_FACTOR):
                 moved.append((pid, p, m))
-        if moved:
-            for pid, p, m in moved[:5]:
-                _fail(bad, f"product {pid} moved ${p:.2f} -> ${m:.2f} "
-                           f"(>{MAX_DAILY_PRICE_FACTOR}x) — upstream data glitch?")
+        # Take 141 (landmine 252): the first real >10x move was a new promo's price found
+        # (710255, $0.49 -> $18.75 with its cheapest listing at $36.99), and it stopped every
+        # build. A slip moves the market alone; a move the same day's cheapest listing agrees
+        # with is the market's, and ships -- named in the log, never silently.
+        glitch = []
+        for pid, p, m in moved:
+            low = db.execute("SELECT low FROM price WHERE product_id = ? AND market = ? "
+                             "ORDER BY low DESC LIMIT 1", (pid, m)).fetchone()
+            low = low[0] if low else None
+            if low and low > 0 and 1 / PRICE_CORROBORATE_FACTOR <= m / low <= PRICE_CORROBORATE_FACTOR:
+                moves.append(f"product {pid} moved ${p:.2f} -> ${m:.2f}; the day's cheapest "
+                             f"listing ${low:.2f} agrees (within {PRICE_CORROBORATE_FACTOR:g}x) -- a market move, shipped")
+            else:
+                glitch.append((pid, p, m, low))
+        for pid, p, m, low in glitch[:5]:
+            _fail(bad, f"product {pid} moved ${p:.2f} -> ${m:.2f} "
+                       f"(>{MAX_DAILY_PRICE_FACTOR}x; cheapest listing "
+                       f"{'$%.2f' % low if low else 'none'}) — upstream data glitch?")
             if len(moved) > 5:
                 _fail(bad, f"...and {len(moved)-5} more implausible price moves")
 
@@ -113,7 +128,7 @@ def check(db, man, prev=None, strict_hashes=True):
     if strict_hashes and cov < 0.98:
         _fail(bad, f"hash coverage {100*cov:.1f}% of {reachable} reachable "
                    f"printings (need 98%; {unavailable} images are 403 and excluded)")
-    return bad, {"hash_coverage": cov, "auto_accept": safe / tot if tot else 0}
+    return bad, {"hash_coverage": cov, "auto_accept": safe / tot if tot else 0, "moves": moves}
 
 
 def exempt(raw):
@@ -156,6 +171,18 @@ def selftest():
     db.execute("INSERT INTO price VALUES (9,'Normal',100.0,1,1,1)")
     bad, _ = check(db, dict(man, cards=EXPECTED_CARDS), {"9": 0.5}, strict_hashes=False)
     ok.append(("10x price move", any("upstream data glitch" in b for b in bad)))
+    # take 141 (landmine 252): a slip the cheapest listing disagrees with still fails; a move it agrees with ships, named
+    db.execute("UPDATE price SET market = 187.5, low = 36.99, mid = 45.0, high = 639.92 WHERE product_id = 9")
+    bad, _ = check(db, dict(man, cards=EXPECTED_CARDS), {"9": 1.875}, strict_hashes=False)
+    ok.append(("100x move, the cheapest listing 5x off", any("upstream data glitch" in b for b in bad)))
+    db.execute("UPDATE price SET market = 18.75 WHERE product_id = 9")
+    bad, st = check(db, dict(man, cards=EXPECTED_CARDS), {"9": 0.49}, strict_hashes=False)
+    ok.append(("a corroborated move ships, named", not any("upstream data glitch" in b for b in bad)
+               and any("product 9 moved $0.49 -> $18.75" in x for x in st["moves"])))
+    db.execute("UPDATE price SET low = NULL WHERE product_id = 9")
+    bad, _ = check(db, dict(man, cards=EXPECTED_CARDS), {"9": 0.49}, strict_hashes=False)
+    ok.append(("the same move with no listing", any("upstream data glitch" in b for b in bad)))
+    db.execute("DELETE FROM price WHERE product_id = 9")
 
     good = sqlite3.connect(CATALOG_DB) if os.path.exists(CATALOG_DB) else None
     if good:
@@ -194,6 +221,8 @@ if __name__ == "__main__":
     bad, stats = check(db, man, prev, strict_hashes="--strict" in sys.argv)
     print(f"   hash coverage {100*stats['hash_coverage']:.1f}% of reachable  "
           f"auto-accept {100*stats['auto_accept']:.1f}%")
+    for x in stats.get("moves", []):
+        print(f"   note: {x}")
     for b in bad:
         print(f"   FAIL: {b}")
     raise SystemExit(1 if bad else 0)

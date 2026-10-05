@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 140.* Ranked by blocking-ness, not by interest.
+*Current as of take 141.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -74,8 +74,14 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0. *Take 140, in flight (4 Oct):* A45 item 4 -- Prep & Play's text; then
-   A43's phone's-day family.
+0. *Take 141, in flight (5 Oct):* A43's phone's-day family (below, Mine 1),
+   and the red night first: validate's >10x guard refused a real move
+   (landmine 252); a move the day's cheapest listing agrees with now ships,
+   named. **Ruled out (take 141):** waiting for the next price day to clear
+   it (every build and PR check stays red until about 20:05 UTC, and the next
+   new promo stops it again); a reviewed allow-list of moves (a session's
+   commit for every one, the night red until it lands); dropping the guard.
+   *Take 140 (PR 67):* A45 item 4 -- Prep & Play's text; A45 is done.
 0a. *Take 139 (PR 66, merged by the session when green, the owner's word;
    Release take-139):* A45 items 2 and 3 --
    Collect's and More's explanations cut short. *Take 138 (PR 65, merged by
@@ -157,6 +163,14 @@ what take 115 changed on screen.
    not, and Events' list wants its own look); a gate check refusing
    `toISOString().slice(0, 10)` (price days and the runner's days are UTC on
    purpose -- `utcDay()` -- and a blanket refusal would refuse them).
+   *Take 141 builds it:* Events' "today" and horizon, Releases', Sealed's,
+   a set's "not published yet", `newestTop`, the release reminder's on-open
+   check, `OWN.snapshot`, both export names -- each by `phoneToday()`, each
+   with a US-evening check. **Ruled out (take 141):** rewriting the value
+   series' old days (an entry filed under tomorrow keeps its day and takes
+   the new value; moving it could write a day twice); the price days, the
+   runner's days, a calendar file's dates and the reminder's own `dayBefore`
+   (pure date arithmetic on a day, no clock).
 2. **A32's Next** (its take-115 section): date moves, a delisted item, the
    history on Releases, Southern Hobby's paging, the retailers that need a
    residential IP.
