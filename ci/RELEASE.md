@@ -1,4 +1,4 @@
-# OP TCG Hub — take 142
+# OP TCG Hub — take 143
 
 ## Installing — read this first
 
@@ -17,6 +17,8 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 143:** If a distributor stops listing a product, the product's page still shows that distributor under Distributor info, as "no longer on its list" with the day it was last listed, and its history. Nothing you have saved changes.
 
 **New at take 142:** When a distributor moves a release day or the day stores must order by, its History under Distributor info now says so, like "release moved Nov 20 → Dec 4". It knows from this update on. Nothing you have saved changes.
 
