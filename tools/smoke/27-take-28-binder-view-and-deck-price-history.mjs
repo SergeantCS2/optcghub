@@ -25,7 +25,7 @@ ok('deck history has one point per catalogue day on file', h.length === V.CAT.da
 const A = V.analysis(d);
 ok('the last history point equals today\'s deck value (Leader included)',
    Math.abs(h[h.length - 1][1] - A.value) < 0.02, `${h[h.length-1][1]} vs ${A.value}`);   /* take 111: the value counts the Leader itself now */
-ok('the deck chart is labelled as an estimate and drawn dashed', /Dashed: this list at each day/.test(js) && /sparkOn\(\$\('#dkSpark'\), hist, 'estimate'\)/.test(js));
+ok('the deck chart is labelled as an estimate and drawn dashed', /Dashed: estimated from each day\\u2019s prices\./.test(js) && /sparkOn\(\$\('#dkSpark'\), hist, 'estimate'\)/.test(js));
 ok('the deck says how many of its cards you own and what it costs to complete', /to complete/.test(js) && /you own every card in it/.test(js));
 V.OWN.items = [];
 }

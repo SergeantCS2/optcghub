@@ -2571,4 +2571,55 @@ const take139 = [
     } },
 ];
 
-export const STEPS = { 139: take139, 138: take138, 137: take137, 131: take131, 130: take130, 128: take128, 127: take127, 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
+/* ---- take 140 — Prep & Play's notes cut short (A45 item 4, the owner's word) ---- */
+const notes140 = sel => `[...document.querySelectorAll('${sel} .note')].map(e => e.textContent.replace(/\\s+/g, ' ').trim()).filter(t => t.length > 15)`;
+const take140 = [
+  { name: 'open', run: async (page, ctx) => { await ctx.open(); return { ok: true }; } },
+  { name: 'deck-rules-and-chart', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('play', true); await ${pause};
+        const d = JSON.parse(JSON.stringify(V.CAT.stock[0])); d.id = 'look140'; d.name = 'Look 140'; delete d.stock;
+        V.DECKS.list = V.DECKS.list.filter(x => x.id !== 'look140'); V.DECKS.list.push(d); V.go('decks'); V.paintDecks(); await ${pause};
+        const h = [...document.querySelectorAll('#decks h3')].find(e => /in one breath/.test(e.textContent)); if (h) { h.closest('.panel').scrollIntoView({ block: 'end' }); window.scrollBy(0, 160); }
+        return { notes: ${notes140('#decks')}.filter(t => /One Leader/.test(t)) }; })()`);
+      await wait(400);
+      return { ok: m.notes.some(t => /^One Leader and fifty cards that share a colour with it, at most four of each card number; ten DON!! cards go alongside\. Comprehensive Rules v1\.2\.1 §5-1\.$/.test(t)), ...m };
+    } },
+  { name: 'deck-chart', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.openDeck('look140'); await ${pause};
+        const n = [...document.querySelectorAll('#deck .note')].find(e => /Dashed|One day of prices/.test(e.textContent)); if (n) { n.scrollIntoView({ block: 'center' }); }
+        return { note: n ? n.textContent.trim() : null }; })()`);
+      await wait(400);
+      return { ok: /^(Dashed: estimated from each day’s prices\.|One day of prices so far; the line appears as days add up\.)$/.test(m.note || ''), ...m };
+    } },
+  { name: 'deck-import-prompt', run: async (page) => {
+      await page.evaluate(() => { window.scrollTo(0, 0); }); await page.click('#dkImport'); await wait(700);
+      const m = await page.evaluate(() => ({ title: document.getElementById('askTitle').textContent, why: document.getElementById('askWhy').textContent }));
+      return { ok: /^One card per line, like 4 OP01-016 Nami; a Leader line sets the Leader\. Unknown lines are listed, not dropped\.$/.test(m.why), ...m };
+    } },
+  { name: 'play-counter', run: async (page) => {
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.DECKS.list = V.DECKS.list.filter(x => x.id !== 'look140'); V.go('play'); V.paintPlay(); await ${pause}; window.scrollTo(0, 0);
+        return { notes: ${notes140('#play')}.filter(t => /table game/.test(t)) }; })()`);
+      await wait(400);
+      return { ok: m.notes.includes('Life and DON!! for a table game. Nothing here is saved or sent.'), ...m };
+    } },
+  { name: 'sim-intro-and-online', run: async (page) => {
+      /* Play online draws only with a relay configured; the look's page has none, so one is named for the drawing (no
+         connection is made until Host or Join is tapped) */
+      const m = await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} window.__relay140 = V.SIMUI.wire.relay; V.SIMUI.wire.relay = V.SIMUI.wire.relay || 'https://relay.invalid'; V.go('sim'); await ${pause}; window.scrollTo(0, 0);
+        return { notes: ${notes140('#sim')}.filter(t => /Two players|Host a match/.test(t)) }; })()`);
+      await wait(400);
+      return { ok: m.notes.some(t => /^Two players on one phone, or you against the app\. The app keeps the rules \(Comprehensive Rules v[\d.]+\) and runs the card effects it understands; any other effect is yours to resolve by hand, with only the moves its words name\.$/.test(t))
+        && m.notes.some(t => /For friends, not strangers: both phones hold the whole deal\. Only the code, the two deck lists and the moves leave the phone\.$/.test(t)), ...m };
+    } },
+  { name: 'sim-online', run: async (page) => {
+      const m = await page.evaluate(() => { const o = document.getElementById('simOnline'); if (o) o.scrollIntoView({ block: 'center' }); return { on: !!o }; });
+      await wait(400);
+      return { ok: m.on, ...m };
+    } },
+  { name: 'restore', run: async (page) => {
+      await page.evaluate(`(async () => { const V = window.VAULT; while (V.closeAnyOverlay()) {} if ('__relay140' in window) V.SIMUI.wire.relay = window.__relay140; V.DECKS.list = V.DECKS.list.filter(x => x.id !== 'look140'); V.MODE.set('collect', true); await ${pause}; })()`);
+      return { ok: true };
+    } },
+];
+
+export const STEPS = { 140: take140, 139: take139, 138: take138, 137: take137, 131: take131, 130: take130, 128: take128, 127: take127, 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };

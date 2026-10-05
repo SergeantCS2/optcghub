@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 139.*
+*Current as of take 140.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -263,6 +263,7 @@ Start here. Do not read top to bottom.
 | A day the collector reads, written as the UTC date: tomorrow's on a US evening | **248** |
 | A check on a saved fixture's age goes red on the clock alone, every build at once | **249** |
 | A `\uXXXX` typed into a command reached the file as the character; an anchor on the escape missed | **250** |
+| The screen names a version the code moved past: a fact typed by hand beside the one the code carries | **251** |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -3270,6 +3271,17 @@ typed -- the expansion happened before Python ran, and not in every command
 6 asks. Rule: to anchor on a literal escape, type a placeholder (`@u2014`) and
 build the backslash in code (`chr(92) + 'u'`); then grep the file for the
 escape, never for the character.
+
+**251. A fact typed into the page by hand drifts from the one the code
+carries.** Take 122 rebased the Sim on the Comprehensive Rules v1.2.1 (`RULES:
+'1.2.1'` in `src/sim.js`, `docs/RULES.md` with it), and the Sim's intro has
+said so since through `${SIM.RULES}`; the deck rules panel in `src/app.html`
+typed "v1.2.0" by hand and kept it for eighteen takes. Nothing checked one
+against the other; take 140 found it only because the panel's words were being
+cut. A smoke check now reads both and wants them equal, watched failing on the
+panel as it was. Rule: a version, a count or a date the screen states twice is
+written once and read everywhere; where the page cannot read it, a check pins
+the copy to the source.
 
 ## §2 — Inherited from APEX ORV
 

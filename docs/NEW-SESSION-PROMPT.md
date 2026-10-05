@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 139.* Paste the block between the rules into a new session
+*Current as of take 140.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 139 takes by previous sessions. The repo is
+built across 140 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -96,9 +96,13 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
 
 **What is in flight when you arrive:**
 
+- **Take 140 -- Prep & Play's explanations cut short** (A45 item 4, the
+  last). Deck rules, Play, the Sim's and Play online's intros, a deck's
+  chart and import notes; the in-game prompts keep their rule citations.
+
 - **Take 139 -- Collect's and More's explanations cut short** (A45 items 2
-  and 3), built on the branch behind take 138's PR (65) and pushed after it
-  merges. The same rule as take 138: a note says what a thing is and where
+  and 3), merged by the session (PR 66, Release take-139). The same rule
+  as take 138: a note says what a thing is and where
   its numbers come from; the not-affiliated line, the licences and "Export
   CSV before you uninstall" stay.
   **The owner's word, 4 Oct: "merge them yourself when green"** -- the
@@ -107,7 +111,8 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
 
 - **Take 138 -- Hunt's explanations cut short** (AGENDA A45 item 1, the
   owner's word of 4 Oct: "short and simple - human like and only necessary
-  info"). Every note on Sealed, Local, Events and Releases says what the
+  info"; PR 65, merged by the owner, Release take-138). Every note on
+  Sealed, Local, Events and Releases says what the
   list is, its source and its age, and nothing more; the smoke checks that
   pinned the old sentences guard the same facts in the new words. Collect,
   More and Prep & Play follow, a take each, each with a look.
@@ -567,6 +572,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 140" and begin with PROTOCOL §0.
+Say "take 141" and begin with PROTOCOL §0.
 
 ---

@@ -1,4 +1,67 @@
-# HANDOFF — through Take 139
+# HANDOFF — through Take 140
+
+## Take 140 — 2026-10-04 — Prep & Play's explanations cut short (A45 item 4, the last)
+
+Opened before any code (PROTOCOL §6), with take 139's PR (66) waiting on its
+check; the session merges it when green (the owner's word, 4 Oct), and this
+take's commits follow it. A45's last item: the owner's "short and simple -
+human like and only necessary info" on Prep & Play.
+
+### What this take changes
+
+1. **Prep & Play's notes and intros say what a thing is, and stop.** The
+   deck rules panel, Play's counter, the Sim's and Play online's intros, a
+   deck's price chart note, the deck import prompt, the Leader and copies
+   notes. What stays: the rules version and the sections a player looks up,
+   that only the code, the decks and the moves leave the phone, that the app
+   as opponent never sees your hand. The Sim's prompts during a game keep
+   their rule citations -- they are the rules, not an explanation of them.
+
+### Measured
+
+- The seven notes this take rewrote: 1,451 characters on take 139, 1,005
+  now (tags stripped), about a third less.
+- The pipeline from a fresh ingest: 87 groups, 7,684 products (7,009 cards,
+  675 sealed), 22 days of history; smoke 1736 of 1736; render 277 of 277
+  `(mode: chrome)`; the gate green; 612 s.
+
+### Tests
+
+- The smoke: 1736 of 1736, 9 new in `tools/smoke/96-…` and one of take 28
+  rewritten (a deck's chart note, which still says the line is an
+  estimate). On take 139's build (`SMOKE_APP`, a directory) 5 fail by name:
+  the chart note, the Sim's intro, Play online, the import prompt, and none
+  of the long forms left. What passes on both: the four notes in the page
+  (the page is this build's under `SMOKE_APP`) and the control -- the app as
+  opponent never sees your hand.
+- The rules panel's version against the Sim's (`RULES:` in the script): a
+  new check wants them equal. On a plant with the panel's old "v1.2.0" it
+  fails alone, 1735 / 1, and passes on the build (landmine 251).
+
+### The look
+
+- `node tools/look.mjs 140`: 8 steps at each Fold size, 16 ok -- Decks'
+  rules panel and a deck's chart, the import prompt, Play's counter, the
+  Sim's intro and Play online (on a stand-in relay address, since the look's
+  build carries none and the panel paints nothing without one). Every picture
+  read: the rules panel says v1.2.1, the deck value line no longer says "at
+  the sleeved printings, today", and Play online's note reads in two lines
+  on the open Fold.
+
+### What I got wrong
+
+- The rules panel said Comprehensive Rules v1.2.0 for eighteen takes while
+  the Sim played v1.2.1 (landmine 251). Not this take's, but no take before
+  it read the two side by side; now a check does.
+- The look's first pass pictured an empty Sim: Play online paints nothing
+  without a relay, and the look's build has none. The step sets a stand-in
+  address and puts the build's own back after.
+- I first pointed the rules panel's step at a deck's screen; the panel is on
+  Decks.
+
+### DEFERRED
+
+- The phone's-day family (AGENDA A43, landmine 248) -- next.
 
 ## Take 139 — 2026-10-04 — Collect's and More's explanations cut short (A45 items 2 and 3)
 
@@ -73,6 +136,17 @@ one take and one look.
 
 - A45 item 4 -- Prep & Play's text (Decks, a deck, Play, the Sim).
 - The phone's-day family (AGENDA A43, landmine 248).
+
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+Held locally until take 138 merged, then pushed as PR 66. With `check` and
+`apk` green on `b0f1249` the session marked it ready and merged it at the
+owner's word ("merge them yourself when green") at 19:13 UTC (`c8ef12b`, a
+merge commit); the look went to him with it. `build` run 99 green in 15
+minutes; Release take-139 published 19:28 UTC with the APK (28,954,693
+bytes, 712 fewer than take 138's), the AAB (22,160,759), the mapping and the
+Play icon. Take 140 began on the branch restarted on this merge, and this
+note rides its PR.
 
 ## Take 138 — 2026-10-04 — Hunt's explanations cut short and plain (the owner's word)
 
@@ -169,6 +243,17 @@ does not hold it back.
   look; the next take starts on Collect.
 - The phone's-day family (AGENDA A43, landmine 248) -- Events', Releases' and
   Sealed's "today", the value snapshot's day, the export names.
+
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+The owner, 4 Oct, on the look: "Looks good"; he merged PR 65 himself
+(18:44 UTC, `a89ff21`, a merge commit), and said: "Merged, yes merge them
+yourself when green". `build` run 98 green in 16 minutes; Release take-138
+published 18:59 UTC with the APK (28,955,405 bytes, 564 fewer than take
+137's -- INFERRED the shorter notes and a night's catalogue, not measured
+file by file), the AAB (22,161,474), the mapping and the Play icon. Take
+139 was held locally until this merge, then pushed; this note rides take
+140's PR, as take 139's does.
 
 ## Take 137 — 2026-10-03 — A43's last two small items: Restore reaches an earlier day's backup, and a cost basis or a Hunt note's price is typed in the currency on screen
 
