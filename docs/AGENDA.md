@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 141.* Ranked by blocking-ness, not by interest.
+*Current as of take 142.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -74,7 +74,9 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0. *Take 141, in flight (5 Oct):* A43's phone's-day family (below, Mine 1),
+0. *Take 142, in flight (5 Oct):* A32's Next, its first item -- a date
+   move on file and in the History (A32's take-115 section).
+   *Take 141 (PR 70, merged by the session; Release take-141):* A43's phone's-day family (below, Mine 1),
    and the red night first: validate's >10x guard refused a real move
    (landmine 252); a move the day's cheapest listing agrees with now ships,
    named. **Ruled out (take 141):** waiting for the next price day to clear
@@ -1450,6 +1452,13 @@ failed read is a hole, not "nothing listed".
 **Next** (in order):
 - Date moves ("release moved Nov 20 → Dec 4"): the runner must record each
   change's dates; the rows keep states only, and about 55 days of them.
+  *Take 142 builds it:* `dates` in the history, per distributor and item,
+  an entry when the release or order due day differs; the History reads
+  "release moved Nov 20 → Dec 4" between the two checks that saw it.
+  **Ruled out (take 142):** the dates in every run's row (71 items x 96
+  runs, for a change seen a few times a month); a move inferred from a
+  state change (a moved date often changes no state); claiming moves before
+  the first run that records dates.
 - A delisted item: the rows carry no map from an id to its product.
 - The history on Releases' not-in-the-catalogue list; the first real change
   is INFERRED for PEB-01 on 15 Oct UTC.

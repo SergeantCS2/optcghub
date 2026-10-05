@@ -1,4 +1,83 @@
-# HANDOFF — through Take 141
+# HANDOFF — through Take 142
+
+## Take 142 — 2026-10-05 — a distributor's date moves, on file and in its history (A32's Next, first item)
+
+Opened before any code (PROTOCOL §6), on the branch restarted on take 141's
+merge (PR 70, `6d38f63`; Release take-141 green at 01:18 UTC, the night's
+red runs mended). The owner's word, 4 Oct: "Continue on anything you can
+overnight". Next in the session's order after A43 is A32's Next list, and
+its first item is a date move ("release moved Nov 20 → Dec 4"): the
+history rows keep each item's state, never its dates, so a moved release
+day was invisible unless it happened to change the state.
+
+### What this take changes
+
+1. **The runner keeps each distributor item's dates when they change.**
+   `tools/hunt.py` writes `dates` into the history: per distributor, per
+   item, the release day and the order due day, as first seen and again at
+   each run that reads a different pair. A run that read nothing fresh
+   (a kept copy) writes nothing. Cut with the runs it sits beside, keeping
+   the entry before the oldest run so the earlier date stays known.
+2. **The history says when a date moved.** Under a distributor's History,
+   a move reads "release moved Nov 20 → Dec 4" or "order due date moved
+   Aug 26 → Sep 2", between the two checks that saw it, beside the state
+   changes. The history only knows from this take on; a move before it is
+   not on file and nothing claims one.
+
+### Measured
+
+- On the history deployed at 4 Oct 19:36 UTC (96 runs since 17 Sep, 94,503
+  bytes) and its feed: the dates add 3,274 bytes (3.5%) -- GTS's 50 items, one
+  entry each. Southern Hobby's copy in that feed was a kept one, so its 21
+  items file at its next fresh read.
+- The pipeline from a fresh ingest: 87 groups, 7,684 products, 23 days of
+  history; smoke 1762 of 1762; render 277 of 277 `(mode: chrome)`; the gate
+  green; 582 s. No pipeline step changed (`tools/hunt.py` is the hourly's,
+  run by its own selftest and by the smoke's fixture run), so no clean run
+  (PROTOCOL §6b).
+
+### Tests
+
+- `tools/hunt.py --selftest`: 151 of 151, 7 new for the dates (filed once at
+  a first read; the same days add nothing; a moved release or order due day
+  adds an entry, the earlier kept; a kept or failed read writes nothing; cut
+  with the runs; an odd shape dropped; `append_history` writes them and the
+  runs guard holds). Two plants watched: always appending fails 2 of them,
+  and a kept copy taken for a read fails 2.
+- The smoke: 1762 of 1762, 9 new in `tools/smoke/98-…` in New York's zone. On
+  take 141's build (`SMOKE_APP`, a directory) the 5 app checks fail by name:
+  the GTS move across a hole, Southern Hobby's day first given then moved,
+  both Histories' words, a move with no read before it said as seen. What
+  passes on both: the runner's own check (this tree's `hunt.py` files the
+  fixture's dates), the premise, and the two controls (no dates on file;
+  dates of an odd shape).
+
+### The look
+
+- `node tools/look.mjs 142`: 3 steps at each Fold size, 6 ok -- the OP-18
+  box's page, Distributor info open, both Histories open, over take 114's
+  fixture with the runner's dates beside it: "release moved Oct 30 →
+  Nov 20 · between Oct 2, 9:30 AM and 1:30 PM" under GTS and "order due
+  date moved May 22 → May 29 · between Oct 4, 5:30 PM and 9:30 PM"
+  under Southern Hobby, after the state changes, oldest first. Every picture
+  read.
+
+### What I got wrong
+
+- Two of my own probes were wrong before the code was: one dropped the very
+  item it had moved, and one read the earlier days back and expected no
+  entry. Both read as failures of `record_dates` until I read the probe.
+- I reached for `import hunt` to read the site's address and got the
+  `tools/hunt/` package, not the script; the address is `config.UPDATE_URL`.
+
+### DEFERRED
+
+- A32's Next, the rest: a delisted item, the history on Releases'
+  not-in-the-catalogue list, Southern Hobby's paging, the hourly's feed
+  apart from validate (it stopped with the nightly on 4 Oct, landmine 252),
+  the retailers that need a residential IP.
+- A move before this take's first hourly is not on file and is never
+  claimed.
 
 ## Take 141 — 2026-10-04 — the phone's day wherever the collector reads one (A43, landmine 248)
 
@@ -102,6 +181,20 @@ pipeline (`validate failed (1)`) before any change; fixed here, item 0.
   shows its real +3,727%. Left as the honest number; a cap is the UI
   session's call.
 - A Release for take 140 alone: none; take 141's carries both.
+
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+With `check` (9 min, after TCGCSV's update, so through the move itself) and
+`apk` green on `e7c8c25`, and the night's runs read (100 and 101 red on this
+take's cause), the session merged PR 70 at 01:04 UTC on 5 Oct (`6d38f63`, a
+merge commit). `build` run 102 green: validate named 710255 and shipped it,
+Pages deployed at 01:13, Release take-141 published 01:18 UTC with the APK
+(28,960,853 bytes, 6,160 more than take 139's -- takes 140 and 141 and a
+night's catalogue, INFERRED, not measured file by file), the AAB
+(22,166,832), the mapping and the Play icon. The hourly feed had stopped too
+(`hunt` run 97 at 23:07 UTC, the same refusal: A32's "the feed is tied to
+validate"); its next run on `main` validates through the same rule. Take 142
+began on the branch restarted on this merge, and this note rides its PR.
 
 ## Take 140 — 2026-10-04 — Prep & Play's explanations cut short (A45 item 4, the last)
 

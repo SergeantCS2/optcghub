@@ -67,6 +67,15 @@ const HUNT = {
       if (tl.checks === 1) { tl.first = r.t; tl.state0 = st; }   /* the left edge of the record, never "since" */
       else if (st !== prev) tl.changes.push({ from: prev, to: st, after: prevT, by: r.t, kind: this.distKind(d, prev, st) });
       prev = st; prevT = r.t; tl.last = r.t; }
+    /* take 142 (A32's Next): the item's days as the runner filed them -- [run, release, order due day], an entry when
+       they moved; a move sits between the read that saw it and the read of this distributor before it */
+    const ds = h.dates && typeof h.dates === 'object' && h.dates[d] && h.dates[d][id], day = x => x === null || (typeof x === 'string' && /^\d{4}-\d\d-\d\d$/.test(x));
+    if (Array.isArray(ds)) { const es = ds.filter(e => Array.isArray(e) && e.length === 3 && typeof e[0] === 'string' && !isNaN(Date.parse(e[0])) && day(e[1]) && day(e[2]))
+        .sort((a, b) => Date.parse(a[0]) - Date.parse(b[0]));
+      for (let i = 1; i < es.length; i++) for (const [field, j] of [['release', 1], ['due', 2]]) if (es[i][j] !== es[i - 1][j]) {
+        const by = es[i][0], read = runs.filter(r => Date.parse(r.t) < Date.parse(by) && r[d] && typeof r[d] === 'object' && !Array.isArray(r[d]) && Object.keys(r[d]).length).pop();
+        tl.changes.push({ kind: 'moved', field, from: es[i - 1][j], to: es[i][j], after: read ? read.t : null, by }); }
+      tl.changes.sort((a, b) => Date.parse(a.by) - Date.parse(b.by)); }
     tl.now = prev; return tl; },
   storeName(zip, sid) { const st = this.hist && this.hist.stores && this.hist.stores[zip]; const x = (st || []).find(y => y.id === sid); return x ? x.name : sid; },
   ageMin(iso) { return iso ? Math.round((Date.now() - Date.parse(iso)) / 60000) : null; },
@@ -307,6 +316,9 @@ function tlDay(d, c, it) {
   const turn = utcDay(at, T[1]); return utcDay(c.after) < turn && turn <= utcDay(c.by, 1) ? at : null;
 }
 function distTl(it) { return HUNT.distTimeline(it._d, it[HUNT.DIST_KEY[it._d] || 'id']); }
+/* take 142: a moved day in words -- "release moved Nov 20 \u2192 Dec 4"; a day first given, or no longer given, says so */
+function tlMoved(c) { const F = c.field === 'due' ? 'order due date' : 'release', D = x => nbsp(dayText(x));
+  return c.from && c.to ? `${F} moved ${D(c.from)} \u2192 ${D(c.to)}` : c.to ? `${F} now ${D(c.to)}` : `${F} no longer given (was ${D(c.from)})`; }
 function distHistory(it, tl = distTl(it)) {
   if (!tl) return '';   /* take 73: with no history it says nothing */
   const d = it._d, W = st => tlWord(d, st), M = t => nbsp(momentText(t)), day = t => nbsp(dayText(localDay(t))), fAt = HUNT.feed && HUNT.feed.fetched_at;
@@ -325,7 +337,8 @@ function distHistory(it, tl = distTl(it)) {
   else {
     lines.push(`${W(tl.state0)} at the first check`);
     const more = tl.changes.length - TL_SHOW; if (more > 0) lines.push(`${more} earlier change${more === 1 ? '' : 's'} not shown`);
-    for (const c of tl.changes.slice(-TL_SHOW)) { const at = tlDay(d, c, it);   /* the last three, oldest first */
+    for (const c of tl.changes.slice(-TL_SHOW)) { if (c.kind === 'moved') { lines.push(dotJoin(tlMoved(c), c.after ? tlWindow(c) : `seen ${M(c.by)}`)); continue; }
+      const at = tlDay(d, c, it);   /* the last three, oldest first */
       lines.push(at ? dotJoin(`${W(c.from)} \u2192 ${TL_DAYW[d][c.to](nbsp(dayText(at)))}`, TL_HOW.dates)
         : dotJoin(`${W(c.from)} \u2192 ${W(c.to)}`, tlWindow(c), TL_HOW[c.kind])); } }
   return box(head, lines);
