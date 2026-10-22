@@ -74,7 +74,7 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0. *Take 146, in flight (22 Oct):* the nightly red since 15 Oct (issue
+0. *Take 146 (PR 76, merged by the session; Release take-146; issue #75 closed):* the nightly red since 15 Oct (issue
    #75): take 94's smoke control read a fixture's order due dates against
    the clock (landmine 249's family); it reads them as of the page's own
    day now. **Ruled out (take 146):** re-saving the GTS page (the next due

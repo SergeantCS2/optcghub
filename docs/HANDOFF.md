@@ -55,6 +55,14 @@ note rides here.
 - Other checks that read the GTS fixture's states against the clock: none
   failed here; the section's own age checks want the clock and keep it.
 
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+With `check` (9 min) and `apk` (6 min) green on `f272e0f`, the session merged
+PR 76 at 21:47 UTC on 22 Oct (`02c44cd`, a merge commit). Build run 124 went
+green; Release take-146 published 22:02 UTC with the APK (29,085,761 bytes)
+and the AAB (22,291,733). The report job closed issue #75 at 22:02 UTC.
+Take 146's AAB is take 145's plus the take number: no upload needed.
+
 ## Take 145 — 2026-10-05 — the hourly ships its feed when the catalogue is refused (A32's Next)
 
 Opened before any code (PROTOCOL §6), on the branch restarted on take 144's
