@@ -1,4 +1,4 @@
-# OP TCG Hub — take 145
+# OP TCG Hub — take 146
 
 ## Installing — read this first
 
@@ -17,6 +17,8 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 146:** Nothing you can see changes. The nightly build runs again: one of our tests had gone stale with the calendar and stopped it from 15 Oct. Your prices kept updating all along through the hourly update. Nothing you have saved changes.
 
 **New at take 145:** Nothing you can see changes. Hunt's stock lists keep updating hourly on a night the day's prices are held back, as they were on 4 Oct, instead of stopping with them. Nothing you have saved changes.
 
