@@ -1,4 +1,59 @@
-# HANDOFF — through Take 145
+# HANDOFF — through Take 146
+
+## Take 146 — 2026-10-22 — the nightly green again: a fixture read as of its own day
+
+Opened on the owner's word, 22 Oct, with issue #75 on screen: "I believe the
+nightly build is failing, should we investigate?" He also uploaded the newest
+Release's AAB (take 145) to Google Play. Branch restarted on `main`
+(`fa664fa`, the nightly's prices for 21 Oct); take 145's after-the-merge
+note rides here.
+
+### What this take changes
+
+1. **One smoke control reads its copy as of the saved page's day.** Every
+   nightly since 15 Oct (runs 116-123) failed one check: take 94's control
+   on Sealed's "orders open", which moves one GTS order due date into the
+   past and expects the count to drop. The fixture run stamps GTS as read
+   now; the saved page's last due date ahead was PEB-01's, 14 Oct. From 15
+   Oct nothing was ahead, so there was nothing to move. The app counted
+   right; the test was on the clock (landmine 249's family). The control now
+   reads its copy as of 24 Sept, the day the page was saved.
+
+### Measured
+
+- Runs 116-123 (15-22 Oct): `bundle` red at smoke, 1768 of 1769, the same
+  check each night; the prices committed first every night (40 days on file
+  at 21 Oct), so no price day was lost. No Release since take 145. The
+  hourly kept deploying a fresh catalogue (take 145's `ci/hunt.sh`): at 21:19
+  UTC on 22 Oct Pages served prices of 21 Oct, built 18:31 UTC, so phones'
+  prices never stopped.
+- Reproduced here on `main` (`fa664fa`): smoke 1768 of 1769, that check,
+  "no item to move ... 0 with orders open". With the fix: 1769 of 1769.
+
+### Tests
+
+- A build whose "orders open" counts by state, not by date (`SMOKE_APP`):
+  the control and the check before it both fail, as they should.
+- A first try pinned the whole section's GTS read time; it broke two checks
+  that read the source's age ("checked just now"). Narrowed to the control's
+  own copy.
+
+### The look
+
+- No look: nothing on screen changes.
+
+### What I got wrong
+
+- Take 94's control and take 138's rewrite of it both read "ahead" off a
+  fixture stamped with the clock; I did not ask how long the fixture's dates
+  would stay ahead. Landmine 249 named the family on 4 Oct.
+- The fix was written while reproducing the failure, before these ledgers
+  (PROTOCOL §6 puts them first); they were opened before the commit.
+
+### DEFERRED
+
+- Other checks that read the GTS fixture's states against the clock: none
+  failed here; the section's own age checks want the clock and keep it.
 
 ## Take 145 — 2026-10-05 — the hourly ships its feed when the catalogue is refused (A32's Next)
 

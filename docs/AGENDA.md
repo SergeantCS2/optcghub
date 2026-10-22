@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 145.* Ranked by blocking-ness, not by interest.
+*Current as of take 146.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -74,7 +74,14 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0. *Take 145 (PR 74, merged by the session; Release take-145):* A32's Next -- the hourly ships its feed
+0. *Take 146, in flight (22 Oct):* the nightly red since 15 Oct (issue
+   #75): take 94's smoke control read a fixture's order due dates against
+   the clock (landmine 249's family); it reads them as of the page's own
+   day now. **Ruled out (take 146):** re-saving the GTS page (the next due
+   date passes too); pinning the whole section's read time (two checks read
+   the source's age and want the clock). The owner uploaded take 145's AAB
+   to Play (22 Oct: "I also merged the most recent version to google play").
+   *Take 145 (PR 74, merged by the session; Release take-145):* A32's Next -- the hourly ships its feed
    over the live catalogue when the fresh one is refused (`ci/hunt.sh`,
    `hunt.py --live-bundle`). **Ruled out (take 145):** below, in A32.
    *Take 144 (PR 73, merged by the session; Release take-144):* A32's Next -- Southern Hobby's further

@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 145.*
+*Current as of take 146.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -3263,6 +3263,13 @@ under a clock pinned 1 minute to 400 days after the read. Rule: a pattern for
 a time-dependent label is written from the label's code, every branch of it,
 and proved under a pinned clock across them; a fixture's age is the one input
 that changes with nothing committed.
+*Take 146:* the same family by a date, not an age. Take 94's control on
+Sealed's "orders open" moves one order due date into the past and needs one
+still ahead of the read day; the fixture run stamps GTS as read now, while
+the saved page's last due date was 14 Oct. From 15 Oct nothing was ahead and
+every nightly went red for a week (issue #75). The control now reads its copy
+as of the page's own day. Rule: a fixture's states come with the day they
+were read; a check reads them as of that day, never the clock's.
 
 **250. A `\uXXXX` typed into a session's command can reach the file as the
 character itself.** Take 138 patched twenty sentences in `src/app/52-hunt.js`,

@@ -51,11 +51,17 @@ ok('...opened, it carries GTS Distribution with the counts and what a distributo
 /* take 138: the count of products without a due date left the screen, and with it what told the two counts apart here (by
    state, take 114 as first built, they agreed with the dates on "ahead"). The control now moves one due date into the past
    and leaves every state as GTS gave it: counted by dates, "orders open" drops by one; counted by state it would not move */
-const G2 = JSON.parse(JSON.stringify(G)), mv = G2.items.find(i => i.release && i.release > read94 && i.preorder && i.preorder >= read94);
+/* take 146: the control reads the copy as of the saved page's own day. The fixture run stamps the source with the clock, but the
+   page's states are as of the day it was saved (gts.FIXTURE_TODAY); from 15 Oct the clock passed its last order due date
+   (PEB-01, 14 Oct), "ahead" was 0 and there was nothing to move -- every nightly red (#75) */
+const PIN94 = '2026-09-24T19:08:56Z', pd94 = PIN94.slice(0, 10);
+const G2 = { ...JSON.parse(JSON.stringify(G)), fetched_at: PIN94 }, aheadP = G2.items.filter(i => i.release && i.release > pd94 && i.preorder && i.preorder >= pd94).length;
+const foldWith = g => { V.HUNT.feed = { ...F94, sources: { ...F94.sources, gts: g } }; V.distFoldTap('sealed'); const h = ctx.document.querySelector('#sealedList').innerHTML; V.distFoldTap('sealed'); V.HUNT.feed = F94; return h; };
+const h94p = foldWith(JSON.parse(JSON.stringify(G2))), mv = G2.items.find(i => i.release && i.release > pd94 && i.preorder && i.preorder >= pd94);
 if (mv) mv.preorder = '2000-01-01';
-V.HUNT.feed = { ...F94, sources: { ...F94.sources, gts: G2 } }; V.distFoldTap('sealed'); const h94m = ctx.document.querySelector('#sealedList').innerHTML; V.distFoldTap('sealed'); V.HUNT.feed = F94;
+const h94m = foldWith(G2);
 ok('...control: the count is by dates, not by state -- one due date moved into the past, its state left as GTS gave it, and "orders open" drops by one',
-   !!mv && ahead94 >= 1 && h94m.includes(`<b>${n94('sold_out')}</b> sold out`) && h94m.includes(`${due94(ahead94 - 1)}, `) && G2.items.filter(i => i.status === 'coming').length === n94('coming'),
+   !!mv && aheadP >= 1 && h94p.includes(`${due94(aheadP)}, `) && h94m.includes(`<b>${n94('sold_out')}</b> sold out`) && h94m.includes(`${due94(aheadP - 1)}, `) && G2.items.filter(i => i.status === 'coming').length === n94('coming'),
    `${mv ? mv.status : 'no item to move'} :: ${(h94m.match(/\d+ products: [^.]*/) || ['no GTS counts'])[0]}`);
 ok('a matched row carries one short line per distributor under its chips -- its name and its state -- which opens its page at Distributor info',
    new RegExp('data-open="' + by.BJP2850164.catalog_id + '" data-distinfo="1" aria-label="GTS Distribution · sold out: open [^"]+ at Distributor info"><span>GTS Distribution · sold out</span>').test(h94),
