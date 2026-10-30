@@ -1,4 +1,4 @@
-# OP TCG Hub — take 146
+# OP TCG Hub — take 147
 
 ## Installing — read this first
 
@@ -17,6 +17,8 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 147:** Hunt's Southern Hobby line for the Heroines Gift Collection display now points to the Set Display, not the single Set. A Southern Hobby display now only ever matches a display. The nightly build runs again. Nothing you have saved changes.
 
 **New at take 146:** Nothing you can see changes. The nightly build runs again: one of our tests had gone stale with the calendar and stopped it from 15 Oct. Your prices kept updating all along through the hourly update. Nothing you have saved changes.
 

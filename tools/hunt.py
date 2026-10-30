@@ -340,7 +340,13 @@ def southern_match(name, codes, sold_as, sealed):
     if southern.unit_unknown(name, sold_as):
         return None, 0.0
     case = (sold_as or "").upper() == "CASE"
-    return match(southern.retail_title(name, codes, sold_as), [s for s in sealed if ("case" in s["toks"]) == case])
+    pool = [s for s in sealed if ("case" in s["toks"]) == case]
+    # take 147: a display matches only a catalogue display. retail_title writes DISPLAY into the title for starter decks and
+    # double pack sets only, so a 6-count Heroines Gift Collection sold as a display took the single Set on the tie-break
+    # (fewer words) the day TCGCSV listed both (28 Oct). A case keeps its own rule: a display case is a case (ST-19's).
+    if not case and southern.is_display(name, sold_as):
+        pool = [s for s in pool if "display" in s["toks"]]
+    return match(southern.retail_title(name, codes, sold_as), pool)
 
 
 def from_fixtures():
@@ -470,8 +476,20 @@ def selftest():
               sm("Bandai - One Piece Card Game: OP-18 Booster Box", ["OP18"], "BOX") == "The Dominance of God Booster Box"
               and sm("Bandai - One Piece Card Game: EB-05 Extra Booster Pack 05", ["EB05"], "EACH") == "Extra Booster: One Piece Heroines Edition Vol.2 - Booster Pack"
               and sm("Bandai - One Piece Card Game: SD-01 Set Sail Deck Set", ["SD01"], "EACH") == "Set Sail Deck Set")
-        check("control: the Heroines Gift Collection the catalogue lacks is not matched to Gift Collection 2023", sm("Bandai - One Piece Card Game: Heroines Gift Collection 6CT", [], "DISPLAY") is None,
-              str(sm("Bandai - One Piece Card Game: Heroines Gift Collection 6CT", [], "DISPLAY")))
+        # take 147: the gift collections on a fixed list, as TCGCSV names them (OP-PR, 28 Oct). Through take 146 this control read
+        # the live catalogue and said the Heroines collection was not in it; TCGCSV listed the Set and its Display on 28 Oct, the
+        # 6-count display took the single Set, and the nightly went red (issue #77). The unit is the identity, as for a case.
+        gift = [{"id": i, "name": n, "toks": tokens(n) | tokens("One Piece Promotion Cards") | tokens("OP-PR")} for i, n in
+                ((484943, "Gift Collection 2023"), (493744, "Gift Collection 2023 Display"), (727129, "Gift Collection -ONE PIECE Heroines- Set"),
+                 (727130, "Gift Collection -ONE PIECE Heroines- Set Display"))]
+        gm = lambda n, sold, pool=gift: southern_match(n, [], sold, pool)[0]   # noqa: E731
+        hg = "Bandai - One Piece Card Game: Heroines Gift Collection 6CT"
+        check("a Heroines Gift Collection sold as a display (6CT) matches the Set Display, never the single Set -- page read or by its count",
+              gm(hg, "DISPLAY") == 727130 and gm(hg, None) == 727130, str([gm(hg, "DISPLAY"), gm(hg, None)]))
+        check("...control: sold as one set it matches the single Set, never the Display", gm("Bandai - One Piece Card Game: Heroines Gift Collection", "EACH") == 727129,
+              str(gm("Bandai - One Piece Card Game: Heroines Gift Collection", "EACH")))
+        check("...control: with the Heroines collection not in the catalogue, nothing -- never Gift Collection 2023 or its Display",
+              gm(hg, "DISPLAY", gift[:2]) is None and gm(hg, None, gift[:2]) is None, str([gm(hg, "DISPLAY", gift[:2]), gm(hg, None, gift[:2])]))
         # the unit is the identity: a case to a case, never to the one box
         ib8 = "Bandai - One Piece Card Game: IB-08 Illustration Box 08"
         check("a product Southern Hobby sells as a CASE matches the catalogue's case, never the single box (IB-08, an OP-12 box case, an ST-19 display case)",
