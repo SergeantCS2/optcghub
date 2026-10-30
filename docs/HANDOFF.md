@@ -57,6 +57,14 @@ nightly's prices for 29 Oct); take 146's after-the-merge note rides here.
 - Target, GTS and the shops' matchers take no unit from their pages; a
   display there is read from the title alone.
 
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+With `check` (9 min) and `apk` (6 min) green on `2fcddb8`, the session merged
+PR 78 at 15:09 UTC on 30 Oct (`e308cbf`, a merge commit). Release take-147
+published 15:25 UTC with the APK (29,157,025 bytes) and the AAB
+(22,362,982); the report job closed issue #77 at 15:25 UTC. Southern
+Hobby's 80216 moves to the Set Display on the next hourly.
+
 ## Take 146 — 2026-10-22 — the nightly green again: a fixture read as of its own day
 
 Opened on the owner's word, 22 Oct, with issue #75 on screen: "I believe the

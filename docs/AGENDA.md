@@ -74,7 +74,7 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0. *Take 147, in flight (30 Oct):* the nightly red again (issue #77, run
+0. *Take 147 (PR 78, merged by the session; Release take-147; issue #77 closed):* the nightly red again (issue #77, run
    132): a selftest control assumed the catalogue lacked the Heroines Gift
    Collection; TCGCSV listed it on 28 Oct and the 6-count display matched the
    single Set, live on Hunt. A Southern Hobby display now matches only a
