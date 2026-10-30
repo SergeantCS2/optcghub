@@ -1,4 +1,61 @@
-# HANDOFF — through Take 146
+# HANDOFF — through Take 147
+
+## Take 147 — 2026-10-30 — a display matches only a display (the nightly red again, issue #77)
+
+Opened on the owner's word, 30 Oct: "I think the build might be failing,
+review GitHub and error logs". Branch restarted on `main` (`7759509`, the
+nightly's prices for 29 Oct); take 146's after-the-merge note rides here.
+
+### What this take changes
+
+1. **A display matches only a catalogue display.** Nightly run 132 (30 Oct)
+   failed at the gate on one `hunt.py --selftest` control: Southern Hobby's
+   "Heroines Gift Collection 6CT", sold as a display, was to match nothing
+   because the catalogue had no Heroines collection. TCGCSV listed
+   "Gift Collection -ONE PIECE Heroines- Set" (727129) and its "Set
+   Display" (727130) with the 28 Oct prices, and the matcher took the single
+   Set: `retail_title` writes DISPLAY only for starter decks and double pack
+   sets, and the tie-break prefers the shorter name. The red was real -- the
+   hourly feed on Pages had item 80216 on the single Set (rules 3 and 4).
+   `southern_match` now keeps a display (the page says so, or the name
+   carries Display or a count above one: `southern.is_display`) to the
+   catalogue's displays, as a case is kept to cases; a case keeps its own
+   rule (ST-19's display case). The control runs on a fixed list of the four
+   gift collections, not on what the catalogue happens to list (landmine
+   253).
+
+### Measured
+
+- Runs 125-131 (23-29 Oct) green; run 132 red at the gate, one probe.
+  Hourlies green throughout (runs 211-220); prices committed every night.
+- Every live Southern Hobby item (19, the feed of 30 Oct 09:58 UTC) matched
+  before and after the change: one moves, 80216 from 727129 (the Set) to
+  727130 (the Set Display); the other 18 are as they were.
+
+### Tests
+
+- `hunt.py --selftest`: 172 of 172 (170 at take 145). New: the 6-count
+  display matches the Set Display, page read or by its count; sold as one
+  set it matches the single Set; with neither in the list, nothing.
+- Plants, each watched to fail the first: no display filter (take 146's
+  matcher); a count that does not make a display. A first version also
+  kept non-display units away from displays; it broke the ST-19 display
+  case and no case needed it, so it went.
+
+### The look
+
+- No look: nothing on screen changes but which product one Southern Hobby
+  line names, on the next hourly.
+
+### What I got wrong
+
+- Take 146 read only the failing check; a check that asserts the
+  catalogue's absence of something was the same family and still standing.
+
+### DEFERRED
+
+- Target, GTS and the shops' matchers take no unit from their pages; a
+  display there is read from the title alone.
 
 ## Take 146 — 2026-10-22 — the nightly green again: a fixture read as of its own day
 
@@ -54,6 +111,14 @@ note rides here.
 
 - Other checks that read the GTS fixture's states against the clock: none
   failed here; the section's own age checks want the clock and keep it.
+
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+With `check` (9 min) and `apk` (6 min) green on `f272e0f`, the session merged
+PR 76 at 21:47 UTC on 22 Oct (`02c44cd`, a merge commit). Build run 124 went
+green; Release take-146 published 22:02 UTC with the APK (29,085,761 bytes)
+and the AAB (22,291,733). The report job closed issue #75 at 22:02 UTC.
+Take 146's AAB is take 145's plus the take number: no upload needed.
 
 ## Take 145 — 2026-10-05 — the hourly ships its feed when the catalogue is refused (A32's Next)
 

@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 146.* Ranked by blocking-ness, not by interest.
+*Current as of take 147.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -74,7 +74,16 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0. *Take 146, in flight (22 Oct):* the nightly red since 15 Oct (issue
+0. *Take 147, in flight (30 Oct):* the nightly red again (issue #77, run
+   132): a selftest control assumed the catalogue lacked the Heroines Gift
+   Collection; TCGCSV listed it on 28 Oct and the 6-count display matched the
+   single Set, live on Hunt. A Southern Hobby display now matches only a
+   catalogue display (landmine 253). **Ruled out (take 147):** writing
+   DISPLAY into every display's title (the catalogue's names put Display in
+   different places; the pool is the unit, as for a case); keeping
+   non-display units off displays as well (no case needs it; it broke ST-19's
+   display case).
+   *Take 146 (PR 76, merged by the session; Release take-146; issue #75 closed):* the nightly red since 15 Oct (issue
    #75): take 94's smoke control read a fixture's order due dates against
    the clock (landmine 249's family); it reads them as of the page's own
    day now. **Ruled out (take 146):** re-saving the GTS page (the next due

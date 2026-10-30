@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 146.*
+*Current as of take 147.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -265,6 +265,7 @@ Start here. Do not read top to bottom.
 | A `\uXXXX` typed into a command reached the file as the character; an anchor on the escape missed | **250** |
 | The screen names a version the code moved past: a fact typed by hand beside the one the code carries | **251** |
 | Every build stops on a >10x price move that is real: a new promo's first market price | **252** |
+| A control that says "the catalogue lacks X" goes red the day the source lists X -- and hid a wrong-unit match | **253** |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -3312,6 +3313,20 @@ UTC): the hourly validated before it deployed, and one job shipped both the
 catalogue and the feed. A refused catalogue now ships the feed over the one
 Pages already serves (`ci/hunt.sh`, `hunt.py --live-bundle`). Rule: a guard
 on one product stops that product only.
+
+**253. A control that leans on what the catalogue lacks goes red the day
+the source lists it, and here the red was a real wrong match.** Take 112's
+control said Southern Hobby's "Heroines Gift Collection 6CT" (sold as a
+display) matched nothing, because the catalogue had no Heroines collection.
+TCGCSV listed the Set and the Set Display with the 28 Oct prices; the next
+nightly (run 132, 30 Oct) refused at the gate, and the hourly had already
+matched the 6-count display to the single Set: `retail_title` wrote
+DISPLAY into the title for starter decks and double pack sets only, and the
+tie-break took the shorter name. Since take 147 a display matches only a
+catalogue display, as a case matches only a case, and the control runs on a
+fixed list of the four gift collections. Rule: a control states its own
+catalogue; and the unit is part of a product's identity for every kind, not
+the kinds that bit first.
 
 ## §2 — Inherited from APEX ORV
 

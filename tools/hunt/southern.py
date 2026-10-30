@@ -162,6 +162,15 @@ def retail_title(name, codes=(), sold_as=None):
     return re.sub(r"\s+", " ", t).strip()
 
 
+def is_display(name, sold_as=None):
+    """Take 147: sold as a display -- the page says so, or the name carries 'Display' or a count above one -- the unit
+    retail_title reads, for every product, not only the starter decks and double pack sets it writes DISPLAY for."""
+    if sold_as:
+        return sold_as.upper() == "DISPLAY"
+    ct = re.search(r"\b(\d+)\s*CT\b", name or "", re.I)
+    return bool(re.search(r"\bDISPLAY\b", name or "", re.I)) or (ct is not None and int(ct.group(1)) > 1)
+
+
 def unit_unknown(name, sold_as=None):
     """A starter deck and a double pack set are sold singly and by the display.
     Until the product page says which (or the name carries 'Display' or a
