@@ -70,6 +70,14 @@ take 147's after-the-merge note rides here.
 - A set's preorder prices before its release are shown as prices; the
   app does not say "preorder" on them.
 
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+With `check` (9 min) and `apk` (6 min) green on `897a46f`, the session merged
+PR 80 at 05:34 UTC on 31 Oct (`7081977`), at the owner's word ("Merge it when
+green"). Build run 135 green; Release take-148 published 05:47 UTC with the
+APK (29,161,921 bytes) and the AAB (22,367,882); the report job closed issue
+#79 at 05:47 UTC. Phones take the 30 Oct prices from this deploy.
+
 ## Take 147 — 2026-10-30 — a display matches only a display (the nightly red again, issue #77)
 
 Opened on the owner's word, 30 Oct: "I think the build might be failing,
