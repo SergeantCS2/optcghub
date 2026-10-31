@@ -74,7 +74,7 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0. *Take 148, in flight (31 Oct):* the nightly red (issue #79, run 134):
+0. *Take 148 (PR 80, merged by the session; Release take-148; issue #79 closed):* the nightly red (issue #79, run 134):
    EB-05's release day dropped its commons from preorder prices to bulk and
    validate's >10x guard called nine of them glitches; a set's first week
    now ships its moves, named (landmine 254). **Ruled out (take 148):** a
