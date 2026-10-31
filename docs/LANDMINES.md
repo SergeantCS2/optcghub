@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 147.*
+*Current as of take 148.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -266,6 +266,7 @@ Start here. Do not read top to bottom.
 | The screen names a version the code moved past: a fact typed by hand beside the one the code carries | **251** |
 | Every build stops on a >10x price move that is real: a new promo's first market price | **252** |
 | A control that says "the catalogue lacks X" goes red the day the source lists X -- and hid a wrong-unit match | **253** |
+| A set's release day drops its preorder prices to bulk; the >10x guard called it a glitch, and smoke's copy never saw drops | **254** |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -3327,6 +3328,24 @@ catalogue display, as a case matches only a case, and the control runs on a
 fixed list of the four gift collections. Rule: a control states its own
 catalogue; and the unit is part of a product's identity for every kind, not
 the kinds that bit first.
+
+**254. A set's release day is a >10x move by design, and the guard's
+corroboration cannot see a bulk price.** EB-05 released 30 Oct. Eleven of
+its commons and uncommons went from preorder listings near $2.99 to bulk,
+$0.12 to $0.28, and validate refused nine of them: the day's cheapest
+listing sits at the $0.05 floor, more than 3x under a bulk market. The
+nightly (run 134) went red; the hourly shipped its feed over the live
+catalogue (take 145's fallback, its first real refusal), so phones stayed
+one price day behind. The log's "...and 6 more" was printed under every
+refusal and counted the shipped moves too. And take 8's smoke copy of the
+rule tested |d1p| < 900, which passes every drop (a 10x drop is -90%), so it
+never saw a drop at all. Since take 148 a printing whose set was published
+on the price day or up to 7 days before ships its move, named; the count
+prints once and counts the refused; smoke's copy is two-way with the same
+window. Rule: a guard's copy is checked both ways the guard is; and a
+corroboration has a floor below which it cannot agree. The same release emptied Upcoming to one set, and take
+110's render check, which read the list's first two rows as a pair, failed
+on a grid that was fine: it reads two rows of one panel now.
 
 ## §2 — Inherited from APEX ORV
 

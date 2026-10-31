@@ -13,7 +13,7 @@ import json, os, sqlite3, sys, time
 from datetime import datetime, timezone
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from config import (CATALOG_DB, MANIFEST, EXPECTED_CARDS, COUNT_TOLERANCE,
-                    MAX_DAILY_PRICE_FACTOR, PRICE_CORROBORATE_FACTOR,
+                    MAX_DAILY_PRICE_FACTOR, PRICE_CORROBORATE_FACTOR, RELEASE_SETTLE_DAYS,
                     MAX_MANIFEST_AGE_HOURS, ROOT)
 
 PREV = os.path.join(ROOT, "catalog", "previous_manifest.json")
@@ -21,6 +21,12 @@ PREV = os.path.join(ROOT, "catalog", "previous_manifest.json")
 
 def _fail(msgs, m):
     msgs.append(m)
+
+
+def _days(a, b):
+    """Whole days from date a to date b (YYYY-MM-DD)."""
+    import datetime
+    return (datetime.date.fromisoformat(b) - datetime.date.fromisoformat(a)).days
 
 
 def check(db, man, prev=None, strict_hashes=True):
@@ -80,22 +86,30 @@ def check(db, man, prev=None, strict_hashes=True):
         # (710255, $0.49 -> $18.75 with its cheapest listing at $36.99), and it stopped every
         # build. A slip moves the market alone; a move the same day's cheapest listing agrees
         # with is the market's, and ships -- named in the log, never silently.
+        # Take 148 (landmine 254): a set's first days settle its preorder prices -- the price day is the source's
+        day = str(man.get("source_updated_at") or man.get("fetched_at") or "")[:10]
         glitch = []
         for pid, p, m in moved:
             low = db.execute("SELECT low FROM price WHERE product_id = ? AND market = ? "
                              "ORDER BY low DESC LIMIT 1", (pid, m)).fetchone()
             low = low[0] if low else None
+            pub = db.execute("SELECT s.published_on FROM printing p JOIN card_set s ON s.group_id = p.group_id "
+                             "WHERE p.product_id = ?", (pid,)).fetchone()
+            pub = str(pub[0] or "")[:10] if pub else ""
             if low and low > 0 and 1 / PRICE_CORROBORATE_FACTOR <= m / low <= PRICE_CORROBORATE_FACTOR:
                 moves.append(f"product {pid} moved ${p:.2f} -> ${m:.2f}; the day's cheapest "
                              f"listing ${low:.2f} agrees (within {PRICE_CORROBORATE_FACTOR:g}x) -- a market move, shipped")
+            elif day and pub and pub <= day and _days(pub, day) <= RELEASE_SETTLE_DAYS:
+                moves.append(f"product {pid} moved ${p:.2f} -> ${m:.2f}; its set was released {pub}, "
+                             f"{_days(pub, day)} day(s) before the prices of {day} -- preorder prices settling, shipped")
             else:
                 glitch.append((pid, p, m, low))
         for pid, p, m, low in glitch[:5]:
             _fail(bad, f"product {pid} moved ${p:.2f} -> ${m:.2f} "
                        f"(>{MAX_DAILY_PRICE_FACTOR}x; cheapest listing "
                        f"{'$%.2f' % low if low else 'none'}) — upstream data glitch?")
-            if len(moved) > 5:
-                _fail(bad, f"...and {len(moved)-5} more implausible price moves")
+        if len(glitch) > 5:                                   # take 148: once, and counting the refused only
+            _fail(bad, f"...and {len(glitch)-5} more implausible price moves")
 
     # 6. The economic confidence tables must exist and be consistent, because the
     #    scanner reads them instead of doing this arithmetic on the hot path.
@@ -182,6 +196,18 @@ def selftest():
     db.execute("UPDATE price SET low = NULL WHERE product_id = 9")
     bad, _ = check(db, dict(man, cards=EXPECTED_CARDS), {"9": 0.49}, strict_hashes=False)
     ok.append(("the same move with no listing", any("upstream data glitch" in b for b in bad)))
+    # take 148 (landmine 254): a set's release days settle its preorder prices -- the same drop ships on its release day
+    # and up to RELEASE_SETTLE_DAYS after, never before it, never after the window
+    db.execute("UPDATE price SET market = 0.26, low = 0.05 WHERE product_id = 9")
+    def on(pub, day="2026-10-30"):
+        db.execute("UPDATE card_set SET published_on = ? WHERE group_id = 1", (pub,))
+        return check(db, dict(man, cards=EXPECTED_CARDS, source_updated_at=day + "T20:05:38+0000"), {"9": 8.77}, strict_hashes=False)
+    b0, s0 = on("2026-10-30"); b7, _ = on("2026-10-23"); b8, _ = on("2026-10-22"); bf, _ = on("2026-11-02")
+    ok.append(("a drop on its set's release day ships, named", not any("upstream data glitch" in b for b in b0)
+               and any("its set was released 2026-10-30" in x for x in s0["moves"])))
+    ok.append(("...7 days on too, never 8, never before the release", not any("glitch" in b for b in b7)
+               and any("glitch" in b for b in b8) and any("glitch" in b for b in bf)))
+    db.execute("UPDATE card_set SET published_on = '2020-01-01' WHERE group_id = 1")
     db.execute("DELETE FROM price WHERE product_id = 9")
 
     good = sqlite3.connect(CATALOG_DB) if os.path.exists(CATALOG_DB) else None

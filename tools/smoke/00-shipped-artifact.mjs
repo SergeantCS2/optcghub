@@ -261,11 +261,24 @@ ok('deltas are internally consistent: pct = abs / yesterday',
    }));
 /* take 141 (landmine 252): validate ships a >10x move the day's cheapest listing agrees with (within 3x) -- a new
    promo's price found, 710255 $0.49 -> $18.75 against a $36.99 listing -- and refuses one it does not */
-const tenX = p => Math.abs(p.d1p) < 900 || (p.low > 0 && p.market / p.low <= 3 && p.market / p.low >= 1 / 3);
-ok('no printing moved more than 10x overnight unless the day\'s cheapest listing agrees, within 3x (landmines 7, 252)',
+/* take 148 (landmine 254): both ways -- a 10x drop is -90%, which |d1p| < 900 let through, so this copy never saw EB-05's
+   release-day drops -- and a printing whose set was released on the price day or up to 7 days before ships too (its
+   preorder prices settling), as validate's RELEASE_SETTLE_DAYS says */
+const day148 = String(manifest.source_updated_at || '').slice(0, 10);
+const settling = p => { const st = p.set != null && V.CAT.sets.get(p.set), pub = st && st.pub;
+  return !!pub && !!day148 && pub <= day148 && (Date.parse(day148 + 'T00:00:00Z') - Date.parse(pub + 'T00:00:00Z')) / 864e5 <= 7; };
+const tenX = p => (p.d1p < 900 && p.d1p > -90) || (p.low > 0 && p.market / p.low <= 3 && p.market / p.low >= 1 / 3) || settling(p);
+ok('no printing moved more than 10x overnight, up or down, unless the day\'s cheapest listing agrees, within 3x, or its set was just released (landmines 7, 252, 254)',
    withD.every(tenX),
-   withD.filter(p => !tenX(p)).map(p => `${p.id} ${p.d1p}% low ${p.low}`).slice(0, 5).join(' | ') || `${withD.filter(p => Math.abs(p.d1p) >= 900).length} corroborated`);
-ok('...control: a 37x move with its cheapest listing 5x off is refused, one with no listing too', !tenX({ d1p: 3727, market: 187.5, low: 36.99 }) && !tenX({ d1p: 3727, market: 18.75, low: null }) && tenX({ d1p: 3727, market: 18.75, low: 36.99 }));
+   withD.filter(p => !tenX(p)).map(p => `${p.id} ${p.d1p}% low ${p.low}`).slice(0, 5).join(' | ') || `${withD.filter(p => p.d1p >= 900 || p.d1p <= -90).length} shipped`);
+ok('...control: a 37x move with its cheapest listing 5x off is refused, one with no listing too; a 97% drop the same, unless its set came out within the week',
+   !tenX({ d1p: 3727, market: 187.5, low: 36.99 }) && !tenX({ d1p: 3727, market: 18.75, low: null }) && tenX({ d1p: 3727, market: 18.75, low: 36.99 })
+   && !tenX({ d1p: -97, market: 0.26, low: 0.05 }) && !tenX({ d1p: -97, market: 0.26, low: 0.05, set: '__none__' })
+   && (() => { const fk = '__t148__', at = n => new Date(Date.parse(day148 + 'T00:00:00Z') - n * 864e5).toISOString().slice(0, 10);
+     try { V.CAT.sets.set(fk, { id: fk, pub: at(0) }); const a = tenX({ d1p: -97, market: 0.26, low: 0.05, set: fk });
+       V.CAT.sets.set(fk, { id: fk, pub: at(8) }); const b = tenX({ d1p: -97, market: 0.26, low: 0.05, set: fk });
+       V.CAT.sets.set(fk, { id: fk, pub: at(-3) }); const c = tenX({ d1p: -97, market: 0.26, low: 0.05, set: fk });
+       return a && !b && !c; } finally { V.CAT.sets.delete(fk); } })());
 /* Landmine 114: this froze "two days" at take 20 and went red on the runner
    the first night TCGCSV published a third. The count grows nightly; assert
    the SHAPE -- at least two, consecutive, ending on the source date. */

@@ -1457,7 +1457,10 @@ if (puppeteer) {
     const rows = [...document.querySelectorAll('#allRes .row')].slice(0, 2).map(R);
     out.search = rows.length === 2 ? { sameLine: Math.abs(rows[0].top - rows[1].top) < 2, apart: Math.round(rows[1].left - rows[0].left) } : null;
     V.MODE.set('hunt', true); await wait(250); V.go('releases'); await wait(250); while (V.closeAnyOverlay()) {}
-    const rels = [...document.querySelectorAll('#relList .rel')].slice(0, 2).map(R);
+    /* take 148: two rows of one panel -- the first two in the list sat in two panels the day Upcoming held a single set
+       (EB-05 released 30 Oct, OP-18 alone ahead), and this read a grid as broken */
+    const relIn = [...document.querySelectorAll('#relList .panel')].map(pn => [...pn.querySelectorAll('.rel')]).find(xs => xs.length >= 2) || [];
+    const rels = relIn.slice(0, 2).map(R);
     out.releases = rels.length === 2 ? { sameLine: Math.abs(rels[0].top - rels[1].top) < 2 } : null;
     V.MODE.set('collect', true); await wait(250); V.go('home'); return out; });
   ok('take 110: the open Fold, a card\'s page -- the card 300 px on the left, its page beside it', inner.card.w === 300 && inner.card.left < 40 && inner.card.besideLeft > inner.card.left + inner.card.w && inner.card.besideTop < inner.card.artBottom, JSON.stringify(inner.card));

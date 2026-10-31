@@ -55,6 +55,11 @@ MAX_DAILY_PRICE_FACTOR = 10.0
 # market price within this factor -- a slip moves the market alone. MEASURED 5 Oct, 7,221 products: market and low
 # sit within 3x for 64%; the one >10x move in 23 days of history (710255, $0.49 -> $18.75, a new promo) at 0.51x.
 PRICE_CORROBORATE_FACTOR = 3.0
+# Take 148 (landmine 254): a set's first days settle its preorder prices. EB-05 released 30 Oct; seven of its commons and
+# uncommons went from preorder listings near $2.99 to bulk ($0.12-$0.28) that day, and the cheapest listing ($0.05, the
+# floor) cannot agree with a bulk market within 3x. A >10x move on a printing whose set was published on the price day or
+# up to this many days before ships, named in the log. MEASURED 30 Oct: all 7 of the day's >10x moves, one set.
+RELEASE_SETTLE_DAYS = 7
 # Landmine 6: a cached payload must not masquerade as a fresh one.
 MAX_MANIFEST_AGE_HOURS = 36
 # MEASURED take 1: 6,860 card products. Landmine 8 — the catalogue is small.
