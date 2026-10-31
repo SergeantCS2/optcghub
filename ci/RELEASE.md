@@ -1,4 +1,4 @@
-# OP TCG Hub — take 147
+# OP TCG Hub — take 148
 
 ## Installing — read this first
 
@@ -17,6 +17,8 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 148:** Nothing you can see changes. Prices update again after a new set's release day: EB-05's cards dropping from preorder prices to bulk had stopped the nightly update on 31 Oct. Nothing you have saved changes.
 
 **New at take 147:** Hunt's Southern Hobby line for the Heroines Gift Collection display now points to the Set Display, not the single Set. A Southern Hobby display now only ever matches a display. The nightly build runs again. Nothing you have saved changes.
 

@@ -1,4 +1,74 @@
-# HANDOFF — through Take 147
+# HANDOFF — through Take 148
+
+## Take 148 — 2026-10-31 — a set's release day settles its prices (the nightly red, issue #79)
+
+Opened on the owner's word, 31 Oct: "Builds till failing I believe".
+Branch restarted on `main` (`6e91728`, the nightly's prices for 30 Oct);
+take 147's after-the-merge note rides here.
+
+### What this take changes
+
+1. **A set's first week ships its price moves.** Nightly run 134 (31 Oct)
+   stopped at validate: EB-05 released 30 Oct, and eleven of its commons
+   and uncommons fell from preorder listings near $2.99 to bulk ($0.12 to
+   $0.28). Two passed the take-141 corroboration; nine did not, because the
+   day's cheapest listing is the $0.05 floor, more than 3x under a bulk
+   market. A >10x move on a printing whose set was published on the price
+   day or up to 7 days before (`RELEASE_SETTLE_DAYS`) now ships, named in
+   the log; outside that week the guard is as it was.
+2. **The refusal count prints once,** counting the refused only (it printed
+   "...and 6 more" under each of five refusals, counting shipped moves).
+3. **Smoke's copy of the rule sees drops.** Take 8's check tested
+   `|d1p| < 900`; a 10x drop is -90%, so no drop ever reached it. It is
+   two-way now, with the same release week.
+4. **Render measures two Releases rows of one panel.** With EB-05 out,
+   Upcoming holds one set (OP-18, 20 Nov); take 110's check read the first
+   two rows in the list, one in Upcoming and one in Recent, and called the
+   grid broken. It found this on the first run past validate here.
+
+### Measured
+
+- Run 134: the nine refused, all EB-05, published 30 Oct, the price day.
+  This take's validate on the 30 Oct prices: green, eleven moves named,
+  nine of them "preorder prices settling".
+- Take 145's fallback, its first real refusal: Pages kept the 29 Oct
+  prices (built 30 Oct 16:41 UTC) and the hourly kept deploying the stock
+  feed (01:35 UTC on 31 Oct). Phones were one price day behind, not more.
+
+- A clean run (PROTOCOL §6b: validate is a pipeline step), a fresh clone
+  with this take laid over it: 87 groups, 7,796 products; smoke 1769 of
+  1769; render 277 of 277 `(mode: chrome)`; the gate green; 601 s.
+
+### Tests
+
+- `validate.py --selftest`: two new controls (a drop on its set's release
+  day ships, named; 7 days on too, never 8 days on, never before the
+  release); each watched to fail with the window removed and with it
+  unbounded.
+- Smoke: the two-way check on the shipped catalogue, and a control that a
+  97% drop is refused unless its set came out within the week (on the
+  release day yes; 8 days on and 3 days before, no).
+
+- Render: 277 of 277 `(mode: chrome)`; with Releases' panels planted one
+  row to a line, the check fails, as it should.
+
+### The look
+
+- No look: nothing on screen changes.
+
+### What I got wrong
+
+- Take 141 measured the corroboration factor on the whole catalogue; it
+  never asked what a bulk card's cheapest listing looks like. And the
+  smoke copy's one-way test was there at take 141 too.
+- My first clean run copied the tracked files into a plain folder; it is
+  not a git repository, so the `.gitignore` check could not ask git, and
+  three failures were the copy's. A clone is the clean directory now.
+
+### DEFERRED
+
+- A set's preorder prices before its release are shown as prices; the
+  app does not say "preorder" on them.
 
 ## Take 147 — 2026-10-30 — a display matches only a display (the nightly red again, issue #77)
 
@@ -56,6 +126,14 @@ nightly's prices for 29 Oct); take 146's after-the-merge note rides here.
 
 - Target, GTS and the shops' matchers take no unit from their pages; a
   display there is read from the title alone.
+
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+With `check` (9 min) and `apk` (6 min) green on `2fcddb8`, the session merged
+PR 78 at 15:09 UTC on 30 Oct (`e308cbf`, a merge commit). Release take-147
+published 15:25 UTC with the APK (29,157,025 bytes) and the AAB
+(22,362,982); the report job closed issue #77 at 15:25 UTC. Southern
+Hobby's 80216 moves to the Set Display on the next hourly.
 
 ## Take 146 — 2026-10-22 — the nightly green again: a fixture read as of its own day
 

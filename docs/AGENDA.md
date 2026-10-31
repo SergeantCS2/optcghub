@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 147.* Ranked by blocking-ness, not by interest.
+*Current as of take 148.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -74,7 +74,15 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0. *Take 147, in flight (30 Oct):* the nightly red again (issue #77, run
+0. *Take 148, in flight (31 Oct):* the nightly red (issue #79, run 134):
+   EB-05's release day dropped its commons from preorder prices to bulk and
+   validate's >10x guard called nine of them glitches; a set's first week
+   now ships its moves, named (landmine 254). **Ruled out (take 148):** a
+   lower corroboration floor (a bulk market and the $0.05 listing floor
+   differ by 2-6x on every bulk card, glitch or not); an absolute cents band
+   (a glitch to $0.20 on a $467 card passes it); a reviewed allow-list
+   (take 141's reason: a session's commit for each).
+   *Take 147 (PR 78, merged by the session; Release take-147; issue #77 closed):* the nightly red again (issue #77, run
    132): a selftest control assumed the catalogue lacked the Heroines Gift
    Collection; TCGCSV listed it on 28 Oct and the 6-count display matched the
    single Set, live on Hunt. A Southern Hobby display now matches only a
