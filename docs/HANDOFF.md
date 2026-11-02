@@ -38,6 +38,8 @@ take 150's after-the-merge note and the AGENDA's pricing measurement.
 - On the look's eight lines (added 20-40 days ago): Vivi -$7.90 since
   added, $0.00 on the day; Imu +$0.90 since added, +$3.05 over 30 days --
   the same price, three honest answers.
+- The date sweep (take 150's): 1781 of 1781 at every instant and on the
+  real clock, in UTC and in New York.
 
 ### Tests
 
