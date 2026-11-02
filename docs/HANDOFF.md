@@ -83,6 +83,16 @@ word (the UI session's ground otherwise); a card's page keeps the day's.
 
 - A card's page keeps the day's change (not asked).
 
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+With `check` and `apk` green on `d265bd4`, the session merged PR 85 at 16:45
+UTC on 2 Nov (`895a564`), at the owner's word ("merge it when green"). Build
+run 141 green; Release take-152 published 17:03 UTC with the APK
+(29,175,381 bytes) and the AAB (22,381,364). The change reaches the phone
+once the owner uploads take 152's AAB. The Cloudflare relay's steps
+(RUNBOOK §9) went to the owner the same hour; the relay's address goes
+into `BUILD` and PROVISION in the take after he sends it.
+
 ## Take 151 — 2026-11-02 — Collection's change over a period of the collector's choosing
 
 Opened on the owner's word, 2 Nov: "Go with option 3, default since added
