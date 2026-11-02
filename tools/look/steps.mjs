@@ -2725,4 +2725,34 @@ const take143 = [
       return { ok: true };
     } },
 ];
-export const STEPS = { 143: take143, 142: take142, 141: take141, 140: take140, 139: take139, 138: take138, 137: take137, 131: take131, 130: take130, 128: take128, 127: take127, 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
+/* take 151: Collection's change over a chosen period -- the owner's own kind of lines (from his 2 Nov screenshots), added
+   20 to 40 days ago, the switch tapped as a finger taps it */
+const take151 = [
+  { name: 'collection-since-added', run: async (page, ctx) => {
+      await ctx.open();
+      const r = await page.evaluate(`(async () => { const V = window.VAULT, P = (num, tr) => V.CAT.rows.find(p => p.num === num && p.treat === tr);
+        const at = d => new Date(Date.now() - d * 864e5).toISOString();
+        const L = [['OP07-026', 'parallel', 40], ['EB04-018', 'alternate_art', 35], ['OP14-031', 'base', 25], ['EB03-024', 'sp', 30], ['OP09-118', 'base', 20], ['OP13-079', 'alternate_art', 22], ['OP10-002', 'parallel', 28], ['EB02-036', 'alternate_art', 33]]
+          .map(([n, t, d]) => { const p = P(n, t); return p && { id: p.id, qty: 1, condition: 'NM', pf: 'main', game: 'optcg', added: at(d) }; }).filter(Boolean);
+        V.OWN.items = L; V.OWN.save(); V.MODE.set('collect', true); V.go('collection'); V.paintCollection(); window.scrollTo(0, 0); await ${pause};
+        return { n: L.length, mode: V.CHANGE.mode, titles: [...document.querySelectorAll('#colGrid .dl span[title]')].map(e => e.title).slice(0, 3) }; })()`);
+      await page.evaluate(() => { const el = document.getElementById('colChange'); el && el.scrollIntoView({ block: 'start' }); window.scrollBy(0, -140); });
+      await wait(300);
+      return { ok: r.n >= 6 && r.mode === 'added' && r.titles.every(t => /^since [A-Z][a-z]{2} \d{1,2}/.test(t)), ...r };
+    } },
+  { name: 'collection-day', run: async (page) => {
+      await page.click('#colChange [data-chg="day"]'); await wait(400);
+      const r = await page.evaluate(() => ({ mode: window.VAULT.CHANGE.mode, pressed: document.querySelector('#colChange [aria-pressed="true"]').textContent }));
+      return { ok: r.mode === 'day' && r.pressed === 'Day', ...r };
+    } },
+  { name: 'collection-30-days', run: async (page) => {
+      await page.click('#colChange [data-chg="30d"]'); await wait(400);
+      const r = await page.evaluate(() => ({ mode: window.VAULT.CHANGE.mode, pressed: document.querySelector('#colChange [aria-pressed="true"]').textContent }));
+      return { ok: r.mode === '30d' && r.pressed === '30 days', ...r };
+    } },
+  { name: 'restore', run: async (page) => {
+      await page.evaluate(`(async () => { const V = window.VAULT; V.setChange('added'); V.OWN.items = []; V.OWN.save(); V.go('home'); await ${pause}; })()`);
+      return { ok: true };
+    } },
+];
+export const STEPS = { 151: take151, 143: take143, 142: take142, 141: take141, 140: take140, 139: take139, 138: take138, 137: take137, 131: take131, 130: take130, 128: take128, 127: take127, 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };

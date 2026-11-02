@@ -165,8 +165,9 @@ function paintCollection() {
   } else if (!items.length) {
     empty.innerHTML = G('scancard', 64) + 'Nothing here yet.<br>Tap <b>Scan</b> and point the camera at a card.';
   }
+  paintChange();
   $('#colGrid').innerHTML = items.map(({ i, p }) => {
-    const s = CAT.sets.get(p.set) || {};
+    const s = CAT.sets.get(p.set) || {}, chg = lineChange(p, i);   /* take 151: the line's change over the period chosen */
     const sel = bulk && bulk.has(p.id);
     const prod = SEALED.isGoods(p);   /* take 111: a box's tile said "NM \u00b7 Normal" under a lone dot */
     return `<button class="tile" data-open="${p.id}"
@@ -183,12 +184,19 @@ function paintCollection() {
       <div class="c" style="color:var(--dim)">${prod ? 'Sealed' : dotJoin(esc(i.condition), esc(p.sub || 'Normal'))}</div>
       <div class="foot">
         <span class="qty">Qty: ${i.qty}</span>
-        <span class="px mono">${p.d1a > 0.004 ? '<span class="up">\u25b2</span> '
-            : p.d1a < -0.004 ? '<span class="down">\u25bc</span> ' : ''}${money(p.market)}
-          <span class="dl">${deltaHtml(p, { tile: true })}</span></span>
+        <span class="px mono">${chg && chg.a > 0.004 ? '<span class="up">\u25b2</span> '
+            : chg && chg.a < -0.004 ? '<span class="down">\u25bc</span> ' : ''}${money(p.market)}
+          <span class="dl">${changeSpan(chg, { tile: true, title: changeTitle(chg, i) })}</span></span>
       </div></button>`;
   }).join('');
 }
+/* take 151: the period's switch, under the search -- one chip pressed, the choice kept */
+function paintChange() {
+  const el = $('#colChange'); if (!el) return;
+  el.innerHTML = CHANGE.modes.map(([m, w]) => `<button class="chip${CHANGE.mode === m ? ' on' : ''}" data-chg="${m}" aria-pressed="${CHANGE.mode === m}">${w}</button>`).join('');
+}
+function setChange(m) { if (!CHANGE.set(m)) return false; paintCollection(); return true; }
+$('#colChange').addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-chg]'); if (b) setChange(b.dataset.chg); });
 /* take 128 (the owner's note): a scanned line's picture by choice. The flip is the line's (pic: 'ref', or absent), kept
    through the one commit path (take 115) so the backup carries it; no snapshot -- the collection's value did not move. */
 const FLIP = { swiped: false };

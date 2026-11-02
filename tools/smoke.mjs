@@ -63,7 +63,7 @@ const onField = (id, turn, rested = false, don = 0) => Object.assign(V.SIM.inst(
 import { pathToFileURL } from 'node:url';
 const harness = { V, ctx, doc, listeners, store, remote, html, js, catalog, manifest, pkg, ok, section, scripted, onField, appSource, ROOT, W, fs, path, os, vm, zlib, execSync, makeDom, boot, fx: null };
 const dir = path.join(ROOT, 'tools', 'smoke');
-const files = fs.readdirSync(dir).filter(f => /^\d\d-[a-z0-9-]+\.mjs$/.test(f)).sort();
+const files = fs.readdirSync(dir).filter(f => /^\d{2,3}-[a-z0-9-]+\.mjs$/.test(f)).sort((a, b) => parseInt(a, 10) - parseInt(b, 10) || a.localeCompare(b));   /* take 151: past 99, 100 and on, in their number's order */
 const short = v => { const s = String(v); return s.length > 60 ? s.slice(0, 57) + '...' : s; };
 const snap = () => ({
   'collection lines': V.OWN.items.length,

@@ -1,4 +1,4 @@
-# OP TCG Hub — take 150
+# OP TCG Hub — take 151
 
 ## Installing — read this first
 
@@ -17,6 +17,8 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 151:** Collection now shows each card's change since you added it, like other collection apps do. A switch under the search bar changes it to the day, 7 days or 30 days, and "Biggest move" sorts by the same period. Your prices are unchanged. Nothing you have saved changes.
 
 **New at take 150:** Nothing you can see changes. Our tests now run as if on other days and in your time zone, so a date or time-zone slip is caught before it reaches you or the nightly update. Nothing you have saved changes.
 

@@ -1,4 +1,76 @@
-# HANDOFF — through Take 150
+# HANDOFF — through Take 151
+
+## Take 151 — 2026-11-02 — Collection's change over a period of the collector's choosing
+
+Opened on the owner's word, 2 Nov: "Go with option 3, default since added
+- your recommendations here. As mentioned it's actually not far off." The
+measurement before it: the owner's 21 cards against Collectr agree on price
+(13 to the cent, the rest within $0.02-$0.69, 11 of Collectr's equal to our
+day before); what differed was the change -- ours the day's, Collectr's over
+weeks, most likely since the card was added. A UI change, the owner's to
+call (the UI session's ground otherwise), made at his word. Branch carries
+take 150's after-the-merge note and the AGENDA's pricing measurement.
+
+### What this take changes
+
+1. **A switch under Collection's search bar: Since added, Day, 7 days,
+   30 days.** Each tile's change and its triangle follow it. Since added is
+   the default; the choice is kept on the phone (`vault.changeBy`). A tile's
+   title names the day the change is measured from.
+2. **Since added** is today's price against the price on the day the line
+   was added (the phone's day, the last price on file on or before it).
+   A line added before the price history begins is measured from the first
+   price on file, and its title says so; a line added today shows no move.
+3. **7 and 30 days** measure from the last price on file on or before that
+   many days back from the newest day; **Day** is the change the tile
+   showed until now, unchanged.
+4. **"Biggest move" sorts by the chosen period**, so the order and the
+   numbers on the tiles agree.
+5. Prices are not touched; Home, a card's page and Market movers keep the
+   day's change. `deltaHtml` now draws through a shared `changeSpan`; its
+   output is the same.
+
+### Measured
+
+- The owner's 21 cards against Collectr (before the take): price agrees,
+  13 to the cent, the rest within $0.02-$0.69; the change differed by
+  period, not by price.
+- On the look's eight lines (added 20-40 days ago): Vivi -$7.90 since
+  added, $0.00 on the day; Imu +$0.90 since added, +$3.05 over 30 days --
+  the same price, three honest answers.
+
+### Tests
+
+- Smoke section 100, twelve checks: the default; since-added against the
+  added day's price; 7 and 30 days against their own days; Day equal to the
+  day's change; a line added before the history (first price, and the title
+  says so); added today (no move); a missing day walks back to the last
+  price; the tile's title, triangle and percent; the switch drawn with Since
+  added pressed; a chosen period kept and read back; an unknown period
+  refused; "Biggest move" ordered by the period.
+- Control: the same section on take 150's build fails all eleven checks
+  past its premise, each by name. Smoke 1781 of 1781 on take 151.
+- `gate.py` and the smoke runner read three-digit section numbers (section
+  100 is the first), in number order.
+
+### The look
+
+- Four steps, cover and inner, 8 of 8: Since added, Day and 30 days, each
+  pressed by a real tap, then the restore.
+
+### What I got wrong
+
+- The new test found an app bug before it shipped: `saveJson` writes a
+  string as it is and `readJson` parses, so a kept "day" would have read
+  back as nothing and fallen to Since added. The period is stored encoded.
+- I wrote the section against `paintCollection` before the app exported it,
+  and the section left the screen stack changed for the files after it; it
+  restores the stack now.
+
+### DEFERRED
+
+- Home, a card's page and Market movers still show the day's change; a
+  period there is the UI session's or the owner's call.
 
 ## Take 150 — 2026-11-02 — the date sweep: every check on other days
 
