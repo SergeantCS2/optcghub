@@ -23,7 +23,9 @@ ok('the Sealed screen draws rows with market, low, high and a delta, grouped by 
 ok('...and says where the price comes from: TCGplayer\'s market, via TCGCSV (take 138: in fewer words)', /Market prices from TCGplayer, via TCGCSV\./.test(html));
 V.paintReleases();
 const rel = ctx.document.querySelector('#relList').innerHTML;
-ok('Releases lists what is upcoming with a countdown and what was recent', /Upcoming/.test(rel) && /in \d+ days?|today/.test(rel) && /days ago/.test(rel));
+/* take 150 (the sweep): a day with nothing announced is a day too -- the list says so rather than count down */
+const upNow = [...V.CAT.sets.values()].some(s => s.pub && s.pub >= V.phoneToday());
+ok('Releases lists what is upcoming with a countdown, or says nothing is announced, and what was recent', /Upcoming/.test(rel) && (upNow ? /in \d+ days?|today/.test(rel) : /Nothing announced in the catalogue yet/.test(rel)) && /days ago/.test(rel), `upcoming in the catalogue: ${upNow}`);
 ok('an unpublished card list is said to be unpublished, never shown as zero', !/\b0 cards/.test(rel));
 ctx.window.scrollTo = () => {}; ctx.scrollTo = () => {};
 ok('a sealed row opens the detail sheet, where the price alert already lives', (() => { try { V.openDetail(rows[0].id); return /alert/i.test(js) && /data-open="/.test(ctx.document.querySelector('#sealedList').innerHTML); } catch (e) { return false; } })());

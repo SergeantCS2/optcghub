@@ -23,7 +23,10 @@ const folded97 = () => { V.RELF.open = new Set(); V.paintReleases(); const h = c
 const renamed97 = (f) => { const was = run.map(s => [s.name, s.abbr]); run.forEach((s, i) => f(s, i)); try { return folded97(); } finally { run.forEach((s, i) => { s.name = was[i][0]; s.abbr = was[i][1]; }); V.paintReleases(); } };
 ok('the run stays one row whatever TCGCSV names its sets: named as before 29 Sept, and named without the words (landmine 231)', renamed97((s, i) => { s.name = `Starter Deck ${31 + i}: Deck ${i}`; }) && renamed97((s, i) => { s.name = `Deck ${i} of the run`; }), `${run.length} decks on ${runDay}`);
 ok('control: a run with neither an ST code nor the words is not folded', !!runDay && !renamed97((s, i) => { s.name = `Deck ${i} of the run`; s.abbr = `XX${i}`; }));
-const single = Object.keys(byDay).find(d => byDay[d].length === 1); const one = single && byDay[single][0];
+/* take 150 (the sweep): a single deck Releases still lists -- upcoming, or among the twelve most recent -- not one that has aged off it */
+const day97s = V.phoneToday(), shown97 = new Set([...V.CAT.sets.values()].filter(s => s.pub && s.pub >= day97s).map(s => s.id)
+  .concat([...V.CAT.sets.values()].filter(s => s.pub && s.pub < day97s).sort((a, b) => b.pub.localeCompare(a.pub)).slice(0, 12).map(s => s.id)));
+const single = Object.keys(byDay).find(d => byDay[d].length === 1 && shown97.has(byDay[d][0].id)); const one = single && byDay[single][0];
 ok('control: a single starter deck on its day stays its own row', !one || new RegExp('data-browse-set="' + one.id + '"').test(r97), String(one && one.abbr));
 V.RELF.open.add(runDay); V.paintReleases(); const r97b = ctx.document.getElementById('relList').innerHTML;
 ok('opening the fold shows every deck of the run as its own row, and the fold says Hide', run.every(s => new RegExp('data-browse-set="' + s.id + '"').test(r97b)) && /Hide the decks/.test(r97b));
@@ -36,8 +39,13 @@ const rows97 = upcoming97.filter(s => new RegExp('data-browse-set="' + s.id + '"
 ok('every upcoming row\'s countdown carries the band of its distance, and a recent row carries the past band', rows97.every(s => new RegExp('data-browse-set="' + s.id + '"[\\s\\S]*?<span class="note ' + V.relBand(days97(s.pub)) + '">').test(r97c)) && /<span class="note cd4">\d+ days ago<\/span>/.test(r97c), `${rows97.length} upcoming rows of ${upcoming97.length} sets`);
 ok('every upcoming row and group has Remind me and Calendar beside Details; a recent one has Details only', count97(r97c, /data-relalert="/g) >= rows97.length && count97(r97c, /data-relcal="/g) === count97(r97c, /data-relalert="/g) && (() => { const rec = r97c.slice(r97c.indexOf('<h3>Recent</h3>')); return !/data-relalert=/.test(rec) && /Details <svg[^>]*><use href="#g-external"/.test(rec); })());
 /* the reminder: on, the day before, once; off */
-const s97 = upcoming97.sort((a, b) => a.pub.localeCompare(b.pub))[0];
-if (s97) {
+/* take 150 (the sweep): on a day the catalogue announces nothing, a set of the check's own, twenty days out, so the reminder
+   and the calendar are proved every day rather than skipped (four checks went unrun from 21 Nov on, the catalogue as it stands) */
+const fake97 = upcoming97.length ? null : { id: '__sweep97__', name: 'Sweep Check Booster', abbr: 'SW-01', kind: 'main',
+  pub: new Date(Date.parse(today97 + 'T12:00:00Z') + 20 * 864e5).toISOString().slice(0, 10) };
+if (fake97) V.CAT.sets.set(fake97.id, fake97);
+const s97 = fake97 || upcoming97.sort((a, b) => a.pub.localeCompare(b.pub))[0];
+try {
   const on = V.RELALERTS.toggle(s97.id, s97.name, s97.pub); V.paintReleases();
   ok('Remind me stores the set and its date and the row says Reminder set', on && V.RELALERTS.has(s97.id) && V.RELALERTS.list[0].pub === s97.pub && /Reminder set <svg[^>]*><use href="#g-check"/.test(ctx.document.getElementById('relList').innerHTML) && new RegExp('data-relalert="' + s97.id + '" [^>]*aria-pressed="true"').test(ctx.document.getElementById('relList').innerHTML));
   const early = await V.RELALERTS.check(V.RELALERTS.dayBefore(V.RELALERTS.dayBefore(s97.pub)));
@@ -47,7 +55,7 @@ if (s97) {
   ok('the same button removes it', !V.RELALERTS.toggle(s97.id, s97.name, s97.pub) && !V.RELALERTS.has(s97.id));
   const ics = V.icsFor(V.releaseEvent(s97));
   ok('Calendar hands the release to the phone as an all-day event on its date, named, with the listing as its link and no store location', new RegExp('DTSTART;VALUE=DATE:' + s97.pub.replace(/-/g, '')).test(ics) && ics.includes('SUMMARY:' + s97.name.replace(/,/g, '\\,') + ' — release day') && !/LOCATION:/.test(ics) && /URL:https:\/\/www\.tcgplayer\.com\//.test(ics) && new RegExp('UID:optcghub-event-release-' + s97.id + '@optcghub').test(ics));
-} else { ok('no upcoming set in the catalogue today (the reminder path is exercised when one exists)', true); }
+} finally { if (fake97) { V.CAT.sets.delete(fake97.id); V.RELALERTS.list = V.RELALERTS.list.filter(a => a.id !== fake97.id); V.paintReleases(); } }
 ok('the reminder rides two paths: a scheduled notification the day before and the on-open check at startup', /notifyAt\(/.test(js) && /schedule: \{ at/.test(js) && /RELALERTS\.check\(\)/.test(js) && /cancelNotify\(/.test(js));
 /* the distributor's unlisted starter-deck displays fold the same way */
 const fxDir97 = fs.mkdtempSync(path.join(os.tmpdir(), 'optcghub-rel-')); const feed97 = path.join(fxDir97, 'feed-fixture.json');
