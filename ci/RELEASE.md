@@ -1,4 +1,4 @@
-# OP TCG Hub — take 151
+# OP TCG Hub — take 152
 
 ## Installing — read this first
 
@@ -17,6 +17,8 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 152:** Home and Market movers now follow the same switch as Collection: Since added, Day, 7 days or 30 days. The figure under your collection's total is how much your cards' prices moved over that period, and the switch sits under it too. Your prices are unchanged. Nothing you have saved changes.
 
 **New at take 151:** Collection now shows each card's change since you added it, like other collection apps do. A switch under the search bar changes it to the day, 7 days or 30 days, and "Biggest move" sorts by the same period. Your prices are unchanged. Nothing you have saved changes.
 

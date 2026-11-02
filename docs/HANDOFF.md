@@ -1,4 +1,87 @@
-# HANDOFF — through Take 151
+# HANDOFF — through Take 152
+
+## Take 152 — 2026-11-02 — Home and Market movers follow the period switch
+
+Opened on the owner's word, 2 Nov, after take 151's look: "Uploaded 151,
+yes make Home and movers follow the switch". Take 151's switch (Since added,
+Day, 7 days, 30 days) set Collection's change only; Home's figure under the
+total and Market movers still read the day's, or the chart's range. Now the
+one switch sets all three, and can be pressed on each. A UI change at his
+word (the UI session's ground otherwise); a card's page keeps the day's.
+
+### What this take changes
+
+1. **Home's figure under the total follows the switch.** It is the held
+   lines' price moves over the period -- each line's own change, times its
+   count, against what those lines were worth at its start
+   (`collectionChange`) -- in words: "since added", "since yesterday",
+   "over 7 days", "over 30 days". A card bought this week is no gain. A
+   line with no price on file at all is left out, and the figure says how
+   many. The switch sits under it, in the hero.
+2. **The chart keeps its own range** (1D to MAX). Its change in dollars was
+   the figure under the total through take 151 and counted a card bought
+   in the range as a gain; it is gone. A note under the ranges says when
+   the chart is an estimate or has too little history; a screen reader
+   hears its range.
+3. **Market movers follow the switch**, which sits on top. Your collection
+   is line by line, each line's change over the period times its count (a
+   printing held on two lines added on two days is two rows -- through take
+   151 it was one printing's row per line, each with all the lines' count).
+   The game's list takes the period too; on Since added, which no card you
+   do not own has, it shows the day's and says so. Both headings name their
+   days.
+4. **The switch is one row of `CLICKS`** (`[data-chg]`), where take 151 had
+   a listener on Collection's chips: a tap on any of the three redraws
+   Collection, Home, and the movers when they are on screen. Take 133's
+   pinned table is 30 rows now.
+5. `periodStart` names the day 7 or 30 days back once, for the lines and
+   the headings.
+
+### Measured
+
+- The look's eight cards (added 20-40 days ago): Home -$19.04 (-3.2%) since
+  added, -$6.81 (-1.2%) over 7 days -- the sum of the seven 7-day rows on
+  Market movers (-6.65 +6.15 -4.41 -1.99 +0.46 -0.45 +0.08). Vivi's
+  -$7.90 since added is Collection's tile.
+- The date sweep: 1795 of 1795 at every instant and on the real clock, in
+  UTC and in New York.
+
+### Tests
+
+- Smoke section 101, fourteen checks: the premise; the sum of lines; a card
+  bought today adds nothing; a line with no price is left out and counted;
+  no lines, no change; Home's figure in its words; Home's switch; the
+  chart's own note; a tap through the CLICKS row; Home on 7 days; the
+  movers' switch and heading; two lines of one printing as two rows; the
+  game's list on Since added; the movers redrawn on 30 days with the
+  game's biggest 30-day mover first. Smoke 1795 of 1795.
+- Render, in Chrome: a real tap on Home's 7 days chip runs the switch's row
+  and redraws the figure; 278 of 278.
+- Controls, take 151's build: smoke fails 16 -- section 101's thirteen past
+  its premise, take 133's row count, and the two release-note checks (that
+  build carries take 151's note); render fails the row count and the real
+  tap. The movers are opened as Collection's button opens them, through its
+  row, so on take 151 the checks read the day's headings it draws, not a
+  missing export.
+
+### The look
+
+- Five steps, cover and inner, 10 of 10: Home on Since added, a real tap on
+  Home's 7 days, Market movers opened by a real tap on Collection's button
+  (7 days pressed), its Since added tapped, the restore.
+
+### What I got wrong
+
+- My first section picked the biggest 30-day mover for its two-lines check;
+  its price had not moved in eight days, so its line added five days ago
+  rightly drew no row. The check picks a printing that moved both since 20
+  and since 5 days ago.
+- My first look step looked for Market movers on Home; it is on
+  Collection's strip.
+
+### DEFERRED
+
+- A card's page keeps the day's change (not asked).
 
 ## Take 151 — 2026-11-02 — Collection's change over a period of the collector's choosing
 
@@ -73,6 +156,15 @@ take 150's after-the-merge note and the AGENDA's pricing measurement.
 
 - Home, a card's page and Market movers still show the day's change; a
   period there is the UI session's or the owner's call.
+
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+The owner saw the look before the merge: "Looks much better, the added color
+for prices is awesome and filtering". With `check` and `apk` green on
+`6e18a81`, the session merged PR 84 at 05:58 UTC on 2 Nov (`78239c1`). Build
+run 140 green; Release take-151 published 06:14 UTC with the APK
+(29,174,273 bytes) and the AAB (22,380,243). The owner uploaded take 151's
+AAB to Play the same morning ("Uploaded 151").
 
 ## Take 150 — 2026-11-02 — the date sweep: every check on other days
 

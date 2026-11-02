@@ -193,10 +193,16 @@ function paintCollection() {
 /* take 151: the period's switch, under the search -- one chip pressed, the choice kept */
 function paintChange() {
   const el = $('#colChange'); if (!el) return;
-  el.innerHTML = CHANGE.modes.map(([m, w]) => `<button class="chip${CHANGE.mode === m ? ' on' : ''}" data-chg="${m}" aria-pressed="${CHANGE.mode === m}">${w}</button>`).join('');
+  el.innerHTML = changeChips();
 }
-function setChange(m) { if (!CHANGE.set(m)) return false; paintCollection(); return true; }
-$('#colChange').addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-chg]'); if (b) setChange(b.dataset.chg); });
+/* take 152: one switch for Collection, Home's figure and Market movers -- pressed on any of them, all three redraw */
+function setChange(m) {
+  if (!CHANGE.set(m)) return false;
+  paintCollection(); paintHome();
+  if (moversShown()) paintMovers();
+  return true;
+}
+CLICKS.on('[data-chg]', (e, b) => setChange(b.dataset.chg));
 /* take 128 (the owner's note): a scanned line's picture by choice. The flip is the line's (pic: 'ref', or absent), kept
    through the one commit path (take 115) so the backup carries it; no snapshot -- the collection's value did not move. */
 const FLIP = { swiped: false };
@@ -271,34 +277,42 @@ CLICKS.on('[data-act]', e => {
    the catalogue carry its own deltas, computed nightly from a committed price
    history, so every device sees the same movers and none of them has to have
    been opened yesterday to know what happened. */
-function showMovers() {
-  const mine = OWN.items.map(i => CAT.byId.get(i.id)).filter(p => p && p.d1p != null);
-  const withQty = id => OWN.items.filter(i => i.id === id).reduce((a, i) => a + i.qty, 0);
-  const rows = mine.map(p => ({ p, dollars: p.d1a * withQty(p.id) }))
-    .filter(x => Math.abs(x.p.d1p) >= 0.01)
+/* take 152 (the owner, 2 Nov): the movers follow the period switch, pressable here too. Your collection is line by line --
+   each line's own change over the period (since added: since that line was added), times its count; the game's list has
+   no added day for a card nobody added, so on Since added it shows the day's, and its heading says which */
+function moversShown() { return ($('#allRes').innerHTML || '').includes('Biggest moves'); }
+function paintMovers() {
+  const lines = OWN.items.map(i => ({ i, p: CAT.byId.get(i.id) })).filter(x => x.p);
+  const rows = lines.map(x => ({ ...x, c: lineChange(x.p, x.i) })).filter(x => x.c && Math.abs(x.c.pc) >= 0.01)
+    .map(x => ({ ...x, dollars: x.c.a * x.i.qty }))
     .sort((a, b) => Math.abs(b.dollars) - Math.abs(a.dollars));
-  const all = CAT.rows.filter(p => p.d1p != null && p.market >= 5)
-    .sort((a, b) => Math.abs(b.d1a) - Math.abs(a.d1a)).slice(0, 8);
-  const day = (CAT.man.history_days || []).slice(-1)[0] || '';
-  const prev = (CAT.man.history_days || []).slice(-2)[0] || '';
-  const line = (p, extra) => `<button class="row" style="width:100%;text-align:left;align-items:center" data-open="${p.id}">
+  const gm = CHANGE.mode === 'added' ? 'day' : CHANGE.mode;   /* the game's list: the day's on Since added */
+  const all = CAT.rows.filter(p => p.market >= 5).map(p => ({ p, c: lineChange(p, null, gm) })).filter(x => x.c)
+    .sort((a, b) => Math.abs(b.c.a) - Math.abs(a.c.a)).slice(0, 8);
+  const span = m => m === 'added' ? 'since added' : m === 'day' ? (D1().gap == null ? sinceLabel() : `${dayText(D1().from)} \u2192 ${dayText(D1().to)}`)
+    : `${dayText(periodStart(m))} \u2192 ${dayText((CAT.days || []).slice(-1)[0] || '')}`;
+  const line = (p, c, title, extra) => `<button class="row" style="width:100%;text-align:left;align-items:center" data-open="${p.id}">
       ${cardPic(p)}<div class="nm"><b>${esc(p.name)}${p.treat !== 'base'
         ? ` <span class="badge">${esc(TREAT[p.treat] || p.treat)}</span>` : ''}</b>
       <span>${dotJoin(esc(p.num), money(p.market))}${extra || ''}</span></div>
-      <div class="v">${deltaHtml(p)}</div></button>`;
+      <div class="v">${changeSpan(c, { title })}</div></button>`;
   $('#allRes').innerHTML = `
-    <div class="panel"><h3>Your collection \u00b7 ${esc(dayText(prev))} \u2192 ${esc(dayText(day))}</h3>
-      ${rows.length ? rows.slice(0, 10).map(x => line(x.p,
-          withQty(x.p.id) > 1 ? ` \u00b7 \u00d7${withQty(x.p.id)} = ${
-            signedMoney(x.dollars)}` : '')).join('')
-        : `<div class="note">${mine.length
-            ? `Nothing you own moved ${esc(sinceLabel())}.`
+    <div class="chips" role="group" aria-label="The period the moves cover" style="margin:0 0 12px">${changeChips()}</div>
+    <div class="panel"><h3>Your collection \u00b7 ${esc(span(CHANGE.mode))}</h3>
+      ${rows.length ? rows.slice(0, 10).map(x => line(x.p, x.c, changeTitle(x.c, x.i),
+          x.i.qty > 1 ? ` \u00b7 \u00d7${x.i.qty} = ${signedMoney(x.dollars)}` : '')).join('')
+        : `<div class="note">${lines.length
+            ? `Nothing you own moved ${esc(changeWords())}.`
             : 'Add cards and their moves show up here.'}</div>`}
     </div>
-    <div class="panel"><h3>Biggest moves in the game</h3>
-      ${all.map(p => line(p)).join('')}
-      <div class="note">Cards under $5 excluded — a 40% swing on $0.30 is noise.</div>
+    <div class="panel"><h3>Biggest moves in the game \u00b7 ${esc(span(gm))}</h3>
+      ${all.map(x => line(x.p, x.c, changeTitle(x.c, null))).join('')}
+      <div class="note">Cards under $5 excluded — a 40% swing on $0.30 is noise.${CHANGE.mode === 'added'
+        ? ' Since added counts the cards you own; this list shows the day\u2019s moves.' : ''}</div>
     </div>`;
+}
+function showMovers() {
+  paintMovers();
   $('#setPanel').style.display = 'none';
   go('search'); window.scrollTo(0, 0);
 }

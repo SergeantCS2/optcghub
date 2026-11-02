@@ -11,10 +11,10 @@ section('take 133 — one click dispatcher (A44 item 3): the document-level dele
     '[data-tradd],[data-trinc],[data-trdec]', '#themeSeg [data-theme]', '[data-pl],#plFirst,#plHot,#plCurtain,#plNext,#plReset,[data-plleader]',
     '[data-cdkw],[data-cdcol],[data-cdcost],[data-cdadd],#cdForDeck', '[data-bnset],#bnPrev,#bnNext', '[data-alrm],[data-alrearm]',
     '[data-checklist],[data-ckmode],[data-ck],#ckWantAll,[data-want]', '[data-go],[data-rules],[data-back],[data-close]', '[data-pf]', '[data-pfname]', '[data-r]',
-    '[data-pfmove]', '[data-bulkcond]', '#colClearF', '[data-open]', '[data-act]', '[data-distfold],[data-disthist]', '[data-browse-set]',
+    '[data-pfmove]', '[data-bulkcond]', '[data-chg]' /* take 152: the period switch, a row where its file registers it */, '#colClearF', '[data-open]', '[data-act]', '[data-distfold],[data-disthist]', '[data-browse-set]',
     '[data-setpick]', '#earnBtn', '[data-pick]', '[data-cond]', '#diagRun,#devEarn,#diagCopy,#diagShare'];
   const have = C ? C.table.map(r => r.sel.join(',')) : [];
-  ok('29 rows: the former listeners\' selectors, in the files\' order -- the registration order the separate listeners had', have.length === 29 && have.every((s, i) => s === ROWS[i]), JSON.stringify(have));
+  ok('30 rows: the 29 former listeners\' selectors and take 152\'s period switch, in the files\' order -- the registration order the separate listeners had', have.length === ROWS.length && have.every((s, i) => s === ROWS[i]), JSON.stringify(have));
   ok('every row\'s handler is a function and every selector a non-empty string', !!C && C.table.every(r => typeof r.fn === 'function' && r.sel.length > 0 && r.sel.every(s => typeof s === 'string' && s.length > 0)));
   /* the mechanics, on a scratch table in the real dispatcher's place */
   if (C) {

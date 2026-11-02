@@ -2168,13 +2168,23 @@ json.dump(H.build(F["zips"], F["radius"], previous=copy.deepcopy(F)), sys.stdout
   ok('take 133: Chrome counts one bubbling click listener on the document -- the dispatcher -- and one capture-phase, the scrim rule', bub133 === 1 && cap133 === 1, `bubbling ${bub133}, capture ${cap133}`);
   const rows133 = await page.evaluate(() => { const V = window.VAULT; if (!V.CLICKS) return { n: 0, bad: ['no CLICKS'] };
     return { n: V.CLICKS.table.length, bad: V.CLICKS.table.flatMap(r => r.sel).filter(s => { try { document.querySelector(s); return false; } catch (e) { return true; } }) }; });
-  ok('take 133: 29 rows, every selector one Chrome parses', rows133.n === 29 && rows133.bad.length === 0, JSON.stringify(rows133));
+  ok('take 133: 30 rows (29, and take 152\'s period switch), every selector one Chrome parses', rows133.n === 30 && rows133.bad.length === 0, JSON.stringify(rows133));
   await page.evaluate(() => { const V = window.VAULT; while (V.closeAnyOverlay()) {} V.MODE.set('collect'); V.go('home'); window.__n133 = V.CLICKS ? V.CLICKS.n : -1; });
   await new Promise(r => setTimeout(r, 300));
   await tap('#home [data-go="settings"]'); await new Promise(r => setTimeout(r, 400));
   const went133 = await page.evaluate(() => { const V = window.VAULT; return { n: V.CLICKS ? V.CLICKS.n - window.__n133 : null, last: V.CLICKS ? V.CLICKS.last : null, screen: V.NAV.stack[V.NAV.stack.length - 1] }; });
   ok('take 133: a real tap on Home\'s gear goes through the table -- one click, the nav row the one that ran -- and opens More', went133.n === 1 && !!went133.last && went133.last.length === 1 && went133.last[0] === '[data-go],[data-rules],[data-back],[data-close]' && went133.screen === 'settings', JSON.stringify({ ...went133, taps: tapNotes.slice(-1) }));
   await page.evaluate(() => { window.VAULT.go('home'); delete window.__n133; });
+  /* take 152: the period switch is a CLICKS row (it was a listener on Collection's chips at take 151). A real tap on Home's
+     7 days chip goes through the table, presses the chip and redraws the figure under the total; the period is put back */
+  await page.evaluate(() => { const V = window.VAULT; window.__k152 = V.CHANGE ? V.CHANGE.mode : null; window.__n152 = V.CLICKS ? V.CLICKS.n : -1; V.go('home'); if (V.setHomeTab) V.setHomeTab(false); });
+  await new Promise(r => setTimeout(r, 300));
+  await tap('#homeChange [data-chg="7d"]'); await new Promise(r => setTimeout(r, 300));
+  const t152 = await page.evaluate(() => { const V = window.VAULT; return { mode: V.CHANGE && V.CHANGE.mode, n: V.CLICKS ? V.CLICKS.n - window.__n152 : null, last: V.CLICKS ? V.CLICKS.last : null,
+    delta: document.getElementById('pfDelta').textContent, pressed: (document.querySelector('#homeChange [aria-pressed="true"]') || {}).textContent }; });
+  ok('take 152: a real tap on Home\'s 7 days chip goes through the table -- the switch\'s row ran -- and the figure under the total follows',
+     t152.mode === '7d' && t152.n === 1 && Array.isArray(t152.last) && t152.last.includes('[data-chg]') && t152.pressed === '7 days' && /over 7 days|^Add a card/.test(t152.delta), JSON.stringify({ ...t152, taps: tapNotes }));
+  await page.evaluate(() => { const V = window.VAULT; if (V.setChange && window.__k152) V.setChange(window.__k152); delete window.__k152; delete window.__n152; });
   await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2 });   /* touch gone: the page reloads once more; nothing below reads it */
 
   await browser.close();

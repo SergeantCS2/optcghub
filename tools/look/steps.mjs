@@ -2755,4 +2755,40 @@ const take151 = [
       return { ok: true };
     } },
 ];
-export const STEPS = { 151: take151, 143: take143, 142: take142, 141: take141, 140: take140, 139: take139, 138: take138, 137: take137, 131: take131, 130: take130, 128: take128, 127: take127, 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
+/* take 152 (the owner, 2 Nov): Home's figure and Market movers follow the switch -- the owner's eight cards again, Home on
+   Since added, a real tap on Home's 7 days, Market movers opened by a real tap on Collection's button, then its Since added */
+const take152 = [
+  { name: 'home-since-added', run: async (page, ctx) => {
+      await ctx.open();
+      const r = await page.evaluate(`(async () => { const V = window.VAULT, P = (num, tr) => V.CAT.rows.find(p => p.num === num && p.treat === tr);
+        const at = d => new Date(Date.now() - d * 864e5).toISOString();
+        const L = [['OP07-026', 'parallel', 40], ['EB04-018', 'alternate_art', 35], ['OP14-031', 'base', 25], ['EB03-024', 'sp', 30], ['OP09-118', 'base', 20], ['OP13-079', 'alternate_art', 22], ['OP10-002', 'parallel', 28], ['EB02-036', 'alternate_art', 33]]
+          .map(([n, t, d]) => { const p = P(n, t); return p && { id: p.id, qty: 1, condition: 'NM', pf: 'main', game: 'optcg', added: at(d) }; }).filter(Boolean);
+        V.OWN.items = L; V.OWN.save(); V.setChange('added'); V.MODE.set('collect', true); V.go('home'); V.setHomeTab(false); V.paintHome(); window.scrollTo(0, 0); await ${pause};
+        return { n: L.length, mode: V.CHANGE.mode, delta: document.getElementById('pfDelta').textContent, pressed: document.querySelector('#homeChange [aria-pressed="true"]').textContent }; })()`);
+      return { ok: r.n >= 6 && r.mode === 'added' && / since added$/.test(r.delta) && r.pressed === 'Since added', ...r };
+    } },
+  { name: 'home-7-days', run: async (page) => {
+      await page.click('#homeChange [data-chg="7d"]'); await wait(400);
+      const r = await page.evaluate(() => ({ mode: window.VAULT.CHANGE.mode, delta: document.getElementById('pfDelta').textContent, pressed: document.querySelector('#homeChange [aria-pressed="true"]').textContent }));
+      return { ok: r.mode === '7d' && / over 7 days$/.test(r.delta) && r.pressed === '7 days', ...r };
+    } },
+  { name: 'movers-7-days', run: async (page) => {
+      await page.evaluate(() => { window.VAULT.go('collection'); window.scrollTo(0, 0); }); await wait(300);   /* Market movers is on Collection's strip */
+      await page.evaluate(() => { const b = document.querySelector('#collection [data-act="movers"]'); b && b.scrollIntoView({ block: 'nearest', inline: 'center' }); });
+      await page.click('#collection [data-act="movers"]'); await wait(500);
+      await page.evaluate(() => window.scrollTo(0, 0)); await wait(200);
+      const r = await page.evaluate(() => ({ heads: [...document.querySelectorAll('#allRes h3')].map(h => h.textContent), pressed: (document.querySelector('#allRes [aria-pressed="true"]') || {}).textContent }));
+      return { ok: r.pressed === '7 days' && /^Your collection · [A-Z][a-z]{2} \d{1,2} → /.test(r.heads[0] || '') && /^Biggest moves in the game · /.test(r.heads[1] || ''), ...r };
+    } },
+  { name: 'movers-since-added', run: async (page) => {
+      await page.click('#allRes [data-chg="added"]'); await wait(400);
+      const r = await page.evaluate(() => ({ mode: window.VAULT.CHANGE.mode, heads: [...document.querySelectorAll('#allRes h3')].map(h => h.textContent), pressed: (document.querySelector('#allRes [aria-pressed="true"]') || {}).textContent }));
+      return { ok: r.mode === 'added' && r.pressed === 'Since added' && r.heads[0] === 'Your collection · since added', ...r };
+    } },
+  { name: 'restore', run: async (page) => {
+      await page.evaluate(`(async () => { const V = window.VAULT; V.setChange('added'); V.OWN.items = []; V.OWN.save(); V.go('home'); await ${pause}; })()`);
+      return { ok: true };
+    } },
+];
+export const STEPS = { 152: take152, 151: take151, 143: take143, 142: take142, 141: take141, 140: take140, 139: take139, 138: take138, 137: take137, 131: take131, 130: take130, 128: take128, 127: take127, 126: take126, 125: take125, 124: take124, 123: take123, 122: take122, 120: take120, 119: take119, 118: take118, 117: take117, 116: take116, 98: take98, 100: take100, 104: take104, 105: take105, 106: take106, 107: take107, 108: take108, 109: take109, 110: take110, 111: take111, 112: take112, 114: take114, 115: take115 };
