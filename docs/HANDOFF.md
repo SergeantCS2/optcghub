@@ -74,6 +74,15 @@ take 150's after-the-merge note and the AGENDA's pricing measurement.
 - Home, a card's page and Market movers still show the day's change; a
   period there is the UI session's or the owner's call.
 
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+The owner saw the look before the merge: "Looks much better, the added color
+for prices is awesome and filtering". With `check` and `apk` green on
+`6e18a81`, the session merged PR 84 at 05:58 UTC on 2 Nov (`78239c1`). Build
+run 140 green; Release take-151 published 06:14 UTC with the APK
+(29,174,273 bytes) and the AAB (22,380,243). The switch is on the phone only
+once the owner uploads take 151's AAB.
+
 ## Take 150 — 2026-11-02 — the date sweep: every check on other days
 
 Opened on the owner's word, 2 Nov: "merge it when green, then start the
