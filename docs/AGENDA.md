@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 149.* Ranked by blocking-ness, not by interest.
+*Current as of take 150.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -74,7 +74,18 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0. *Take 149, in flight (2 Nov):* the nightly split (the owner's yes to
+0. *Take 150, in flight (2 Nov):* the date sweep (the proposal's second
+   take, the owner's word): `tools/sweep.mjs` runs the whole smoke on a moved
+   clock (DST nights, month and year ends, 30-90 days ahead, a set's release
+   day) in UTC and New York; every check it found is fixed (landmine 255);
+   the PR check runs the smoke in New York too. **Ruled out (take 150):**
+   libfaketime (not on the runner; the shim is the runner's own `Date` and
+   a `sitecustomize`); the sweep in every PR (18 smoke runs, ~14 min with
+   four at a time); a frozen clock (timers and waits need it to run).
+   Pricing accuracy (the owner, 2 Nov: "even with updated prices, ours is
+   quite off") waits on the owner's examples; Collectr's headline is
+   TCGplayer's market price by a third party's measure.
+   *Take 149 (PR 82, merged by the session; Release take-149; issue #81 closed):* the nightly split (the owner's yes to
    the session's proposal, 2 Nov): a scheduled night runs the data lane
    (ingest to app, validate strict) and then the code checks, whose red is
    reported under `nightly-checks` and stops nothing; no APK on a schedule.

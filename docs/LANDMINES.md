@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 149.*
+*Current as of take 150.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -267,6 +267,7 @@ Start here. Do not read top to bottom.
 | Every build stops on a >10x price move that is real: a new promo's first market price | **252** |
 | A control that says "the catalogue lacks X" goes red the day the source lists X -- and hid a wrong-unit match | **253** |
 | A set's release day drops its preorder prices to bulk; the >10x guard called it a glitch, and smoke's copy never saw drops | **254** |
+| Every check ran in UTC and on today's date; the phone runs in New York, on every date | **255** |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -3350,6 +3351,22 @@ window. Rule: a guard's copy is checked both ways the guard is; and a
 corroboration has a floor below which it cannot agree. The same release emptied Upcoming to one set, and take
 110's render check, which read the list's first two rows as a pair, failed
 on a grid that was fine: it reads two rows of one panel now.
+
+**255. Every check ran in UTC and on the day it was written; the phone
+runs in New York, on every day after.** Take 150's sweep (`tools/sweep.mjs`:
+the whole smoke on a moved clock, in UTC and in New York) found, beyond the
+four red nights that started it: two value-snapshot checks that compared the
+phone's day with the UTC day and failed every New York evening since take
+141, unseen because no runner is in New York; take 137's Restore checks
+counting days back by 24 hours (the 25-hour night of 1 Nov); two Releases
+checks that assumed an upcoming set and a recent single deck; and four
+reminder checks that silently stopped running once nothing was upcoming. A
+day with nothing announced, a DST night and an evening in the owner's zone
+are all days the app lives through. Rule: a check that reads a date is run
+on other dates and in the owner's zone before it ships -- the PR check runs
+the smoke in New York too, and the sweep is run by hand when a check reads
+the clock -- and a check that can skip itself on data says so by failing,
+or brings its own data.
 
 ## §2 — Inherited from APEX ORV
 

@@ -19,7 +19,8 @@ export async function run(harness) {
   try {
     /* 1. Restore and the dated copies, on a phone's Filesystem (a stub, the plugin's definitions' shape) */
     const iso = n => new Date(Date.now() + n * 864e5).toISOString();
-    const latestAt = iso(0), D = [1, 2, 3, 4, 7].map(n => V.localDay(iso(-n)));   // four earlier days and a week-old one, the phone's days as the copies are named
+    const cal = n => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate() - n, 12).toISOString(); };   /* take 150 (the sweep): by the calendar -- 24 hours before 23:30 on 1 Nov in New York is still 1 Nov */
+    const latestAt = iso(0), D = [1, 2, 3, 4, 7].map(n => V.localDay(cal(n)));   // four earlier days and a week-old one, the phone's days as the copies are named
     const base = JSON.parse(V.backupJson());
     const latest = JSON.stringify({ ...base, at: latestAt, items: [{ id: cards[0].id, qty: 1, condition: 'NM', pf: 'main', game: 'optcg' }] });
     const older = JSON.stringify({ ...base, at: D[1] + 'T15:00:00.000Z', items: [cards[0], cards[1], cards[2]].map(p => ({ id: p.id, qty: 2, condition: 'NM', pf: 'main', game: 'optcg' })) });

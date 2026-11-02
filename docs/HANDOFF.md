@@ -1,4 +1,81 @@
-# HANDOFF — through Take 149
+# HANDOFF — through Take 150
+
+## Take 150 — 2026-11-02 — the date sweep: every check on other days
+
+Opened on the owner's word, 2 Nov: "merge it when green, then start the
+date sweep." The proposal's second take: run the whole smoke under pinned
+clocks -- DST nights, month and year ends, 30 to 90 days ahead, a set's
+release day -- and fix every check that goes stale with the calendar in one
+take, instead of one a night. Branch restarted on `main` after take 149's
+merge (PR 82, `6c09c23`).
+
+### What this take changes
+
+1. **`tools/sweep.mjs`, the sweep.** The whole smoke, the shipped app's, run
+   at eight instants and on the real clock, each in UTC and in New York
+   (18 runs, four at a time, ~14 min): 23:30 on the night DST ends and the
+   night it starts, a month's and a year's last evening (already the next
+   day in UTC), OP-18's release day, and 30, 60 and 90 days ahead. It
+   prints what fails beyond the real clock, says when a run did not finish,
+   and exits 1 on any failure. By hand, never in the pipeline.
+2. **`SMOKE_NOW`, the moved clock.** The smoke runner moves its own `Date`
+   (the app's sandbox borrows it) and Python's (`tools/sweep/sitecustomize.py`,
+   on `PYTHONPATH` only then), so `hunt.py --from-fixtures` stamps the same
+   moved "now". The clock still runs; only its origin moves.
+3. **Every check the sweep found, mended** (landmine 255):
+   - two value-snapshot checks (section 73) compared the phone's day with
+     the UTC day and failed every New York evening since take 141;
+   - take 137's Restore checks (section 94) counted days back by 24 hours --
+     on the 25-hour 1 Nov, "yesterday" was today; by the calendar now;
+   - Releases (section 47) said a day with nothing announced was broken;
+     it accepts the app's "Nothing announced in the catalogue yet" when the
+     catalogue lists nothing ahead;
+   - the single-starter-deck control (section 54) picked a deck that had
+     aged off the twelve recent rows; it picks one Releases still lists;
+   - the reminder and calendar checks (section 54) stopped running once
+     nothing was upcoming -- four checks gone, one placeholder passing; on
+     such a day they bring a set of their own, twenty days out.
+4. **The PR check runs the smoke in New York too** (`ci/check.sh`), ~2.5
+   minutes: the evening class stood a month because every runner is in UTC.
+
+### Measured
+
+- First sweep: UTC on the real clock 1769 of 1769; New York on the real
+  clock 1767 (the two snapshot checks); 2 Dec on, 2 more (Releases and the
+  single deck) at every instant; and four checks unrun. The 25-hour night
+  in New York failed four Restore checks once the first fixes let the
+  section run.
+- Final sweep: 1769 of 1769 at every instant, both zones, 14 min.
+
+### Tests
+
+- The sweep is the test: each mended check failed at its instant before
+  and passes after. A run planted to crash (a syntax error in section 54)
+  exits the sweep 1 and is printed as not finished; my first sweep tool
+  read a crashed run as clean (below).
+- `ci/check.sh --selftest` green; smoke in New York on the real clock 1769
+  of 1769.
+
+### The look
+
+- No look: nothing on screen changes.
+
+### What I got wrong
+
+- My first sweep tool counted a run that crashed before its tally as
+  "nothing beyond the real clock": 18 green lines in 42 seconds, from a
+  name I had declared twice in section 54. It counts a crash as a failure
+  now, and the clash is renamed.
+- A first plant for that put its line outside the section's function and
+  clashed with nothing; a syntax error was the plant that showed it.
+
+### DEFERRED
+
+- Render is not swept (Chrome's clock is page.clock's; its date-bound
+  checks are the Releases panel, mended at take 148).
+- Section 54's own `today97` (line 10) is the UTC day; the sweep found no
+  check it breaks.
+
 
 ## Take 149 — 2026-11-02 — the nightly split: data that ships, checks that report
 
@@ -76,6 +153,15 @@ clock should report, not stop the prices. Branch restarted on `main`
   DST nights, month and year ends, 30 to 90 days ahead, a set's release day --
   and every date-fragile check found fixed in one take. Last night's red
   (item 4 above) was its first find.
+
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+With `check` and `apk` green on `847c6e2`, the session merged PR 82 at 02:25
+UTC on 2 Nov (`6c09c23`), at the owner's word ("merge it when green"). Build
+run 138 (the merge: the whole pipeline, blocking) green; Release take-149
+published 02:40 UTC with the APK (29,173,313 bytes) and the AAB (22,379,280).
+The report job closed issue #81 at 02:40 UTC. The first scheduled night on
+the split is 3 Nov's.
 
 ## Take 148 — 2026-10-31 — a set's release day settles its prices (the nightly red, issue #79)
 

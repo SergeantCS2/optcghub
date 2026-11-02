@@ -1,4 +1,4 @@
-# OP TCG Hub — take 149
+# OP TCG Hub — take 150
 
 ## Installing — read this first
 
@@ -17,6 +17,8 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 150:** Nothing you can see changes. Our tests now run as if on other days and in your time zone, so a date or time-zone slip is caught before it reaches you or the nightly update. Nothing you have saved changes.
 
 **New at take 149:** Nothing you can see changes. The nightly price update no longer stops when one of our own tests fails; the tests still run and report to us. Nothing you have saved changes.
 

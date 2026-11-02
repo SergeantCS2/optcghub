@@ -33,6 +33,18 @@ const scripted = E => Object.fromEntries(Object.entries(E).map(([k, L]) => [k, L
 
 /* the DOM stub and the boot live in tools/lib/appvm.mjs since take 122: the card proofs and self-play boot the shipped app the same way */
 
+/* take 150, the date sweep (tools/sweep.mjs): SMOKE_NOW=<ISO instant> runs every check on a clock moved to that instant --
+   this process's Date, which the app's sandbox borrows (tools/lib/appvm.mjs), and Python's for the helpers the sections
+   call (tools/sweep/sitecustomize.py). The clock still runs; only its origin moves. */
+if (process.env.SMOKE_NOW) {
+  const R = Date, off = R.parse(process.env.SMOKE_NOW) - R.now();
+  if (!Number.isFinite(off)) throw new Error(`SMOKE_NOW is not an instant: ${process.env.SMOKE_NOW}`);
+  globalThis.Date = class extends R { constructor(...a) { super(...(a.length ? a : [R.now() + off])); } static now() { return R.now() + off; } };
+  process.env.SMOKE_OFFSET_S = String(off / 1000);
+  process.env.PYTHONPATH = [path.join(ROOT, 'tools', 'sweep'), process.env.PYTHONPATH].filter(Boolean).join(path.delimiter);
+  console.log(`clock moved to ${new Date().toISOString()} (SMOKE_NOW), TZ ${process.env.TZ || 'system'}`);
+}
+
 /* ---- run --------------------------------------------------------------- */
 const APP = await boot();
 const { html, js, catalog, manifest, store, remote, ctx, doc, listeners } = APP;

@@ -67,6 +67,13 @@ echo "::group::pipeline"
 python3 tools/pipeline.py
 echo "::endgroup::"
 
+# take 150 (the sweep): the smoke again in the owner's zone. Every runner is in UTC, so a check that read the UTC day
+# where the app files the phone's passed here and failed every New York evening -- two such stood from take 141 to
+# take 150, found only by tools/sweep.mjs. ~2.5 minutes; tools/sweep.mjs (by hand) moves the clock as well.
+echo "::group::the smoke in New York time (take 150)"
+TZ=America/New_York node tools/smoke.mjs
+echo "::endgroup::"
+
 # take 131: the Sim's relay -- its own suite and controls, then the same exchange against the real Worker under
 # wrangler dev on this runner (relay/ has its own lockfile; the registry serves the local runtime)
 echo "::group::the relay (take 131)"

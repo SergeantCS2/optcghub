@@ -582,7 +582,7 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
     const r2 = await backedUp(() => { bulkSel([A]); doc.getElementById('bulkCond')._ev.click(); tap('[data-bulkcond]', { bulkcond: 'LP' }); }, b => line(b, A).condition === 'LP');
     ok('a bulk condition is backed up', r2.reason === 'bulk' && r2.good, JSON.stringify(r2));
     const r3 = await backedUp(() => { bulkSel([A]); doc.getElementById('bulkMove')._ev.click(); tap('[data-pfmove]', { pfmove: 'tr115' }); }, b => line(b, A).pf === 'tr115');
-    const t3 = V.OWN.snaps.find(s => s[0] === utcDay());
+    const t3 = V.OWN.snaps.find(s => s[0] === V.phoneToday());   /* take 150: the phone's day, as OWN.snapshot() files it since take 141 -- the UTC day failed every New York evening (the sweep) */
     ok('a bulk move is backed up', r3.reason === 'bulk' && r3.good, JSON.stringify(r3));
     ok('...and today\'s reading is taken again: the collection on screen lost the lines moved out of it (the reading still counted them)', !!t3 && Math.abs(t3[1] - V.OWN.total()) < 1e-9, JSON.stringify({ t3, total: V.OWN.total() }));
     const r4 = await backedUp(() => { bulkSel([B]); doc.getElementById('bulkDel')._ev.click(); }, b => !b.items.some(i => i.id === B));
@@ -680,7 +680,7 @@ section('take 114 — A32\'s distributor state timeline, from the history rows: 
        && kept.relAlerts[0].id === 'relPhone' && kept.notes[0].store === 'Phone shop' && kept.trade.give.length === 1, kept ? JSON.stringify(Object.keys(kept)) : 'nothing kept');
     { G.c.navigator.onLine = false; const rep = await G.V.DIAG.report();
       ok('...and Diagnostics\' storage lines say where it is kept, with its size', /^vault\.beforeRestore: \d+ KB$/m.test(rep), (rep.match(/^vault\.beforeRestore: .*$/m) || ['no line'])[0]); }
-    const after = (() => { try { return JSON.parse(G.st['vault.backup']); } catch (e) { return null; } })(), t = G.V.OWN.snaps.find(s => s[0] === utcDay());
+    const after = (() => { try { return JSON.parse(G.st['vault.backup']); } catch (e) { return null; } })(), t = G.V.OWN.snaps.find(s => s[0] === G.V.phoneToday());
     ok('...the restore is backed up, and today\'s reading is of what it restored', (G.V.OWN.lastBackup || {}).reason === 'restore' && !!after && after.at !== file.at && after.items.length === 1 && !!t && t[2] === 4,
        JSON.stringify({ reason: (G.V.OWN.lastBackup || {}).reason, t }));
     /* the undo: Restore now offers what the last restore replaced */
