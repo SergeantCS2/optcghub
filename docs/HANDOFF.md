@@ -43,6 +43,8 @@ word (the UI session's ground otherwise); a card's page keeps the day's.
   added, -$6.81 (-1.2%) over 7 days -- the sum of the seven 7-day rows on
   Market movers (-6.65 +6.15 -4.41 -1.99 +0.46 -0.45 +0.08). Vivi's
   -$7.90 since added is Collection's tile.
+- The date sweep: 1795 of 1795 at every instant and on the real clock, in
+  UTC and in New York.
 
 ### Tests
 
