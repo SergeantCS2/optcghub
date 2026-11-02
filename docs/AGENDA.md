@@ -74,7 +74,7 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0. *Take 150, in flight (2 Nov):* the date sweep (the proposal's second
+0. *Take 150 (PR 83, merged by the session; Release take-150):* the date sweep (the proposal's second
    take, the owner's word): `tools/sweep.mjs` runs the whole smoke on a moved
    clock (DST nights, month and year ends, 30-90 days ahead, a set's release
    day) in UTC and New York; every check it found is fixed (landmine 255);

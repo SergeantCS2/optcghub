@@ -77,6 +77,14 @@ merge (PR 82, `6c09c23`).
   check it breaks.
 
 
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+With `check` (now with the smoke in New York too) and `apk` green on
+`f552a24`, the session merged PR 83 at 04:07 UTC on 2 Nov (`8d3fc0c`). Build
+run 139 green; Release take-150 published 04:22 UTC with the APK
+(29,173,333 bytes) and the AAB (22,379,294). Nothing on the phone changes;
+no upload needed.
+
 ## Take 149 — 2026-11-02 — the nightly split: data that ships, checks that report
 
 Opened on the owner's word, 2 Nov: "Yes to proposal 1, go ahead with the
