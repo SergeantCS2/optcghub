@@ -1,4 +1,4 @@
-# OP TCG Hub — take 148
+# OP TCG Hub — take 149
 
 ## Installing — read this first
 
@@ -17,6 +17,8 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 149:** Nothing you can see changes. The nightly price update no longer stops when one of our own tests fails; the tests still run and report to us. Nothing you have saved changes.
 
 **New at take 148:** Nothing you can see changes. Prices update again after a new set's release day: EB-05's cards dropping from preorder prices to bulk had stopped the nightly update on 31 Oct. Nothing you have saved changes.
 

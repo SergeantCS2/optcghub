@@ -91,7 +91,7 @@ export async function run(harness) {
       const late = new RealDate(); late.setHours(23, 30, 0, 0); const noon = new RealDate(); noon.setHours(12, 0, 0, 0);
       const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const at = t => { ctx.Date = class extends RealDate { constructor(...a) { super(...(a.length ? a : [t.getTime()])); } static now() { return t.getTime(); } }; };
-      const today = ymd(late), yday = ymd(new RealDate(late.getTime() - 864e5));
+      const today = ymd(late), yday = ymd(new RealDate(late.getFullYear(), late.getMonth(), late.getDate() - 1, 12));   /* take 149: by the calendar -- 1 Nov 2026 in New York is 25 hours, and 24 hours back from 23:30 was the same day */
       ok('precondition: 23:30 on a US evening is already tomorrow in UTC', late.toISOString().slice(0, 10) !== today, late.toISOString());
       const named = [];
       ctx.Capacitor = { Plugins: { Filesystem: { writeFile: async o => { named.push(o.path); return { uri: 'file:///' + o.path }; } } } };

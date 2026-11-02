@@ -1,6 +1,6 @@
 # LANDMINES
 
-*Current as of take 148.*
+*Current as of take 149.*
 
 Numbered so they can be cited. Never renumber. Add, correct, or mark superseded —
 but the number stays with the finding.
@@ -3272,6 +3272,10 @@ the saved page's last due date was 14 Oct. From 15 Oct nothing was ahead and
 every nightly went red for a week (issue #75). The control now reads its copy
 as of the page's own day. Rule: a fixture's states come with the day they
 were read; a check reads them as of that day, never the clock's.
+*Take 149:* and by the calendar, never by 24 hours: take 137's Restore check
+took "yesterday" as 23:30 less a day, and 1 Nov 2026 in New York is 25 hours
+long (run 137 red). Since take 149 a red check on the nightly is reported
+under `nightly-checks` and stops neither the prices nor Pages.
 
 **250. A `\uXXXX` typed into a session's command can reach the file as the
 character itself.** Take 138 patched twenty sentences in `src/app/52-hunt.js`,

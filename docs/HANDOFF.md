@@ -1,4 +1,81 @@
-# HANDOFF — through Take 148
+# HANDOFF — through Take 149
+
+## Take 149 — 2026-11-02 — the nightly split: data that ships, checks that report
+
+Opened on the owner's word, 2 Nov: "Yes to proposal 1, go ahead with the
+split." The proposal, after four red nights in three weeks (15 Oct, 30 Oct,
+31 Oct, 2 Nov), each a check that passed when written and broke because the
+calendar or the catalogue moved on: the nightly's job is the prices; the
+code's checks already run on every PR; a check that goes stale with the
+clock should report, not stop the prices. Branch restarted on `main`
+(`f42762b`); take 148's after-the-merge note rides here.
+
+### What this take changes
+
+1. **The scheduled nightly runs the data lane, then the checks.** `ci/bundle.sh`
+   on a schedule runs ingest, history, catalog, hashes, validate (strict)
+   and app -- any failure there stops the night, as before -- then smoke,
+   render, stamp and the gate, whose failure is written as `health=red` and
+   stops nothing: Pages deploys, the sidecars commit. A push or a manual run
+   runs the whole pipeline, blocking, as before.
+2. **The report files the checks under their own thread.** `nightly-checks`,
+   "The nightly code checks are failing", opened or commented on a red
+   check run and closed on a green one; the `nightly-failure` thread is the
+   data lane's alone. A job skipped by design counts as neither red nor
+   green.
+3. **No APK on a schedule.** The apk job runs on a merge or a manual run;
+   Release take-N is the merge's, every check green. The nightly's APK only
+   refreshed the catalogue the APK carries, and every installed app syncs
+   the catalogue from Pages.
+4. **Last night's red, mended** (the sweep's first item, here because it
+   would turn this PR's own check red until 05:00 UTC): take 137's Restore
+   check took "yesterday" as 24 hours before 23:30; 1 Nov 2026 in New York is
+   25 hours, so it named the same day. By the calendar now.
+
+### Measured
+
+- Nights since 15 Oct: four red (runs 123, 132, 134, 137), every one a
+  check gone stale with the date or the catalogue; on each, the prices had
+  committed and the hourly kept Pages current, so the red night stopped only
+  the nightly's own deploy and the Release.
+- The pipeline from a fresh ingest: 87 groups, 7,796 products; smoke 1768 of
+  1769 at 20:59 New York time on 1 Nov (the DST check), 1769 of 1769 with it
+  mended, run the same evening; render 277 of 277 `(mode: chrome)`.
+  `tools/pipeline.py` is unchanged (the split is `ci/bundle.sh`'s), so no
+  clean run.
+
+### Tests
+
+- `hunt.py --selftest`: 176 of 176 (172 at take 147). New: `bundle.sh`'s
+  pipeline lines with a stand-in `python3` -- a scheduled night runs the
+  data lane then the checks, `health=green`; a red check is `health=red` and
+  the night goes on; a red data lane stops before any check; a merge is the
+  whole pipeline, blocking, with no health line. The wiring: `bundle`
+  exposes `health`, `apk` never runs on a schedule, `pages` does not wait on
+  the checks. The report: a red check comments on `nightly-checks` while the
+  green data night closes `nightly-failure`; the first red check opens its
+  thread; a green one closes it; a red data lane is `nightly-failure`'s alone.
+- Five plants, each watched to fail: the checks blocking the night again;
+  no split at all; an APK every night; a skipped APK holding the thread
+  open; no health thread.
+
+### The look
+
+- No look: nothing on screen changes.
+
+### What I got wrong
+
+- Four nights of single fixes before proposing the split; the owner named
+  the pattern first ("we can't keep chasing errors non-stop").
+- I piped the seal once more (`| tail -2`); rerun bare, green (landmine
+  103's rule stands).
+
+### DEFERRED
+
+- The sweep (the proposal's second take): the smoke under pinned clocks --
+  DST nights, month and year ends, 30 to 90 days ahead, a set's release day --
+  and every date-fragile check found fixed in one take. Last night's red
+  (item 4 above) was its first find.
 
 ## Take 148 — 2026-10-31 — a set's release day settles its prices (the nightly red, issue #79)
 

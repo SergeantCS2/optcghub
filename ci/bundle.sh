@@ -78,7 +78,27 @@ fi
 echo "::endgroup::"
 
 echo "::group::pipeline"
-python3 tools/pipeline.py
+# Take 149, the nightly split (the owner's yes, 2 Nov): a scheduled night is
+# for the prices. The data lane -- ingest to the app, validate strict among it
+# -- stops the night on any failure, as before. The code's checks (smoke,
+# render, the gate) already ran on the PR that merged this tree; at night they
+# read the new day's data and the clock, and a check that goes stale with
+# either (four red nights in three weeks) is reported, not obeyed: health=red,
+# filed under its own thread by the report job, while Pages deploys and the
+# sidecars commit. A push or a manual run is the whole pipeline, blocking.
+if [ "${GITHUB_EVENT_NAME:-}" = "schedule" ]; then
+  python3 tools/pipeline.py ingest history catalog hashes validate app
+  echo "::endgroup::"
+  echo "::group::the code checks on tonight's data (reported, not blocking -- take 149)"
+  if python3 tools/pipeline.py smoke render stamp gate; then
+    echo "health=green" >> "${GITHUB_OUTPUT:-/dev/null}"
+  else
+    echo "::warning::a code check failed on tonight's data -- reported under nightly-checks; the prices and Pages go ahead"
+    echo "health=red" >> "${GITHUB_OUTPUT:-/dev/null}"
+  fi
+else
+  python3 tools/pipeline.py
+fi
 echo "::endgroup::"
 
 carry_over      # the function at the top; build.yml's pages job runs it again (take 115)

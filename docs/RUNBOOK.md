@@ -1,6 +1,6 @@
 # RUNBOOK — from nothing to a repo that builds every night
 
-*Current as of take 148.* **Since take 89 the repo is the record:** a session
+*Current as of take 149.* **Since take 89 the repo is the record:** a session
 works on a branch and opens a pull request; you merge; the merge builds. §6
 is every take. §1–§5 are how the repo was first stood up from a seed zip and
 remain the recovery procedure; you need them again only for a new repo or a
@@ -236,6 +236,15 @@ came before the label existed). Since take 115 the **report** job files it for
 any job -- seed, bundle, pages or apk -- and a night whose Pages deploy was
 skipped (pages=skip) neither opens nor closes it. The reason is in the failed
 job's log; the table below maps the common ones.
+
+**Since take 149 the nightly has two threads.** `nightly-failure` is the data
+lane's: the prices, the catalogue, validate, the app's build, Pages, the
+sidecars. `nightly-checks` ("The nightly code checks are failing") is smoke,
+render and the gate run on the night's data: a red check there stopped
+nothing -- the prices committed and Pages deployed -- and the session fixes
+it in a take. A scheduled night builds no APK; Release take-N comes from the
+merge, and **Actions → build → Run workflow** rebuilds it whole, every check
+blocking.
 
 ---
 

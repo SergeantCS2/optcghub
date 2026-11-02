@@ -5,10 +5,12 @@ name: build
 #
 #   seed   -> unpack a seed zip at the root and commit it (the RECOVERY route)
 #   bundle -> build the catalogue, the app, run smoke + gate, commit the prices
+#             (take 149: on a schedule the checks report, health=red, and
+#             block nothing -- the data lane alone stops a night)
 #   pages  -> browser build + privacy policy (Play requires a live URL), with
 #             the hourly's hunt/ files read again inside the `pages` group
 #   apk    -> signed APK for sideload, AAB for Play, Release take-N (and the
-#             Play icon)
+#             Play icon) -- on a merge or a manual run, never a schedule (take 149)
 #   report -> A9: one issue for any job that went red, closed only when every
 #             job ran green
 #
@@ -93,6 +95,7 @@ jobs:
     # from Pages (ci/bundle.sh says why); the pages job below then does not run
     outputs:
       pages: ${{ steps.build.outputs.pages }}
+      health: ${{ steps.build.outputs.health }}
     steps:
       # `ref` is REQUIRED. checkout defaults to the commit that TRIGGERED the
       # run; the seed job pushes a newer one, so a default checkout lands on a
@@ -178,6 +181,9 @@ jobs:
   # ── package ─────────────────────────────────────────────────────────────
   apk:
     needs: bundle
+    # take 149: a Release is a merge's, every check green. The nightly's APK only
+    # refreshed the catalogue it carries, and every install syncs that from Pages.
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -221,9 +227,9 @@ jobs:
       # checks it on every build; the owner uploads it to the listing by hand.
       # Release notes come from ci/RELEASE.md, in the REPO. Inline here they
       # would freeze at whatever take was last pasted (APEX landmine 96).
-      # The nightly cron builds the SAME take with fresh prices; a second
-      # `gh release create` on an existing tag fails. Create once, then
-      # replace the assets (landmine 105).
+      # A manual re-run builds the SAME take (through take 148 the nightly did
+      # too); a second `gh release create` on an existing tag fails. Create
+      # once, then replace the assets (landmine 105).
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -271,6 +277,8 @@ jobs:
           LABEL: nightly-failure
           TITLE: The nightly build is failing
           KEEPS: The app keeps running on its last catalogue; the Home screen will show a stale banner after three days (A9).
+          HEALTH_LABEL: nightly-checks
+          HEALTH_TITLE: The nightly code checks are failing
         run: |
           set -euo pipefail
           # Every job this one needs, and how it ended. A job that failed, or
@@ -284,7 +292,7 @@ jobs:
           needs = json.loads(os.environ["NEEDS"])
           res = {job: n.get("result") for job, n in needs.items()}
           red = [job for job, r in res.items() if r in ("failure", "cancelled")]
-          off = [job + " " + str(r) for job, r in res.items() if r != "success"]
+          off = [job + " " + str(r) for job, r in res.items() if r not in ("success", "skipped")]   # take 149: skipped by design (no APK on a schedule) is neither; a pages=skip says so below
           off += [job + " pages=skip" for job, n in needs.items() if (n.get("outputs") or {}).get("pages") == "skip"]
           off += [job + " catalogue=live (the fresh catalogue was refused; the feed shipped over the live one)" for job, n in needs.items() if (n.get("outputs") or {}).get("catalogue") == "live"]
           print("red " + ", ".join(red) if red else "partial " + "; ".join(off) if off or not res else "green " + ", ".join(res))
@@ -304,3 +312,19 @@ jobs:
             *)
               echo "::notice::no job failed, but not every job ran green ($what): the failure thread is left as it is" ;;
           esac
+          # Take 149: the nightly's code checks report under a thread of their own (health=red never fails a job).
+          h=$(python3 -c '
+          import json, os
+          print(next((n["outputs"]["health"] for n in json.loads(os.environ["NEEDS"]).values() if (n.get("outputs") or {}).get("health")), ""))
+          ')
+          hl=${HEALTH_LABEL:-}
+          if [ -n "$hl" ] && [ "$h" = red ]; then
+            gh label create "$hl" --color D93F0B --description "$HEALTH_TITLE" --force >/dev/null
+            n=$(gh issue list --label "$hl" --state open --json number -q '.[0].number')
+            body="A code check failed on the night's data -- run $RUN on $day. The prices committed and Pages deployed; see the log's code-checks group."
+            if [ -n "$n" ]; then gh issue comment "$n" --body "$body"
+            else gh issue create --title "$HEALTH_TITLE" --label "$hl" --body "$body"; fi
+          elif [ -n "$hl" ] && [ "$h" = green ]; then
+            n=$(gh issue list --label "$hl" --state open --json number -q '.[0].number' 2>/dev/null || true)
+            if [ -n "$n" ]; then gh issue close "$n" --comment "The code checks ran green on the night's data: run $RUN on $day."; fi
+          fi
