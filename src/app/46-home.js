@@ -17,15 +17,24 @@ function paintHome() {
   $('#pfTotal').textContent = money(tot);
   const days = { '1D': 1, '7D': 7, '1M': 30, '3M': 90, '6M': 180, MAX: 1e4 }[range];
   const S = seriesFor(days), series = S.pts;
-  const d = series.length > 1 ? tot - series[0][1] : 0;
+  /* take 152 (the owner, 2 Nov): the figure under the total follows the period switch Collection and Market movers read --
+     how much the prices of the cards held moved over it, as other collection apps show it. Through take 151 it was the
+     chart's first point to today, which counted a card bought in the range as a gain. The chart keeps its own range. */
+  const held = PF.scope(OWN.items), chg = collectionChange(held);
   const dl = $('#pfDelta');
-  dl.className = 'delta mono ' + (d > 0.005 ? 'up' : d < -0.005 ? 'down' : 'flat');
-  dl.innerHTML = series.length > 1
-    ? `${signedMoney(d)} ${RANGE_WORDS[range] || 'in the last ' + range}` +
-      (S.kind === 'estimate'
-        ? ` <span class="flat" style="font-weight:500;font-size:var(--fs-sm)">\u00b7 estimated from today\u2019s cards at each day\u2019s prices</span>`
-        : '')
-    : 'Not enough history yet — a snapshot is taken each day.';
+  dl.className = 'delta mono ' + (chg.a > 0.005 ? 'up' : chg.a < -0.005 ? 'down' : 'flat');
+  dl.innerHTML = !held.length ? 'Add a card and its change shows here.'
+    : !chg.n ? `No price on file ${esc(changeWords())} for these cards.`
+    : `${signedMoney(chg.a)}${chg.pc != null ? ` (${signedPct(chg.pc, true)})` : ''} ${esc(changeWords())}` +
+      (chg.none ? ` <span class="flat" style="font-weight:500;font-size:var(--fs-sm)">\u00b7 ${chg.none} with no price on file</span>` : '');
+  const hc = $('#homeChange'); if (hc) hc.innerHTML = changeChips();
+  /* the chart's own words: whether it is an estimate, or has too little to draw (its change in dollars counted a card
+     bought in the range as a gain, so it is no figure beside the one above); its range for a screen reader */
+  const sn = $('#sparkNote');
+  const st = series.length < 2 ? 'Not enough history yet — a snapshot is taken each day.'
+    : S.kind === 'estimate' ? 'The chart is estimated from today\u2019s cards at each day\u2019s prices.' : '';
+  if (sn) { sn.innerHTML = st; sn.style.display = st ? '' : 'none'; }
+  const sp = $('#spark'); if (sp && sp.setAttribute) sp.setAttribute('aria-label', `Your collection\u2019s value ${RANGE_WORDS[range] || 'in the last ' + range}`);
 
   $('#ranges').innerHTML = RANGES.map(r =>
     `<button class="range${r === range ? ' on' : ''}" data-r="${r}" aria-pressed="${r === range}">${r}${

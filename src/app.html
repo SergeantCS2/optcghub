@@ -1142,9 +1142,11 @@ nav button.on{color:var(--accent-ink);background:var(--accent-bg)}   /* take 115
     <button class="who" id="pfSwitch" style="text-align:left;display:block"><span class="cap">Collection</span><em id="pfName">One Piece</em> <svg class="g" width="16" height="16" aria-hidden="true" style="color:var(--dim2)"><use href="#g-chevron"/></svg></button>
     <div class="total mono" id="pfTotal">$0.00</div>
     <div class="delta mono" id="pfDelta">&nbsp;</div>
+    <div class="chips" id="homeChange" role="group" aria-label="The period the change covers" style="margin-top:10px"></div>
   </div>
-  <canvas id="spark"></canvas>
+  <canvas id="spark" role="img" aria-label="Your collection's value"></canvas>
   <div class="ranges" id="ranges"></div>
+  <div class="note" id="sparkNote" style="text-align:center;margin:-10px 0 14px"></div>
 
   <div class="panel" id="perfPanel" style="display:none">
     <h3>Against what you paid</h3>

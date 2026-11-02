@@ -67,12 +67,15 @@ function priceOn(p, day) {
   for (let k = days.length - 1; k >= 0; k--) if (days[k] <= day && h[k] > 0) return { day: days[k], v: h[k] };
   return null;
 }
+/* the day 7 or 30 days before the newest price day (take 152: one place, for the lines and the movers' heading) */
+function periodStart(mode) {
+  const days = CAT.days || []; if (!days.length) return '';
+  return new Date(Date.parse(days[days.length - 1] + 'T12:00:00Z') - (mode === '7d' ? 7 : 30) * 864e5).toISOString().slice(0, 10);
+}
 function lineChange(p, i, mode = CHANGE.mode) {
   if (mode === 'day') return p.d1p == null ? null : { a: p.d1a, pc: p.d1p, from: D1().from || null, mode };
   const days = CAT.days || []; if (!days.length || !(p.market > 0)) return null;
-  const last = days[days.length - 1];
-  const target = mode === 'added' ? (i && i.added ? localDay(i.added) : '')
-    : new Date(Date.parse(last + 'T12:00:00Z') - (mode === '7d' ? 7 : 30) * 864e5).toISOString().slice(0, 10);
+  const target = mode === 'added' ? (i && i.added ? localDay(i.added) : '') : periodStart(mode);
   if (!target) return null;
   let base = priceOn(p, target), first = false;
   if (!base) { const h = CAT.hist[p.id] || [], k = h.findIndex(v => v > 0); if (k < 0) return null; base = { day: days[k], v: h[k] }; first = true; }
@@ -84,6 +87,24 @@ function changeTitle(c, i) {
   if (!c) return '';
   if (c.mode === 'added' && c.first) return `since ${dayText(c.from)}, the first price on file (added ${dayText(localDay(i && i.added))})`;
   return c.mode === 'day' ? sinceLabel() : `since ${dayText(c.from)}`;
+}
+/* take 152 (the owner, 2 Nov): Home's figure under the total and Market movers read the same switch. The period in words,
+   and a set of lines' change over it: the sum of each line's own (its price moves only -- a card bought this week is not
+   a gain), against what those lines were worth at the start; a line with no price on file at all is left out, and counted */
+function changeWords(mode = CHANGE.mode) {
+  return mode === 'added' ? 'since added' : mode === 'day' ? sinceLabel() : mode === '7d' ? 'over 7 days' : 'over 30 days';
+}
+function collectionChange(items, mode = CHANGE.mode) {
+  let a = 0, base = 0, n = 0, none = 0;
+  for (const i of items) {
+    const p = CAT.byId.get(i.id); if (!p) continue;
+    const c = lineChange(p, i, mode); if (!c) { none++; continue; }
+    a += c.a * i.qty; base += (p.market - c.a) * i.qty; n++;
+  }
+  return { a, pc: base > 0 ? 100 * a / base : null, n, none, mode };
+}
+function changeChips() {
+  return CHANGE.modes.map(([m, w]) => `<button class="chip${CHANGE.mode === m ? ' on' : ''}" data-chg="${m}" aria-pressed="${CHANGE.mode === m}">${w}</button>`).join('');
 }
 
 /* Apply. `rows` are {p, i?} -- i is null in catalogue scope. */

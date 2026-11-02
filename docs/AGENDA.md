@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 151.* Ranked by blocking-ness, not by interest.
+*Current as of take 152.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -74,7 +74,14 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0. *Take 151, in flight (2 Nov):* Collection's change over a chosen period
+0. *Take 152, in flight (2 Nov):* Home's figure under the total and Market
+   movers follow take 151's switch (Since added, Day, 7 days, 30 days), the
+   switch pressable on each; the owner's word after take 151's look.
+   **Ruled out (take 152):** a card's page (not asked; it keeps the day's);
+   a "since added" for cards not owned (no added day: the game's list shows
+   the day's then, and says so); Home's chart ranges as the switch (3M, 6M
+   and MAX have no Collection twin; the chart keeps its own).
+0. *Take 151, merged (PR 84, Release take-151; uploaded by the owner):* Collection's change over a chosen period
    -- Since added (the default), Day, 7 days, 30 days -- from the price
    history on the phone; "Biggest move" follows it. The owner's choice
    (option 3, default since added). **Ruled out (take 151):** changing the
