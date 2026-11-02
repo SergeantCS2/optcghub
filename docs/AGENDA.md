@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 150.* Ranked by blocking-ness, not by interest.
+*Current as of take 151.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -74,7 +74,24 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0. *Take 150, in flight (2 Nov):* the date sweep (the proposal's second
+0. *Take 151, in flight (2 Nov):* Collection's change over a chosen period
+   -- Since added (the default), Day, 7 days, 30 days -- from the price
+   history on the phone; "Biggest move" follows it. The owner's choice
+   (option 3, default since added). **Ruled out (take 151):** changing the
+   change on Home, the card page or Market movers (the day's is their
+   question); a price before the history begins for a card added earlier
+   (none on file: it counts from the first day, and says so).
+0. *Pricing, measured (2 Nov, the owner's 21 cards side by side with
+   Collectr):* the prices agree -- 13 of 21 to the cent, the rest within
+   $0.02-$0.69, and 11 of Collectr's equal our day before (the two read
+   TCGplayer's market at different hours). What differs is the change: ours
+   is the day's, Collectr's spans weeks (Megalo EB04-018 -$6.60 against our
+   -$1.32; Nami OP14-031 +118%), most likely since the card was added. Next,
+   the owner's call: which period the change shows (the day, 7 or 30 days,
+   since added). **Ruled out:** another price source to close the gap (the
+   source is the same); refreshing more than daily (TCGCSV publishes once,
+   about 20:05 UTC).
+   *Take 150 (PR 83, merged by the session; Release take-150):* the date sweep (the proposal's second
    take, the owner's word): `tools/sweep.mjs` runs the whole smoke on a moved
    clock (DST nights, month and year ends, 30-90 days ahead, a set's release
    day) in UTC and New York; every check it found is fixed (landmine 255);

@@ -191,7 +191,8 @@ def check_app_split():
 def smoke_files():
     """Take 135 (A44 item 6): the smoke's sections, one file each under tools/smoke/, in the order they run."""
     d = os.path.join(ROOT, "tools", "smoke")
-    return sorted(f for f in os.listdir(d) if re.fullmatch(r"\d\d-[a-z0-9-]+\.mjs", f)) if os.path.isdir(d) else []
+    # take 151: past 99 a section is numbered 100 and on, and the files run by their number, not their name's letters
+    return sorted((f for f in os.listdir(d) if re.fullmatch(r"\d{2,3}-[a-z0-9-]+\.mjs", f)), key=lambda f: (int(f.split("-")[0]), f)) if os.path.isdir(d) else []
 
 
 def smoke_source():
@@ -257,9 +258,9 @@ def check_smoke_split():
     files = smoke_files()
     if not files:
         return fail("smoke-split", "no section files under tools/smoke/ (NN-name.mjs)")
-    nums = [f[:2] for f in files]
+    nums = [int(f.split("-")[0]) for f in files]
     if len(set(nums)) != len(nums):
-        fail("smoke-split", "two section files share a number under tools/smoke/: " + ", ".join(f for f in files if nums.count(f[:2]) > 1))
+        fail("smoke-split", "two section files share a number under tools/smoke/: " + ", ".join(f for f in files if nums.count(int(f.split("-")[0])) > 1))
     if not files[0].startswith("00-"):
         fail("smoke-split", f"the first section file is {files[0]}, not the foundation (00-)")
     for f in files:

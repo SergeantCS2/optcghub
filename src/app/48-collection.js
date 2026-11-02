@@ -52,6 +52,40 @@ function activeCount(f) {
 }
 function cardColors(p) { return colsOf(p); }
 
+/* take 151 (the owner, 2 Nov): the change a collection line shows, over a period the collector chooses -- since the line
+   was added (the default: the measure the owner held ours against, Collectr's), the day (the catalogue's last two days,
+   as everywhere else), 7 or 30 days -- read off the price history the catalogue carries (CAT.hist: one price a day on
+   file). A day with no price walks back to the last day that has one, and the line says which day it counts from. */
+const CHANGE = {
+  modes: [['added', 'Since added'], ['day', 'Day'], ['7d', '7 days'], ['30d', '30 days']],
+  mode: (m => ['added', 'day', '7d', '30d'].includes(m) ? m : 'added')(readJson('vault.changeBy', 'added', false)),
+  set(m) { if (!this.modes.some(x => x[0] === m)) return false; this.mode = m; saveJson('vault.changeBy', JSON.stringify(m)); return true; }   /* encoded: saveJson writes a string as it is, readJson parses */
+};
+/* the price on the last day on file at or before `day` (YYYY-MM-DD), and that day; null when there is none */
+function priceOn(p, day) {
+  const days = CAT.days || [], h = CAT.hist[p.id]; if (!h) return null;
+  for (let k = days.length - 1; k >= 0; k--) if (days[k] <= day && h[k] > 0) return { day: days[k], v: h[k] };
+  return null;
+}
+function lineChange(p, i, mode = CHANGE.mode) {
+  if (mode === 'day') return p.d1p == null ? null : { a: p.d1a, pc: p.d1p, from: D1().from || null, mode };
+  const days = CAT.days || []; if (!days.length || !(p.market > 0)) return null;
+  const last = days[days.length - 1];
+  const target = mode === 'added' ? (i && i.added ? localDay(i.added) : '')
+    : new Date(Date.parse(last + 'T12:00:00Z') - (mode === '7d' ? 7 : 30) * 864e5).toISOString().slice(0, 10);
+  if (!target) return null;
+  let base = priceOn(p, target), first = false;
+  if (!base) { const h = CAT.hist[p.id] || [], k = h.findIndex(v => v > 0); if (k < 0) return null; base = { day: days[k], v: h[k] }; first = true; }
+  const a = p.market - base.v;
+  return { a, pc: 100 * a / base.v, from: base.day, first, mode };
+}
+/* what the tile's change counts from, in words: its title, so the number never claims a horizon it did not measure */
+function changeTitle(c, i) {
+  if (!c) return '';
+  if (c.mode === 'added' && c.first) return `since ${dayText(c.from)}, the first price on file (added ${dayText(localDay(i && i.added))})`;
+  return c.mode === 'day' ? sinceLabel() : `since ${dayText(c.from)}`;
+}
+
 /* Apply. `rows` are {p, i?} -- i is null in catalogue scope. */
 function applyFilter(rows, f) {
   const q = (f._scope === 'own' ? colQuery : ($('#allq').value || '')).trim().toLowerCase();
@@ -83,6 +117,7 @@ function applyFilter(rows, f) {
 function sortRows(rows, f) {
   const d = f.dir, key = f.sort;
   const setName = p => (CAT.sets.get(p.set) || {}).pub || '';
+  const mv = (p, i) => i ? ((lineChange(p, i) || {}).a || 0) : (p.d1a || 0);
   return rows.slice().sort((a, b) => {
     const A = a.p, B = b.p, ai = a.i, bi = b.i;
     let r = 0;
@@ -93,7 +128,7 @@ function sortRows(rows, f) {
       case 'rarity': r = RARITY_ORDER.indexOf(A.rarity) - RARITY_ORDER.indexOf(B.rarity); break;
       case 'qty':    r = ((bi && bi.qty) || 0) - ((ai && ai.qty) || 0); break;
       case 'added':  r = ((bi && bi.added) || '').localeCompare((ai && ai.added) || ''); break;
-      case 'delta':  r = Math.abs(B.d1a || 0) * ((bi && bi.qty) || 1) - Math.abs(A.d1a || 0) * ((ai && ai.qty) || 1); break;
+      case 'delta':  r = Math.abs(mv(B, bi)) * ((bi && bi.qty) || 1) - Math.abs(mv(A, ai)) * ((ai && ai.qty) || 1); break;   /* take 151: a line's by its period */
       case 'paid':   r = (((B.market || 0) - ((bi && bi.paid) || 0)) * ((bi && bi.qty) || 1)) -
                          (((A.market || 0) - ((ai && ai.paid) || 0)) * ((ai && ai.qty) || 1)); break;
       default:       r = (B.market || 0) * ((bi && bi.qty) || 1) - (A.market || 0) * ((ai && ai.qty) || 1);

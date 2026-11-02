@@ -159,17 +159,21 @@ function sinceLabel({ cap = false } = {}) { const g = D1();
   if (g.gap === 1) return cap ? 'Since yesterday' : 'since yesterday';
   return `${cap ? 'Over' : 'over'} ${g.gap} days (${dayText(g.from)} \u2192 ${dayText(g.to)})`;
 }
-function deltaHtml(p, { pctOnly = false, tile = false } = {}) {
-  if (p.d1p == null) return `<span class="flat" title="no prior day on file">\u2014</span>`;
-  const a = p.d1a, pc = p.d1p;
+function deltaHtml(p, opts = {}) {
+  return changeSpan(p.d1p == null ? null : { a: p.d1a, pc: p.d1p }, { ...opts, none: 'no prior day on file' });
+}
+/* take 151: a change as the app prints it -- the day's (deltaHtml) or a collection line's over its period (lineChange) */
+function changeSpan(c, { pctOnly = false, tile = false, none = 'no price on file for that day', title = '' } = {}) {
+  if (!c) return `<span class="flat" title="${none}">\u2014</span>`;
+  const a = c.a, pc = c.pc;
   const cls = a > 0.004 ? 'up' : a < -0.004 ? 'down' : 'flat';
   /* On a 184px tile the triangle already sits before the price; repeating it
      in the delta line pushed the line to two rows. */
   const tri = tile ? '' : cls === 'up' ? '\u25b2 ' : cls === 'down' ? '\u25bc ' : '';
-  const pct = signedPct(pc);
-  if (pctOnly) return `<span class="${cls} mono">${pct}</span>`;
+  const pct = signedPct(pc), t = title ? ` title="${title}"` : '';
+  if (pctOnly) return `<span class="${cls} mono"${t}>${pct}</span>`;
   const abs = a >= 0 ? money(a) : signedMoney(a);
-  return `<span class="${cls} mono">${tri}${abs} (${pct})</span>`;
+  return `<span class="${cls} mono"${t}>${tri}${abs} (${pct})</span>`;
 }
 /* One glyph helper. Everything iconographic in the app goes through it, so
    the set in assets/glyphs.svg is the only source and swapping a symbol is
