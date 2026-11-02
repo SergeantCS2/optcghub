@@ -757,7 +757,8 @@ def selftest():
             lg = os.path.join(td, "gh.log")
             open(os.path.join(td, "gh"), "w").write('#!/bin/sh\necho "$*" >> "$GH_LOG"\n[ "$1 $2" = "issue list" ] && echo "$OPEN_ISSUE"\nexit 0\n'); os.chmod(os.path.join(td, "gh"), 0o755)
             r = subprocess.run(["bash", "-c", body], env=dict(os.environ, PATH=td + os.pathsep + os.environ.get("PATH", ""), GH_LOG=lg, OPEN_ISSUE=open_issue,
-                               NEEDS=json.dumps(needs), RUN="https://x/runs/1", LABEL=env_.get("LABEL", ""), TITLE=env_.get("TITLE", ""), KEEPS=env_.get("KEEPS", "")),
+                               NEEDS=json.dumps(needs), RUN="https://x/runs/1", LABEL=env_.get("LABEL", ""), TITLE=env_.get("TITLE", ""), KEEPS=env_.get("KEEPS", ""),
+                               HEALTH_LABEL=env_.get("HEALTH_LABEL", ""), HEALTH_TITLE=env_.get("HEALTH_TITLE", "")),
                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30)
             calls = open(lg).read().splitlines() if os.path.exists(lg) else []
         return r.returncode, sorted({c.split()[1] for c in calls if c.split()[:1] == ["issue"] and c.split()[1] in ("close", "comment", "create")}), calls
@@ -783,6 +784,40 @@ def selftest():
     hgot = {k: report(hyml, n_, o) for k, (n_, o, _) in hourly.items()}
     check("hunt.yml's report job does the same under its own label: a red hourly opens the thread, a green one closes it, and one that shipped its feed over the live catalogue leaves it as it is",
           all(hgot[k][:2] == (0, w) for k, (_, _, w) in hourly.items()) and any("--label hourly-failure" in c for c in hgot["red: opened"][2]), json.dumps({k: v[:2] for k, v in hgot.items()}))
+    # take 149, the nightly split: on a schedule the data lane alone stops a night; the code checks report as health=red under
+    # nightly-checks and stop nothing; no APK on a schedule. ci/bundle.sh's pipeline lines, run with a stand-in python3 that
+    # logs its calls and fails the step named in STANDIN_FAIL.
+    pipe = re.search(r'\necho "::group::pipeline"\n(.*?\nfi\necho "::endgroup::"\n)', open(os.path.join(ROOT, "ci", "bundle.sh"), encoding="utf8").read(), re.S)
+    def night(event, fail=""):
+        with tempfile.TemporaryDirectory() as td:
+            open(os.path.join(td, "python3"), "w").write('#!/bin/sh\necho "$*" >> "$STANDIN_LOG"\ncase "$*" in *"$STANDIN_FAIL"*) [ -n "$STANDIN_FAIL" ] && exit 1;; esac\nexit 0\n')
+            os.chmod(os.path.join(td, "python3"), 0o755); gho, lg = os.path.join(td, "out"), os.path.join(td, "log"); open(gho, "w").close()
+            r = subprocess.run(["bash", "-c", "set -euo pipefail\n" + (pipe.group(1) if pipe else "exit 9")], cwd=td, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30,
+                               env=dict(os.environ, PATH=td + os.pathsep + os.environ.get("PATH", ""), STANDIN_LOG=lg, STANDIN_FAIL=fail, GITHUB_OUTPUT=gho, GITHUB_EVENT_NAME=event))
+            return r.returncode, open(gho).read().strip(), open(lg).read().splitlines() if os.path.exists(lg) else []
+    DATA, CHECKS = "tools/pipeline.py ingest history catalog hashes validate app", "tools/pipeline.py smoke render stamp gate"
+    nights = {"green night": night("schedule"), "a check red": night("schedule", "smoke"), "the data red": night("schedule", "validate"), "a merge": night("push"), "a merge, a check red": night("push", "pipeline.py")}
+    check("take 149: a scheduled night runs the data lane, then the code checks -- a red check is health=red and the night goes on; a red data lane stops it before any check",
+          nights["green night"] == (0, "health=green", [DATA, CHECKS]) and nights["a check red"] == (0, "health=red", [DATA, CHECKS])
+          and nights["the data red"][0] != 0 and nights["the data red"][1:] == ("", [DATA]), json.dumps(nights)[:240])
+    check("...and a merge or a manual run is the whole pipeline, blocking, with no health line", nights["a merge"] == (0, "", ["tools/pipeline.py"]) and nights["a merge, a check red"][0] != 0,
+          json.dumps({k: nights[k] for k in ("a merge", "a merge, a check red")}))
+    bj, aj = blocks(yml).get("bundle", ""), blocks(yml).get("apk", "")
+    split_wired = "\n      health: ${{ steps.build.outputs.health }}\n" in bj and "\n    if: github.event_name != 'schedule'\n" in aj \
+        and "health" not in blocks(yml).get("pages", "")
+    check("...the bundle job exposes health, the apk job never runs on a schedule, and the pages job does not wait on the checks", split_wired)
+    def nh(health, **res):
+        n = nd(**res); n["bundle"]["outputs"] = {"health": health} if health else {}; return n
+    hc = {k: report(yml, n_, o) for k, (n_, o) in {"checks red, the data green, no APK": (nh("red", apk="skipped"), "7"), "checks red, no thread yet": (nh("red", apk="skipped"), ""),
+                                                   "checks green": (nh("green", apk="skipped"), "7"), "the data red": (nh("", bundle="failure", pages="skipped", apk="skipped"), "7")}.items()}
+    calls = lambda k, verb, label: [c for c in hc[k][2] if c.startswith("issue " + verb)] if label is None else [c for c in hc[k][2] if c.startswith(f"issue list --label {label}")]   # noqa: E731
+    lab = lambda k: [c.split("--label ")[1].split()[0] for c in hc[k][2] if c.startswith("issue list --label ")]   # noqa: E731
+    check("...and the report: a red check comments on nightly-checks while a green data night closes nightly-failure (an APK skipped by design is neither); "
+          "the first red check opens its thread; a green one closes it; a red data lane is nightly-failure's alone",
+          lab("checks red, the data green, no APK") == ["nightly-failure", "nightly-checks"] and hc["checks red, the data green, no APK"][1] == ["close", "comment"]
+          and any(c.startswith("issue create") and "--label nightly-checks" in c for c in hc["checks red, no thread yet"][2])
+          and hc["checks green"][1] == ["close"] and len(calls("checks green", "close", None)) == 2
+          and lab("the data red") == ["nightly-failure"] and hc["the data red"][1] == ["comment"], json.dumps({k: v[:2] for k, v in hc.items()}))
     def report_wired(text, per_job):
         r, env_, body = report_step(text); js = blocks(text)
         need = re.search(r"\n    needs: \[?([a-z, ]+)\]?\n", r)

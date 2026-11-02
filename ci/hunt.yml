@@ -119,7 +119,7 @@ jobs:
           needs = json.loads(os.environ["NEEDS"])
           res = {job: n.get("result") for job, n in needs.items()}
           red = [job for job, r in res.items() if r in ("failure", "cancelled")]
-          off = [job + " " + str(r) for job, r in res.items() if r != "success"]
+          off = [job + " " + str(r) for job, r in res.items() if r not in ("success", "skipped")]   # take 149: skipped by design (no APK on a schedule) is neither; a pages=skip says so below
           off += [job + " pages=skip" for job, n in needs.items() if (n.get("outputs") or {}).get("pages") == "skip"]
           off += [job + " catalogue=live (the fresh catalogue was refused; the feed shipped over the live one)" for job, n in needs.items() if (n.get("outputs") or {}).get("catalogue") == "live"]
           print("red " + ", ".join(red) if red else "partial " + "; ".join(off) if off or not res else "green " + ", ".join(res))
@@ -139,3 +139,19 @@ jobs:
             *)
               echo "::notice::no job failed, but not every job ran green ($what): the failure thread is left as it is" ;;
           esac
+          # Take 149: the nightly's code checks report under a thread of their own (health=red never fails a job).
+          h=$(python3 -c '
+          import json, os
+          print(next((n["outputs"]["health"] for n in json.loads(os.environ["NEEDS"]).values() if (n.get("outputs") or {}).get("health")), ""))
+          ')
+          hl=${HEALTH_LABEL:-}
+          if [ -n "$hl" ] && [ "$h" = red ]; then
+            gh label create "$hl" --color D93F0B --description "$HEALTH_TITLE" --force >/dev/null
+            n=$(gh issue list --label "$hl" --state open --json number -q '.[0].number')
+            body="A code check failed on the night's data -- run $RUN on $day. The prices committed and Pages deployed; see the log's code-checks group."
+            if [ -n "$n" ]; then gh issue comment "$n" --body "$body"
+            else gh issue create --title "$HEALTH_TITLE" --label "$hl" --body "$body"; fi
+          elif [ -n "$hl" ] && [ "$h" = green ]; then
+            n=$(gh issue list --label "$hl" --state open --json number -q '.[0].number' 2>/dev/null || true)
+            if [ -n "$n" ]; then gh issue close "$n" --comment "The code checks ran green on the night's data: run $RUN on $day."; fi
+          fi

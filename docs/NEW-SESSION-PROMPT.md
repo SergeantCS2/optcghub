@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 148.* Paste the block between the rules into a new session
+*Current as of take 149.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 148 takes by previous sessions. The repo is
+built across 149 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -95,6 +95,11 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   them in order with his results (his rule, take 94).
 
 **What is in flight when you arrive:**
+
+- **Take 149 -- the nightly split.** A scheduled `build` runs the data
+  lane, then the code checks; a red check is `health=red`, filed under
+  `nightly-checks`, and blocks nothing. No APK on a schedule. Next: the
+  smoke under pinned clocks (the proposal's second take).
 
 - **Take 148 -- a set's release day settles its prices** (issue #79).
   validate ships a >10x move within `RELEASE_SETTLE_DAYS` (7) of the
@@ -616,6 +621,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 149" and begin with PROTOCOL §0.
+Say "take 150" and begin with PROTOCOL §0.
 
 ---
