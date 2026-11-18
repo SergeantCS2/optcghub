@@ -98,6 +98,20 @@ week, and the hourly stayed green only by re-shipping that catalogue.
   (landmine 257); the first night TCGCSV is out will be its first proof on
   a runner.
 
+### After the merge (a note riding the next take's PR, PROTOCOL §6 step 6)
+
+With `check` and `apk` green on `1028312` -- the check ran after TCGCSV's
+20:05 UTC update, so it validated that night's prices (landmine 252) -- the
+session merged PR 88 at 20:59 UTC on 18 Nov (`1bb466b`). Build run 158
+green on the source of 18 Nov 20:05 UTC (OP18 RE still unpriced there):
+validate passed, the sidecars were committed (prices 2026-11-18, 67 days on
+file), the cache `catalog-158` was saved -- the first to carry the manifest
+the hourly's fallback needs -- and Pages deployed at 21:08 UTC: phones sync
+18 Nov's prices from it, the first since 11 Nov's. Release take-153
+published 21:12 UTC with the APK (29,335,225 bytes) and the AAB
+(22,541,099). Issues #86 and #87 closed. The first scheduled nightly on take
+153 is 19 Nov.
+
 ## Take 152 — 2026-11-02 — Home and Market movers follow the period switch
 
 Opened on the owner's word, 2 Nov, after take 151's look: "Uploaded 151,
