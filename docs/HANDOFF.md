@@ -38,6 +38,12 @@ week, and the hourly stayed green only by re-shipping that catalogue.
    step says so and fails before the app step, as it did with no catalogue.
 4. `tcgcsv.py --selftest` exists and the gate runs it: the empty-group rule
    had no negative control since take 2.
+5. **The smoke's hash coverage counts the cards whose picture the host
+   serves** (`00-shipped-artifact.mjs`). The third face of the same set: its
+   76 cards have no published picture, and the share of all cards hashed
+   fell to 94.5% (needs 95%) while 98.3% of the reachable were -- validate's
+   measure. The bundle's `images.missing_cards` is left out, capped at a
+   tenth of the cards so a host refusing pictures cannot shrink it unseen.
 
 ### Measured
 
@@ -68,6 +74,11 @@ week, and the hourly stayed green only by re-shipping that catalogue.
   no manifest) fails before the app step; both caches carry the manifest;
   a mutation dropping the put-back does not pass. On take 152's `ci/` files
   the hourly checks fail. 178 of 178.
+- Smoke 1796 of 1796: the coverage check over served pictures (6,876 of
+  6,996) and its control (a tenth of the hashes gone, or a tenth of the
+  cards not served, fails). The old measure on today's build: 94.5%, red.
+- Render 278 of 278 `(mode: chrome)`; gate passed; seal run bare; a clean
+  run from a fresh clone (PROTOCOL §6b) -- see the result below.
 
 ### What I got wrong
 
