@@ -861,6 +861,11 @@ def check_selftests():
     if r.returncode:
         fail("selftest", "validate.py negative controls did not all fire:\n"
                          + r.stdout)
+    # take 153 (landmine 256): the ingest's empty-group rule, through fetch() with stand-in answers -- it had no control
+    r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "tcgcsv.py"), "--selftest"],
+                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    if r.returncode:
+        fail("selftest", "tcgcsv.py negative controls did not all fire:\n" + r.stdout)
     r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "variants.py")],
                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     if r.returncode:

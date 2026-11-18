@@ -11,7 +11,7 @@ exists in the group manifest returns products. A zero is never a valid answer.
 """
 import json, os, sys, time, urllib.request, urllib.error
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import (TCGCSV, LAST_UPDATED, CATEGORY_ID, USER_AGENT, CACHE)
+from config import (TCGCSV, LAST_UPDATED, CATEGORY_ID, USER_AGENT, CACHE, NEW_GROUP_GRACE_DAYS)
 
 
 def _get(url, tries=3):
@@ -44,6 +44,32 @@ def last_updated():
     return _get(LAST_UPDATED).decode().strip()
 
 
+def _days(a, b):
+    """Whole days from date a to date b (YYYY-MM-DD)."""
+    import datetime
+    return (datetime.date.fromisoformat(b) - datetime.date.fromisoformat(a)).days
+
+
+def empty_refusal(gid, name, pub, was, today):
+    """Why an empty group stops the build, or None when the source explains it (landmines 5, 42, 256). A group that
+    had products in the last build and has none is a regression. One announced for a later day is a release schedule
+    (take 2's landmine 42). Take 153 (landmine 256): one the source published today or up to NEW_GROUP_GRACE_DAYS
+    before, that never had products, is listed and not yet stocked -- TCGCSV lists a group on its publish day and fills
+    it with its evening update. Anything else -- an older group, or none with a date -- is a blocked response wearing
+    an empty body, and stops the build. The wave guard in fetch() still refuses more than three empty groups."""
+    if was:
+        return (f"tcgcsv: group {gid} ({name}) has ZERO products but had "
+                f"{was} in the last build.\n  That is a regression, not a release "
+                f"schedule. Refusing to build (landmine 5).")
+    if pub and pub > today:
+        return None
+    if pub and 0 <= _days(pub, today) <= NEW_GROUP_GRACE_DAYS:
+        return None
+    return (f"tcgcsv: group {gid} ({name}) returned ZERO products with "
+            f"no unreleased-set explanation\n  (publishedOn={pub or 'none'}, "
+            f"today={today}). Refusing to build (landmine 5).")
+
+
 def fetch(verbose=True):
     os.makedirs(CACHE, exist_ok=True)
     stamp = last_updated()
@@ -66,19 +92,9 @@ def fetch(verbose=True):
         # to widen the guard.
         if not P:
             pub = (g.get("publishedOn") or "")[:10]
-            was = prev.get(str(gid))
-            if was:
-                raise SystemExit(
-                    f"tcgcsv: group {gid} ({g['name']}) has ZERO products but had "
-                    f"{was} in the last build.\n  That is a regression, not a release "
-                    f"schedule. Refusing to build (landmine 5)."
-                )
-            if not (pub and pub > today):
-                raise SystemExit(
-                    f"tcgcsv: group {gid} ({g['name']}) returned ZERO products with "
-                    f"no unreleased-set explanation\n  (publishedOn={pub or 'none'}, "
-                    f"today={today}). Refusing to build (landmine 5)."
-                )
+            why = empty_refusal(gid, g["name"], pub, prev.get(str(gid)), today)
+            if why:
+                raise SystemExit(why)
             empty.append((gid, g["name"], pub))
             continue
         for p in P:
@@ -114,7 +130,8 @@ def fetch(verbose=True):
         json.dump(out, f)
     if verbose:
         for gid, name, pub in empty:
-            print(f"   skipped {gid} '{name}' — unreleased (publishes {pub})")
+            print(f"   skipped {gid} '{name}' — " + (f"unreleased (publishes {pub})" if pub > today
+                  else f"listed {pub}, no products yet (landmine 256)"))
         cards = sum(1 for p in products
                     if any(e["name"] == "Number" for e in p.get("extendedData", [])))
         print(f"   {len(groups)} groups  {len(products)} products "
@@ -142,5 +159,60 @@ def cached():
     return json.load(open(p))
 
 
+def selftest():
+    """Negative controls for the empty-group rule, through fetch() itself: the source's answers are stand-ins (no
+    network), the cache a temporary directory, today the real day. Landmine 5's refusals each fire; landmine 256's
+    publish-day listing ships, recorded in empty_groups."""
+    import tempfile, datetime
+    today = time.strftime("%Y-%m-%d", time.gmtime())
+    ago = lambda k: (datetime.date.fromisoformat(today) - datetime.timedelta(days=k)).isoformat()   # noqa: E731
+    def run(extra, prev=None):
+        """88 groups would be the real shape; two stocked ones and the case under test are enough for the rule"""
+        global CACHE, _json, last_updated
+        groups = [{"groupId": 1, "name": "A", "publishedOn": "2024-01-01T00:00:00"},
+                  {"groupId": 2, "name": "B", "publishedOn": "2024-02-01T00:00:00"}] + [dict(g) for g in extra]
+        stocked = {1: 3, 2: 2}
+        answers = {f"{TCGCSV}/{CATEGORY_ID}/groups": groups}
+        for g in groups:
+            gid, n = g["groupId"], stocked.get(g["groupId"], 0)
+            answers[f"{TCGCSV}/{CATEGORY_ID}/{gid}/products"] = [{"productId": gid * 100 + k, "groupId": gid, "name": f"p{k}",
+                                                                 "extendedData": [{"name": "Number", "value": f"X-{k:03d}"}]} for k in range(n)]
+            answers[f"{TCGCSV}/{CATEGORY_ID}/{gid}/prices"] = []
+        saved = (CACHE, _json, last_updated)
+        with tempfile.TemporaryDirectory() as td:
+            CACHE = td
+            if prev is not None:
+                json.dump({"group_counts": prev}, open(os.path.join(td, "tcgcsv_payload.json"), "w"))
+            _json, last_updated = (lambda url: answers.get(url, [])), (lambda: today + "T20:05:00+0000")
+            try:
+                out = fetch(verbose=False)
+                return None, out.get("empty_groups", [])
+            except SystemExit as e:
+                return str(e), None
+            finally:
+                CACHE, _json, last_updated = saved
+    G = lambda pub, gid=9: {"groupId": gid, "name": "New", "publishedOn": pub + "T00:00:00" if pub else None}   # noqa: E731
+    cases = [
+        ("every group stocked builds", run([]), lambda r: r[0] is None and r[1] == []),
+        ("an empty group announced for a later day is skipped, recorded (landmine 42)", run([G(ago(-5))]), lambda r: r[0] is None and [list(x) for x in r[1]] == [[9, "New", ago(-5)]]),
+        ("take 153: one the source published today, never stocked, is skipped, recorded (landmine 256)", run([G(today)]), lambda r: r[0] is None and len(r[1]) == 1),
+        ("...yesterday too", run([G(ago(1))]), lambda r: r[0] is None and len(r[1]) == 1),
+        ("control: two days on, still empty, it stops the build", run([G(ago(2))]), lambda r: r[0] and "no unreleased-set explanation" in r[0]),
+        ("control: an empty group with no date stops the build", run([G("")]), lambda r: r[0] and "publishedOn=none" in r[0]),
+        ("control: a group that had products in the last build stops it, published today or not", run([G(today)], prev={"9": 75}), lambda r: r[0] and "had 75 in the last build" in r[0]),
+        ("control: four empty groups are a throttle, even all published today", run([G(today, 9), G(today, 10), G(today, 11), G(today, 12)]), lambda r: r[0] and "throttle" in r[0]),
+    ]
+    width = max(len(n) for n, _, _ in cases)
+    good = True
+    for name, r, fine in cases:
+        f = bool(fine(r))
+        good &= f
+        print(f"  {'ok  ' if f else 'FAIL'}  {name:<{width}}  {r[0].splitlines()[0][:70] if r[0] else 'built'}")
+    return good
+
+
 if __name__ == "__main__":
+    if "--selftest" in sys.argv:
+        print("tcgcsv.py negative controls:")
+        raise SystemExit(0 if selftest() else 1)
     fetch()

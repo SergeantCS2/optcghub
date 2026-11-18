@@ -60,6 +60,11 @@ PRICE_CORROBORATE_FACTOR = 3.0
 # floor) cannot agree with a bulk market within 3x. A >10x move on a printing whose set was published on the price day or
 # up to this many days before ships, named in the log. MEASURED 30 Oct: all 7 of the day's >10x moves, one set.
 RELEASE_SETTLE_DAYS = 7
+# Take 153 (landmine 256): TCGCSV lists a new group on its publish day before it has products. Group 24834 (OP18 RE)
+# was published 13 Nov at 00:00 and was empty at 02:00, 07:55 and 16:19 UTC; its 76 products came with the source's
+# update that evening (modifiedOn 19:26). An empty group published today or up to this many days before, that had no
+# products in the last build, is listed and not yet stocked -- skipped and recorded, like a set announced for later.
+NEW_GROUP_GRACE_DAYS = 1
 # Landmine 6: a cached payload must not masquerade as a fresh one.
 MAX_MANIFEST_AGE_HOURS = 36
 # MEASURED take 1: 6,860 card products. Landmine 8 — the catalogue is small.

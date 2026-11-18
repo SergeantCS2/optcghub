@@ -15,6 +15,12 @@ npm install --silent --no-save acorn
 good="${RUNNER_TEMP:-/tmp}/catalog-last-green.sqlite"
 rm -f "$good"
 if [ -f catalog/catalog.sqlite ]; then cp catalog/catalog.sqlite "$good"; fi
+# Take 153 (landmine 257): and its manifest, which the app step reads. Through take 152 only the catalogue was kept,
+# so when the ingest died before writing one (TCGCSV out; on 13 Nov a new set listed with no cards) there was no
+# catalog/manifest.json on a fresh runner and the fallback below stopped at the app step -- nothing deployed.
+goodman="${RUNNER_TEMP:-/tmp}/catalog-last-green-manifest.json"
+rm -f "$goodman"
+if [ -f catalog/manifest.json ]; then cp catalog/manifest.json "$goodman"; fi
 
 # Take 115: validate.py before `app`. Through take 114 this built and deployed a
 # fresh ingest that no check had read: the card-count floor, the source's age,
@@ -36,6 +42,11 @@ else
   # this build reads: nothing deploys, as before.
   if [ ! -f "$good" ]; then
     echo "::error::the fresh catalogue was refused (above) and there is no last green one to build the page from -- nothing deploys; Pages keeps its last deploy"
+    exit 1
+  fi
+  if [ -f "$goodman" ]; then cp "$goodman" catalog/manifest.json; fi
+  if [ ! -f catalog/manifest.json ]; then
+    echo "::error::the fresh catalogue was refused (above) and there is no manifest to build the page with -- nothing deploys; Pages keeps its last deploy"
     exit 1
   fi
   echo "::warning::the fresh catalogue was refused (above) -- the feed ships over the catalogue Pages already serves"

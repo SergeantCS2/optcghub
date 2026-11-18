@@ -30,7 +30,7 @@ def _days(a, b):
 
 
 def check(db, man, prev=None, strict_hashes=True):
-    bad, moves = [], []
+    bad, moves, notes = [], [], []
 
     # 1. Card count. Landmine 8 pins the expected size; a real set release moves
     #    it by a few hundred, a broken ingest moves it by thousands.
@@ -53,12 +53,23 @@ def check(db, man, prev=None, strict_hashes=True):
 
     # 3. Every set with cards has at least one price. A set that silently loses
     #    its prices values a collector's cards at zero.
-    q = db.execute("""SELECT s.name, s.card_count FROM card_set s
+    #    Take 153 (landmine 256): unless the source has none for it either. OP18 RE was listed with 76 products and no
+    #    price row at the source, and this refused every catalogue for five nights while phones kept 11 Nov's prices.
+    #    The manifest carries the source's price rows per group: a set the source has not priced ships, named; one the
+    #    source prices and this build has no price for stops it. A manifest without the count (older) stops it, as before.
+    src = man.get("source_prices_by_group")
+    q = db.execute("""SELECT s.group_id, s.name, s.card_count FROM card_set s
                        WHERE s.card_count > 0 AND NOT EXISTS (
                          SELECT 1 FROM printing p JOIN price x USING(product_id)
                           WHERE p.group_id = s.group_id)""").fetchall()
-    for name, n in q:
-        _fail(bad, f"set '{name}' has {n} cards and NO prices")
+    for gid, name, n in q:
+        listed = None if src is None else int(src.get(str(gid), 0))
+        if listed == 0:
+            notes.append(f"set '{name}' has {n} cards and no prices; the source lists no price for it either "
+                         f"-- shipped, its cards show no price on file")
+            continue
+        _fail(bad, f"set '{name}' has {n} cards and NO prices"
+                   + (f" -- the source lists {listed} price row(s) for it, so this build lost them" if listed else ""))
 
     # 4. Landmine 1, enforced structurally. A printing without a productId, or a
     #    card without a number, would let the app fall back to keying on a name.
@@ -142,7 +153,7 @@ def check(db, man, prev=None, strict_hashes=True):
     if strict_hashes and cov < 0.98:
         _fail(bad, f"hash coverage {100*cov:.1f}% of {reachable} reachable "
                    f"printings (need 98%; {unavailable} images are 403 and excluded)")
-    return bad, {"hash_coverage": cov, "auto_accept": safe / tot if tot else 0, "moves": moves}
+    return bad, {"hash_coverage": cov, "auto_accept": safe / tot if tot else 0, "moves": moves, "notes": notes}
 
 
 def exempt(raw):
@@ -171,6 +182,12 @@ def selftest():
     db.execute("INSERT INTO card_set VALUES (1,'X','Set X','2020-01-01',5)")
     bad, _ = check(db, dict(man, cards=EXPECTED_CARDS), strict_hashes=False)
     ok.append(("set with no prices", any("NO prices" in b for b in bad)))
+    # take 153 (landmine 256): the source's count decides -- none at the source ships, named; some at the source stops it
+    bad, st = check(db, dict(man, cards=EXPECTED_CARDS, source_prices_by_group={"2": 40}), strict_hashes=False)
+    ok.append(("a set the source has not priced ships, named", not any("NO prices" in b for b in bad)
+               and any("the source lists no price for it either" in x for x in st["notes"])))
+    bad, _ = check(db, dict(man, cards=EXPECTED_CARDS, source_prices_by_group={"1": 12}), strict_hashes=False)
+    ok.append(("...one the source prices and this build has not stops it", any("NO prices -- the source lists 12" in b for b in bad)))
 
     # Named columns, not positional. The take-4 `life` addition broke the
     # positional form and took a negative control down with it (landmine 52):
@@ -247,7 +264,7 @@ if __name__ == "__main__":
     bad, stats = check(db, man, prev, strict_hashes="--strict" in sys.argv)
     print(f"   hash coverage {100*stats['hash_coverage']:.1f}% of reachable  "
           f"auto-accept {100*stats['auto_accept']:.1f}%")
-    for x in stats.get("moves", []):
+    for x in stats.get("moves", []) + stats.get("notes", []):
         print(f"   note: {x}")
     for b in bad:
         print(f"   FAIL: {b}")

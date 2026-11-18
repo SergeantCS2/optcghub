@@ -1,6 +1,6 @@
 # RUNBOOK — from nothing to a repo that builds every night
 
-*Current as of take 152.* **Since take 89 the repo is the record:** a session
+*Current as of take 153.* **Since take 89 the repo is the record:** a session
 works on a branch and opens a pull request; you merge; the merge builds. §6
 is every take. §1–§5 are how the repo was first stood up from a seed zip and
 remain the recovery procedure; you need them again only for a new repo or a
@@ -287,6 +287,7 @@ dev` runs it on a PC with no account; `node relay/test.mjs --dev` tests it.
 | Uploading a seed starts no run | §2b — the `push.paths` glob was dropped from the paste |
 | Any job: `remote: Permission … denied` on push | §3 — workflow permissions are read-only |
 | bundle red in `ingest` | TCGCSV: throttled cloud IP (APEX 205) or an unreleased set (landmine 42). Re-run once; if it persists the log names the group |
+| bundle red in `validate`: a set "has N cards and NO prices -- the source lists M" | the catalogue lost a set's prices the source has (landmine 256): read the join for that group. A set the source has not priced yet ships, named in the log's notes; a new group published today or yesterday with no products is skipped |
 | bundle red in `gate` | the gate's last lines say which check; the take was gated green before its PR, so this is the runner's environment — read the line |
 | bundle red in `hashes` the week a set drops | since take 89 a 403/404 is "not published yet" and never counts; if it still stops, the canary failed — the CDN is refusing the runner (landmine 124) |
 | bundle red in `smoke` on a day with no code change | a fixture or an assertion with an expiry date (landmines 62, 114, 123); the log names the assertion |

@@ -1,6 +1,6 @@
 # AGENDA
 
-*Current as of take 152.* Ranked by blocking-ness, not by interest.
+*Current as of take 153.* Ranked by blocking-ness, not by interest.
 
 **Every item lists what has been RULED OUT and with what evidence.** Keep it that
 way, so nobody re-derives a dead end.
@@ -74,7 +74,15 @@ what take 115 changed on screen.
 **Mine, in order**
 00. **A2, the printing from the picture** (its take-125 section), on the
    owner's scan results and photographs.
-0. *Take 152, in flight (2 Nov):* Home's figure under the total and Market
+0. *Take 153, in flight (18 Nov):* issues #86 and #87 -- OP18 RE, listed by
+   TCGCSV on 13 Nov with no cards, then with cards and no prices, held every
+   price since 11 Nov (landmines 256, 257). **Ruled out (take 153):**
+   dropping the no-prices check (it stands for a join that loses a set's
+   prices; it asks the source now); a fixed window of days for an unpriced
+   set (a release-event set may stay unpriced for weeks; the source's count
+   says when, not the calendar); recovering 12 Nov's prices (TCGCSV serves
+   only the current day).
+0. *Take 152, merged (PR 85, Release take-152):* Home's figure under the total and Market
    movers follow take 151's switch (Since added, Day, 7 days, 30 days), the
    switch pressable on each; the owner's word after take 151's look.
    **Ruled out (take 152):** a card's page (not asked; it keeps the day's);

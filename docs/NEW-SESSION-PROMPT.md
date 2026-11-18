@@ -1,6 +1,6 @@
 # NEW-SESSION-PROMPT — how the next session starts
 
-*Current as of take 152.* Paste the block between the rules into a new session
+*Current as of take 153.* Paste the block between the rules into a new session
 opened on the repo (`github.com/SergeantCS2/optcghub`), on its own branch.
 The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 `docs/`; nothing is attached any more.
@@ -9,7 +9,7 @@ The three project files — `AGENDA.md`, `LANDMINES.md`, `HANDOFF.md` — are in
 
 You are picking up **OP TCG Hub** — a One Piece Card Game scanner, collection
 tracker, deck builder, simulator and sealed-product Hunt mode for Android,
-built across 152 takes by previous sessions. The repo is
+built across 153 takes by previous sessions. The repo is
 `github.com/SergeantCS2/optcghub`; the tree you are in is the whole project.
 Since take 89 a session works on a branch and opens a pull request; the owner
 merges; the merge to `main` runs `build.yml`, which publishes Release
@@ -95,6 +95,12 @@ where the app is live since 24 Sept 2026) and deploys Pages. The nightly at
   them in order with his results (his rule, take 94).
 
 **What is in flight when you arrive:**
+
+- **Take 153 -- a set listed before its cards and prices stops nothing**
+  (issues #86, #87; landmines 256, 257). The ingest skips an empty group
+  published today or yesterday that never had products; validate refuses a
+  set with no prices only when the source lists prices for it; the hourly
+  keeps the last green manifest with the catalogue.
 
 - **Take 152 -- Home and Market movers follow the switch** (the owner's
   word, 2 Nov). One `CHANGE` sets Collection, Home's figure under the total
@@ -634,6 +640,6 @@ send the collection anywhere (PROTOCOL §9); key anything off a card number
 instead of a printing (AGENTS §3); open a PR with a red gate; commit a seed
 zip or the runner-owned price and hash files from a branch.
 
-Say "take 153" and begin with PROTOCOL §0.
+Say "take 154" and begin with PROTOCOL §0.
 
 ---
