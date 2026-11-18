@@ -77,8 +77,10 @@ week, and the hourly stayed green only by re-shipping that catalogue.
 - Smoke 1796 of 1796: the coverage check over served pictures (6,876 of
   6,996) and its control (a tenth of the hashes gone, or a tenth of the
   cards not served, fails). The old measure on today's build: 94.5%, red.
-- Render 278 of 278 `(mode: chrome)`; gate passed; seal run bare; a clean
-  run from a fresh clone (PROTOCOL §6b) -- see the result below.
+- Render 278 of 278 `(mode: chrome)`; gate passed; seal run bare. The clean
+  run (PROTOCOL §6b), a fresh clone at `7da02f4` with `ci/deps.sh`: smoke
+  1796 of 1796, render 278 of 278 in Chrome, gate passed, 544 s, the unpriced
+  set named in validate's notes.
 
 ### What I got wrong
 
