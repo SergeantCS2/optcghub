@@ -185,9 +185,18 @@ ok('an indistinguishable pair NEVER auto-accepts on artwork',
    })());
 const cardsOnly = V.CAT.rows.filter(p => !p.sealed);
 const hashed = cardsOnly.filter(p => p.hash != null).length;
-ok('hash coverage is complete enough to rely on (cards, not sealed)',
-   hashed / cardsOnly.length > 0.95,
-   `${(100 * hashed / cardsOnly.length).toFixed(1)}%`);
+/* Take 153 (landmine 256): of the cards whose picture the host serves. A new set is listed before its pictures: OP18 RE's
+   76 cards had none on 18 Nov, and the share of ALL cards fell to 94.5% while 98.3% of the reachable were hashed (validate's
+   measure). A picture the host does not serve is no hash anywhere -- the scanner asks about that card, it never guesses.
+   So a card whose picture is unpublished or refused (the sidecar's misses, the bundle's images.missing_cards) is left out,
+   and those misses must stay under a tenth of the cards, or a host refusing pictures would shrink the measure unseen. */
+const unserved = (manifest.images || {}).missing_cards;
+const coverage = (h, cards, miss) => h / Math.max(1, cards - miss) > 0.95 && miss < 0.10 * cards;
+ok('hash coverage is complete enough to rely on (cards, not sealed; of those whose picture the host serves)',
+   Number.isFinite(unserved) && coverage(hashed, cardsOnly.length, unserved),
+   `${hashed} of ${cardsOnly.length - unserved} (${(100 * hashed / Math.max(1, cardsOnly.length - unserved)).toFixed(1)}%), ${unserved} not served`);
+ok('...control: the same measure fails with a tenth of those hashes gone, or with a tenth of the cards not served',
+   Number.isFinite(unserved) && !coverage(Math.floor(hashed * 0.9), cardsOnly.length, unserved) && !coverage(hashed, cardsOnly.length, Math.ceil(0.1 * cardsOnly.length)));
 ok('sealed product is in the bundle for manual entry (A7)',
    V.CAT.rows.filter(p => p.sealed).length > 500 &&
    V.CAT.rows.filter(p => p.sealed).every(p => !p.num),
