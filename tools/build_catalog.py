@@ -359,6 +359,9 @@ def build(payload=None, verbose=True):
         "cards": ncards,
         "sealed": nsealed,
         "prices": len(payload["prices"]),
+        # take 153 (landmine 256): the source's own price rows per group, so validate can tell a set the source has not
+        # priced yet (it ships, named) from one whose prices this build lost (it stops). Groups with none are absent.
+        "source_prices_by_group": _prices_by_group(payload),
         "empty_groups": payload.get("empty_groups", []),
         "bytes": os.path.getsize(CATALOG_DB),
     }
@@ -368,6 +371,17 @@ def build(payload=None, verbose=True):
         print(f"   catalog.sqlite {man['bytes']/1e6:.1f} MB")
     return man
 
+
+
+def _prices_by_group(payload):
+    """The source's price rows per group (as strings, the manifest's JSON keys), through the products' group ids."""
+    group_of = {p["productId"]: p["groupId"] for p in payload["products"]}
+    out = {}
+    for r in payload["prices"]:
+        g = group_of.get(r.get("productId"))
+        if g is not None:
+            out[str(g)] = out.get(str(g), 0) + 1
+    return out
 
 if __name__ == "__main__":
     build()

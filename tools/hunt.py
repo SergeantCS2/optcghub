@@ -839,15 +839,22 @@ def selftest():
     # Take 145: the lines are ci/hunt.sh's, run here with a stand-in python3 (it logs each call and the catalogue it sees; an ingest
     # writes over the catalogue; a step named in STANDIN_FAIL exits 1, --live-bundle exits STANDIN_LIVE) and stand-in pip and npm.
     hsh = open(os.path.join(ROOT, "ci", "hunt.sh"), encoding="utf8").read()
-    def hourly_run(script, fail=(), green=True, live="0"):
+    # Take 153 (landmine 257): the stand-in carries the catalogue's manifest too -- the ingest call writes it only when it
+    # succeeds (the catalogue step is the last of the three), and the app step stops without one, as build_app.py does.
+    # The log line is "<call> :: <catalogue>/<manifest>"; a cache from before take 153 has the catalogue and no manifest.
+    def hourly_run(script, fail=(), green=True, live="0", manifest=True):
         with tempfile.TemporaryDirectory() as td:
             bin_, work = os.path.join(td, "bin"), os.path.join(td, "work"); os.makedirs(bin_); os.makedirs(os.path.join(work, "catalog"))
             if green:
                 open(os.path.join(work, "catalog", "catalog.sqlite"), "w").write("green\n")
+                if manifest:
+                    open(os.path.join(work, "catalog", "manifest.json"), "w").write("green\n")
             lg, gho = os.path.join(td, "log"), os.path.join(td, "out"); open(gho, "w").close()
-            stand = {"python3": '#!/bin/sh\necho "$* :: $(cat catalog/catalog.sqlite 2>/dev/null)" >> "$STANDIN_LOG"\n'
+            stand = {"python3": '#!/bin/sh\necho "$* :: $(cat catalog/catalog.sqlite 2>/dev/null)/$(cat catalog/manifest.json 2>/dev/null)" >> "$STANDIN_LOG"\n'
                                 'case "$*" in *"ingest history catalog"*) echo fresh > catalog/catalog.sqlite;; esac\n'
                                 'for f in $STANDIN_FAIL; do case "$*" in *"$f"*) exit 1;; esac; done\n'
+                                'case "$*" in *"ingest history catalog"*) echo fresh > catalog/manifest.json;; esac\n'
+                                'case "$*" in *"pipeline.py app"*) [ -f catalog/manifest.json ] || exit 1;; esac\n'
                                 'case "$*" in *--live-bundle*) exit $STANDIN_LIVE;; esac\nexit 0\n',
                      "pip": "#!/bin/sh\nexit 0\n", "npm": "#!/bin/sh\nexit 0\n"}
             for b, body in stand.items():
@@ -858,9 +865,10 @@ def selftest():
                                         STANDIN_LIVE=live, GITHUB_OUTPUT=gho, RUNNER_TEMP=td, HUNT_ZIPS="", HUNT_RADIUS=""))
             return r.returncode, open(gho).read().strip(), open(lg).read().splitlines() if os.path.exists(lg) else []
     ING, VAL, APP, LIVE, FEED = "tools/pipeline.py ingest history catalog", "tools/validate.py", "tools/pipeline.py app", "tools/hunt.py --live-bundle", "tools/hunt.py --zips 48329 --radius 50"
-    want = {"fresh": (0, "catalogue=fresh", [f"{ING} :: green", f"{VAL} :: fresh", f"{APP} :: fresh", f"{FEED} :: fresh"]),
-            "refused": (0, "catalogue=live", [f"{ING} :: green", f"{VAL} :: fresh", f"{APP} :: green", f"{LIVE} :: green", f"{FEED} :: green"]),
-            "tcgcsv out": (0, "catalogue=live", [f"{ING} :: green", f"{APP} :: green", f"{LIVE} :: green", f"{FEED} :: green"])}
+    G, F = "green/green", "fresh/fresh"
+    want = {"fresh": (0, "catalogue=fresh", [f"{ING} :: {G}", f"{VAL} :: {F}", f"{APP} :: {F}", f"{FEED} :: {F}"]),
+            "refused": (0, "catalogue=live", [f"{ING} :: {G}", f"{VAL} :: {F}", f"{APP} :: {G}", f"{LIVE} :: {G}", f"{FEED} :: {G}"]),
+            "tcgcsv out": (0, "catalogue=live", [f"{ING} :: {G}", f"{APP} :: {G}", f"{LIVE} :: {G}", f"{FEED} :: {G}"])}
     case = {"fresh": {}, "refused": {"fail": ("validate.py",)}, "tcgcsv out": {"fail": ("ingest",)}}
     def hourly_ok(script, yml_text):
         return all(hourly_run(script, **case[k]) == w for k, w in want.items()) and not re.search(r"python3 tools/validate\.py[^\n;&|]*--strict", script) \
@@ -874,10 +882,22 @@ def selftest():
           "refused one), the live catalogue is put back over its bundle, the feed is fetched over it, and the run says catalogue=live",
           hgo["refused"] == want["refused"], json.dumps(hgo["refused"])[:200])
     check("...the same when TCGCSV is out: the ingest fails, nothing is validated, the feed ships over the live catalogue", hgo["tcgcsv out"] == want["tcgcsv out"], json.dumps(hgo["tcgcsv out"])[:200])
+    # take 153 (landmine 257): the fallback builds from the last green catalogue AND its manifest, both kept aside and put back
+    # (the refused case above reads green/green; through take 152 it read green/fresh, a catalogue under another's manifest);
+    # on 13 Nov the cache had no manifest and the ingest died before writing one: the app step stopped, nothing deployed
+    nomani = hourly_run(hsh, fail=("ingest",), manifest=False)
+    check("take 153: ...and when there is no manifest to build the page with (13 Nov: TCGCSV listed a set with no cards, the ingest stopped, "
+          "the cache held none), the step says so and fails before the app step: nothing deploys, Pages keeps its last deploy",
+          nomani[0] != 0 and not any(APP in c for c in nomani[2]) and nomani[1] == "", json.dumps(nomani)[:200])
+    byml = open(os.path.join(ROOT, "ci", "build.yml"), encoding="utf8").read()   # the twin of .github/workflows/build.yml (the gate compares them)
+    cache_paths = lambda y, uses: (lambda m: m.group(1) if m else "")(re.search(re.escape(uses) + r"[^\n]*\n\s+with:\n\s+path: \|\n((?:\s+[^\s:]+\n)+)", y))   # noqa: E731
+    hp, bp = cache_paths(hyml, "uses: actions/cache/restore@"), cache_paths(byml, "uses: actions/cache@")
+    check("take 153: ...the nightly's cache saves catalog/manifest.json with the catalogue, and the hourly restores it",
+          all("catalog/manifest.json" in x and "catalog/catalog.sqlite" in x for x in (hp, bp)), json.dumps([hp, bp]))
     unread, nogreen = hourly_run(hsh, fail=("validate.py",), live="3"), hourly_run(hsh, fail=("validate.py",), green=False)
     check("...and nothing deploys when the live catalogue cannot be put back (--live-bundle exits 3), or when there is no last green catalogue to build from: "
           "the step fails before the feed, so the upload and the deploy do not run and Pages keeps its last deploy",
-          unread[0] != 0 and unread[2][-1:] == [f"{LIVE} :: green"] and unread[1] == "" and nogreen[0] != 0 and not any(APP in c for c in nogreen[2]) and nogreen[1] == "",
+          unread[0] != 0 and unread[2][-1:] == [f"{LIVE} :: {G}"] and unread[1] == "" and nogreen[0] != 0 and not any(APP in c for c in nogreen[2]) and nogreen[1] == "",
           json.dumps([unread, nogreen])[:220])
     feed_job = blocks(hyml).get("feed", "")
     wired = "\n        id: feed\n        run: bash ci/hunt.sh\n" in feed_job and "\n    outputs:\n      catalogue: ${{ steps.feed.outputs.catalogue }}\n" in feed_job \
@@ -888,7 +908,8 @@ def selftest():
             "--strict": hsh.replace("python3 tools/validate.py;", "python3 tools/validate.py --strict;"),
             "the refused catalogue left in place": hsh.replace('  cp "$good" catalog/catalog.sqlite\n', ""),
             "the live catalogue not put back": hsh.replace("  python3 tools/hunt.py --live-bundle\n", ""),
-            "a refused catalogue still stops the run (take 144)": hsh.replace('  echo "::warning::', '  exit 1\n  echo "::warning::', 1)}
+            "a refused catalogue still stops the run (take 144)": hsh.replace('  echo "::warning::', '  exit 1\n  echo "::warning::', 1),
+            "take 152's, the manifest not put back (landmine 257)": hsh.replace('  if [ -f "$goodman" ]; then cp "$goodman" catalog/manifest.json; fi\n', "")}
     passed = [k for k, m in muts.items() if m == hsh or hourly_ok(m, hyml)]
     check("...control: take 115's first list, take 114's (none), --strict, the refused catalogue left in place, the live one not put back, or a refusal that "
           "stops the run as through take 144 does not pass; nor a cache step that saves every hour", not passed and not hourly_ok(hsh, hyml.replace("actions/cache/restore@", "actions/cache@")),

@@ -70,6 +70,7 @@ jobs:
           path: |
             tcgcsv_cache
             catalog/catalog.sqlite
+            catalog/manifest.json
           key: catalog-hourly-reads-only
           restore-keys: catalog-
       - name: Rebuild www/ from the committed tree, validate it, then fetch the feed

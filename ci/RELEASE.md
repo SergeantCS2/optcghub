@@ -1,4 +1,4 @@
-# OP TCG Hub — take 152
+# OP TCG Hub — take 153
 
 ## Installing — read this first
 
@@ -17,6 +17,8 @@ it to the developer. It takes ten seconds and tells us your phone runs
 everything.
 
 ---
+
+**New at take 153:** Prices update again. Since 13 Nov they had stayed on 11 Nov's: TCGplayer listed OP-18's release event cards before it had any prices for them, and our nightly check refused the whole update. A new set with no prices yet no longer holds back everyone else's, and its cards say they have no price on file. Nothing you have saved changes.
 
 **New at take 152:** Home and Market movers now follow the same switch as Collection: Since added, Day, 7 days or 30 days. The figure under your collection's total is how much your cards' prices moved over that period, and the switch sits under it too. Your prices are unchanged. Nothing you have saved changes.
 

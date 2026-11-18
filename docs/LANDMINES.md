@@ -268,6 +268,8 @@ Start here. Do not read top to bottom.
 | A control that says "the catalogue lacks X" goes red the day the source lists X -- and hid a wrong-unit match | **253** |
 | A set's release day drops its preorder prices to bulk; the >10x guard called it a glitch, and smoke's copy never saw drops | **254** |
 | Every check ran in UTC and on today's date; the phone runs in New York, on every date | **255** |
+| A new set with no cards yet, or no prices yet, stops the nightly; prices freeze | **256** |
+| The hourly's fallback crashes on a missing manifest.json when the ingest dies | **257** |
 | Map/canvas renders in browser but not in the APK | A-1 |
 | Works on wifi, dead offline | A-3, A-4 |
 | A gate check stops running for no reason | A-33 |
@@ -3367,6 +3369,35 @@ on other dates and in the owner's zone before it ships -- the PR check runs
 the smoke in New York too, and the sweep is run by hand when a check reads
 the clock -- and a check that can skip itself on data says so by failing,
 or brings its own data.
+
+**256. A new set is listed before its cards, and its cards before their
+prices; two guards read each stage as a broken fetch and held every price
+for a week.** TCGCSV listed group 24834 (OP18 RE, published 13 Nov). On its
+publish day it had no products: the ingest refused an empty group that was
+not announced for a later day (landmine 5), before the day's prices were
+committed, so 12 Nov's price day is lost. From 14 Nov it had 76 products and
+no price row at the source (MEASURED, 18 Nov): validate refused "a set with
+cards and NO prices", and no catalogue shipped for five nights while the
+prices were committed and the hourly re-shipped 11 Nov's. Both guards stand
+for real failures -- an empty body, a join that drops a set's prices -- and
+neither asked the source. Rule: an empty group the source published today or
+yesterday, that never had products, is listed and not yet stocked
+(`NEW_GROUP_GRACE_DAYS`); a set with no prices fails only when the source
+lists prices for it (the manifest's `source_prices_by_group`), and ships
+named when the source has none.
+
+**257. Take 145's fallback kept the catalogue aside but not its manifest,
+so it never built on the day it was for.** The hourly restores the nightly's
+cache (`catalog.sqlite`, `tcgcsv_cache`) and, past a refused or failed
+ingest, builds the page from the last green catalogue. When the ingest dies
+before the catalogue step (TCGCSV out, or landmine 256's empty group), there
+is no `catalog/manifest.json` on a fresh runner, and the app step stopped
+with FileNotFoundError on 13 Nov -- twice, nothing deployed. Its selftest's
+stand-in never modelled the manifest, so "the same when TCGCSV is out"
+passed for months untested. Rule: what a fallback builds from is kept
+whole -- the cache carries `catalog/manifest.json` with the catalogue, the
+hourly puts both back, and the stand-in's app step needs the manifest the
+real one reads.
 
 ## §2 — Inherited from APEX ORV
 

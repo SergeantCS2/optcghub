@@ -1,4 +1,89 @@
-# HANDOFF — through Take 152
+# HANDOFF — through Take 153
+
+## Take 153 — 2026-11-18 — a set listed before its cards and its prices stops nothing (issues #86, #87)
+
+Opened on the owner's word, 18 Nov: "I think we're hitting some issues on
+github, two - check it out". Issue #87: every nightly red since 13 Nov;
+issue #86: two hourlies red on 13 Nov. One cause. TCGCSV listed group 24834,
+"The Dominance of God Release Event Cards" (OP18 RE), published 13 Nov. On
+its day it had no products, and the ingest refused an empty group that was
+not announced for a later day (landmine 5); the hourly then fell back to the
+last green catalogue and crashed on a missing `catalog/manifest.json`. From
+14 Nov it had 75 cards (76 products) and no prices -- the source itself
+lists no price row for it (MEASURED, 18 Nov: 0 rows) -- and validate refused
+a set with cards and no prices. The day's prices were committed every night
+(take 149), but no catalogue shipped: phones have held 11 Nov's prices for a
+week, and the hourly stayed green only by re-shipping that catalogue.
+
+### What this take changes
+
+1. **The ingest's empty-group rule asks the publish day** (`tcgcsv.py`,
+   `empty_refusal`). A group the source published today or the day before
+   (`NEW_GROUP_GRACE_DAYS` = 1), that had no products in the last build, is
+   listed and not yet stocked: skipped and recorded in `empty_groups`, as a
+   set announced for a later day is. A group that had products and has none,
+   an older empty group, one with no date, and more than three empty groups
+   at once still stop the build.
+2. **Validate's no-prices check asks the source** (`validate.py` check 3).
+   The catalogue step records the source's price rows per group in the
+   manifest (`source_prices_by_group`). A set with cards and no prices stops
+   the build only when the source lists prices for it (this build lost
+   them); when the source has none it ships, named in the log, and its
+   cards say "no price on file" as any unpriced card does. A manifest
+   without the count stops it, as before.
+3. **The hourly keeps the last green manifest with the catalogue**
+   (`ci/hunt.sh`), and both caches carry `catalog/manifest.json`
+   (`build.yml` saves it, `hunt.yml` restores it). Past a refused or failed
+   ingest, the page is built from that pair; with no manifest at all the
+   step says so and fails before the app step, as it did with no catalogue.
+4. `tcgcsv.py --selftest` exists and the gate runs it: the empty-group rule
+   had no negative control since take 2.
+
+### Measured
+
+- TCGCSV, 18 Nov: group 24834, published 2026-11-13T00:00, modified 13 Nov
+  19:26; 76 products, 0 price rows.
+- The nightly: red 13 Nov (ingest, empty group), 14-18 Nov (validate, no
+  prices); prices committed every night but 13 Nov's, so 12 Nov's price day
+  is missing from the history (TCGCSV serves only the current day). Last
+  green nightly 12 Nov (run 151): phones hold 11 Nov's prices.
+- The hourly: red twice on 13 Nov (07:55, 16:19; FileNotFoundError at the
+  app step), green after the group filled -- on the live catalogue.
+- Today's real catalogue: take 152's validate fails ("75 cards and NO
+  prices"); take 153's passes, naming the set.
+
+### Tests
+
+- `tcgcsv.py --selftest`, eight cases through `fetch()` with stand-in
+  answers: all groups stocked; announced for later; published today;
+  yesterday; and four controls -- two days on, no date, had products, four
+  at once. On take 152's `fetch()` the today and yesterday cases fail with
+  13 Nov's own message.
+- `validate.py --selftest`: two new controls (a set the source has not
+  priced ships, named; one it prices stops the build); the old control (no
+  count in the manifest) still fires.
+- `hunt.py --selftest`: the stand-in carries the manifest (the ingest
+  writes it only when it succeeds; the app step stops without one); the
+  refused case reads green/green; 13 Nov's case (TCGCSV out, a cache with
+  no manifest) fails before the app step; both caches carry the manifest;
+  a mutation dropping the put-back does not pass. On take 152's `ci/` files
+  the hourly checks fail. 178 of 178.
+
+### What I got wrong
+
+- Resetting the branch onto `main` for this take dropped take 152's
+  after-the-merge note from it; I took it back from the remote branch.
+- My control copy of take 152's validate ran from the scratch folder and
+  found no catalogue; it ran from `tools/` under another name.
+- My new cache check read the `.github` copy of `build.yml` while the
+  hourly checks read the `ci/` copies; it reads `ci/build.yml` now.
+
+### DEFERRED
+
+- 12 Nov's prices: gone at the source.
+- The take-145 claim "the same when TCGCSV is out" was untested until now
+  (landmine 257); the first night TCGCSV is out will be its first proof on
+  a runner.
 
 ## Take 152 — 2026-11-02 — Home and Market movers follow the period switch
 
